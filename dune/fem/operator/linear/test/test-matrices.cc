@@ -34,12 +34,26 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, 2 > P
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 
+// emulate block type being derived from Dune::FieldVector (e.g. in OPM)
+namespace Dune {
+  template <class K, int dim>
+  struct MyBlock : public Dune::FieldVector< K, dim >
+  {
+    typedef Dune::FieldVector< K, dim > BaseType;
+    using BaseType :: operator =;
+  };
+
+  template <class K, int dim>
+  struct FieldTraits< MyBlock<  K, dim > > : public FieldTraits< typename MyBlock<  K, dim > :: BaseType >
+  {};
+}
+
 template< class DSpace, class RSpace >
 struct LinearOperator
 {
   typedef Dune::Fem::ISTLLinearOperator<
-    Dune::Fem::ISTLBlockVectorDiscreteFunction< DSpace >,
-    Dune::Fem::ISTLBlockVectorDiscreteFunction< RSpace >
+    Dune::Fem::ISTLBlockVectorDiscreteFunction< DSpace, Dune::MyBlock< typename DSpace::RangeFieldType, DSpace::localBlockSize > >,
+    Dune::Fem::ISTLBlockVectorDiscreteFunction< RSpace, Dune::MyBlock< typename RSpace::RangeFieldType, RSpace::localBlockSize > >
     > type;
 };
 
