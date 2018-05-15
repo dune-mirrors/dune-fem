@@ -14,6 +14,7 @@
 
 //- Dune common includes
 #include <dune/common/exceptions.hh>
+#include <dune/common/fmatrix.hh>
 
 //- Dune istl includes
 #include <dune/istl/bvector.hh>
@@ -46,7 +47,9 @@ namespace Dune
     template< class MatrixObject >
     class ISTLLocalMatrix;
 
-    template< class RowSpaceImp, class ColSpaceImp >
+    template <class DomainSpaceImp, class RangeSpaceImp,
+              class DomainBlock = Dune::FieldVector< typename DomainSpaceImp :: RangeFieldType, DomainSpaceImp:: localBlockSize >,
+              class RangeBlock  = Dune::FieldVector< typename RangeSpaceImp  :: RangeFieldType, RangeSpaceImp :: localBlockSize > >
     class ISTLMatrixObject;
 
     ///////////////////////////////////////////////////////
@@ -603,19 +606,8 @@ namespace Dune
     };
 
 
-
-    template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
-    struct ISTLMatrixTraits
-    {
-      typedef RowSpaceImp RangeSpaceType;
-      typedef ColSpaceImp DomainSpaceType;
-      typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;
-
-      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType;
-    };
-
     //! MatrixObject handling an istl matrix
-    template <class DomainSpaceImp, class RangeSpaceImp>
+    template <class DomainSpaceImp, class RangeSpaceImp, class DomainBlock, class RangeBlock >
     class ISTLMatrixObject
     {
     public:
@@ -625,7 +617,7 @@ namespace Dune
       typedef RangeSpaceImp RangeSpaceType;
 
       //! type of this pointer
-      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> ThisType;
+      typedef ISTLMatrixObject< DomainSpaceImp, RangeSpaceImp, DomainBlock, RangeBlock > ThisType;
       typedef ThisType  PreconditionMatrixType;
 
       typedef typename DomainSpaceType::GridType GridType;
@@ -638,8 +630,8 @@ namespace Dune
 
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
-      typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >      RowDiscreteFunctionType;
-      typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     ColumnDiscreteFunctionType;
+      typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType, RangeBlock >     RowDiscreteFunctionType;
+      typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType, DomainBlock >   ColumnDiscreteFunctionType;
 
       typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
       typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType;

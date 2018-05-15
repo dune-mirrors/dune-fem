@@ -410,15 +410,15 @@ namespace Dune
     template < class MatrixObject >
     class ISTLMatrixAdapterFactory ;
 
-    template < class DomainSpace, class RangeSpace,
-               template <class, class> class MatrixObject >
-    class ISTLMatrixAdapterFactory< MatrixObject< DomainSpace, RangeSpace > >
+    template < class DomainSpace, class RangeSpace, class DomainBlock, class RangeBlock,
+               template <class, class, class, class> class MatrixObject >
+    class ISTLMatrixAdapterFactory< MatrixObject< DomainSpace, RangeSpace, DomainBlock, RangeBlock > >
     {
       typedef DomainSpace       DomainSpaceType ;
       typedef RangeSpace        RangeSpaceType;
 
     public:
-      typedef MatrixObject< DomainSpaceType, RangeSpaceType >    MatrixObjectType;
+      typedef MatrixObject< DomainSpaceType, RangeSpaceType, DomainBlock, RangeBlock >  MatrixObjectType;
       typedef typename MatrixObjectType :: MatrixType            MatrixType;
       typedef ISTLParallelMatrixAdapterInterface< MatrixType >   MatrixAdapterInterfaceType;
 
@@ -457,9 +457,9 @@ namespace Dune
 
 #ifndef DISABLE_ISTL_PRECONDITIONING
     //! Specialization for domain space == range space
-    template < class Space,
-               template <class, class> class MatrixObject >
-    class ISTLMatrixAdapterFactory< MatrixObject< Space, Space > >
+    template < class Space, class DomainBlock, class RangeBlock,
+               template <class, class, class, class> class MatrixObject >
+    class ISTLMatrixAdapterFactory< MatrixObject< Space, Space, DomainBlock, RangeBlock > >
     {
     public:
       enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner
@@ -480,7 +480,7 @@ namespace Dune
       typedef Space       DomainSpaceType ;
       typedef Space       RangeSpaceType;
 
-      typedef MatrixObject< DomainSpaceType, RangeSpaceType >  MatrixObjectType;
+      typedef MatrixObject< DomainSpaceType, RangeSpaceType, DomainBlock, RangeBlock >  MatrixObjectType;
       typedef typename MatrixObjectType :: MatrixType              MatrixType;
       typedef typename MatrixType   :: BaseType                    ISTLMatrixType ;
       typedef Fem::PreconditionerWrapper< MatrixType >             PreconditionAdapterType;
