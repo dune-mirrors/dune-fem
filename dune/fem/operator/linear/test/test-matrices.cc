@@ -33,6 +33,10 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, 2 > P
 
 
 #if USE_ISTL && HAVE_DUNE_ISTL
+// the UMFPack implementation in dune-istl is inflexible and only works with
+// FieldMartrix. Here, we test MyBlock and therefore disable the directsolver
+// for AMG.
+#define DISABLE_AMG_DIRECTSOLVER 1
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 
