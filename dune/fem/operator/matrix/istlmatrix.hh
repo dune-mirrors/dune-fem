@@ -451,7 +451,13 @@ namespace Dune
 
         numRows_  = rowMapper_.numDofs( rangeEntity );
         numCols_  = colMapper_.numDofs( domainEntity );
-        matrices_.resize( numRows_, numCols_, nullptr );
+
+        // resize matrix pointer storage for new row/col numbers
+        matrices_.resize( numRows_ );
+        for( auto& row : matrices_ )
+        {
+          row.resize( numCols_, nullptr );
+        }
 
         if(  matrixObj_.implicitModeActive() )
         {
@@ -599,7 +605,7 @@ namespace Dune
       int numCols_;
 
       // dynamic matrix with pointers to block matrices
-      Dune::DynamicMatrix< LittleBlockType* > matrices_;
+      std::vector< std::vector< LittleBlockType* > > matrices_;
 
       // matrix to build
       const MatrixObjectType& matrixObj_;
