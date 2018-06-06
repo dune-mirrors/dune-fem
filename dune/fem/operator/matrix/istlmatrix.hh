@@ -145,10 +145,11 @@ namespace Dune
         {
           // not insert map of indices into matrix
           auto endcreate = this->createend();
+          const auto endindices = indices.end();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
             const auto it = indices.find( create.index() );
-            if (it == indices.end() )
+            if (it == endindices )
               continue;
             const auto& localIndices = it->second;
             const auto end = localIndices.end();
@@ -797,6 +798,7 @@ namespace Dune
           assert(set);
         }
       }
+
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
       void reserve(const Stencil &stencil, const bool implicit = true )
@@ -1009,6 +1011,26 @@ namespace Dune
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType ( *this, domainEntity );
+      }
+
+      template< class LocalBlock, class Operation >
+      void applyToBlock ( const size_t row, const size_t col,
+                          const LocalBlock &localBlock,
+                          Operation& operation )
+      {
+        LittleBlockType& block = ( implicitModeActive() ) ? matrix().entry( row, col ) : matrix()[ row ][ col ];
+        for( int i  = 0; i < littleRows; ++i )
+          for( int j = 0; j < littleCols; ++j )
+            operation( block[ i ][ j ], localBlock[ i ][ j ] );
+      }
+
+      template< class LocalBlock >
+      void setBlock ( const size_t row, const size_t col,
+                      const LocalBlock &localBlock )
+      {
+        typedef typename DomainSpaceType :: RangeFieldType Field;
+        auto copy = [] ( Field& a, const typename LocalBlock::field_type& b ) { a = b; };
+        applyToBlock( row, col, localBlock, copy );
       }
 
       template< class LocalMatrix, class Operation >

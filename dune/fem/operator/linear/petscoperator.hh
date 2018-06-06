@@ -276,6 +276,32 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+      template< class LocalBlock >
+      void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        setStatus( statInsert );
+
+        assert( block.rows() == rangeLocalBlockSize );
+        assert( block.cols() == domainLocalBlockSize );
+
+        std::array< PetscInt, rangeLocalBlockSize > r;
+        std::array< PetscInt, domainLocalBlockSize> c;
+        for( size_t i=0; i<rangeLocalBlockSize; ++i )
+          r[ i ] = row * rangeLocalBlockSize + i;
+        for( size_t i=0; i<domainLocalBlockSize; ++i )
+          c[ i ] = col * domainLocalBlockSize + i;
+
+        std::array< PetscScalar, rangeLocalBlockSize * domainLocalBlockSize > v;
+        for( std::size_t i =0 ; i< rangeLocalBlockSize; ++i )
+          for( std::size_t j =0; j< domainLocalBlockSize; ++j )
+            v[ i * domainLocalBlockSize + j ] = block[ i ][ j ];
+
+        ::Dune::Petsc::MatSetValues( petscMatrix_, rangeLocalBlockSize, r.data(), domainLocalBlockSize, c.data(), v.data(), INSERT_VALUES );
+
+        setStatus( statAssembled );
+      }
+
       template< class LocalMatrix >
       void addLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
       {

@@ -121,6 +121,7 @@ namespace Dune
         LocalStencilType &localStencil_;
       };
 
+    protected:
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
@@ -166,7 +167,7 @@ namespace Dune
         DUNE_THROW( Dune::NotImplemented, "SimpleStencil: global stencil is  unavailable." );
         return stencil_;
       }
-    private:
+    protected:
       int maxNZ_;
       GlobalStencilType stencil_;
       LocalStencilType localStencil_;
