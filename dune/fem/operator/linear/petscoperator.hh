@@ -276,12 +276,9 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
-      template< class LocalBlock >
-      void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      template< class LocalBlock, class PetscOp >
+      void applyToBlock ( const size_t row, const size_t col, const LocalBlock& block, PetscOp op )
       {
-        assert( status_==statAssembled || status_==statInsert );
-        setStatus( statInsert );
-
         assert( block.rows() == rangeLocalBlockSize );
         assert( block.cols() == domainLocalBlockSize );
 
@@ -297,9 +294,27 @@ namespace Dune
           for( std::size_t j =0; j< domainLocalBlockSize; ++j )
             v[ i * domainLocalBlockSize + j ] = block[ i ][ j ];
 
-        ::Dune::Petsc::MatSetValues( petscMatrix_, rangeLocalBlockSize, r.data(), domainLocalBlockSize, c.data(), v.data(), INSERT_VALUES );
+        ::Dune::Petsc::MatSetValues( petscMatrix_, rangeLocalBlockSize, r.data(), domainLocalBlockSize, c.data(), v.data(), op );
 
         setStatus( statAssembled );
+      }
+
+      template< class LocalBlock >
+      void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        setStatus( statInsert );
+
+        applyToBlock( row, col, block, INSERT_VALUES );
+      }
+
+      template< class LocalBlock >
+      void addBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        setStatus( statAdd );
+
+        applyToBlock( row, col, block, ADD_VALUES );
       }
 
       template< class LocalMatrix >

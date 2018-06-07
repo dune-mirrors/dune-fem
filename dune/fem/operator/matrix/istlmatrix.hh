@@ -1033,6 +1033,15 @@ namespace Dune
         applyToBlock( row, col, localBlock, copy );
       }
 
+      template< class LocalBlock >
+      void addBlock ( const size_t row, const size_t col,
+                      const LocalBlock &localBlock )
+      {
+        typedef typename DomainSpaceType :: RangeFieldType Field;
+        auto add = [] ( Field& a, const typename LocalBlock::field_type& b ) { a += b; };
+        applyToBlock( row, col, localBlock, add );
+      }
+
       template< class LocalMatrix, class Operation >
       void applyToLocalMatrix ( const DomainEntityType &domainEntity,
                                 const RangeEntityType &rangeEntity,
