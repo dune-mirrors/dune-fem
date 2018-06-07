@@ -99,8 +99,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return module(includes, typeName).Scheme(space, model, parameters)
 
 
-def galerkin(space, integrands, solver=None, parameters={},
-             virtualize=None):
+def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
     integrandsParam = None
     if isinstance(integrands, (list, tuple)):
         integrandsParam = integrands[1:]
