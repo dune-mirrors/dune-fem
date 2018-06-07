@@ -152,6 +152,9 @@ class GridFunction(ufl.Coefficient):
     __name__   = property(lambda self:self.gf.__name__)
     __class__  = property(lambda self:self.gf.__class__)
 
+    def __call__(self,e,x):
+        return self.gf.localFunction(e).evaluate(x)
+
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
                 "can only evaluate up to first order derivatives of grid functions"
