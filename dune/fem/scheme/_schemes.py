@@ -66,7 +66,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
-def dg(space, model, solver=None, **kwargs):
+def dg(space, model, penalty=0, solver=None, parameters={}):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -82,7 +82,9 @@ def dg(space, model, solver=None, **kwargs):
                                    ",".join([linOp,model]) + ">"
     includes, typeName = femscheme(includes, space, solver, operator)
 
-    return module(includes, typeName).Scheme(space,model,**kwargs)
+    parameters["penalty"] = parameters.get("penalty",penalty)
+
+    return module(includes, typeName).Scheme(space,model,parameters)
 
 def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     from . import module
