@@ -34,7 +34,8 @@ namespace Dune
     inline static void registerLocalFunction ( pybind11::handle scope, pybind11::class_< LocalFunction, options... > cls)
     {
       typedef typename LocalFunction::EntityType::Geometry::LocalCoordinate LocalCoordinate;
-
+      Dune::Python::registerFieldVector<double,LocalFunction::RangeType::dimension>(scope);
+      Dune::Python::registerFieldMatrix<double, LocalFunction::RangeType::dimension, LocalFunction::EntityType::Geometry::coorddimension>( scope );
       cls.def_property_readonly( "dimRange", [] ( LocalFunction & ) -> int { return LocalFunction::RangeType::dimension; } );
       cls.def_property_readonly( "order", [] ( const LocalFunction & lf ) -> int { return lf.order(); } );
       cls.def( "evaluate", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
