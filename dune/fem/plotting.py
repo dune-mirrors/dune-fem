@@ -57,9 +57,16 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
                     extend = 'neither'
                 v = linspace(clim[0], clim[1], 10, endpoint=True)
                 norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
-                cbar = pyplot.colorbar(orientation="vertical",shrink=1.0,
-                          extend=extend, norm=norm, ticks=v)
-                cbar.ax.tick_params(labelsize=18)
+                if not isinstance(colorbar,dict):
+                    colorbar = {}
+                colorbar.setdefault("orientation","vertical")
+                colorbar.setdefault("shrink",1.0)
+                colorbar.setdefault("extend",extend)
+                colorbar.setdefault("norm",norm)
+                colorbar.setdefault("ticks",v)
+                cbar = pyplot.colorbar(**colorbar)
+                # cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend=extend, norm=norm, ticks=v)
+                cbar.ax.tick_params(labelsize=10)
 
     fig.gca().set_aspect('equal')
     fig.gca().autoscale()
@@ -70,8 +77,10 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
 
 from ufl.core.expr import Expr
 from dune.ufl import expression2GF
-def plotPointData(solution, level=0, gridLines="black", vectors=False,
-        xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
+def plotPointData(solution, figure=None,
+        level=0, gridLines="black", vectors=False,
+        xlim=None, ylim=None, clim=None, cmap=None,
+        colorbar=True,grid=None):
     try:
         grid = solution.grid
     except AttributeError:
@@ -86,12 +95,23 @@ def plotPointData(solution, level=0, gridLines="black", vectors=False,
         print("inline plotting so far only available for 2d grids")
         return
 
-    fig = pyplot.figure()
-    _plotPointData(fig,grid,solution,level,gridLines,vectors,xlim,ylim,clim,cmap,True)
+    if figure is None:
+        figure = pyplot.figure()
+        newFig = True
+    else:
+        try:
+            subPlot = figure[1]
+            figure = figure[0]
+            pyplot.subplot(subPlot)
+        except:
+            pass
+        newFig = False
+    _plotPointData(figure,grid,solution,level,gridLines,vectors,xlim,ylim,clim,cmap,colorbar)
 
-    pyplot.show(block=block)
+    if newFig:
+        pyplot.show(block=block)
     # display(fig)
-    # return fig
+    # return figure
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
         xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
