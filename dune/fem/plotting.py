@@ -10,8 +10,8 @@ except:
 
 from dune.plotting import block
 
-def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
-        xlim=None, ylim=None, clim=None, cmap=None, colorbar=True):
+def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
+        xlim=None, ylim=None, clim=None, cmap=None, colorbar=True, triplot=False):
 
     if not gridLines == "":
         polys = grid.polygons()
@@ -44,7 +44,13 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
             if clim == None:
                 clim = [minData, maxData]
             levels = linspace(clim[0], clim[1], 256, endpoint=True)
-            pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
+            if triplot == True:
+                pyplot.triplot(triangulation, antialiased=True, linewidth=0.2, color='black')
+            else:
+                try:
+                    pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
+                except:
+                    pyplot.tricontourf(triangulation, data, cmap=cmap, extend="both")
             if colorbar:
                 # having extend not 'both' does not seem to work (needs fixing)...
                 if clim[0] > minData and clim[1] < maxData:
@@ -80,14 +86,14 @@ from dune.ufl import expression2GF
 def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
         xlim=None, ylim=None, clim=None, cmap=None,
-        colorbar=True,grid=None):
+        colorbar=True, grid=None, triplot=False):
     try:
         grid = solution.grid
     except AttributeError:
         if isinstance(solution, Expr):
-            grid = kwargs.get("grid",None)
+            grid = kwargs.get("grid", None)
             assert grid, "need to provide a named grid argument to plot a ufl expression directly"
-            solution = expression2GF(grid,solution,1)
+            solution = expression2GF(grid, solution, 1)
         else:
             grid = solution
             solution = None
@@ -106,7 +112,8 @@ def plotPointData(solution, figure=None,
         except:
             pass
         newFig = False
-    _plotPointData(figure,grid,solution,level,gridLines,vectors,xlim,ylim,clim,cmap,colorbar)
+    _plotPointData(figure, grid, solution, level, gridLines,
+                    vectors, xlim, ylim, clim, cmap, colorbar, triplot)
 
     if newFig:
         pyplot.show(block=block)
