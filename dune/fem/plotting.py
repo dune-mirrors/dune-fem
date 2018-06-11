@@ -90,8 +90,7 @@ def plotPointData(solution, figure=None,
     try:
         grid = solution.grid
     except AttributeError:
-        if isinstance(solution, Expr):
-            grid = kwargs.get("grid", None)
+        if isinstance(solution, Expr) and grid is Not None:
             assert grid, "need to provide a named grid argument to plot a ufl expression directly"
             solution = expression2GF(grid, solution, 1)
         else:
