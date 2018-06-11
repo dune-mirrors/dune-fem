@@ -1,9 +1,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
+import sys, os
 import logging
 logger = logging.getLogger(__name__)
-
 
 import dune.grid
 import dune.fem.space
@@ -76,9 +75,36 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+    from dune.generator import Constructor
     storage, dfIncludes, dfTypeName, _, _,backend = space.storage
 
-    df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
+    if storage == "petsc":
+        spaceType = space._typeName
+        ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
+                ['if (import_petsc4py() != 0) {',
+                 '  throw std::runtime_error("Error during import of petsc4py");',
+                 '}',
+                 'Vec petscVec = PyPetscVec_Get(vec.ptr());',
+                 'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
+                 '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
+                 'pybind11::cpp_function remove_petscStorage( [ dofStorage, vec, petscVec] ( pybind11::handle weakref ) {',
+                 '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
+                 '  delete dofStorage;',
+                 '  weakref.dec_ref();',
+                 '} );',
+                 'pybind11::weakref weakref( vec, remove_petscStorage );',
+                 'weakref.release();',
+                 'return new DuneType( name, space, *dofStorage );'],
+                ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+        DF = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend, ctor)
+        vec = kwargs.get("vec",None)
+        if vec is None:
+            df = DF.DiscreteFunction(space,name)
+        else:
+            df = DF.DiscreteFunction(name,space,vec)
+            return df.as_ufl()
+    else:
+        df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
     if expr is None:
         df.clear()
     else:
@@ -109,6 +135,46 @@ def numpyFunction(space, vec, name="tmp", **unused):
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
     return module("numpy", includes, typeName, "as_numpy").DiscreteFunction(space,name,vec).as_ufl()
+
+def petscFunction(space, vec, name="tmp", **unused):
+    """create a discrete function - using the fem petsc storage as linear algebra backend
+       Note: this is not a 'managed' discrete function, i.e., the storage
+       is passed in and owned by the user. No resizing will take be done
+       during grid modification.
+
+    Args:
+        space: discrete space
+        vec: the vector storage (a numpy array)
+
+    Returns:
+        DiscreteFunction: the constructed discrete function
+    """
+
+    return discreteFunction(space,name,vec=vec)
+    from dune.generator import Constructor
+    from dune.fem.discretefunction import module, petsc
+    # assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
+    import petsc4py
+    includes = [ "dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh", "dune/fem/misc/petsc/petscvector.hh" ] +\
+                 space._includes +\
+               [ os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h" ]
+
+    spaceType = space._typeName
+    typeName = "Dune::Fem::PetscDiscreteFunction< " + spaceType + ">"
+
+    ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
+            ['std::cout << "UM: " << vec.ptr() << std::endl;',
+             'if (import_petsc4py() != 0) {',
+             '  std::cout << "ERROR: could not import petsc4py" << std::endl;',
+             '  throw std::runtime_error("Error during import of petsc4py");',
+             '}',
+             'Vec petscVec = PyPetscVec_Get(vec.ptr());',
+             'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
+             'std::cout << "UM: " << petscVec << " " << *(dofStorage->getVector()) << std::endl;',
+             'return new DuneType( name, space, *dofStorage );'],
+            ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+
+    return module("petsc", includes, typeName, "as_petsc", ctor).DiscreteFunction(name,space,vec).as_ufl()
 
 
 def tupleDiscreteFunction(*spaces, **kwargs):

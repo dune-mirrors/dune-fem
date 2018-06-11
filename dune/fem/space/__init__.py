@@ -45,6 +45,7 @@ def addAttr(module, cls, field):
     setattr(cls, "field", field)
     setattr(cls, "interpolate", interpolate)
     setattr(cls, "numpyFunction", function.numpyFunction)
+    setattr(cls, "petscFunction", function.petscFunction)
 
     from ufl.finiteelement import FiniteElementBase
     def uflSpace(self):
