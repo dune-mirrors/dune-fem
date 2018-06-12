@@ -43,7 +43,7 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
@@ -81,7 +81,7 @@ def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unuse
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hierarchical=True, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function
@@ -124,7 +124,7 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hier
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
@@ -162,7 +162,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise lagrange basis function
@@ -200,7 +200,7 @@ def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **un
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 
 def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
@@ -239,7 +239,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
 
     spc = module(field, includes, typeName).Space(view)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
     """create a finite volume space
@@ -269,7 +269,7 @@ def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 
 def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unused):
@@ -307,7 +307,7 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
 
     spc = module(field, includes, typeName).Space(gridview)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 
 def combined(*spaces, **kwargs):
@@ -353,7 +353,7 @@ def combined(*spaces, **kwargs):
         pass
     spc = mod.Space(spaces)
     addStorage(spc, combinedStorage)
-    return spc
+    return spc.as_ufl()
 
 def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
@@ -417,7 +417,7 @@ def product(*spaces, **kwargs):
     addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
                         None,None,None] )
-    return spc
+    return spc.as_ufl()
 
 def bdm(view, order=1, field="double", storage=None, **unused):
     from dune.fem.space import module, addStorage
@@ -437,7 +437,7 @@ def bdm(view, order=1, field="double", storage=None, **unused):
 
     spc = module(field, includes, typeName).Space(view)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()
 
 def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
     from dune.fem.space import module, addStorage
@@ -454,4 +454,4 @@ def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
 
     spc = module(field, includes, typeName).Space(view)
     addStorage(spc, storage)
-    return spc
+    return spc.as_ufl()

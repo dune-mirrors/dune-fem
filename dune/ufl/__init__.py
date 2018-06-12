@@ -50,6 +50,37 @@ class Space(ufl.FunctionSpace):
     def field(self):
         return self._field
 
+class FemSpace(Space):
+    def __init__(self, space):
+        try:
+            space = space.femSpace
+        except:
+            pass
+        self.femSpace = space
+        Space.__init__(self,space)
+        self.__impl__ = space
+        __module__ = space.__module__
+        self.FemSpaceClass = space.__class__
+
+    def __getattr__(self, item):
+        def tocontainer(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+        result = getattr(self.__impl__, item)
+        if not isinstance(result, FemSpace) and callable(result):
+            # doc = result.func.__doc__
+            result = tocontainer(result)
+            # result.func.__doc__ = doc
+        return result
+    def __repr__(self):
+        return repr(self.__impl__)
+    # def __str__(self):
+    #     return self.name
+    __dict__   = property(lambda self:self.__impl__.__dict__)
+    __name__   = property(lambda self:self.__impl__.__name__)
+    __class__  = property(lambda self:self.__impl__.__class__)
 
 class MixedFunctionSpace(ufl.MixedFunctionSpace):
     def __init__(self, *spaces):
@@ -121,6 +152,8 @@ class GridFunction(ufl.Coefficient):
         dimRange = gf.dimRange
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
+    def ufl_function_space(self):
+        return FemSpace(self.gf.space)
     def copy(self,name=None):
         if name is None:
             return self.gf.copy().as_ufl()
@@ -165,10 +198,10 @@ class GridFunction(ufl.Coefficient):
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
-        try:
-            self.functionSpace = functionSpace.uflSpace
-        except AttributeError:
-            self.functionSpace = functionSpace
+        # try:
+        #     self.functionSpace = functionSpace.uflSpace
+        # except AttributeError:
+        self.functionSpace = functionSpace
         self.value = value
         self.subDomain = subDomain
         if type(value) is list:
