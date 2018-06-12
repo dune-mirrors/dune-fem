@@ -2,6 +2,7 @@
 #define DUNE_FEMPY_PYBIND11_PYBIND11_HH
 
 #include <dune/fempy/pybind11/gridfunction.hh>
+#include <dune/fempy/pybind11/space.hh>
 
 #include <dune/python/pybind11/complex.h>
 #if HAVE_EIGEN

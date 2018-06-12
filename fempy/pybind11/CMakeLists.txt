@@ -1,5 +1,6 @@
 set(HEADERS
   gridfunction.hh
+  space.hh
   pybind11.hh
 )
 

@@ -18,7 +18,7 @@
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/fempy/py/space.hh>
-#include <dune/python/pybind11/pybind11.h>
+#include <dune/fempy/pybind11/pybind11.hh>
 
 #if 0
      namespace pybind11

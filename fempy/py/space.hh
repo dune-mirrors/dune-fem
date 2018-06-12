@@ -10,6 +10,7 @@
 #include <dune/fempy/pybind11/pybind11.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
+#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {
@@ -107,6 +108,13 @@ namespace Dune
 
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
+
+        cls.def( "as_ufl", [] ( pybind11::object &self ) -> pybind11::handle {
+              pybind11::tuple args( 1 );
+              args[ 0 ] = self;
+              pybind11::handle res = PyObject_Call( Dune::FemPy::getSpaceWrapper().ptr(), args.ptr(), nullptr );
+              return res;
+            },  pybind11::keep_alive< 0, 1 >() );
       }
 
 
