@@ -103,7 +103,6 @@ namespace Dune
       // ----------------------
       // register assemble method if data method is available (and return value is registered)
 #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
-
       template< class GF, class Scheme, class... options, std::enable_if_t<
             std::is_same< std::decay_t< decltype(std::declval< Scheme >().assemble( std::declval< const GF& >() )) >,
                   typename Scheme::LinearOperatorType>::value, int > _i = 0 >
@@ -127,13 +126,8 @@ namespace Dune
             }
 
             Mat mat = self.assemble( ubar ).petscMatrix();
-#if 0
-            return mat;
-#else
-            // MatView( mat, PETSC_VIEWER_STDOUT_WORLD );
             pybind11::handle petsc_mat(PyPetscMat_New(mat));
             return petsc_mat;
-#endif
           }, "ubar"_a );
       }
 #endif
