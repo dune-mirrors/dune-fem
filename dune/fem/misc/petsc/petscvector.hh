@@ -169,8 +169,17 @@ namespace Dune
 
       typedef typename DFSpace::template CommDataHandle<void>::OperationType CommunicationOperationType;
 
+      // note that Vec is a pointer type so no deep copy is made
+      PetscVector ( const DFSpace& space, Vec vec )
+        : mappers_( space ), vec_(vec), owner_(false)
+      {
+        static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
+                            CommunicationOperationType::value == DFCommunicationOperation::add,
+                            "only copy/add are available communication operations for petsc");
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+      }
       PetscVector ( const DFSpace& space )
-        : mappers_( space )
+        : mappers_( space ), owner_(true)
       {
         static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
                             CommunicationOperationType::value == DFCommunicationOperation::add,
@@ -181,7 +190,7 @@ namespace Dune
 
       // TODO: think about sequence overflows...
       PetscVector ( const ThisType &other )
-        : mappers_( other.mappers_ )
+        : mappers_( other.mappers_ ), owner_(true)
       {
         // assign vectors
         assign( other );
@@ -189,8 +198,9 @@ namespace Dune
 
       ~PetscVector ()
       {
-        // destroy vectors
-        removeObj();
+        if (owner_)
+          // destroy vectors
+          removeObj();
       }
 
       std::size_t size () const { return mappers().ghostMapper().size(); }
@@ -475,6 +485,7 @@ namespace Dune
       mutable unsigned long sequence_ = 0;        // represents the modifications to the PETSc vec
 
       mutable bool communicateFlag_ = false;
+      bool owner_;
     };
 
   } // namespace Fem
