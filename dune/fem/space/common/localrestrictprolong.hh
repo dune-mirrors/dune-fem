@@ -46,26 +46,31 @@ namespace Dune
       }
 
       //! restrict data to father
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
-                           const LocalGeometry &geometryInFather, bool initialize ) const
+      template< class LFFather, class LFChild, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const std::vector<LFChild> & lfChildren,
+                           const std::vector<LocalGeometry> &geometriesInFather ) const
       {
-        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
-
-        assert( weight > 0.0 );
-        //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
-
-        const int numDofs = lfFather.numDofs();
-        assert( lfFather.numDofs() == lfSon.numDofs() );
-        if( initialize )
+        bool initialize = true;
+        for(const LFChild & lfSon : lfChildren)
         {
-          for( int i = 0; i < numDofs; ++i )
-            lfFather[ i ] = weight * lfSon[ i ];
-        }
-        else
-        {
-          for( int i = 0; i < numDofs; ++i )
-            lfFather[ i ] += weight * lfSon[ i ];
+          const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
+
+          assert( weight > 0.0 );
+          //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
+
+          const int numDofs = lfFather.numDofs();
+          assert( lfFather.numDofs() == lfSon.numDofs() );
+          if( initialize )
+          {
+            for( int i = 0; i < numDofs; ++i )
+              lfFather[ i ] = weight * lfSon[ i ];
+          }
+          else
+          {
+            for( int i = 0; i < numDofs; ++i )
+              lfFather[ i ] += weight * lfSon[ i ];
+          }
+          initialize = false;
         }
       }
 
@@ -118,9 +123,9 @@ namespace Dune
       void setFatherChildWeight ( const DomainFieldType &weight ) {}
 
       //! restrict data to father
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
-                           const LocalGeometry &geometryInFather, bool initialize ) const
+      template< class LFFather, class LFChild, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const std::vector<LFChild> & lfChildren,
+                           const std::vector<LocalGeometry> &geometriesInFather ) const
       {}
 
       //! prolong data to children

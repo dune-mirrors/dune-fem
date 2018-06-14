@@ -43,32 +43,36 @@ namespace Dune
       template< class DomainField >
       void setFatherChildWeight ( const DomainField &weight ) {}
 
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
-                           const LocalGeometry &geometryInFather, bool initialize ) const
+      template< class LFFather, class LFChild, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const std::vector<LFChild> &lfChildren,
+                           const std::vector<LocalGeometry> &geometriesInFather) const
       {
-        static const int dimRange = LFSon::dimRange;
-
-        const Entity &father = lfFather.entity();
-        const Entity &son = lfSon.entity();
-
-        auto refSon = referenceElement< ctype, dimension >( son.type() );
-
-        const LagrangePointSet &pointSet = lagrangePointSet( father );
-
-        const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
-        for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
+        static const int dimRange = LFChild::dimRange;
+        int i =0;
+        for(const LFChild & lfSon : lfChildren)
         {
-          const unsigned int dof = *sit;
-          const DomainVector &pointInFather = pointSet.point( dof );
-          const DomainVector pointInSon = geometryInFather.local( pointInFather );
-          if( refSon.checkInside( pointInSon ) )
+          const Entity &father = lfFather.entity();
+          const Entity &son = lfSon.entity();
+
+          auto refSon = referenceElement< ctype, dimension >( son.type() );
+
+          const LagrangePointSet &pointSet = lagrangePointSet( father );
+
+          const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
+          for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
           {
-            typename LFSon::RangeType phi;
-            lfSon.evaluate( pointInSon, phi );
-            for( int coordinate = 0; coordinate < dimRange; ++coordinate )
-              lfFather[ dimRange * dof + coordinate ] = phi[ coordinate ];
+            const unsigned int dof = *sit;
+            const DomainVector &pointInFather = pointSet.point( dof );
+            const DomainVector pointInSon = geometriesInFather[i].local( pointInFather );
+            if( refSon.checkInside( pointInSon ) )
+            {
+              typename LFChild::RangeType phi;
+              lfSon.evaluate( pointInSon, phi );
+              for( int coordinate = 0; coordinate < dimRange; ++coordinate )
+                lfFather[ dimRange * dof + coordinate ] = phi[ coordinate ];
+            }
           }
+          ++i;
         }
       }
 

@@ -56,59 +56,62 @@ namespace Dune
       }
 
       //! restrict data to father
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
-                           const LocalGeometry &geometryInFather, bool initialize ) const
+      template< class LFFather, class LFChild, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const std::vector<LFChild> &lfChildren,
+                           const std::vector<LocalGeometry> &geometriesInFather ) const
       {
         typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
-        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
-
-        assert( weight > 0.0 );
-
-        if( initialize )
-          lfFather.clear();
-
-        if( applyInverse )
+        lfFather.clear();
+        int i = 0;
+        for(const LFChild & lfSon : lfChildren)
         {
-          temp_.init( lfFather.entity() );
-          temp_.clear();
-        }
+          const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
 
-        typedef typename LFSon :: EntityType  EntityType ;
-        typedef typename EntityType :: Geometry   Geometry;
-        const EntityType& sonEntity = lfSon.entity();
-        const Geometry sonGeo = sonEntity.geometry();
+          assert( weight > 0.0 );
 
-        QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
-        const int nop = quad.nop();
-        for( int qp = 0; qp < nop; ++qp )
-        {
-          RangeFieldType quadWeight = quad.weight( qp );
-
-          // in case of non-orthonormal basis we have to
-          // apply the integration element and the
-          // inverse mass matrix later
           if( applyInverse )
           {
-            quadWeight *= sonGeo.integrationElement( quad.point(qp) );
+            temp_.init( lfFather.entity() );
+            temp_.clear();
           }
-          else
-            quadWeight *= weight ;
 
-          RangeType value;
-          lfSon.evaluate( quad[ qp ], value );
-          value *= quadWeight;
+          typedef typename LFChild :: EntityType  EntityType ;
+          typedef typename EntityType :: Geometry   Geometry;
+          const EntityType& sonEntity = lfSon.entity();
+          const Geometry sonGeo = sonEntity.geometry();
+
+          QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
+          const int nop = quad.nop();
+          for( int qp = 0; qp < nop; ++qp )
+          {
+            RangeFieldType quadWeight = quad.weight( qp );
+
+            // in case of non-orthonormal basis we have to
+            // apply the integration element and the
+            // inverse mass matrix later
+            if( applyInverse )
+            {
+              quadWeight *= sonGeo.integrationElement( quad.point(qp) );
+            }
+            else
+              quadWeight *= weight ;
+
+            RangeType value;
+            lfSon.evaluate( quad[ qp ], value );
+            value *= quadWeight;
+
+            if( applyInverse )
+              temp_.axpy( geometriesInFather[i].global( quad.point( qp ) ), value );
+            else
+              lfFather.axpy( geometriesInFather[i].global( quad.point( qp ) ), value );
+          }
 
           if( applyInverse )
-            temp_.axpy( geometryInFather.global( quad.point( qp ) ), value );
-          else
-            lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
-        }
-
-        if( applyInverse )
-        {
-          localMassMatrix_.applyInverse( temp_ );
-          lfFather += temp_;
+          {
+            localMassMatrix_.applyInverse( temp_ );
+            lfFather += temp_;
+          }
+          ++i;
         }
       }
 

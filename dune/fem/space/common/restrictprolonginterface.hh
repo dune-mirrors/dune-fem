@@ -187,7 +187,8 @@ namespace Dune
 
       explicit RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
       : discreteFunction_( discreteFunction ),
-        constLf_( discreteFunction ),
+        restrictLf_(),
+        prolongLf_( discreteFunction ),
         localRP_( discreteFunction_.space() )
       {
         // enable dof compression for this discrete function
@@ -240,15 +241,22 @@ namespace Dune
       void restrictLocal ( const Entity &father, const std::vector< Entity > & children,
                            const std::vector< LocalGeometry > & geometriesInFather ) const
       {
-        for(size_t i = 0 ; i < children.size(); ++i)
+        if(restrictLf_.size() == 0)
+        {
+          for(unsigned i = 0; i < children.size(); ++i)
+          {
+            LocalFunctionType lf(discreteFunction_);
+            restrictLf_.push_back(lf);
+          }
+        }
+        for(unsigned i = 0 ; i < children.size(); ++i)
         {
           const Entity & son = children[i];
-          const LocalGeometry & geometryInFather = geometriesInFather[i];
-          constLf_.init( son );
-          LocalFunctionType lfFather = discreteFunction_.localFunction( father );
-
-          localRP_.restrictLocal( lfFather, constLf_, geometryInFather, bool(i == 0) );
+          restrictLf_[i].init( son );
         }
+        LocalFunctionType lfFather = discreteFunction_.localFunction( father );
+
+        localRP_.restrictLocal( lfFather, restrictLf_, geometriesInFather );
       }
 
       //! prolong data to children
@@ -273,10 +281,10 @@ namespace Dune
                           const LocalGeometry &geometryInFather,
                           bool initialize ) const
       {
-        constLf_.init( father );
+        prolongLf_.init( father );
         LocalFunctionType lfSon = discreteFunction_.localFunction( son );
 
-        localRP_.prolongLocal( constLf_, lfSon, geometryInFather, initialize );
+        localRP_.prolongLocal( prolongLf_, lfSon, geometryInFather, initialize );
       }
 
       //! add discrete function to communicator with given unpack operation
@@ -312,7 +320,8 @@ namespace Dune
 
     protected:
       DiscreteFunctionType &discreteFunction_;
-      mutable LocalFunctionType constLf_;
+      mutable std::vector<LocalFunctionType> restrictLf_;
+      mutable LocalFunctionType prolongLf_;
       mutable LocalRestrictProlongType localRP_;
     };
     ///@}
