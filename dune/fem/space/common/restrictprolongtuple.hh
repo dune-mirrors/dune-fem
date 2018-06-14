@@ -83,17 +83,17 @@ namespace Dune
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
       template< class Entity >
-      void restrictLocal ( const Entity &father, const Entity &child, bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children ) const
       {
-        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
+        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, children, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
       template< class Entity, class LocalGeometry >
-      void restrictLocal ( const Entity &father, const Entity &child,
-                           const LocalGeometry &geometryInFather, bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children,
+                           const std::vector< LocalGeometry > & geometriesInFather ) const
       {
-        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
+        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, children, geometriesInFather, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
@@ -210,17 +210,17 @@ namespace Dune
     struct RestrictProlongTuple< Head, Tail... >::RestrictLocal
     {
       template< class Entity >
-      static void apply ( const Entity &father, const Entity &child, bool initialize,
+      static void apply ( const Entity &father, const std::vector< Entity > & children,
                           const std::tuple< Head, Tail... > &tuple )
       {
-        std::get< i >( tuple ).restrictLocal( father, child, initialize );
+        std::get< i >( tuple ).restrictLocal( father, children );
       }
 
       template< class Entity, class LocalGeometry >
-      static void apply ( const Entity &father, const Entity &child, const LocalGeometry &geometryInFather, bool initialize,
+      static void apply ( const Entity &father, const std::vector< Entity > & children, const std::vector< LocalGeometry > & geometriesInFather,
                           const std::tuple< Head, Tail... > &tuple )
       {
-        std::get< i >( tuple ).restrictLocal( father, child, geometryInFather, initialize );
+        std::get< i >( tuple ).restrictLocal( father, children, geometriesInFather );
       }
     };
 

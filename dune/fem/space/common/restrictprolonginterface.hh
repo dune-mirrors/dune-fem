@@ -59,18 +59,17 @@ namespace Dune
 
       //! restrict data to father
       template< class Entity >
-      void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children ) const
       {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, son, initialize ) );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, children ) );
       }
 
       //! restrict data to father
       template< class Entity, class LocalGeometry >
-      void restrictLocal ( const Entity &father, const Entity &son,
-                           const LocalGeometry &geometryInFather,
-                           bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children,
+                           std::vector<const LocalGeometry > geometriesInFather ) const
       {
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, son, geometryInFather, initialize ) );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, children, geometriesInFather ) );
       }
 
       //! prolong data to children
@@ -213,30 +212,43 @@ namespace Dune
 
       //! restrict data to father
       template< class Entity >
-      void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity >& children ) const
       {
         assert( !father.isLeaf() );
 
         // convert from grid entities to grid part entities
         typedef typename GridPartType::template Codim< Entity::codimension >::EntityType GridPartEntityType;
+        typedef typename Entity::LocalGeometry LocalGeometryType;
         const GridPartType &gridPart = discreteFunction_.gridPart();
         const GridPartEntityType &gpFather = gridPart.convert( father );
-        const GridPartEntityType &gpSon    = gridPart.convert( son );
+        std::vector< GridPartEntityType > gpChildren;
+        std::vector< LocalGeometryType > geometriesInFather;
 
-        if( !entitiesAreCopies( gridPart.indexSet(), gpFather, gpSon ) )
-          restrictLocal( gpFather, gpSon, son.geometryInFather(), initialize );
+        for(const Entity & son : children)
+        {
+          const LocalGeometryType geometryInFather = son.geometryInFather();
+          geometriesInFather.push_back(geometryInFather);
+          const GridPartEntityType &gpSon    = gridPart.convert( son );
+          gpChildren.push_back(gpSon);
+        }
+        if(children.size() != 1 || !entitiesAreCopies( gridPart.indexSet(), gpFather, children[0] ) )
+          restrictLocal( gpFather, gpChildren, geometriesInFather );
       }
 
       //! restrict data to father
       template< class Entity, class LocalGeometry >
-      void restrictLocal ( const Entity &father, const Entity &son,
-                           const LocalGeometry &geometryInFather,
-                           bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children,
+                           const std::vector< LocalGeometry > & geometriesInFather ) const
       {
-        constLf_.init( son );
-        LocalFunctionType lfFather = discreteFunction_.localFunction( father );
+        for(size_t i = 0 ; i < children.size(); ++i)
+        {
+          const Entity & son = children[i];
+          const LocalGeometry & geometryInFather = geometriesInFather[i];
+          constLf_.init( son );
+          LocalFunctionType lfFather = discreteFunction_.localFunction( father );
 
-        localRP_.restrictLocal( lfFather, constLf_, geometryInFather, initialize );
+          localRP_.restrictLocal( lfFather, constLf_, geometryInFather, bool(i == 0) );
+        }
       }
 
       //! prolong data to children

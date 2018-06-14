@@ -750,13 +750,15 @@ namespace Dune
 
       //! restrict data to father and resize memory if doResize is true
       template <class EntityType>
-      inline void restrictLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
+      inline void restrictLocal ( const EntityType & father, const std::vector< EntityType > & children ) const
       {
         // insert index of father
         insert_.apply( father );
-        // mark index of son for removal
-        remove_.apply( son );
-
+        for(const EntityType & son : children)
+        {
+          // mark index of son for removal
+          remove_.apply( son );
+        }
         // resize memory if doResize is true
         if ( doResize )
         {
@@ -789,7 +791,7 @@ namespace Dune
       EmptyIndexSetRestrictProlong() {}
       //! restrict data to father and resize memory if doResize is true
       template <class EntityType>
-      inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const {}
+      inline void restrictLocal ( EntityType & father, std::vector<EntityType > children ) const {}
       //! prolong data to children and resize memory if doResize is true
       template <class EntityType>
       inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const {}

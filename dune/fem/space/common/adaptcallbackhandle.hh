@@ -119,23 +119,24 @@ namespace Dune
         {
           typedef typename Entity::HierarchicIterator HIterator;
 
-          bool initialize = true;
           const int childLevel = father.level() + 1;
           const HIterator end = father.hend( childLevel );
+          std::vector< Entity > children;
           for( HIterator it = father.hbegin( childLevel ); it != end; ++it )
           {
-            restrictLocal( father, *it, initialize );
-            initialize = false;
+            const Entity child = *it;
+            children.push_back(child);
           }
+          restrictLocal( father, children );
         }
       }
 
-      void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      void restrictLocal ( const Entity &father, const std::vector< Entity > & children ) const
       {
         if( isValidEntity( father ) )
         {
-          dofManager_.indexSetRestrictProlong().restrictLocal( father, son, initialize );
-          rpOp_.restrictLocal( father, son, initialize );
+          dofManager_.indexSetRestrictProlong().restrictLocal( father, children );
+          rpOp_.restrictLocal( father, children );
         }
       }
 

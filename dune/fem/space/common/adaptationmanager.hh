@@ -492,16 +492,16 @@ namespace Dune
           // calling hierarchicRestrict on interior won't work either
           if( ! isGhost )
           {
-            // true for first child, otherwise false
-            bool initialize = true;
+            // store entities inside a vector
+            std::vector< EntityType  > children;
             const HierarchicIterator endit = entity.hend( childLevel );
             for(HierarchicIterator it = entity.hbegin( childLevel ); it != endit; ++it)
             {
-              // restrict solution
-              restop.restrictLocal( entity, *it , initialize);
-              // reset initialize flag
-              initialize = false;
+              const EntityType child = *it;
+              children.push_back(child);
             }
+            // restrict solution
+            restop.restrictLocal( entity, children);
           }
         }
       }
