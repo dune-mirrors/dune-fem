@@ -9,6 +9,9 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
+from ufl.equation import Equation
+from ufl import Form
+
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 
@@ -24,6 +27,19 @@ def load(includes, typeName, *args):
 def galerkin(integrands, domainSpace, rangeSpace=None):
     if rangeSpace is None:
         rangeSpace = domainSpace
+
+    modelParam = None
+    if isinstance(integrands, (list, tuple)):
+        modelParam = integrands[1:]
+        integrands = integrands[0]
+    if isinstance(integrands,Form):
+        integrands = integrands == 0
+    if isinstance(integrands,Equation):
+        from dune.fem.model._models import integrands as makeIntegrands
+        if modelParam:
+            integrands = makeIntegrands(domainSpace.grid,integrands,*modelParam)
+        else:
+            integrands = makeIntegrands(domainSpace.grid,integrands)
 
     domainSpaceType = domainSpace._typeName
     rangeSpaceType = rangeSpace._typeName

@@ -74,9 +74,18 @@ def dg(space, model, penalty=0, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+    modelParam = None
+    if isinstance(model, (list, tuple)):
+        modelParam = model[1:]
+        model = model[0]
+    if isinstance(model,Equation):
+        from dune.fem.model._models import elliptic
+        if modelParam:
+            model = elliptic(space.grid,model,*modelParam)
+        else:
+            model = elliptic(space.grid,model)
 
     from . import module
-
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
