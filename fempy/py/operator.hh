@@ -39,7 +39,7 @@ namespace Dune
       }
 
       template< class Operator, class... options >
-      inline static void registerOperatorGeneralCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
+      inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
 
 
