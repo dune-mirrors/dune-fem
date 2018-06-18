@@ -49,14 +49,13 @@ namespace Dune
       {
         static const int dimRange = LFChild::dimRange;
         int i =0;
+        const Entity &father = lfFather.entity();
+        const LagrangePointSet &pointSet = lagrangePointSet( father );
         for(const LFChild & lfSon : lfChildren)
         {
-          const Entity &father = lfFather.entity();
           const Entity &son = lfSon.entity();
 
           auto refSon = referenceElement< ctype, dimension >( son.type() );
-
-          const LagrangePointSet &pointSet = lagrangePointSet( father );
 
           const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
           for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )

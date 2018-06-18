@@ -138,6 +138,7 @@ namespace Dune
       bool needCommunication () const { return false; }
     };
 
+
   } // namespace Fem
 
 } // namespace Dune

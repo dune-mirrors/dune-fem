@@ -57,7 +57,6 @@ namespace Dune
 
         for( std::size_t i = 0; i < N; ++i )
         {
-          int j = 0;
           for(const LFChild & lfSon : lfChildren)
           {
             SubSonBasisFunctionSetType subSonBasisFunctionSet = lfSon.basisFunctionSet().scalarBasisFunctionSet();
@@ -68,7 +67,6 @@ namespace Dune
 
             BasicConstLocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
             subLFChildren.push_back(subLFSon);
-            ++j;
           }
           std::size_t fatherBasisSetsize = subFatherBasisFunctionSet.size();
           SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(),

@@ -454,7 +454,7 @@ namespace Dune
           for( std::size_t i = 0; i < size; ++i )
           {
             const GlobalDofType globalDof = dofAlignment_.globalDof( LocalDofType( r, i ) );
-            for ( int j = 0; j < x.size(); ++j )
+            for ( unsigned j = 0; j < x.size(); ++j )
               dofs[ globalDof ] += factor[ r ][ j ] * scalars[ i ][ 0 ][ j ];
           }
         }
