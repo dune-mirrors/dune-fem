@@ -19,7 +19,8 @@ def compile(inputFileName, outputFileName=None, namespace=None, tempVars=True):
 
 def version(package_name):
     import pip
-    for package in pip.get_installed_distributions():
+    from pip._internal.utils.misc import get_installed_distributions
+    for package in get_installed_distributions():
         if package.project_name == package_name and package.has_version():
             return str(package.version)
     return "?.?"
