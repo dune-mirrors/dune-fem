@@ -43,7 +43,8 @@ registry["discretefunction"] = {
          "petscadapt"  : discretefunction.petscadapt
      }
 registry["operator"] = {
-        "galerkin"   : operator.galerkin
+        "galerkin"   : operator.galerkin,
+        "h1"         : operator.h1
     }
 registry["solver"] = {
          "fem"         : discretefunction.femsolver,

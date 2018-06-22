@@ -33,6 +33,7 @@ def femscheme(includes, space, solver, operator):
     modelType = "DiffusionModel< " +\
           "typename " + spaceType + "::GridPartType, " +\
           spaceType + "::dimRange, " +\
+          spaceType + "::dimRange, " +\
           "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType, modelType)
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
@@ -61,6 +62,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
     typeName = "BurgersSchemeWrapper<PRPScheme< " + vspaceType + ", " + pspaceType + ", " +\
         "DiffusionModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\
+          vspaceType + "::dimRange+1 " +\
           vspaceType + "::dimRange+1 " +\
         "> > >"
 
@@ -129,7 +131,7 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
     if virtualize is None:
         virtualize = integrands.virtualized
 
-    includes = ["dune/fem/schemes/galerkin.hh"]
+    includes = ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
     includes += space._includes + dfIncludes + solverIncludes
     includes += integrands._includes
     includes += ["dune/fempy/parameter.hh"]
@@ -152,7 +154,9 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
                              ['"space"_a', '"integrands"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
 
     parameters.update(param)
-    return module(includes, typeName, *ctors).Scheme(space, integrands, parameters)
+    scheme = module(includes, typeName, *ctors).Scheme(space, integrands, parameters)
+    scheme.model = integrands
+    return scheme
 
 
 def h1(space, model, solver=None, parameters={}):
@@ -175,14 +179,16 @@ def h1(space, model, solver=None, parameters={}):
             model = elliptic(space.grid,model)
 
     from . import module
-    includes = ["dune/fem/schemes/elliptic.hh"]
+    includes = ["dune/fem/schemes/dirichletwrapper.hh","dune/fem/schemes/elliptic.hh"]
 
-    operator = lambda linOp,model: "DifferentiableEllipticOperator< " +\
-                                   ",".join([linOp,model]) + ">"
+    operator = lambda linOp,model: "DirichletWrapperOperator<DifferentiableEllipticOperator< " +\
+                                   ",".join([linOp,model]) + ">>"
     includes, typeName, solverParam = femscheme(includes, space, solver, operator)
 
     parameters.update(solverParam)
-    return module(includes, typeName).Scheme(space,model,parameters)
+    scheme = module(includes, typeName).Scheme(space,model,parameters)
+    scheme.model = model
+    return scheme
 
 
 def h1Galerkin(space, model, solver=None, parameters={}):
@@ -240,6 +246,7 @@ def stokes(space, model, name, viscosity, timestep, **kwargs):
     typeName = "StokesSchemeWrapper<UzawaScheme< " + vspaceType + ", " + pspaceType + ", " +\
         "DiffusionModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\
+          vspaceType + "::dimRange+1 " +\
           vspaceType + "::dimRange+1 " +\
         "> > >"
 

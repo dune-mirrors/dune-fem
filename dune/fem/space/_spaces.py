@@ -324,6 +324,7 @@ def combined(*spaces, **kwargs):
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
+    spaces = tuple([s.__impl__ for s in spaces])
     combinedStorage = None
     combinedField = None
     for space in spaces:
@@ -371,6 +372,9 @@ def product(*spaces, **kwargs):
         spaces = spaces[0]
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
+
+    spaces = tuple([s.__impl__ for s in spaces])
+
     combinedField = None
     combinedIncludes = None
     for space in spaces:
@@ -407,9 +411,11 @@ def product(*spaces, **kwargs):
         """
         if name is None: name = func.name
         try:
-            return tupleDiscreteFunction(space, name=name, expr=func, components=space.componentNames,**kwargs)
+            df = tupleDiscreteFunction(space, name=name, components=space.componentNames,**kwargs)
         except AttributeError:
-            return tupleDiscreteFunction(space, name=name, expr=func, **kwargs)
+            df = tupleDiscreteFunction(space, name=name, **kwargs)
+        df.interpolate(func)
+        return df
     setattr(mod.Space, "interpolate", interpolate)
 
     # there is no obvious operator associated with the TupleDF used for this space

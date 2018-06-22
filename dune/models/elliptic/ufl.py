@@ -106,6 +106,7 @@ def compileUFL(form, *args, **kwargs):
     ubar = Coefficient(u.ufl_function_space())
     dubar = Grad(ubar)
     d2ubar = Grad(dubar)
+    dimDomain = u.ufl_shape[0]
 
     x = SpatialCoordinate(form.ufl_cell())
 
@@ -130,7 +131,7 @@ def compileUFL(form, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimRange, form.signature())
+    model = EllipticModel(dimDomain, dimRange, form.signature())
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
@@ -140,8 +141,9 @@ def compileUFL(form, *args, **kwargs):
     model.field = field
 
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
-    if "dirichlet" in kwargs:
-        dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
+    # deprecated
+    # if "dirichlet" in kwargs:
+    #     dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
 
     uflCoefficients = set(form.coefficients())
     for bc in dirichletBCs:
@@ -245,7 +247,7 @@ def compileUFL(form, *args, **kwargs):
                                          switch
                                         ]
 
-        switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RangeType", 0)))
+        switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RRangeType", 0)))
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
         predefineCoefficients(predefined, model.arg_x)

@@ -8,7 +8,7 @@ from dune.common.compatibility import isString
 from dune.source.cplusplus import Include, NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import fieldTensorType
-from dune.ufl import GridFunction
+from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 
 from .ufl import compileUFL, fieldVectorType
@@ -19,10 +19,11 @@ def init(integrands, *args, **kwargs):
         coefficients.update(args[0])
         args = []
     else:
-        args = list(args)
+        args = list(a for a in args if not isinstance(a,DirichletBC))
+        dirichletBCs = list(a for a in args if isinstance(a,DirichletBC))
 
     coefficientNames = integrands._coefficientNames
-    if len(args) > len(coefficientNames):
+    if len(args) > len(coefficientNames) + len(dirichletBCs):
         raise ValueError('Too many coefficients passed.')
     args += [None] * (len(coefficientNames) - len(args))
 
@@ -77,13 +78,14 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    def __init__(self, gridType, gridIncludes, integrands,
+    def __init__(self, gridType, gridIncludes, integrands,*args,
             tempVars=True, virtualize=True):
         self.gridType = gridType
         self.gridIncludes = gridIncludes
         self.integrands = integrands
         self.tempVars = tempVars
         self.virtualize = virtualize
+        self.args = args
 
     def signature(self):
         return self.integrands.signature()
@@ -107,7 +109,7 @@ class Source(object):
             coefficients = set(self.integrands.coefficients())
             constants = [c for c in coefficients if c.is_cellwise_constant()]
             coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
-            integrands = compileUFL(self.integrands, constants=constants, coefficients=coefficients, tempVars=self.tempVars)
+            integrands = compileUFL(self.integrands, *self.args, constants=constants, coefficients=coefficients, tempVars=self.tempVars)
         else:
             integrands = self.integrands
 
@@ -170,11 +172,11 @@ class Source(object):
         return source
 
 
-def load(grid, integrands, renumbering=None, tempVars=True, virtualize=True):
+def load(grid, integrands, *args, renumbering=None, tempVars=True, virtualize=True):
     if isinstance(integrands, Equation):
         integrands = integrands.lhs - integrands.rhs
 
-    source = Source(grid._typeName, grid._includes, integrands,
+    source = Source(grid._typeName, grid._includes, integrands,*args,
             tempVars=tempVars,virtualize=virtualize)
     if isinstance(integrands, Form):
         coefficients = set(integrands.coefficients())
