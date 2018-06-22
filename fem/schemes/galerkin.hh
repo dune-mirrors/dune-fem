@@ -25,6 +25,7 @@
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/schemes/integrands.hh>
+#include <dune/fem/schemes/dirichletwrapper.hh>
 
 namespace Dune
 {
@@ -418,7 +419,10 @@ namespace Dune
           : gridPart_( gridPart ), integrands_( std::forward< Args >( args )... )
         {}
 
-        // evaluate
+        IntegrandsType &model() const
+        {
+          return integrands_;
+        }
 
       private:
         template< class GridFunction, class DiscreteFunction >
@@ -681,6 +685,10 @@ namespace Dune
 
       const GridPartType &gridPart () const { return impl_.gridPart(); }
 
+      typedef Integrands ModelType;
+      typedef Integrands DirichletModelType;
+      ModelType &model() const { return impl_.model(); }
+
     protected:
       Impl::GalerkinOperator< Integrands > impl_;
     };
@@ -702,12 +710,16 @@ namespace Dune
 
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
+      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
 
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit DifferentiableGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-        : BaseType( gridPart, std::forward< Args >( args )... )
+      explicit DifferentiableGalerkinOperator ( const DomainSpaceType &dSpace, const RangeSpaceType &rSpace,
+                       Args &&... args )
+        : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
+          dSpace_(dSpace), rSpace_(rSpace)
       {}
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
@@ -721,8 +733,19 @@ namespace Dune
         impl_.assemble( u, jOp );
       }
 
+      const DomainSpaceType& domainSpace() const
+      {
+        return dSpace_;
+      }
+      const RangeSpaceType& rangeSpace() const
+      {
+        return rSpace_;
+      }
+
     protected:
       using BaseType::impl_;
+      const DomainSpaceType &dSpace_;
+      const RangeSpaceType &rSpace_;
     };
 
 
@@ -763,7 +786,7 @@ namespace Dune
       typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
-      ModelDifferentiableGalerkinOperator ( const ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
+      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
         : BaseType( dfSpace.gridPart(), model )
       {}
 
@@ -778,10 +801,16 @@ namespace Dune
       {
         (*this).jacobian( u, jOp );
       }
-
-      void prepare( RangeFunctionType &u ) const {}
-
-      void prepare( const RangeFunctionType &u, RangeFunctionType &w ) const {}
+#if 0
+      void setConstraints( DiscreteFunctionType &u ) const
+      {}
+      void setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
+      {}
+      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {}
+      void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {}
+#endif
     };
 
 
@@ -794,7 +823,8 @@ namespace Dune
     {
       typedef InverseOperator InverseOperatorType;
       typedef Integrands ModelType;
-      typedef DifferentiableGalerkinOperator< Integrands, LinearOperator > DifferentiableOperatorType;
+      typedef DirichletWrapperOperator< DifferentiableGalerkinOperator< Integrands, LinearOperator >> DifferentiableOperatorType;
+      // typedef DifferentiableGalerkinOperator< Integrands, LinearOperator > DifferentiableOperatorType;
 
       typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
       typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
@@ -806,6 +836,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
+      typedef LinearOperator JacobianOperatorType;
+
       struct SolverInfo
       {
         SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -816,9 +848,9 @@ namespace Dune
         int linearIterations, nonlinearIterations;
       };
 
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands integrands, ParameterReader parameter = Parameter::container() )
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands &integrands, ParameterReader parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
-          fullOperator_( dfSpace.gridPart(), std::move( integrands ) ),
+          fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),
           linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
       {}
@@ -855,12 +887,30 @@ namespace Dune
         return linearOperator_;
       }
 
-      bool mark ( double tolerance ) { return false; }
-      double estimate ( const DiscreteFunctionType &solution ) { return 0.0; }
-
       const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
       const GridPartType &gridPart () const { return space().gridPart(); }
+      ModelType &model() const { return fullOperator().model(); }
 
+      auto setConstraints( DomainFunctionType &u ) const
+      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u) )>
+      {
+        fullOperator().setConstraints( u );
+      }
+      auto setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
+      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(value,u) )>
+      {
+        fullOperator().setConstraints( value, u );
+      }
+      auto setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u,v) )>
+      {
+        fullOperator().setConstraints( u, v );
+      }
+      auto subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().subConstraints(u,v) )>
+      {
+        fullOperator().subConstraints( u, v );
+      }
     protected:
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;

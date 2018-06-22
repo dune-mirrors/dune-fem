@@ -94,20 +94,23 @@ public:
   {}
 
   // prepare the solution vector
-  template <class Function>
-  void prepare( const Function &func, DiscreteFunctionType &u ) const
-  {
-  }
+  void setConstraints( DomainDiscreteFunctionType &u ) const
+  {}
+  // prepare the solution vector
+  void setConstraints( const DomainRangeType &value, DomainDiscreteFunctionType &u ) const
+  {}
+  template <class GF>
+  void setConstraints( const GF &u, RangeDiscreteFunctionType &w ) const
+  {}
+  template <class GF>
+  void addConstraints( const GF &u, RangeDiscreteFunctionType &w ) const
+  {}
 
   //! application operator
   virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
   { apply(u,w); }
   template <class GF>
   void apply( const GF &u, RangeDiscreteFunctionType &w ) const;
-
-  // prepare the solution vector
-  void prepare( DiscreteFunctionType &u ) const
-  {}
 
 protected:
   const ModelType &model () const { return model_; }

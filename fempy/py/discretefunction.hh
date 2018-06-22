@@ -310,6 +310,11 @@ namespace Dune
 
         cls.def( "clear", [] ( DF &self ) { self.clear(); } );
         cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); }, "other"_a );
+        cls.def( "scalarProductDofs", [] ( DF &self, const DF &other ) { return self.scalarProductDofs( other ); }, "other"_a );
+        cls.def( "axpy", [] ( DF &self, double a, const DF &y ) { self.axpy( a, y ); }, "a"_a, "y"_a );
+        cls.def( "__iadd__", [] ( DF &self, const DF &other ) { return self += other; }, "other"_a );
+        cls.def( "__isub__", [] ( DF &self, const DF &other ) { return self -= other; }, "other"_a );
+        cls.def( "__imul__", [] ( DF &self, double a ) { return self *= a; }, "a"_a );
 
         typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
         cls.def( "_interpolate", [] ( DF &self, const GridFunction &gf ) {

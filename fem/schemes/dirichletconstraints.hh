@@ -48,6 +48,7 @@ template < class Model, class DiscreteFunctionSpace >
 class DirichletConstraints
 {
 public:
+  enum Operation { set = 0, sub = 1 };
   typedef Model ModelType;
   typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
@@ -64,9 +65,9 @@ public:
   static_assert( localBlockSize == DiscreteFunctionSpaceType::FunctionSpaceType::dimRange,
       "local block size of the space must be identical to the dimension of the range of the function space.");
   typedef FieldVector<int, localBlockSize> DirichletBlock;
-  typedef FieldVector<int, ModelType::dimRange> ModelDirichletBlock;
-  static_assert( ModelType::dimRange >= localBlockSize,
-      "local block size of the space must be less or equahl to the dimension of the range of the model.");
+  typedef FieldVector<int, localBlockSize> ModelDirichletBlock;
+  // static_assert( dimD >= localBlockSize,
+  //     "local block size of the space must be less or equahl to the dimension of the range of the model.");
 
   class BoundaryWrapper
   {
@@ -83,7 +84,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented"); }
   };
 
-  DirichletConstraints( const ModelType &model, const DiscreteFunctionSpaceType& space )
+  DirichletConstraints( ModelType &model, const DiscreteFunctionSpaceType& space )
     : model_(model),
       space_( space ),
       dirichletBlocks_(),
@@ -131,6 +132,41 @@ public:
       }
     }
   }
+  /*! treatment of Dirichlet-DoFs for given discrete function
+   *
+   *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
+   *
+   *   \param[in]  value   a range vector
+   *   \param[out] w       discrete function the constraints are applied to
+   */
+  template < class DiscreteFunctionType >
+  void operator ()( const typename DiscreteFunctionType::RangeType& value, DiscreteFunctionType& w ) const
+  {
+    updateDirichletDofs();
+
+    // if Dirichlet Dofs have been found, treat them
+    if( hasDirichletDofs_ )
+    {
+      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType ;
+
+      DofIteratorType wIt = w.dbegin();
+
+      // loop over all blocks
+      const unsigned int blocks = space_.blockMapper().size();
+      for( unsigned int blockDof = 0; blockDof < blocks ; ++ blockDof )
+      {
+        for( int l = 0; l < localBlockSize ; ++ l, ++ wIt )
+        {
+          if( dirichletBlocks_[ blockDof ][l] )
+          {
+            // copy dofs of the block
+            assert( wIt != w.dend() );
+            (*wIt) = value[l];
+          }
+        }
+      }
+    }
+  }
 
   /*! treatment of Dirichlet-DoFs for given discrete function
    *
@@ -161,8 +197,10 @@ public:
       }
     }
   }
-  template < class GridFunctionType, class DiscreteFunctionType >
-  void operator ()( const GridFunctionType &u, DiscreteFunctionType& w ) const
+  template < class GridFunctionType, class DiscreteFunctionType,
+           typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
+  void operator ()( const GridFunctionType &u,
+                    DiscreteFunctionType& w, Operation op=Operation::setDF ) const
   {
     updateDirichletDofs();
 
@@ -175,7 +213,9 @@ public:
         LocalFunctionType wLocal = w.localFunction( entity );
         const GridLocalFunctionType uLocal = u.localFunction( entity );
         // interpolate dirichlet dofs
-        dirichletDofTreatment( uLocal, wLocal );
+        if (op == Operation::sub)
+          model_.init(entity);
+        dirichletDofTreatment( uLocal, wLocal, op );
       }
     }
   }
@@ -297,7 +337,7 @@ protected:
   }
   template< class GridLocalFunctionType, class LocalFunctionType >
   void dirichletDofTreatment( const GridLocalFunctionType &uLocal,
-                              LocalFunctionType &wLocal ) const
+                              LocalFunctionType &wLocal, Operation op ) const
   {
     // get entity
     const typename LocalFunctionType::EntityType &entity = wLocal.entity();
@@ -309,6 +349,7 @@ protected:
     std::vector<std::size_t> globalBlockDofs(localBlocks);
     space_.blockMapper().map(entity,globalBlockDofs);
     std::vector<double> values( localBlocks*localBlockSize );
+    std::vector<double> valuesModel( localBlocks*localBlockSize );
     space_.interpolation(entity)(uLocal, values);
 
     int localDof = 0;
@@ -322,6 +363,12 @@ protected:
       {
         if( dirichletBlocks_[ global ][l] )
         {
+          if (op == Operation::sub)
+          {
+            space_.interpolation(entity)
+              (BoundaryWrapper(model_,dirichletBlocks_[global][l]), valuesModel);
+            values[ localDof ] -= valuesModel[ localDof ];
+          }
           // store result
           assert( (unsigned int)localDof < wLocal.size() );
           wLocal[ localDof ] = values[ localDof ];
@@ -392,7 +439,7 @@ protected:
 
   // detect all DoFs on the Dirichlet boundary of the given entity
   template< class EntityType >
-  bool searchEntityDirichletDofs( const EntityType &entity, const ModelType& model ) const
+  bool searchEntityDirichletDofs( const EntityType &entity, ModelType& model ) const
   {
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
@@ -446,7 +493,7 @@ protected:
   }
 
   //! pointer to slave dofs
-  const ModelType& model_;
+  ModelType& model_;
   const DiscreteFunctionSpaceType& space_;
   mutable std::vector< DirichletBlock > dirichletBlocks_;
   mutable bool hasDirichletDofs_ ;

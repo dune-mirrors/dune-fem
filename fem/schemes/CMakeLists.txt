@@ -4,6 +4,7 @@ set(HEADERS
   dgrhs.hh
   diffusionmodel.hh
   dirichletconstraints.hh
+  dirichletwrapper.hh
   elliptic.hh
   estimator.hh
   femscheme.hh

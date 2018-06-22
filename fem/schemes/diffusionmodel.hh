@@ -12,100 +12,106 @@
 
 #define VirtualDiffusionModelMethods(POINT) \
   virtual void source ( const POINT &x,\
-                const RangeType &value,\
-                const JacobianRangeType &gradient,\
-                RangeType &flux ) const = 0;\
-  virtual void linSource ( const RangeType& uBar,\
-                   const JacobianRangeType &gradientBar,\
+                const DRangeType &value,\
+                const DJacobianRangeType &gradient,\
+                RRangeType &flux ) const = 0;\
+  virtual void linSource ( const DRangeType& uBar,\
+                   const DJacobianRangeType &gradientBar,\
                    const POINT &x,\
-                   const RangeType &value,\
-                   const JacobianRangeType &gradient,\
-                   RangeType &flux ) const = 0;\
+                   const DRangeType &value,\
+                   const DJacobianRangeType &gradient,\
+                   RRangeType &flux ) const = 0;\
   virtual void diffusiveFlux ( const POINT &x,\
-                       const RangeType &value,\
-                       const JacobianRangeType &gradient,\
-                       JacobianRangeType &flux ) const = 0;\
-  virtual void linDiffusiveFlux ( const RangeType& uBar,\
-                          const JacobianRangeType& gradientBar,\
+                       const DRangeType &value,\
+                       const DJacobianRangeType &gradient,\
+                       RJacobianRangeType &flux ) const = 0;\
+  virtual void linDiffusiveFlux ( const DRangeType& uBar,\
+                          const DJacobianRangeType& gradientBar,\
                           const POINT &x,\
-                          const RangeType &value,\
-                          const JacobianRangeType &gradient,\
-                          JacobianRangeType &flux ) const = 0;\
+                          const DRangeType &value,\
+                          const DJacobianRangeType &gradient,\
+                          RJacobianRangeType &flux ) const = 0;\
   virtual void fluxDivergence( const POINT &x,\
-                         const RangeType &value,\
-                         const JacobianRangeType &jacobian,\
-                         const HessianRangeType &hessian,\
-                         RangeType &flux) const = 0;\
+                         const DRangeType &value,\
+                         const DJacobianRangeType &jacobian,\
+                         const DHessianRangeType &hessian,\
+                         RRangeType &flux) const = 0;\
   virtual void alpha(const POINT &x,\
-             const RangeType &value,\
-             RangeType &val) const = 0;\
-  virtual void linAlpha(const RangeType &uBar,\
+             const DRangeType &value,\
+             RRangeType &val) const = 0;\
+  virtual void linAlpha(const DRangeType &uBar,\
                 const POINT &x,\
-                const RangeType &value,\
-                RangeType &val) const = 0;\
+                const DRangeType &value,\
+                RRangeType &val) const = 0;\
   virtual void dirichlet( int bndId, const POINT &x,\
-                RangeType &value) const = 0;
+                RRangeType &value) const = 0;
 
 #define WrapperDiffusionModelMethods(POINT) \
   virtual void source ( const POINT &x,\
-                const RangeType &value,\
-                const JacobianRangeType &gradient,\
-                RangeType &flux ) const \
+                const DRangeType &value,\
+                const DJacobianRangeType &gradient,\
+                RRangeType &flux ) const \
   { impl().source(x, value, gradient, flux); } \
-  virtual void linSource ( const RangeType& uBar,\
-                   const JacobianRangeType &gradientBar,\
+  virtual void linSource ( const DRangeType& uBar,\
+                   const DJacobianRangeType &gradientBar,\
                    const POINT &x,\
-                   const RangeType &value,\
-                   const JacobianRangeType &gradient,\
-                   RangeType &flux ) const \
+                   const DRangeType &value,\
+                   const DJacobianRangeType &gradient,\
+                   RRangeType &flux ) const \
   { impl().linSource(uBar, gradientBar, x, value, gradient, flux); } \
   virtual void diffusiveFlux ( const POINT &x,\
-                       const RangeType &value,\
-                       const JacobianRangeType &gradient,\
-                       JacobianRangeType &flux ) const \
+                       const DRangeType &value,\
+                       const DJacobianRangeType &gradient,\
+                       RJacobianRangeType &flux ) const \
   { impl().diffusiveFlux(x, value, gradient, flux); } \
-  virtual void linDiffusiveFlux ( const RangeType& uBar,\
-                          const JacobianRangeType& gradientBar,\
+  virtual void linDiffusiveFlux ( const DRangeType& uBar,\
+                          const DJacobianRangeType& gradientBar,\
                           const POINT &x,\
-                          const RangeType &value,\
-                          const JacobianRangeType &gradient,\
-                          JacobianRangeType &flux ) const \
+                          const DRangeType &value,\
+                          const DJacobianRangeType &gradient,\
+                          RJacobianRangeType &flux ) const \
   { impl().linDiffusiveFlux(uBar, gradientBar, x, value, gradient, flux); } \
   virtual void fluxDivergence( const POINT &x,\
-                         const RangeType &value,\
-                         const JacobianRangeType &jacobian,\
-                         const HessianRangeType &hessian,\
-                         RangeType &flux) const \
+                         const DRangeType &value,\
+                         const DJacobianRangeType &jacobian,\
+                         const DHessianRangeType &hessian,\
+                         RRangeType &flux) const \
   { impl().fluxDivergence(x, value, jacobian, hessian, flux); } \
   virtual void alpha(const POINT &x,\
-             const RangeType &value,\
-             RangeType &val) const \
+             const DRangeType &value,\
+             RRangeType &val) const \
   { impl().alpha(x, value, val); } \
-  virtual void linAlpha(const RangeType &uBar,\
+  virtual void linAlpha(const DRangeType &uBar,\
                 const POINT &x,\
-                const RangeType &value,\
-                RangeType &val) const \
+                const DRangeType &value,\
+                RRangeType &val) const \
   { impl().linAlpha(uBar, x, value, val); } \
   virtual void dirichlet( int bndId, const POINT &x,\
-                RangeType &value) const \
+                RRangeType &value) const \
   { impl().dirichlet(bndId, x, value); }
 
-template< class GridPart, int dimR, class RangeField = double >
+template< class GridPart, int dimDomain, int dimRange=dimDomain, class RangeField = double >
 struct DiffusionModel
 {
   typedef GridPart GridPartType;
-  static const int dimRange = dimR;
-  typedef DiffusionModel<GridPartType, dimRange, RangeField> ModelType;
+  static const int dimD = dimDomain;
+  static const int dimR = dimRange;
+  typedef DiffusionModel<GridPartType, dimD, dimR, RangeField> ModelType;
   typedef RangeField RangeFieldType;
 
   typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
-              GridPart::dimensionworld, dimRange > FunctionSpaceType;
-  typedef typename FunctionSpaceType::DomainType DomainType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-  typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
-
-  typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+              GridPart::dimensionworld, dimD > DFunctionSpaceType;
+  typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
+              GridPart::dimensionworld, dimR > RFunctionSpaceType;
+  typedef typename DFunctionSpaceType::DomainType DomainType;
+  typedef typename DFunctionSpaceType::RangeType DRangeType;
+  typedef typename DFunctionSpaceType::JacobianRangeType DJacobianRangeType;
+  typedef typename DFunctionSpaceType::HessianRangeType DHessianRangeType;
+  typedef typename DFunctionSpaceType::DomainFieldType DDomainFieldType;
+  typedef typename RFunctionSpaceType::RangeType RRangeType;
+  typedef typename RFunctionSpaceType::JacobianRangeType RJacobianRangeType;
+  typedef typename RFunctionSpaceType::HessianRangeType RHessianRangeType;
+  typedef typename RFunctionSpaceType::DomainFieldType rDomainFieldType;
 
   typedef typename GridPartType::template Codim<0>::EntityType EntityType;
   typedef typename GridPartType::IntersectionType IntersectionType;
@@ -146,12 +152,14 @@ public:
 };
 
 template < class ModelImpl >
-struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimRange, typename ModelImpl::RangeFieldType>
+struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimD, ModelImpl::dimR,
+                                      typename ModelImpl::RRangeFieldType>
 {
   typedef ModelImpl Impl;
   typedef typename ModelImpl::GridPartType GridPartType;
-  static const int dimRange  = ModelImpl::dimRange;
-  typedef DiffusionModel<GridPartType, dimRange, typename ModelImpl::RangeFieldType> Base;
+  static const int dimD  = ModelImpl::dimD;
+  static const int dimR  = ModelImpl::dimR;
+  typedef DiffusionModel<GridPartType, dimD, dimR, typename ModelImpl::RRangeFieldType> Base;
 
   typedef typename Base::Point Point;
   typedef typename Base::IntersectionPoint IntersectionPoint;
@@ -159,9 +167,12 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   typedef typename Base::ElementIntersectionPoint ElementIntersectionPoint;
   typedef typename Base::LocalDomainType LocalDomainType;
   typedef typename Base::DomainType DomainType;
-  typedef typename Base::RangeType RangeType;
-  typedef typename Base::JacobianRangeType JacobianRangeType;
-  typedef typename Base::HessianRangeType HessianRangeType;
+  typedef typename Base::DRangeType DRangeType;
+  typedef typename Base::DJacobianRangeType DJacobianRangeType;
+  typedef typename Base::DHessianRangeType DHessianRangeType;
+  typedef typename Base::RRangeType RRangeType;
+  typedef typename Base::RJacobianRangeType RJacobianRangeType;
+  typedef typename Base::RHessianRangeType RHessianRangeType;
   typedef typename Base::EntityType EntityType;
   typedef typename Base::IntersectionType IntersectionType;
 
@@ -172,7 +183,6 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
 
   ~DiffusionModelWrapper()
   {
-    std::cout << "In DiffusionModelWrapper destructor" << std::endl;
   }
 
   WrapperDiffusionModelMethods(Point);
@@ -194,7 +204,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimR> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
@@ -215,11 +225,12 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
 };
 
 template < class ModelTraits >
-struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimRange, typename ModelTraits::RangeFieldType>
+struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimD, ModelTraits::dimR, typename ModelTraits::RRangeFieldType>
 {
   typedef typename ModelTraits::GridPartType GridPartType;
-  static const int dimRange  = ModelTraits::dimRange;
-  typedef DiffusionModel<GridPartType, dimRange> Base;
+  static const int dimD  = ModelTraits::dimD;
+  static const int dimR  = ModelTraits::dimR;
+  typedef DiffusionModel<GridPartType, dimD, dimR> Base;
 
   typedef typename Base::Point Point;
   typedef typename Base::IntersectionPoint IntersectionPoint;
@@ -227,9 +238,12 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   typedef typename Base::ElementIntersectionPoint ElementIntersectionPoint;
   typedef typename Base::LocalDomainType LocalDomainType;
   typedef typename Base::DomainType DomainType;
-  typedef typename Base::RangeType RangeType;
-  typedef typename Base::JacobianRangeType JacobianRangeType;
-  typedef typename Base::HessianRangeType HessianRangeType;
+  typedef typename Base::DRangeType DRangeType;
+  typedef typename Base::DJacobianRangeType DJacobianRangeType;
+  typedef typename Base::DHessianRangeType DHessianRangeType;
+  typedef typename Base::RRangeType RRangeType;
+  typedef typename Base::RJacobianRangeType RJacobianRangeType;
+  typedef typename Base::RHessianRangeType RHessianRangeType;
   typedef typename Base::EntityType EntityType;
   typedef typename Base::IntersectionType IntersectionType;
 
@@ -238,7 +252,6 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   DiffusionModelEngine(ModelImpl &model) : impl_(model) {}
   ~DiffusionModelEngine()
   {
-    std::cout << "In DiffusionModelWrapper destructor" << std::endl;
   }
 
   WrapperDiffusionModelMethods(Point);
@@ -260,7 +273,7 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimR> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
