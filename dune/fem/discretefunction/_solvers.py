@@ -17,7 +17,8 @@ def femsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::KrylovInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    return "fem",includes,typeName
+    parameter = {"krylovmethod":solverType} if solverType is not None else {}
+    return "fem",includes,typeName, parameter
 
 def pardgsolver(storage,solverType="gmres"):
     includes = ["dune/fem/solver/cginverseoperator.hh"] + ["dune/fem/solver/pardginverseoperators.hh"]
@@ -32,7 +33,7 @@ def pardgsolver(storage,solverType="gmres"):
         raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "pardg",includes,typeName
+    return "pardg",includes,typeName,{}
 
 def oemfemsolver(storage,solverType="gmres"):
     includes = ["dune/fem/solver/oemsolver.hh"]
@@ -49,7 +50,7 @@ def oemfemsolver(storage,solverType="gmres"):
         raise ValueError("wrong krylov solver - only cg,gmres,bicgstab, bicqsq available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "oemfem",includes,typeName
+    return "oemfem",includes,typeName,{}
 
 def istlsolver(storage,solverType="gmres"):
     includes = ["dune/fem/solver/istlsolver.hh"]
@@ -68,7 +69,7 @@ def istlsolver(storage,solverType="gmres"):
         raise ValueError("wrong krylov solver - only cg,gmres,bicgstab,minres,superlu available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "istl",includes,typeName
+    return "istl",includes,typeName,{}
 
 def suitesparsesolver(storage,solverType="umfpack"):
     includes = ["dune/fem/solver/ldlsolver.hh", "dune/fem/solver/spqrsolver.hh", "dune/fem/solver/umfpacksolver.hh"]
@@ -85,7 +86,7 @@ def suitesparsesolver(storage,solverType="umfpack"):
         raise ValueError("wrong krylov solver - only ldl,spqr_symmetric,spqr_nonsymmetric,umfpack available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "suitesparse",includes,typeName
+    return "suitesparse",includes,typeName,{}
 
 def eigensolver(storage,solverType="bicgstab"):
     includes = ["dune/fem/solver/eigen.hh"]
@@ -98,7 +99,7 @@ def eigensolver(storage,solverType="bicgstab"):
         raise ValueError("wrong krylov solver - only cg,bicgstab available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "eigen",includes,typeName
+    return "eigen",includes,typeName, {}
 
 def viennaclsolver(storage,solverType="gmres"):
     includes = ["dune/fem/solver/viennacl.hh"]
@@ -113,7 +114,7 @@ def viennaclsolver(storage,solverType="gmres"):
         raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "viennacl",includes,typeName
+    return "viennacl",includes,typeName, {}
 
 def petscsolver(storage,solverType=None):
     includes = ["dune/fem/solver/petscsolver.hh"]
@@ -121,4 +122,5 @@ def petscsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::PetscInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    return "petsc",includes,typeName
+    parameter = {"petsc.kspsolver.method":solverType} if solverType is not None else {}
+    return "petsc",includes,typeName, parameter

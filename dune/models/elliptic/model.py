@@ -93,10 +93,10 @@ class EllipticModel:
 
     def code(self, name='Model', targs=[]):
         constants_ = Variable('std::tuple< ' + ', '.join('std::shared_ptr< ' + c  + ' >' for c in self._constants) + ' >', 'constants_')
-        coefficients_ = Variable('std::tuple< ' + ', '.join('Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
+        coefficients_ = Variable('std::tuple< ' + ', '.join(c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
         entity_ = Variable('const EntityType *', 'entity_')
 
-        code = Struct(name, targs=(['class GridPart'] + ['class Coefficient' + str(i) for i, c in enumerate(self._coefficients)] + targs))
+        code = Struct(name, targs=(['class GridPart'] + ['class ' + c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)] + targs))
 
         code.append(TypeAlias("GridPartType", "GridPart"))
         code.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
@@ -118,7 +118,7 @@ class EllipticModel:
         args = [Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()'))]
         init = None
         if self.hasCoefficients:
-            args = [Variable("const Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
+            args = [Variable("const " + c['name'] if c['name'] is not None else "Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
             init = ["coefficients_( " + ", ".join("coefficient" + str(i) for i, c in enumerate(self._coefficients)) + " )"]
         constructor = Constructor(args=args, init=init)
         constructor.append([assign(get(str(i))(constants_), make_shared(c)()) for i, c in enumerate(self._constants)])
@@ -161,6 +161,11 @@ class EllipticModel:
         if self.hasCoefficients:
             code.append(Method("const CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_)), const=True))
             code.append(Method("CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_))))
+
+        for n, i in self._constantNames.items():
+            t = self._constants[i]
+            code.append(Method('const ' + t + ' &', n, code=return_(dereference(get(i)(constants_))), const=True))
+            code.append(Method(t + ' &', n, code=return_(dereference(get(i)(constants_)))))
 
         code.append(AccessModifier("private"))
         code.append(Declaration(entity_, nullptr, mutable=True))

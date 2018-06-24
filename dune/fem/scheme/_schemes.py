@@ -24,7 +24,7 @@ def getSolver(solver,storage,default):
 
 def femscheme(includes, space, solver, operator):
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, backend = space.storage
-    _, solverIncludes, solverTypeName = getSolver(solver,space.storage,defaultSolver)
+    _, solverIncludes, solverTypeName,param = getSolver(solver,space.storage,defaultSolver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
                 space._includes + dfIncludes + solverIncludes +\
@@ -36,7 +36,7 @@ def femscheme(includes, space, solver, operator):
           "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType, modelType)
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
-    return includes, typeName
+    return includes, typeName, param
 
 def burgers(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
@@ -89,9 +89,10 @@ def dg(space, model, penalty=0, solver=None, parameters={}):
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
-    includes, typeName = femscheme(includes, space, solver, operator)
+    includes, typeName, param = femscheme(includes, space, solver, operator)
 
     parameters["penalty"] = parameters.get("penalty",penalty)
+    parameters.update(param)
 
     return module(includes, typeName).Scheme(space,model,parameters)
 
@@ -103,7 +104,8 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName = femscheme(includes, space, solver, operator)
+    includes, typeName, param = femscheme(includes, space, solver, operator)
+    parameters.update(param)
 
     return module(includes, typeName).Scheme(space, model, parameters)
 
@@ -122,7 +124,7 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
-    _, solverIncludes, solverTypeName = getSolver(solver, space.storage, defaultSolver)
+    _, solverIncludes, solverTypeName, param = getSolver(solver, space.storage, defaultSolver)
 
     if virtualize is None:
         virtualize = integrands.virtualized
@@ -149,6 +151,7 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
                              ['return new ' + typeName + '( space, std::ref( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
                              ['"space"_a', '"integrands"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
 
+    parameters.update(param)
     return module(includes, typeName, *ctors).Scheme(space, integrands, parameters)
 
 
@@ -176,8 +179,9 @@ def h1(space, model, solver=None, parameters={}):
 
     operator = lambda linOp,model: "DifferentiableEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
-    includes, typeName = femscheme(includes, space, solver, operator)
+    includes, typeName, solverParam = femscheme(includes, space, solver, operator)
 
+    parameters.update(solverParam)
     return module(includes, typeName).Scheme(space,model,parameters)
 
 
@@ -188,8 +192,8 @@ def h1Galerkin(space, model, solver=None, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName = femscheme(includes, space, solver, operator)
-
+    includes, typeName, param = femscheme(includes, space, solver, operator)
+    parameters.update(param)
     return module(includes, typeName).Scheme(space, model, parameters)
 
 
