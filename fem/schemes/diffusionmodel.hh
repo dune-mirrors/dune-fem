@@ -143,27 +143,6 @@ public:
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
   virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const = 0;
-
-  class BoundaryWrapper
-  {
-    const ModelType& impl_;
-    int bndId_;
-    public:
-    BoundaryWrapper( const ModelType& impl, int bndId )
-    : impl_( impl ), bndId_(bndId) {}
-
-    //! evaluate function
-    template <class Point>
-    void evaluate( const Point& x, RangeType& ret ) const
-    {
-      impl_.dirichlet(bndId_,Dune::Fem::coordinate(x),ret);
-    }
-    //! jacobian function (only for exact)
-    void jacobian( const DomainType& x, JacobianRangeType& ret ) const
-    {
-      DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented");
-    }
-  };
 };
 
 template < class ModelImpl >

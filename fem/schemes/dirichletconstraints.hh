@@ -50,6 +50,8 @@ class DirichletConstraints
 public:
   typedef Model ModelType;
   typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
   //! type of grid partition
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -65,6 +67,21 @@ public:
   typedef FieldVector<int, ModelType::dimRange> ModelDirichletBlock;
   static_assert( ModelType::dimRange >= localBlockSize,
       "local block size of the space must be less or equahl to the dimension of the range of the model.");
+
+  class BoundaryWrapper
+  {
+    const ModelType& impl_;
+    int bndId_;
+    public:
+    BoundaryWrapper( const ModelType& impl, int bndId )
+    : impl_( impl ), bndId_(bndId) {}
+    template <class Point>
+    void evaluate( const Point& x, RangeType& ret ) const
+    { impl_.dirichlet(bndId_,Dune::Fem::coordinate(x),ret); }
+    template <class Point>
+    void jacobian( const Point& x, JacobianRangeType& ret ) const
+    { DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented"); }
+  };
 
   DirichletConstraints( const ModelType &model, const DiscreteFunctionSpaceType& space )
     : model_(model),
@@ -270,7 +287,7 @@ protected:
         if( dirichletBlocks_[ global ][l] )
         {
           space_.interpolation(entity)
-            (typename ModelType::BoundaryWrapper(model_,dirichletBlocks_[global][l]), values);
+            (BoundaryWrapper(model_,dirichletBlocks_[global][l]), values);
           // store result
           assert( (unsigned int)localDof < wLocal.size() );
           wLocal[ localDof ] = values[ localDof ];
