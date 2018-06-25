@@ -203,7 +203,9 @@ def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **un
     return spc.as_ufl()
 
 
-def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
+def lagrange(view, order=1, dimrange=1, field="double", storage=None,
+            interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
+            **unused):
     """create a Lagrange space
 
     Args:
@@ -217,7 +219,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
         Space: the constructed Space
     """
 
-    from dune.fem.space import module, addStorage
+    from dune.fem.space import module, addStorage, codegen
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
@@ -238,6 +240,11 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName).Space(view)
+    if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
+        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
+        spc = module(field, includes, typeName,
+                    interiorQuadratureOrders=interiorQuadratureOrders,
+                    skeletonQuadratureOrders=skeletonQuadratureOrders).Space(view)
     addStorage(spc, storage)
     return spc.as_ufl()
 
