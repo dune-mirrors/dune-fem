@@ -2,6 +2,9 @@
 #define DUNE_FEMPY_PY_SPACE_HH
 
 #include <dune/common/hybridutilities.hh>
+
+#include <dune/fem/space/basisfunctionset/codegen.hh>
+
 #include <dune/python/common/dynmatrix.hh>
 #include <dune/python/common/dynvector.hh>
 #include <dune/python/common/fmatrix.hh>
@@ -115,6 +118,13 @@ namespace Dune
               pybind11::handle res = PyObject_Call( Dune::FemPy::getSpaceWrapper().ptr(), args.ptr(), nullptr );
               return res;
             },  pybind11::keep_alive< 0, 1 >() );
+
+        cls.def( "_generateQuadratureCode", []( Space &self,
+                 const std::vector<unsigned int> &interiorOrders,
+                 const std::vector<unsigned int> &skeletonOrders,
+                 const std::string &path) {
+            Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path);
+            } );
       }
 
 

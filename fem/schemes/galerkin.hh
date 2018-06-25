@@ -148,7 +148,7 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*w.order()+3 ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), interiorQuadOrder(w.order()) ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
@@ -171,7 +171,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*rangeBasis.order()+3 ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), interiorQuadOrder(rangeBasis.order()) ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
 
@@ -200,7 +200,7 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order()+3, SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadOrder(w.order()), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -223,7 +223,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*rangeBasis.order(), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadOrder(rangeBasis.order()), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -250,7 +250,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*wIn.order()+3, false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(wIn.order()), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -270,7 +270,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn, W &wOut ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( wIn.order(), wOut.order() )+3, false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(std::max( wIn.order(), wOut.order() )), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -298,7 +298,7 @@ namespace Dune
           const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*rangeBasisIn.order()+3, false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(rangeBasisIn.order()), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -343,7 +343,7 @@ namespace Dune
           const auto &rangeBasisOut = jInOut.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( rangeBasisIn.order(), rangeBasisOut.order() )+3, false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(std::max( rangeBasisIn.order(), rangeBasisOut.order() )), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -415,8 +415,14 @@ namespace Dune
 
         template< class... Args >
         explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-          : gridPart_( gridPart ), integrands_( std::forward< Args >( args )... )
+          : gridPart_( gridPart ), integrands_( std::forward< Args >( args )... ),
+            interiorQuadOrder_(0), surfaceQuadOrder_(0)
         {}
+        void setQuadratureOrders(unsigned int interior, unsigned int surface)
+        {
+          interiorQuadOrder_ = interior;
+          surfaceQuadOrder_ = surface;
+        }
 
         // evaluate
 
@@ -639,9 +645,14 @@ namespace Dune
 
         const GridPartType &gridPart () const { return gridPart_; }
 
+        unsigned int interiorQuadOrder(unsigned int order) const { return interiorQuadOrder_==0 ? 2*order+3:interiorQuadOrder_; }
+        unsigned int surfaceQuadOrder(unsigned int order)  const { return surfaceQuadOrder_==0 ? 2*order+3:surfaceQuadOrder_; }
+
       private:
         const GridPartType &gridPart_;
         mutable IntegrandsType integrands_;
+        unsigned int interiorQuadOrder_;
+        unsigned int surfaceQuadOrder_;
       };
 
     } // namespace Impl
@@ -667,6 +678,8 @@ namespace Dune
       explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
         : impl_( gridPart, std::forward< Args >( args )... )
       {}
+
+      void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
@@ -823,7 +836,10 @@ namespace Dune
           linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
       {}
 
+      void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
+
       const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
+      DifferentiableOperatorType &fullOperator() { return fullOperator_; }
 
       void constraint ( DiscreteFunctionType &u ) const {}
 
