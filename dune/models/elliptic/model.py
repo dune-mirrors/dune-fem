@@ -1,5 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
+import re
+
 from dune.common.compatibility import isInteger
 
 from dune.source.builtin import get, make_shared
@@ -67,6 +69,18 @@ class EllipticModel:
             self._parameterNames[parameter] = idx
         return idx
 
+    def cppIdentifier(self,name,base,idx):
+        if re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is None:
+            return base+str(idx)
+        else:
+            return name
+    def cppTypeIdentifier(self,name,base,idx):
+        ret = self.cppIdentifier(name,base,idx)
+        return ret[0].upper() + ret[1:]
+    def cppVarIdentifier(self,name,base,idx):
+        ret = self.cppIdentifier(name,base,idx)
+        return ret[0].lower() + ret[1:]
+
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
 
@@ -93,10 +107,12 @@ class EllipticModel:
 
     def code(self, name='Model', targs=[]):
         constants_ = Variable('std::tuple< ' + ', '.join('std::shared_ptr< ' + c  + ' >' for c in self._constants) + ' >', 'constants_')
-        coefficients_ = Variable('std::tuple< ' + ', '.join(c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
+        # coefficients_ = Variable('std::tuple< ' + ', '.join(c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
+        coefficients_ = Variable('std::tuple< ' + ', '.join(self.cppTypeIdentifier(c['name'],"coefficient",i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
         entity_ = Variable('const EntityType *', 'entity_')
 
-        code = Struct(name, targs=(['class GridPart'] + ['class ' + c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)] + targs))
+        # code = Struct(name, targs=(['class GridPart'] + ['class ' + c['name'] if c['name'] is not None else 'class Coefficient' + str(i) for i, c in enumerate(self._coefficients)] + targs))
+        code = Struct(name, targs=(['class GridPart'] + ['class ' + self.cppTypeIdentifier(c['name'],"coefficient",i) for i, c in enumerate(self._coefficients)] + targs))
 
         code.append(TypeAlias("GridPartType", "GridPart"))
         code.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
@@ -118,7 +134,8 @@ class EllipticModel:
         args = [Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()'))]
         init = None
         if self.hasCoefficients:
-            args = [Variable("const " + c['name'] if c['name'] is not None else "Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
+            # args = [Variable("const " + c['name'] if c['name'] is not None else "const Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
+            args = [Variable("const " + self.cppTypeIdentifier(c['name'],"coefficient",i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
             init = ["coefficients_( " + ", ".join("coefficient" + str(i) for i, c in enumerate(self._coefficients)) + " )"]
         constructor = Constructor(args=args, init=init)
         constructor.append([assign(get(str(i))(constants_), make_shared(c)()) for i, c in enumerate(self._constants)])
