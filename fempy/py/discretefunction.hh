@@ -291,7 +291,9 @@ namespace Dune
         registerDiscreteFunctionConstructor( cls );
 
         cls.def( "copy", [] ( DF &self ) {
-            pybind11::object copy = pybind11::cast( new DF( self ), pybind11::return_value_policy::take_ownership );
+            DF *df = new DF( self );
+            df->name() = "copy_of_"+self.name();
+            pybind11::object copy = pybind11::cast( df, pybind11::return_value_policy::take_ownership );
             // keep alive discrete function space until copy dies, too
             pybind11::detail::keep_alive_impl( copy, pybind11::detail::get_object_handle( &self.space(), pybind11::detail::get_type_info( typeid( Space ) ) ) );
             return copy;
