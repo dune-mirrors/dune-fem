@@ -95,6 +95,9 @@ namespace Dune
       //! type of associated discrete function space
       typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
+      //! type of associated function space
+      typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
+
       //! type of the discrete function interface (this type)
       typedef DiscreteFunctionInterface< Impl > DiscreteFunctionInterfaceType;
 
@@ -189,6 +192,19 @@ namespace Dune
       std::string &name ()
       {
         return asImp().name();
+      }
+
+      /** \brief obtain an upper bound on the polynomial order of the underlying space.
+       */
+      const std::string &order () const
+      {
+        return asImp().order();
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
+      bool continuous() const
+      {
+        return asImp().continuous();
       }
 
       /** \brief obtain a reference to the corresponding DiscreteFunctionSpace */
@@ -626,6 +642,18 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() */
       std::string &name () { return name_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::order() */
+      constexpr int order() const
+      {
+        return space().order();
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::continuous */
+      bool continuous() const
+      {
+        return space().continuous();
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
       const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
