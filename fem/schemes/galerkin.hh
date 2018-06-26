@@ -127,6 +127,17 @@ namespace Dune
           return phi;
         }
 
+        template< class LocalFunction, class Point , class Weight>
+        static DomainValueType domainValue ( const LocalFunction &u, const Point &x, const Weight& weight  )
+        {
+          DomainValueType phi;
+          value( u, x, phi );
+          Hybrid::forEach( RangeValueIndices(), [ &phi, &weight ] ( auto i ) {
+                  std::get< i >( phi ) *= weight;
+                } );
+          return phi;
+        }
+
         template< class Phi, std::size_t... i >
         static auto value ( const Phi &phi, std::size_t col, std::index_sequence< i... > )
         {
@@ -162,6 +173,8 @@ namespace Dune
           }
         }
 
+        mutable std::vector< DomainValueVectorType > values_;
+
         template< class U, class J >
         void addLinearizedInteriorIntegral ( const U &u, DomainValueVectorType &phi, J &j ) const
         {
@@ -172,6 +185,54 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
+          InteriorQuadratureType quad( u.entity(), interiorQuadOrder(rangeBasis.order()) );
+          const size_t domainSize = domainBasis.size();
+
+
+          //if( values_.size() != quad.nop() )
+          {
+            //std::cout << "Resize values_ " << std::endl;
+            values_.resize( quad.nop() );
+            for( const auto qp : quad )
+            {
+              auto& valphi = values_[ qp.index() ];
+              Hybrid::forEach( RangeValueIndices(), [ &domainSize, &valphi ] ( auto i ) {
+                  std::get< i >( valphi ).resize( domainSize );
+                } );
+              //valphi.resize( domainBasis.size() );
+              values( domainBasis, qp, valphi );
+            }
+          }
+
+          typedef decltype( integrands_.linearizedInterior( quad[0], domainValue( u, quad[0] ) ) )  IntegrandsType;
+          std::vector< IntegrandsType > domVals;
+          domVals.reserve( quad.nop() );
+
+          for( const auto qp : quad )
+          {
+            const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
+            domVals.emplace_back( integrands_.linearizedInterior( qp, domainValue( u, qp, weight ) ) );
+          }
+
+          for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
+          {
+            LocalMatrixColumn< J > jCol( j, col );
+            for( const auto qp : quad )
+            {
+              //const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
+              //values( domainBasis, qp, phi );
+              auto& integrand = domVals[ qp.index() ];
+              const auto& valphi = values_[ qp.index() ];
+
+              RangeValueType intPhi = integrand( value( valphi, col ) );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qp, &jCol, &intPhi ] ( auto i ) {
+                  //std::get< i >( intPhi ) *= weight;
+                  jCol.axpy( qp, std::get< i >( intPhi ) );
+                } );
+            }
+          }
+          /*
           for( const auto qp : InteriorQuadratureType( u.entity(), interiorQuadOrder(rangeBasis.order()) ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
@@ -190,6 +251,7 @@ namespace Dune
                 } );
             }
           }
+          */
         }
 
         // boundary integral
