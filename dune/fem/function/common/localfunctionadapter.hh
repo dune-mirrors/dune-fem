@@ -289,6 +289,12 @@ namespace Dune
         return order_;
       }
 
+      //! return true, probably
+      inline bool continuous () const
+      {
+        return space().continuous();
+      }
+
       //! return local function implementation
       const LocalFuncStorageType& localFunctionImpl() const
       {

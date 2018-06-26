@@ -299,6 +299,7 @@ namespace Dune
           using GF::LocalFunctionType::jacobian;
           using GF::LocalFunctionType::hessian;
           using GF::LocalFunctionType::init;
+          using GF::LocalFunctionType::entity;
 
           //! evaluate local function
           template< class Point >
@@ -420,8 +421,13 @@ namespace Dune
               v[ qp.index() ] = jacobian( qp );
           }
 
-          void bind ( const EntityType &entity ) { gridFunction().bind( entity ); }
+          void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
           void unbind () { gridFunction().unbind(); }
+
+          const EntityType& entity() const
+          {
+            return gridFunction_.entity();
+          }
 
           const GridFunctionType &gridFunction () const { return gridFunction_; }
 

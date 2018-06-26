@@ -178,6 +178,18 @@ namespace Dune
         return space().gridPart();
       }
 
+      //! return true, probably
+      inline int order () const
+      {
+        return space().order();
+      }
+
+      //! return true, probably
+      inline bool continuous () const
+      {
+        return space().continuous();
+      }
+
     protected:
       DiscreteFunctionSpaceType space_;
       FunctionImp function_;

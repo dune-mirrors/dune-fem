@@ -26,6 +26,7 @@ namespace Dune
       : gridPart_(gridPart) {}
       void bind(const EntityType &entity) { entity_ = entity; }
       void unbind() {}
+      bool continuous() const { return true; }
       template <class Point>
       DomainType global(const Point &x) const
       {
