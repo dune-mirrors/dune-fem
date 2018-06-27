@@ -68,7 +68,19 @@ namespace Dune
           return makeDomainValueVector( maxNumLocalDofs, DomainValueIndices() );
         }
 
+        template< std::size_t... i >
+        static auto makeRangeValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
+        {
+          return std::make_tuple( std::vector< std::tuple_element_t< i, RangeValueType > >( maxNumLocalDofs )... );
+        }
+
+        static auto makeRangeValueVector ( std::size_t maxNumLocalDofs )
+        {
+          return makeRangeValueVector( maxNumLocalDofs, RangeValueIndices() );
+        }
+
         typedef decltype( makeDomainValueVector( 0u ) ) DomainValueVectorType;
+        typedef decltype( makeRangeValueVector( 0u ) )  RangeValueVectorType;
 
         template< class LocalFunction, class Point >
         static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::RangeType &phi )
@@ -213,6 +225,8 @@ namespace Dune
             domVals.emplace_back( integrands_.linearizedInterior( qp, domainValue( u, qp, weight ) ) );
           }
 
+          RangeValueVectorType ranges = makeRangeValueVector( quad.nop() );
+
           for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
           {
             LocalMatrixColumn< J > jCol( j, col );
@@ -225,11 +239,17 @@ namespace Dune
 
               RangeValueType intPhi = integrand( value( valphi, col ) );
 
-              Hybrid::forEach( RangeValueIndices(), [ &qp, &jCol, &intPhi ] ( auto i ) {
-                  //std::get< i >( intPhi ) *= weight;
-                  jCol.axpy( qp, std::get< i >( intPhi ) );
+              Hybrid::forEach( RangeValueIndices(), [ &qp, &intPhi, &ranges ] ( auto i ) {
+                  std::get< i > ( ranges )[ qp.index() ] = std::get< i >( intPhi );
                 } );
             }
+
+            Hybrid::forEach( RangeValueIndices(), [ &quad, &jCol, &ranges ] ( auto i ) {
+                //std::get< i >( intPhi ) *= weight;
+                jCol.axpy( quad, std::get< i >( ranges ) );
+              } );
+
+
           }
           /*
           for( const auto qp : InteriorQuadratureType( u.entity(), interiorQuadOrder(rangeBasis.order()) ) )
