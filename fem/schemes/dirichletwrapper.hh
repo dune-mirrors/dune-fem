@@ -109,7 +109,8 @@ struct DirichletWrapperOperator
     subConstraints( u, w );
   }
   template <class GF>
-  void operator()( const GF &u, RangeFunctionType &w ) const
+  auto operator()( const GF &u, RangeFunctionType &w ) const
+  -> Dune::void_t<decltype(std::declval<const Operator&>()(u,w))>
   {
     op_(u,w);
     subConstraints( u, w );
@@ -121,7 +122,8 @@ struct DirichletWrapperOperator
     constraints().applyToOperator( jOp );
   }
   template <class GridFunctionType>
-  void jacobian ( const GridFunctionType &u, JacobianOperatorType &jOp ) const
+  auto jacobian ( const GridFunctionType &u, JacobianOperatorType &jOp ) const
+  -> Dune::void_t<decltype(std::declval<const Operator&>().jacobian(u,jOp))>
   {
     op_.jacobian(u,jOp);
     constraints().applyToOperator( jOp );

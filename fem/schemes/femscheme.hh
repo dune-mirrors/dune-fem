@@ -58,6 +58,14 @@
 // FemScheme
 //----------
 
+template < class Op, class DF, typename = void >
+struct AddDirichletBC { static const bool value = false; };
+template < class Op, class DF>
+struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declval<const Op>().
+            setConstraints( std::declval<DF&>() ) )>::value > >
+{ static const bool value = true; };
+
+
 template< class Operator, class InverseOperator >
 class FemScheme
 {
@@ -92,7 +100,7 @@ public:
   : model_( model ),
     space_( space ),
     // the elliptic operator (implicit)
-    implicitOperator_( space, space, std::move(model_), parameter ),
+    implicitOperator_( space, space, std::forward<ModelType&>(model_), parameter ),
     // create linear operator (domainSpace,rangeSpace)
     linearOperator_( "assembled elliptic operator", space_, space_ ), // , parameter ),
     parameter_( parameter )
@@ -103,25 +111,29 @@ public:
     return implicitOperator_;
   }
 
-  auto setConstraints( DomainFunctionType &u ) const
-  -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u) )>
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( DomainFunctionType &u ) const
   {
     implicitOperator_.setConstraints( u );
   }
-  auto setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
-  -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(value,u) )>
-  {
-    implicitOperator_.setConstraints( value, u );
-  }
-  auto setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-  -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u,v) )>
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
   {
     implicitOperator_.setConstraints( u, v );
   }
-  auto subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-  -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().subConstraints(u,v) )>
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
   {
     implicitOperator_.subConstraints( u, v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
+  {
+    implicitOperator_.setConstraints( value, u );
   }
 
   void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
@@ -129,7 +141,8 @@ public:
     implicitOperator_( arg, dest );
   }
   template <class GridFunction>
-  void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
+  auto operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
+  -> Dune::void_t<decltype(std::declval<const Operator&>()(arg,dest))>
   {
     implicitOperator_( arg, dest );
   }
@@ -148,8 +161,7 @@ public:
     typedef Dune::Fem::NewtonInverseOperator< JacobianOperatorType, InverseOperatorType > NLInverseOperatorType;
     NLInverseOperatorType invOp( implicitOperator_, parameter_ );
     DiscreteFunctionType rhs0 = rhs;
-    implicitOperator_.setConstraints( RangeType(0), rhs0 );
-    // implicitOperator_.setConstraints( rhs0, solution );
+    setZeroConstraints( rhs0 );
     invOp( rhs0, solution );
     return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
   }
@@ -181,6 +193,11 @@ public:
     return model_;
   }
 protected:
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
+  void setZeroConstraints( ... ) const { }
+
   ModelType &model_;   // the mathematical model
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;

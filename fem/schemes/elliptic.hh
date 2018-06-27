@@ -107,6 +107,7 @@ struct EllipticOperator
       dSpace_(dSpace), rSpace_(rSpace)
   {}
 
+#if 0
   // prepare the solution vector
   void setConstraints( DomainFunctionType &u ) const
   { }
@@ -119,6 +120,7 @@ struct EllipticOperator
   template <class GF>
   void subConstraints( const GF &u, RangeFunctionType &w ) const
   { }
+#endif
 
   //! application operator
   virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const

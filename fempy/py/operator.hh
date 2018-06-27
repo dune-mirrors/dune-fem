@@ -37,14 +37,12 @@ namespace Dune
 
       // registerGeneralOperatorCall
       // ---------------------------
-      //! QUESTION: this way only VGF can be sued instead of having both options
       template< class Operator, class... options, decltype( std::declval< const Operator & >()( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::RangeFunctionType & >() ), 0 ) = 0 >
       inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def( "__call__", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::RangeFunctionType &w ) { self( u, w ); }, "u"_a, "w"_a );
       }
-
       template< class Operator, class... options >
       inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
@@ -89,7 +87,7 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        cls.def( "_backend", [] ( Operator &self ) {
+        cls.def_property_readonly( "_backend", [] ( Operator &self ) {
             if (import_petsc4py() != 0)
             {                           \
               std::cout << "ERROR: could not import petsc4py\n";
@@ -117,7 +115,7 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "_backend", [] ( Operator &self ) {
+        cls.def_property_readonly( "_backend", [] ( Operator &self ) {
             return getBCRSMatrix( self.matrix() );
           });
       }
@@ -194,26 +192,6 @@ namespace Dune
         registerOperatorAssemble< DomainFunction >( cls, PriorityTag< 42 >() );
         registerOperatorAssemble< VirtualizedGridFunction< GridPart, RangeType > >( cls, PriorityTag< 42 >() );
       }
-
-#if 0
-      // registerOperatorModel
-      // -------------------
-      template< class Operator, class... options >
-      inline static auto registerOperatorModel ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< const Operator >().model() ) >
-      {
-        cls.def_property_readonly( "model", &Operator::model );
-      }
-      template< class Operator, class... options >
-      inline static void registerOperatorModel ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class Operator, class... options >
-      inline static void registerOperatorModel ( pybind11::class_< Operator, options... > cls )
-      {
-        registerOperatorModel( cls, PriorityTag< 42 >() );
-      }
-#endif
 
       // registerConstraints
       // -------------------

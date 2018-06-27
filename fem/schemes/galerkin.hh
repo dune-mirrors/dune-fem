@@ -818,13 +818,14 @@ namespace Dune
     // GalerkinScheme
     // --------------
 
-    template< class Integrands, class LinearOperator, class InverseOperator >
+    template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC >
     struct GalerkinScheme
     {
       typedef InverseOperator InverseOperatorType;
       typedef Integrands ModelType;
-      typedef DirichletWrapperOperator< DifferentiableGalerkinOperator< Integrands, LinearOperator >> DifferentiableOperatorType;
-      // typedef DifferentiableGalerkinOperator< Integrands, LinearOperator > DifferentiableOperatorType;
+      using DifferentiableOperatorType = std::conditional_t< addDirichletBC,
+         DirichletWrapperOperator< DifferentiableGalerkinOperator< Integrands, LinearOperator >>,
+         DifferentiableGalerkinOperator< Integrands, LinearOperator > >;
 
       typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
       typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
@@ -869,7 +870,9 @@ namespace Dune
       {
         typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperator;
         NewtonOperator invOp( fullOperator(), parameter_ );
-        invOp( rhs, solution );
+        DiscreteFunctionType rhs0 = rhs;
+        setZeroConstraints( rhs0 );
+        invOp( rhs0, solution );
 
         return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
       }
@@ -891,27 +894,30 @@ namespace Dune
       const GridPartType &gridPart () const { return space().gridPart(); }
       ModelType &model() const { return fullOperator().model(); }
 
-      auto setConstraints( DomainFunctionType &u ) const
-      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u) )>
+      std::enable_if_t<addDirichletBC,void>
+      setConstraints( DomainFunctionType &u ) const
       {
         fullOperator().setConstraints( u );
       }
-      auto setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
-      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(value,u) )>
+      std::enable_if_t<addDirichletBC,void>
+      setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
       {
         fullOperator().setConstraints( value, u );
       }
-      auto setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().setConstraints(u,v) )>
+      std::enable_if_t<addDirichletBC,void>
+      setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
       {
         fullOperator().setConstraints( u, v );
       }
-      auto subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      -> Dune::void_t< decltype( std::declval<DifferentiableOperatorType>().subConstraints(u,v) )>
+      std::enable_if_t<addDirichletBC,void>
+      subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
       {
         fullOperator().subConstraints( u, v );
       }
     protected:
+      std::enable_if_t<addDirichletBC,void>
+      setZeroConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u ); }
+      void setZeroConstraints( ... ) const { }
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
