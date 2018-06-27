@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import Form
+from ufl import Form, Coefficient
 from ufl.equation import Equation
 
 from dune.common.compatibility import isString
@@ -164,6 +164,8 @@ class Source(object):
             te = "Integrands::" + t
             writer.emit('cls.def_property( "' + n + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
         writer.emit('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')
+        hasDirichletBC = 'true' if integrands.hasDirichletBoundary else 'false'
+        writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return '+hasDirichletBC+';});')
 
         writer.closePythonModule(name)
 

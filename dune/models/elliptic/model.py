@@ -133,9 +133,10 @@ class EllipticModel:
             code.append(Declaration(Variable("const std::size_t", "numConstants"), initializer=len(self._constants), static=True))
 
         if self.hasCoefficients:
-            coefficientSpaces = ["Dune::Fem::FunctionSpace< DomainFieldType, " + SourceWriter.cpp_fields(c['field']) + ", dimDomain, " + str(c['dimRange']) + " >" for c in self._coefficients]
-            code.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " + ", ".join(coefficientSpaces) + " >"))
             code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, ' + coefficients_.cppType + ' >', targs=['std::size_t i']))
+            # coefficientSpaces = ["Dune::Fem::FunctionSpace< DomainFieldType, " + SourceWriter.cpp_fields(c['field']) + ", dimDomain, " + str(c['dimRange']) + " >" for c in self._coefficients]
+            coefficientSpaces = ["typename CoefficientType<"+str(i)+">::FunctionSpaceType" for i,c in enumerate(self._coefficients)]
+            code.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " + ", ".join(coefficientSpaces) + " >"))
 
         arg_param = Variable("const Dune::Fem::ParameterReader &", "parameter")
         args = [Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()'))]

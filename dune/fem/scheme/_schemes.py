@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
+import warnings
 
 from ufl.equation import Equation
 
@@ -22,22 +23,37 @@ def getSolver(solver,storage,default):
         else:
             return default(storage,solver[0])
 
-def femscheme(includes, space, solver, operator):
+def femscheme(includes, space, solver, operator, modelType):
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, backend = space.storage
     _, solverIncludes, solverTypeName,param = getSolver(solver,space.storage,defaultSolver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
                 space._includes + dfIncludes + solverIncludes +\
-                ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
+                ["dune/fempy/parameter.hh"]
     spaceType = space._typeName
-    modelType = "DiffusionModel< " +\
-          "typename " + spaceType + "::GridPartType, " +\
-          spaceType + "::dimRange, " +\
-          spaceType + "::dimRange, " +\
-          "typename " + spaceType + "::RangeFieldType >"
+    if modelType is None:
+        includes += ["dune/fem/schemes/diffusionmodel.hh"]
+        modelType = "DiffusionModel< " +\
+              "typename " + spaceType + "::GridPartType, " +\
+              spaceType + "::dimRange, " +\
+              spaceType + "::dimRange, " +\
+              "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType, modelType)
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
-    return includes, typeName, param
+    return includes, typeName
+
+def femschemeModule(space, model, includes, solver, operator, *args,
+        parameters={},
+        modelType = None, ctorArgs={}):
+    from . import module
+    _, _, _, _, defaultSolver, backend = space.storage
+    _, _, _, param = getSolver(solver,space.storage,defaultSolver)
+    includes, typeName = femscheme(includes, space, solver, operator, modelType)
+    parameters.update(param)
+    mod = module(includes, typeName, *args, backend=backend)
+    scheme = mod.Scheme(space,model,**ctorArgs, parameters=parameters)
+    scheme.model = model
+    return scheme
 
 def burgers(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
@@ -76,6 +92,7 @@ def dg(space, model, penalty=0, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+    useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
     modelParam = None
     if isinstance(model, (list, tuple)):
         modelParam = model[1:]
@@ -87,42 +104,46 @@ def dg(space, model, penalty=0, solver=None, parameters={}):
         else:
             model = elliptic(space.grid,model)
 
-    from . import module
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
-    includes, typeName, param = femscheme(includes, space, solver, operator)
-
     parameters["penalty"] = parameters.get("penalty",penalty)
-    parameters.update(param)
 
-    return module(includes, typeName).Scheme(space,model,parameters)
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 def dgGalerkin(space, model, penalty, solver=None, parameters={}):
-    from . import module
-
     includes = ["dune/fem/schemes/galerkin.hh"]
 
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName, param = femscheme(includes, space, solver, operator)
-    parameters.update(param)
-
-    return module(includes, typeName).Scheme(space, model, parameters)
+    return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
 
 
-def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
+def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None):
+    if hasattr(integrands,"interpolate"):
+        warnings.warn("""
+        note: the parameter order for the 'schemes' has changes.
+              First argument is not the ufl form and the second argument is
+              the space.""")
+        integrands,space = space,integrands
     integrandsParam = None
     if isinstance(integrands, (list, tuple)):
         integrandsParam = integrands[1:]
         integrands = integrands[0]
     if isinstance(integrands,Equation):
+        if space == None:
+            try:
+                space = integrands.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no space provided and could not deduce from form provided")
         from dune.fem.model._models import integrands as makeIntegrands
         if integrandsParam:
             integrands = makeIntegrands(space.grid,integrands,*integrandsParam)
         else:
             integrands = makeIntegrands(space.grid,integrands)
+    if not hasattr(space,"interpolate"):
+        raise ValueError("wrong space given")
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
@@ -143,7 +164,10 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
     else:
         integrandsType = integrands._typeName
 
-    typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' + linearOperatorType + ', ' + solverTypeName + ' >'
+    useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
+    typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' +\
+            linearOperatorType + ', ' + solverTypeName + ', ' +\
+            useDirichletBC + ' >'
 
     ctors = []
     ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands'],
@@ -154,12 +178,12 @@ def galerkin(space, integrands, solver=None, parameters={}, virtualize=None):
                              ['"space"_a', '"integrands"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
 
     parameters.update(param)
-    scheme = module(includes, typeName, *ctors).Scheme(space, integrands, parameters)
+    scheme = module(includes, typeName, *ctors, backend=backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
     return scheme
 
 
-def h1(space, model, solver=None, parameters={}):
+def h1(model, space=None, solver=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -167,29 +191,39 @@ def h1(space, model, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+    if hasattr(model,"interpolate"):
+        warnings.warn("""
+        note: the parameter order for the 'schemes' has changes.
+              First argument is not the ufl form and the second argument is
+              the space.""")
+        model,space = space,model
     modelParam = None
     if isinstance(model, (list, tuple)):
         modelParam = model[1:]
         model = model[0]
     if isinstance(model,Equation):
+        if space == None:
+            try:
+                space = model.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no space provided and could not deduce from form provided")
         from dune.fem.model._models import elliptic
         if modelParam:
             model = elliptic(space.grid,model,*modelParam)
         else:
             model = elliptic(space.grid,model)
 
-    from . import module
+    if not hasattr(space,"interpolate"):
+        raise ValueError("wrong space given")
+
     includes = ["dune/fem/schemes/dirichletwrapper.hh","dune/fem/schemes/elliptic.hh"]
 
-    operator = lambda linOp,model: "DirichletWrapperOperator<DifferentiableEllipticOperator< " +\
-                                   ",".join([linOp,model]) + ">>"
-    includes, typeName, solverParam = femscheme(includes, space, solver, operator)
-
-    parameters.update(solverParam)
-    scheme = module(includes, typeName).Scheme(space,model,parameters)
-    scheme.model = model
-    return scheme
-
+    op = lambda linOp,model: "DifferentiableEllipticOperator< " + ",".join([linOp,model]) + ">"
+    if model.hasDirichletBoundary:
+        operator = lambda linOp,model: "DirichletWrapperOperator< " + op(linOp,model) + " >"
+    else:
+        operator = op
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 def h1Galerkin(space, model, solver=None, parameters={}):
     from . import module
@@ -198,9 +232,7 @@ def h1Galerkin(space, model, solver=None, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName, param = femscheme(includes, space, solver, operator)
-    parameters.update(param)
-    return module(includes, typeName).Scheme(space, model, parameters)
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 
 def linearized(scheme, ubar=None, parameters={}):

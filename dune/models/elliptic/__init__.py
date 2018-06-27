@@ -152,6 +152,8 @@ def load(grid, model, *args, **kwargs):
     writer.emit('// actual wrapper class for model derived from abstract base')
     writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
     writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+    hasDirichletBC = 'true' if model.hasDirichletBoundary else 'false'
+    writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( ModelWrapper& ) -> bool { return '+hasDirichletBC+';});')
     writer.emit('')
     for n, number in model._constantNames.items():
         writer.emit('cls.def_property( "' + n + '", ' +
