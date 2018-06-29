@@ -2,11 +2,6 @@ import matplotlib
 from matplotlib import pyplot
 from numpy import amin, amax, linspace, linalg
 from matplotlib.collections import PolyCollection
-try:
-    from IPython.core.display import display
-except:
-    def display():
-        pass
 
 from dune.plotting import block
 
@@ -116,7 +111,6 @@ def plotPointData(solution, figure=None,
 
     if newFig:
         pyplot.show(block=block)
-    # display(fig)
     # return figure
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
@@ -156,7 +150,6 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
         _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,False)
 
     pyplot.show(block=block)
-    # display(fig)
     # return fig
 
 def mayaviPointData(grid, solution, level=0, component=0):

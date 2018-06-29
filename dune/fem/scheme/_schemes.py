@@ -51,7 +51,7 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
     mod = module(includes, typeName, *args, backend=backend)
-    scheme = mod.Scheme(space,model,**ctorArgs, parameters=parameters)
+    scheme = mod.Scheme(space,model, parameters=parameters, **ctorArgs)
     scheme.model = model
     return scheme
 
