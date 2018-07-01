@@ -11,6 +11,7 @@
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
@@ -129,6 +130,7 @@ namespace Dune
       {
         bind( op );
       }
+
       /** \brief constructor
        *
        *  \param[in] op Mapping describing operator to invert
@@ -169,6 +171,16 @@ namespace Dune
         maxIter_( std::numeric_limits< int >::max()),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         parameter_( parameter )
+      {}
+
+      PetscInverseOperator ( const OperatorType &op,
+          double reduction, double absLimit,
+          const SolverParameter &parameter )
+      : PetscInverseOperator( reduction, absLimit, parameter.parameter() )
+      {}
+      PetscInverseOperator ( double reduction, double absLimit,
+          const SolverParameter &parameter )
+      : PetscInverseOperator( reduction, absLimit, parameter.parameter() )
       {}
 
       void bind ( const OperatorType &op )

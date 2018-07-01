@@ -49,18 +49,19 @@ namespace Dune
       {}
 
       NewtonParameter( const ParameterReader &parameter = Parameter::container() )
-        : baseParam_( nullptr ),
+        : baseParam_( std::make_shared<SolverParameter>(parameter) ),
           keyPrefix_( "fem.solver.newton." ),
           parameter_( parameter )
       {}
 
       NewtonParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
-        : baseParam_( nullptr ),
+        : baseParam_( std::make_shared<SolverParameter>(keyPrefix, parameter) ),
           keyPrefix_( keyPrefix ),
           parameter_( parameter )
       {}
 
       const ParameterReader &parameter () const { return parameter_; }
+      const SolverParameter& solverParameter () const { return *baseParam_; }
 
       virtual double toleranceParameter () const
       {
@@ -171,7 +172,8 @@ namespace Dune
           verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
           maxIterations_( parameter.maxIterationsParameter() ),
           maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
-          jInv_( std::move( jInv ) )
+          jInv_( std::move( jInv ) ),
+          parameter_(parameter)
       {}
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon,
@@ -296,6 +298,7 @@ namespace Dune
       mutable int linearIterations_;
       mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
+      const NewtonParameter &parameter_;
     };
 
 
