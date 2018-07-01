@@ -7,6 +7,7 @@
 #include <set>
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/fem/misc/functor.hh>
 
 namespace Dune
@@ -180,11 +181,12 @@ namespace Dune
      *  \tparam  RangeSpace   type of discrete function space for the range
      *
      */
-    template <class DomainSpace, class RangeSpace>
+    template <class DomainSpace, class RangeSpace, class Partition = Dune::Partitions::InteriorBorder>
     struct DiagonalStencil : public Stencil<DomainSpace,RangeSpace>
     {
       typedef Stencil<DomainSpace,RangeSpace> BaseType;
     public:
+      typedef Partition                                 PartitionType;
       typedef typename BaseType::DomainEntityType       DomainEntityType;
       typedef typename BaseType::RangeEntityType        RangeEntityType;
       typedef typename BaseType::DomainGlobalKeyType    DomainGlobalKeyType;
@@ -195,7 +197,7 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
-        for (const auto& entity : dSpace)
+        for (const auto& entity : elements( dSpace.gridPart(), PartitionType{} ) )
           BaseType::fill(entity,entity);
       }
     };
@@ -209,11 +211,12 @@ namespace Dune
      *  \tparam  RangeSpace   type of discrete function space for the range
      *
      */
-    template <class DomainSpace, class RangeSpace>
+    template <class DomainSpace, class RangeSpace, class Partition = Dune::Partitions::InteriorBorder>
     struct DiagonalAndNeighborStencil : public Stencil<DomainSpace,RangeSpace>
     {
       typedef Stencil<DomainSpace,RangeSpace> BaseType;
     public:
+      typedef Partition                                 PartitionType;
       typedef typename BaseType::DomainEntityType       DomainEntityType;
       typedef typename BaseType::RangeEntityType        RangeEntityType;
       typedef typename BaseType::DomainGlobalKeyType    DomainGlobalKeyType;
@@ -225,7 +228,7 @@ namespace Dune
                                  bool onlyNonContinuousNeighbors = false)
         : BaseType( dSpace, rSpace )
       {
-        for (const auto & entity: dSpace)
+        for (const auto & entity: elements( dSpace.gridPart(), PartitionType{} ) )
         {
           BaseType::fill(entity,entity);
           for (const auto & intersection: intersections(dSpace.gridPart(), entity) )
