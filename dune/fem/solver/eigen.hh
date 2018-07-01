@@ -7,6 +7,7 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/linear/eigenoperator.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
@@ -41,7 +42,7 @@ namespace Dune
         : solver_(std::make_unique<EigenOp>()), absLimit_( absLimit )
       {}
 
-      EigenInverseOperator ( double redEps, double absLimit, unsigned int maxIter,
+      EigenInverseOperator ( double redEps, double absLimit, unsigned int maxIter = std::numeric_limits<int>::max(),
                              const ParameterReader &parameter = Parameter::container() )
         : solver_(std::make_unique<EigenOp>()), absLimit_( absLimit )
       {}
@@ -59,6 +60,16 @@ namespace Dune
       {
         bind( op );
       }
+
+      EigenInverseOperator ( const OperatorType &op,
+          double reduction, double absLimit,
+          const SolverParameter &parameter )
+      : EigenInverseOperator( reduction, absLimit, std::numeric_limits<int>::max(), parameter.parameter() )
+      {}
+      EigenInverseOperator ( double reduction, double absLimit,
+          const SolverParameter &parameter )
+      : EigenInverseOperator( reduction, absLimit, std::numeric_limits<int>::max(), parameter.parameter() )
+      {}
 
       void bind ( const OperatorType &op )
       {
