@@ -36,8 +36,12 @@ class Integrands():
             rangeValue = domainValue
 
         self._signature = signature
+        domainValue = tuple(domainValue)
+        rangeValue  = tuple(rangeValue)
         self.domainValueTuple = 'std::tuple< ' + ', '.join(fieldTensorType(v) for v in domainValue) + ' >'
         self.rangeValueTuple = 'std::tuple< ' + ', '.join(fieldTensorType(v) for v in rangeValue) + ' >'
+        self.dimDomain = domainValue[0][0]
+        self.dimRange = rangeValue[0][0]
 
         self.field = "double"
         self._constants = [] if constants is None else list(constants)
@@ -74,6 +78,16 @@ class Integrands():
         self.linearizedSkeleton = None
 
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
+
+        # Added for dirichlet treatment (same as elliptic model)
+        self.hasDirichletBoundary = False
+        self.hasNeumanBoundary = False
+        self.isDirichletIntersection = None # [return_(False)]
+        self.dirichlet = None # [assign(self.arg_r, construct("RRangeType", 0))]
+        self.arg_i = Variable("const IntersectionType &", "intersection")
+        self.arg_bndId = Variable("int", "bndId")
+        self.arg_r = Variable("RRangeType &", "result")
+        self.arg_x = Variable("const Point &", "x")
 
     @property
     def constantTypes(self):
@@ -243,6 +257,15 @@ class Integrands():
         if self.skeleton is not None:
             code.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
             code.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
+
+        # added for dirichlet treatment - same as elliptic model
+        if self.hasDirichletBoundary is not None:
+            code.append(TypeAlias("RRangeType",'Dune::FieldVector< double, '+ str(self.dimRange) + ' > '))
+            code.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
+            code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
+            code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
+            code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'], code=self.isDirichletIntersection, const=True))
+            code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))
 
         code.append(Method('const ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_))), const=True))
         code.append(Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_)))))

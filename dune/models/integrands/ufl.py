@@ -1,15 +1,20 @@
 from __future__ import division, print_function, unicode_literals
 
+from ufl import FiniteElementBase, FunctionSpace
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
 from ufl import action, derivative
+from ufl.classes import Indexed
+from ufl.core.multiindex import FixedIndex, MultiIndex
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
+from dune.ufl.tensors import ExprTensor
+from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
 
 from dune.source.builtin import make_pair
 from dune.source.cplusplus import InitializerList, Variable
@@ -17,7 +22,7 @@ from dune.source.cplusplus import construct, lambda_, makeExpression, maxEdgeLen
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
-from dune.ufl import codegen
+from dune.ufl import codegen, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors
@@ -50,6 +55,14 @@ def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
         values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
 
     return preamble, values
+
+# used for Dirichlet conditions - taken from elliptic
+def generateDirichletCode(predefined, tensor, tempVars=True):
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 
 def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True):
@@ -153,11 +166,10 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 
 
-def fieldVectorType(shape, field = None):
+def fieldVectorType(shape, field = None, useScalar = False):
     if isinstance(shape, Coefficient):
         if field is not None:
             raise ValueError("Cannot specify field type for coefficients")
-
         try:
             field = shape.ufl_function_space().field()
         except AttributeError:
@@ -172,17 +184,29 @@ def fieldVectorType(shape, field = None):
         raise ValueError("Shape must be a tuple.")
     dimRange = (1 if len(shape) == 0 else shape[0])
 
-    return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
+    if dimRange == 1 and useScalar:
+        return field
+    else:
+        return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
 
-def compileUFL(form, constants=None, coefficients=None, tempVars=True):
+def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
     if not isinstance(form, Form):
         raise ValueError("ufl.Form or ufl.Equation expected.")
 
+    # added for dirichlet treatment same as elliptic model
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+
     if coefficients is None and constants is None:
         coefficients = set(form.coefficients())
+
+        # added for dirichlet treatment same as elliptic model
+        for bc in dirichletBCs:
+            _, cc = extract_arguments_and_coefficients(bc.ufl_value)
+        coefficients |= set(cc)
+
         constants = [c for c in coefficients if c.is_cellwise_constant()]
         coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
     elif coefficients is None or constants is None:
@@ -211,8 +235,9 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
-                            constants=(fieldVectorType(c) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
+    integrands = Integrands(form.signature(),
+                            (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
+                            constants=(fieldVectorType(c,useScalar=True) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
                             constantNames=(getattr(c, 'name', None) for c in constants),
                             coefficientNames=(getattr(c, 'name', None) for c in coefficients),
                             parameterNames=(getattr(c, 'parameter', None) for c in constants))
@@ -327,5 +352,54 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('interior_facet'), tempVars=tempVars)
+
+    if dirichletBCs:
+        integrands.hasDirichletBoundary = True
+
+        bySubDomain = dict()
+        neuman = []
+        for bc in dirichletBCs:
+            if bc.subDomain in bySubDomain:
+                raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
+
+            if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
+                raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
+            if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
+                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
+                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+
+            if isinstance(bc.value, list):
+                neuman = [i for i, x in enumerate(bc.value) if x == None]
+            else:
+                neuman = []
+
+            value = ExprTensor(u.ufl_shape)
+            for key in value.keys():
+                value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
+            bySubDomain[bc.subDomain] = value,neuman
+
+        bndId = Variable('const int', 'bndId')
+        getBndId = UnformattedExpression('int', 'Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >::boundaryId( ' + integrands.arg_i.name + ' )')
+
+        switch = SwitchStatement(bndId, default=return_(False))
+        for i,v in bySubDomain.items():
+            code = []
+            if len(v[1])>0:
+                [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            code.append(return_(True))
+            switch.append(i, code)
+        integrands.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + integrands.arg_i.name + ' )')),
+                                         UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
+                                         switch
+                                        ]
+
+        switch = SwitchStatement(integrands.arg_bndId, default=assign(integrands.arg_r, construct("RRangeType", 0)))
+        predefined = {}
+        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
+        predefineCoefficients(predefined, integrands.arg_x)
+        for i, v in bySubDomain.items():
+            switch.append(i, generateDirichletCode(predefined, v[0], tempVars=tempVars))
+        integrands.dirichlet = [switch]
 
     return integrands

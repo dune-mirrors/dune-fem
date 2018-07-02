@@ -17,14 +17,22 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args):
+def load(includes, typeName, *args, backend=None):
+    from dune.fem.discretefunction import addBackend
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args)
+    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True)
+    JacobianOperator = getattr(module.Operator,"JacobianOperator",None)
+    try:
+        backend = backend[0] if backend[0] == backend[1] else None
+    except:
+        pass
+    if JacobianOperator is not None and hasattr(JacobianOperator,"_backend") and backend is not None:
+        addBackend(JacobianOperator,backend)
     return module
 
 
-def galerkin(integrands, domainSpace, rangeSpace=None):
+def galerkin(integrands, domainSpace=None, rangeSpace=None):
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -36,16 +44,31 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
         integrands = integrands == 0
     if isinstance(integrands,Equation):
         from dune.fem.model._models import integrands as makeIntegrands
+        if rangeSpace == None:
+            try:
+                rangeSpace = integrands.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no range space provided and could not deduce from form provided")
+        if domainSpace == None:
+            try:
+                domainSpace = integrands.lhs.arguments()[1].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no domain space provided and could not deduce from form provided")
         if modelParam:
             integrands = makeIntegrands(domainSpace.grid,integrands,*modelParam)
         else:
             integrands = makeIntegrands(domainSpace.grid,integrands)
 
-    domainSpaceType = domainSpace._typeName
-    rangeSpaceType = rangeSpace._typeName
+    if not hasattr(rangeSpace,"interpolate"):
+        raise ValueError("wrong range space")
+    if not hasattr(domainSpace,"interpolate"):
+        raise ValueError("wrong domain space")
 
-    _, domainFunctionIncludes, domainFunctionType, _, _, _ = domainSpace.storage
-    _, rangeFunctionIncludes, rangeFunctionType, _, _, _ = rangeSpace.storage
+    domainSpaceType = domainSpace._typeName
+    rangeSpaceType  = rangeSpace._typeName
+
+    storage, domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
+    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
 
     includes = ["dune/fem/schemes/galerkin.hh", "dune/fempy/py/grid/gridpart.hh"]
     includes += domainSpace._includes + domainFunctionIncludes
@@ -53,10 +76,91 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
 
     integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ', ' + integrands._rangeValueType + ' >'
 
-    typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
+    import dune.create as create
+    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
 
-    constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
-                              ['return new ' + typeName + '( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );'],
-                              ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+    if not rstorage == storage:
+        typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
+        constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
+                                  ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );'],
+                                  ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace.gridPart(), integrands );'],
+                                  ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+    else:
+        typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace, rSpace, integrands );'],
+                                  ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+    if integrands.hasDirichletBoundary:
+        typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
 
-    return load(includes, typeName, constructor).Operator(rangeSpace.grid, integrands)
+
+    op = load(includes, typeName, constructor,backend=(dbackend,rbackend)).Operator(domainSpace,rangeSpace, integrands)
+    op.model = integrands
+    return op
+
+def h1(model, domainSpace=None, rangeSpace=None):
+    if rangeSpace is None:
+        rangeSpace = domainSpace
+
+    modelParam = None
+    if isinstance(model, (list, tuple)):
+        modelParam = model[1:]
+        model = model[0]
+    if isinstance(model,Form):
+        model = model == 0
+    if isinstance(model,Equation):
+        from dune.fem.model._models import elliptic as makeElliptic
+        if rangeSpace == None:
+            try:
+                rangeSpace = model.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no range space provided and could not deduce from form provided")
+        if domainSpace == None:
+            try:
+                domainSpace = model.lhs.arguments()[1].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no domain space provided and could not deduce from form provided")
+        if modelParam:
+            model = makeElliptic(domainSpace.grid,model,*modelParam)
+        else:
+            model = makeElliptic(domainSpace.grid,model)
+
+    if not hasattr(rangeSpace,"interpolate"):
+        raise ValueError("wrong range space")
+    if not hasattr(domainSpace,"interpolate"):
+        raise ValueError("wrong domain space")
+
+    domainSpaceType = domainSpace._typeName
+    rangeSpaceType = rangeSpace._typeName
+
+    storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
+    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
+    if not rstorage == storage:
+        raise ValueError("storage for both spaces must be identical to construct operator")
+
+    includes = ["dune/fem/schemes/elliptic.hh", "dune/fem/schemes/dirichletwrapper.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes += domainSpace._includes + domainFunctionIncludes
+    includes += rangeSpace._includes + rangeFunctionIncludes
+    includes += ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
+
+    import dune.create as create
+    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+
+    modelType = "DiffusionModel< " +\
+          "typename " + domainSpaceType + "::GridPartType, " +\
+          domainSpaceType + "::dimRange, " +\
+          rangeSpaceType + "::dimRange, " +\
+          "typename " + domainSpaceType + "::RangeFieldType >"
+    typeName = "DifferentiableEllipticOperator< " + linearOperator + ", " + modelType + ">"
+    if model.hasDirichletBoundary:
+        typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
+
+    constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', modelType + ' &model'],
+                              ['return new ' + typeName + '( dSpace, rSpace, model );'],
+                              ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+
+    scheme = load(includes, typeName, constructor, backend=(dbackend,rbackend)).Operator(domainSpace,rangeSpace, model)
+    scheme.model = model
+    return scheme

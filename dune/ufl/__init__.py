@@ -160,6 +160,18 @@ class GridFunction(ufl.Coefficient):
         else:
             return self.gf.copy(name).as_ufl()
 
+    def __imul__(self,a):
+        self.__impl__ *= a
+        self.__impl__ = self.__impl__.__impl__ # this a hack: the C++ method needs to return 'self' which is then automatically wrapped!
+        return self
+    def __iadd__(self,other):
+        self.__impl__ += other
+        self.__impl__ = self.__impl__.__impl__
+        return self
+    def __isub__(self,other):
+        self.__impl__ -= other
+        self.__impl__ = self.__impl__.__impl__
+        return self
     def __getitem__(self,i):
         if isinstance(i,int):
             return GridIndexed(self,i)
@@ -197,6 +209,19 @@ class GridFunction(ufl.Coefficient):
             return self.gf.localFunction(x.entity).jacobian(x.local)[component[0]][derivatives[0]]
 
 class DirichletBC:
+
+    def flatten(l):
+        print("in flatten: ",l)
+        import collections
+        for el in l:
+            if isinstance(el, collections.Iterable): # and not isinstance(el, basestring):
+                print("iterate")
+                for sub in DirichletBC.flatten(el):
+                    yield sub
+            else:
+                print("take it")
+                yield el
+
     def __init__(self, functionSpace, value, subDomain):
         # try:
         #     self.functionSpace = functionSpace.uflSpace
@@ -205,7 +230,8 @@ class DirichletBC:
         self.value = value
         self.subDomain = subDomain
         if type(value) is list:
-            self.ufl_value = [0 if v is None else v for v in value]
+            self.ufl_value = value # DirichletBC.flatten(value)
+            self.ufl_value = [0 if v is None else v for v in self.ufl_value]
             self.ufl_value = ufl.as_vector(self.ufl_value)
         else:
             self.ufl_value = value

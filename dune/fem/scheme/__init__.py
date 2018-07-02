@@ -35,9 +35,13 @@ def addAttr(module, cls):
 
 fileBase = "femscheme"
 
-def module(includes, typeName, *args):
+def module(includes, typeName, *args, backend=None):
+    from dune.fem.discretefunction import addBackend
     includes = includes + ["dune/fempy/py/scheme.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args)
+    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True)
     addAttr(module, module.Scheme)
+    JacobianOperator = getattr(module.Scheme,"JacobianOperator",None)
+    if JacobianOperator is not None and hasattr(JacobianOperator,"_backend") and backend is not None:
+        addBackend(JacobianOperator,backend)
     return module
