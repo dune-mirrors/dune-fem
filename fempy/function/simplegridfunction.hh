@@ -88,6 +88,13 @@ namespace Dune
         DUNE_THROW( NotImplemented, "SimpleLocalFunction::hessian not implemented" );
       }
 
+      template< class Quadrature, class Hessians >
+      void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians ) const
+      {
+        for( const auto qp : quadrature )
+          hessian( qp, hessians[ qp.index() ] );
+      }
+
       int order () const { return order_; }
 
       const EntityType &entity () const { assert( entity_ ); return *entity_; }

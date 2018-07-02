@@ -48,6 +48,14 @@ namespace Dune
       typedef FemPy::CachingPoint< LocalCoordinateType > CachingPoint;
       typedef FemPy::ElementPoint< LocalCoordinateType > ElementPoint;
 
+      // typically used quadratures for efficient evaluation of basis functions
+      typedef Dune::Fem::CachingQuadrature< GridPart, 0 > ElementQuadratureType ;
+      typedef Dune::Fem::CachingQuadrature< GridPart, 1 > FaceQuadratureType ;
+
+      typedef std::vector< RangeType >          RangeValueVectorType;
+      typedef std::vector< JacobianRangeType >  JacobianRangeValueVectorType;
+      typedef std::vector< HessianRangeType >   HessianRangeValueVectorType;
+
       template< class QP >
       static Fem::QuadraturePointWrapper< QP > asQP ( const QP &qp )
       {
@@ -96,6 +104,14 @@ namespace Dune
         virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const = 0;
         virtual void hessian ( const CachingPoint &x, HessianRangeType &hessian ) const = 0;
         virtual void hessian ( const ElementPoint &x, HessianRangeType &hessian ) const = 0;
+
+        virtual void evaluateQuadrature( const ElementQuadratureType& quad, RangeValueVectorType& values ) const = 0 ;
+        virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const = 0 ;
+        virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const = 0 ;
+        virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const = 0 ;
+        //virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
+        //virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
+
         virtual int order () const = 0;
         virtual const EntityType &entity () const = 0;
       };
@@ -118,6 +134,13 @@ namespace Dune
         virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
         virtual void hessian ( const CachingPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
         virtual void hessian ( const ElementPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
+        virtual void evaluateQuadrature( const ElementQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
+        virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
+        //virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
+        //virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
+
         virtual int order () const override { return impl().order(); }
         virtual const EntityType &entity () const override { return impl().entity(); }
 
@@ -184,6 +207,18 @@ namespace Dune
           evaluate( qp, values[ qp.index() ] );
       }
 
+      void evaluateQuadrature ( const ElementQuadratureType &quadrature, RangeValueVectorType &values ) const
+      {
+        std::cout << "Virtualized::evalQuad " << std::endl;
+        impl_->evaluateQuadrature( quadrature, values );
+      }
+
+      void evaluateQuadrature ( const FaceQuadratureType &quadrature, RangeValueVectorType &values ) const
+      {
+        std::cout << "Virtualized::evalQuad " << std::endl;
+        impl_->evaluateQuadrature( quadrature, values );
+      }
+
       template< class Point >
       void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
       {
@@ -210,6 +245,13 @@ namespace Dune
       {
         for( const auto qp : quadrature )
           jacobian( qp, jacobians[ qp.index() ] );
+      }
+
+      template< class Quadrature, class Hessians >
+      void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians ) const
+      {
+        for( const auto qp : quadrature )
+          hessian( qp, hessians[ qp.index() ] );
       }
 
       template< class Point >
