@@ -92,6 +92,13 @@ namespace Dune
 
         static std::false_type hasSkeleton ( ... );
 
+        template< class Integrands >
+        using Get = std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >;
+
+        template< class Integrands >
+        using RRangeType = typename Get<Integrands>::RRangeType;
+        template< class Integrands >
+        using DirichletComponentType = typename Get<Integrands>::DirichletComponentType;
       } // namespace IntegrandsTraits
 
     } // namespace Impl
@@ -120,6 +127,9 @@ namespace Dune
       static_assert( (!hasSkeleton || skeleton), "Existence of method 'hasSkeleton' implies existence of method skeleton." );
 
       static const bool isFull = hasInterior && hasBoundary && hasSkeleton;
+
+      typedef Impl::IntegrandsTraits::RRangeType< Integrands > RRangeType;
+      typedef Impl::IntegrandsTraits::DirichletComponentType< Integrands > DirichletComponentType;
     };
 
 
@@ -303,12 +313,47 @@ namespace Dune
       decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
 
       Integrands integrands_;
+
+    public:
+      typedef typename IntegrandsTraits< Integrands >::RRangeType RRangeType;
+      typedef typename IntegrandsTraits< Integrands >::DirichletComponentType DirichletComponentType;
+      bool hasDirichletBoundary () const
+      {
+        return integrands_.get().hasDirichletBoundary();
+      }
+      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent )
+      {
+        return integrands_.get().isDirichletIntersection(inter,dirichletComponent);
+      }
+      template <class Point>
+      void dirichlet( int bndId, const Point &x, RRangeType &value) const
+      {
+        return integrands_.get().dirichlet(bndId,x,value);
+      }
     };
 
 
 
     // VirtualizedIntegrands
     // ---------------------
+
+    namespace detail
+    {
+      template <class T>
+      struct GetDimRange;
+      template <class FT,int r>
+      struct GetDimRange<Dune::FieldVector<FT,r>>
+      {
+        typedef Dune::FieldVector<FT,r> type;
+        static const int value = r;
+      };
+      template <class FT,int r,int c>
+      struct GetDimRange<Dune::FieldMatrix<FT,r,c>>
+      {
+        typedef Dune::FieldVector<FT,r> type;
+        static const int value = r;
+      };
+    }
 
     template< class GridPart, class DomainValue, class RangeValue = DomainValue >
     class VirtualizedIntegrands
@@ -322,6 +367,10 @@ namespace Dune
 
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
       typedef typename GridPartType::IntersectionType IntersectionType;
+
+      using RRangeType = typename detail::GetDimRange<std::tuple_element_t<0,RangeValueType>>::type;
+      typedef Dune::FieldVector<int,RRangeType::dimension> DirichletComponentType;
+      typedef typename EntityType::Geometry::LocalCoordinate DomainType;
 
     private:
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
@@ -368,6 +417,10 @@ namespace Dune
         virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const = 0;
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const = 0;
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const = 0;
+
+        virtual bool hasDirichletBoundary () const = 0;
+        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) = 0;
+        virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const = 0;
       };
 
       template< class Impl >
@@ -397,6 +450,10 @@ namespace Dune
         virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const override { return impl().skeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
+
+        virtual bool hasDirichletBoundary () const override { return impl().hasDirichletBoundary(); }
+        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) override { return impl().isDirichletIntersection(inter,dirichletComponent); }
+        virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const override { impl().dirichlet(bndId,x,value); }
 
       private:
         const auto &impl () const { return std::cref( impl_ ).get(); }
@@ -508,6 +565,18 @@ namespace Dune
         return impl().linearizedSkeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
       }
 
+      bool hasDirichletBoundary () const
+      {
+        return impl().hasDirichletBoundary();
+      }
+      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent )
+      {
+        return impl().isDirichletIntersection(inter,dirichletComponent);
+      }
+      void dirichlet( int bndId, const DomainType &x,RRangeType &value) const
+      {
+        return impl().dirichlet(bndId,x,value);
+      }
     private:
       const Interface &impl () const { assert( impl_ ); return *impl_; }
       Interface &impl () { assert( impl_ ); return *impl_; }

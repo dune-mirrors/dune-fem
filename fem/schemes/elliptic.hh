@@ -54,7 +54,6 @@
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
-#include <dune/fem/schemes/dirichletconstraints.hh>
 // include parameter handling
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/dataoutput.hh>
@@ -62,50 +61,23 @@
 // EllipticOperator
 // ----------------
 
-struct NoConstraints
-{
-  template <class ModelType, class DiscreteFunctionSpaceType>
-  NoConstraints( const ModelType&, const DiscreteFunctionSpaceType& )
-  {}
-
-  template < class DiscreteFunctionType >
-  void operator ()( const DiscreteFunctionType& u, DiscreteFunctionType& w ) const
-  {}
-
-  template < class DiscreteFunctionType >
-  void operator ()( const DiscreteFunctionType& u) const
-  {}
-
-  template < class GridFunctionType, class DiscreteFunctionType >
-  void operator ()( const GridFunctionType& u, DiscreteFunctionType& w ) const
-  {}
-
-  template <class LinearOperator>
-  void applyToOperator( LinearOperator& linearOperator ) const
-  {}
-};
-
-
-
 //! [Class for elliptic operator]
-template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model,
-          class Constraints = Dune::DirichletConstraints< Model, typename RangeDiscreteFunction::DiscreteFunctionSpaceType > >
+template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model>
 struct EllipticOperator
 : public virtual Dune::Fem::Operator< DomainDiscreteFunction, RangeDiscreteFunction >
 //! [Class for elliptic operator]
 {
-  typedef DomainDiscreteFunction DomainDiscreteFunctionType;
-  typedef RangeDiscreteFunction  RangeDiscreteFunctionType;
+  typedef DomainDiscreteFunction DomainFunctionType;
+  typedef RangeDiscreteFunction  RangeFunctionType;
   typedef Model                  ModelType;
-  typedef Constraints      ConstraintsType;           // the class taking care of boundary constraints e.g. dirichlet bc
+  typedef Model                  DirichletModelType;
 
-protected:
-  typedef typename DomainDiscreteFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
-  typedef typename DomainDiscreteFunctionType::LocalFunctionType         DomainLocalFunctionType;
+  typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
+  typedef typename DomainFunctionType::LocalFunctionType         DomainLocalFunctionType;
   typedef typename DomainLocalFunctionType::RangeType                    DomainRangeType;
   typedef typename DomainLocalFunctionType::JacobianRangeType            DomainJacobianRangeType;
-  typedef typename RangeDiscreteFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
-  typedef typename RangeDiscreteFunctionType::LocalFunctionType         RangeLocalFunctionType;
+  typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
+  typedef typename RangeFunctionType::LocalFunctionType         RangeLocalFunctionType;
   typedef typename RangeLocalFunctionType::RangeType                    RangeRangeType;
   typedef typename RangeLocalFunctionType::JacobianRangeType            RangeJacobianRangeType;
 
@@ -121,36 +93,58 @@ protected:
   typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > QuadratureType;
   typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
 
-public:
-  EllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &rangeSpace, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : model_( model ) , constraints_( model, rangeSpace )
+  EllipticOperator ( const RangeDiscreteFunctionSpaceType &rangeSpace,
+                     ModelType &model,
+                     const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : model_( model ),
+      dSpace_(rangeSpace), rSpace_(rangeSpace)
+  {}
+  EllipticOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
+                     const RangeDiscreteFunctionSpaceType &rSpace,
+                     ModelType &model,
+                     const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : model_( model ),
+      dSpace_(dSpace), rSpace_(rSpace)
   {}
 
+#if 0
   // prepare the solution vector
-  void prepare( RangeDiscreteFunctionType &u ) const
-  {
-    // set boundary values for solution
-    constraints()( u );
-  }
-  void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
-  {
-    // set boundary values for solution
-    constraints()( u, w );
-  }
+  void setConstraints( DomainFunctionType &u ) const
+  { }
+  // prepare the solution vector
+  void setConstraints( const DomainRangeType &value, DomainFunctionType &u ) const
+  { }
+  template <class GF>
+  void setConstraints( const GF &u, RangeFunctionType &w ) const
+  { }
+  template <class GF>
+  void subConstraints( const GF &u, RangeFunctionType &w ) const
+  { }
+#endif
 
   //! application operator
-  virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
+  virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
   { apply(u,w); }
   template <class GF>
-  void apply( const GF &u, RangeDiscreteFunctionType &w ) const;
+  void operator()( const GF &u, RangeFunctionType &w ) const
+  { apply(u,w); }
+  template <class GF>
+  void apply( const GF &u, RangeFunctionType &w ) const;
 
-protected:
-  const ModelType &model () const { return model_; }
-  const ConstraintsType &constraints () const { return constraints_; }
+  const DomainDiscreteFunctionSpaceType& domainSpace() const
+  {
+    return dSpace_;
+  }
+  const RangeDiscreteFunctionSpaceType& rangeSpace() const
+  {
+    return rSpace_;
+  }
+  ModelType &model () const { return model_; }
 
 private:
-  const ModelType &model_;
-  ConstraintsType constraints_;
+  ModelType &model_;
+  const DomainDiscreteFunctionSpaceType &dSpace_;
+  const RangeDiscreteFunctionSpaceType &rSpace_;
 };
 
 
@@ -159,28 +153,26 @@ private:
 // ------------------------------
 
 //! [Class for linearizable elliptic operator]
-template< class JacobianOperator, class Model,
-          class Constraints = Dune::DirichletConstraints< Model, typename JacobianOperator::RangeFunctionType::DiscreteFunctionSpaceType > >
+template< class JacobianOperator, class Model >
 struct DifferentiableEllipticOperator
-: public EllipticOperator< typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType, Model, Constraints >,
+: public EllipticOperator< typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType, Model >,
   public Dune::Fem::DifferentiableOperator< JacobianOperator >
 //! [Class for linearizable elliptic operator]
 {
-  typedef EllipticOperator< typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType, Model, Constraints > BaseType;
+  typedef EllipticOperator< typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType, Model > BaseType;
 
   typedef JacobianOperator JacobianOperatorType;
 
-  typedef typename BaseType::DomainDiscreteFunctionType DomainDiscreteFunctionType;
-  typedef typename BaseType::RangeDiscreteFunctionType  RangeDiscreteFunctionType;
+  typedef typename BaseType::DomainFunctionType DomainFunctionType;
+  typedef typename BaseType::RangeFunctionType  RangeFunctionType;
   typedef typename BaseType::ModelType ModelType;
 
-protected:
-  typedef typename DomainDiscreteFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
-  typedef typename DomainDiscreteFunctionType::LocalFunctionType         DomainLocalFunctionType;
+  typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
+  typedef typename DomainFunctionType::LocalFunctionType         DomainLocalFunctionType;
   typedef typename DomainLocalFunctionType::RangeType                    DomainRangeType;
   typedef typename DomainLocalFunctionType::JacobianRangeType            DomainJacobianRangeType;
-  typedef typename RangeDiscreteFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
-  typedef typename RangeDiscreteFunctionType::LocalFunctionType         RangeLocalFunctionType;
+  typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
+  typedef typename RangeFunctionType::LocalFunctionType         RangeLocalFunctionType;
   typedef typename RangeLocalFunctionType::RangeType                    RangeRangeType;
   typedef typename RangeLocalFunctionType::JacobianRangeType            RangeJacobianRangeType;
 
@@ -197,22 +189,31 @@ protected:
   // quadrature for faces - used for Neuman b.c.
   typedef typename BaseType::FaceQuadratureType FaceQuadratureType;
 
-public:
   //! contructor
-  DifferentiableEllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &space, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-  : BaseType( model, space, parameter )
+  DifferentiableEllipticOperator ( const RangeDiscreteFunctionSpaceType &space,
+                                   ModelType &model,
+                                   const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : BaseType( space, space, model, parameter )
+  {}
+  //! contructor
+  DifferentiableEllipticOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
+                                   const RangeDiscreteFunctionSpaceType &rSpace,
+                                   ModelType &model,
+                                   const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : BaseType( dSpace, rSpace, model, parameter )
   {}
 
   //! method to setup the jacobian of the operator for storage in a matrix
-  void jacobian ( const DomainDiscreteFunctionType &u, JacobianOperatorType &jOp ) const
-  { apply(u,jOp); }
+  void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
+  { assemble(u,jOp); }
   template <class GridFunctionType>
-  void apply ( const GridFunctionType &u, JacobianOperatorType &jOp ) const;
-  using BaseType::apply;
+  void jacobian ( const GridFunctionType &u, JacobianOperatorType &jOp ) const
+  { assemble(u,jOp); }
+  template <class GridFunctionType>
+  void assemble ( const GridFunctionType &u, JacobianOperatorType &jOp ) const;
+  using BaseType::operator();
 
-protected:
   using BaseType::model;
-  using BaseType::constraints;
 };
 
 
@@ -220,10 +221,10 @@ protected:
 // Implementation of EllipticOperator
 // ----------------------------------
 
-template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model, class Constraints >
+template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model >
 template<class GF>
-void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Constraints >
-  ::apply( const GF &u, RangeDiscreteFunctionType &w ) const
+void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model >
+  ::apply( const GF &u, RangeFunctionType &w ) const
 {
   w.clear();
   // get discrete function space
@@ -231,7 +232,7 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
 
   // get local representation of the discrete functions
   Dune::Fem::ConstLocalFunction< GF > uLocal( u );
-  Dune::Fem::AddLocalContribution< RangeDiscreteFunctionType > wLocal( w );
+  Dune::Fem::AddLocalContribution< RangeFunctionType > wLocal( w );
 
   // iterate over grid
   for( const EntityType &entity : dfSpace )
@@ -314,8 +315,6 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
   }
 
   w.communicate();
-  // apply constraints, e.g. Dirichlet contraints, to the result
-  constraints()( u, w );
 }
 
 
@@ -323,10 +322,10 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
 // Implementation of DifferentiableEllipticOperator
 // ------------------------------------------------
 
-template< class JacobianOperator, class Model, class Constraints >
+template< class JacobianOperator, class Model >
 template<class GF>
-void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
-  ::apply ( const GF &u, JacobianOperator &jOp ) const
+void DifferentiableEllipticOperator< JacobianOperator, Model >
+  ::assemble ( const GF &u, JacobianOperator &jOp ) const
 {
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DomainDiscreteFunctionSpaceType::BasisFunctionSetType DomainBasisFunctionSetType;
@@ -434,9 +433,6 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
       }
     }
   } // end grid traversal
-
-  // apply constraints to matrix operator
-  constraints().applyToOperator( jOp );
   jOp.communicate();
 }
 #endif // #ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH

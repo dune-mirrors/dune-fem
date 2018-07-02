@@ -46,6 +46,7 @@ namespace Dune
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
+      GeometryGridPartIntersection () = default;
       GeometryGridPartIntersection ( const GridFunctionType &gridFunction, const typename ElementGeometry::Implementation &insideGeo, HostIntersectionType hostIntersection )
         : hostIntersection_( std::move( hostIntersection ) ), gridFunction_( &gridFunction ), insideGeo_( insideGeo )
       {}

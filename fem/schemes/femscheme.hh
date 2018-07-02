@@ -40,16 +40,16 @@
 #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
 #define DUNE_FEM_SCHEMES_FEMSCHEME_HH
 
+#include <type_traits>
+#include <utility>
 #include <iostream>
 #include <memory>
+#include <dune/common/typeutilities.hh>
 
 // include discrete function space
 #include <dune/fem/space/lagrange.hh>
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
-
-// estimator for residual <- not adapted to new diffusion model yet
-#include "estimator.hh"
 
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/io/parameter.hh>
@@ -58,13 +58,23 @@
 // FemScheme
 //----------
 
+template < class Op, class DF, typename = void >
+struct AddDirichletBC { static const bool value = false; };
+template < class Op, class DF>
+struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declval<const Op>().
+            setConstraints( std::declval<DF&>() ) )>::value > >
+{ static const bool value = true; };
+
+
 template< class Operator, class InverseOperator >
 class FemScheme
 {
 public:
   //! type of the mathematical model
   typedef typename Operator::ModelType ModelType;
-  typedef typename Operator::RangeDiscreteFunctionType DiscreteFunctionType;
+  typedef typename Operator::DomainFunctionType DomainFunctionType;
+  typedef typename Operator::RangeFunctionType  RangeFunctionType;
+  typedef typename Operator::RangeFunctionType  DiscreteFunctionType;
   typedef Operator DifferentiableOperatorType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef InverseOperator InverseOperatorType;
@@ -80,27 +90,19 @@ public:
   //! type of function space (scalar functions, \f$ f: \Omega -> R) \f$
   typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
-  typedef typename Operator::JacobianOperatorType LinearOperatorType;
+  typedef typename Operator::JacobianOperatorType JacobianOperatorType;
 
-  //! type of restriction/prolongation projection for adaptive simulations
-  //! (use default here, i.e. LagrangeInterpolation)
-  typedef Dune::Fem::RestrictProlongDefault< DiscreteFunctionType >  RestrictionProlongationType;
-
-  //! type of error estimator
-  typedef Estimator< DiscreteFunctionType, ModelType, GridPartType::dimension == GridPartType::dimensionworld > EstimatorType;
-
+  typedef typename FunctionSpaceType::RangeType RangeType;
   static const int dimRange = FunctionSpaceType::dimRange;
-  typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
     space_( space ),
     // the elliptic operator (implicit)
-    implicitOperator_( model_, space_, parameter ),
+    implicitOperator_( space, space, std::forward<ModelType&>(model_), parameter ),
     // create linear operator (domainSpace,rangeSpace)
     linearOperator_( "assembled elliptic operator", space_, space_ ), // , parameter ),
-    estimator_( space_, model ),
     parameter_( parameter )
   {}
 
@@ -109,9 +111,29 @@ public:
     return implicitOperator_;
   }
 
-  void constraint( DiscreteFunctionType &u ) const
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( DomainFunctionType &u ) const
   {
-    implicitOperator_.prepare( u );
+    implicitOperator_.setConstraints( u );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.setConstraints( u, v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.subConstraints( u, v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
+  {
+    implicitOperator_.setConstraints( value, u );
   }
 
   void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
@@ -119,9 +141,10 @@ public:
     implicitOperator_( arg, dest );
   }
   template <class GridFunction>
-  void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
+  auto operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
+  -> Dune::void_t<decltype(std::declval<const Operator&>()(arg,dest))>
   {
-    implicitOperator_.apply( arg, dest );
+    implicitOperator_( arg, dest );
   }
 
   struct SolverInfo
@@ -135,12 +158,10 @@ public:
   };
   SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
   {
-    typedef InverseOperator LinearInverseOperatorType;
-    typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
-    InverseOperatorType invOp( implicitOperator_, parameter_ );
+    typedef Dune::Fem::NewtonInverseOperator< JacobianOperatorType, InverseOperatorType > NLInverseOperatorType;
+    NLInverseOperatorType invOp( implicitOperator_, parameter_ );
     DiscreteFunctionType rhs0 = rhs;
-    implicitOperator_.prepare( rhs0 );
-    implicitOperator_.prepare( rhs0, solution );
+    setZeroConstraints( rhs0 );
     invOp( rhs0, solution );
     return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
   }
@@ -153,36 +174,34 @@ public:
 
   template< class GridFunction, std::enable_if_t<
         std::is_same< decltype(
-          std::declval< const DifferentiableOperatorType >().apply(
-              std::declval< const GridFunction& >(), std::declval< LinearOperatorType& >()
+          std::declval< const DifferentiableOperatorType >().jacobian(
+              std::declval< const GridFunction& >(), std::declval< JacobianOperatorType& >()
             )
           ), void >::value, int> i = 0
     >
-  const LinearOperatorType &assemble( const GridFunction &ubar )
+  const JacobianOperatorType &assemble( const GridFunction &ubar )
   {
-    implicitOperator_.apply(ubar, linearOperator_);
+    implicitOperator_.jacobian(ubar, linearOperator_);
     return linearOperator_;
   }
-
-  //! mark elements for adaptation
-  bool mark ( double tolerance ) { return estimator_.mark( tolerance ); }
-
-  //! calculate error estimator
-  double estimate ( const DiscreteFunctionType &solution ) { return estimator_.estimate( solution ); }
 
   const GridPartType &gridPart () const { return space().gridPart(); }
   const DiscreteFunctionSpaceType &space( ) const { return space_; }
 
-  const ModelType &model() const
+  ModelType &model() const
   {
     return model_;
   }
 protected:
-  const ModelType &model_;   // the mathematical model
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
+  void setZeroConstraints( ... ) const { }
+
+  ModelType &model_;   // the mathematical model
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
-  LinearOperatorType linearOperator_;
-  EstimatorType estimator_; // estimator for residual error
+  JacobianOperatorType linearOperator_;
   const Dune::Fem::ParameterReader parameter_;
 };
 
