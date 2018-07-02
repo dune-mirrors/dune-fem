@@ -109,8 +109,8 @@ namespace Dune
         virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const = 0 ;
         virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const = 0 ;
         virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const = 0 ;
-        virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
-        virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
+        //virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
+        //virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
 
         virtual int order () const = 0;
         virtual const EntityType &entity () const = 0;
@@ -138,8 +138,8 @@ namespace Dune
         virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
         virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
         virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
+        //virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
+        //virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
 
         virtual int order () const override { return impl().order(); }
         virtual const EntityType &entity () const override { return impl().entity(); }

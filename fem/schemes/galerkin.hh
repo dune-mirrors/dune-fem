@@ -57,6 +57,7 @@ namespace Dune
         typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
         typedef std::make_index_sequence< std::tuple_size< RangeValueType >::value > RangeValueIndices;
 
+
         template< std::size_t... i >
         static auto makeDomainValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
         {
@@ -150,11 +151,13 @@ namespace Dune
           return phi;
         }
 
-        static DomainValueType domainVec ( const int qpIdx, DomainValueVectorType& vec )
+        template <class Weight>
+        static DomainValueType domainVec ( const int qpIdx, DomainValueVectorType& vec, const Weight& weight )
         {
           DomainValueType phi;
-          Hybrid::forEach( RangeValueIndices(), [ &qpIdx, &vec, &phi ] ( auto i ) {
+          Hybrid::forEach( DomainValueIndices(), [ &qpIdx, &vec, &phi, &weight ] ( auto i ) {
               std::get< i > ( phi ) = std::get< i >( vec )[ qpIdx ];
+              std::get< i > ( phi ) *= weight;
                 } );
           return phi;
         }
@@ -204,9 +207,6 @@ namespace Dune
           }
         }
 
-        mutable std::vector< DomainValueVectorType > values_;
-        mutable DomainValueVectorType domEval_;
-
         template< class U, class J >
         void addLinearizedInteriorIntegral ( const U &u, DomainValueVectorType &phi, J &j ) const
         {
@@ -219,66 +219,50 @@ namespace Dune
 
           InteriorQuadratureType quad( u.entity(), interiorQuadOrder(rangeBasis.order()) );
           const size_t domainSize = domainBasis.size();
+          const size_t quadNop = quad.nop();
+
+          auto& basisValues = basisValues_;
+          Hybrid::forEach( RangeValueIndices(), [ &domainSize, &basisValues ] ( auto i ) {
+              std::get< i >( basisValues ).resize( domainSize );
+            });
 
 
-          //if( values_.size() != quad.nop() )
-          {
-            //std::cout << "Resize values_ " << std::endl;
-            values_.resize( quad.nop() );
-            for( const auto qp : quad )
-            {
-              auto& valphi = values_[ qp.index() ];
-              Hybrid::forEach( RangeValueIndices(), [ &domainSize, &valphi ] ( auto i ) {
-                  std::get< i >( valphi ).resize( domainSize );
-                } );
-              values( domainBasis, qp, valphi );
-            }
-          }
-
-          DomainValueVectorType& domEval = domEval_;
-
+          DomainValueVectorType& domEval = domainValues_;
           domainValue( u, quad, domEval );
 
-          typedef decltype( integrands_.linearizedInterior( quad[0], domainValue( u, quad[0] ) ) )  IntegrandsType;
-          std::vector< IntegrandsType > domVals;
-          domVals.reserve( quad.nop() );
-
+          rangeValues_.resize( domainSize );
+          for( std::size_t col = 0; col < domainSize; ++col )
+          {
+            auto& ranges = rangeValues_[ col ];
+            Hybrid::forEach( RangeValueIndices(), [ &quadNop, &ranges ] ( auto i ) {
+                std::get< i >( ranges ).resize( quadNop );
+              });
+          }
 
           for( const auto qp : quad )
           {
+            values( domainBasis, qp, basisValues );
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
-            //domVals.emplace_back( integrands_.linearizedInterior( qp, domainValue( u, qp, weight ) ) );
-            Hybrid::forEach( DomainValueIndices(), [ &qp, &domEval, &weight ] ( auto i ) {
-                std::get< i >( domEval )[ qp.index() ] *= weight;
-              } );
-            domVals.emplace_back( integrands_.linearizedInterior( qp, domainVec( qp.index(), domEval ) ) );
+            auto integrand = integrands_.linearizedInterior( qp, domainVec( qp.index(), domEval, weight ) );
+            for( std::size_t col = 0; col < domainSize; ++col )
+            {
+              auto& ranges = rangeValues_[ col ];
+              RangeValueType intPhi = integrand( value( basisValues, col ) );
+              Hybrid::forEach( RangeValueIndices(), [ &quadNop, &ranges, &intPhi, &qp, &col ] ( auto i ) {
+                  std::get< i >( ranges )[ qp.index() ] = std::get< i >( intPhi );
+              });
+            }
           }
-
-          RangeValueVectorType ranges = makeRangeValueVector( quad.nop() );
 
           for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
           {
             LocalMatrixColumn< J > jCol( j, col );
-            for( const auto qp : quad )
-            {
-              //const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
-              //values( domainBasis, qp, phi );
-              auto& integrand = domVals[ qp.index() ];
-              const auto& valphi = values_[ qp.index() ];
-
-              RangeValueType intPhi = integrand( value( valphi, col ) );
-
-              Hybrid::forEach( RangeValueIndices(), [ &qp, &intPhi, &ranges ] ( auto i ) {
-                  std::get< i > ( ranges )[ qp.index() ] = std::get< i >( intPhi );
-                } );
-            }
+            auto& ranges = rangeValues_[ col ];
 
             Hybrid::forEach( RangeValueIndices(), [ &quad, &jCol, &ranges ] ( auto i ) {
                 //std::get< i >( intPhi ) *= weight;
                 jCol.axpy( quad, std::get< i >( ranges ) );
               } );
-
-
           }
           /*
           for( const auto qp : InteriorQuadratureType( u.entity(), interiorQuadOrder(rangeBasis.order()) ) )
@@ -764,6 +748,11 @@ namespace Dune
         mutable IntegrandsType integrands_;
         unsigned int interiorQuadOrder_;
         unsigned int surfaceQuadOrder_;
+
+        mutable std::vector< RangeValueVectorType > rangeValues_;
+        mutable DomainValueVectorType basisValues_;
+        mutable DomainValueVectorType domainValues_;
+
       };
 
     } // namespace Impl
