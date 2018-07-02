@@ -42,6 +42,7 @@ namespace Dune
       template< class Integrands >
       struct GalerkinOperator
       {
+        typedef GalerkinOperator<Integrands> ThisType;
         typedef std::conditional_t< Fem::IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
 
         typedef typename IntegrandsType::GridPartType GridPartType;
@@ -183,7 +184,7 @@ namespace Dune
           Hybrid::forEach( RangeValueIndices(), [ &u, &quad, &result ] ( auto i ) {
                   auto& vec = std::get< i >( result );
                   vec.resize( quad.nop() );
-                  evalquad( u, quad, vec );
+                  ThisType::evalquad( u, quad, vec );
                 } );
         }
 
