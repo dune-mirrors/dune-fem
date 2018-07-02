@@ -124,7 +124,7 @@ def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
-              First argument is not the ufl form and the second argument is
+              First argument is now the ufl form and the second argument is
               the space.""")
         integrands,space = space,integrands
     integrandsParam = None
@@ -194,7 +194,7 @@ def h1(model, space=None, solver=None, parameters={}):
     if hasattr(model,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
-              First argument is not the ufl form and the second argument is
+              First argument is now the ufl form and the second argument is
               the space.""")
         model,space = space,model
     modelParam = None
