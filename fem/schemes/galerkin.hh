@@ -98,16 +98,22 @@ namespace Dune
             } );
         }
 
-        template< class LocalFunction, class Quad >
-        static void evalquad ( const LocalFunction &u, const Quad &quad, std::vector< typename LocalFunction::RangeType > &phi )
+        template< class LocalFunction, class Quadrature >
+        static void evaluateQuadrature ( const LocalFunction &u, const Quadrature &quad, std::vector< typename LocalFunction::RangeType > &phi )
         {
           u.evaluateQuadrature( quad, phi );
         }
 
-        template< class LocalFunction, class Quad >
-        static void evalquad ( const LocalFunction &u, const Quad &quad, std::vector< typename LocalFunction::JacobianRangeType > &phi )
+        template< class LocalFunction, class Quadrature>
+        static void evaluateQuadrature ( const LocalFunction &u, const Quadrature &quad, std::vector< typename LocalFunction::JacobianRangeType > &phi )
         {
           u.jacobianQuadrature( quad, phi );
+        }
+
+        template< class LocalFunction, class Quadrature >
+        static void evaluateQuadrature ( const LocalFunction &u, const Quadrature &quad, std::vector< typename LocalFunction::HessianRangeType > &phi )
+        {
+          u.hessianQuadrature( quad, phi );
         }
 
         template< class LocalFunction, class Point >
@@ -167,23 +173,23 @@ namespace Dune
         }
 
         template <class Weight>
-        static DomainValueType domainVec ( const int qpIdx, DomainValueVectorType& vec, const Weight& weight )
+        static DomainValueType domainValue ( const int qpIdx, DomainValueVectorType& vec, const Weight& weight )
         {
           DomainValueType phi;
           Hybrid::forEach( DomainValueIndices(), [ &qpIdx, &vec, &phi, &weight ] ( auto i ) {
-              std::get< i > ( phi ) = std::get< i >( vec )[ qpIdx ];
+              std::get< i > ( phi )  = std::get< i >( vec )[ qpIdx ];
               std::get< i > ( phi ) *= weight;
                 } );
           return phi;
         }
 
-        template< class LocalFunction, class Quad >
-        static void domainValue ( const LocalFunction &u, const Quad& quad, DomainValueVectorType &result  )
+        template< class LocalFunction, class Quadrature >
+        static void domainValue ( const LocalFunction &u, const Quadrature& quadrature, DomainValueVectorType &result  )
         {
-          Hybrid::forEach( RangeValueIndices(), [ &u, &quad, &result ] ( auto i ) {
+          Hybrid::forEach( DomainValueIndices(), [ &u, &quadrature, &result ] ( auto i ) {
                   auto& vec = std::get< i >( result );
-                  vec.resize( quad.nop() );
-                  evalquad( u, quad, vec );
+                  vec.resize( quadrature.nop() );
+                  evaluateQuadrature( u, quadrature, vec );
                 } );
         }
 
@@ -244,8 +250,7 @@ namespace Dune
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
-            RangeValueType intPhi = integrands_.interior( qp, domainVec( qp.index(), domEval, weight ) );
-            assignRange( ranges, qp.index(), intPhi );
+            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domEval, weight ) ) );
           }
 
           // add to w for all quadrature points
@@ -262,16 +267,16 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          InteriorQuadratureType quad( u.entity(), interiorQuadOrder(rangeBasis.order()) );
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadOrder(rangeBasis.order()) );
           const size_t domainSize = domainBasis.size();
-          const size_t quadNop = quad.nop();
+          const size_t quadNop = quadrature.nop();
 
           auto& basisValues = basisValues_;
           resizeDomainValueVector( basisValues_, domainSize );
 
           // evaluate u for all quadrature points
           DomainValueVectorType& domains = domainValues_;
-          domainValue( u, quad, domains );
+          domainValue( u, quadrature, domains );
 
           rangeValues_.resize( domainSize );
           for( std::size_t col = 0; col < domainSize; ++col )
@@ -281,28 +286,22 @@ namespace Dune
           }
 
           // evaluate all basis functions and integrands
-          for( const auto qp : quad )
+          for( const auto qp : quadrature )
           {
             values( domainBasis, qp, basisValues );
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
-            auto integrand = integrands_.linearizedInterior( qp, domainVec( qp.index(), domains, weight ) );
+            auto integrand = integrands_.linearizedInterior( qp, domainValue( qp.index(), domains, weight ) );
             for( std::size_t col = 0; col < domainSize; ++col )
             {
-              auto& ranges = rangeValues_[ col ];
-              RangeValueType intPhi = integrand( value( basisValues, col ) );
-              Hybrid::forEach( RangeValueIndices(), [ &quadNop, &ranges, &intPhi, &qp, &col ] ( auto i ) {
-                  std::get< i >( ranges )[ qp.index() ] = std::get< i >( intPhi );
-              });
+              assignRange( rangeValues_[ col ], qp.index(), integrand( value( basisValues, col ) ) );
             }
           }
 
           // add to local matrix for all quadrature points and basis functions
-          for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
+          for( std::size_t col = 0; col < domainSize; ++col )
           {
             LocalMatrixColumn< J > jCol( j, col );
-            auto& ranges = rangeValues_[ col ];
-
-            axpyQuadrature( jCol, quad, ranges );
+            axpyQuadrature( jCol, quadrature, rangeValues_[ col ] );
           }
         }
 
