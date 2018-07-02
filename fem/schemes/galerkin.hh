@@ -42,6 +42,7 @@ namespace Dune
       template< class Integrands >
       struct GalerkinOperator
       {
+        typedef GalerkinOperator<Integrands> ThisType;
         typedef std::conditional_t< Fem::IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
 
         typedef typename IntegrandsType::GridPartType GridPartType;
@@ -187,10 +188,10 @@ namespace Dune
         static void domainValue ( const LocalFunction &u, const Quadrature& quadrature, DomainValueVectorType &result  )
         {
           Hybrid::forEach( DomainValueIndices(), [ &u, &quadrature, &result ] ( auto i ) {
-                  auto& vec = std::get< i >( result );
-                  vec.resize( quadrature.nop() );
-                  evaluateQuadrature( u, quadrature, vec );
-                } );
+              auto& vec = std::get< i >( result );
+              vec.resize( quadrature.nop() );
+              ThisType::evaluateQuadrature( u, quadrature, vec );
+            } );
         }
 
         template< class Phi, std::size_t... i >
