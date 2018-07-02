@@ -80,6 +80,12 @@ namespace Dune
         basisFunctionSet().axpy( x, std::forward< Factor >( factor )..., *this );
       }
 
+      template< class Point, class... Factor >
+      void axpyQuadrature ( const Point &x, Factor &&... factor )
+      {
+        basisFunctionSet().axpy( x, std::forward< Factor >( factor )..., *this );
+      }
+
       const BasisFunctionSetType &basisFunctionSet () const { return localMatrix_.rangeBasisFunctionSet(); }
 
       auto size() const { return basisFunctionSet().size(); }
@@ -121,6 +127,12 @@ namespace Dune
 
       template< class Point, class... Factor >
       void axpy ( const Point &x, Factor &&... factor )
+      {
+        basisFunctionSet().axpy( x, std::forward< Factor >( factor )..., *this );
+      }
+
+      template< class Point, class... Factor >
+      void axpyQuadrature ( const Point &x, Factor &&... factor )
       {
         basisFunctionSet().axpy( x, std::forward< Factor >( factor )..., *this );
       }
