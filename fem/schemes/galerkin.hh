@@ -241,8 +241,8 @@ namespace Dune
           InteriorQuadratureType quadrature( u.entity(), interiorQuadOrder(w.order()) );
 
           // evaluate u for all quadrature points
-          DomainValueVectorType& domEval = domainValues_;
-          domainValue( u, quadrature, domEval );
+          DomainValueVectorType& domains = domainValues_;
+          domainValue( u, quadrature, domains );
 
           auto& ranges = values_;
           resizeRangeValueVector( ranges, quadrature.nop() );
@@ -251,7 +251,7 @@ namespace Dune
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
-            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domEval, weight ) ) );
+            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domains, weight ) ) );
           }
 
           // add to w for all quadrature points
@@ -282,8 +282,7 @@ namespace Dune
           rangeValues_.resize( domainSize );
           for( std::size_t col = 0; col < domainSize; ++col )
           {
-            auto& ranges = rangeValues_[ col ];
-            resizeRangeValueVector( ranges, quadNop );
+            resizeRangeValueVector( rangeValues_[ col ], quadNop );
           }
 
           // evaluate all basis functions and integrands
