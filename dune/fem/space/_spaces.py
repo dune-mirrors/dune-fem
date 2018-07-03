@@ -233,7 +233,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/lagrange.hh" ] + view._includes
+    includes = view._includes + [ "dune/fem/space/lagrange.hh" ]
     dimw = view.dimWorld
     typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
@@ -242,6 +242,11 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
     spc = module(field, includes, typeName).Space(view)
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
+        typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + ", " +\
+          "Dune::Fem::CodegenStorage" +\
+          " >"
         spc = module(field, includes, typeName,
                     interiorQuadratureOrders=interiorQuadratureOrders,
                     skeletonQuadratureOrders=skeletonQuadratureOrders).Space(view)

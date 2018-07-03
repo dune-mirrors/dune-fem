@@ -128,7 +128,7 @@ def numpyFunction(space, vec, name="tmp", **unused):
 
     from dune.fem.discretefunction import module
     assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
-    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._includes
+    includes = space._includes + [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ]
     spaceType = space._typeName
     field = space.field
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
@@ -155,9 +155,9 @@ def petscFunction(space, vec, name="tmp", **unused):
     from dune.fem.discretefunction import module, petsc
     # assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
     import petsc4py
-    includes = [ "dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh", "dune/fem/misc/petsc/petscvector.hh" ] +\
-                 space._includes +\
-               [ os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h" ]
+    includes = space._includes +\
+               [ os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h" ] +\
+               [ "dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh", "dune/fem/misc/petsc/petscvector.hh" ]
 
     spaceType = space._typeName
     typeName = "Dune::Fem::PetscDiscreteFunction< " + spaceType + ">"
