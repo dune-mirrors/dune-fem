@@ -933,16 +933,6 @@ namespace Dune
       {
         (*this).jacobian( u, jOp );
       }
-#if 0
-      void setConstraints( DiscreteFunctionType &u ) const
-      {}
-      void setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
-      {}
-      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {}
-      void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {}
-#endif
     };
 
 
