@@ -51,6 +51,11 @@ include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
 
+# PETSC_ROOT overrules PETSC_DIR which overrules ENV PETSC_DIR
+if( PETSC_ROOT )
+  set(PETSC_DIR ${PETSC_ROOT})
+endif()
+
 if( NOT PETSC_DIR )
   set(PETSC_DIR $ENV{PETSC_DIR})
 else()
