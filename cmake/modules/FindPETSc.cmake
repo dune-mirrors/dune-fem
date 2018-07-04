@@ -1,29 +1,3 @@
-# Downloaded from https://github.com/jedbrown/cmake-modules.git
-#
-# Copyright Christoph Grüninger, Constantine Khroulev, David Moxey, Jed Brown, johnfettig
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# * Redistributions of source code must retain the above copyright notice, this
-#   list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright notice, this
-#   list of conditions and the following disclaimer in the documentation and/or
-#   other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 # - Try to find PETSc
 # Once done this will define
 #
@@ -48,12 +22,19 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
+cmake_policy(VERSION 3.3)
+
 set(PETSC_VALID_COMPONENTS
   C
   CXX)
 
 if(NOT PETSc_FIND_COMPONENTS)
-  set(PETSC_LANGUAGE_BINDINGS "C")
+  get_property (_enabled_langs GLOBAL PROPERTY ENABLED_LANGUAGES)
+  if ("C" IN_LIST _enabled_langs)
+    set(PETSC_LANGUAGE_BINDINGS "C")
+  else ()
+    set(PETSC_LANGUAGE_BINDINGS "CXX")
+  endif ()
 else()
   # Right now, this is designed for compatability with the --with-clanguage option, so
   # only allow one item in the components list.
@@ -84,26 +65,31 @@ function (petsc_get_version)
       set (${var} ${val})         # Also in local scope so we have access below
     endforeach ()
     if (PETSC_VERSION_RELEASE)
-      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}" PARENT_SCOPE)
+      if ($(PETSC_VERSION_PATCH) GREATER 0)
+        set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}" CACHE INTERNAL "PETSc version")
+      else ()
+        set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}" CACHE INTERNAL "PETSc version")
+      endif ()
     else ()
       # make dev version compare higher than any patch level of a released version
-      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}.99" PARENT_SCOPE)
+      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}.99" CACHE INTERNAL "PETSc version")
     endif ()
   else ()
     message (SEND_ERROR "PETSC_DIR can not be used, ${PETSC_DIR}/include/petscversion.h does not exist")
   endif ()
 endfunction ()
 
+# Debian uses versioned paths e.g /usr/lib/petscdir/3.5/
+file (GLOB DEB_PATHS "/usr/lib/petscdir/*")
+
 find_path (PETSC_DIR include/petsc.h
   HINTS ENV PETSC_DIR
   PATHS
-  # Debian paths
   /usr/lib/petsc
-  /usr/lib/petscdir/3.7.5 /usr/lib/petscdir/3.7
-  /usr/lib/petscdir/3.5.1 /usr/lib/petscdir/3.5
-  /usr/lib/petscdir/3.4.2 /usr/lib/petscdir/3.4
-  /usr/lib/petscdir/3.3 /usr/lib/petscdir/3.2 /usr/lib/petscdir/3.1
-  /usr/lib/petscdir/3.0.0 /usr/lib/petscdir/2.3.3 /usr/lib/petscdir/2.3.2
+  # Debian paths
+  ${DEB_PATHS}
+  # Arch Linux path
+  /opt/petsc/linux-c-opt
   # MacPorts path
   /opt/local/lib/petsc
   $ENV{HOME}/petsc
@@ -114,6 +100,7 @@ find_program (MAKE_EXECUTABLE NAMES make gmake)
 if (PETSC_DIR AND NOT PETSC_ARCH)
   set (_petsc_arches
     $ENV{PETSC_ARCH}                   # If set, use environment variable first
+    ""
     linux-gnu-c-debug linux-gnu-c-opt  # Debian defaults
     x86_64-unknown-linux-gnu i386-unknown-linux-gnu)
   set (petscconf "NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
@@ -252,6 +239,7 @@ show :
   else ()
     set (PETSC_LIBRARY_VEC "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # There is no libpetscvec
     petsc_find_library (SINGLE petsc)
+    # Debian 9/Ubuntu 16.04 uses _real and _complex extensions when using libraries in /usr/lib/petsc.
     if (NOT PETSC_LIBRARY_SINGLE)
       petsc_find_library (SINGLE petsc_real)
     endif()
@@ -270,11 +258,6 @@ show :
 
   include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
-    if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
-      set(_PETSC_ERR_FUNC "CHKERRQ(ierr)")
-    elseif(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
-      set(_PETSC_ERR_FUNC "CHKERRXX(ierr)")
-    endif()
     if (PETSC_VERSION VERSION_GREATER 3.1)
       set (_PETSC_TSDestroy "TSDestroy(&ts)")
     else ()
@@ -288,11 +271,11 @@ int main(int argc,char *argv[]) {
   PetscErrorCode ierr;
   TS ts;
 
-  ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
-  ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
-  ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
-  ierr = PetscFinalize();${_PETSC_ERR_FUNC};
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = ${_PETSC_TSDestroy};CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
 ")
@@ -359,5 +342,6 @@ endif ()
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (PETSc
-  "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
-  PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS)
+  REQUIRED_VARS PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS
+  VERSION_VAR PETSC_VERSION
+  FAIL_MESSAGE "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH.")

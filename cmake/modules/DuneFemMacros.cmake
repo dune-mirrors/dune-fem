@@ -51,8 +51,19 @@ include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
 
-set(PETSC_DIR $ENV{PETSC_DIR})
-set(PETSC_ARCH $ENV{PETSC_ARCH})
+if( NOT PETSC_DIR )
+  set(PETSC_DIR $ENV{PETSC_DIR})
+else()
+  # set PETSC_DIR as environment variable to avoid trouble
+  set(ENV{PETSC_DIR} ${PETSC_DIR})
+endif()
+if( NOT PETSC_ARCH )
+  set(PETSC_ARCH $ENV{PETSC_ARCH})
+else()
+  # set PETSC_ARCH as environment variable to avoid trouble
+  set(ENV{PETSC_ARCH} ${PETSC_ARCH})
+endif()
+
 find_package(PETSc)
 if(PETSC_FOUND)
   # set HAVE_PETSC for config.h
