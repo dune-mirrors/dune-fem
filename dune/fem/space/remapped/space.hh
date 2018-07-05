@@ -1,6 +1,11 @@
 #ifndef DUNE_FEM_SPACE_REMAPPED_SPACE_HH
 #define DUNE_FEM_SPACE_REMAPPED_SPACE_HH
 
+#include <memory>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 
@@ -59,18 +64,24 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename Traits::BlockMapperType BlockMapperType;
 
+      template< class DiscreteFunction, class Operation >
+      using CommDataHandleType = typename BaseType::template CommDataHandle< DiscreteFunction, Operation >::Type;
+
       typedef SlaveDofs< ThisType, BlockMapperType > SlaveDofsType;
     protected:
-      typedef typename SlaveDofsType::SingletonKey SlaveDofsKeyType;
-      typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
-
-      struct SlaveDofsDeleter
+      struct SlaveDofsFactory
       {
-        void operator() ( SlaveDofsType *slaveDofs )
+        typedef std::pair< SlaveDofsType, int > ObjectType;
+
+        static ObjectType *createObject ( std::pair< GridPartType *, BlockMapperType * > key )
         {
-          SlaveDofsProviderType::removeObject( *slaveDofs );
+          return new ObjectType( std::piecewise_construct, std::tie( *key.first, *key.second ), std::make_tuple( -1 ) );
         }
+
+        static void deleteObject ( ObjectType *object ) { delete object; }
       };
+
+      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< SlaveDofsType, int >, SlaveDofsFactory > SlaveDofsProviderType;
 
     public:
       static const int localBlockSize = Traits::localBlockSize;
@@ -79,21 +90,38 @@ namespace Dune
       ReMappedDiscreteFunctionSpace ( GridPartType &gridPart,
                                   const InterfaceType commInterface = InteriorBorder_All_Interface,
                                   const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, commInterface, commDirection ), blockMapper_( BaseType::blockMapper() )
-      {}
+        : BaseType( gridPart, commInterface, commDirection )
+      {
+        createBlockMapper( gridPart, BaseType::BlockMapper(), blockMapper_ );
+      }
 
       BlockMapperType &blockMapper () const
       {
+        assert( blockMapper_ );
         return blockMapper_;
       }
 
       const SlaveDofsType &slaveDofs () const
       {
         if( !slaveDofs_ )
-          slaveDofs_.reset( &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( BaseType::gridPart(), blockMapper() ) ) ),
-               SlaveDofsDeleter() );
-        slaveDofs_->rebuild( *this );
-        return *slaveDofs_;
+          slaveDofs_.reset( &( SlaveDofsProviderType :: getObject( std::make_pair( &BaseType::gridPart(), &blockMapper() ) ) ) );
+        const int sequence = this->sequence();
+        if( slaveDofs_->second != sequence )
+        {
+          slaveDofs_->first.rebuild();
+          slaveDofs_->second = sequence;
+        }
+        return slaveDofs_->first;
+      }
+
+      template< class DiscreteFunction, class Operation >
+      CommDataHandleType< DiscreteFunction, Operation >
+      createDataHandle( DiscreteFunction &discreteFunction, const Operation &operation ) const
+      {
+        static_assert( std::is_same< BlockMapperType, typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value
+                       && (localBlockSize == static_cast< std::size_t >( DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize )),
+                       "ReMappedDiscreteFunctionSpace::createDataHandle cannot be called with discrete functions defined over a different space" );
+        return CommDataHandleType< DiscreteFunction, Operation >( discreteFunction, operation );
       }
 
       const CommunicationManagerType &communicator () const
@@ -117,9 +145,23 @@ namespace Dune
       }
 
     private:
-      mutable BlockMapperType blockMapper_;
+      template< class BM >
+      static std::enable_if_t< std::is_constructible< BM, typename BaseType::BlockMapperType & >::value >
+      createBlockMapper ( const GridPartType &gridPart, typename BaseType::BlockMapperType &baseMapper, std::unique_ptr< BM > &blockMapper )
+      {
+        blockMapper.reset( new BM( baseMapper ) );
+      }
+
+      template< class BM >
+      static std::enable_if_t< std::is_constructible< BM, const GridPartType &, typename BaseType::BlockMapperType & >::value >
+      createBlockMapper ( const GridPartType &gridPart, typename BaseType::BlockMapperType &baseMapper, std::unique_ptr< BM > &blockMapper )
+      {
+        blockMapper.reset( new BM( gridPart, baseMapper ) );
+      }
+
+      std::unique_ptr< BlockMapperType > blockMapper_;
       mutable std::unique_ptr< CommunicationManagerType > comm_;
-      mutable std::shared_ptr< SlaveDofsType > slaveDofs_;
+      mutable std::unique_ptr< std::pair< SlaveDofsType, int >, typename SlaveDofsProviderType::Deleter > slaveDofs_;
     };
 
 
