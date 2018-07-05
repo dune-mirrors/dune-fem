@@ -26,6 +26,8 @@
 
 using namespace Dune;
 
+#ifdef COMPILE_TEST
+
 // polynom approximation order of quadratures,
 // at least poolynom order of basis functions
 #ifdef POLORDER
@@ -34,7 +36,6 @@ using namespace Dune;
   constexpr int polOrder = 1;
 #endif
 
-#ifdef COMPILE_TEST
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #include <dune/alugrid/dgf.hh>

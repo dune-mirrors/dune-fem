@@ -85,69 +85,6 @@ namespace Dune
       const static int aluTwistMap_[ 2 * EntityCount<type>::numVerticesPerFace ];
     };
 
-    //- class FaceTopologyMapping
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::dune2aluVertex(int index) {
-      assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
-      return dune2aluVertex_[index];
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::dune2aluVertex(int index, int twist) {
-      assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
-      return invTwist(dune2aluVertex_[index], twist);
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::alu2duneVertex(int index) {
-      assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
-      return alu2duneVertex_[index];
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::alu2duneVertex(int index, int twist)
-    {
-      assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
-      return alu2duneVertex_[invTwist(index, twist)];
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::alu2duneEdge(int index) {
-      assert(index >= 0 && index < EntityCount<type>::numEdgesPerFace);
-      return alu2duneEdge_[index];
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::
-    aluTwistMap(const int aluTwist)
-    {
-      // this map has been calculated by grid/test/checktwists.cc
-      // and the dune-fem twist calculator
-      // this should be revised after the release 2.1
-      return aluTwistMap_[ aluTwist + ((type == tetra) ? 3 : 4) ];
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::
-    twistedDuneIndex(const int duneIdx, const int aluTwist)
-    {
-      if( type == tetra )
-      {
-        // apply alu2dune twist mapping (only for tetra)
-        const int twist = alu2duneTwist_[ aluTwist + 3 ];
-        return alu2duneVertex( dune2aluVertex(duneIdx) , twist );
-      }
-      else
-       return alu2duneVertex( dune2aluVertex(duneIdx) , aluTwist );
-    }
-
-    template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::dune2aluEdge(int index) {
-      assert(index >= 0 && index < EntityCount<type>::numEdgesPerFace);
-      return dune2aluEdge_[index];
-    }
-
-
   } // namespace Fem
 
 } // namespace Dune
