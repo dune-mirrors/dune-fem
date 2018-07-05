@@ -84,6 +84,7 @@ int main ( int argc, char **argv )
     typedef Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > HostDiscreteFunctionType;
     HostDiscreteFunctionType hostDF( "host", hostSpace );
     {
+      hostDF.clear();
       Dune::Fem::AddLocalContribution< HostDiscreteFunctionType > localDF( hostDF );
       for( const auto &entity : entities( hostDF ) )
       {
@@ -99,6 +100,7 @@ int main ( int argc, char **argv )
     typedef Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > FilteredDiscreteFunctionType;
     FilteredDiscreteFunctionType leftDF( "left", leftSpace );
     {
+      leftDF.clear();
       Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( leftDF );
       for( const auto &entity : entities( leftDF ) )
       {
@@ -111,6 +113,7 @@ int main ( int argc, char **argv )
     FilteredDiscreteFunctionSpaceType rightSpace( rightGridPart );
     FilteredDiscreteFunctionType rightDF( "right", rightSpace );
     {
+      rightDF.clear();
       Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( rightDF );
       for( const auto &entity : entities( rightDF ) )
       {
@@ -130,7 +133,9 @@ int main ( int argc, char **argv )
       hostLocal.bind( entity );
       leftLocal.bind( entity );
       if( leftLocal[ 0 ] != hostLocal[ 0 ] )
+      {
         DUNE_THROW( Dune::InvalidStateException, "Inconsistent DOF in leftDF" );
+      }
       hostLocal.unbind();
       leftLocal.unbind();
     }
