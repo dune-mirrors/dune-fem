@@ -13,7 +13,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptationmanager.hh>
 
-#include <dune/fem/operator/projection/l2projection.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/misc/double.hh>
@@ -118,7 +118,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    Dune :: Fem :: L2Norm< GridPartType > l2norm( solution.gridPart() );
 
    //! perform l2-projection
-   DGL2ProjectionImpl::project(f, solution);
+   interpolate(f, solution);
 
    // calculation L2 error
    // pol ord for calculation the error should be higher than

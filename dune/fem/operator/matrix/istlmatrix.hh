@@ -1026,7 +1026,7 @@ namespace Dune
           {
             return matrix().entry( index.first, index.second );
           };
-          auto functor = [ &localMat, this, blockAccess, operation ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+          auto functor = [ &localMat, blockAccess, operation ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
           {
             LittleBlockType& block = blockAccess( index );
             for( int i  = 0; i < littleRows; ++i )
@@ -1041,7 +1041,7 @@ namespace Dune
           {
             return matrix()[ index.first][ index.second ];
           };
-          auto functor = [ &localMat, this, blockAccess, operation ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+          auto functor = [ &localMat, blockAccess, operation ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
           {
             LittleBlockType& block = blockAccess( index );
             for( int i  = 0; i < littleRows; ++i )

@@ -47,6 +47,11 @@ namespace Dune
     const int FaceTopologyMapping<tetra>::
     alu2duneTwist_[ 2 * EntityCount<tetra>::numVerticesPerFace] = { -2, -3, -1, 0, 2, 1 };
 
+    // not needed for hexa, but the static member needs some definiton for sanity
+    template <>
+    const int FaceTopologyMapping<hexa>::
+    alu2duneTwist_[ 2 * EntityCount<hexa>::numVerticesPerFace] = {};
+
     // mapping of twists from alu 2 dune
     template <>
     const int FaceTopologyMapping<tetra>::
@@ -90,6 +95,73 @@ namespace Dune
     template <>
     const int FaceTopologyMapping<hexa>::
     alu2duneEdge_[EntityCount<hexa>::numEdgesPerFace] = {0, 3, 1, 2};
+
+
+    //- IMPLEMENTATION
+    //- class FaceTopologyMapping
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::dune2aluVertex(int index) {
+      assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
+      return dune2aluVertex_[index];
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::dune2aluVertex(int index, int twist) {
+      assert (index >= 0 && index < EntityCount<type>::numVerticesPerFace);
+      return invTwist(dune2aluVertex_[index], twist);
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::alu2duneVertex(int index) {
+      assert (index >= 0 && index < EntityCount<type>::numVerticesPerFace);
+      return alu2duneVertex_[index];
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::alu2duneVertex(int index, int twist)
+    {
+      assert (index >= 0 && index < EntityCount<type>::numVerticesPerFace);
+      return alu2duneVertex_[invTwist(index, twist)];
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::alu2duneEdge(int index) {
+      assert (index >= 0 && index < EntityCount<type>::numEdgesPerFace);
+      return alu2duneEdge_[index];
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::
+    aluTwistMap(const int aluTwist)
+    {
+      // this map has been calculated by grid/test/checktwists.cc
+      // and the dune-fem twist calculator
+      // this should be revised after the release 2.1
+      return aluTwistMap_[ aluTwist + ((type == tetra) ? 3 : 4) ];
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::
+    twistedDuneIndex(const int duneIdx, const int aluTwist)
+    {
+      if( type == tetra )
+      {
+        // apply alu2dune twist mapping (only for tetra)
+        const int twist = alu2duneTwist_[ aluTwist + 3 ];
+        return alu2duneVertex( dune2aluVertex(duneIdx) , twist );
+      }
+      else
+       return alu2duneVertex( dune2aluVertex(duneIdx) , aluTwist );
+    }
+
+    template <ALU3dGridElementType type>
+    inline int FaceTopologyMapping<type>::dune2aluEdge(int index) {
+      assert (index >= 0 && index < EntityCount<type>::numEdgesPerFace);
+      return dune2aluEdge_[index];
+    }
+
+    template class FaceTopologyMapping<tetra>;
+    template class FaceTopologyMapping<hexa>;
 
   } // end namespace Fem
 } // end namespace Dune

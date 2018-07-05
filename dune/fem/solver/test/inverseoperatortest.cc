@@ -21,7 +21,6 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/solver/cginverseoperator.hh>
-#include <dune/fem/solver/pardginverseoperators.hh>
 #include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>

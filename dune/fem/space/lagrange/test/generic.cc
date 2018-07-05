@@ -119,7 +119,6 @@ int main( int argc, char **argv )
       point.local( x );
 
       RangeType phi;
-      FieldVector< int, 0 > derivative;
       shapeFunction->evaluate( x, phi );
 
       double expected = ((i == j) ? 1.0 : 0.0);
