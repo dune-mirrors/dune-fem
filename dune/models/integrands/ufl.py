@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import FiniteElementBase, FunctionSpace
+from ufl import FiniteElementBase, FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
@@ -189,6 +189,14 @@ def fieldVectorType(shape, field = None, useScalar = False):
     else:
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
+def integrandsSignature(form,*args):
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    sig = form
+    if len(dirichletBCs) > 0:
+        for bc in dirichletBCs:
+            sig += sum(bc.ufl_value)*dx
+    return sig.signature()
+
 
 def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     if isinstance(form, Equation):
@@ -235,7 +243,7 @@ def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(form.signature(),
+    integrands = Integrands(integrandsSignature(form,*args),
                             (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                             constants=(fieldVectorType(c,useScalar=True) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
                             constantNames=(getattr(c, 'name', None) for c in constants),

@@ -11,7 +11,7 @@ from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 
-from .ufl import compileUFL, fieldVectorType
+from .ufl import compileUFL, fieldVectorType, integrandsSignature
 
 def init(integrands, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
@@ -78,7 +78,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    def __init__(self, gridType, gridIncludes, integrands,*args,
+    def __init__(self, gridType, gridIncludes, integrands, *args,
             tempVars=True, virtualize=True):
         self.gridType = gridType
         self.gridIncludes = gridIncludes
@@ -88,7 +88,7 @@ class Source(object):
         self.args = args
 
     def signature(self):
-        return self.integrands.signature()
+        return integrandsSignature(self.integrands, *self.args)
 
     def name(self):
         from dune.common.hashit import hashIt
