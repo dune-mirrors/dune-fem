@@ -417,6 +417,15 @@ namespace Dune
         basisFunctionSet().jacobianAll( quad, localDofVector(), result );
       }
 
+      // evaluate jacobian of local function and store result in vector of
+      // JacobianRangeTypes, this method only helps to identify the correct method on
+      // the basis function set
+      template< class QuadratureType, class VectorType >
+      void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const HessianRangeType & ) const
+      {
+        basisFunctionSet().hessianAll( quad, localDofVector(), result );
+      }
+
       BasisFunctionSetType basisFunctionSet_;
       LocalDofVectorType localDofVector_;
     };
