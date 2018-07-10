@@ -154,7 +154,8 @@ namespace Dune
       {
 #if HAVE_MPI
         // case of ALUGrid and DGSpace or FVSpace
-        const bool deleteGhostEntries = (space().gridPart().grid().overlapSize( 0 ) == 0) && !space().continuous();
+        // BUG: We should not use the leafGridView to detect whether the grid has overlap!
+        const bool deleteGhostEntries = (space().gridPart().grid().leafGridView().overlapSize( 0 ) == 0) && !space().continuous();
 
         // only delete ghost entries
         if( deleteGhostEntries )
@@ -166,9 +167,9 @@ namespace Dune
           for(int slave = 0; slave<slaveSize; ++slave)
             x[ slaveDofs[slave] ] = 0;
         }
-#endif
+#endif // #if HAVE_MPI
       }
-#endif
+#endif // #if HAVE_DUNE_ISTL
       const DiscreteFunctionSpaceType &space_;
     };
 
