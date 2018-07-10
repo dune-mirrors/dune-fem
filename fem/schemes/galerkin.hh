@@ -852,6 +852,7 @@ namespace Dune
       typedef LinearOperator JacobianOperatorType;
 
       typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
+      typedef InverseOperator LinearInverseOperatorType;
       typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
 
       struct SolverInfo
