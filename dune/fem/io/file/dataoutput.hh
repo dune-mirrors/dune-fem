@@ -516,7 +516,7 @@ namespace Dune
     : public VTKListEntry< VTKIOType >
     {
       typedef typename VTKIOType::GridPartType GridPartType;
-      typedef typename DFType::DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+      typedef typename DFType::FunctionSpaceType FunctionSpaceType;
 
       typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > LagrangeSpaceType;
       typedef AdaptiveDiscreteFunction< LagrangeSpaceType > NewFunctionType;
@@ -530,7 +530,7 @@ namespace Dune
       virtual void add ( VTKIOType &vtkio ) const
       {
         func_.reset( new NewFunctionType( df_.name()+"vtx-prj" , space_ ) );
-        if( df_.space().continuous() )
+        if( df_.continuous() )
         {
           interpolate( df_, *func_ );
         }
@@ -575,7 +575,7 @@ namespace Dune
                           auto df( std::get< i >( data ) );
                           if( df )
                           {
-                            if( conforming_ || ( df->space().order() == 0 ) )
+                            if( conforming_ || ( df->order() == 0 ) )
                               vtkOut_.addCellData( *df );
                             else
                               vtkOut_.addVertexData( *df );
@@ -683,14 +683,16 @@ namespace Dune
                           auto df( std::get< i >( data ));
                           if( df )
                           {
-                            auto lf = df->localFunction(en_);
+                            ConstLocalFunction<std::decay_t<decltype(*df)> > lf(*df);
+                            lf.bind(en_);
                             typedef typename std::remove_pointer< decltype( df ) >::type DFType;
-                            typename DFType::DiscreteFunctionSpaceType::RangeType u;
+                            typename DFType::FunctionSpaceType::RangeType u;
                             lf.evaluate( quad_[ i_ ], u );
 
-                            constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+                            constexpr int dimRange = DFType::FunctionSpaceType::dimRange;
                             for( auto k = 0; k < dimRange; ++k )
                               out_ << "  " << u[ k ];
+                            lf.unbind();
                           }
                         });
       }
