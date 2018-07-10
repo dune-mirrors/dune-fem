@@ -34,3 +34,11 @@ ubuntu:16.04--clang:
 debian:9--gcc--petsc:
   image: registry.dune-project.org/dune-fem/dune-fem/ci-petsc:9
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+
+debian:10 torture-testing:
+  image: duneci/base:10
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
+  when: always
+  only:
+    - triggers
+    - schedules
