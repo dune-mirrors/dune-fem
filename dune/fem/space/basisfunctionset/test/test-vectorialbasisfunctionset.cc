@@ -160,7 +160,7 @@ struct Error< Dune::FieldMatrix< RangeFieldType, dimRange, dimDomain > >
 };
 
 template< class RangeFieldType, int dimDomain, int dimRange >
-struct Error< Dune::FieldVector< Dune::FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > >
+struct Error< Dune::Fem::ExplicitFieldVector< Dune::FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > >
 {
   typedef Dune::FieldVector< Dune::FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > Vector;
 
