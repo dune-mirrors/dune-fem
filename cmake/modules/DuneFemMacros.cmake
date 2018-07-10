@@ -99,3 +99,6 @@ include(CommandLineHacks)
 # check SuiteSparse support
 find_package(SuiteSparse OPTIONAL_COMPONENTS UMFPACK SPQR LDL)
 include(AddSuiteSparseFlags)
+
+# torture tests AKA nighly builds
+inlcude(FemTortureTests)
