@@ -6,12 +6,11 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/std/memory.hh>
 
 #include <dune/grid/common/grid.hh>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/common/utility.hh>
-
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
 #include <dune/fem/space/combinedspace/interpolation.hh>
@@ -39,7 +38,7 @@ namespace Dune
     struct PowerDiscreteFunctionSpaceTraits
     {
       // we need to store pointer to the spaces in the SpaceTuple, since space can not be copied.
-      typedef std::unique_ptr< DiscreteFunctionSpace > DiscreteFunctionSpaceTupleType;
+      typedef std::shared_ptr< DiscreteFunctionSpace > DiscreteFunctionSpaceTupleType;
 
       // helper struct to access contained sub spaces
       template< int >
@@ -116,7 +115,7 @@ namespace Dune
       static DiscreteFunctionSpaceTupleType createSpaces ( GridPartType &gridPart, InterfaceType commInterface,
                                                            CommunicationDirection commDirection )
       {
-        return Std::make_unique< DiscreteFunctionSpace >( gridPart, commInterface, commDirection );
+        return std::make_shared< DiscreteFunctionSpace >( gridPart, commInterface, commDirection );
       }
 
       template< class Entity >
@@ -177,6 +176,14 @@ namespace Dune
                                    const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection ),
           LagrangePointSetExporterType( containedSpace() )
+      {}
+
+      PowerDiscreteFunctionSpace ( const DiscreteFunctionSpace &space )
+        : BaseType( referenceToSharedPtr( space ) )
+      {}
+
+      PowerDiscreteFunctionSpace ( std::shared_ptr< DiscreteFunctionSpace > space )
+        : BaseType( std::move( space ) )
       {}
 
       PowerDiscreteFunctionSpace ( const ThisType & ) = delete;
