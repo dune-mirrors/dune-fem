@@ -2,11 +2,13 @@
 variables:
   DUNECI_OPTS: "/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts"
 
-before_script:
-  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
-  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
+#before_script:
+#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
+#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
 .base: &base
+  stage: test
+  when: always
   tags:
     - "stuttgart"
 
@@ -32,11 +34,17 @@ debian-10-gcc-8-17:
   <<: *base
   image: dune-fem-ci:git-debian-10-gcc-8-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+  only:
+    - triggers
+    - schedules
 
 debian-10-gcc-8-noassert-17:
   <<: *base
   image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+  only:
+    - triggers
+    - schedules
 
 debian-10-clang-6-libcpp-17:
   <<: *base
@@ -47,6 +55,9 @@ ubuntu-18.04-clang-6-17:
   <<: *base
   image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
+  only:
+    - triggers
+    - schedules
 
 ####################### PETSc versions ########################
 
@@ -54,6 +65,9 @@ debian-9-gcc-6-14-petsc:
   <<: *base
   image: dune-fem-ci:git-debian-9-gcc-6-14-petsc
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+  only:
+    - triggers
+    - schedules
 
 debian-10-gcc-7-14-petsc:
   <<: *base
@@ -64,31 +78,30 @@ debian-10-gcc-8-17-petsc:
   <<: *base
   image: dune-fem-ci:git-debian-10-gcc-8-17-petsc
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+  only:
+    - triggers
+    - schedules
 
 debian-10-gcc-8-noassert-17-petsc:
   <<: *base
   image: dune-fem-ci:git-debian-10-gcc-8-noassert-17-petsc
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+  only:
+    - triggers
+    - schedules
 
 debian-10-clang-6-libcpp-17-petsc:
   <<: *base
   image: dune-fem-ci:git-debian-10-clang-6-libcpp-17-petsc
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
+  only:
+    - triggers
+    - schedules
 
 ubuntu-18.04-clang-6-17-petsc:
   <<: *base
   image: dune-fem-ci:git-ubuntu-18.04-clang-6-17-petsc
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
-
-
-
-
-
-ubuntu-18.04-clang-6-17-petsc-torture:
-  <<: *base
-  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17-petsc
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
-  when: always
   only:
     - triggers
     - schedules
