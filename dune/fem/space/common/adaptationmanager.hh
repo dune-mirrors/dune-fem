@@ -782,7 +782,7 @@ namespace Dune
       using GridType = typename DiscreteFunctionSpaceType::GridType;
       using DofManagerType = DofManager< GridType >;
 
-      struct DataProjectionWrapper;
+      class DataProjectionWrapper;
 
     public:
       /** \name Construction

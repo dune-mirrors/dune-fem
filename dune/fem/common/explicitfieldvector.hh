@@ -65,8 +65,6 @@ namespace Dune
       std::enable_if_t<((IsFieldType<typename DenseMatVecTraits<C>::value_type>::value
                          ==
                          IsFieldType<T>::value)
-                        ||
-                        std::is_convertible<typename DenseMatVecTraits<C>::value_type, T>::value
         )> >
       : std::true_type
     {};
