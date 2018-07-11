@@ -7,7 +7,8 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
 .base: &base
-  tags: "stuttgart"
+  tags:
+    - "stuttgart"
 
 debian-10-gcc-7-14:
   <<: *base
