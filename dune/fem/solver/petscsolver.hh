@@ -326,6 +326,7 @@ namespace Dune
             break;
           case PetscPrec::hypre:
             {
+#ifdef PETSC_HAVE_HYPRE
               enum class HyprePrec {
                   boomeramg = 0,
                   parasails = 1,
@@ -348,10 +349,17 @@ namespace Dune
               ::Dune::Petsc::PCSetType( pc, PCHYPRE );
               ::Dune::Petsc::PCHYPRESetType( pc, hypre.c_str() );
               ::Dune::Petsc::PCSetUp( pc );
+#else // PETSC_HAVE_HYPRE
+              DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with hyper support." );
+#endif // PETSC_HAVE_HYPRE
               break;
             }
           case PetscPrec::ml:
+#ifdef PETSC_HAVE_ML
             ::Dune::Petsc::PCSetType( pc, PCML );
+#else // PETSC_HAVE_ML
+              DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with ml support." );
+#endif // PETSC_HAVE_ML
             break;
           case PetscPrec::ilu:
             {
@@ -365,8 +373,10 @@ namespace Dune
               ::Dune::Petsc::PCFactorSetLevels( pc, pcLevel );
               break;
             }
+            ::Dune::Petsc::PCSetType( pc, PCML );
           case PetscPrec::icc:
             {
+#ifdef PETSC_HAVE_ICC
               if ( MPIManager::size() > 1 )
                 DUNE_THROW( InvalidStateException, "PetscInverseOperator: icc preconditioner does not worl in parallel." );
 
@@ -375,6 +385,9 @@ namespace Dune
 
               ::Dune::Petsc::PCSetType( pc, PCICC );
               ::Dune::Petsc::PCFactorSetLevels( pc, pcLevel );
+#else // PETSC_HAVE_ICC
+              DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with icc support." );
+#endif // PETSC_HAVE_ICC
               break;
             }
           case PetscPrec::lu:
