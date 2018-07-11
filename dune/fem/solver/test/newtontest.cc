@@ -179,7 +179,11 @@ class MyOperator
   void operator()(const DomainFunctionType& u, RangeFunctionType& w) const
   {
     for (int i = 0; i < N; ++i) {
+#ifdef USE_LINESEARCH
+      w[i] = std::atan(u[i]);
+#else
       w[i] = u[i]*u[i] - i;
+#endif
     }
   }
 
@@ -189,7 +193,11 @@ class MyOperator
 
     matrix = 0.;
     for (int i = 0; i < N; ++i) {
+#ifdef USE_LINESEARCH
+      matrix[i][i] = 1./(1.+u[i]*u[i]);
+#else
       matrix[i][i] = 2*u[i];
+#endif
     }
   }
 
@@ -199,6 +207,9 @@ int main( int argc, char **argv )
 {
   Dune::Fem::MPIManager::initialize( argc, argv );
   Dune::Fem::Parameter::append( argc, argv );
+#ifdef USE_LINESEARCH
+  Dune::Fem::Parameter::append("fem.solver.newton.lineSearch","simple");
+#endif
   if( argc == 1 )
     Dune::Fem::Parameter::append("parameter");
 
@@ -211,8 +222,12 @@ int main( int argc, char **argv )
   typedef MyLinearInverseOperator<systemSize> LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator<LinearOperatorType, LinearInverseOperatorType> NewtonInverseOperatorType;
 
-
+#ifdef USE_LINESEARCH
+  FunctionType sol("sol", { 2, 2, 2, 2, 2 }), rhs("rhs", { -1.57, -1.5, 0, 1.5, 1.57 });
+#else
   FunctionType sol("sol", { 1, 2, 3, 4, 7 }), rhs("rhs", {0,0,0,0,0});
+#endif
+
   OperatorType op;
   NewtonInverseOperatorType opInv( LinearInverseOperatorType{} );
   opInv.bind( op );

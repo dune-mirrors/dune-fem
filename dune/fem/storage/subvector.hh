@@ -170,6 +170,8 @@ namespace Dune
       typedef typename BaseType::size_type size_type;
       typedef typename BaseType::value_type value_type;
 
+      using BaseType::operator=;
+
       //! Type of the base vector
       typedef BaseVectorImp BaseVectorType;
 
