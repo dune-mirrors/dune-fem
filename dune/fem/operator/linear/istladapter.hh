@@ -94,9 +94,22 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType  RangeFunctionSpaceType;
 
-      static_assert( std::is_same< DomainFunctionType, ISTLBlockVectorDiscreteFunction< DomainFunctionSpaceType > > :: value,
+      template <class DF>
+      struct IsISTLBlockVectorDiscreteFunction
+      {
+        static const bool value = false ;
+      };
+
+      template <class Space, class Block>
+      struct IsISTLBlockVectorDiscreteFunction< ISTLBlockVectorDiscreteFunction< Space, Block > >
+      {
+        static const bool value = true ;
+      };
+
+
+      static_assert( IsISTLBlockVectorDiscreteFunction< DomainFunctionType > :: value,
                      "ISTLMatrixFreeOperatorAdapter only works with ISTLBlockVectorDiscreteFunction" );
-      static_assert( std::is_same< RangeFunctionType,  ISTLBlockVectorDiscreteFunction< RangeFunctionSpaceType  > > :: value,
+      static_assert( IsISTLBlockVectorDiscreteFunction< RangeFunctionType  > :: value,
                      "ISTLMatrixFreeOperatorAdapter only works with ISTLBlockVectorDiscreteFunction" );
 
       typedef typename BaseType::domain_type domain_type;
