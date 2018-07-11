@@ -5,6 +5,7 @@
 #include <dune/common/fvector.hh>
 
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/common/explicitfieldvector.hh>
 
 namespace Dune
 {
@@ -78,6 +79,25 @@ namespace Dune
       return s;
     }
 
+    template< class K, int ROWS, int COLS, int R >
+    inline K scalarProduct ( const FieldVector< FieldMatrix< K, ROWS, COLS >, R> &a, const FieldVector< FieldMatrix< K, ROWS, COLS >, R> &b )
+    {
+      K s( 0 );
+      for (int i=0; i<R; ++i)
+        for( int r = 0; r < ROWS; ++r )
+          s += a[ i ][ r ] * b[ i ][ r ];
+      return s;
+    }
+
+    template< class K, int ROWS, int COLS, int R >
+    inline K scalarProduct ( const ExplicitFieldVector< FieldMatrix< K, ROWS, COLS >, R> &a, const ExplicitFieldVector< FieldMatrix< K, ROWS, COLS >, R> &b )
+    {
+      K s( 0 );
+      for (int i=0; i<R; ++i)
+        for( int r = 0; r < ROWS; ++r )
+          s += a[ i ][ r ] * b[ i ][ r ];
+      return s;
+    }
 
 
     // AxpyFunctor

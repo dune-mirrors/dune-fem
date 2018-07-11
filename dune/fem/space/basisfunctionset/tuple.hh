@@ -313,6 +313,13 @@ namespace Dune
         Fem::ForLoop< Axpy, 0, setIterationSize >::apply( x, jacobianFactor, dofs, offset_, basisFunctionSetTuple_ );
       }
 
+      //! \copydoc BasisFunctionSet::axpy( x, hessianFactor, dofs )
+      template< class Point, class DofVector >
+      void axpy ( const Point &x, const HessianRangeType &hessianFactor, DofVector &dofs ) const
+      {
+        Fem::ForLoop< Axpy, 0, setIterationSize >::apply( x, hessianFactor, dofs, offset_, basisFunctionSetTuple_ );
+      }
+
       //! \copydoc BasisFunctionSet::axpy( x, valueFactor, jacobianFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
@@ -553,11 +560,13 @@ namespace Dune
     {
       typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType ThisRangeType;
       typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType ThisJacobianRangeType;
+      typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType ThisHessianRangeType;
 
       static const int rangeOffset = RangeIndices::template offset< i >();
 
       typedef SubObject< const RangeType, const ThisRangeType, rangeOffset > SubRangeType;
       typedef SubObject< const JacobianRangeType, const ThisJacobianRangeType, rangeOffset > SubJacobianRangeType;
+      typedef SubObject< const HessianRangeType, const ThisHessianRangeType, rangeOffset > SubHessianRangeType;
 
       // axpy with range type
       template< class Point, class DofVector, class Tuple >
@@ -577,6 +586,16 @@ namespace Dune
         SubVector< DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubJacobianRangeType subFactor( factor );
         std::get< i >( tuple ).axpy( x, (ThisJacobianRangeType) subFactor, subDofVector );
+      }
+
+      // axpy with hessian range type
+      template< class Point, class DofVector, class Tuple >
+      static void apply ( const Point &x, const HessianRangeType &factor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
+      {
+        std::size_t size = std::get< i >( tuple ).size();
+        SubVector< DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        SubHessianRangeType subFactor( factor );
+        std::get< i >( tuple ).axpy( x, (ThisHessianRangeType) subFactor, subDofVector );
       }
 
       // axpy with range and jacobian range type

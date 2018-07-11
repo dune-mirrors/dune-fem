@@ -52,13 +52,13 @@ void traverse ( GridPartType &gridPart )
   typedef Dune::Fem::LegendreShapeFunctionSet< ScalarFunctionSpaceType > ScalarLegendreShapeFunctionSetType;
 
   // type of error
-  typedef Dune::FieldVector< double, 6 > ErrorType;
+  typedef Dune::FieldVector< double, 7 > ErrorType;
 
   // prepare shapefunctions
   ScalarLagrangeShapeFunctionSetType scalarLagrangeShapeFunctionSet( entity.type() );
   ScalarLegendreShapeFunctionSetType scalarLegendreShapeFunctionSet( polorder );
 
-  double eps = 5e-8;
+  double eps = 1e-7;
 
   ErrorType error( 0 );
   typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLagrangeShapeFunctionSetType > ScalarBasisFunctionSetType1;
@@ -74,9 +74,9 @@ void traverse ( GridPartType &gridPart )
   basisSet( scalarBasisSet1, scalarBasisSet2, basisFunctionSet3 );
 
   error = Dune::Fem::checkQuadratureConsistency( basisSet, quadrature, true );
-  if( error.two_norm() > eps )
+  if( error.infinity_norm() > eps )
   {
-    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy ): "<< error <<std::endl;
+    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy, hessian axpy, v+j axpy): "<< error <<std::endl;
     DUNE_THROW( Dune::InvalidStateException, " TupleBasisFunctionSet< ShapeFunctionSet1, ShapeFunctionSet2, ShapeFunctionSet3 > test failed." );
   }
 }
