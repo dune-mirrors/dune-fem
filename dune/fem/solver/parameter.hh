@@ -66,7 +66,10 @@ namespace Dune
       {
         const std::string krylovMethodTable[] =
           { "cg", "bicgstab", "gmres" };
-        const int methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
+        if ( parameter_.exists("krylovmethod") &&
+            !parameter_.exists(keyPrefix_+"krylovmethod") )
+          DUNE_THROW( ParameterInvalid, "Use parameter 'krylovmethod' with the given prefix '"+keyPrefix_+"'" );
+        const int methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
         return methodType;
       }
 
