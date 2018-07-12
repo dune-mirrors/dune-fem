@@ -348,8 +348,11 @@ find_package_handle_standard_args (PETSc
   VERSION_VAR PETSC_VERSION
   FAIL_MESSAGE "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH.")
 
-message(STATUS "PETSc found: ${PETSC_FOUND}")
-
-if("$ENV{FEM_REQUIRE_PETSC}" STREQUAL "force")
+if("$ENV{FEM_REQUIRE_PETSC}" STREQUAL "force" AND NOT ${PETSC_FOUND})
   message(FATAL_ERROR "PETSc could not be found when FEM_REQUIRE_PETSC was set to \"force\"")
+elseif("$ENV{FEM_REQUIRE_PETSC}" STREQUAL "disable")
+  set(PETSC_FOUND false)
+  message(STATUS "Enforcing PETSC_FOUND == false after inspecting env var FEM_REQUIRE_PETSC")
+else()
+  message(STATUS "PETSc found: ${PETSC_FOUND}")
 endif()
