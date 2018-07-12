@@ -71,7 +71,7 @@ ubuntu-18.04-clang-6-17:
 
 debian-9-gcc-6-14-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-debian-9-gcc-6-14-petsc
+  image: dune-fem-ci:git-debian-9-gcc-6-14
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
   only:
     - triggers
@@ -79,12 +79,12 @@ debian-9-gcc-6-14-petsc:
 
 debian-10-gcc-7-14-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-7-14-petsc
+  image: dune-fem-ci:git-debian-10-gcc-7-14
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
 
 debian-10-gcc-8-17-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-8-17-petsc
+  image: dune-fem-ci:git-debian-10-gcc-8-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
   only:
     - triggers
@@ -92,7 +92,7 @@ debian-10-gcc-8-17-petsc:
 
 debian-10-gcc-8-noassert-17-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-8-noassert-17-petsc
+  image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
   only:
     - triggers
@@ -100,7 +100,7 @@ debian-10-gcc-8-noassert-17-petsc:
 
 .debian-10-clang-6-libcpp-17-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-clang-6-libcpp-17-petsc
+  image: dune-fem-ci:git-debian-10-clang-6-libcpp-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang-6.opts
   only:
     - triggers
@@ -108,7 +108,7 @@ debian-10-gcc-8-noassert-17-petsc:
 
 ubuntu-18.04-clang-6-17-petsc:
   <<: *base-petsc
-  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17-petsc
+  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
   only:
     - triggers
