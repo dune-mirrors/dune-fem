@@ -17,15 +17,13 @@ variables:
 .base-petsc: &base-petsc
   <<: *base
   variables:
-    FORCE_PETSC: "on"
     FEM_REQUIRE_PETSC: "force"
 
 # FEM_REQUIRE_PETSC=disable is intended force PETSc to not being found
 .base-nopetsc: &base-nopetsc
   <<: *base
   variables:
-    FORCE_PETSC: "on"
-    FEM_REQUIRE_PETSC: "force"
+    FEM_REQUIRE_PETSC: "disable"
 
 # available image tags,
 # debian-9-gcc-6-14
