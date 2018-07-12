@@ -53,7 +53,7 @@
 // EllipticOperator
 // ----------------
 
-template< class DiscreteFunction, class Model, class Constraints=NoConstraints >
+template< class DiscreteFunction, class Model >
 struct DGEllipticOperator
 : public virtual Dune::Fem::Operator< DiscreteFunction >
 {
@@ -87,23 +87,19 @@ protected:
 
 public:
   //! constructor
-  DGEllipticOperator ( const ModelType &model, const DiscreteFunctionSpaceType &space,
-                         const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  DGEllipticOperator ( const DiscreteFunctionSpaceType &space,
+                       const ModelType &model,
+                       const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
     penalty_( parameter.getValue< double >( "penalty", 40 ) )
   {}
 
-  // prepare the solution vector
-  void setConstraints( DomainDiscreteFunctionType &u ) const
-  {}
-  // prepare the solution vector
-  void setConstraints( const DomainRangeType &value, DomainDiscreteFunctionType &u ) const
-  {}
-  template <class GF>
-  void setConstraints( const GF &u, RangeDiscreteFunctionType &w ) const
-  {}
-  template <class GF>
-  void addConstraints( const GF &u, RangeDiscreteFunctionType &w ) const
+  DGEllipticOperator ( const DiscreteFunctionSpaceType &dSpace,
+                       const DiscreteFunctionSpaceType &rSpace,
+                       const ModelType &model,
+                       const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : model_( model ),
+    penalty_( parameter.getValue< double >( "penalty", 40 ) )
   {}
 
   //! application operator
@@ -124,12 +120,12 @@ private:
 // DifferentiableDGEllipticOperator
 // ------------------------------
 
-template< class JacobianOperator, class Model, class Constraints=NoConstraints >
+template< class JacobianOperator, class Model >
 struct DifferentiableDGEllipticOperator
-: public DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model, Constraints >,
+: public DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model >,
   public Dune::Fem::DifferentiableOperator< JacobianOperator >
 {
-  typedef DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model, Constraints > BaseType;
+  typedef DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model > BaseType;
 
   typedef JacobianOperator JacobianOperatorType;
 
@@ -173,9 +169,16 @@ protected:
 
 public:
   //! constructor
-  DifferentiableDGEllipticOperator ( const ModelType &model, const DiscreteFunctionSpaceType &space,
+  DifferentiableDGEllipticOperator ( const DiscreteFunctionSpaceType &space,
+                         const ModelType &model,
                          const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-  : BaseType( model, space, parameter )
+  : BaseType( space, model, parameter )
+  {}
+  DifferentiableDGEllipticOperator ( const DiscreteFunctionSpaceType &dSpace,
+                         const DiscreteFunctionSpaceType &rSpace,
+                         const ModelType &model,
+                         const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : BaseType( dSpace, rSpace, model, parameter )
   {}
 
   //! method to setup the jacobian of the operator for storage in a matrix
@@ -193,9 +196,9 @@ protected:
 // Implementation of DGEllipticOperator
 // ----------------------------------
 
-template< class RangeDiscreteFunction, class Model, class Constraints >
+template< class RangeDiscreteFunction, class Model >
 template<class GF>
-void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
+void DGEllipticOperator< RangeDiscreteFunction, Model >
   ::apply( const GF &u, RangeDiscreteFunctionType &w ) const
 {
   // clear destination
@@ -407,9 +410,9 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
 
 // Implementation of DifferentiableDGEllipticOperator
 // ------------------------------------------------
-template< class JacobianOperator, class Model, class Constraints >
+template< class JacobianOperator, class Model >
 template<class GF>
-void DifferentiableDGEllipticOperator< JacobianOperator, Model, Constraints >
+void DifferentiableDGEllipticOperator< JacobianOperator, Model >
   ::apply ( const GF &u, JacobianOperator &jOp ) const
 {
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
