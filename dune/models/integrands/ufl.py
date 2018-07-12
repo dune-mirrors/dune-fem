@@ -13,6 +13,7 @@ from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
+from ufl import UFLException
 from dune.ufl.tensors import ExprTensor
 from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
 
@@ -126,10 +127,17 @@ def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
 
 
 def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
-    if tensorMap is None:
-        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))], brace=True))))]
-
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
+    if tensorMap is None:
+        values = []
+        for phi in testFunctions:
+            value = tensors.fill(phi.ufl_shape, None)
+            value = tensors.apply(lambda v : makeExpression(0), phi.ufl_shape, value)
+            values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
+        return [return_(lambda_(args=['const DomainValueType &phi'],\
+                  code=return_(construct('RangeValueType',*values,
+                    brace=True)) ))]
+
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var], brace=True))))]
@@ -194,7 +202,10 @@ def integrandsSignature(form,*args):
     sig = form
     if len(dirichletBCs) > 0:
         for bc in dirichletBCs:
-            sig += sum(bc.ufl_value)*dx
+            try:
+                sig += sum(bc.ufl_value)*dx
+            except UFLException:
+                pass
     return sig.signature()
 
 

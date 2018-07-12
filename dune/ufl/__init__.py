@@ -209,7 +209,6 @@ class GridFunction(ufl.Coefficient):
             return self.gf.localFunction(x.entity).jacobian(x.local)[component[0]][derivatives[0]]
 
 class DirichletBC:
-
     def flatten(l):
         print("in flatten: ",l)
         import collections

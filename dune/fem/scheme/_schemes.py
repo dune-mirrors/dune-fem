@@ -84,7 +84,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
-def dg(space, model, penalty=0, solver=None, parameters={}):
+def dg(model, space, penalty=0, solver=None, parameters={}):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -92,7 +92,13 @@ def dg(space, model, penalty=0, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
-    useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
+    if hasattr(model,"interpolate"):
+        warnings.warn("""
+        note: the parameter order for the 'schemes' has changes.
+              First argument is now the ufl form and the second argument is
+              the space.""")
+        model,space = space,model
+    useDirichletBC = "true" if model.hasDirichletBoundary else "false"
     modelParam = None
     if isinstance(model, (list, tuple)):
         modelParam = model[1:]
@@ -120,7 +126,8 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
 
 
-def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None):
+def galerkin(integrands, space=None, solver=None, parameters={},
+        errorMeasure=None, virtualize=None):
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -180,6 +187,8 @@ def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None
     parameters.update(param)
     scheme = module(includes, typeName, *ctors, backend=backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
+    if not errorMeasure is None:
+        scheme.setErrorMeasure( errorMeasure );
     return scheme
 
 
