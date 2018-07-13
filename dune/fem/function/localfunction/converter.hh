@@ -161,6 +161,14 @@ namespace Dune
           jacobian( quadrature[ qp ], values[ qp ] );
       }
 
+      template< class QuadratureType, class VectorType >
+      void evaluateQuadratureImp ( const QuadratureType &quadrature, VectorType &values, const HessianRangeType & ) const
+      {
+        const unsigned int nop = quadrature.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+          hessian( quadrature[ qp ], values[ qp ] );
+      }
+
       Converter converter_;
     };
 

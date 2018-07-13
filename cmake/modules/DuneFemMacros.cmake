@@ -61,8 +61,12 @@ if(PETSC_FOUND)
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determining location of PETSC succeded:\n"
     "Include directory: ${PETSC_INCLUDES}\n"
-    "Library directory: ${PETSC_LIBRARIES}\n\n")
-  set(PETSC_DUNE_COMPILE_FLAGS "-DENABLE_PETSC=1 -I${PETSC_INCLUDES}"
+    "Library directory: grep${PETSC_LIBRARIES}\n\n")
+  set(PETSC_DUNE_COMPILE_FLAGS "-DENABLE_PETSC=1")
+  foreach(dir ${PETSC_INCLUDES})
+    set(PETSC_DUNE_COMPILE_FLAGS "${PETSC_DUNE_COMPILE_FLAGS} -I${dir}")
+  endforeach()
+  set(PETSC_DUNE_COMPILE_FLAGS "${PETSC_DUNE_COMPILE_FLAGS}"
     CACHE STRING "Compile Flags used by DUNE when compiling with PETSc programs")
   set(PETSC_DUNE_LIBRARIES ${PETSC_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking PETSc programs")
@@ -99,3 +103,6 @@ include(CommandLineHacks)
 # check SuiteSparse support
 find_package(SuiteSparse OPTIONAL_COMPONENTS UMFPACK SPQR LDL)
 include(AddSuiteSparseFlags)
+
+# torture tests AKA nighly builds
+include(FemTortureTests)

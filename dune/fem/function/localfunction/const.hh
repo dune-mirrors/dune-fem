@@ -421,6 +421,14 @@ namespace Dune
               v[ qp.index() ] = jacobian( qp );
           }
 
+          template< class Quadrature, class Vector >
+          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, HessianRangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = hessian( qp );
+          }
+
           void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
           void unbind () { gridFunction().unbind(); }
 

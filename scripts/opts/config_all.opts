@@ -3,7 +3,7 @@
 USE_CMAKE=YES
 
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
-CONFIGURE_FLAGS="--enable-parallel" 
+CONFIGURE_FLAGS="--enable-parallel"
 
 CC=${CC:-cc}
 CXX=${CXX:-c++}
@@ -13,7 +13,7 @@ BUILD_DIR=build-all
 
 CMAKE_FLAGS="
   -DCMAKE_SYSTEM_PREFIX_PATH=\"${SYSTEM_PREFIX_PATH}\" \
-  -DCMAKE_CXX_FLAGS=\"-Wall -Winit-self -O1 -g \" \
+  -DCMAKE_CXX_FLAGS=\"-Wall -Winit-self -O3 -g \" \
   -DCMAKE_CXX_COMPILER=\"$(which ${CXX})\" \
   -DCMAKE_C_COMPILER=\"$(which ${CC})\" \
   -DCMAKE_Fortran_COMPILER=\"$(which ${F77} )\" \
