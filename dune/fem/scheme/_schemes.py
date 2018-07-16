@@ -161,7 +161,6 @@ def galerkin(integrands, space=None, solver=None, parameters={},
 
     includes = ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
     includes += space._includes + dfIncludes + solverIncludes
-    includes += integrands._includes
     includes += ["dune/fempy/parameter.hh"]
 
     spaceType = space._typeName
@@ -169,6 +168,7 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     if virtualize:
         integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
     else:
+        includes += integrands._includes
         integrandsType = integrands._typeName
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"

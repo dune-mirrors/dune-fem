@@ -23,6 +23,8 @@ from dune.source.cplusplus import construct, lambda_, makeExpression, maxEdgeLen
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
+from dune.common.hashit import hashIt
+
 from dune.ufl import codegen, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
@@ -205,11 +207,13 @@ def toFileName(value):
     return value
 
 def integrandsSignature(form,*args):
-    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
     sig = form.signature()
     if len(dirichletBCs) > 0:
-        sig = sig + "_bc" + hash(dirichletBCs)
+        dirichletBCs.append(sig)
+        sig = hashIt( dirichletBCs )
     return sig
+
 
 def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     if isinstance(form, Equation):
@@ -226,7 +230,7 @@ def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
         # added for dirichlet treatment same as elliptic model
         for bc in dirichletBCs:
             _, cc = extract_arguments_and_coefficients(bc.ufl_value)
-        coefficients |= set(cc)
+            coefficients |= set(cc)
 
         constants = [c for c in coefficients if c.is_cellwise_constant()]
         coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
@@ -386,7 +390,7 @@ def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
             if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
             if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
-                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+                raise Exception('Space of trial function and dirichlet boundary function must be the same - note that boundary conditions on subspaces are not available, yet')
             if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 

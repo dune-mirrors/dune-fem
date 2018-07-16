@@ -210,15 +210,12 @@ class GridFunction(ufl.Coefficient):
 
 class DirichletBC:
     def flatten(l):
-        print("in flatten: ",l)
         import collections
         for el in l:
             if isinstance(el, collections.Iterable): # and not isinstance(el, basestring):
-                print("iterate")
                 for sub in DirichletBC.flatten(el):
                     yield sub
             else:
-                print("take it")
                 yield el
 
     def __init__(self, functionSpace, value, subDomain):

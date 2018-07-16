@@ -16,6 +16,8 @@ from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
+from dune.common.hashit import hashIt
+
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, return_
@@ -97,10 +99,11 @@ def toFileName(value):
     return value
 
 def modelSignature(form,*args):
-    dirichletBCs = tuple((arg for arg in args if isinstance(arg, DirichletBC)) )
+    dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
     sig = form.signature()
     if len(dirichletBCs) > 0:
-        sig = sig + "_bc" + str(hash(dirichletBCs))
+        dirichletBCs.append(sig)
+        sig = hashIt( dirichletBCs )
     return sig
 
 def compileUFL(form, *args, **kwargs):
