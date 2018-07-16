@@ -119,6 +119,41 @@ namespace Dune
         registerSchemeAssemble< VirtualizedGridFunction< GridPart, RangeType > >( cls, PriorityTag< 42 >() );
       }
 
+      template< class Scheme, class... options, std::enable_if_t<
+        std::is_constructible<typename Scheme::LinearInverseOperatorType,double,double,Dune::Fem::SolverParameter>::value,int > _i=0 >
+      inline static void registerInverseLinearOperator ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
+      {
+        using pybind11::operator""_a;
+        cls.def("inverseLinearOperator",[] (Scheme &self, double eps, const pybind11::dict &parameters) {
+          return std::make_unique<typename Scheme::LinearInverseOperatorType>
+            ( eps, eps, Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
+        }, "eps"_a, "parameters"_a );
+        cls.def("inverseLinearOperator",[] (Scheme &self, typename Scheme::JacobianOperatorType &jOp, double eps, const pybind11::dict &parameters) {
+          auto invOp = std::make_unique<typename Scheme::LinearInverseOperatorType>
+            ( eps, eps, Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
+          invOp->bind(jOp);
+          return invOp;
+        }, "jOp"_a, "eps"_a, "parameters"_a, pybind11::keep_alive<0,2>() );
+      }
+      template< class Scheme, class... options >
+      inline static void registerInverseLinearOperator ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
+      {
+      }
+      template< class Scheme, class... options >
+      inline static void registerInverseLinearOperator ( pybind11::class_< Scheme, options... > cls )
+      {
+        using pybind11::operator""_a;
+        cls.def("inverseLinearOperator",[] (Scheme &self, double eps) {
+          return std::make_unique<typename Scheme::LinearInverseOperatorType>( eps, eps );
+        }, "eps"_a );
+        cls.def("inverseLinearOperator",[] (Scheme &self, typename Scheme::JacobianOperatorType &jOp, double eps) {
+          auto invOp = std::make_unique<typename Scheme::LinearInverseOperatorType>( eps, eps );
+          invOp->bind(jOp);
+          return invOp;
+        }, "jOp"_a, "eps"_a, pybind11::keep_alive<0,2>() );
+        registerInverseLinearOperator( cls, PriorityTag<42>() );
+      }
+
 #if 0
       // registerSchemeGeneralCall
       // -------------------------
@@ -194,25 +229,7 @@ namespace Dune
               return self.iterations();
           });
         }
-        cls.def("inverseLinearOperator",[] (Scheme &self, double eps, const pybind11::dict &parameters) {
-          return std::make_unique<typename Scheme::LinearInverseOperatorType>
-            ( eps, eps, Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
-        }, "eps"_a, "parameters"_a );
-        cls.def("inverseLinearOperator",[] (Scheme &self, typename Scheme::JacobianOperatorType &jOp, double eps, const pybind11::dict &parameters) {
-          auto invOp = std::make_unique<typename Scheme::LinearInverseOperatorType>
-            ( eps, eps, Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
-          invOp->bind(jOp);
-          return invOp;
-        }, "jOp"_a, "eps"_a, "parameters"_a, pybind11::keep_alive<0,2>() );
-        cls.def("inverseLinearOperator",[] (Scheme &self, double eps) {
-          return std::make_unique<typename Scheme::LinearInverseOperatorType>( eps, eps );
-        }, "eps"_a );
-        cls.def("inverseLinearOperator",[] (Scheme &self, typename Scheme::JacobianOperatorType &jOp, double eps) {
-          auto invOp = std::make_unique<typename Scheme::LinearInverseOperatorType>( eps, eps );
-          invOp->bind(jOp);
-          return invOp;
-        }, "jOp"_a, "eps"_a, pybind11::keep_alive<0,2>() );
-
+        registerInverseLinearOperator( cls );
         registerSchemeAssemble( cls );
         Dune::FemPy::registerOperator(module,cls);
       }

@@ -167,7 +167,6 @@ namespace Dune
             decltype( std::declval< const Operator & >().jacobian( std::declval< const GF & >(), std::declval< typename Operator::JacobianOperatorType& >() ), 0 ) = 0 >
       inline static void registerOperatorAssemble ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
-        typedef typename Operator::DomainFunctionType DomainFunction;
         typedef typename Operator::JacobianOperatorType LinearOperator;
 
         using pybind11::operator""_a;
