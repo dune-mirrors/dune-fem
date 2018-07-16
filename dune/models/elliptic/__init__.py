@@ -98,7 +98,9 @@ def load(grid, model, *args, **kwargs):
         modelPatch(model)
     else:
         modelPatch = None
-    name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
+
+    signature = model.signature + "_" + hashIt(grid._typeName)
+    name = 'ellipticmodel_' + signature
 
     writer = SourceWriter()
 
@@ -122,7 +124,7 @@ def load(grid, model, *args, **kwargs):
 
     code = []
 
-    nameSpace = NameSpace("ModelImpl_" + model.signature)
+    nameSpace = NameSpace("ModelImpl_" + signature)
     if modelPatch:
         nameSpace.append(model.code(model))
     else:

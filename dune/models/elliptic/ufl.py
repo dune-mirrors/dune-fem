@@ -9,6 +9,7 @@ from ufl.classes import Indexed
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
+from ufl import UFLException
 
 from dune.ufl import DirichletBC, GridFunction
 from dune.ufl import codegen
@@ -88,6 +89,16 @@ def generateCode(predefined, tensor, tempVars=True):
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
+def modelSignature(form,*args):
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    sig = form
+    if len(dirichletBCs) > 0:
+        for bc in dirichletBCs:
+            try:
+                sig += sum(bc.ufl_value)*dx
+            except UFLException:
+                pass
+    return sig.signature()
 
 def compileUFL(form, *args, **kwargs):
     if isinstance(form, Equation):
@@ -131,7 +142,7 @@ def compileUFL(form, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimDomain, dimRange, form.signature())
+    model = EllipticModel(dimDomain, dimRange, modelSignature(form,*args))
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 

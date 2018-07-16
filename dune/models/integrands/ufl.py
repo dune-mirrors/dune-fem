@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import FiniteElementBase, FunctionSpace
+from ufl import FiniteElementBase, FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
@@ -13,6 +13,7 @@ from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
+from ufl import UFLException
 from dune.ufl.tensors import ExprTensor
 from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
 
@@ -126,10 +127,17 @@ def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
 
 
 def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
-    if tensorMap is None:
-        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))], brace=True))))]
-
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
+    if tensorMap is None:
+        values = []
+        for phi in testFunctions:
+            value = tensors.fill(phi.ufl_shape, None)
+            value = tensors.apply(lambda v : makeExpression(0), phi.ufl_shape, value)
+            values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
+        return [return_(lambda_(args=['const DomainValueType &phi'],\
+                  code=return_(construct('RangeValueType',*values,
+                    brace=True)) ))]
+
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var], brace=True))))]
@@ -189,6 +197,17 @@ def fieldVectorType(shape, field = None, useScalar = False):
     else:
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
+def integrandsSignature(form,*args):
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    sig = form
+    if len(dirichletBCs) > 0:
+        for bc in dirichletBCs:
+            try:
+                sig += sum(bc.ufl_value)*dx
+            except UFLException:
+                pass
+    return sig.signature()
+
 
 def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     if isinstance(form, Equation):
@@ -235,7 +254,7 @@ def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(form.signature(),
+    integrands = Integrands(integrandsSignature(form,*args),
                             (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                             constants=(fieldVectorType(c,useScalar=True) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
                             constantNames=(getattr(c, 'name', None) for c in constants),
