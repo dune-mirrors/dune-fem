@@ -89,16 +89,19 @@ def generateCode(predefined, tensor, tempVars=True):
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
+def toFileName(value):
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub('[-\s]+', '-', value))
+    return value
+
 def modelSignature(form,*args):
-    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
-    sig = form
+    dirichletBCs = tuple((arg for arg in args if isinstance(arg, DirichletBC)) )
+    sig = form.signature()
     if len(dirichletBCs) > 0:
-        for bc in dirichletBCs:
-            try:
-                sig += sum(bc.ufl_value)*dx
-            except UFLException:
-                pass
-    return sig.signature()
+        sig = sig + "_bc" + str(hash(dirichletBCs))
+    return sig
 
 def compileUFL(form, *args, **kwargs):
     if isinstance(form, Equation):

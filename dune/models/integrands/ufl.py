@@ -197,17 +197,19 @@ def fieldVectorType(shape, field = None, useScalar = False):
     else:
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
+def toFileName(value):
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub('[-\s]+', '-', value))
+    return value
+
 def integrandsSignature(form,*args):
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
-    sig = form
+    sig = form.signature()
     if len(dirichletBCs) > 0:
-        for bc in dirichletBCs:
-            try:
-                sig += sum(bc.ufl_value)*dx
-            except UFLException:
-                pass
-    return sig.signature()
-
+        sig = sig + "_bc" + hash(dirichletBCs)
+    return sig
 
 def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
     if isinstance(form, Equation):
