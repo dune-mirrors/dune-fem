@@ -2,7 +2,9 @@
 variables:
   DUNECI_OPTS: "/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts"
 
-#before_script:
+before_script:
+  - rm -rf /duneci/modules/dune-alugrid
+  - DUNECI_BRANCH_AUTO=0 duneci-install-module -b bugfix/creategrid-unique-ptr-return https://gitlab.dune-project.org/claus-justus.heine/dune-alugrid.git
 #  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 #  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
