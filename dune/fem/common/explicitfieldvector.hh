@@ -114,12 +114,13 @@ namespace Dune
 
       //! Assignment operator for scalar
       template<typename C,
-               typename EnableIf = typename std::enable_if<
+               std::enable_if_t<(
                  N == 1 &&
-                 std::is_convertible<C, T>::value &&
-                 ! std::is_same<T, DenseVector<typename FieldTraits<C>::field_type>
-                                >::value
-                 >::type
+                 AcceptElementImplicitConstruction<C, T>::value &&
+                 std::is_assignable<T, C>::value &&
+                 ! std::is_base_of<DenseVector<typename FieldTraits<T>::field_type>, T
+                                   >::value
+                 ), int> = 0
                >
       ExplicitFieldVector& operator=(const C& c)
       {
@@ -138,15 +139,15 @@ namespace Dune
         return *this;
       }
 
-      template <typename C, int M>
-      ExplicitFieldVector& operator=(const FieldVector<C, M>& other)
+      template <typename C, std::enable_if_t<std::is_assignable<T, C>::value, int> = 0>
+      ExplicitFieldVector& operator=(const FieldVector<C, N>& other)
       {
         static_cast<BaseType&>(*this) = other;
         return *this;
       }
 
-      template <typename C, int M>
-      ExplicitFieldVector& operator=(const ExplicitFieldVector<C, M>& other)
+      template <typename C, std::enable_if_t<std::is_assignable<T, C>::value, int> = 0>
+      ExplicitFieldVector& operator=(const ExplicitFieldVector<C, N>& other)
       {
         static_cast<BaseType&>(*this) = other;
         return *this;
