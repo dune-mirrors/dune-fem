@@ -22,6 +22,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/schemes/integrands.hh>
@@ -228,6 +229,17 @@ namespace Dune
             } );
         }
 
+        int interiorQuadratureOrder( const int order ) const
+        {
+          return 2*order + 3;
+          //return (order == 0) ? 3 : 2*order + 1 ;
+        }
+
+        int surfaceQuadratureOrder( const int order ) const
+        {
+          return 2*order + 3;
+          //return (order == 0) ? 3 : 2*order + 1 ;
+        }
       public:
         // interior integral
 
@@ -268,7 +280,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadOrder(rangeBasis.order()) );
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(rangeBasis.order()) );
           const size_t domainSize = domainBasis.size();
           const size_t quadNop = quadrature.nop();
 
@@ -314,7 +326,7 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadOrder(w.order()), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadratureOrder(w.order()), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -337,7 +349,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadOrder(rangeBasis.order()), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadratureOrder(rangeBasis.order()), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -364,7 +376,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(wIn.order()), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(wIn.order()), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -384,7 +396,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn, W &wOut ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(std::max( wIn.order(), wOut.order() )), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(std::max( wIn.order(), wOut.order() )), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -412,7 +424,7 @@ namespace Dune
           const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(rangeBasisIn.order()), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(rangeBasisIn.order()), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -457,7 +469,7 @@ namespace Dune
           const auto &rangeBasisOut = jInOut.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadOrder(std::max( rangeBasisIn.order(), rangeBasisOut.order() )), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(std::max( rangeBasisIn.order(), rangeBasisOut.order() )), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -961,6 +973,10 @@ namespace Dune
 
       typedef LinearOperator JacobianOperatorType;
 
+      typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
+      typedef InverseOperator LinearInverseOperatorType;
+      typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
+
       struct SolverInfo
       {
         SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -975,7 +991,8 @@ namespace Dune
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),
-          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
+          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace ),
+          invOp_(parameter_)
       {}
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
@@ -991,15 +1008,19 @@ namespace Dune
         fullOperator()( u, w );
       }
 
+      void setErrorMeasure(ErrorMeasureType &errorMeasure) const
+      {
+        invOp_.setErrorMeasure(errorMeasure);
+      }
+
       SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
       {
-        typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperator;
-        NewtonOperator invOp( fullOperator(), parameter_ );
+        invOp_.bind(fullOperator());
         DiscreteFunctionType rhs0 = rhs;
         setZeroConstraints( rhs0 );
-        invOp( rhs0, solution );
-
-        return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
+        invOp_( rhs0, solution );
+        invOp_.unbind();
+        return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
@@ -1047,6 +1068,7 @@ namespace Dune
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
       LinearOperatorType linearOperator_;
+      mutable NewtonOperatorType invOp_;
     };
 
   } // namespace Fem
