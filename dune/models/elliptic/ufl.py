@@ -9,11 +9,14 @@ from ufl.classes import Indexed
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
+from ufl import UFLException
 
 from dune.ufl import DirichletBC, GridFunction
 from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
+
+from dune.common.hashit import hashIt
 
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
@@ -88,6 +91,20 @@ def generateCode(predefined, tensor, tempVars=True):
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
+def toFileName(value):
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub('[-\s]+', '-', value))
+    return value
+
+def modelSignature(form,*args):
+    dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
+    sig = form.signature()
+    if len(dirichletBCs) > 0:
+        dirichletBCs.append(sig)
+        sig = hashIt( dirichletBCs )
+    return sig
 
 def compileUFL(form, *args, **kwargs):
     if isinstance(form, Equation):
@@ -131,7 +148,7 @@ def compileUFL(form, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimDomain, dimRange, form.signature())
+    model = EllipticModel(dimDomain, dimRange, modelSignature(form,*args))
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 

@@ -58,49 +58,58 @@ def istl():
         solvers.istlsolver,\
         "as_istl"
     ]
-def petsc():
-    dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
-    rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
-    def equalSpaces(space,rspace):
-        if not space==rspace and not rspace is None:
-            raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
-        return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
-    try:
-        import petsc4py
-        return lambda space, rspace=None:[\
-            "petsc",\
-            ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
-                  [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"] +\
-                  space._includes,\
-            dfType(space),\
-            equalSpaces(space,rspace),\
-            solvers.petscsolver,\
-            "as_petsc"
-        ]
-    except:
+
+from dune.common.checkconfiguration import assertHave, ConfigurationError
+try:
+    assertHave("HAVE_PETSC")
+    def petsc():
+        dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
+        rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
+        def equalSpaces(space,rspace):
+            if not space==rspace and not rspace is None:
+                raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
+            return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
+        try:
+            import petsc4py
+            return lambda space, rspace=None:[\
+                "petsc",\
+                ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+                      [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"] +\
+                      space._includes,\
+                dfType(space),\
+                equalSpaces(space,rspace),\
+                solvers.petscsolver,\
+                "as_petsc"
+            ]
+        except:
+            return lambda space,rspace=None:[\
+                "petsc",\
+                ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+                      space._includes,\
+                dfType(space),\
+                equalSpaces(space,rspace),\
+                solvers.petscsolver,\
+                "as_petsc"
+            ]
+
+    def petscadapt():
+        dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+        rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
+        def equalSpaces(space,rspace):
+            if not space==rspace and not rspace is None:
+                raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
+            return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
         return lambda space,rspace=None:[\
             "petsc",\
-            ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+            ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
                   space._includes,\
             dfType(space),\
             equalSpaces(space,rspace),\
             solvers.petscsolver,\
-            "as_petsc"
+            "as_numpy"
         ]
-
-def petscadapt():
-    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
-    rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
-    def equalSpaces(space,rspace):
-        if not space==rspace and not rspace is None:
-            raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
-        return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
-    return lambda space,rspace=None:[\
-        "petsc",\
-        ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
-              space._includes,\
-        dfType(space),\
-        equalSpaces(space,rspace),\
-        solvers.petscsolver,\
-        "as_numpy"
-    ]
+except ConfigurationError:
+    def petsc():
+        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")
+    def petscadapt():
+        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")

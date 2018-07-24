@@ -40,6 +40,8 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
     from dune.ufl import GridFunction
     from dune.ufl.tensors import ExprTensor
+    if type(expr) == list or type(expr) == tuple:
+        expr = ufl.as_vector(expr)
     if not isinstance(expr, ufl.core.expr.Expr):
         return None
     _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)

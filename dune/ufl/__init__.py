@@ -209,17 +209,13 @@ class GridFunction(ufl.Coefficient):
             return self.gf.localFunction(x.entity).jacobian(x.local)[component[0]][derivatives[0]]
 
 class DirichletBC:
-
     def flatten(l):
-        print("in flatten: ",l)
         import collections
         for el in l:
             if isinstance(el, collections.Iterable): # and not isinstance(el, basestring):
-                print("iterate")
                 for sub in DirichletBC.flatten(el):
                     yield sub
             else:
-                print("take it")
                 yield el
 
     def __init__(self, functionSpace, value, subDomain):
@@ -246,7 +242,7 @@ class CoordWrapper:
     def __init__(self,e,x):
         self.entity = e
         self.local = x
-        self.glb = e.geometry.position(x)
+        self.glb = e.geometry.toGlobal(x)
     def __getitem__(self,i): return self.glb[i]
 def expression2GF(grid,expression,order,name="expr"):
     from dune.fem.function import localFunction, uflFunction

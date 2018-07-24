@@ -8,7 +8,7 @@ from dune.plotting import block
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
         xlim=None, ylim=None, clim=None, cmap=None, colorbar=True, triplot=False):
 
-    if not gridLines == "":
+    if (gridLines is not None) and (gridLines != ""):
         polys = grid.polygons()
         for p in polys:
             coll = PolyCollection(p,facecolor='none',edgecolor=gridLines,linewidth=0.5,zorder=2)
@@ -133,14 +133,14 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
         show = range(solution.dimRange)
 
     fig = pyplot.figure()
-    if not gridLines=="":
+    if (gridLines is not None) and (gridLines != ""):
         offset = 1
     else:
         offset = 0
     subfig = 101+(len(show)+offset)*10
 
     # first the grid if required
-    if not gridLines=="":
+    if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
         _plotPointData(fig,grid,None,level,gridLines,False,xlim,ylim,clim,cmap)
 
