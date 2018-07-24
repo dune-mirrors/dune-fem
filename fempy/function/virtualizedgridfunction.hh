@@ -209,13 +209,11 @@ namespace Dune
 
       void evaluateQuadrature ( const ElementQuadratureType &quadrature, RangeValueVectorType &values ) const
       {
-        std::cout << "Virtualized::evalQuad " << std::endl;
         impl_->evaluateQuadrature( quadrature, values );
       }
 
       void evaluateQuadrature ( const FaceQuadratureType &quadrature, RangeValueVectorType &values ) const
       {
-        std::cout << "Virtualized::evalQuad " << std::endl;
         impl_->evaluateQuadrature( quadrature, values );
       }
 
