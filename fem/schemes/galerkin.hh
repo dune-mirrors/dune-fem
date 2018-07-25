@@ -174,13 +174,11 @@ namespace Dune
           return phi;
         }
 
-        template <class Weight>
-        static DomainValueType domainValue ( const int qpIdx, DomainValueVectorType& vec, const Weight& weight )
+        static DomainValueType domainValue ( const unsigned int qpIdx, DomainValueVectorType& vec)
         {
           DomainValueType phi;
-          Hybrid::forEach( DomainValueIndices(), [ &qpIdx, &vec, &phi, &weight ] ( auto i ) {
+          Hybrid::forEach( DomainValueIndices(), [ &qpIdx, &vec, &phi ] ( auto i ) {
               std::get< i > ( phi )  = std::get< i >( vec )[ qpIdx ];
-              std::get< i > ( phi ) *= weight;
                 } );
           return phi;
         }
@@ -213,6 +211,14 @@ namespace Dune
               std::get< i >( ranges )[ idx ] = std::get< i >( range );
             });
         }
+        template <class W>
+        static void assignRange( RangeValueVectorType& ranges, const std::size_t idx, const RangeValueType& range, const W &weight )
+        {
+          Hybrid::forEach( RangeValueIndices(), [ &ranges, &idx, &range, &weight ] ( auto i ) {
+              std::get< i >( ranges )[ idx ]  = std::get< i >( range );
+              std::get< i >( ranges )[ idx ] *= weight;
+            });
+        }
 
         static void assignDomain( DomainValueVectorType& domains, const std::size_t idx, const DomainValueType& domain )
         {
@@ -229,17 +235,6 @@ namespace Dune
             } );
         }
 
-        int interiorQuadratureOrder( const int order ) const
-        {
-          return 2*order + 3;
-          //return (order == 0) ? 3 : 2*order + 1 ;
-        }
-
-        int surfaceQuadratureOrder( const int order ) const
-        {
-          return 2*order + 3;
-          //return (order == 0) ? 3 : 2*order + 1 ;
-        }
       public:
         // interior integral
 
@@ -250,7 +245,7 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadOrder(w.order()) );
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(w.order()) );
 
           // evaluate u for all quadrature points
           DomainValueVectorType& domains = domainValues_;
@@ -263,7 +258,7 @@ namespace Dune
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
-            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domains, weight ) ) );
+            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domains ) ), weight );
           }
 
           // add to w for all quadrature points
@@ -280,7 +275,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(rangeBasis.order()) );
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder( std::max(domainBasis.order(),rangeBasis.order()) ) );
           const size_t domainSize = domainBasis.size();
           const size_t quadNop = quadrature.nop();
 
@@ -302,10 +297,10 @@ namespace Dune
           {
             values( domainBasis, qp, basisValues );
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
-            auto integrand = integrands_.linearizedInterior( qp, domainValue( qp.index(), domains, weight ) );
+            auto integrand = integrands_.linearizedInterior( qp, domainValue( qp.index(), domains ) );
             for( std::size_t col = 0; col < domainSize; ++col )
             {
-              assignRange( rangeValues_[ col ], qp.index(), integrand( value( basisValues, col ) ) );
+              assignRange( rangeValues_[ col ], qp.index(), integrand( value( basisValues, col ) ), weight );
             }
           }
 
@@ -774,8 +769,8 @@ namespace Dune
 
         const GridPartType &gridPart () const { return gridPart_; }
 
-        unsigned int interiorQuadOrder(unsigned int order) const { return interiorQuadOrder_==0 ? 2*order+3:interiorQuadOrder_; }
-        unsigned int surfaceQuadOrder(unsigned int order)  const { return surfaceQuadOrder_==0 ? 2*order+3:surfaceQuadOrder_; }
+        unsigned int interiorQuadratureOrder(unsigned int order) const { return interiorQuadOrder_==0 ? 2*order+3:interiorQuadOrder_; }
+        unsigned int surfaceQuadratureOrder(unsigned int order)  const { return surfaceQuadOrder_==0 ? 2*order+3:surfaceQuadOrder_; }
 
       private:
         const GridPartType &gridPart_;
