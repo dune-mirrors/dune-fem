@@ -197,8 +197,11 @@ class GridFunction(ufl.Coefficient):
     __name__   = property(lambda self:self.gf.__name__)
     __class__  = property(lambda self:self.gf.__class__)
 
-    def __call__(self,e,x):
-        return self.gf.localFunction(e).evaluate(x)
+    def __call__(self,e,x=None):
+        if x is None:
+            return ufl.Coefficient.__call__(self,e)
+        else:
+            return self.gf.localFunction(e).evaluate(x)
 
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \

@@ -32,15 +32,15 @@ def initModel(model, *args, **kwargs):
     except:
         coefficientNames = []
     if len(args) > len(coefficientNames):
-        raise ArgumentError('Too many coefficients passed.')
+        raise ValueError('Too many coefficients passed.')
     args += [None] * (len(coefficientNames) - len(args))
 
     for name, value in kwargs:
         i = coefficientNames.get(name)
         if i is None:
-            raise ArgumentError('No such coefficent: ' + name + '.')
+            raise ValueError('No such coefficent: ' + name + '.')
         if args[i] is not None:
-            raise ArgumentError('Coefficient already given as positional argument: ' + name + '.')
+            raise ValueError('Coefficient already given as positional argument: ' + name + '.')
         args[i] = value
 
     for key, value in coefficients.items():
@@ -48,17 +48,17 @@ def initModel(model, *args, **kwargs):
             try:
                 i = model._renumbering[key]
             except AttributeError:
-                raise ArgumentError('Cannot map UFL coefficients, because model was not generated from UFL form.')
+                raise ValueError('Cannot map UFL coefficients, because model was not generated from UFL form.')
             except KeyError:
-                raise ArgumentError('No such coefficient: ' + str(key) + '.')
+                raise ValueError('No such coefficient: ' + str(key) + '.')
         elif isString(key):
             i = coefficientNames.get(name)
             if i is None:
-                raise ArgumentError('No such coefficent: ' + name + '.')
+                raise ValueError('No such coefficent: ' + name + '.')
         else:
-            raise ArgumentError('Expecting keys of coefficient map to be ufl.Coefficient instances.')
+            raise ValueError('Expecting keys of coefficient map to be ufl.Coefficient instances.')
         if args[i] is not None:
-            raise ArgumentError('Coefficient already given as positional or keyword argument: ' + str(key) + '.')
+            raise ValueError('Coefficient already given as positional or keyword argument: ' + str(key) + '.')
         args[i] = value
 
     if hasattr(model, '_renumbering'):
@@ -68,8 +68,9 @@ def initModel(model, *args, **kwargs):
                 args[i] = c.gf
 
     if any(arg is None for arg in args):
-        missing = [name for name, i in coefficientNames if args[i] is None]
-        raise ArgumentError('Missing coefficients: ' + ', '.join(missing) + '.')
+        print(coefficientNames)
+        missing = [name for name, i in coefficientNames.items() if args[i] is None]
+        raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
     model._init(*args)
 

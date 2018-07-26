@@ -15,16 +15,16 @@ from .ufl import compileUFL, fieldVectorType, integrandsSignature
 
 def init(integrands, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
+    coefficientNames = integrands._coefficientNames
     if len(args) == 1 and isinstance(args[0], dict):
         coefficients.update(args[0])
         args = []
     else:
         args = list(a for a in args if not isinstance(a,DirichletBC))
         dirichletBCs = list(a for a in args if isinstance(a,DirichletBC))
+        if len(args) > len(coefficientNames) + len(dirichletBCs):
+            raise ValueError('Too many coefficients passed.')
 
-    coefficientNames = integrands._coefficientNames
-    if len(args) > len(coefficientNames) + len(dirichletBCs):
-        raise ValueError('Too many coefficients passed.')
     args += [None] * (len(coefficientNames) - len(args))
 
     for name, value in kwargs.items():
