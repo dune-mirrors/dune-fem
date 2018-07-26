@@ -155,6 +155,21 @@ namespace Dune
 
     };
 
+    template<class FV>
+    struct MakeExplicit
+    {
+      using Type = FV;
+    };
+
+    template<class Field, int Size>
+    struct MakeExplicit<FieldVector<Field, Size> >
+    {
+      using Type = ExplicitFieldVector<Field, Size>;
+    };
+
+    template<class FV>
+    using Explicit = typename MakeExplicit<FV>::Type;
+
   } // Fem
 
 } // Dune
