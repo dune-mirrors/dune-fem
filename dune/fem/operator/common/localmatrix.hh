@@ -3,6 +3,7 @@
 
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include "../../common/explicitfieldvector.hh"
 
 namespace Dune
 {
@@ -443,7 +444,7 @@ namespace Dune
        */
       template <class RangeVectorType>
       void axpy( const RangeVectorType& phi,
-                 const RangeType& factor,
+                 const Explicit<RangeType>& factor,
                  const RangeFieldType& weight = RangeFieldType(1) )
       {
         const unsigned int numBasisFunctions = localMatrix_.rows();
@@ -501,7 +502,7 @@ namespace Dune
       template <class RangeVectorType, class JacobianVectorType>
       void axpy( const RangeVectorType& phi,
                  const JacobianVectorType& dphi,
-                 const RangeType& factor,
+                 const Explicit<RangeType>& factor,
                  const JacobianRangeType& jacobianFactor,
                  const RangeFieldType& weight = RangeFieldType(1) )
       {
