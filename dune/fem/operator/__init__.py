@@ -17,11 +17,11 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args, backend=None):
+def load(includes, typeName, *args, backend=None, preamble=None):
     from dune.fem.discretefunction import addBackend
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True)
+    module = generator.load(includes, typeName, moduleName, *args, preamble=preamble, dynamicAttr=True)
     JacobianOperator = getattr(module.Operator,"JacobianOperator",None)
     try:
         backend = backend[0] if backend[0] == backend[1] else None
