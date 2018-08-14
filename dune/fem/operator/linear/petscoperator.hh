@@ -284,15 +284,17 @@ namespace Dune
 
         std::array< PetscInt, rangeLocalBlockSize > r;
         std::array< PetscInt, domainLocalBlockSize> c;
-        for( size_t i=0; i<rangeLocalBlockSize; ++i )
-          r[ i ] = row * rangeLocalBlockSize + i;
-        for( size_t i=0; i<domainLocalBlockSize; ++i )
-          c[ i ] = col * domainLocalBlockSize + i;
+        for( size_t i=0, ir = row * rangeLocalBlockSize ; i<rangeLocalBlockSize; ++i, ++ir )
+          r[ i ] = ir;
+        for( size_t i=0, ic = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++ic )
+          c[ i ] = ic;
 
         std::array< PetscScalar, rangeLocalBlockSize * domainLocalBlockSize > v;
-        for( std::size_t i =0 ; i< rangeLocalBlockSize; ++i )
-          for( std::size_t j =0; j< domainLocalBlockSize; ++j )
-            v[ i * domainLocalBlockSize + j ] = block[ i ][ j ];
+        for( std::size_t i = 0 ; i< rangeLocalBlockSize; ++i )
+        {
+          for( std::size_t j = 0, ij = i * domainLocalBlockSize; j< domainLocalBlockSize; ++j, ++ij )
+            v[ ij ] = block[ i ][ j ];
+        }
 
         ::Dune::Petsc::MatSetValues( petscMatrix_, rangeLocalBlockSize, r.data(), domainLocalBlockSize, c.data(), v.data(), op );
 
