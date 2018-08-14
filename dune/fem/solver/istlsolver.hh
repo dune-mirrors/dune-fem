@@ -73,7 +73,7 @@ namespace Dune
         // call solver
         solver.apply( dest.blockVector(), rhs, returnInfo );
 
-        return std::pair< int, double > ( returnInfo.iterations, matrix.averageCommTime() );
+        return std::pair< int, double > ( returnInfo.converged ? returnInfo.iterations : -( returnInfo.iterations ), matrix.averageCommTime() );
       }
 
     };
