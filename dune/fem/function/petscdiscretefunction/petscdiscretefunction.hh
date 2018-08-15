@@ -5,6 +5,9 @@
 #include <string>
 #include <utility>
 
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
+
 #if HAVE_PETSC
 
 #include <dune/common/dynvector.hh>
@@ -21,8 +24,6 @@ namespace Dune
 
     template< class DiscreteFunctionSpace >
     class PetscDiscreteFunction;
-
-
 
     template< class DofProxy, class Allocator >
     struct AssignVectorReference< Dune::DynamicVector< DofProxy, Allocator >  >
@@ -84,6 +85,7 @@ namespace Dune
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
 
+      // generic assign method
       using BaseType::assign;
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
@@ -143,6 +145,23 @@ namespace Dune
       void communicate ()
       {
         dofVector().communicateNow();
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g)
+       *  \note This is a specialization when the right hand side is an AdaptiveDiscreteFunction */
+      void assign( const AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > &g )
+      {
+        // call more efficient assign on PetscVector
+        dofVector().assignVector( g.dofVector() );
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g)
+       *  \note This is a specialization when the right hand side is an ISTLBlockVectorDiscreteFunction */
+      template < class Block >
+      void assign( const ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType, Block > &g )
+      {
+        // call more efficient assign on PetscVector
+        dofVector().assignVector( g.dofVector() );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */

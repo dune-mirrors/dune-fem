@@ -20,6 +20,8 @@ namespace Dune
     template< class K, int m >
     class FieldMatrixConverterRow;
 
+    template< class K, int n, int m >
+    class FlatFieldMatrix;
   }
 
 
@@ -45,6 +47,13 @@ namespace Dune
     typedef K value_type;
     typedef size_t size_type;
   };
+
+  template< class K, int n, int m >
+  struct DenseMatVecTraits< Fem::FlatFieldMatrix< K, n, m > >
+    : public DenseMatVecTraits< Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > >
+  {
+  };
+
 
 
   namespace Fem
@@ -234,6 +243,64 @@ namespace Dune
     #endif
     };
 
+    template< typename K, int n, int m >
+    class FlatFieldMatrix
+      : public FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > >
+    {
+      typedef FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > BaseType;
+    protected:
+      typedef typename BaseType :: InteralVectorType  InteralVectorType;
+      InteralVectorType  data_;
+    public:
+      FlatFieldMatrix() : BaseType( data_ ) {}
+      FlatFieldMatrix( const K& val ) : BaseType( data_ )
+      {
+        // all entries == val
+        data_ = val;
+      }
+
+      FlatFieldMatrix( const FlatFieldMatrix& other ) : BaseType( data_ )
+      {
+        data_ = other.data_;
+      }
+
+      FlatFieldMatrix( const FieldMatrix< K, n, m >& other ) : BaseType( data_ )
+      {
+        assign( other );
+      }
+
+      FlatFieldMatrix &operator= ( const FlatFieldMatrix &other )
+      {
+        data_ = other.data_;
+        return *this;
+      }
+
+      FlatFieldMatrix &operator= ( const K& val )
+      {
+        data_ = val;
+        return *this;
+      }
+
+      FlatFieldMatrix &operator= ( const FieldMatrix< K, n, m > &other )
+      {
+        assign( other );
+        return *this;
+      }
+
+      void assign( const FieldMatrix< K, n, m > &other )
+      {
+        for( int i = 0; i<n; ++i )
+        {
+          for( int j = 0, ij = i * n; j<m; ++j, ++ij )
+            data_[ ij ] = other[ i ][ j ];
+        }
+      }
+
+      K* data() { return &data_[ 0 ]; }
+      const K* data() const { return &data_[ 0 ]; }
+    };
+
+
   } // namespace Fem
 
   // method that implements the operator= of a FieldMatrix taking a FieldMatrixConverter
@@ -256,6 +323,31 @@ namespace Dune
   {
     static void apply ( DenseMatrix< FieldMatrix< K, n, m > > &A,
         const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+    {
+      for( size_t i = 0; i < n; ++i )
+        for( size_t j = 0; j < m; ++j )
+          A[ i ][ j ] = B[ i ][ j ];
+    }
+  };
+
+  // method that implements the operator= of a FieldMatrix taking a FlatFieldMatrix
+  template< class K, int n, int m >
+  struct DenseMatrixAssigner< FieldMatrix< K, n, m >, Fem::FlatFieldMatrix< K, n, m > >
+  {
+    static void apply ( FieldMatrix< K, n, m > &A,
+                        const Fem::FlatFieldMatrix< K, n, m > &B )
+    {
+      for( size_t i = 0; i < n; ++i )
+        for( size_t j = 0; j < m; ++j )
+          A[ i ][ j ] = B[ i ][ j ];
+    }
+  };
+
+  template< class K, int n, int m >
+  struct DenseMatrixAssigner< DenseMatrix< FieldMatrix< K, n, m > >, Fem::FlatFieldMatrix< K, n, m > >
+  {
+    static void apply ( DenseMatrix< FieldMatrix< K, n, m > > &A,
+                        const Fem::FlatFieldMatrix< K, n, m > &B )
     {
       for( size_t i = 0; i < n; ++i )
         for( size_t j = 0; j < m; ++j )

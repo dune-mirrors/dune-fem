@@ -14,6 +14,7 @@
 
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/misc/fmatrixconverter.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
@@ -74,6 +75,9 @@ namespace Dune
       const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
 
       static_assert( domainLocalBlockSize == rangeLocalBlockSize, "PetscLinearOperator only works for domainLocalBlockSize == rangeLocalBlockSize. " );
+
+      typedef FlatFieldMatrix< RangeFieldType, domainLocalBlockSize, rangeLocalBlockSize > MatrixBlockType;
+      typedef MatrixBlockType  block_type;
 
     private:
       enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4};
@@ -276,47 +280,45 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+    protected:
+      template< class PetscOp >
+      void applyToBlock ( const PetscInt row, const PetscInt col, const MatrixBlockType& block, PetscOp op )
+      {
+        ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, 1, &row, 1, &col, block.data(), op );
+        setStatus( statAssembled );
+      }
+
       template< class LocalBlock, class PetscOp >
       void applyToBlock ( const size_t row, const size_t col, const LocalBlock& block, PetscOp op )
       {
         assert( block.rows() == rangeLocalBlockSize );
         assert( block.cols() == domainLocalBlockSize );
 
-        std::array< PetscInt, rangeLocalBlockSize > r;
-        std::array< PetscInt, domainLocalBlockSize> c;
-        for( size_t i=0, ir = row * rangeLocalBlockSize ; i<rangeLocalBlockSize; ++i, ++ir )
-          r[ i ] = ir;
-        for( size_t i=0, ic = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++ic )
-          c[ i ] = ic;
-
-        std::array< PetscScalar, rangeLocalBlockSize * domainLocalBlockSize > v;
-        for( std::size_t i = 0 ; i< rangeLocalBlockSize; ++i )
-        {
-          for( std::size_t j = 0, ij = i * domainLocalBlockSize; j< domainLocalBlockSize; ++j, ++ij )
-            v[ ij ] = block[ i ][ j ];
-        }
-
-        ::Dune::Petsc::MatSetValues( petscMatrix_, rangeLocalBlockSize, r.data(), domainLocalBlockSize, c.data(), v.data(), op );
-
-        setStatus( statAssembled );
+        MatrixBlockType matBlock( block );
+        applyToBlock( row, col, matBlock, op );
       }
 
+    public:
       template< class LocalBlock >
       void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
         assert( status_==statAssembled || status_==statInsert );
-        setStatus( statInsert );
+        assert( row < std::numeric_limits< int > :: max() );
+        assert( col < std::numeric_limits< int > :: max() );
 
-        applyToBlock( row, col, block, INSERT_VALUES );
+        setStatus( statInsert );
+        applyToBlock( static_cast< PetscInt > (row), static_cast< PetscInt > (col), block, INSERT_VALUES );
       }
 
       template< class LocalBlock >
       void addBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
         assert( status_==statAssembled || status_==statInsert );
-        setStatus( statAdd );
+        assert( row < std::numeric_limits< int > :: max() );
+        assert( col < std::numeric_limits< int > :: max() );
 
-        applyToBlock( row, col, block, ADD_VALUES );
+        setStatus( statAdd );
+        applyToBlock( static_cast< PetscInt > (row), static_cast< PetscInt > (col), block, ADD_VALUES );
       }
 
       template< class LocalMatrix >

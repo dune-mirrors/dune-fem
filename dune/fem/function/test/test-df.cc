@@ -174,6 +174,10 @@ int main(int argc, char ** argv)
     Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > petscdf ("petsc", space);
     checkFunction( petscdf, ref );
     checkFunction( petscdf, vdf );
+    checkFunction( petscdf, adf );
+    checkFunction( petscdf, istldf );
+    checkFunction( adf, petscdf );
+    checkFunction( istldf, petscdf );
 #endif
 
     // refine grid

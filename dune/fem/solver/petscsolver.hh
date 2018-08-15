@@ -181,13 +181,19 @@ namespace Dune
       void unbind ()
       {
         op_ = nullptr; matrixOp_ = nullptr;
-        ksp_.reset(nullptr);
+        Arg_.reset();
+        Dest_.reset();
+        ksp_.reset();
       }
 
       void initialize ( const ParameterReader &parameter )
       {
         if( !matrixOp_ )
           DUNE_THROW(NotImplemented,"Petsc solver with matrix free implementations not yet supported!");
+
+        // reset temporary functions
+        Arg_.reset();
+        Dest_.reset();
 
         // Create linear solver context
         ksp_.reset( new KSP() );
@@ -427,16 +433,25 @@ namespace Dune
       void apply( const DiscreteFunction& arg, DiscreteFunction& dest ) const
       {
         // copy discrete functions
-        PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
-        Arg.assign( arg );
+        if( !Arg_ )
+        {
+          Arg_.reset( new PetscDiscreteFunctionType("PetscSolver::arg", arg.space() ) );
+        }
 
-        // also copy initial destination in case this is used a solver init value
-        PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
-        Dest.assign( dest );
+        Arg_->assign( arg );
 
-        apply( Arg, Dest );
+        if( ! Dest_ )
+        {
+          // also copy initial destination in case this is used a solver init value
+          Dest_.reset( new PetscDiscreteFunctionType("PetscSolver::dest", dest.space() ) );
+        }
+
+        Dest_->assign( dest );
+
+        apply( *Arg_, *Dest_ );
+
         // copy destination back
-        dest.assign( Dest );
+        dest.assign( *Dest_ );
       }
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
@@ -492,6 +507,8 @@ namespace Dune
 
       const OperatorType  *op_ = nullptr; // linear operator
       const AssembledOperatorType* matrixOp_ = nullptr; // assembled operator
+
+      mutable std::unique_ptr< PetscDiscreteFunctionType > Arg_, Dest_;
 
       std::unique_ptr< KSP, KSPDeleter > ksp_;   // PETSc Krylov Space solver context
       double reduction_;

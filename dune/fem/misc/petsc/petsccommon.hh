@@ -263,6 +263,8 @@ namespace Dune
     inline static void MatSetValue ( Mat v, PetscInt i, PetscInt j, PetscScalar va, InsertMode mode ) { ErrorCheck( ::MatSetValue( v, i, j, va, mode ) ); }
     inline static void MatSetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
       { ErrorCheck( ::MatSetValues( mat, m, idxm, n, idxn, v, addv ) ); }
+    inline static void MatSetValuesBlocked ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
+      { ErrorCheck( ::MatSetValuesBlocked( mat, m, idxm, n, idxn, v, addv ) ); }
     inline static void MatGetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[] )
       { ErrorCheck( ::MatGetValues( mat, m, idxm, n, idxn, v ) ); }
     inline static void MatZeroRows ( Mat mat, PetscInt m, const PetscInt idxm[], const PetscScalar v ) { ErrorCheck( ::MatZeroRows( mat, m, idxm, v, 0, 0 ) ); }
@@ -319,6 +321,7 @@ namespace Dune
     }
     inline static void VecDot ( Vec x, Vec y, PetscScalar *val ) { ErrorCheck( ::VecDot( x, y, val ) ); }
     inline static void VecDuplicate ( Vec v, Vec *newv ) { ErrorCheck( ::VecDuplicate( v, newv ) ); }
+    inline static void VecGetBlockSize ( Vec x, PetscInt* bs ) { ErrorCheck( ::VecGetBlockSize( x, bs ) ); }
     inline static void VecGetLocalSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetLocalSize( x, size ) ); }
     inline static void VecGetOwnershipRange ( Vec x, PetscInt *low, PetscInt *high ) { ErrorCheck( ::VecGetOwnershipRange( x, low, high ) ); }
     inline static void VecGetSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetSize( x, size ) ); }
@@ -330,10 +333,12 @@ namespace Dune
     inline static void VecNorm ( Vec x, NormType type, PetscReal *val ) { ErrorCheck( ::VecNorm( x, type, val ) ); }
     inline static void VecScale ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecScale( x, alpha ) ); }
     inline static void VecSet ( Vec x, PetscScalar alpha ) { ErrorCheck( ::VecSet( x, alpha ) ); }
+    inline static void VecSetBlockSize ( Vec x, PetscInt bs ) { ErrorCheck( ::VecSetBlockSize( x, bs ) ); }
     inline static void VecSetFromOptions ( Vec vec ) { ErrorCheck( ::VecSetFromOptions( vec ) ); }
     inline static void VecSetType ( Vec vec, const VecType method ) { ErrorCheck( ::VecSetType( vec, method ) ); }
     inline static void VecSetSizes ( Vec v, PetscInt n, PetscInt N ) { ErrorCheck( ::VecSetSizes( v, n, N ) ); }
     inline static void VecSetValue ( Vec v, int row, PetscScalar value, InsertMode mode ) { ErrorCheck( ::VecSetValue( v, row, value, mode ) ); }
+    inline static void VecSetValuesBlocked ( Vec v, PetscInt ni, const PetscInt xi[], const PetscScalar values[], InsertMode mode ) { ErrorCheck( ::VecSetValuesBlocked( v, ni, xi, values, mode ) ); }
     inline static void VecView ( Vec vec, PetscViewer viewer ) { ErrorCheck( ::VecView( vec, viewer ) ); }
 
   } // namespace Petsc
