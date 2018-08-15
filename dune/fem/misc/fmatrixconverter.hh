@@ -120,7 +120,6 @@ namespace Dune
 
 
 
-
     //! convert a FieldVector with length n * m to a FieldMatrix with n rows and m cols
     template< typename K, int n, int m >
     class FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > >
@@ -191,19 +190,27 @@ namespace Dune
       FieldMatrixConverter &operator= ( const FieldMatrix< K, n, m > &matrix )
       {
         assert( mutableVec_ );
-        for( size_t i = 0; i < rows; ++i )
-          for( size_t j = 0; j < cols; ++j )
-            (*vec_)[ i * cols + j ] = matrix[ i ][ j ];
+        for( int i = 0; i<rows; ++i )
+        {
+          for( int j = 0, ij = i * cols; j<cols; ++j, ++ij )
+          {
+            (*vec_)[ ij ] = matrix[ i ][ j ];
+          }
+        }
 
         return *this;
       }
+
       FieldMatrixConverter &operator+= ( const FieldMatrix< K, n, m > &matrix )
       {
         assert( mutableVec_ );
-        for( size_t i = 0; i < rows; ++i )
-          for( size_t j = 0; j < cols; ++j )
-            (*vec_)[ i * cols + j ] += matrix[ i ][ j ];
-
+        for( int i = 0; i<rows; ++i )
+        {
+          for( int j = 0, ij = i * cols; j<cols; ++j, ++ij )
+          {
+            (*vec_)[ ij ] += matrix[ i ][ j ];
+          }
+        }
         return *this;
       }
 
@@ -245,26 +252,51 @@ namespace Dune
 
     template< typename K, int n, int m >
     class FlatFieldMatrix
-      : public FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > >
+      : public Dune::DenseMatrix< FlatFieldMatrix< K, n, m > >
     {
-      typedef FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > BaseType;
-    protected:
-      typedef typename BaseType :: InteralVectorType  InteralVectorType;
-      InteralVectorType  data_;
+      typedef Dune::DenseMatrix< FlatFieldMatrix< K, n, m > > Base;
+
     public:
-      FlatFieldMatrix() : BaseType( data_ ) {}
-      FlatFieldMatrix( const K& val ) : BaseType( data_ )
+      //! internal storage of matrix
+      typedef FieldVector< K, n * m > InteralVectorType;
+
+      //! type of class return upon operator [] which behaves like a reference
+      typedef typename Base::row_type row_type;
+      typedef typename Base::row_reference row_reference;
+      typedef typename Base::const_row_reference const_row_reference;
+
+      //! export the type representing the field
+      typedef K field_type;
+
+      //! export the type representing the components
+      typedef K block_type;
+
+      //! The type used for the index access and size operations.
+      typedef std::size_t size_type;
+
+      enum {
+        //! The number of rows.
+        rows = n,
+        //! The number of columns.
+        cols = m,
+        //! The total dimension
+        dimension = n * m
+      };
+
+    public:
+      FlatFieldMatrix() {}
+      FlatFieldMatrix( const K& val )
       {
         // all entries == val
         data_ = val;
       }
 
-      FlatFieldMatrix( const FlatFieldMatrix& other ) : BaseType( data_ )
+      FlatFieldMatrix( const FlatFieldMatrix& other )
       {
         data_ = other.data_;
       }
 
-      FlatFieldMatrix( const FieldMatrix< K, n, m >& other ) : BaseType( data_ )
+      FlatFieldMatrix( const FieldMatrix< K, n, m >& other )
       {
         assign( other );
       }
@@ -287,21 +319,75 @@ namespace Dune
         return *this;
       }
 
+      FlatFieldMatrix &operator+= ( const FieldMatrix< K, n, m > &other )
+      {
+        for( int i = 0; i<rows; ++i )
+        {
+          for( int j = 0, ij = i * cols; j<cols; ++j, ++ij )
+            data_[ ij ] += other[ i ][ j ];
+        }
+        return *this;
+      }
+
       void assign( const FieldMatrix< K, n, m > &other )
       {
-        for( int i = 0; i<n; ++i )
+        for( int i = 0; i<rows; ++i )
         {
-          for( int j = 0, ij = i * n; j<m; ++j, ++ij )
+          for( int j = 0, ij = i * cols; j<cols; ++j, ++ij )
             data_[ ij ] = other[ i ][ j ];
         }
       }
 
       K* data() { return &data_[ 0 ]; }
       const K* data() const { return &data_[ 0 ]; }
+
+      // make this thing a matrix
+      size_type mat_rows () const { return rows; }
+      size_type mat_cols () const { return cols; }
+
+      row_reference mat_access ( size_type i )
+      {
+        assert( i < rows );
+        return row_reference( &(data_[ i * cols ]) );
+      }
+
+      const_row_reference mat_access ( size_type i ) const
+      {
+        assert( i < rows );
+        return const_row_reference( &(*data_[ i * cols ]) );
+      }
+
+      /** \brief Sends the matrix to an output stream */
+      friend std::ostream &operator<< ( std::ostream &s,
+                                        const FlatFieldMatrix &a )
+      {
+        for( size_type i = 0; i < n; ++i )
+        {
+          for( size_type j = 0; j < m; ++j )
+            s << a[ i ][ j ] << " ";
+          s << std::endl;
+        }
+        return s;
+      }
+
+    protected:
+      InteralVectorType  data_;
     };
 
 
   } // namespace Fem
+
+
+  namespace detail {
+
+    template < class K, int n, int m, class Converter>
+    inline void toMatrix( FieldMatrix< K, n, m>& A, const Converter& B )
+    {
+      for( int i = 0; i < n; ++i )
+        for( int j = 0; j < m; ++j )
+          A[ i ][ j ] = B[ i ][ j ];
+    }
+  }
 
   // method that implements the operator= of a FieldMatrix taking a FieldMatrixConverter
   template< class K, int n, int m >
@@ -309,11 +395,9 @@ namespace Dune
     Fem::FieldMatrixConverter< FieldVector< K, n*m >, FieldMatrix< K, n, m > > >
   {
     static void apply ( FieldMatrix< K, n, m > &A,
-        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+                        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
     {
-      for( size_t i = 0; i < n; ++i )
-        for( size_t j = 0; j < m; ++j )
-          A[ i ][ j ] = B[ i ][ j ];
+      detail::toMatrix( A, B );
     }
   };
 
@@ -322,11 +406,9 @@ namespace Dune
     Fem::FieldMatrixConverter< FieldVector< K, n*m >, FieldMatrix< K, n, m > > >
   {
     static void apply ( DenseMatrix< FieldMatrix< K, n, m > > &A,
-        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+                        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
     {
-      for( size_t i = 0; i < n; ++i )
-        for( size_t j = 0; j < m; ++j )
-          A[ i ][ j ] = B[ i ][ j ];
+      detail::toMatrix( A, B );
     }
   };
 
@@ -337,9 +419,7 @@ namespace Dune
     static void apply ( FieldMatrix< K, n, m > &A,
                         const Fem::FlatFieldMatrix< K, n, m > &B )
     {
-      for( size_t i = 0; i < n; ++i )
-        for( size_t j = 0; j < m; ++j )
-          A[ i ][ j ] = B[ i ][ j ];
+      detail::toMatrix( A, B );
     }
   };
 
@@ -349,9 +429,7 @@ namespace Dune
     static void apply ( DenseMatrix< FieldMatrix< K, n, m > > &A,
                         const Fem::FlatFieldMatrix< K, n, m > &B )
     {
-      for( size_t i = 0; i < n; ++i )
-        for( size_t j = 0; j < m; ++j )
-          A[ i ][ j ] = B[ i ][ j ];
+      detail::toMatrix( A, B );
     }
   };
 
