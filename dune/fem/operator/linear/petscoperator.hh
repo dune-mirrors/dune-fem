@@ -173,6 +173,12 @@ namespace Dune
         reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
       }
 
+      template <class Set>
+      void reserve (const std::vector< Set >& sparsityPattern )
+      {
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ) );
+      }
+
       //! reserve memory for assemble based on the provided stencil
       template <class StencilType>
       void reserve (const StencilType &stencil)
@@ -278,6 +284,16 @@ namespace Dune
       LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
       {
         return LocalColumnObjectType ( *this, colEntity );
+      }
+
+      void unitRow( const PetscInt row, const PetscScalar diag = 1.0 )
+      {
+        std::array< PetscInt, domainLocalBlockSize > rows;
+        for( int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
+          rows[ i ] = r;
+
+        // set given row to a zero row with diagonal entry equal to diag
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
       }
 
     protected:
