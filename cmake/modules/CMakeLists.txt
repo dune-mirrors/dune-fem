@@ -5,6 +5,7 @@ set(modules
   CorrectWindowsPaths.cmake
   DuneFemMacros.cmake
   FemShort.cmake
+  FemTortureTests.cmake
   FindPackageMultipass.cmake
   FindPAPI.cmake
   FindPETSc.cmake
