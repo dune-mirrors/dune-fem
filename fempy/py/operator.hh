@@ -80,6 +80,11 @@ namespace Dune
       inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
 
+      template< class AssembledLinearOperator, class... options>
+      inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 0 > )
+      {
+      }
+
 #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
       template< class Operator, class... options>
       inline static auto addMatrixBackend ( pybind11::class_< Operator, options... > cls, PriorityTag< 4 > )
@@ -121,11 +126,11 @@ namespace Dune
       }
 #endif
 
-      template< class LinearOperator, class... options>
-      inline static void addMatrixBackend ( pybind11::class_< LinearOperator, options... > cls, PriorityTag< 1 > )
+      template< class AssembledLinearOperator, class... options>
+      inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def_property_readonly( "_backend", [] ( LinearOperator &self ) {
+        cls.def_property_readonly( "_backend", [] ( AssembledLinearOperator &self ) {
             auto& mat = self.matrix();
 
             pybind11::array_t<size_t> outerIndices(mat.rows() + 1);
@@ -163,6 +168,7 @@ namespace Dune
             return scipy_mat;
           } );
       }
+
       template< class GF, class Operator, class... options,
             decltype( std::declval< const Operator & >().jacobian( std::declval< const GF & >(), std::declval< typename Operator::JacobianOperatorType& >() ), 0 ) = 0 >
       inline static void registerOperatorAssemble ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
@@ -236,7 +242,16 @@ namespace Dune
         if( clsLinOp.second )
         {
           registerBasicOperator(clsLinOp.first);
-          addMatrixBackend(clsLinOp.first, PriorityTag<42>());
+
+          typedef typename Operator::DomainFunctionType DomainFunction;
+          typedef typename Operator::RangeFunctionType RangeFunction;
+
+          // check whether Operator::JacobianOperatorType is of type
+          // AssembledOperator and thus offers a method matrix.
+          static constexpr std::size_t priority =
+              std::is_base_of< Dune::Fem::AssembledOperator< DomainFunction, RangeFunction>,
+                               typename Operator::JacobianOperatorType > :: value ? 42 : 0;
+          addMatrixBackend(clsLinOp.first, PriorityTag< priority >());
         }
       }
       template< class Operator, class... options >
