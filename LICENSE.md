@@ -2,21 +2,21 @@ Copyright holders:
 ==================
 
 2014--2017    Marco Agnese
-2015--2017    Martin Alkämper
+2015--2018    Martin Alkämper
 2008--2012    Slavko Brdar
 2017          Samuel Burbulla
 2005          Adrian Burri
-2005--2017    Andreas Dedner
+2005--2018    Andreas Dedner
 2009          Martin Drohmann
 2006--2015    Christoph Gersbacher
-2013--2017    Janick Gerstenberger
+2013--2018    Janick Gerstenberger
 2012--2017    Stefan Girke
 2005--2007    Bernard Haasdonk
-2012--2016    Claus-Justus Heine
+2012--2018    Claus-Justus Heine
 2006--2008    Katharina Hermsdörfer
 2016          Stephan Hilb
 2007          Nadine Jung
-2005--2017    Robert Klöfkorn
+2005--2018    Robert Klöfkorn
 2007--2008    Cornelia Kronsbein
 2006--2014    Mirko Kränkel
 2006          Eldad Louw
@@ -24,7 +24,7 @@ Copyright holders:
 2006--2010    Karsten Michel
 2013--2014    René Milk
 2011--2012    David Nies
-2007--2017    Martin Nolte
+2007--2018    Martin Nolte
 2005--2008    Mario Ohlberger
 2011--2012    Axel Pfeiffer
 2008--2010    Nina Shokina
