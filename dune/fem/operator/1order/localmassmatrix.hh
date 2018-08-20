@@ -371,7 +371,15 @@ namespace Dune
           buildMatrix( caller, entity, geo, localMatrix.domainBasisFunctionSet(), dgNumDofs, dgMatrix_ );
           dgMatrix_.invert();
 
-          leftMultiplyScaled( dgMatrix_, localMatrix );
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            for( int j = 0; j < dgNumDofs; ++j )
+              dgRhs_[ j ] = localMatrix.get( i, j );
+            dgMatrix_.mv( dgRhs_, dgX_ );
+            for( int j = 0; j < dgNumDofs; ++j )
+              localMatrix.set( i, j, dgX_[ j ] );
+          }
         }
       }
 
@@ -763,6 +771,12 @@ namespace Dune
       void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
         BaseType::rightMultiplyInverseDgOrthoNormalBasis( localMatrix );
+      }
+
+      template< class LocalMatrix >
+      void leftMultiplyInverse ( LocalMatrix &localMatrix ) const
+      {
+        BaseType::leftMultiplyInverseDgOrthoNormalBasis( localMatrix );
       }
     };
 
