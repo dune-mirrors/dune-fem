@@ -26,6 +26,7 @@
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/io/parameter.hh>
@@ -140,18 +141,18 @@ namespace Dune
           BaseType(org)
         {}
 
-        template <class RowKeyType, class ColKeyType>
-        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices)
+        template < class SparsityPattern >
+        void createEntries(const SparsityPattern& sparsityPattern)
         {
           // not insert map of indices into matrix
           auto endcreate = this->createend();
-          const auto endindices = indices.end();
+          const auto endsp = sparsityPattern.end();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
-            const auto it = indices.find( create.index() );
-            if (it == endindices )
+            const auto row = sparsityPattern.find( create.index() );
+            if ( row == endsp )
               continue;
-            const auto& localIndices = it->second;
+            const auto& localIndices = ( *row ).second;
             const auto end = localIndices.end();
             // insert all indices for this row
             for (auto it = localIndices.begin(); it != end; ++it)
@@ -165,6 +166,25 @@ namespace Dune
           for (auto& row : *this)
             for (auto& entry : row)
               entry = 0;
+        }
+
+        //! clear Matrix, i.e. set all entires to 0
+        void unitRow( const size_t row )
+        {
+          block_type idBlock( 0 );
+          for (int i = 0; i < idBlock.rows; ++i)
+              idBlock[i][i] = 1.0;
+
+          auto& matRow = (*this)[ row ];
+          auto colIt = matRow.begin();
+          const auto& colEndIt = matRow.end();
+          for (; colIt != colEndIt; ++colIt)
+          {
+              if( colIt.index() == row )
+                  *colIt = idBlock;
+              else
+                  *colIt = 0.0;
+          }
         }
 
         //! setup like the old matrix but remove rows with hanging nodes
@@ -770,6 +790,11 @@ namespace Dune
         removeObj();
       }
 
+      void unitRow( const size_t row )
+      {
+        matrix().unitRow( row );
+      }
+
       template <class Vector>
       void setUnitRows( const Vector &rows )
       {
@@ -798,6 +823,13 @@ namespace Dune
           }
           assert(set);
         }
+      }
+
+      //! reserve memory for assemble based on the provided stencil
+      template <class Set>
+      void reserve (const std::vector< Set >& sparsityPattern )
+      {
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ), false );
       }
 
       //! reserve memory for assemble based on the provided stencil
