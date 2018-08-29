@@ -71,6 +71,10 @@ class UMFPACKOp:public Operator<DF, DF>
             const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
     UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
   {}
+  UMFPACKOp(const double& redEps, const double& absLimit,
+            const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
+  {}
 
   UMFPACKOp(const ParameterReader& parameter = Parameter::container() ) :
     UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
