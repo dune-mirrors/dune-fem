@@ -1,9 +1,11 @@
 #include <config.h>
 
+#include <cmath>
 #include <sstream>
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include <dune/python/pybind11/extensions.h>
 #include <dune/python/pybind11/pybind11.h>
@@ -15,6 +17,18 @@ PYBIND11_MODULE( _fem, module )
     int argc = 0;
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
+
+    int numThreads = 1;
+#ifdef USE_SMP_PARALLEL
+    {
+      const char* nThreads = getenv("OMP_NUM_THREADS");
+      if( nThreads )
+      {
+        numThreads = std::max( int(1), atoi( nThreads ) );
+      }
+    }
+#endif
+    Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
 
     if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
       DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );
