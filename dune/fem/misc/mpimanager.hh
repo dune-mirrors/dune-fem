@@ -78,8 +78,8 @@ namespace Dune
 #endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI
 
-        if( helper && comm )
-          return ;
+        if( helper || comm )
+          DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
 
         // if not already called, this will call MPI_Init
         helper = &MPIHelper::instance( argc, argv );
