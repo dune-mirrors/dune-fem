@@ -34,4 +34,7 @@
 /* Define if we have PETSc */
 #cmakedefine HAVE_PETSC ENABLE_PETSC
 
+/* Define if we have AMGX */
+#cmakedefine HAVE_AMGX 1
+
 /* end dune-fem */
