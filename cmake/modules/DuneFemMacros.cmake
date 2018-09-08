@@ -100,7 +100,7 @@ endif()
 
 # AMGX solver needs PETSC matrix structures, therefore PETSC is needed
 if(PETSC_FOUND)
-  find_package(AMGX)
+  find_package(PetscAMGX)
 endif()
 
 # check for Eigen3

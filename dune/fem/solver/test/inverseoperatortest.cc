@@ -54,6 +54,10 @@
 #include <dune/fem/solver/spqrsolver.hh>
 #endif // HAVE_SUITESPARSE_SPQR
 
+#if HAVE_PETSC_AMGX
+#include <dune/fem/solver/amgxsolver.hh>
+#endif
+
 // local includes
 #include "../../test/massoperator.hh"
 
@@ -406,6 +410,18 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif //HAVE_EIGEN
+
+#if HAVE_PETSC_AMGX
+  // EigenBiCGStabInverseOperator + EigenLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::AMGXInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === AMGXInverseOperator + PetscLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+#endif
 
   return pass ? 0 : 1;
 }
