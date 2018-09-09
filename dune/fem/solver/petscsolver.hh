@@ -37,7 +37,7 @@ namespace Dune
     protected:
       // monitor function for PETSc solvers
       static PetscErrorCode
-      monitor (KSP ksp, int it, PetscReal rnorm, void *mctx)
+      monitor (KSP ksp, PetscInt it, PetscReal rnorm, void *mctx)
       {
         if( Parameter :: verbose () )
         {

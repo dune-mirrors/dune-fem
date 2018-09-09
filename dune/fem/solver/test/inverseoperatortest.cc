@@ -35,6 +35,12 @@
 #include <dune/fem/solver/istlsolver.hh>
 #endif // HAVE_DUNE_ISTL
 
+#if HAVE_PETSC
+#include <dune/fem/function/petscdiscretefunction.hh>
+#include <dune/fem/operator/linear/petscoperator.hh>
+#include <dune/fem/solver/petscsolver.hh>
+#endif // HAVE_PETSC
+
 #if HAVE_EIGEN
 #include <dune/fem/storage/eigenvector.hh>
 #include <dune/fem/function/vectorfunction.hh>
@@ -387,6 +393,18 @@ int main(int argc, char** argv)
   }
 #endif // HAVE_DUNE_ISTL
 
+#if HAVE_PETSC
+  // PetscInverseOperator + PetscLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::PetscInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === PetscInverseOperator + PetscLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+#endif // HAVE_PETSC
+
 #if HAVE_EIGEN
   // EigenCGInverseOperator + EigenLinearOperator
   {
@@ -411,6 +429,7 @@ int main(int argc, char** argv)
   }
 #endif //HAVE_EIGEN
 
+  /*
 #if HAVE_PETSC_AMGX
   // EigenBiCGStabInverseOperator + EigenLinearOperator
   {
@@ -422,6 +441,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif
+*/
 
   return pass ? 0 : 1;
 }

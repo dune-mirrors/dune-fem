@@ -217,7 +217,7 @@ namespace Dune
     {
       ErrorCheck( ::MatSetUp(mat));
     }
-    inline static void MatSetUp( Mat mat, PetscInt bs, int nz )
+    inline static void MatSetUp( Mat mat, PetscInt bs, PetscInt nz )
     {
       if (bs == 1)
       {
@@ -236,7 +236,7 @@ namespace Dune
       // ErrorCheck( ::MatSetOption(mat, MAT_USE_HASH_TABLE,PETSC_FALSE) );
       ErrorCheck( ::MatSetUp(mat));
     }
-    inline static void MatSetUp( Mat mat, PetscInt bs, const int *d_nnz, const int *o_nnz )
+    inline static void MatSetUp( Mat mat, PetscInt bs, const PetscInt *d_nnz, const PetscInt *o_nnz )
     {
       if (bs == 1)
       {
