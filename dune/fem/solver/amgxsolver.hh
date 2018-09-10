@@ -7,7 +7,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
 
-#if HAVE_PETSC_AMGX
+#if HAVE_AMGXSOLVER
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>

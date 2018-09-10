@@ -60,7 +60,7 @@
 #include <dune/fem/solver/spqrsolver.hh>
 #endif // HAVE_SUITESPARSE_SPQR
 
-#if HAVE_PETSC_AMGX
+#if HAVE_AMGXSOLVER
 #include <dune/fem/solver/amgxsolver.hh>
 #endif
 
@@ -430,7 +430,7 @@ int main(int argc, char** argv)
 #endif //HAVE_EIGEN
 
   /*
-#if HAVE_PETSC_AMGX
+#if HAVE_AMGXSOLVER
   // EigenBiCGStabInverseOperator + EigenLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType >;

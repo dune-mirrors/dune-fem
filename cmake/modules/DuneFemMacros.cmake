@@ -98,9 +98,9 @@ else()
     "Library directory: ${PETSC_LIBRARIES}\n\n")
 endif()
 
-# AMGX solver needs PETSC matrix structures, therefore PETSC is needed
+# AMGX solver (AmgXWrapper) needs PETSC matrix structures, therefore PETSC is needed
 if(PETSC_FOUND)
-  find_package(PetscAMGX)
+  find_package(AmgXSolver)
 endif()
 
 # check for Eigen3

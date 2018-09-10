@@ -1,9 +1,9 @@
-# - Try to find AMGX
+# - Try to find AmgX
 # Once done this will define
 #
-#  AMGX_FOUND        - system has PETSc
-#  AMGX_INCLUDES     - the PETSc include directories
-#  AMGX_LIBRARIES    - Link these to use PETSc
+#  AMGXSOLVER_FOUND        - system has PETSc
+#  AMGXSOLVER_INCLUDES     - the PETSc include directories
+#  AMGXSOLVER_LIBRARIES    - Link these to use PETSc
 #
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
@@ -25,7 +25,7 @@ find_path(AMGX_INCLUDE_DIR amgx_c.h amgx_capi.h
   DOC "Include directory of AMGX")
 
 find_library(AMGX_LIBRARY
-    NAMES "amgxsh" "amgx"
+    NAMES "amgx" "amgxsh"
     PATHS ${AMGX_ROOT}
     PATH_SUFFIXES "lib" "lib" "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
     NO_DEFAULT_PATH)
@@ -46,17 +46,17 @@ message("amg = ${AMGX_LIBRARY}")
 message("amg wrapper = ${AMGX_WRAPPER_LIBRARY}")
 
 if( AMGX_WRAPPER_LIBRARY )
-  set(AMGX_INCLUDE_DIRS ${AMGX_INCLUDE_DIR} ${AMGX_WRAPPER_INCLUDE_DIR})
-  set(AMGX_LIBRARIES ${AMGX_LIBRARY} ${AMGX_WRAPPER_LIBRARY})
+  set(AMGXSOLVER_INCLUDE_DIRS ${AMGX_INCLUDE_DIR} ${AMGX_WRAPPER_INCLUDE_DIR})
+  set(AMGXSOLVER_LIBRARIES ${AMGX_LIBRARY} ${AMGX_WRAPPER_LIBRARY})
 
-  set(PETSC_AMGX_FOUND TRUE)
+  set(AMGXSOLVER_FOUND TRUE)
 endif()
 
-#set HAVE_AMGX for config.h
-set(HAVE_PETSC_AMGX ${PETSC_AMGX_FOUND})
+#set HAVE_AMGXSOLVER for config.h
+set(HAVE_AMGXSOLVER ${AMGXSOLVER_FOUND})
 
 # register all AMGX related flags
-if(PETSC_AMGX_FOUND)
-  dune_register_package_flags(LIBRARIES "${AMGX_LIBRARIES}"
-                              INCLUDE_DIRS "${AMGX_INCLUDE_DIRS}")
+if(AMGXSOLVER_FOUND)
+  dune_register_package_flags(LIBRARIES "${AMGXSOLVER_LIBRARIES}"
+                              INCLUDE_DIRS "${AMGXSOLVER_INCLUDE_DIRS}")
 endif()
