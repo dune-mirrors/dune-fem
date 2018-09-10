@@ -310,6 +310,7 @@ namespace Dune
         assert( block.rows() == rangeLocalBlockSize );
         assert( block.cols() == domainLocalBlockSize );
 
+        // copy to MatrixBlockType data structure suited to be inserted into Mat
         MatrixBlockType matBlock( block );
         applyToBlock( row, col, matBlock, op );
       }
