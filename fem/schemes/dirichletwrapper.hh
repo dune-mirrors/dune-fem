@@ -98,6 +98,11 @@ struct DirichletWrapperOperator
     return op_.rangeSpace();
   }
 
+  void setQuadratureOrders(unsigned int interior, unsigned int surface)
+  {
+    return op_.setQuadratureOrders(interior,surface);
+  }
+
   ModelType &model () const { return op_.model(); }
   const ConstraintsType &constraints () const { return constraints_; }
 

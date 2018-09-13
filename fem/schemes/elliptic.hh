@@ -104,7 +104,8 @@ struct EllipticOperator
                      ModelType &model,
                      const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : model_( model ),
-      dSpace_(dSpace), rSpace_(rSpace)
+      dSpace_(dSpace), rSpace_(rSpace),
+      interiorOrder_(-1), surfaceOrder_(-1)
   {}
 
 #if 0
@@ -141,6 +142,14 @@ struct EllipticOperator
   }
   ModelType &model () const { return model_; }
 
+  void setQuadratureOrders(unsigned int interior, unsigned int surface)
+  {
+    interiorOrder_ = interior;
+    surfaceOrder_ = surface;
+  }
+
+protected:
+  int interiorOrder_, surfaceOrder_;
 private:
   ModelType &model_;
   const DomainDiscreteFunctionSpaceType &dSpace_;
@@ -214,6 +223,8 @@ struct DifferentiableEllipticOperator
   using BaseType::operator();
 
   using BaseType::model;
+  using BaseType::interiorOrder_;
+  using BaseType::surfaceOrder_;
 };
 
 
@@ -247,7 +258,8 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model >
     auto wGuard = Dune::Fem::bindGuard( wLocal, entity );
 
     // obtain quadrature order
-    const int quadOrder = uLocal.order() + wLocal.order();
+    const int quadOrder = interiorOrder_==-1?
+      uLocal.order() + wLocal.order() : interiorOrder_;
 
     { // element integral
       QuadratureType quadrature( entity, quadOrder );
@@ -294,6 +306,8 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model >
         const bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
         const auto &intersectionGeometry = intersection.geometry();
+        const int quadOrder = surfaceOrder_==-1?
+          uLocal.order() + wLocal.order() : surfaceOrder_;
         FaceQuadratureType quadInside( dfSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::INSIDE );
         const std::size_t numQuadraturePoints = quadInside.nop();
         for( std::size_t pt = 0; pt < numQuadraturePoints; ++pt )
@@ -360,7 +374,9 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
     const RangeBasisFunctionSetType &rangeBaseSet  = jLocal.rangeBasisFunctionSet();
     const std::size_t domainNumBasisFunctions = domainBaseSet.size();
 
-    QuadratureType quadrature( entity, domainSpace.order()+rangeSpace.order() );
+    const int quadOrder = interiorOrder_==-1?
+      domainSpace.order() + rangeSpace.order() : interiorOrder_;
+    QuadratureType quadrature( entity, quadOrder );
     const size_t numQuadraturePoints = quadrature.nop();
     for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
     {
@@ -411,7 +427,9 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
         bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
         const auto &intersectionGeometry = intersection.geometry();
-        FaceQuadratureType quadInside( rangeSpace.gridPart(), intersection, domainSpace.order()+rangeSpace.order(), FaceQuadratureType::INSIDE );
+        const int quadOrder = surfaceOrder_==-1?
+          domainSpace.order() + rangeSpace.order() : surfaceOrder_;
+        FaceQuadratureType quadInside( rangeSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::INSIDE );
         const std::size_t numQuadraturePoints = quadInside.nop();
         for( std::size_t pt = 0; pt < numQuadraturePoints; ++pt )
         {
