@@ -55,9 +55,14 @@ namespace Dune
           if(order >= storage_.size() )
           {
 #ifndef NDEBUG
-            std::cerr << "A quadrature of order " << order
-                      << " is not implemented!" << std::endl
-                      << "Choosing maximum order: " << storage_.size()-1 << std::endl << std::endl;
+            static bool showMessage = true ;
+            if( showMessage )
+            {
+              std::cerr << "WARNING: QuadratureStorage::getQuadrature: A quadrature of order " << order
+                        << " is not implemented!" << std::endl
+                        << "Choosing maximum order: " << storage_.size()-1 << std::endl << std::endl;
+              showMessage = false;
+            }
 #endif
             order = storage_.size() -1;
           }
