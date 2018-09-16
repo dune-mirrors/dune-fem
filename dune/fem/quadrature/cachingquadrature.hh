@@ -30,19 +30,22 @@ namespace Dune
      *
      *  \note If you don't want caching, you can use ElementQuadrature instead.
      *
+     *  \note QuadratureTraits specifies the quadrature points used to build the
+     *        quadrature.
+     *
      *  For the actual implementations, see
      *  - CachingQuadrature<GridPartImp,0>
      *  - CachingQuadrature<GridPartImp,1>
      */
-    template< typename GridPartImp, int codim >
+    template< typename GridPartImp, int codim, template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
     class CachingQuadrature;
 
 
 
     /** \copydoc CachingQuadrature */
-    template< typename GridPart >
-    class CachingQuadrature< GridPart, 0 >
-    : public CachingPointList< GridPart, 0, ElementQuadratureTraits< GridPart, 0 > >
+    template< typename GridPart, template <class, int> class QuadratureTraits >
+    class CachingQuadrature< GridPart, 0, QuadratureTraits >
+    : public CachingPointList< GridPart, 0, ElementQuadratureTraits< GridPart, 0, QuadratureTraits > >
     {
     public:
       //! type of grid partition
@@ -52,9 +55,9 @@ namespace Dune
       static constexpr auto codimension = 0;
 
     private:
-      typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
+      typedef ElementQuadratureTraits< GridPartType, codimension, QuadratureTraits > IntegrationTraits;
 
-      typedef CachingQuadrature< GridPartType, codimension > ThisType;
+      typedef CachingQuadrature< GridPartType, codimension, QuadratureTraits > ThisType;
       typedef CachingPointList< GridPartType, codimension, IntegrationTraits > BaseType;
 
     public:
@@ -126,10 +129,10 @@ namespace Dune
 
 
     /** \copydoc CachingQuadrature */
-    template< typename GridPartImp >
-    class CachingQuadrature< GridPartImp, 1 >
+    template< typename GridPartImp, template <class, int> class QuadratureTraits  >
+    class CachingQuadrature< GridPartImp, 1, QuadratureTraits >
     : public CachingPointList
-      < GridPartImp, 1, ElementQuadratureTraits< GridPartImp, 1 > >
+      < GridPartImp, 1, ElementQuadratureTraits< GridPartImp, 1, QuadratureTraits > >
     {
     public:
       //! type of the grid partition
@@ -139,9 +142,9 @@ namespace Dune
       static constexpr auto codimension = 1;
 
     private:
-      typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
+      typedef ElementQuadratureTraits< GridPartType, codimension, QuadratureTraits > IntegrationTraits;
 
-      typedef CachingQuadrature< GridPartType, codimension > ThisType;
+      typedef CachingQuadrature< GridPartType, codimension, QuadratureTraits > ThisType;
       typedef CachingPointList< GridPartType, codimension, IntegrationTraits > BaseType;
 
     protected:

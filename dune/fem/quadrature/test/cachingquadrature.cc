@@ -9,26 +9,42 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
 
+#include <dune/fem/quadrature/dunequadratures.hh>
+
 #include "checkleafcodim1.hh"
 
 using namespace Dune;
-  using namespace Fem ;
+using namespace Fem ;
 
-template<class GridPartType, int codim, bool caching>
+struct DuneQuadratures
+{};
+
+template<class GridPartType, int codim, bool caching, class QuadratureTraits = int >
 struct QuadratureChooser;
 
 template<class GridPartType, int codim>
-struct QuadratureChooser<GridPartType,codim,false>
+struct QuadratureChooser<GridPartType,codim,false,int>
 {
   typedef ElementQuadrature< GridPartType, codim > Quadrature;
 };
 template<class GridPartType, int codim>
-struct QuadratureChooser<GridPartType,codim,true>
+struct QuadratureChooser<GridPartType,codim,true,int>
 {
   typedef CachingQuadrature< GridPartType, codim > Quadrature;
 };
 
-template<class GridPartType, bool caching>
+template<class GridPartType, int codim, class QuadratureTraits >
+struct QuadratureChooser<GridPartType,codim,false, QuadratureTraits>
+{
+  typedef ElementQuadrature< GridPartType, codim, Dune::Fem::DuneQuadratureTraits > Quadrature;
+};
+template<class GridPartType, int codim, class QuadratureTraits >
+struct QuadratureChooser<GridPartType,codim,true, QuadratureTraits>
+{
+  typedef CachingQuadrature< GridPartType, codim, Dune::Fem::DuneQuadratureTraits > Quadrature;
+};
+
+template<class GridPartType, bool caching, class QuadratureTraits = int>
 class TestCaching
 {
 private:
@@ -40,8 +56,8 @@ private:
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef typename QuadratureChooser<GridPartType, 0, caching>::Quadrature VolumeQuadratureType;
-  typedef ElementQuadrature< GridPartType, 0 > ElementQuadratureType;
+  typedef typename QuadratureChooser<GridPartType, 0, caching, QuadratureTraits>::Quadrature VolumeQuadratureType;
+  typedef typename QuadratureChooser<GridPartType, 0, false,   QuadratureTraits>::Quadrature ElementQuadratureType;
   typedef typename QuadratureChooser<GridPartType, 1, caching>::Quadrature FaceQuadratureType;
 
   GridPartType & gridPart_;
@@ -233,13 +249,24 @@ int main(int argc, char ** argv)
     for(int l=0; l<=maxlevel; ++l )
     {
       {
-        std::cout << "Testing ElementQuadratures: " << std::endl;
+        std::cout << "Testing default ElementQuadratures: " << std::endl;
         TestCaching<GridPartType,false> testCaching(gridPart, quadOrder, eps);
         testCaching.runTest();
       }
       {
-        std::cout << "Testing CachingQuadratures: " << std::endl;
+        std::cout << "Testing default CachingQuadratures: " << std::endl;
         TestCaching<GridPartType,true> testCaching(gridPart, quadOrder, eps);
+        testCaching.runTest();
+      }
+
+      {
+        std::cout << "Testing DUNE ElementQuadratures: " << std::endl;
+        TestCaching<GridPartType,false, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
+        testCaching.runTest();
+      }
+      {
+        std::cout << "Testing DUNE CachingQuadratures: " << std::endl;
+        TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
         testCaching.runTest();
       }
       grid.globalRefine( 1 );
