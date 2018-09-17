@@ -71,8 +71,8 @@ namespace Dune
       typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
       typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType ColumnEntityType;
 
-      const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
-      const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
+      static const unsigned int domainLocalBlockSize = DomainSpaceType::localBlockSize;
+      static const unsigned int rangeLocalBlockSize  = RangeSpaceType::localBlockSize;
 
       static_assert( domainLocalBlockSize == rangeLocalBlockSize, "PetscLinearOperator only works for domainLocalBlockSize == rangeLocalBlockSize. " );
 
@@ -289,7 +289,7 @@ namespace Dune
       void unitRow( const PetscInt row, const PetscScalar diag = 1.0 )
       {
         std::array< PetscInt, domainLocalBlockSize > rows;
-        for( int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
+        for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
           rows[ i ] = r;
 
         // set given row to a zero row with diagonal entry equal to diag
