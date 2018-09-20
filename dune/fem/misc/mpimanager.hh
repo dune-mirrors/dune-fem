@@ -1,8 +1,11 @@
 #ifndef DUNE_FEM_MPIMANAGER_HH
 #define DUNE_FEM_MPIMANAGER_HH
 
+#include <memory>
+
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/quadrature/caching/registry.hh>
 
@@ -22,21 +25,6 @@ namespace Dune
         CollectiveCommunication;
 
     private:
-      MPIManager ()
-      : helper_( 0 ),
-        comm_( 0 )
-      {}
-
-      ~MPIManager ()
-      {
-        delete comm_;
-      }
-
-    public:
-      MPIManager ( const MPIManager& ) = delete;
-      MPIManager& operator= ( const MPIManager& ) = delete;
-
-    private:
       static MPIManager &instance ()
       {
         static MPIManager instance;
@@ -44,10 +32,10 @@ namespace Dune
       }
 
 #if HAVE_PETSC
-      class PETSc
+      struct PETSc
       {
         ~PETSc() { ::Dune::Petsc::finalize(); }
-      public:
+
         static void initialize( const bool verbose, int &argc, char **&argv )
         {
           // needed for later calling Petsc::finalize to the right time
@@ -55,24 +43,29 @@ namespace Dune
           ::Dune::Petsc::initialize( verbose, argc, argv );
         }
       };
-#endif
+#endif // #if HAVE_PETSC
 
     public:
       static void initialize ( int &argc, char **&argv )
       {
         MPIHelper *&helper = instance().helper_;
-        CollectiveCommunication *&comm = instance().comm_;
+        std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
         // the following initalization is only enabled for
         // MPI-thread parallel programs
 #if HAVE_MPI
 #ifdef USE_SMP_PARALLEL
-        int provided;
-        // use MPI_Init_thread for hybrid parallel programs
-        int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
+        int wasInitialized = -1;
+        MPI_Initialized( &wasInitialized );
+        if( ! wasInitialized )
+        {
+          int provided;
+          // use MPI_Init_thread for hybrid parallel programs
+          int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
 
-        if( is_initialized != MPI_SUCCESS )
-          DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
+          if( is_initialized != MPI_SUCCESS )
+            DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
+        }
 
 #if not defined NDEBUG && defined DUNE_DEVEL_MODE
         // for OpenMPI provided seems to be MPI_THREAD_SINGLE
@@ -90,12 +83,12 @@ namespace Dune
 #endif // end USE_SMP_PARALLEL
 #endif // end HAVE_MPI
 
-        if( (helper != 0) || (comm != 0) )
+        if( helper || comm )
           DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
 
         // if not already called, this will call MPI_Init
         helper = &MPIHelper::instance( argc, argv );
-        comm = new CollectiveCommunication( helper->getCommunicator() );
+        comm.reset( new CollectiveCommunication( helper->getCommunicator() ) );
 
 #if HAVE_PETSC
         // initialize PETSc if pressent
@@ -108,8 +101,8 @@ namespace Dune
 
       static const CollectiveCommunication &comm ()
       {
-        const CollectiveCommunication *const comm = instance().comm_;
-        if( comm == 0 )
+        const std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
+        if( !comm )
           DUNE_THROW( InvalidStateException, "MPIManager has not been initialized." );
         return *comm;
       }
@@ -125,8 +118,8 @@ namespace Dune
       }
 
     private:
-      MPIHelper *helper_;
-      CollectiveCommunication *comm_;
+      MPIHelper *helper_ = nullptr;
+      std::unique_ptr< CollectiveCommunication > comm_;
     };
 
   } // namespace Fem
