@@ -123,7 +123,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 
 def galerkin(integrands, space=None, solver=None, parameters={},
