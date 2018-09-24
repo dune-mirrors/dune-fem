@@ -557,11 +557,11 @@ namespace Dune
           w.clear();
 
           TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wLocal( w.space() );
-
+          Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            const auto uLocal = u.localFunction( entity );
-
+            // const auto uLocal = u.localFunction( entity );
+            uLocal.init( entity );
             wLocal.init( entity );
             wLocal.clear();
 
@@ -589,12 +589,14 @@ namespace Dune
           w.clear();
 
           TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
+          Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
 
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            const auto uInside = u.localFunction( inside );
+            // const auto uInside = u.localFunction( inside );
 
+            uInside.init( inside );
             wInside.init( inside );
             wInside.clear();
 
@@ -612,13 +614,15 @@ namespace Dune
               {
                 const EntityType &outside = intersection.outside();
 
+                Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
+                uOutside.init( outside );
                 if( outside.partitionType() != InteriorEntity )
-                  addSkeletonIntegral( intersection, uInside, u.localFunction( outside ), wInside );
+                  addSkeletonIntegral( intersection, uInside, uOutside, wInside );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
                   wOutside.init( outside );
                   wOutside.clear();
-                  addSkeletonIntegral( intersection, uInside, u.localFunction( outside ), wInside, wOutside );
+                  addSkeletonIntegral( intersection, uInside, uOutside, wInside, wOutside );
                   w.addLocalDofs( outside, wOutside.localDofVector() );
                 }
               }
@@ -659,10 +663,12 @@ namespace Dune
           DomainValueVectorType phi = makeDomainValueVector( maxNumLocalDofs );
 
           TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
+          Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
 
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            const auto uLocal = u.localFunction( entity );
+            // const auto uLocal = u.localFunction( entity );
+            uLocal.init( entity );
 
             jOpLocal.init( entity, entity );
             jOpLocal.clear();
@@ -700,11 +706,13 @@ namespace Dune
 
           TemporaryLocalMatrixType jOpInIn( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutIn( jOp.domainSpace(), jOp.rangeSpace() );
           TemporaryLocalMatrixType jOpInOut( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutOut( jOp.domainSpace(), jOp.rangeSpace() );
+          Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
 
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            const auto uIn = u.localFunction( inside );
+            // const auto uIn = u.localFunction( inside );
+            uIn.init( inside );
 
             jOpInIn.init( inside, inside );
             jOpInIn.clear();
@@ -726,8 +734,11 @@ namespace Dune
                 jOpOutIn.init( outside, inside );
                 jOpOutIn.clear();
 
+                Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
+                uOut.init( outside );
+
                 if( outside.partitionType() != InteriorEntity )
-                  addLinearizedSkeletonIntegral( intersection, uIn, u.localFunction( outside ), phiIn, phiOut, jOpInIn, jOpOutIn );
+                  addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
                   jOpInOut.init( inside, outside );
@@ -735,7 +746,7 @@ namespace Dune
                   jOpOutOut.init( outside, outside );
                   jOpOutOut.clear();
 
-                  addLinearizedSkeletonIntegral( intersection, uIn, u.localFunction( outside ), phiIn, phiOut, jOpInIn, jOpOutIn, jOpInOut, jOpOutOut );
+                  addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn, jOpInOut, jOpOutOut );
 
                   jOp.addLocalMatrix( inside, outside, jOpInOut );
                   jOp.addLocalMatrix( outside, outside, jOpOutOut );

@@ -110,10 +110,10 @@ public:
     invOp_( parameter_ )
   {}
 
-  const DifferentiableOperatorType &fullOperator() const
-  {
-    return implicitOperator_;
-  }
+  const DifferentiableOperatorType &fullOperator() const { return implicitOperator_; }
+  DifferentiableOperatorType &fullOperator() { return implicitOperator_; }
+
+  void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
 
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
