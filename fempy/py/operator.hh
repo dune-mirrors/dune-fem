@@ -264,6 +264,26 @@ namespace Dune
       }
 
 
+      // registerOperatorSetQuadrtureOrder
+      // ---------------------------------
+
+      template< class Operator, class... options >
+      inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
+        -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
+      {
+        cls.def( "setQuadratureOrders", &Operator::setQuadratureOrders );
+      }
+
+      template< class Operator, class... options >
+      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class Operator, class... options >
+      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls )
+      {
+        registerOperatorQuadratureOrders( cls, PriorityTag< 42 >() );
+      }
+
       // registerOperator
       // ----------------
 
@@ -280,6 +300,7 @@ namespace Dune
         // registerOperatorModel( cls );
         registerOperatorConstraints( cls );
         registerJacobianOperator( cls );
+        registerOperatorQuadratureOrders ( cls );
 
       }
     } // namespace detail

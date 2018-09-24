@@ -201,26 +201,6 @@ namespace Dune
       }
 #endif
 
-      // registerOperatorSetQuadrtureOrder
-      // ---------------------------------
-
-      template< class Operator, class... options >
-      inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
-      {
-        cls.def( "setQuadratureOrders", &Operator::setQuadratureOrders );
-      }
-
-      template< class Operator, class... options >
-      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class Operator, class... options >
-      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls )
-      {
-        registerOperatorQuadratureOrders( cls, PriorityTag< 42 >() );
-      }
-
       // registerScheme
       // --------------
 
@@ -255,7 +235,6 @@ namespace Dune
 
         cls.def_property_readonly( "dimRange", [] ( Scheme & ) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
-        registerOperatorQuadratureOrders ( cls );
 
         auto clsInvOp = Dune::Python::insertClass< typename Scheme::LinearInverseOperatorType >
               ( cls, "LinearInverseOperator", Dune::Python::GenerateTypeName(cls,"LinearInverseOperatorType"));
