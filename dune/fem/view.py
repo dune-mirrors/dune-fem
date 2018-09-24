@@ -64,7 +64,9 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
                   "return Dune::FemPy::constructGridPart<"+gridPartName+">( grid );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
 
-    return load(includes, typeName, constructor).GridView(grid)
+    GridView = load(includes, typeName, constructor).GridView
+    setattr(GridView,"canAdapt",True)
+    return GridView(grid)
 
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):

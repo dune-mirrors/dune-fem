@@ -1,14 +1,16 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 __metaclass__ = type
 
-import hashlib
-import warnings
+import hashlib, warnings
 
 from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
 
 modules = {}
+
+import logging, traceback
+logger = logging.getLogger(__name__)
 
 def module(grid):
     try:
@@ -45,9 +47,18 @@ def _adaptArguments(first,*args):
               passing in the hierarchical grid as first argument to the
               'dune.fem.adapt' function is not required and deprecated.
               """)
+
     # make sure all args are over the same grid
     assert all([a.grid.hierarchicalGrid==hgrid for a in args]),\
             "all discrete functions must be over the same hierarchical grid"
+    # make sure all gridview can be adapted
+    try:
+        adapt = all([a.grid.canAdapt==True for a in args])
+    except AttributeError:
+        adapt = False
+    assert adapt,\
+            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view"
+
     return hgrid,args
 
 def adapt(first, *args):
