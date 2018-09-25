@@ -422,7 +422,7 @@ def compileUFL(form, *args, constants=None, coefficients=None, tempVars=True):
         switch = SwitchStatement(integrands.arg_bndId, default=assign(integrands.arg_r, construct("RRangeType", 0)))
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
-        predefineCoefficients(predefined, integrands.arg_x)
+        predefineCoefficients(predefined, 'x')
         for i, v in bySubDomain.items():
             switch.append(i, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         integrands.dirichlet = [switch]
