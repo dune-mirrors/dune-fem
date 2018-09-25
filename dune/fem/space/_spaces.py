@@ -114,7 +114,7 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hier
     from dune.fem.space import module, addStorage
 
     if not (len(gridview.indexSet.types(0)) == 1 and
-            gridview.indexSet.types(0)[0].isQuadrilateral):
+            gridview.indexSet.types(0)[0].isCube):
         raise KeyError(\
             "the `dglegendre' space can only be used with a fully "+
             "quadrilateral grid")
@@ -160,7 +160,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
 
     from dune.fem.space import module, addStorage
     if not (len(gridview.indexSet.types(0)) == 1 and
-            gridview.indexSet.types(0)[0].isQuadrilateral):
+            gridview.indexSet.types(0)[0].isCube):
         raise KeyError(\
             "the `dglegendrehp' space can only be used with a fully "+
             "quadrilateral grid")
