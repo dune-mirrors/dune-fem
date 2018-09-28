@@ -271,7 +271,7 @@ namespace Dune
       inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
         -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
       {
-        cls.def( "setQuadratureOrders", &Operator::setQuadratureOrders );
+        cls.def( "setQuadratureOrders", &Operator::template setQuadratureOrders<Operator> );
       }
 
       template< class Operator, class... options >
