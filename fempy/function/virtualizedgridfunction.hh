@@ -310,6 +310,9 @@ namespace Dune
     private:
       struct Space
       {
+        typedef typename Base::FunctionSpaceType FunctionSpaceType;
+        typedef GridPart GridPartType;
+        static const int dimRange = FunctionSpaceType::RangeType::dimension;
         Space(const GridPart &gridPart, int o)
           : gp_(gridPart), o_(o) {}
         int order() const
@@ -365,6 +368,7 @@ namespace Dune
       };
 
     public:
+      typedef Space DiscreteFunctionSpaceType;
       template< class Impl, std::enable_if_t< isGridFunction< Impl >() && !std::is_base_of< VirtualizedGridFunction, Impl >::value, int > = 0 >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )

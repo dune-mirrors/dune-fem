@@ -18,6 +18,7 @@
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/numpy.hh>
+#include <dune/fempy/py/space.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 
@@ -138,6 +139,7 @@ namespace Dune
         cls.def_property_readonly( "dimRange", [] ( GridFunction & ) -> int { return GridFunction::RangeType::dimension; } );
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
         cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
+        cls.def_property_readonly( "space", &GridFunction::space );
 
         registerGridFunctionName( cls );
 
@@ -200,12 +202,24 @@ namespace Dune
       clsVirtualizedGridFunction ( pybind11::handle scope )
       {
         typedef VirtualizedGridFunction< GridPart, Value > GridFunction;
+        std::string adapt = Python::GenerateTypeName("Dune::FemPy::GridPartAdapter",
+            Dune::MetaType<typename GridPart::GridViewType>()).name();
         auto vgfClass = Python::insertClass<GridFunction>(scope,"VirtualizedGridFunction"+std::to_string(Value::dimension),
-            Python::GenerateTypeName("TODO-VGF"),
-            // Python::GenerateTypeName("VirtualizedGridFunction",MetaType<GridPart>(),MetaType<Value>()),
+            Python::GenerateTypeName("VirtualizedGridFunction",adapt,MetaType<Value>()),
             Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"});
+
         if( vgfClass.second )
           detail::registerGridFunction( scope, vgfClass.first );
+
+        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
+        if( !pybind11::already_registered< SpaceType >() )
+        {
+          auto spcCls = Python::insertClass<SpaceType>(vgfClass.first, "Space",
+              Python::GenerateTypeName("TODO-SPACE"));
+          if (spcCls.second)
+            detail::registerFunctionSpace( vgfClass.first, spcCls.first );
+        }
+
         return vgfClass.first;
       }
 
@@ -266,10 +280,25 @@ namespace Dune
       inline static auto registerPyGlobalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
       {
         typedef decltype( makePyGlobalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
+        std::string adapt = Python::GenerateTypeName("Dune::FemPy::GridPartAdapter",
+            Dune::MetaType<typename GridPart::GridViewType>()).name();
         auto gfClass = Python::insertClass<GridFunction>(scope, name+std::to_string(dimRange),
-            Python::GenerateTypeName("N/A"));
+            Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
+              adapt,
+              "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
+              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fempy/grid/gridpartadapter.hh"}
+              );
         if (gfClass.second)
           FemPy::registerGridFunction< GridFunction >( scope, gfClass.first );
+        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
+        if( !pybind11::already_registered< SpaceType >() )
+        {
+          auto spcCls = Python::insertClass<SpaceType>(gfClass.first, "Space",
+              Python::GenerateTypeName("TODO-SPACE"));
+          if (spcCls.second)
+            detail::registerFunctionSpace( gfClass.first, spcCls.first );
+        }
+
         return gfClass.first;
       };
 
@@ -326,10 +355,27 @@ namespace Dune
       {
         typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         const std::string clsName = name + std::to_string( dimRange );
+        std::string adapt = Python::GenerateTypeName("Dune::FemPy::GridPartAdapter",
+            Dune::MetaType<typename GridPart::GridViewType>()).name();
         auto gfClass = Python::insertClass<GridFunction>(scope,name+std::to_string(dimRange),
-          Python::GenerateTypeName("N/A"));
+            Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
+              adapt,
+              "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
+              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fempy/grid/gridpartadapter.hh"}
+              );
+
         if (gfClass.second)
           FemPy::registerGridFunction( scope, gfClass.first);
+
+        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
+        if( !pybind11::already_registered< SpaceType >() )
+        {
+          auto spcCls = Python::insertClass<SpaceType>(gfClass.first, "Space",
+              Python::GenerateTypeName("TODO-SPACE"));
+          if (spcCls.second)
+            detail::registerFunctionSpace( gfClass.first, spcCls.first );
+        }
+
         return gfClass.first;
       };
 

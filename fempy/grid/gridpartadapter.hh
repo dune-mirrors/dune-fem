@@ -22,6 +22,7 @@ namespace Dune
       typedef Fem::GridView2GridPart< GridView, GridPartAdapter< GridView > > Base;
 
     public:
+      typedef GridView GridViewType;
       typedef typename Base::GridType GridType;
 
       explicit GridPartAdapter ( const GridView &gridView ) : Base( gridView ) {}

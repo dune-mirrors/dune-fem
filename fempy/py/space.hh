@@ -79,7 +79,7 @@ namespace Dune
       // -------------
 
       template< class Space, class... options >
-      void registerSpace ( pybind11::module module, pybind11::class_< Space, options... > cls )
+      void registerFunctionSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if( !std::is_same< RangeFieldType, double >::value )
@@ -93,13 +93,17 @@ namespace Dune
           Dune::Python::registerDynamicVector<RangeFieldType>(module);
           Dune::Python::registerDynamicMatrix<RangeFieldType>(module);
         }
-
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
-
         cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );
         cls.def_property_readonly( "grid", [] ( Space &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
+      }
+
+      template< class Space, class... options >
+      void registerSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
+      {
+        registerFunctionSpace(module,cls);
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
         cls.def_property_readonly( "localBlockSize", [] ( Space &spc ) -> unsigned int { return spc.localBlockSize; } );
         cls.def("localOrder", [] ( Space &self, typename Space::EntityType &e) -> int { return self.order(e); } );
@@ -157,7 +161,7 @@ namespace Dune
     // -------------
 
     template< class Space, class... options >
-    void registerSpace ( pybind11::module module, pybind11::class_< Space, options... > cls )
+    void registerSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
     {
       detail::registerSpace( module, cls );
     }
