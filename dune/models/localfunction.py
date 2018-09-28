@@ -36,7 +36,7 @@ def generateCode(predefined, tensor, coefficients, tempVars=True):
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 
-def UFLFunction(grid, name, order, expr, **kwargs):
+def UFLFunction(grid, name, order, expr, virtualize=True, **kwargs):
     import ufl
     from dune.ufl import GridFunction
     from dune.ufl.tensors import ExprTensor
@@ -104,7 +104,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     except:
         code = {"evaluate" : evaluate}
 
-    Gf = gridFunction(grid, code, coefficients, None).GFWrapper
+    Gf = gridFunction(grid, code, coefficients, None, virtualize).GFWrapper
 
     coefficients = kwargs.pop("coefficients", {})
     fullCoeff = {c:c.gf for c in coef if isinstance(c, GridFunction)}
@@ -113,7 +113,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     return Gf(name, order, grid, **kwargs)
 
 
-def gridFunction(grid, code, coefficients, constants):
+def gridFunction(grid, code, coefficients, constants, virtualize=True):
     startTime = timeit.default_timer()
 
     if type(code) is not dict:
@@ -242,11 +242,21 @@ def gridFunction(grid, code, coefficients, constants):
     writer.emit('')
     writer.emit('// export function class')
     writer.emit('')
-    writer.emit('pybind11::class_< GFWrapper > cls ='+\
-      'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
-      'Dune::Python::GenerateTypeName("'+typeName+'"),'+\
-      'Dune::Python::IncludeFiles{"python/dune/generated/'+pyname+'.cc"}'+\
-      ').first;')
+    if not virtualize:
+        writer.emit('pybind11::class_< GFWrapper > cls ='+\
+          'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
+          'Dune::Python::GenerateTypeName("'+typeName+'"),'+\
+          'Dune::Python::IncludeFiles{"python/dune/generated/'+pyname+'.cc"}'+\
+          ').first;')
+    else:
+        virtTypeName = "Dune::FemPy::VirtualizedGridFunction<"+\
+                "Dune::FemPy::GridPartAdapter<"+grid._typeName+">, "+\
+                "Dune::FieldVector<double,"+str(dimRange)+">>"
+        writer.emit('pybind11::class_< GFWrapper > cls ='+\
+          'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
+          'Dune::Python::GenerateTypeName("'+virtTypeName+'"),'+\
+          'Dune::Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"}'+\
+          ').first;')
     writer.emit('Dune::FemPy::registerGridFunction( module, cls );')
     writer.emit('')
     base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridView', 'pybind11::handle')), constrKeepAlive='pybind11::keep_alive<0,3>()' )

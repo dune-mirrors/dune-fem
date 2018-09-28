@@ -60,8 +60,8 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
 
 
-def uflFunction(gridview, name, order, ufl, *args, **kwargs):
-    func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
+def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
+    func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, virtualize, *args, **kwargs)
     return func.as_ufl() if func is not None else None
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
