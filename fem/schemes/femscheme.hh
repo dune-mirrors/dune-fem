@@ -113,7 +113,12 @@ public:
   const DifferentiableOperatorType &fullOperator() const { return implicitOperator_; }
   DifferentiableOperatorType &fullOperator() { return implicitOperator_; }
 
-  void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
+  template <typename O = DifferentiableOperatorType>
+  auto setQuadratureOrders(unsigned int interior, unsigned int surface)
+  -> Dune::void_t< decltype( std::declval< O >().setQuadratureOrders(0,0) ) >
+  {
+    fullOperator().setQuadratureOrders(interior,surface);
+  }
 
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>

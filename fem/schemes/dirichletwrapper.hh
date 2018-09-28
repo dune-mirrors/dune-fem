@@ -20,7 +20,9 @@
 #include <dune/fem/io/file/dataoutput.hh>
 
 
-template< class Operator >
+template< class Operator,
+  class Constraints = Dune::DirichletConstraints< typename Operator::ModelType, typename Operator::RangeDiscreteFunctionSpaceType >
+  >
 struct DirichletWrapperOperator
 : public Dune::Fem::DifferentiableOperator< typename Operator::JacobianOperatorType >
 {
@@ -32,7 +34,7 @@ struct DirichletWrapperOperator
   typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
   typedef typename Operator::JacobianOperatorType JacobianOperatorType;
   typedef typename RangeDiscreteFunctionSpaceType::RangeType DomainRangeType;
-  typedef Dune::DirichletConstraints< ModelType, RangeDiscreteFunctionSpaceType > ConstraintsType;
+  typedef Constraints ConstraintsType;
 
   template <class... Args>
   DirichletWrapperOperator ( Args&&... args )
@@ -98,7 +100,9 @@ struct DirichletWrapperOperator
     return op_.rangeSpace();
   }
 
-  void setQuadratureOrders(unsigned int interior, unsigned int surface)
+  template <typename O = Operator>
+  auto setQuadratureOrders(unsigned int interior, unsigned int surface)
+  -> Dune::void_t< decltype( std::declval< O >().setQuadratureOrders(0,0) ) >
   {
     return op_.setQuadratureOrders(interior,surface);
   }

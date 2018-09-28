@@ -74,6 +74,7 @@ public:
     const ModelType& impl_;
     int bndId_;
     public:
+    typedef typename DiscreteFunctionSpace::RangeType RangeType;
     BoundaryWrapper( const ModelType& impl, int bndId )
     : impl_( impl ), bndId_(bndId) {}
     template <class Point>
