@@ -122,6 +122,7 @@ namespace Dune
     public:
       typedef std::remove_const_t< DiscreteFunction > DiscreteFunctionType;
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
       typedef DiscreteFunctionType GridFunctionType;
 
@@ -129,6 +130,7 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
+      typedef typename BaseType::DomainType DomainType;
       typedef typename BaseType::RangeType RangeType;
       typedef typename BaseType::JacobianRangeType JacobianRangeType;
       typedef typename BaseType::HessianRangeType HessianRangeType;
@@ -286,6 +288,7 @@ namespace Dune
           typedef GF GridFunctionType;
           typedef typename GridFunctionType::LocalFunctionType::EntityType EntityType;
 
+          typedef typename GF::LocalFunctionType::DomainType DomainType;
           typedef typename GF::LocalFunctionType::RangeType RangeType;
           typedef typename GF::LocalFunctionType::JacobianRangeType JacobianRangeType;
           typedef typename GF::LocalFunctionType::HessianRangeType HessianRangeType;
@@ -344,8 +347,10 @@ namespace Dune
         struct Type
         {
           typedef GF GridFunctionType;
+          typedef typename GF::GridPartType GridPartType;
           typedef typename GF::EntityType EntityType;
           typedef typename GF::RangeFieldType RangeFieldType;
+          typedef typename GF::DomainType DomainType;
           typedef typename GF::RangeType RangeType;
           typedef typename GF::JacobianRangeType JacobianRangeType;
           typedef typename GF::HessianRangeType HessianRangeType;
