@@ -126,7 +126,8 @@ namespace Dune
       }
 #endif
 
-      template< class AssembledLinearOperator, class... options>
+      template< class AssembledLinearOperator, class... options,
+            decltype( std::declval< const AssembledLinearOperator & >().matrix(), 0 ) = 0 >
       inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
@@ -271,7 +272,8 @@ namespace Dune
       inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
         -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
       {
-        cls.def( "setQuadratureOrders", &Operator::template setQuadratureOrders<Operator> );
+        cls.def( "setQuadratureOrders", [](Operator &self, unsigned int interior, unsigned int surface)
+            { self.setQuadratureOrders(interior,surface); } );
       }
 
       template< class Operator, class... options >
