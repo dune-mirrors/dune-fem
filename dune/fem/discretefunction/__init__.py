@@ -21,7 +21,8 @@ generator = SimpleGenerator("DiscreteFunction", "Dune::FemPy")
 
 def interpolate(self, f):
     if ufl and (isinstance(f, list) or isinstance(f, tuple)):
-        f = ufl.as_vector(f)
+        if isinstance(f[0], ufl.core.expr.Expr):
+            f = ufl.as_vector(f)
     if ufl and isinstance(f, GridFunction):
         func = f.gf
     elif ufl and isinstance(f, ufl.core.expr.Expr):
