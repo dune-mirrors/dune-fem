@@ -229,7 +229,8 @@ def gridFunction(grid, code, coefficients, constants):
     wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('auto', 'this->localFunctionImpl()'))))
     code.append(wrapper)
 
-    code.append(TypeAlias('GFWrapper', wrappername + '< GridView, RangeType >'))
+    typeName = wrappername + '< GridView, RangeType >'
+    code.append(TypeAlias('GFWrapper', typeName))
 
     writer = SourceWriter(StringWriter())
     writer.emit(code)
@@ -241,7 +242,11 @@ def gridFunction(grid, code, coefficients, constants):
     writer.emit('')
     writer.emit('// export function class')
     writer.emit('')
-    writer.emit('pybind11::class_< GFWrapper > cls = Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",Dune::Python::GenerateTypeName("N/A")).first;')
+    writer.emit('pybind11::class_< GFWrapper > cls ='+\
+      'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
+      'Dune::Python::GenerateTypeName("'+typeName+'"),'+\
+      'Dune::Python::IncludeFiles{"python/dune/generated/'+pyname+'.cc"}'+\
+      ').first;')
     writer.emit('Dune::FemPy::registerGridFunction( module, cls );')
     writer.emit('')
     base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridView', 'pybind11::handle')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
