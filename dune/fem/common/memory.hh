@@ -27,7 +27,7 @@ namespace Dune
     {
       return t.shared_from_this();
     }
-    catch( std::bad_weak_ptr )
+    catch( std::bad_weak_ptr& )
     {
       return std::shared_ptr< T >( &t, Dune::null_deleter< T >() );
     }
