@@ -6,6 +6,7 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/quadrature/dunequadratures.hh>
 
 template< int dim >
 struct FakeGridPart
@@ -21,12 +22,17 @@ struct FakeGridPart
 };
 
 
-template< int dim >
+template< int dim, bool useDuneQuad >
 void checkQuadraturePoints ( Dune::GeometryType type, int order )
 {
-  std::cout << ">>> Checking ElementQuadrature for type " << type << " and order " << order << "..." << std::endl;
+  const char* duneQuad = useDuneQuad ? "DUNE " : " " ;
+  std::cout << ">>> Checking " << duneQuad << "ElementQuadrature for type " << type << " and order " << order << "..." << std::endl;
 
-  Dune::Fem::ElementQuadrature< FakeGridPart< dim >, 0 > quadrature( type, order );
+  typedef typename std::conditional< useDuneQuad,
+      Dune::Fem::ElementQuadrature< FakeGridPart< dim >, 0, Dune::Fem::DuneQuadratureTraits >,
+      Dune::Fem::ElementQuadrature< FakeGridPart< dim >, 0 > > :: type  Quadrature;
+
+  Quadrature quadrature( type, order );
   const auto refElement = Dune::referenceElement< double, dim >( type );
   for( std::size_t qp = 0; qp < quadrature.nop(); ++qp )
   {
@@ -42,19 +48,34 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   for( int order = 0; order < 12; ++order )
-    checkQuadraturePoints< 1 >( Dune::GeometryTypes::line, order );
+    checkQuadraturePoints< 1, false >( Dune::GeometryTypes::line, order );
   for( int order = 0; order < 12; ++order )
-    checkQuadraturePoints< 2 >( Dune::GeometryTypes::quadrilateral, order );
+    checkQuadraturePoints< 2, false >( Dune::GeometryTypes::quadrilateral, order );
   for( int order = 0; order < 11; ++order )
-    checkQuadraturePoints< 2 >( Dune::GeometryTypes::triangle, order );
+    checkQuadraturePoints< 2, false >( Dune::GeometryTypes::triangle, order );
   for( int order = 0; order < 12; ++order )
-    checkQuadraturePoints< 3 >( Dune::GeometryTypes::hexahedron, order );
+    checkQuadraturePoints< 3, false >( Dune::GeometryTypes::hexahedron, order );
   for( int order = 0; order < 9; ++order )
-    checkQuadraturePoints< 3 >( Dune::GeometryTypes::tetrahedron, order );
+    checkQuadraturePoints< 3, false >( Dune::GeometryTypes::tetrahedron, order );
   for( int order = 0; order < 11; ++order )
-    checkQuadraturePoints< 3 >( Dune::GeometryTypes::prism, order );
+    checkQuadraturePoints< 3, false >( Dune::GeometryTypes::prism, order );
   for( int order = 0; order < 3; ++order )
-    checkQuadraturePoints< 3 >( Dune::GeometryTypes::pyramid, order );
+    checkQuadraturePoints< 3, false >( Dune::GeometryTypes::pyramid, order );
+
+  for( int order = 0; order < 12; ++order )
+    checkQuadraturePoints< 1, true >( Dune::GeometryTypes::line, order );
+  for( int order = 0; order < 12; ++order )
+    checkQuadraturePoints< 2, true >( Dune::GeometryTypes::quadrilateral, order );
+  for( int order = 0; order < 11; ++order )
+    checkQuadraturePoints< 2, true >( Dune::GeometryTypes::triangle, order );
+  for( int order = 0; order < 12; ++order )
+    checkQuadraturePoints< 3, true >( Dune::GeometryTypes::hexahedron, order );
+  for( int order = 0; order < 9; ++order )
+    checkQuadraturePoints< 3, true >( Dune::GeometryTypes::tetrahedron, order );
+  for( int order = 0; order < 11; ++order )
+    checkQuadraturePoints< 3, true >( Dune::GeometryTypes::prism, order );
+  for( int order = 0; order < 3; ++order )
+    checkQuadraturePoints< 3, true >( Dune::GeometryTypes::pyramid, order );
 
   return 0;
 }
