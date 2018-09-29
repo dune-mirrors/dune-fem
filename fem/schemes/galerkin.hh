@@ -860,13 +860,13 @@ namespace Dune
 
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
-      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
+      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
 
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit DifferentiableGalerkinOperator ( const DomainSpaceType &dSpace, const RangeSpaceType &rSpace,
+      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace, const RangeDiscreteFunctionSpaceType &rSpace,
                        Args &&... args )
         : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace), rSpace_(rSpace)
@@ -883,19 +883,19 @@ namespace Dune
         impl_.assemble( u, jOp );
       }
 
-      const DomainSpaceType& domainSpace() const
+      const DomainDiscreteFunctionSpaceType& domainSpace() const
       {
         return dSpace_;
       }
-      const RangeSpaceType& rangeSpace() const
+      const RangeDiscreteFunctionSpaceType& rangeSpace() const
       {
         return rSpace_;
       }
 
     protected:
       using BaseType::impl_;
-      const DomainSpaceType &dSpace_;
-      const RangeSpaceType &rSpace_;
+      const DomainDiscreteFunctionSpaceType &dSpace_;
+      const RangeDiscreteFunctionSpaceType &rSpace_;
     };
 
 

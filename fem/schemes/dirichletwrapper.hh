@@ -82,6 +82,7 @@ struct DirichletWrapperOperator
   {
     op_.jacobian(u,jOp);
     constraints().applyToOperator( jOp );
+    jOp.communicate();
   }
   template <class GridFunctionType>
   auto jacobian ( const GridFunctionType &u, JacobianOperatorType &jOp ) const
@@ -89,6 +90,7 @@ struct DirichletWrapperOperator
   {
     op_.jacobian(u,jOp);
     constraints().applyToOperator( jOp );
+    jOp.communicate();
   }
 
   const DomainDiscreteFunctionSpaceType& domainSpace() const
