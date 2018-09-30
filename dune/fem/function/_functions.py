@@ -80,22 +80,30 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
 
     if storage == "petsc":
         spaceType = space._typeName
-        ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-                ['if (import_petsc4py() != 0) {',
-                 '  throw std::runtime_error("Error during import of petsc4py");',
-                 '}',
-                 'Vec petscVec = PyPetscVec_Get(vec.ptr());',
-                 'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
-                 '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
-                 'pybind11::cpp_function remove_petscStorage( [ dofStorage, vec, petscVec] ( pybind11::handle weakref ) {',
-                 '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
-                 '  delete dofStorage;',
-                 '  weakref.dec_ref();',
-                 '} );',
-                 'pybind11::weakref weakref( vec, remove_petscStorage );',
-                 'weakref.release();',
-                 'return new DuneType( name, space, *dofStorage );'],
-                ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+        try:
+            import petsc4py
+            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
+                    ['if (import_petsc4py() != 0) {',
+                     '  throw std::runtime_error("Error during import of petsc4py");',
+                     '}',
+                     'Vec petscVec = PyPetscVec_Get(vec.ptr());',
+                     'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
+                     '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
+                     'pybind11::cpp_function remove_petscStorage( [ dofStorage, vec, petscVec] ( pybind11::handle weakref ) {',
+                     '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
+                     '  delete dofStorage;',
+                     '  weakref.dec_ref();',
+                     '} );',
+                     'pybind11::weakref weakref( vec, remove_petscStorage );',
+                     'weakref.release();',
+                     'return new DuneType( name, space, *dofStorage );'],
+                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+        except:
+            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
+                    ['std::cerr <<"Can not use constructor with dof vector argument because `petsc4py` was not found!\\n";',
+                     'throw std::runtime_error("Can not use constructor with dof vector argument because `petsc4py` was not found!");',
+                     'return new DuneType(name,space);'],
+                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
         DF = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend, ctor)
         vec = kwargs.get("vec",None)
         if vec is None:
