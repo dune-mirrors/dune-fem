@@ -20,21 +20,6 @@ def femsolver(storage,solverType=None):
     parameter = {"krylovmethod":solverType} if solverType is not None else {}
     return "fem",includes,typeName, parameter
 
-def pardgsolver(storage,solverType="gmres"):
-    includes = ["dune/fem/solver/cginverseoperator.hh"] + ["dune/fem/solver/pardginverseoperators.hh"]
-
-    if solverType == "cg":
-        operator = lambda df,_: "Dune::Fem::CGInverseOperator< " + df + " >"
-    elif solverType == "gmres":
-        operator = lambda df,_: "Dune::Fem::ParDGGeneralizedMinResInverseOperator< " + df + " >"
-    elif solverType == "bicgstab":
-        operator = lambda df,_: "Dune::Fem::ParDGBiCGStabInverseOperator< " + df + " >"
-    else:
-        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
-
-    includes, typeName = solvers(includes,storage,operator)
-    return "pardg",includes,typeName,{}
-
 def istlsolver(storage,solverType=None):
     includes = ["dune/fem/solver/istlinverseoperators.hh"]
 
