@@ -342,21 +342,23 @@ namespace Dune
       };
 
       template< class GF >
-      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction, std::decay_t<GF> >::value && !std::is_base_of< Fem::IsDiscreteFunction, std::decay_t<GF> >::value > >
       {
         struct Type
         {
           typedef GF GridFunctionType;
-          typedef typename GF::GridPartType GridPartType;
-          typedef typename GF::EntityType EntityType;
-          typedef typename GF::RangeFieldType RangeFieldType;
-          typedef typename GF::DomainType DomainType;
-          typedef typename GF::RangeType RangeType;
-          typedef typename GF::JacobianRangeType JacobianRangeType;
-          typedef typename GF::HessianRangeType HessianRangeType;
+          typedef std::decay_t<GF> GridFunctionDecayType;
+          typedef typename GridFunctionDecayType::GridPartType GridPartType;
+          typedef typename GridFunctionDecayType::EntityType EntityType;
+          typedef typename GridFunctionDecayType::RangeFieldType RangeFieldType;
+          typedef typename GridFunctionDecayType::DomainType DomainType;
+          typedef typename GridFunctionDecayType::RangeType RangeType;
+          typedef typename GridFunctionDecayType::JacobianRangeType JacobianRangeType;
+          typedef typename GridFunctionDecayType::HessianRangeType HessianRangeType;
 
-          explicit Type ( const GridFunctionType &gridFunction )
-            :  gridFunction_( gridFunction )
+          template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
+          explicit Type ( Arg&& gridFunction )
+            :  gridFunction_( std::forward<Arg>(gridFunction) )
           {}
 
           template <class Point>
@@ -442,10 +444,10 @@ namespace Dune
             return gridFunction_.entity();
           }
 
-          const GridFunctionType &gridFunction () const { return gridFunction_; }
+          const GridFunctionDecayType &gridFunction () const { return gridFunction_; }
 
         private:
-          GridFunctionType &gridFunction () { return gridFunction_; }
+          GridFunctionDecayType &gridFunction () { return gridFunction_; }
           GridFunctionType gridFunction_;
         };
       };
