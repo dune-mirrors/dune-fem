@@ -35,12 +35,12 @@ registry["space"] = {
          "rannacherTurek": space.rannacherTurek
      }
 registry["discretefunction"] = {
-         "adaptive" : discretefunction.adaptive,
-         "fem"      : discretefunction.adaptive,
-         "istl"     : discretefunction.istl,
-         "eigen"    : discretefunction.eigen,
-         "petsc"    : discretefunction.petsc,
-         "petscadapt"  : discretefunction.petscadapt
+         "adaptive"   : discretefunction.adaptive,
+         "fem"        : discretefunction.adaptive,
+         "istl"       : discretefunction.istl,
+         "eigen"      : discretefunction.eigen,
+         "petsc"      : discretefunction.petsc,
+         "petscadapt" : discretefunction.petscadapt
      }
 registry["operator"] = {
         "galerkin"   : operator.galerkin,
@@ -48,8 +48,6 @@ registry["operator"] = {
     }
 registry["solver"] = {
          "fem"         : discretefunction.femsolver,
-         "pardg"       : discretefunction.pardgsolver,
-         "femoem"      : discretefunction.oemfemsolver,
          "istl"        : discretefunction.istlsolver,
          "suitesparse" : discretefunction.suitesparsesolver,
          "eigen"       : discretefunction.eigensolver,

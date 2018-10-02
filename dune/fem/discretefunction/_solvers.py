@@ -20,56 +20,14 @@ def femsolver(storage,solverType=None):
     parameter = {"krylovmethod":solverType} if solverType is not None else {}
     return "fem",includes,typeName, parameter
 
-def pardgsolver(storage,solverType="gmres"):
-    includes = ["dune/fem/solver/cginverseoperator.hh"] + ["dune/fem/solver/pardginverseoperators.hh"]
+def istlsolver(storage,solverType=None):
+    includes = ["dune/fem/solver/istlinverseoperators.hh"]
 
-    if solverType == "cg":
-        operator = lambda df,_: "Dune::Fem::CGInverseOperator< " + df + " >"
-    elif solverType == "gmres":
-        operator = lambda df,_: "Dune::Fem::ParDGGeneralizedMinResInverseOperator< " + df + " >"
-    elif solverType == "bicgstab":
-        operator = lambda df,_: "Dune::Fem::ParDGBiCGStabInverseOperator< " + df + " >"
-    else:
-        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
+    operator = lambda df,_: "Dune::Fem::ISTLInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    return "pardg",includes,typeName,{}
-
-def oemfemsolver(storage,solverType="gmres"):
-    includes = ["dune/fem/solver/oemsolver.hh"]
-
-    if solverType == "cg":
-        operator = lambda df,linop: "Dune::Fem::OEMCGOp<" + ",".join([df,linop]) + " >"
-    elif solverType == "gmres":
-        operator = lambda df,linop: "Dune::Fem::OEMGMRESOp< " + ",".join([df,linop]) + " >"
-    elif solverType == "bicgstab":
-        operator = lambda df,linop: "Dune::Fem::OEMBICGSTABOp< " + ",".join([df,linop]) + " >"
-    elif solverType == "bicgsq":
-        operator = lambda df,linop: "Dune::Fem::OEMBICGSQOp< " + ",".join([df,linop]) + " >"
-    else:
-        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab, bicqsq available")
-
-    includes, typeName = solvers(includes,storage,operator)
-    return "oemfem",includes,typeName,{}
-
-def istlsolver(storage,solverType="gmres"):
-    includes = ["dune/fem/solver/istlsolver.hh"]
-
-    if solverType == "cg":
-        operator = lambda df,linop: "Dune::Fem::ISTLCGOp<" + ",".join([df,linop]) + " >"
-    elif solverType == "gmres":
-        operator = lambda df,linop: "Dune::Fem::ISTLGMResOp< " + ",".join([df,linop]) + " >"
-    elif solverType == "bicgstab":
-        operator = lambda df,linop: "Dune::Fem::ISTLBICGSTABOp< " + ",".join([df,linop]) + " >"
-    elif solverType == "minres":
-        operator = lambda df,linop: "Dune::Fem::ISTLMINResOp< " + ",".join([df,linop]) + " >"
-    elif solverType == "superlu":
-        operator = lambda df,linop: "Dune::Fem::ISTLSuperLU< " + ",".join([df,linop]) + " >"
-    else:
-        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab,minres,superlu available")
-
-    includes, typeName = solvers(includes,storage,operator)
-    return "istl",includes,typeName,{}
+    parameter = {"krylovmethod":solverType} if solverType is not None else {}
+    return "istl",includes,typeName, parameter
 
 def suitesparsesolver(storage,solverType="umfpack"):
     includes = ["dune/fem/solver/ldlsolver.hh", "dune/fem/solver/spqrsolver.hh", "dune/fem/solver/umfpacksolver.hh"]
