@@ -437,7 +437,7 @@ namespace Dune
           }
 
           void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
-          void unbind () { gridFunction().unbind(); }
+          void unbind () { gridFunction_.unbind(); }
 
           const EntityType& entity() const
           {
@@ -447,7 +447,6 @@ namespace Dune
           const GridFunctionDecayType &gridFunction () const { return gridFunction_; }
 
         private:
-          GridFunctionDecayType &gridFunction () { return gridFunction_; }
           GridFunctionType gridFunction_;
         };
       };
