@@ -274,7 +274,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName).Space(view)
+    spc = module(field, includes, typeName, storage=storage).Space(view)
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\

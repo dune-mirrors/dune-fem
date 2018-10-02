@@ -64,7 +64,7 @@ def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
     func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, virtualize, *args, **kwargs)
     return func.as_ufl() if func is not None else None
 
-def discreteFunction(space, name, expr=None, *args, **kwargs):
+def discreteFunction(space, name, expr=None, dofVector=None):
     """create a discrete function
 
     Args:
@@ -75,6 +75,19 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+
+    if dofVector is None:
+        df = space.DiscreteFunction(space,name)
+    else:
+        df = space.DiscreteFunction(name,space,dofVector)
+        return df.as_ufl()
+
+    if expr is None:
+        df.clear()
+    else:
+        df.interpolate(expr)
+    return df.as_ufl()
+
     from dune.generator import Constructor
     storage, dfIncludes, dfTypeName, _, _,backend = space.storage
 
@@ -105,7 +118,6 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
                      'return new DuneType(name,space);'],
                     ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
         DF = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend, ctor)
-        vec = kwargs.get("vec",None)
         if vec is None:
             df = DF.DiscreteFunction(space,name)
         else:
@@ -133,6 +145,7 @@ def numpyFunction(space, vec, name="tmp", **unused):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+    return discreteFunction(space,name,dofVector=vec)
 
     from dune.fem.discretefunction import module
     assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
@@ -158,7 +171,7 @@ def petscFunction(space, vec, name="tmp", **unused):
         DiscreteFunction: the constructed discrete function
     """
 
-    return discreteFunction(space,name,vec=vec)
+    return discreteFunction(space,name,dofVector=vec)
     from dune.generator import Constructor
     from dune.fem.discretefunction import module, petsc
     # assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"

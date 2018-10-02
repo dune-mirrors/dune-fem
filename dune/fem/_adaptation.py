@@ -31,22 +31,28 @@ def _adaptArguments(first,*args):
     try: # first see if first argument is a discrete function (should be only method)
         hgrid = first.grid.hierarchicalGrid
         args = list([*args,first])
+        return hgrid,args
     except AttributeError:
         pass
-    try: # if its not a df test if it is a list/tuple
-        if len(first)>1:
-            assert len(args)==0,\
-                   "only one list of discrete functions can be passed into the adaptation method"
-            hgrid = first[0].grid.hierarchicalGrid
-            args = first
-    except TypeError: # okay apparently its a hgrid object (should be deprecated)
+    if isinstance(first,list) or isinstance(first,tuple):
+        assert len(args)==0,\
+               "only one list of discrete functions can be passed into the adaptation method"
+        hgrid = first[0].grid.hierarchicalGrid
+        args = first
+    else: # okay apparently its a hgrid object (should be deprecated if args is not empty)
         hgrid = first
+        if len(args)==0:
+            return hgrid,()
         if len(args)==1:
             args = args[0]
         warnings.warn("""
               passing in the hierarchical grid as first argument to the
               'dune.fem.adapt' function is not required and deprecated.
               """)
+    return hgrid,args
+
+def adapt(first, *args):
+    hgrid,args = _adaptArguments(first,*args)
 
     # make sure all args are over the same grid
     assert all([a.grid.hierarchicalGrid==hgrid for a in args]),\
@@ -59,10 +65,6 @@ def _adaptArguments(first,*args):
     assert adapt,\
             "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view"
 
-    return hgrid,args
-
-def adapt(first, *args):
-    hgrid,args = _adaptArguments(first,*args)
     module(hgrid).gridAdaptation(hgrid).adapt(args)
 
 def loadBalance(first, *args):

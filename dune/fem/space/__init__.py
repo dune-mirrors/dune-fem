@@ -13,8 +13,11 @@ from dune.fem import function
 
 from ._spaces import *
 
-import ufl
-import dune.ufl
+try:
+    import ufl
+    from dune.ufl import GridFunction, expression2GF
+except:
+    pass
 
 
 def interpolate(space, func, name=None, **kwargs):
@@ -33,6 +36,54 @@ def interpolate(space, func, name=None, **kwargs):
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=func, **kwargs)
 
+def dfInterpolate(self, f):
+    if ufl and (isinstance(f, list) or isinstance(f, tuple)):
+        if isinstance(f[0], ufl.core.expr.Expr):
+            f = ufl.as_vector(f)
+    if ufl and isinstance(f, GridFunction):
+        func = f.gf
+    elif ufl and isinstance(f, ufl.core.expr.Expr):
+        func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+    else:
+        try:
+            gl = len(inspect.getargspec(f)[0])
+            if gl == 1:   # global function
+                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 2: # local function
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 3: # local function with self argument (i.e. from @gridFunction)
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+        except TypeError:
+            func = f
+    return self._interpolate(func)
+
+def localContribution(self, assembly):
+    if assembly == "set":
+        return self.setLocalContribution()
+    elif assembly == "add":
+        return self.addLocalContribution()
+    else:
+        raise ValueError("assembly can only be `set` or `add`")
+
+def addDFAttr(module, cls, storage):
+    setattr(cls, "_module", module)
+    setattr(cls, "_storage", storage)
+    setattr(cls, "interpolate", dfInterpolate )
+    setattr(cls, "localContribution", localContribution )
+
+def addBackend(Df,backend):
+    def backend_(self):
+        try:
+            return self._backend
+        except:
+            pass
+        try:
+            import numpy as np
+            return np.array( self.dofVector, copy=False )
+        except:
+            pass
+        return None
+    setattr(Df,backend,property(backend_))
 
 def storageToSolver(storage):
     if storage == "adaptive":
@@ -40,7 +91,7 @@ def storageToSolver(storage):
     else:
         return str(storage)
 
-generator = SimpleGenerator("Space", "Dune::FemPy")
+generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
 def addAttr(module, cls, field):
     setattr(cls, "_module", module)
@@ -59,10 +110,62 @@ def addStorage(obj, storage):
     else:
         storage = storage(obj)
     setattr(obj, "storage", storage)
+    return storage
 
 fileBase = "femspace"
 
+def addDiscreteFunction(space, storage):
+    from dune.generator import Constructor
+    storage, dfIncludes, dfTypeName, _, _,backend = addStorage(space,storage)
+
+    ctor = ()
+    spaceType = space._typeName
+    if storage == "petsc":
+        try:
+            import petsc4py
+            ctor = [Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle dofVector'],
+                    ['if (import_petsc4py() != 0) {',
+                     '  throw std::runtime_error("Error during import of petsc4py");',
+                     '}',
+                     'Vec petscVec = PyPetscVec_Get(dofVector.ptr());',
+                     'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
+                     '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
+                     'pybind11::cpp_function remove_petscStorage( [ dofStorage, dofVector, petscVec] ( pybind11::handle weakref ) {',
+                     '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
+                     '  delete dofStorage;',
+                     '  weakref.dec_ref();',
+                     '} );',
+                     'pybind11::weakref weakref( dofVector, remove_petscStorage );',
+                     'weakref.release();',
+                     'return new DuneType( name, space, *dofStorage );'],
+                    ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+                ]
+        except:
+            ctor = [Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle dofVector'],
+                    ['std::cerr <<"Can not use constructor with dof vector argument because `petsc4py` was not found!\\n";',
+                     'throw std::runtime_error("Can not use constructor with dof vector argument because `petsc4py` was not found!");',
+                     'return new DuneType(name,space);'],
+                    ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+                   ]
+    elif storage == "fem":
+        ctor = [Constructor(['const std::string &name', 'const ' +
+            spaceType + '&space', 'pybind11::array_t<double> dofVector'],
+                ['double *dof = static_cast< double* >( dofVector.request(false).ptr );',
+                 'return new DuneType(name,space,dof);'],
+                ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+            ]
+    else:
+        ctor = [Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
+                ['std::cerr <<"Can not use constructor with dof vector argument for this type of discrete function storage!\\n";',
+                 'throw std::runtime_error("Can not use constructor with dof vector argument for this type of discrete function storage!");',
+                 'return new DuneType(name,space);'],
+                ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+               ]
+    dfIncludes += ["dune/fempy/py/discretefunction.hh"]
+    return dfIncludes, dfTypeName, backend, ctor
+
 def module(field, includes, typeName, *args,
+           storage=None,
            interiorQuadratureOrders=None, skeletonQuadratureOrders=None):
     includes = includes + ["dune/fempy/py/space.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
@@ -75,10 +178,22 @@ def module(field, includes, typeName, *args,
             "i" + "".join(str(i) for i in interiorQuadratureOrders) + "_" +\
             "s" + "".join(str(i) for i in skeletonQuadratureOrders) + "_" +\
             hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True,
-                            options=["std::shared_ptr<DuneType>"],
+    class DummySpace:
+        _typeName = typeName
+        _includes = includes
+    dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
+    moduleName += hashlib.md5(dfTypeName.encode('utf-8')).hexdigest()
+    module = generator.load(includes+dfIncludes, [typeName,dfTypeName], moduleName,
+                            ((*args,), (*dfArgs,)),
+                            dynamicAttr=[True,False],
+                            bufferProtocol=[False,True],
+                            options=[["std::shared_ptr<DuneType>"],[]],
                             defines=defines)
     addAttr(module, module.Space, field)
+    setattr(module.Space,"DiscreteFunction",module.DiscreteFunction)
+    addDFAttr(module, module.Space.DiscreteFunction, addStorage(module.Space,storage))
+    if not backend is None:
+        addBackend(module.Space.DiscreteFunction, backend)
     return module
 
 def codegen(space,interiorQuadratureOrders, skeletonQuadratureOrders):
