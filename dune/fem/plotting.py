@@ -3,7 +3,7 @@ from matplotlib import pyplot
 from numpy import amin, amax, linspace, linalg
 from matplotlib.collections import PolyCollection
 
-from dune.plotting import block
+from dune.plotting import block, disable
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
         xlim=None, ylim=None, clim=None, cmap=None, colorbar=True, triplot=False):
@@ -82,6 +82,7 @@ def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar=True, grid=None, triplot=False):
+    if disable: return
     try:
         grid = solution.grid
     except AttributeError:
@@ -115,6 +116,7 @@ def plotPointData(solution, figure=None,
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
         xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
+    if disable: return
     try:
         grid = solution.grid
     except AttributeError:
@@ -153,6 +155,7 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     # return fig
 
 def mayaviPointData(grid, solution, level=0, component=0):
+    if disable: return
     from mayavi import mlab
     triangulation = grid.triangulation(level)
     z = uh.pointData(level)[:,component]
