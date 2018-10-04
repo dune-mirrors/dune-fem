@@ -64,6 +64,8 @@ namespace Dune
       {
         return "None";
       }
+
+      virtual bool viennaCL () const { return false; }
     };
 
 
