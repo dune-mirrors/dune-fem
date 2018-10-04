@@ -270,7 +270,7 @@ namespace Dune
           sequence_ = domainSpace().sequence();
         }
 
-        communicate( false );
+        flushAssembly();
 
         status_ = statAssembled;
       }
