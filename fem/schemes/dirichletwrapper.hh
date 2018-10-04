@@ -17,7 +17,6 @@
 
 #include <dune/fem/schemes/dirichletconstraints.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/io/file/dataoutput.hh>
 
 
 template< class Operator,
