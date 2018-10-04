@@ -32,7 +32,8 @@ def load(includes, typeName, *args, backend=None, preamble=None):
     return module
 
 
-def galerkin(integrands, domainSpace=None, rangeSpace=None):
+def galerkin(integrands, domainSpace=None, rangeSpace=None,
+    virtualize=None):
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -59,6 +60,9 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
         else:
             integrands = makeIntegrands(domainSpace.grid,integrands)
 
+    if virtualize is None:
+        virtualize = integrands.virtualized
+
     if not hasattr(rangeSpace,"interpolate"):
         raise ValueError("wrong range space")
     if not hasattr(domainSpace,"interpolate"):
@@ -74,7 +78,11 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
     includes += domainSpace._includes + domainFunctionIncludes
     includes += rangeSpace._includes + rangeFunctionIncludes
 
-    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ', ' + integrands._rangeValueType + ' >'
+    if virtualize:
+        integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
+    else:
+        includes += integrands._includes
+        integrandsType = integrands._typeName
 
     import dune.create as create
     linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
@@ -94,7 +102,6 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
     if integrands.hasDirichletBoundary:
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
-
 
     op = load(includes, typeName, constructor,backend=(dbackend,rbackend)).Operator(domainSpace,rangeSpace, integrands)
     op.model = integrands
