@@ -124,7 +124,7 @@ namespace Dune
           // write grid to stream (grid implementation has to take care of byte order)
           BackupRestoreFacility< GridType > :: backup( grid, stream );
         }
-        catch ( NotImplemented )
+        catch ( const NotImplemented& )
         {
           // write grid to file with filename + extension
           BackupRestoreFacility< GridType > :: backup( grid, filename );
