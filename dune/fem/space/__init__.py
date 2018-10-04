@@ -97,8 +97,7 @@ def addAttr(module, cls, field):
     setattr(cls, "_module", module)
     setattr(cls, "field", field)
     setattr(cls, "interpolate", interpolate)
-    setattr(cls, "numpyFunction", function.numpyFunction)
-    setattr(cls, "petscFunction", function.petscFunction)
+    setattr(cls, "function", function.discreteFunction)
 
 def addStorage(obj, storage):
     if not storage:
@@ -154,6 +153,12 @@ def addDiscreteFunction(space, storage):
                  'return new DuneType(name,space,dof);'],
                 ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
             ]
+    elif storage == "istl":
+        ctor = [Constructor(['const std::string &name', 'const ' +
+            spaceType + '&space', 'typename DuneType::DofContainerType &dofVector'],
+                ['return new DuneType(name,space,dofVector);'],
+                ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
+            ]
     else:
         ctor = [Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
                 ['std::cerr <<"Can not use constructor with dof vector argument for this type of discrete function storage!\\n";',
@@ -168,21 +173,26 @@ def module(field, includes, typeName, *args,
            storage=None,
            interiorQuadratureOrders=None, skeletonQuadratureOrders=None):
     includes = includes + ["dune/fempy/py/space.hh"]
-    moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     defines = []
+
+    class DummySpace:
+        _typeName = typeName
+        _includes = includes
+    DummySpace.field     = field
+    dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
+
     if interiorQuadratureOrders is not None or\
        skeletonQuadratureOrders is not None:
         defines = ["USE_BASEFUNCTIONSET_CODEGEN"]
         includes = ["dune/fem/space/basisfunctionset/default_codegen.hh"] + includes
         moduleName = fileBase + "_" +\
             "i" + "".join(str(i) for i in interiorQuadratureOrders) + "_" +\
-            "s" + "".join(str(i) for i in skeletonQuadratureOrders) + "_" +\
-            hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    class DummySpace:
-        _typeName = typeName
-        _includes = includes
-    dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
-    moduleName += hashlib.md5(dfTypeName.encode('utf-8')).hexdigest()
+            "s" + "".join(str(i) for i in skeletonQuadratureOrders)
+    else:
+        moduleName = fileBase
+    moduleName = moduleName + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest() \
+                            + "_" + hashlib.md5(dfTypeName.encode('utf-8')).hexdigest()
+
     module = generator.load(includes+dfIncludes, [typeName,dfTypeName], moduleName,
                             ((*args,), (*dfArgs,)),
                             dynamicAttr=[True,False],

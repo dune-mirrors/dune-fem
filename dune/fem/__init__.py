@@ -69,7 +69,6 @@ registry["function"] = {
          "local"      : function.localFunction,
          "cpp"        : function.cppFunction,
          "ufl"        : function.uflFunction,
-         "numpy"      : function.numpyFunction,
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
