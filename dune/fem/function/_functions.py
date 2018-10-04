@@ -80,11 +80,10 @@ def discreteFunction(space, name, expr=None, dofVector=None):
         df = space.DiscreteFunction(space,name)
     else:
         df = space.DiscreteFunction(name,space,dofVector)
-        return df.as_ufl()
 
-    if expr is None:
+    if expr is None and dofVector is None:
         df.clear()
-    else:
+    elif dofVector is None:
         df.interpolate(expr)
     return df.as_ufl()
 
@@ -130,73 +129,6 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     else:
         df.interpolate(expr)
     return df.as_ufl()
-
-
-def numpyFunction(space, vec, name="tmp", **unused):
-    """create a discrete function - using the fem numpy storage as linear algebra backend
-       Note: this is not a 'managed' discrete function, i.e., the storage
-       is passed in and owned by the user. No resizing will take be done
-       during grid modification.
-
-    Args:
-        space: discrete space
-        vec: the vector storage (a numpy array)
-
-    Returns:
-        DiscreteFunction: the constructed discrete function
-    """
-    return discreteFunction(space,name,dofVector=vec)
-
-    from dune.fem.discretefunction import module
-    assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
-    includes = space._includes + [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ]
-    spaceType = space._typeName
-    field = space.field
-    typeName = "Dune::Fem::VectorDiscreteFunction< " +\
-          spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
-
-    return module("numpy", includes, typeName, "as_numpy").DiscreteFunction(space,name,vec).as_ufl()
-
-def petscFunction(space, vec, name="tmp", **unused):
-    """create a discrete function - using the fem petsc storage as linear algebra backend
-       Note: this is not a 'managed' discrete function, i.e., the storage
-       is passed in and owned by the user. No resizing will take be done
-       during grid modification.
-
-    Args:
-        space: discrete space
-        vec: the vector storage (a numpy array)
-
-    Returns:
-        DiscreteFunction: the constructed discrete function
-    """
-
-    return discreteFunction(space,name,dofVector=vec)
-    from dune.generator import Constructor
-    from dune.fem.discretefunction import module, petsc
-    # assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
-    import petsc4py
-    includes = space._includes +\
-               [ os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h" ] +\
-               [ "dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh", "dune/fem/misc/petsc/petscvector.hh" ]
-
-    spaceType = space._typeName
-    typeName = "Dune::Fem::PetscDiscreteFunction< " + spaceType + ">"
-
-    ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-            ['std::cout << "UM: " << vec.ptr() << std::endl;',
-             'if (import_petsc4py() != 0) {',
-             '  std::cout << "ERROR: could not import petsc4py" << std::endl;',
-             '  throw std::runtime_error("Error during import of petsc4py");',
-             '}',
-             'Vec petscVec = PyPetscVec_Get(vec.ptr());',
-             'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
-             'std::cout << "UM: " << petscVec << " " << *(dofStorage->getVector()) << std::endl;',
-             'return new DuneType( name, space, *dofStorage );'],
-            ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
-
-    return module("petsc", includes, typeName, "as_petsc", ctor).DiscreteFunction(name,space,vec).as_ufl()
-
 
 def tupleDiscreteFunction(*spaces, **kwargs):
     from dune.fem.discretefunction import module, addAttr
