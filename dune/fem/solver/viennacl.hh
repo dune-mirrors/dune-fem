@@ -3,9 +3,12 @@
 
 #ifdef HAVE_VIENNACL
 
-#define VIENNACL_WITH_EIGEN 
-// #define VIENNACL_WITH_OPENCL 
-#define VIENNACL_WITH_OPENMP 
+#if HAVE_EIGEN
+#define VIENNACL_WITH_EIGEN
+#endif
+
+#define VIENNACL_WITH_OPENCL
+#define VIENNACL_WITH_OPENMP
 
 #include <viennacl/linalg/bicgstab.hpp>
 #include <viennacl/linalg/cg.hpp>
@@ -21,7 +24,6 @@ namespace Dune
 
   namespace Fem
   {
-
     template< class DiscreteFunction >
     class ViennaCLBiCGStabInverseOperator
       : public Fem::Operator< DiscreteFunction, DiscreteFunction >
@@ -32,26 +34,36 @@ namespace Dune
       typedef typename Base::DomainFunctionType DomainFunction;
       typedef typename Base::RangeFunctionType RangeFunction;
 
-      typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+      //typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+      typedef Fem::SparseRowLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
     private:
       typedef typename OperatorType::MatrixType Matrix;
 
-      typedef typename Matrix::Ttype Field;
+      typedef typename Matrix::field_type Field;
+      typedef typename Matrix::size_type  size_type;
 
     public:
       ViennaCLBiCGStabInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose )
         : matrix_( op.matrix().rows(), op.matrix().cols() ),
           tag_( absLimit, maxIter )
       {
-        viennacl::copy( op.matrix().data(), matrix_ );
+        init( op );
       }
 
       ViennaCLBiCGStabInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
         : matrix_( op.matrix().rows(), op.matrix().cols() ),
           tag_( absLimit, maxIter )
       {
-        viennacl::copy( op.matrix().data(), matrix_ );
+        init( op );
+      }
+
+      void init( const OperatorType &op )
+      {
+        std::vector< std::map< size_type, Field > > cpuMatrix;
+        op.fillCSRStorage( cpuMatrix );
+
+        viennacl::copy( cpuMatrix, matrix_ );
       }
 
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
@@ -122,7 +134,7 @@ namespace Dune
         w.dofVector().array().coefficients() = viennacl::linalg::solve(
                  op_.matrix().data(), u.dofVector().array().coefficients(), tag_);
 #endif
-                                                 
+
       }
 
       unsigned int iterations () const { return tag_.iters(); }
@@ -144,6 +156,8 @@ namespace Dune
     public:
       typedef typename Base::DomainFunctionType DomainFunction;
       typedef typename Base::RangeFunctionType RangeFunction;
+
+      //typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
       typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
 

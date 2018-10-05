@@ -269,6 +269,27 @@ namespace Dune
           }
       }
 
+      template <class SizeT, class NumericT >
+      void fillCSRStorage( std::vector< std::map<SizeT, NumericT> >& matrix ) const
+      {
+        matrix.resize( rows() );
+
+        size_type thisCol = 0;
+        for(size_type i = 0; i<dim_[ 0 ]; ++i )
+        {
+          auto& matRow = matrix[ i ];
+          for(size_type col=firstCol; col<nz_; ++col, ++thisCol)
+          {
+            const size_type realCol = col_[thisCol];
+
+            if( realCol == defaultCol )
+              continue;
+
+            matRow[ realCol ] = values_[ thisCol ];
+          }
+        }
+      }
+
     private:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
