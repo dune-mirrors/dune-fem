@@ -8,6 +8,7 @@
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
+#include <dune/fempy/parameter.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 
@@ -178,6 +179,12 @@ namespace Dune
 
         using pybind11::operator""_a;
 
+        cls.def( "assemble", [] ( const Operator &self, const GF &ubar, const pybind11::dict parameters ) {
+            std::unique_ptr<LinearOperator> linOp = std::make_unique<LinearOperator>("tmp", self.domainSpace(), self.rangeSpace(),
+             pyParameter( parameters, std::make_shared< std::string >() ) );
+            self.jacobian( ubar, *linOp );
+            return linOp;
+          }, "ubar"_a, "parameters"_a, pybind11::keep_alive<0,1>() );
         cls.def( "assemble", [] ( const Operator &self, const GF &ubar ) {
             std::unique_ptr<LinearOperator> linOp = std::make_unique<LinearOperator>("tmp", self.domainSpace(), self.rangeSpace());
             self.jacobian( ubar, *linOp );

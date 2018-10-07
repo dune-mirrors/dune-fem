@@ -105,7 +105,7 @@ public:
     // the elliptic operator (implicit)
     implicitOperator_( space, space, std::forward<ModelType&>(model_), parameter ),
     // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( "assembled elliptic operator", space_, space_ ), // , parameter ),
+    linearOperator_( "assembled elliptic operator", space_, space_, parameter ),
     parameter_( parameter ),
     invOp_( parameter_ )
   {}

@@ -7,6 +7,7 @@
 
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
+#include <dune/fem/solver/parameter.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
