@@ -37,4 +37,10 @@
 /* Define if we have AmgXSolver */
 #cmakedefine HAVE_AMGXSOLVER 1
 
+/* Define if we have ViennaCL */
+#cmakedefine HAVE_VIENNACL 1
+
+/* Define if we have OpenCL */
+#cmakedefine HAVE_OPENCL 1
+
 /* end dune-fem */

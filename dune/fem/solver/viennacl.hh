@@ -7,8 +7,13 @@
 #define VIENNACL_WITH_EIGEN
 #endif
 
+#if HAVE_OPENCL
 #define VIENNACL_WITH_OPENCL
+#endif
+
+#if _OPENMP
 #define VIENNACL_WITH_OPENMP
+#endif
 
 #include <viennacl/linalg/bicgstab.hpp>
 #include <viennacl/linalg/cg.hpp>
@@ -58,10 +63,23 @@ namespace Dune
         init( op );
       }
 
+      ViennaCLBiCGStabInverseOperator ( double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max(),
+                                        const bool verbose = false )
+        : //matrix_( op.matrix().rows(), op.matrix().cols() ),
+          tag_( absLimit, maxIter )
+      {
+      }
+
+      void bind( const OperatorType& op )
+      {
+        init( op );
+      }
+
       void init( const OperatorType &op )
       {
+        matrix_.resize( op.matrix().rows(), op.matrix().rows() );
         std::vector< std::map< size_type, Field > > cpuMatrix;
-        op.fillCSRStorage( cpuMatrix );
+        op.matrix().fillCSRStorage( cpuMatrix );
 
         viennacl::copy( cpuMatrix, matrix_ );
       }
@@ -93,7 +111,7 @@ namespace Dune
       typedef typename Base::DomainFunctionType DomainFunction;
       typedef typename Base::RangeFunctionType RangeFunction;
 
-      typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+      typedef Fem::SparseRowLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
     private:
       typedef typename OperatorType::MatrixType::MatrixStorageType Matrix;
@@ -159,7 +177,8 @@ namespace Dune
 
       //typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
-      typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+      //typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+      typedef Fem::SparseRowLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
     private:
       typedef typename OperatorType::MatrixType Matrix;

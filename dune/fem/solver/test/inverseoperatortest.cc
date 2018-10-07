@@ -27,6 +27,7 @@
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/solver/oemsolver.hh>
+#include <dune/fem/solver/viennacl.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -428,6 +429,18 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif //HAVE_EIGEN
+
+#if HAVE_VIENNACL
+  // EigenCGInverseOperator + EigenLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::ViennaCLBiCGStabInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === EigenCGInverseOperator + EigenLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+#endif
 
   /*
 #if HAVE_AMGXSOLVER
