@@ -17,7 +17,7 @@ def femsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::KrylovInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"krylovmethod":solverType} if solverType is not None else {}
+    parameter = {"fem.solver.krylovmethod":solverType} if solverType is not None else {}
     return "fem",includes,typeName, parameter
 
 def istlsolver(storage,solverType=None):
@@ -26,7 +26,7 @@ def istlsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::ISTLInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"krylovmethod":solverType} if solverType is not None else {}
+    parameter = {"fem.solver.krylovmethod":solverType} if solverType is not None else {}
     return "istl",includes,typeName, parameter
 
 def suitesparsesolver(storage,solverType="umfpack"):
