@@ -435,7 +435,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ViennaCLBiCGStabInverseOperator< DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::ViennaCLInverseOperator< DiscreteFunction >;
 
     std::string designation(" === EigenCGInverseOperator + EigenLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
