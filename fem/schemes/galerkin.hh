@@ -972,6 +972,8 @@ namespace Dune
       typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
 
       typedef RangeFunctionType DiscreteFunctionType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
@@ -997,7 +999,7 @@ namespace Dune
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),
-          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace ),
+          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace), // ,parameter_  ),
           invOp_(parameter_)
       {}
 

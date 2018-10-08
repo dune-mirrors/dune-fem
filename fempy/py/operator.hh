@@ -171,6 +171,32 @@ namespace Dune
           } );
       }
 
+      /*
+      template< class GF, class Operator, class... options,
+            decltype( std::declval< const Operator & >().jacobian( std::declval< const GF & >(), std::declval< typename Operator::JacobianOperatorType& >() ), 0 ) = 0,
+            decltype( std::declval< const typename Operator::JacobianOperatorType & >().jacobian(
+                  std::declval< const typename Operator::DomainSpaceType& >(),
+                  std::declval< const typename Operator::RangeSpaceType& >(),
+                  std::declval< const Dune::Fem::ParameterReader& >() ), 0 ) = 0
+            >
+      inline static void registerOperatorAssembleWithParameter ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
+      {
+        typedef typename Operator::JacobianOperatorType LinearOperator;
+
+        using pybind11::operator""_a;
+
+        cls.def( "assemble", [] ( const Operator &self, const GF &ubar, const pybind11::dict parameters ) {
+            std::unique_ptr<LinearOperator> linOp = std::make_unique<LinearOperator>("tmp", self.domainSpace(), self.rangeSpace(),
+                  pyParameter( parameters, std::make_shared< std::string >() ) );
+            self.jacobian( ubar, *linOp );
+            return linOp;
+          }, "ubar"_a, "parameters"_a, pybind11::keep_alive<0,1>() );
+      }
+      template< class GF, class Operator, class... options >
+      inline static void registerOperatorAssembleWithParameter ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
+      {
+      }
+      */
       template< class GF, class Operator, class... options,
             decltype( std::declval< const Operator & >().jacobian( std::declval< const GF & >(), std::declval< typename Operator::JacobianOperatorType& >() ), 0 ) = 0 >
       inline static void registerOperatorAssemble ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
@@ -179,12 +205,6 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "assemble", [] ( const Operator &self, const GF &ubar, const pybind11::dict parameters ) {
-            std::unique_ptr<LinearOperator> linOp = std::make_unique<LinearOperator>("tmp", self.domainSpace(), self.rangeSpace(),
-             pyParameter( parameters, std::make_shared< std::string >() ) );
-            self.jacobian( ubar, *linOp );
-            return linOp;
-          }, "ubar"_a, "parameters"_a, pybind11::keep_alive<0,1>() );
         cls.def( "assemble", [] ( const Operator &self, const GF &ubar ) {
             std::unique_ptr<LinearOperator> linOp = std::make_unique<LinearOperator>("tmp", self.domainSpace(), self.rangeSpace());
             self.jacobian( ubar, *linOp );
@@ -202,6 +222,8 @@ namespace Dune
         typedef typename DomainFunction::RangeType RangeType;
         typedef typename DomainFunction::GridPartType GridPart;
 
+        // registerOperatorAssembleWithParameter< DomainFunction >( cls, PriorityTag< 42 >() );
+        // registerOperatorAssembleWithParameter< VirtualizedGridFunction< GridPart, RangeType > >( cls, PriorityTag< 42 >() );
         registerOperatorAssemble< DomainFunction >( cls, PriorityTag< 42 >() );
         registerOperatorAssemble< VirtualizedGridFunction< GridPart, RangeType > >( cls, PriorityTag< 42 >() );
       }
