@@ -77,7 +77,7 @@ namespace Dune
       ViennaCLInverseOperator ( double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max(),
                                 const bool verbose = false,
                                 const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
-        : absLimit_( absLimit ),
+        : absLimit_( parameter.linReductionParameter() ),
           maxIter_( maxIter ),
           iterations_( 0 ),
           method_( parameter.krylovMethod() )
