@@ -28,6 +28,9 @@
 #include <dune/fem/schemes/integrands.hh>
 #include <dune/fem/schemes/dirichletwrapper.hh>
 
+// fempy includes
+#include <dune/fempy/quadrature/fempyquadratures.hh>
+
 namespace Dune
 {
 
@@ -52,8 +55,8 @@ namespace Dune
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       private:
-        typedef CachingQuadrature< GridPartType, 0 > InteriorQuadratureType;
-        typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
+        typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
+        typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
 
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;

@@ -54,9 +54,13 @@
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
+
 // include parameter handling
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/dataoutput.hh>
+
+// fempy includes
+#include <dune/fempy/quadrature/fempyquadratures.hh>
 
 // EllipticOperator
 // ----------------
@@ -90,8 +94,8 @@ struct EllipticOperator
   typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-  typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > QuadratureType;
-  typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
+  typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > QuadratureType;
+  typedef Dune::Fem::CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > FaceQuadratureType;
 
   EllipticOperator ( const RangeDiscreteFunctionSpaceType &rangeSpace,
                      ModelType &model,
