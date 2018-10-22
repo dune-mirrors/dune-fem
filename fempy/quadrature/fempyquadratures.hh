@@ -192,32 +192,34 @@ namespace Dune
       /** \brief constructor filling the list of points and weights
        *
        *  \param[in]  geometry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
+       *  \param[in]  key       key to identify quadrature (i.e. order of quadrature provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
       FempyQuadratureRulesFactory( const GeometryType &geometry,
                                    const QuadratureKeyType& key,
                                    const size_t id )
       : BaseType( id ),
-        elementGeometry_( geometry )
+        elementGeometry_( geometry ),
+        order_( key.first )
       {
+
+        // if quadrature for this key was registered, then use it
         if( QuadratureRuleRegistryType::quadratureExists( key ) )
         {
           const DuneQuadratureRuleType &rule =
             QuadratureRuleRegistryType::quadratureRule( key );
-
-          order_ = key.first; // ???? rule.order();
-          assert( order <= order_ );
 
           typedef typename DuneQuadratureRuleType :: iterator IteratorType;
           const IteratorType endit = rule.end();
           for( IteratorType it = rule.begin(); it != endit; ++it )
             addQuadraturePoint( (*it).position(), (*it).weight() );
         }
-        else // use default dune-fem quadratures
+        else
         {
-          DefaultQuadrature quad( geometry, key, id );
-          const int nop = quad.size();
+          // when not quadrature for a key is registered
+          // use default dune-fem quadratures
+          DefaultQuadrature quad( geometry, order_, id );
+          const int nop = quad.nop();
           for( int i=0; i<nop; ++i )
           {
             addQuadraturePoint( quad.point( i ), quad.weight( i ) );
