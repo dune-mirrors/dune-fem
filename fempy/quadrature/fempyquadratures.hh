@@ -9,12 +9,69 @@
 #include <dune/python/pybind11/numpy.h>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
+#include <dune/fem/quadrature/defaultquadratures.hh>
 
 namespace Dune
 {
 
   namespace FemPy
   {
+
+    // forward declaration
+    template< class DefaultQuadrature >
+    class FempyQuadratureRulesFactory;
+
+    template< class FieldType, int dim >
+    struct FempyQuadratureTraits
+    {
+      typedef Dune::Fem::DefaultQuadratureTraits< FieldType, dim >
+        DefaultQuadTraits;
+
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: SimplexQuadratureType > SimplexQuadratureType;
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: CubeQuadratureType    > CubeQuadratureType;
+
+      typedef typename DefaultQuadTraits::IntegrationPointListType  IntegrationPointListType;
+      typedef typename CubeQuadratureType :: QuadratureKeyType      QuadratureKeyType;
+    };
+
+    template< class FieldType >
+    struct FempyQuadratureTraits< FieldType, 0 >
+    {
+      typedef Dune::Fem::DefaultQuadratureTraits< FieldType, 0 >
+        DefaultQuadTraits;
+
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits::PointQuadratureType > PointQuadratureType;
+      typedef typename DefaultQuadTraits::IntegrationPointListType  IntegrationPointListType;
+      typedef typename PointQuadratureType :: QuadratureKeyType     QuadratureKeyType;
+    };
+
+    template< class FieldType >
+    struct FempyQuadratureTraits< FieldType, 1 >
+    {
+      typedef Dune::Fem::DefaultQuadratureTraits< FieldType, 1 >
+        DefaultQuadTraits;
+
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits::LineQuadratureType > LineQuadratureType;
+
+      typedef typename DefaultQuadTraits::IntegrationPointListType IntegrationPointListType;
+      typedef typename LineQuadratureType :: QuadratureKeyType     QuadratureKeyType;
+    };
+
+    template< class FieldType >
+    struct FempyQuadratureTraits< FieldType, 3 >
+    {
+      typedef Dune::Fem::DefaultQuadratureTraits< FieldType, 3 >
+        DefaultQuadTraits;
+
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: SimplexQuadratureType > SimplexQuadratureType;
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: CubeQuadratureType    > CubeQuadratureType;
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: PrismQuadratureType   > PrismQuadratureType;
+      typedef FempyQuadratureRulesFactory< typename DefaultQuadTraits:: PyramidQuadratureType > PyramidQuadratureType;
+
+      typedef typename DefaultQuadTraits::IntegrationPointListType  IntegrationPointListType;
+      typedef typename CubeQuadratureType :: QuadratureKeyType      QuadratureKeyType;
+    };
+
     template <class Field, int dim>
     class QuadraturePointsRegistry
     {
@@ -24,13 +81,22 @@ namespace Dune
       typedef Dune::QuadraturePoint< Field, dim > QuadraturePointType;
       typedef typename QuadraturePointType :: Vector  CoordinateType;
 
-      std::vector< QuadratureRuleType > rules_;
+    public:
+      typedef std::pair< int, int > QuadratureKeyType ;
 
-      QuadraturePointsRegistry(int maxOrder = 100 ) : rules_( maxOrder ) {}
+    protected:
+      std::map< QuadratureKeyType, QuadratureRuleType > rules_;
 
-      QuadratureRuleType& getRule(const int order )
+      QuadraturePointsRegistry() {}
+
+      QuadratureRuleType& getRule(const QuadratureKeyType& key )
       {
-        return rules_[ order ];
+        return rules_[ key ];
+      }
+
+      bool quadExists( const QuadratureKeyType& key ) const
+      {
+        return rules_.find( key ) != rules_.end();
       }
 
       static ThisType& instance()
@@ -40,17 +106,22 @@ namespace Dune
       }
 
     public:
-      DUNE_EXPORT static const QuadratureRuleType& quadratureRule( const int order )
+      DUNE_EXPORT static const QuadratureRuleType& quadratureRule( const QuadratureKeyType& key )
       {
-        return instance().rules_[ order ];
+        assert( quadratureExists( key ) );
+        return instance().rules_[ key ];
       }
 
+      DUNE_EXPORT static bool quadratureExists( const QuadratureKeyType& key )
+      {
+        return instance().quadExists( key );
+      }
 
       template <class Rules>
       DUNE_EXPORT
-      static void registerQuadratureRule( const Rules& rules, const int order, const Dune::GeometryType& geometry )
+      static void registerQuadratureRule( const Rules& rules, const QuadratureKeyType& key, const Dune::GeometryType& geometry )
       {
-        QuadratureRuleType& rule = instance().getRule( order );
+        QuadratureRuleType& rule = instance().getRule( key );
 
         pybind11::object pyrule = rules( geometry );
         pybind11::object pyPW = pyrule.attr("get")();
@@ -80,30 +151,32 @@ namespace Dune
      *  standard quadratures from DUNE grid to generate a list of quadrature
      *  points.
      */
-    template< typename FieldImp, int dim >
+    template< class DefaultQuadrature >
     class FempyQuadratureRulesFactory
-    : public Dune::Fem::QuadratureImp< FieldImp, dim >
+    : public Dune::Fem::QuadratureImp< typename DefaultQuadrature::FieldType, DefaultQuadrature::dimension >
     {
-    public:
-      typedef FieldImp FieldType;
-
-      enum { dimension = dim };
-
     private:
-      typedef FempyQuadratureRulesFactory< FieldType, dimension > ThisType;
-      typedef Dune::Fem::QuadratureImp< FieldType, dimension > BaseType;
+      typedef FempyQuadratureRulesFactory< DefaultQuadrature > ThisType;
+      typedef Dune::Fem::QuadratureImp< typename DefaultQuadrature::FieldType, DefaultQuadrature::dimension > BaseType;
+
+    public:
+      typedef typename  BaseType :: FieldType   FieldType;
+      using BaseType :: dimension;
 
     protected:
       using BaseType :: addQuadraturePoint;
 
-    public:
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    protected:
       typedef Dune::QuadratureRule< FieldType, dimension > DuneQuadratureRuleType;
       typedef QuadraturePointsRegistry< FieldType, dimension >
         QuadratureRuleRegistryType;
 
+    public:
+      typedef typename BaseType :: CoordinateType CoordinateType;
+
+      //! type of key to identify a selected quadrature
+      typedef typename QuadratureRuleRegistryType :: QuadratureKeyType  QuadratureKeyType;
+
+    protected:
       //enum { highest_order_cube    = CubeQuadratureRule<ct,dim>::highest_order };
       //enum { highest_order_simplex = SimplexQuadratureRule<ct,dim>::highest_order };
 
@@ -123,21 +196,33 @@ namespace Dune
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
        */
       FempyQuadratureRulesFactory( const GeometryType &geometry,
-                                   const int order,
+                                   const QuadratureKeyType& key,
                                    const size_t id )
       : BaseType( id ),
         elementGeometry_( geometry )
       {
-        const DuneQuadratureRuleType &rule =
-          QuadratureRuleRegistryType::quadratureRule( order );
+        if( QuadratureRuleRegistryType::quadratureExists( key ) )
+        {
+          const DuneQuadratureRuleType &rule =
+            QuadratureRuleRegistryType::quadratureRule( key );
 
-        order_ = order; // ???? rule.order();
-        assert( order <= order_ );
+          order_ = key.first; // ???? rule.order();
+          assert( order <= order_ );
 
-        typedef typename DuneQuadratureRuleType :: iterator IteratorType;
-        const IteratorType endit = rule.end();
-        for( IteratorType it = rule.begin(); it != endit; ++it )
-          addQuadraturePoint( (*it).position(), (*it).weight() );
+          typedef typename DuneQuadratureRuleType :: iterator IteratorType;
+          const IteratorType endit = rule.end();
+          for( IteratorType it = rule.begin(); it != endit; ++it )
+            addQuadraturePoint( (*it).position(), (*it).weight() );
+        }
+        else // use default dune-fem quadratures
+        {
+          DefaultQuadrature quad( geometry, key, id );
+          const int nop = quad.size();
+          for( int i=0; i<nop; ++i )
+          {
+            addQuadraturePoint( quad.point( i ), quad.weight( i ) );
+          }
+        }
       }
 
       /** \copydoc Dune::Fem::QuadratureImp::order
@@ -162,43 +247,6 @@ namespace Dune
       }
     };
 
-
-    template< class FieldType, int dim >
-    struct FempyQuadratureTraits
-    {
-      typedef FempyQuadratureRulesFactory< FieldType, dim > SimplexQuadratureType;
-      typedef FempyQuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
-
-      typedef Dune::Fem::QuadratureImp< FieldType, dim > IntegrationPointListType;
-    };
-
-    template< class FieldType >
-    struct FempyQuadratureTraits< FieldType, 0 >
-    {
-      typedef FempyQuadratureRulesFactory< FieldType, 0 > PointQuadratureType;
-
-      typedef Dune::Fem::QuadratureImp< FieldType, 0 > IntegrationPointListType;
-    };
-
-    template< class FieldType >
-    struct FempyQuadratureTraits< FieldType, 1 >
-    {
-      typedef FempyQuadratureRulesFactory< FieldType, 1 > LineQuadratureType;
-
-      typedef Dune::Fem::QuadratureImp< FieldType, 1 > IntegrationPointListType;
-    };
-
-    template< class FieldType >
-    struct FempyQuadratureTraits< FieldType, 3 >
-    {
-      typedef FempyQuadratureRulesFactory< FieldType, 3 > SimplexQuadratureType;
-      typedef FempyQuadratureRulesFactory< FieldType, 3 > CubeQuadratureType;
-
-      typedef FempyQuadratureRulesFactory< FieldType, 3 > PrismQuadratureType;
-      typedef FempyQuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
-
-      typedef Dune::Fem::QuadratureImp< FieldType, 3 > IntegrationPointListType;
-    };
 
   } // namespace FemPy
 
