@@ -81,8 +81,16 @@ namespace Dune
       typedef Dune::QuadraturePoint< Field, dim > QuadraturePointType;
       typedef typename QuadraturePointType :: Vector  CoordinateType;
 
+      struct QuadratureKey : public std::pair< int, int >
+      {
+        QuadratureKey( int a, int b = 0 )
+          : std::pair< int, int >( a, b )
+        {
+        }
+      };
+
     public:
-      typedef std::pair< int, int > QuadratureKeyType ;
+      typedef QuadratureKey  QuadratureKeyType ;
 
     protected:
       std::map< QuadratureKeyType, QuadratureRuleType > rules_;
