@@ -83,7 +83,7 @@ namespace Dune
 
       struct QuadratureKey : public std::pair< int, int >
       {
-        QuadratureKey( int a, int b = 0 )
+        QuadratureKey( int a, int b = -1 )
           : std::pair< int, int >( a, b )
         {
         }
@@ -97,7 +97,7 @@ namespace Dune
 
       QuadraturePointsRegistry() {}
 
-      QuadratureRuleType& getRule(const QuadratureKeyType& key )
+      QuadratureRuleType& getRule(const QuadratureKeyType& key)
       {
         return rules_[ key ];
       }
@@ -207,8 +207,7 @@ namespace Dune
                                    const QuadratureKeyType& key,
                                    const size_t id )
       : BaseType( id ),
-        elementGeometry_( geometry ),
-        order_( key.first )
+        elementGeometry_( geometry )
       {
 
         // if quadrature for this key was registered, then use it
@@ -216,6 +215,9 @@ namespace Dune
         {
           const DuneQuadratureRuleType &rule =
             QuadratureRuleRegistryType::quadratureRule( key );
+
+          // obtain quadrature order
+          order_ = key.first;
 
           typedef typename DuneQuadratureRuleType :: iterator IteratorType;
           const IteratorType endit = rule.end();
@@ -226,7 +228,11 @@ namespace Dune
         {
           // when not quadrature for a key is registered
           // use default dune-fem quadratures
-          DefaultQuadrature quad( geometry, order_, id );
+          DefaultQuadrature quad( geometry, key.first, id );
+
+          // obtain quadrature order
+          order_ = quad.order();
+
           const int nop = quad.nop();
           for( int i=0; i<nop; ++i )
           {
