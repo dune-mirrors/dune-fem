@@ -164,6 +164,15 @@ namespace Dune
        *         values and add to dofs
        */
       template< class Point, class DofVector >
+      void axpy( const Point &x, const HessianRangeType &hessianFactor, DofVector &dofs ) const
+      {
+        DUNE_THROW( NotImplemented, "hessian axpy for TransformedBasisFunctionSet not implemented." );
+      }
+
+      /** \brief evaluate all basis function and multiply with given
+       *         values and add to dofs
+       */
+      template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
       {
