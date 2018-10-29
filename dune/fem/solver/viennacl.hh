@@ -8,7 +8,7 @@
 #endif
 
 #if HAVE_OPENCL
-#define VIENNACL_WITH_OPENCL
+//#define VIENNACL_WITH_OPENCL
 #endif
 
 #if _OPENMP
@@ -111,6 +111,13 @@ namespace Dune
       }
 #endif
 
+      void unbind()
+      {
+        matrix_ = ViennaCLMatrix();
+        U_.reset();
+        W_.reset();
+      }
+
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
       {
         apply( u, w );
@@ -126,6 +133,8 @@ namespace Dune
       {
         viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
         viennacl::copy( u.dbegin(), u.dend(), vclU.begin() );
+
+        //std::cout << "Using ViennaCL " << std::endl;
 
         if( method_ == SolverParameter::cg )
         {
@@ -149,10 +158,8 @@ namespace Dune
           Preconditioner ilu0( matrix_, chow_patel_ilu_config );
           */
 
-          typedef viennacl::linalg::block_ilu_precond< ViennaCLMatrix, viennacl::linalg::ilu0_tag > Preconditioner;
+          //typedef viennacl::linalg::block_ilu_precond< ViennaCLMatrix, viennacl::linalg::ilu0_tag > Preconditioner;
           Preconditioner ilu0( matrix_, viennacl::linalg::ilu0_tag() );
-
-          //Preconditioner ilu0( matrix_, viennacl::linalg::ilu0_tag() );
           viennacl::linalg::bicgstab_tag tag( absLimit_, maxIter_ );
           vclW = viennacl::linalg::solve( matrix_, vclU, tag, ilu0 );
           iterations_ = tag.iters();
@@ -192,14 +199,14 @@ namespace Dune
         w.assign( *W_ );
       }
 
-      unsigned int iterations () const { return iterations_; }
+      int iterations () const { return iterations_; }
 
     protected:
       ViennaCLMatrix matrix_;
 
       double absLimit_;
       unsigned int maxIter_;
-      mutable unsigned int iterations_;
+      mutable int iterations_;
 
       int method_;
 
