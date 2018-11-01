@@ -53,6 +53,10 @@ namespace Dune
         return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "viennacl", false );
       }
 
+      bool blockedMode () const {
+        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", false );
+      }
+
     };
 
     /* ========================================
@@ -125,7 +129,8 @@ namespace Dune
           rangeMappers_( rangeSpace ),
           localMatrixStack_( *this ),
           status_(statNothing),
-          viennaCL_( param.viennaCL() )
+          viennaCL_( param.viennaCL() ),
+          blockedMode_( !viennaCL_ && param.blockedMode() )
       {}
 
       PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
@@ -220,7 +225,7 @@ namespace Dune
           {
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJVIENNACL );
           }
-          else if( domainLocalBlockSize > 1 )
+          else if( domainLocalBlockSize > 1 && blockedMode_ )
           {
             bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
@@ -322,7 +327,11 @@ namespace Dune
       template< class PetscOp >
       void applyToBlock ( const PetscInt row, const PetscInt col, const MatrixBlockType& block, PetscOp op )
       {
-        if( viennaCL_ )
+        if( blockedMode_ )
+        {
+          ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, 1, &row, 1, &col, block.data(), op );
+        }
+        else
         {
           std::array< PetscInt, domainLocalBlockSize > rows;
           std::array< PetscInt, domainLocalBlockSize > cols;
@@ -335,8 +344,6 @@ namespace Dune
           // set given row to a zero row with diagonal entry equal to diag
           ::Dune::Petsc::MatSetValues( petscMatrix_, domainLocalBlockSize, rows.data(), domainLocalBlockSize, cols.data(), block.data(), op );
         }
-        else
-          ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, 1, &row, 1, &col, block.data(), op );
         setStatus( statAssembled );
       }
 
@@ -517,6 +524,7 @@ namespace Dune
       mutable Status status_;
 
       const bool viennaCL_;
+      const bool blockedMode_;
 
       mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;

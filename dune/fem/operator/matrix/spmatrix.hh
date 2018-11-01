@@ -68,6 +68,7 @@ namespace Dune
       }
 
       virtual bool viennaCL () const { return false; }
+      virtual bool blockedMode () const { return false; }
     };
 
 
