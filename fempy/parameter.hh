@@ -48,7 +48,10 @@ namespace Dune
           } catch( ... ) {
             if( !Fem::Parameter::exists( key ) )
               return def;
-            Fem::Parameter::get( key, *tmp );
+            if (def)
+              Fem::Parameter::get( key, *def, *tmp );
+            else
+              Fem::Parameter::get( key, *tmp );
             return tmp.get();
           }
         } );
