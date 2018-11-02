@@ -9,6 +9,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fempy/quadrature/fempyquadratures.hh>
 
 #define VirtualDiffusionModelMethods(POINT) \
   virtual void source ( const POINT &x,\
@@ -117,13 +118,15 @@ struct DiffusionModel
   typedef typename GridPartType::IntersectionType IntersectionType;
   typedef typename EntityType::Geometry::LocalCoordinate LocalDomainType;
 
-  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0 >::
+  template <class F,int d>
+  using Traits = Dune::FemPy::FempyQuadratureTraits<F,d>;
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0, Traits >::
                    QuadraturePointWrapperType Point;
-  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 1 >::
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 1, Traits >::
                    QuadraturePointWrapperType IntersectionPoint;
-  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 0 >::
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 0, Traits >::
                    QuadraturePointWrapperType ElementPoint;
-  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1 >::
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1, Traits >::
                    QuadraturePointWrapperType ElementIntersectionPoint;
 
   /*
