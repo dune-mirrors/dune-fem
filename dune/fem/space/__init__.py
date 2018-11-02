@@ -47,14 +47,16 @@ def dfInterpolate(self, f):
     else:
         try:
             gl = len(inspect.getargspec(f)[0])
+            func = None
+        except TypeError:
+            func = f
+        if func is None:
             if gl == 1:   # global function
                 func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
             elif gl == 2: # local function
                 func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
                 func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
-        except TypeError:
-            func = f
     return self._interpolate(func)
 
 def localContribution(self, assembly):

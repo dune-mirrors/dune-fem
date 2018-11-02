@@ -64,9 +64,9 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None,
         virtualize = integrands.virtualized
 
     if not hasattr(rangeSpace,"interpolate"):
-        raise ValueError("wrong range space")
+        raise ValueError("given range space has to be a discrete space")
     if not hasattr(domainSpace,"interpolate"):
-        raise ValueError("wrong domain space")
+        raise ValueError("given domain space has to be a discrete space")
 
     domainSpaceType = domainSpace._typeName
     rangeSpaceType  = rangeSpace._typeName

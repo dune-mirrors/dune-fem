@@ -150,7 +150,7 @@ def galerkin(integrands, space=None, solver=None, parameters={},
         else:
             integrands = makeIntegrands(space.grid,integrands)
     if not hasattr(space,"interpolate"):
-        raise ValueError("wrong space given")
+        pass # raise ValueError("wrong space given")
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage

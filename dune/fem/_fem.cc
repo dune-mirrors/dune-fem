@@ -57,7 +57,15 @@ PYBIND11_MODULE( _fem, module )
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const pybind11::dict &entries ) {
         for ( auto entry : entries )
-          self.append( str( entry.first ), str( entry.second ) );
+        {
+          std::string s = str( entry.second );
+          if (s == "False")
+            self.append( str( entry.first ), "false" );
+          else if (s == "True")
+            self.append( str( entry.first ), "true" );
+          else
+            self.append( str( entry.first ), s );
+        }
       }, "entries"_a );
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
