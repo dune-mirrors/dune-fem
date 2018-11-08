@@ -449,7 +449,7 @@ namespace Dune
 
       auto getGridPart( std::integral_constant< bool, true > ) const
       {
-        return std::get< 0 >( data_ )->space().gridPart();
+        return std::get< 0 >( data_ )->gridPart();
       }
 
 #if USE_VTKWRITER
@@ -960,7 +960,7 @@ namespace Dune
       template< class DF >
       inline static auto makeSingleIOTuple ( DF &&df, PriorityTag< 1 > )
         -> std::enable_if_t< std::is_reference< DF >::value && std::is_base_of< Fem::HasLocalFunction, std::decay_t< DF > >::value,
-                             std::tuple< const std::decay_t< DF > * > >
+                             std::tuple< std::decay_t< DF > * > >
       {
         return std::make_tuple( &df );
       }
