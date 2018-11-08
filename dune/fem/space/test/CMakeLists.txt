@@ -37,7 +37,7 @@ set( EXPENSIVE_TESTS
 
 if( ${TORTURE_TESTS} )
   set( TESTS "${TESTS} ${EXPENSIVE_TESTS}")
-endif
+endif()
 
 # create test targets, for standart tests
 foreach( test ${TESTS} )
