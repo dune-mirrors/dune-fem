@@ -21,13 +21,19 @@ set( DEFAULTFLAGS "COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 set( TESTS )
 
 # lagrangeinterpolation tests
-if( ${GRIDDIM} LESS 3 )
-  set( MAXORDER 4 )
-else()
+if( NOT ${TORTURE_TESTS} )
+  set( MINORDER 2 )
   set( MAXORDER 2 )
+else()
+  set( MINORDER 1 )
+  if( NOT ${GRIDDIM} LESS 3 )
+    set( MAXORDER 4 )
+  else()
+    set( MAXORDER 2 )
+  endif()
 endif()
 
-foreach( order RANGE 1 ${MAXORDER} )
+foreach( order RANGE ${MINORDER} ${MAXORDER} )
   dune_add_test( NAME lagrangeinterpolation_p${order} SOURCES lagrangeinterpolation.cc
                  COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} lagrangeinterpolation_p${order} )
