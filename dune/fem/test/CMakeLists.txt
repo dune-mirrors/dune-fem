@@ -47,7 +47,11 @@ dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_adaptive )
 
-set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
+if( ${TORTURE_TESTS} )
+  set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
+else()
+  set( DFS blockvectorfunction )
+endif()
 foreach( df ${DFS} )
   string( TOUPPER ${df} DF )
   dune_add_test( NAME dgl2projection_${df} SOURCES dgl2projection.cc
@@ -59,10 +63,12 @@ dune_add_test( NAME dgl2projection_vector_int SOURCES dgl2projection.cc
                COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_vector_int )
 
-# only run this test for YaspGrid
-dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
-               COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
-set( TESTS ${TESTS} dgl2projection_legendre )
+if( ${TORTURE_TESTS} )
+  # only run this test for YaspGrid
+  dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
+                 COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
+  set( TESTS ${TESTS} dgl2projection_legendre )
+endif()
 
 dune_add_test( NAME dgl2projection_hierarchiclegendre SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
@@ -72,15 +78,15 @@ dune_add_test( NAME dgl2projection_fv SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "USE_FVSPACE;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_fv )
 
+if( ${TORTURE_TESTS} )
+  dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} dgl2projection_filtered )
 
-dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_filtered )
-
-dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_idgridpart )
-
+  dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} dgl2projection_idgridpart )
+endif()
 
 dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
@@ -104,12 +110,6 @@ dune_add_test(
   CMAKE_GUARD HAVE_PETSC
 )
 
-if( ${SuiteSparse_UMFPACK_FOUND} )
-  dune_add_test( NAME l2projection_adaptive_umfpack SOURCES l2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS};USE_UMFPACK" )
-  set( TESTS ${TESTS} l2projection_adaptive_umfpack )
-endif()
-
 dune_add_test( NAME l2projection_adaptive SOURCES l2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} l2projection_adaptive )
@@ -118,19 +118,26 @@ dune_add_test( NAME l2projection_istl SOURCES l2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} l2projection_istl )
 
-dune_add_test( NAME l2projection_istl_complex SOURCES l2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} l2projection_istl_complex )
+if( ${TORTURE_TESTS} )
+  dune_add_test( NAME l2projection_istl_complex SOURCES l2projection.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} l2projection_istl_complex )
 
+  if( ${SuiteSparse_UMFPACK_FOUND} )
+    dune_add_test( NAME l2projection_adaptive_umfpack SOURCES l2projection.cc
+    COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS};USE_UMFPACK" )
+    set( TESTS ${TESTS} l2projection_adaptive_umfpack )
+  endif()
 
-dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
-COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} test-tupleoperator )
+  dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} test-tupleoperator )
 
-if( HAVE_EIGEN )
-  dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} l2projection_eigen )
+  if( HAVE_EIGEN )
+    dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
+    COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
+    set( TESTS ${TESTS} l2projection_eigen )
+  endif()
 endif()
 
 dune_add_test( NAME referencesolution SOURCES referencesolution
