@@ -36,7 +36,9 @@ set( EXPENSIVE_TESTS
 )
 
 if( ${TORTURE_TESTS} )
-  set( TESTS "${TESTS} ${EXPENSIVE_TESTS}")
+  foreach(i ${EXPENSIVE_TESTS})
+    list(APPEND TESTS ${i})
+  endforeach()
 endif()
 
 # create test targets, for standart tests
@@ -57,7 +59,7 @@ LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
 dune_add_test( SOURCES test-raviartthomasinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-  
+
 if( ${TORTURE_TESTS} )
   # test adaptation of combinedspaces
   dune_add_test( NAME adapt_combinedspace_pointbased SOURCES adapt.cc
@@ -72,11 +74,11 @@ if( ${TORTURE_TESTS} )
   dune_add_test( SOURCES test-globalrefine.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem )
 
   dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 )
-  
+
   dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
 
   dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-endif()  
+endif()
 
 install( FILES checklocalinterpolation.hh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/test )
