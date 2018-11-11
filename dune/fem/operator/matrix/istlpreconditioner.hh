@@ -37,36 +37,41 @@ namespace Dune
     struct ISTLMatrixParameter
       : public MatrixParameter
     {
+      ISTLMatrixParameter( const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( "istl." ),
+          parameter_( parameter )
+      {}
 
-      ISTLMatrixParameter( const std::string keyPrefix = "istl." )
-        : keyPrefix_( keyPrefix )
+      ISTLMatrixParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( keyPrefix ),
+          parameter_( parameter )
       {}
 
       virtual double overflowFraction () const
       {
-        return Parameter::getValue< double >( keyPrefix_ + "matrix.overflowfraction", 1.0 );
+        return parameter_.getValue< double >( keyPrefix_ + "matrix.overflowfraction", 1.0 );
       }
 
       virtual int numIterations () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.iterations", 5 );
+        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 5 );
       }
 
       virtual bool fastILUStorage () const
       {
-        return Parameter::getValue< bool >( keyPrefix_ + "preconditioning.fastilustorage", true );
+        return parameter_.getValue< bool >( keyPrefix_ + "preconditioning.fastilustorage", true );
       }
 
       virtual double relaxation () const
       {
-        return Parameter::getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
       }
 
       virtual int method () const
       {
         static const std::string preConTable[]
           = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi", "ildl", "ilu", "amg-ilu" };
-        return Parameter::getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
+        return parameter_.getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
       }
 
       virtual std::string preconditionName() const
@@ -83,9 +88,9 @@ namespace Dune
         return tmp.str();
       }
 
-     private:
+    protected:
       std::string keyPrefix_;
-
+      ParameterReader parameter_;
     };
 
 #if HAVE_DUNE_ISTL
@@ -425,7 +430,7 @@ namespace Dune
       //! return matrix adapter object that works with ISTL linear solvers
       static std::unique_ptr< MatrixAdapterInterfaceType >
       matrixAdapter( const MatrixObjectType& matrixObj,
-                     const MatrixParameter& param = ISTLMatrixParameter() )
+                     const MatrixParameter& param)
       {
         std::unique_ptr< MatrixAdapterInterfaceType > ptr;
         if( matrixObj.domainSpace().continuous() )
@@ -678,7 +683,7 @@ namespace Dune
       //! return matrix adapter object that works with ISTL linear solvers
       static std::unique_ptr< MatrixAdapterInterfaceType >
       matrixAdapter( const MatrixObjectType& matrixObj,
-                     const MatrixParameter& param = ISTLMatrixParameter() )
+                     const MatrixParameter& param)
       {
         std::unique_ptr< MatrixAdapterInterfaceType > ptr;
         if( matrixObj.domainSpace().continuous() )
