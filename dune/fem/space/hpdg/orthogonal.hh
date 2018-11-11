@@ -4,6 +4,7 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -151,7 +152,7 @@ namespace Dune
     };
 
 
-
+#if HAVE_DUNE_ISTL
     // ISTLParallelMatrixAdapter
     // -------------------------
 
@@ -160,6 +161,7 @@ namespace Dune
     {
       using Type = DGParallelMatrixAdapter< Matrix >;
     };
+#endif // HAVE_DUNE_ISTL
 
 #endif // #ifndef DOXYGEN
 
