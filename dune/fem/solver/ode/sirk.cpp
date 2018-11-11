@@ -12,7 +12,8 @@ SIRK::SIRK(Communicator &comm,
      const double *aex, const double *cex) :
   ODESolver(comm, 0),
   f(f), fex(fex),
-  num_of_stages(numofstages), order(ord),
+  num_of_stages(numofstages),
+  // order(ord),
   A(num_of_stages, a), b(num_of_stages, b), c(num_of_stages, c),
   Aex(num_of_stages, aex), cex(num_of_stages, cex),
   alpha(num_of_stages), beta(num_of_stages), gamma(num_of_stages),
@@ -539,6 +540,3 @@ IERK45::IERK45(Communicator &comm, Function &f, Function &fex) :
   SIRK(comm, 5, 4, f, fex, IERK45_A, IERK45_b, IERK45_c,
        IERK45_Aex, IERK45_cex)
 {}
-
-
-

@@ -9,7 +9,7 @@ using namespace pardg;
 DIRK::DIRK(Communicator &comm, int num_of_stages, int order, Function &f,
 	   const double *a, const double *b, const double *c) :
   ODESolver(comm, 0), f(f), num_of_stages(num_of_stages),
-  order(order),
+  //order(order),
   A(num_of_stages, a), b(num_of_stages, b), c(num_of_stages, c),
   alpha(num_of_stages), beta(num_of_stages), gamma(num_of_stages),
   F(NULL), y(NULL),
@@ -273,5 +273,3 @@ static const double Gauss2_c[] = {0.5};
 Gauss2::Gauss2(Communicator &comm, Function &f) :
   DIRK(comm, 1, 1, f, Gauss2_A, Gauss2_b, Gauss2_c)
 {}
-
-

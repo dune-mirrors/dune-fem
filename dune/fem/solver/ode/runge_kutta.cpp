@@ -13,8 +13,8 @@ ExplicitRungeKutta::ExplicitRungeKutta(Communicator &comm,
 				       Function &f) :
   ODESolver(comm, num_of_stages), f(f), num_of_stages(num_of_stages),
   A(num_of_stages), b(num_of_stages), c(num_of_stages),
-  alpha(num_of_stages-1), beta(num_of_stages), gamma(num_of_stages),
-  order(order)
+  alpha(num_of_stages-1), beta(num_of_stages), gamma(num_of_stages)
+  //, order(order)
 {}
 
 
@@ -27,8 +27,8 @@ ExplicitRungeKutta::ExplicitRungeKutta(Communicator &comm,
 				       const double *c) :
   ODESolver(comm, num_of_stages), f(f), num_of_stages(num_of_stages),
   A(num_of_stages, a), b(num_of_stages, b), c(num_of_stages, c),
-  alpha(num_of_stages-1), beta(num_of_stages), gamma(num_of_stages),
-  order(order)
+  alpha(num_of_stages-1), beta(num_of_stages), gamma(num_of_stages)
+  //, order(order)
 {
   const int s = num_of_stages;
 
@@ -300,5 +300,3 @@ static const double Butcher6_c[] =
 
 ExplicitButcher6::ExplicitButcher6(Communicator &comm, Function &f) :
   ExplicitRungeKutta(comm, 7, 6, f, Butcher6_A, Butcher6_b, Butcher6_c) {}
-
-
