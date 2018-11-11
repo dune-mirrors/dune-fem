@@ -43,13 +43,15 @@ namespace Dune
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
+      typedef typename IntegrationPointListType :: QuadratureKeyType  QuadratureKeyType;
+
       /** \brief constructor
        *
        *  \param[in]  geometry  geometry type, the quadrature lives on
        *  \param[in]  order     desired minimal order of the quadrature
        */
-      ElementPointListBase ( const GeometryType &geometry, int order )
-      : quad_( geometry, order )
+      ElementPointListBase ( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+      : quad_( geometry, quadKey )
       {}
 
       /** \copydoc Dune::Fem::IntegrationPointList::nop */
@@ -177,6 +179,8 @@ namespace Dune
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
+      typedef typename IntegrationPointListType :: QuadratureKeyType  QuadratureKeyType;
+
       /** \brief constructor
        *
        *  \param[in]  elementGeo      geometry type of the element
@@ -187,8 +191,8 @@ namespace Dune
       ElementPointListBase ( const GeometryType &elementGeo,
                              const GeometryType &faceGeo,
                              const int localFaceIndex,
-                             const int order )
-      : quad_( faceGeo, order ),
+                             const QuadratureKeyType& quadKey )
+      : quad_( faceGeo, quadKey ),
         elementGeometry_( elementGeo ),
         localFaceIndex_( localFaceIndex )
       {}
@@ -201,8 +205,8 @@ namespace Dune
        */
       ElementPointListBase ( const GeometryType &elementGeo,
                              const int localFaceIndex,
-                             const int order )
-      : quad_( getFaceGeometry( elementGeo, localFaceIndex ), order ),
+                             const QuadratureKeyType& quadKey )
+      : quad_( getFaceGeometry( elementGeo, localFaceIndex ), quadKey ),
         elementGeometry_( elementGeo ),
         localFaceIndex_( localFaceIndex )
       {}
