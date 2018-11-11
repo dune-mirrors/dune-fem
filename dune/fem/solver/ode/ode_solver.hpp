@@ -103,7 +103,7 @@ private:
 
   Function &f;
   const int num_of_stages;
-  [[maybe_unused]] const int order;
+  //[[maybe_unused]] const int order;
   const Matrix A;    // classical Butcher table
   const Vector b,c;  //
   Matrix alpha; // modified table
@@ -168,7 +168,7 @@ private:
 
   Function &f, &fex; // implicit / explicit part
   const int num_of_stages;
-  [[maybe_unused]] const int order;
+  //[[maybe_unused]] const int order;
   const Matrix A;    // classical Butcher table
   const Vector b,c;  // for implicit part
   const Matrix Aex;  // classical Butcher table
@@ -318,7 +318,7 @@ private:
   const Vector b,c;  //
   Matrix alpha;      // "modified Butcher" table
   Vector beta, gamma;//
-  [[maybe_unused]] const int order;
+  //[[maybe_unused]] const int order;
 };
 
 
