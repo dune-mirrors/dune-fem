@@ -183,7 +183,7 @@ namespace Dune
     };
 
 
-
+#if HAVE_DUNE_ISTL
     // ISTLParallelMatrixAdapter
     // -------------------------
 
@@ -201,6 +201,7 @@ namespace Dune
     {
       using Type = DGParallelMatrixAdapter< Matrix >;
     };
+#endif // HAVE_DUNE_ISTL
 
 #endif // #ifndef DOXYGEN
 
