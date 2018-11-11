@@ -14,9 +14,12 @@
 
 #include <dune/fem/function/petscdiscretefunction/petscdiscretefunction.hh>
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/misc/fmatrixconverter.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/operator/common/localcontribution.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
@@ -41,9 +44,20 @@ namespace Dune
     {
       typedef MatrixParameter BaseType;
 
+      std::string keyPrefix_;
+
       PetscMatrixParameter( const std::string keyPrefix = "petscmatrix." )
-        : BaseType( keyPrefix )
+        : BaseType( keyPrefix ),
+          keyPrefix_( keyPrefix )
       {}
+
+      bool viennaCL () const {
+        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "viennacl", false );
+      }
+
+      bool blockedMode () const {
+        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", false );
+      }
 
     };
 
@@ -67,13 +81,17 @@ namespace Dune
       typedef PetscDiscreteFunction< DomainSpaceType > PetscDomainFunctionType;
       typedef PetscDiscreteFunction< RangeSpaceType  > PetscRangeFunctionType;
 
-      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
-      typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType ColumnEntityType;
+      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType DomainEntityType;
+      typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType  RangeEntityType;
 
-      const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
-      const static size_t rangeLocalBlockSize = RangeSpaceType::localBlockSize;
+      static const unsigned int domainLocalBlockSize = DomainSpaceType::localBlockSize;
+      static const unsigned int rangeLocalBlockSize  = RangeSpaceType::localBlockSize;
 
-      static_assert( domainLocalBlockSize == rangeLocalBlockSize, "PetscLinearOperator only works for domainLocalBlockSize == rangeLocalBlockSize. " );
+      static constexpr bool blockedMatrix = domainLocalBlockSize > 1 &&
+        domainLocalBlockSize == rangeLocalBlockSize ;
+
+      typedef FlatFieldMatrix< RangeFieldType, domainLocalBlockSize, rangeLocalBlockSize > MatrixBlockType;
+      typedef MatrixBlockType  block_type;
 
     private:
       enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4};
@@ -113,7 +131,9 @@ namespace Dune
         : domainMappers_( domainSpace ),
           rangeMappers_( rangeSpace ),
           localMatrixStack_( *this ),
-          status_(statNothing)
+          status_(statNothing),
+          viennaCL_( param.viennaCL() ),
+          blockedMode_( blockedMatrix && (!viennaCL_) && param.blockedMode() )
       {}
 
       PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
@@ -127,11 +147,18 @@ namespace Dune
         destroy();
       }
 
+      void flushAssembly()
+      {
+        ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FLUSH_ASSEMBLY );
+        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FLUSH_ASSEMBLY );
+        status_ = statAssembled;
+      }
+
       void communicate ()
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-         status_ = statAssembled;
+        status_ = statAssembled;
       }
 
       const DomainSpaceType &domainSpace () const { return domainMappers_.space(); }
@@ -169,6 +196,12 @@ namespace Dune
         reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
       }
 
+      template <class Set>
+      void reserve (const std::vector< Set >& sparsityPattern )
+      {
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ) );
+      }
+
       //! reserve memory for assemble based on the provided stencil
       template <class StencilType>
       void reserve (const StencilType &stencil)
@@ -185,12 +218,15 @@ namespace Dune
           petscArg_.reset();
           petscDest_.reset();
 
-          assert( domainLocalBlockSize == rangeLocalBlockSize );
           // create matrix
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
 
           PetscInt bs = 1;
-          if( domainLocalBlockSize > 1 )
+          if( viennaCL_ )
+          {
+            ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJVIENNACL );
+          }
+          else if( blockedMatrix )
           {
             bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
@@ -202,11 +238,13 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          // set sizes of the matrix
-          const PetscInt localRows = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
-          const PetscInt localCols = rangeMappers_.ghostMapper().interiorSize() * rangeLocalBlockSize;
-          const PetscInt globalRows = domainMappers_.parallelMapper().size() * domainLocalBlockSize;
-          const PetscInt globalCols = rangeMappers_.parallelMapper().size() * rangeLocalBlockSize;
+          // set sizes of the matrix (columns == domain and rows == range)
+          const PetscInt localCols = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
+          const PetscInt localRows = rangeMappers_.ghostMapper().interiorSize() * rangeLocalBlockSize;
+
+          const PetscInt globalCols = domainMappers_.parallelMapper().size() * domainLocalBlockSize;
+          const PetscInt globalRows = rangeMappers_.parallelMapper().size() * rangeLocalBlockSize;
+
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, globalRows, globalCols );
 
           DomainSlaveDofsType domainSlaveDofs( domainMappers_.ghostMapper() );
@@ -240,6 +278,8 @@ namespace Dune
           sequence_ = domainSpace().sequence();
         }
 
+        flushAssembly();
+
         status_ = statAssembled;
       }
 
@@ -267,85 +307,207 @@ namespace Dune
       }
 
       //! return local matrix representation
-      LocalMatrixType localMatrix ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) const
+      LocalMatrixType localMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
-        return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
+        return LocalMatrixType(localMatrixStack_, domainEntity, rangeEntity);
       }
-      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      LocalColumnObjectType localColumn( const DomainEntityType &colEntity ) const
       {
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+    public:
+      void unitRow( const PetscInt row, const PetscScalar diag = 1.0 )
+      {
+        std::array< PetscInt, domainLocalBlockSize > rows;
+        for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
+          rows[ i ] = r;
+
+        // set given row to a zero row with diagonal entry equal to diag
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
+      }
+
+    protected:
+      template< class PetscOp >
+      void applyToBlock ( const PetscInt row, const PetscInt col, const MatrixBlockType& block, PetscOp op )
+      {
+        if( blockedMode_ )
+        {
+          ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, 1, &row, 1, &col, block.data(), op );
+        }
+        else
+        {
+          std::array< PetscInt, domainLocalBlockSize > rows;
+          std::array< PetscInt, domainLocalBlockSize > cols;
+          for( unsigned int i=0, r = row * domainLocalBlockSize, c = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r, ++c )
+          {
+            rows[ i ] = r;
+            cols[ i ] = c;
+          }
+
+          // set given row to a zero row with diagonal entry equal to diag
+          ::Dune::Petsc::MatSetValues( petscMatrix_, domainLocalBlockSize, rows.data(), domainLocalBlockSize, cols.data(), block.data(), op );
+        }
+        setStatus( statAssembled );
+      }
+
+      template< class LocalBlock, class PetscOp >
+      void applyToBlock ( const size_t row, const size_t col, const LocalBlock& block, PetscOp op )
+      {
+        assert( block.rows() == rangeLocalBlockSize );
+        assert( block.cols() == domainLocalBlockSize );
+
+        // copy to MatrixBlockType data structure suited to be inserted into Mat
+        MatrixBlockType matBlock( block );
+        applyToBlock( row, col, matBlock, op );
+      }
+
+    public:
+      template< class LocalBlock >
+      void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        assert( row < std::numeric_limits< int > :: max() );
+        assert( col < std::numeric_limits< int > :: max() );
+
+        setStatus( statInsert );
+        applyToBlock( static_cast< PetscInt > (row), static_cast< PetscInt > (col), block, INSERT_VALUES );
+      }
+
+      template< class LocalBlock >
+      void addBlock ( const size_t row, const size_t col, const LocalBlock& block )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        assert( row < std::numeric_limits< int > :: max() );
+        assert( col < std::numeric_limits< int > :: max() );
+
+        setStatus( statAdd );
+        applyToBlock( static_cast< PetscInt > (row), static_cast< PetscInt > (col), block, ADD_VALUES );
+      }
+
+    protected:
+      typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+
+      // specialization for temporary local matrix, then copy of values is not needed
+      template <class Operation>
+      const PetscScalar* getValues( const unsigned int rSize, const unsigned int cSize,
+                                    const TemporaryLocalMatrixType &localMat, const Operation&,
+                                    const std::integral_constant< bool, false> nonscaled )
+      {
+        return localMat.data();
+      }
+
+      // specialization for temporary local matrix, then copy of values is not needed
+      template <class LM, class Operation>
+      const PetscScalar* getValues( const unsigned int rSize, const unsigned int cSize,
+                                    const Assembly::Impl::LocalMatrixGetter< LM >& localMat, const Operation&,
+                                    const std::integral_constant< bool, false> nonscaled )
+      {
+        return localMat.localMatrix().data();
+      }
+
+      // retrieve values for arbitrary local matrix
+      template <class LocalMatrix, class Operation, bool T>
+      const PetscScalar* getValues( const unsigned int rSize, const unsigned int cSize,
+                                    const LocalMatrix &localMat, const Operation& operation,
+                                    const std::integral_constant< bool, T> scaled )
+      {
+        std::vector< PetscScalar >& v = v_;
+        v.resize( rSize * cSize );
+        for( unsigned int i = 0, ic = 0 ; i< rSize; ++i )
+        {
+          for( unsigned int j =0; j< cSize; ++j, ++ic )
+          {
+            v[ ic ] = operation( localMat.get( i, j ) );
+          }
+        }
+        return v.data();
+      }
+
+      template< class LocalMatrix, class Operation, class PetscOp, bool T >
+      void applyLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity,
+                              const LocalMatrix &localMat, const Operation& operation,
+                              PetscOp petscOp,
+                              const std::integral_constant<bool, T> scaled )
+      {
+        std::vector< PetscInt >& r = r_;
+        std::vector< PetscInt >& c = c_;
+
+        if( blockedMatrix )
+        {
+          setupIndicesBlocked( rangeMappers_,  rangeEntity,  r );
+          setupIndicesBlocked( domainMappers_, domainEntity, c );
+
+          // domainLocalBlockSize == rangeLocalBlockSize
+          const unsigned int rSize = r.size() * domainLocalBlockSize ;
+          const unsigned int cSize = c.size() * domainLocalBlockSize ;
+
+          const PetscScalar* values = getValues( rSize, cSize, localMat, operation, scaled );
+          ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, r.size(), r.data(), c.size(), c.data(), values, petscOp );
+        }
+        else
+        {
+          setupIndices( rangeMappers_,  rangeEntity,  r );
+          setupIndices( domainMappers_, domainEntity, c );
+
+          const unsigned int rSize = r.size();
+          const unsigned int cSize = c.size();
+
+          const PetscScalar* values = getValues( rSize, cSize, localMat, operation, scaled );
+          ::Dune::Petsc::MatSetValues( petscMatrix_, rSize, r.data(), cSize, c.data(), values, petscOp );
+        }
+        setStatus( statAssembled );
+      }
+
+    public:
       template< class LocalMatrix >
-      void addLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
         assert( status_==statAssembled || status_==statAdd );
         setStatus( statAdd );
 
-        std::vector< PetscInt > r, c;
-        setupIndices( rangeMappers_, rangeEntity, r );
-        setupIndices( domainMappers_, domainEntity, c );
+        auto operation = [] ( const PetscScalar& value ) -> PetscScalar { return value; };
 
-        std::vector< PetscScalar > v( r.size() * c.size() );
-        for( std::size_t i =0 ; i< r.size(); ++i )
-          for( std::size_t j =0; j< c.size(); ++j )
-            v[ i * c.size() +j ] = localMat.get( i, j );
-
-        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
-        setStatus( statAssembled );
+        applyLocalMatrix( domainEntity, rangeEntity, localMat, operation, ADD_VALUES, std::integral_constant< bool, false>() );
       }
 
       template< class LocalMatrix, class Scalar >
-      void addScaledLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
       {
         assert( status_==statAssembled || status_==statAdd );
         setStatus( statAdd );
 
-        std::vector< PetscInt > r, c;
-        setupIndices( rangeMappers_, rangeEntity, r );
-        setupIndices( domainMappers_, domainEntity, c );
+        auto operation = [ &s ] ( const PetscScalar& value ) -> PetscScalar { return s * value; };
 
-        std::vector< PetscScalar > v( r.size() * c.size() );
-        for( std::size_t i =0 ; i< r.size(); ++i )
-          for( std::size_t j =0; j< c.size(); ++j )
-            v[ i * c.size() +j ] = s * localMat.get( i, j );
-
-        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
-        setStatus( statAssembled );
+        applyLocalMatrix( domainEntity, rangeEntity, localMat, operation, ADD_VALUES, std::integral_constant< bool, true>() );
       }
 
       template< class LocalMatrix >
-      void setLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
         assert( status_==statAssembled || status_==statInsert );
         setStatus( statInsert );
 
-        std::vector< PetscInt > r, c;
-        setupIndices( rangeMappers_, rangeEntity, r );
-        setupIndices( domainMappers_, domainEntity, c );
+        auto operation = [] ( const PetscScalar& value ) -> PetscScalar { return value; };
 
-        std::vector< PetscScalar > v( r.size() * c.size() );
-        for( std::size_t i =0 ; i< r.size(); ++i )
-          for( std::size_t j =0; j< c.size(); ++j )
-            v[ i * c.size() +j ] = localMat.get( i, j );
-
-        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), INSERT_VALUES );
-
-        setStatus( statAssembled );
+        applyLocalMatrix( domainEntity, rangeEntity, localMat, operation, INSERT_VALUES, std::integral_constant< bool, false>() );
       }
 
 
       template< class LocalMatrix >
-      void getLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, LocalMatrix &localMat ) const
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
         assert( status_==statAssembled || status_==statGet );
         setStatus( statGet );
 
-        std::vector< PetscInt > r, c;
+        std::vector< PetscInt >&  r = r_;
+        std::vector< PetscInt >&  c = c_;
+        std::vector< PetscScalar >& v = v_;
+
         setupIndices( rangeMappers_, rangeEntity, r );
         setupIndices( domainMappers_, domainEntity, c );
 
-        std::vector< PetscScalar > v( r.size() * c.size() );
+        v.resize( r.size() * c.size() );
         ::Dune::Petsc::MatGetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data() );
 
         for( std::size_t i =0 ; i< r.size(); ++i )
@@ -406,11 +568,17 @@ namespace Dune
         nonBlockMapper.map( entity, indices );
       }
 
+      template< class DFS, class Entity >
+      static void setupIndicesBlocked ( const PetscMappers< DFS > &mappers, const Entity &entity, std::vector< PetscInt > &indices )
+      {
+        mappers.parallelMapper().map( entity, indices );
+      }
+
       /*
        * data fields
        */
       DomainMappersType domainMappers_;
-      RangeMappersType rangeMappers_;
+      RangeMappersType  rangeMappers_;
 
       int sequence_ = -1;
       mutable Mat petscMatrix_;
@@ -418,8 +586,15 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
       mutable Status status_;
 
+      const bool viennaCL_;
+      const bool blockedMode_;
+
       mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;
+
+      mutable std::vector< PetscScalar > v_;
+      mutable std::vector< PetscInt    > r_;
+      mutable std::vector< PetscInt    > c_;
     };
 
 
@@ -496,7 +671,7 @@ namespace Dune
         }
       }
 
-      void init ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity )
+      void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         // call initialize on base class
         BaseType :: init( domainEntity, rangeEntity );
@@ -535,6 +710,7 @@ namespace Dune
         //! assert( idx < values_.size() );
         //! values_[idx] += value;
       }
+
       inline void set(const int localRow, const int localCol, const RangeFieldType &value )
       {
         assert( status_==statAssembled || status_==statInsert );
