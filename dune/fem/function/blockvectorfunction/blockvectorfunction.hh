@@ -104,6 +104,13 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
+#if HAVE_PETSC
+      void assign( const PetscDiscreteFunction< DiscreteFunctionSpaceType >& g )
+      {
+        g.dofVector().copyTo( dofVector() );
+      }
+#endif
+
       //! convenience method for usage with ISTL solvers
       DofContainerType& blockVector() { return dofVector().array(); }
 

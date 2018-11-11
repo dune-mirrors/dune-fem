@@ -21,7 +21,10 @@ namespace Dune
     template <class DiscreteFunctionSpace>
     class AdaptiveDiscreteFunction;
 
-
+#if HAVE_PETSC
+    template <class DiscreteFunctionSpace>
+    class PetscDiscreteFunction;
+#endif
 
     template< typename DiscreteFunctionSpace >
     struct DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
@@ -51,6 +54,7 @@ namespace Dune
       typedef typename BaseType :: DofVectorType              DofVectorType;
       typedef typename BaseType :: DofType                    DofType;
 
+      // generic assign method
       using BaseType::assign;
 
       typedef MutableBlockVector< DynamicArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
@@ -114,6 +118,13 @@ namespace Dune
       AdaptiveDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
       ThisType& operator= ( ThisType&& ) = delete;
+
+#if HAVE_PETSC
+      void assign( const PetscDiscreteFunction< DiscreteFunctionSpaceType >& g )
+      {
+        g.dofVector().copyTo( dofVector() );
+      }
+#endif
 
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }
