@@ -213,6 +213,9 @@ namespace Dune
         const size_type cols = mat_cols();
         return const_row_reference( fields_.data() + i*cols, cols );
       }
+
+      // return pointer to data array for PetscLinearOperator to avoid copying.
+      const RangeFieldType* data() const { return fields_.data(); }
     };
 
   } // namespace Fem
