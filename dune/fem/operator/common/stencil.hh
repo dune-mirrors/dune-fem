@@ -5,6 +5,8 @@
 #include <map>
 #include <numeric>
 #include <set>
+#include <type_traits>
+#include <vector>
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/rangegenerators.hh>
@@ -46,6 +48,7 @@ namespace Dune
 
       //! type for storing the stencil of one row
       typedef std::set<RangeGlobalKeyType>                   LocalStencilType;
+
       //! type for storing the full stencil
       typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
 
@@ -122,6 +125,7 @@ namespace Dune
         LocalStencilType &localStencil_;
       };
 
+    protected:
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
@@ -167,11 +171,126 @@ namespace Dune
         DUNE_THROW( Dune::NotImplemented, "SimpleStencil: global stencil is  unavailable." );
         return stencil_;
       }
-    private:
+    protected:
       int maxNZ_;
       GlobalStencilType stencil_;
       LocalStencilType localStencil_;
     };
+
+
+    /** \class StencilWrapper
+     *  \brief a simple wrapper class for sparsity patterns provide as vector< set< size_t > >
+     *
+     *  \tparam  DomainSpace  type of discrete function space for the domain
+     *  \tparam  RangeSpace   type of discrete function space for the range
+     *
+     */
+    template <class DomainSpace, class RangeSpace, class LocalStencil>
+    class StencilWrapper
+    {
+      typedef Stencil<DomainSpace,RangeSpace> StencilType;
+      typedef StencilWrapper< DomainSpace, RangeSpace, LocalStencil > ThisType;
+    public:
+      typedef typename StencilType::DomainEntityType       DomainEntityType;
+      typedef typename StencilType::RangeEntityType        RangeEntityType;
+      typedef typename StencilType::DomainGlobalKeyType    DomainGlobalKeyType;
+      typedef typename StencilType::RangeGlobalKeyType     RangeGlobalKeyType;
+
+      static_assert( std::is_pod< DomainGlobalKeyType > :: value, "StencilWrapper only works for POD DomainGlobalKeyType");
+
+      typedef LocalStencil                                 LocalStencilType;
+      typedef std::vector< LocalStencilType >              GlobalStencilType;
+
+      struct Iterator
+      {
+        typedef std::pair< DomainGlobalKeyType, const LocalStencilType& > ItemType;
+
+        DomainGlobalKeyType index_;
+        const GlobalStencilType& stencil_;
+
+
+        Iterator( const DomainGlobalKeyType& init, const GlobalStencilType& stencil )
+          : index_( init ), stencil_( stencil ) {}
+
+        Iterator& operator++ ()
+        {
+          ++ index_ ;
+          return *this;
+        }
+
+        ItemType operator*() const
+        {
+          assert( index_ < stencil_.size() );
+          return ItemType( index_, stencil_[ index_ ] );
+        }
+
+        bool operator == ( const Iterator& other ) const
+        {
+          return index_ == other.index_;
+        }
+
+        bool operator != ( const Iterator& other ) const
+        {
+          return !this->operator==( other );
+        }
+      };
+
+      StencilWrapper(const GlobalStencilType& stencil)
+        : stencil_( stencil )
+        , maxNZ_( computeNNZ() )
+      {
+      }
+
+      int maxNonZerosEstimate() const
+      {
+        return maxNZ_;
+      }
+
+      const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+      {
+         return stencil_[ key ];
+      }
+
+      const ThisType& globalStencil() const
+      {
+        return *this;
+      }
+
+      /** \brief Create stencil entries for (dEntity,rEntity) pair
+       *
+       *  \param[in]  dEntity    domain entity
+       *  \param[in]  rEntity    range entity
+       *  \param[in]  fillGhost  setup stencil even for a ghost domain entity
+       *
+       */
+      void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
+                  bool fillGhost=true )
+      {
+      }
+
+      Iterator begin() const { return Iterator(0, stencil_); }
+      Iterator end() const { return Iterator(stencil_.size(), stencil_); }
+      Iterator find( const DomainGlobalKeyType &key) const
+      {
+        assert( key < stencil_.size() );
+        return Iterator( key, stencil_);
+      }
+
+    protected:
+      int computeNNZ() const
+      {
+        int maxNNZ = 0;
+        for( const auto& row : stencil_ )
+        {
+          maxNNZ = std::max( maxNNZ, int(row.size()) );
+        }
+        return maxNNZ;
+      }
+
+      const GlobalStencilType& stencil_;
+      int maxNZ_;
+    };
+
 
     /** \class DiagonalStencil
      *  \brief Stencil contaning the entries (en,en) for all entities in the space.
