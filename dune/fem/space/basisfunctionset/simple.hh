@@ -154,7 +154,7 @@ namespace Dune
       {
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-          evaulateAll( quad[ qp ], dofs, ranges[ qp ] );
+          evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
       }
 
       //! please doc me
