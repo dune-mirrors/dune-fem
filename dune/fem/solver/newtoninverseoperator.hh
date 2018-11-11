@@ -371,7 +371,7 @@ namespace Dune
       JacobianOperatorType& jacobian ( Args && ... args ) const
       {
         if( !jOp_ )
-          jOp_.reset( new JacobianOperatorType( std::forward< Args >( args ) ... ) );
+          jOp_.reset( new JacobianOperatorType( std::forward< Args >( args ) ...) ); //, parameter_.parameter() ) );
         return *jOp_;
       }
 
@@ -388,7 +388,7 @@ namespace Dune
       mutable int linearIterations_;
       mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
-      const NewtonParameter &parameter_;
+      NewtonParameter parameter_;
       mutable int stepCompleted_;
       NewtonParameter::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
@@ -406,7 +406,7 @@ namespace Dune
 
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
-      JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
+      JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space()); // , parameter_.parameter() );
 
       stepCompleted_ = true;
       iterations_ = 0;

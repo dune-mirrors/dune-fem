@@ -20,13 +20,19 @@ namespace Dune
       ParameterReader parameter_;
 
     public:
+      // identifier for Fem and ISTL solvers
       static const int cg       = 0 ; // CG
       static const int bicgstab = 1 ; // BiCGStab
       static const int gmres    = 2 ; // GMRES
+      static const int minres   = 3 ; // MinRes
+      static const int gradient = 4 ; // GradientSolver
+      static const int loop     = 5 ; // LoopSolver
+      static const int superlu  = 6 ; // SuperLUSolver
 
       explicit SolverParameter ( const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( "fem.solver." ), parameter_( parameter )
-      {}
+      {
+      }
 
       explicit SolverParameter ( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( keyPrefix ), parameter_( parameter )
@@ -65,8 +71,12 @@ namespace Dune
       virtual int krylovMethod() const
       {
         const std::string krylovMethodTable[] =
-          { "cg", "bicgstab", "gmres" };
-        const int methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
+          { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+        int methodType = gmres;
+        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
+          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
+        else
+          methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
         return methodType;
       }
 
