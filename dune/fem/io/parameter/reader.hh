@@ -17,6 +17,12 @@ namespace Dune
   namespace Fem
   {
 
+    static const std::string& checkParameterExistsString()
+    {
+      static const std::string defaultKeyForExistCheck("__ParameterReader::check-exists__");
+      return defaultKeyForExistCheck;
+    }
+
     // BasicParameterReader
     // --------------------
 
@@ -34,7 +40,10 @@ namespace Dune
        *
        * \returns \b true, if the parameter is found, \b false otherwise
        */
-      bool exists ( const std::string &key ) const { return static_cast< bool >( parameter_( key, nullptr ) ); }
+      bool exists ( const std::string &key ) const
+      {
+        return static_cast< bool >( parameter_( key, &checkParameterExistsString() ) );
+      }
 
       /**
        * \brief get mandatory parameter
