@@ -81,6 +81,7 @@ namespace Dune
 
         explicit DofMapper ( const IndexSetType &indexSet )
           : indexSet_( indexSet ),
+            extension_( 0 ),
             maxNumDofs_( 0 )
         {
           AllGeomTypes< IndexSetType, typename GridPartType::GridType > types( indexSet );
@@ -98,7 +99,7 @@ namespace Dune
 
         SizeType size () const
         {
-          return indexSet().size( codimension );
+          return indexSet().size( codimension ) + extension_;
         }
 
         static constexpr bool contains ( int codim ) noexcept
@@ -145,6 +146,11 @@ namespace Dune
         }
 
         void update () {}
+
+        void extendSize( const SizeType extension )
+        {
+          extension_ = extension;
+        }
 
         /* \} */
 
@@ -209,6 +215,7 @@ namespace Dune
         }
 
         const IndexSetType &indexSet_;
+        SizeType extension_;
         int maxNumDofs_;
       };
 
