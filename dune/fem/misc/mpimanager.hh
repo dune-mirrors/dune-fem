@@ -31,10 +31,30 @@ namespace Dune
         return instance;
       }
 
+      static bool mpiFinalized ()
+      {
+        bool finalized = false ;
+#if HAVE_MPI
+        // check that MPI was not already finalized
+        {
+          int wasFinalized = -1;
+          MPI_Finalized( &wasFinalized );
+          finalized = bool( wasFinalized );
+        }
+#endif // #if HAVE_MPI
+        return finalized ;
+      }
+
 #if HAVE_PETSC
       struct PETSc
       {
-        ~PETSc() { ::Dune::Petsc::finalize(); }
+        ~PETSc()
+        {
+          if( ! mpiFinalized() )
+          {
+            ::Dune::Petsc::finalize();
+          }
+        }
 
         DUNE_EXPORT static void initialize( const bool verbose, int &argc, char **&argv )
         {
@@ -55,31 +75,36 @@ namespace Dune
         // MPI-thread parallel programs
 #if HAVE_MPI
 #ifdef USE_SMP_PARALLEL
-        int provided;
-        // use MPI_Init_thread for hybrid parallel programs
-        int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
+        int wasInitialized = -1;
+        MPI_Initialized( &wasInitialized );
+        if(!wasInitialized)
+        {
+          int provided;
+          // use MPI_Init_thread for hybrid parallel programs
+          int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
 
-        if( is_initialized != MPI_SUCCESS )
-          DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
+          if( is_initialized != MPI_SUCCESS )
+            DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
 
 #if not defined NDEBUG && defined DUNE_DEVEL_MODE
-        // for OpenMPI provided seems to be MPI_THREAD_SINGLE
-        // but the bybrid version still works. On BlueGene systems
-        // the MPI_THREAD_FUNNELED is really needed
-        if( provided != MPI_THREAD_FUNNELED )
-        {
-          if( provided == MPI_THREAD_SINGLE )
-            dwarn << "MPI thread support = single (instead of funneled)!" << std::endl;
-          else
-            dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
-        }
-#endif // end NDEBUG
+          // for OpenMPI provided seems to be MPI_THREAD_SINGLE
+          // but the bybrid version still works. On BlueGene systems
+          // the MPI_THREAD_FUNNELED is really needed
+          if( provided != MPI_THREAD_FUNNELED )
+          {
+            if( provided == MPI_THREAD_SINGLE )
+              dwarn << "MPI thread support = single (instead of funneled)!" << std::endl;
+            else
+              dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
+          }
+#endif  // end NDEBUG
+        } // end if(!wasInitialized)
+#endif  // end USE_SMP_PARALLEL
+#endif  // end HAVE_MPI
 
-#endif // end USE_SMP_PARALLEL
-#endif // end HAVE_MPI
-
-        if( helper || comm )
-          DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
+        // if already initialized, do nothing further
+        if( helper && comm )
+          return ;
 
         // if not already called, this will call MPI_Init
         helper = &MPIHelper::instance( argc, argv );
@@ -104,6 +129,14 @@ namespace Dune
 
       static int rank ()
       {
+        //int wasFinalized = -1;
+        //MPI_Finalized( &wasFinalized );
+        //if( wasFinalized)
+        //{
+        //  assert(false);
+        //  std::abort();
+        //}
+
         return comm().rank();
       }
 
