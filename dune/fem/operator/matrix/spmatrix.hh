@@ -23,6 +23,8 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/objectstack.hh>
 
+#include <dune/fem/operator/common/stencil.hh>
+
 #include <dune/fem/operator/matrix/functor.hh>
 
 namespace Dune
@@ -36,6 +38,9 @@ namespace Dune
     {
 
       MatrixParameter( const std::string keyPrefix = "" )
+      {}
+
+      MatrixParameter( const ParameterReader &parameter, const std::string keyPrefix = "istl." )
       {}
 
       virtual double overflowFraction () const
@@ -64,6 +69,9 @@ namespace Dune
       {
         return "None";
       }
+
+      virtual bool viennaCL () const { return false; }
+      virtual bool blockedMode () const { return false; }
     };
 
 
@@ -267,6 +275,27 @@ namespace Dune
           }
       }
 
+      template <class SizeT, class NumericT >
+      void fillCSRStorage( std::vector< std::map<SizeT, NumericT> >& matrix ) const
+      {
+        matrix.resize( rows() );
+
+        size_type thisCol = 0;
+        for(size_type i = 0; i<dim_[ 0 ]; ++i )
+        {
+          auto& matRow = matrix[ i ];
+          for(size_type col=firstCol; col<nz_; ++col, ++thisCol)
+          {
+            const size_type realCol = col_[thisCol];
+
+            if( realCol == defaultCol )
+              continue;
+
+            matRow[ realCol ] = values_[ thisCol ];
+          }
+        }
+      }
+
     private:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
@@ -353,7 +382,14 @@ namespace Dune
       typedef Matrix MatrixType;
       typedef typename MatrixType::size_type size_type;
       typedef typename MatrixType::field_type field_type;
+
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
+
+      static const size_type domainLocalBlockSize = DomainSpaceType::dimRange;
+      static const size_type rangeLocalBlockSize  = RangeSpaceType::dimRange;
+
+      typedef Dune::FieldMatrix< field_type, rangeLocalBlockSize, domainLocalBlockSize > MatrixBlockType;
+      typedef MatrixBlockType  block_type;
 
       typedef MatrixType PreconditionMatrixType;
 
@@ -419,6 +455,55 @@ namespace Dune
         return LocalColumnObjectType( *this, domainEntity );
       }
 
+      void unitRow( const size_type row )
+      {
+        for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
+        {
+          matrix_.clearRow( r );
+          matrix_.set( r, r, 1.0 );
+        }
+      }
+
+      template <class LocalBlock>
+      void addBlock( const size_type row, const size_type col, const LocalBlock& block )
+      {
+        std::array< size_type, rangeLocalBlockSize  > rows;
+        std::array< size_type, domainLocalBlockSize > cols;
+        for( unsigned int i=0, r = row * domainLocalBlockSize, c = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r, ++c )
+        {
+          rows[ i ] = r;
+          cols[ i ] = c;
+        }
+
+        for( unsigned int i=0; i<domainLocalBlockSize; ++i )
+        {
+          for( unsigned int j=0; j<domainLocalBlockSize; ++j )
+          {
+            matrix_.add( rows[ i ], cols[ j ], block[ i ][ j ]);
+          }
+        }
+      }
+
+      template <class LocalBlock>
+      void setBlock( const size_type row, const size_type col, const LocalBlock& block )
+      {
+        std::array< size_type, rangeLocalBlockSize  > rows;
+        std::array< size_type, domainLocalBlockSize > cols;
+        for( unsigned int i=0, r = row * domainLocalBlockSize, c = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r, ++c )
+        {
+          rows[ i ] = r;
+          cols[ i ] = c;
+        }
+
+        for( unsigned int i=0; i<domainLocalBlockSize; ++i )
+        {
+          for( unsigned int j=0; j<domainLocalBlockSize; ++j )
+          {
+            matrix_.set( rows[ i ], cols[ j ], block[ i ][ j ]);
+          }
+        }
+      }
+
       template< class LocalMatrix >
       void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
@@ -467,6 +552,14 @@ namespace Dune
       void clear()
       {
         matrix_.clear();
+      }
+
+      void flushAssembly() {}
+
+      template <class Set>
+      void reserve (const std::vector< Set >& sparsityPattern )
+      {
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ) );
       }
 
       //! reserve memory
