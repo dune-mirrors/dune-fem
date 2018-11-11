@@ -19,7 +19,8 @@ namespace Dune
     template< class >
     class SimpleStorage;
 
-
+    template< class >
+    class CodegenStorage;
 
     // SelectCachingShapeFunctionSet
     // -----------------------------
@@ -54,6 +55,21 @@ namespace Dune
       explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
                                                const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : BaseType( shapeFunctionSet )
+      {}
+    };
+
+    template< class ShapeFunctionSet >
+    class SelectCachingShapeFunctionSet< ShapeFunctionSet, CodegenStorage >
+    : public CachingShapeFunctionSet< ShapeFunctionSet >
+    {
+      typedef CachingShapeFunctionSet< ShapeFunctionSet > BaseType;
+
+    public:
+      typedef ShapeFunctionSet ImplementationType;
+
+      explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
+                                               const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
+      : BaseType( type, shapeFunctionSet )
       {}
     };
 

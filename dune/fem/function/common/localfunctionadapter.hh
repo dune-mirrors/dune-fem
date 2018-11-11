@@ -541,6 +541,14 @@ namespace Dune
             ( evaluateQuadrature( quad, result ), 1 ) ... );
       }
 
+      template< class QuadratureType, class ... Vectors  >
+      void jacobianQuadrature( const QuadratureType &quad, Vectors& ... result ) const
+      {
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore = std::make_tuple(
+            ( evaluateQuadrature( quad, result ), 1 ) ... );
+      }
+
       //! init local function
       void init( const EntityType& entity )
       {

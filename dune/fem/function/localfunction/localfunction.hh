@@ -392,6 +392,28 @@ namespace Dune
             ... );
       }
 
+      /** \brief evaluate all Jacobians for all basis functions for all quadrature points and
+       *         store the results in the result vector */
+      template< class QuadratureType, class ... Vectors >
+      void jacobianQuadrature( const QuadratureType &quad, Vectors& ... vec ) const
+      {
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore =
+          std::make_tuple( ( evaluateQuadrature( quad, vec, typename std::decay< decltype( vec[ 0 ] ) >::type() ), 1 )
+            ... );
+      }
+
+      /** \brief evaluate all hessians of all basis functions for all quadrature points and store the results in the result vector */
+      template< class QuadratureType, class ... Vectors >
+      void hessianQuadrature( const QuadratureType &quad, Vectors& ... vec ) const
+      {
+        // make sure vec size if large enough
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore =
+           std::make_tuple( ( evaluateQuadrature( quad, vec, typename std::decay< decltype( vec[ 0 ] ) >::type() ), 1 )
+           ... );
+      }
+
       /** \brief return const reference to local Dof Vector  */
       const LocalDofVectorType &localDofVector () const { return localDofVector_; }
 

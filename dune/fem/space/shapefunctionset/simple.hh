@@ -53,6 +53,8 @@ namespace Dune
     public:
       typedef ShapeFunction ShapeFunctionType;
 
+      typedef ThisType ScalarFunctionSpaceType;
+
       typedef typename ShapeFunction::FunctionSpaceType FunctionSpaceType;
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
