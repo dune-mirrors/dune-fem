@@ -12,6 +12,8 @@
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>
+#include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 // dune-fem includes
 #include <dune/fem/space/basisfunctionset/piolatransformation.hh>
