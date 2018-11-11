@@ -112,6 +112,8 @@ namespace Dune
       typedef QuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
 
       typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
+
+      typedef int QuadratureKeyType ;
     };
 
     template< class FieldType >
@@ -120,6 +122,8 @@ namespace Dune
       typedef QuadratureRulesFactory< FieldType, 0 > PointQuadratureType;
 
       typedef QuadratureImp< FieldType, 0 > IntegrationPointListType;
+
+      typedef int QuadratureKeyType ;
     };
 
     template< class FieldType >
@@ -128,6 +132,8 @@ namespace Dune
       typedef QuadratureRulesFactory< FieldType, 1 > LineQuadratureType;
 
       typedef QuadratureImp< FieldType, 1 > IntegrationPointListType;
+
+      typedef int QuadratureKeyType ;
     };
 
     template< class FieldType >
@@ -140,6 +146,8 @@ namespace Dune
       typedef QuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
 
       typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
+
+      typedef int QuadratureKeyType ;
     };
 
   } // namespace Fem

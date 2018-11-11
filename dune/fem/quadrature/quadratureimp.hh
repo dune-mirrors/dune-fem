@@ -45,6 +45,9 @@ namespace Dune
       //! to be revised, look at caching quad
       enum { codimension = 0 };
 
+      //! dimension of quadrature
+      static const int dimension = dim ;
+
     private:
       // vector holding the coordinates for each point
       std::vector< CoordinateType > points_;

@@ -62,6 +62,9 @@ namespace Dune
       //! type for coordinates in the codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename Base::QuadratureKeyType  QuadratureKeyType;
+
       //! type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
       //! type of iterator
@@ -76,8 +79,8 @@ namespace Dune
        *  \param[in]  geometry  geometry type, the quadrature lives on
        *  \param[in]  order     desired minimal order of the quadrature
        */
-      ElementIntegrationPointList( const GeometryType &geometry, int order )
-      : Base( geometry, order )
+      ElementIntegrationPointList( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+      : Base( geometry, quadKey )
       {}
 
       const QuadraturePointWrapperType operator[] ( const size_t i ) const
@@ -114,6 +117,9 @@ namespace Dune
       //! Type of coordinates in codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename Base::QuadratureKeyType  QuadratureKeyType;
+
       //! Type of the intersection iterator
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -140,7 +146,7 @@ namespace Dune
        *
        *  \param[in]  gridPart      grid partition (a dummy here)
        *  \param[in]  intersection  intersection
-       *  \param[in]  order         desired order of the quadrature
+       *  \param[in]  quadKey       quadrature key, i.e. desired order of the quadrature
        *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        *
@@ -149,9 +155,9 @@ namespace Dune
        */
       ElementIntegrationPointList ( const GridPartType &gridPart,
                                     const IntersectionType &intersection,
-                                    const int order,
+                                    const QuadratureKeyType& quadKey,
                                     const typename Base :: Side side )
-      : Base( getPointList( intersection, order, side ) ),
+      : Base( getPointList( intersection, quadKey, side ) ),
         referenceGeometry_( side == Base::INSIDE ? intersection.geometryInInside() : intersection.geometryInOutside() )
       {}
 

@@ -443,6 +443,8 @@ namespace Dune
 
         //! type of integration point list implemementation
         typedef LagrangePointListInterface< ct, quaddim, polynomialOrder > IntegrationPointListType;
+
+        typedef int QuadratureKeyType ;
       };
 
       //! type of used integration point list
