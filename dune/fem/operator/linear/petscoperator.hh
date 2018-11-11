@@ -56,7 +56,7 @@ namespace Dune
       }
 
       bool blockedMode () const {
-        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", false );
+        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", true );
       }
 
     };
