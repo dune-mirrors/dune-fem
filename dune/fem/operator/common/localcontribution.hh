@@ -68,6 +68,8 @@ namespace Dune
 
           value_type get ( int row, int col ) const { return localMatrix_[ row ][ col ]; }
 
+          const LocalMatrix & localMatrix() const { return localMatrix_; }
+
         private:
           const LocalMatrix &localMatrix_;
         };
@@ -340,6 +342,8 @@ namespace Dune
         const SizeType cols = mat_cols();
         return const_row_reference( localMatrixEntries_.data() + i*cols, cols );
       }
+
+      const value_type* data() const { return localMatrixEntries_.data(); }
 
     private:
       AssembledOperatorType &assembledOperator_;
