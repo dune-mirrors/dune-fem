@@ -202,6 +202,22 @@ namespace Dune
       std::map< std::string, Value >::iterator pos;
       if( defaultValue )
       {
+        const std::string& defaultValueStr = *defaultValue;
+        // only check existence, do not check default values and the like
+        // when the default string has the value of checkParameterExistsString
+        // this is to avoid problems with default and non-default parameters
+        if( defaultValueStr == checkParameterExistsString() )
+        {
+          pos = map.find( key );
+          if( pos == map.end() )
+            return nullptr;
+          else
+          {
+            Value &val = pos->second;
+            return &val.value ;
+          }
+        }
+
         auto info = map.insert( std::make_pair( key, Value( *defaultValue, "default" ) ) );
         if( info.second && verbose() )
           std::cout << "Adding default: " << key << " = " << *defaultValue << std::endl;
