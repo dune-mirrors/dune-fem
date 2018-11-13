@@ -9,7 +9,7 @@
 // dune-fem includes
 #include <dune/fem/io/parameter.hh>
 
-#include <dune/fem/io/parameter/subreader.hh>
+#include <dune/fem/io/parameter/prefixreader.hh>
 
 
 int main(int argc, char** argv)
@@ -20,14 +20,14 @@ try
   auto& parameter = Dune::Fem::Parameter::container();
   parameter.append( argc, argv );
 
-  auto subParameter = subParameterReader( "level0." , parameter );
-  auto subSubParameter = subParameterReader( "level0.", subParameterReader( "level1." , parameter ));
+  auto preParameter = prefixParameterReader( "level0." , parameter );
+  auto prePreParameter = prefixParameterReader( "level0.", prefixParameterReader( "level1." , parameter ));
 
   std::string default_( "default" );
 
   auto value0 = parameter.getValue< std::string >( "level0.level1.value", default_ );
-  auto value1 = subParameter.getValue< std::string >( "level1.value", default_ );
-  auto value2 = subSubParameter.getValue< std::string >( "value", default_ );
+  auto value1 = preParameter.getValue< std::string >( "level1.value", default_ );
+  auto value2 = prePreParameter.getValue< std::string >( "value", default_ );
 
   if( value0 == default_ )
     DUNE_THROW( Dune::Exception, "Value read is default." );

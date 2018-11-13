@@ -7,7 +7,7 @@ configure_file(date.sh ${CMAKE_CURRENT_BINARY_DIR}/date.sh COPYONLY)
 
 dune_add_test( NAME parametertest SOURCES parametertest.cc LINK_LIBRARIES dunefem )
 
-dune_add_test(NAME subparametertest
-              SOURCES subparametertest.cc
+dune_add_test(NAME prefixparametertest
+              SOURCES prefixparametertest.cc
               CMD_ARGS "level0.level1.value: test"
               LINK_LIBRARIES dunefem )
