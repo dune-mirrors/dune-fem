@@ -17,6 +17,21 @@ namespace Dune
   namespace Fem
   {
 
+    // Internal Forward Declarations
+    // -----------------------------
+
+    template< class Parameter >
+    struct BasicParameterReader;
+
+
+
+    // ParameterReader
+    // ---------------
+
+    typedef BasicParameterReader< std::function< const std::string *( const std::string &, const std::string * ) > > ParameterReader;
+
+
+
     // BasicParameterReader
     // --------------------
 
@@ -34,7 +49,7 @@ namespace Dune
        *
        * \returns \b true, if the parameter is found, \b false otherwise
        */
-      bool exists ( const std::string &key ) const { return static_cast< bool >( parameter_( key, nullptr ) ); }
+      bool exists ( const std::string &key ) const { return static_cast< bool >( parameter()( key, nullptr ) ); }
 
       /**
        * \brief get mandatory parameter
@@ -48,7 +63,7 @@ namespace Dune
       template< class T >
       void get ( const std::string &key, T &value ) const
       {
-        const std::string *string = parameter_( key, nullptr );
+        const std::string *string = parameter()( key, nullptr );
         if( !string )
           DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." );
         if( !ParameterParser< T >::parse( *string, value ) )
@@ -69,7 +84,7 @@ namespace Dune
       void get ( const std::string &key, const T &defaultValue, T &value ) const
       {
         const std::string defaultString = ParameterParser< T >::toString( defaultValue );
-        const std::string *string = parameter_( key, &defaultString );
+        const std::string *string = parameter()( key, &defaultString );
         assert( string );
         if( !ParameterParser< T >::parse( *string, value ) )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
@@ -88,7 +103,7 @@ namespace Dune
       void get ( const std::string &key, const char* defaultValue, std::string &value ) const
       {
         const std::string defaultString( defaultValue );
-        const std::string *string = parameter_( key, &defaultString );
+        const std::string *string = parameter()( key, &defaultString );
         assert( string );
         if( !ParameterParser< std::string >::parse( *string, value ) )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
@@ -107,7 +122,7 @@ namespace Dune
       template< class T, class Validator >
       void getValid ( const std::string &key, const Validator &validator, T &value ) const
       {
-        const std::string *string = parameter_( key, nullptr );
+        const std::string *string = parameter()( key, nullptr );
         if( !string )
           DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." );
         if( !ParameterParser< T >::parse( *string, value ) || !validator( value ) )
@@ -129,7 +144,7 @@ namespace Dune
       void getValid ( const std::string &key, const T &defaultValue, const Validator &validator, T &value ) const
       {
         const std::string defaultString = ParameterParser< T >::toString( defaultValue );
-        const std::string *string = parameter_( key, &defaultString );
+        const std::string *string = parameter()( key, &defaultString );
         assert( string );
         if( !ParameterParser< T >::parse( *string, value ) || !validator( value ) )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
@@ -214,7 +229,7 @@ namespace Dune
       template< int n >
       int getEnum ( const std::string &key, const std::string (&values)[ n ] ) const
       {
-        const std::string *string = parameter_( key, nullptr );
+        const std::string *string = parameter()( key, nullptr );
         if( !string )
           DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." );
         return getEnumeration( key, *string, values );
@@ -223,9 +238,11 @@ namespace Dune
       template< int n >
       int getEnum ( const std::string &key, const std::string (&values)[ n ], int defaultValue ) const
       {
-        const std::string *string = parameter_( key, &values[ defaultValue ] );
+        const std::string *string = parameter()( key, &values[ defaultValue ] );
         return getEnumeration( key, *string, values );
       }
+
+      const Parameter &parameter () const { return parameter_; }
 
     private:
       template< int n >
@@ -255,13 +272,6 @@ namespace Dune
     protected:
       Parameter parameter_;
     };
-
-
-
-    // ParameterReader
-    // ---------------
-
-    typedef BasicParameterReader< std::function< const std::string *( const std::string &, const std::string * ) > > ParameterReader;
 
   } // namespace Fem
 

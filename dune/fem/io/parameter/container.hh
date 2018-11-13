@@ -85,9 +85,8 @@ namespace Dune
       void processIncludes( std::queue< std::string > &includes );
 
     public:
-
       /** \brief cast into ParameterReader */
-      operator ParameterReader () const { return ParameterReader( std::ref( parameter_ ) ); }
+      operator ParameterReader () const { return ParameterReader( std::ref( parameter() ) ); }
 
       /**
        * \brief add parameters from the command line
