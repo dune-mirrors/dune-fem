@@ -20,8 +20,8 @@ try
   auto& parameter = Dune::Fem::Parameter::container();
   parameter.append( argc, argv );
 
-  auto subParameter = subParameterReader( "level0" , parameter );
-  Dune::Fem::ParameterReader subSubParameter = subParameterReader( "level1" , subParameter );
+  auto subParameter = subParameterReader( "level0." , parameter );
+  auto subSubParameter = subParameterReader( "level0.", subParameterReader( "level1." , parameter ));
 
   std::string default_( "default" );
 
@@ -33,7 +33,7 @@ try
     DUNE_THROW( Dune::Exception, "Value read is default." );
 
   if( value0 != value1 || value0 != value2 )
-    DUNE_THROW( Dune::Exception, "Values read differ." );
+    DUNE_THROW( Dune::Exception, "Values read differ. [" << value0 << ", " << value1 << ", " << value2 << " ]" );
 
   return 0;
 }
