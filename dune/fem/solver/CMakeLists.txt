@@ -5,7 +5,7 @@ dune_install(cginverseoperator.hh diagonalpreconditioner.hh istlinverseoperators
              petscsolver.hh petscinverseoperators.hh preconditionedinverseoperator.hh
              timeprovider.hh umfpacksolver.hh spqrsolver.hh ldlsolver.hh eigen.hh)
 
-dune_add_subdirs(linear rungekutta ode oemsolver test)
+dune_add_subdirs(linear rungekutta ode test)
 
 dune_add_library(solver OBJECT
     ode/odeobjectfiles.cc
