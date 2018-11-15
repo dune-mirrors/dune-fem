@@ -118,6 +118,7 @@ struct DiffusionModel
   typedef typename GridPartType::IntersectionType IntersectionType;
   typedef typename EntityType::Geometry::LocalCoordinate LocalDomainType;
 
+  // quadrature points from dune-fempy quadratures
   template <class F,int d>
   using Traits = Dune::FemPy::FempyQuadratureTraits<F,d>;
   typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0, Traits >::
@@ -128,6 +129,16 @@ struct DiffusionModel
                    QuadraturePointWrapperType ElementPoint;
   typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1, Traits >::
                    QuadraturePointWrapperType ElementIntersectionPoint;
+
+  // quadrature points from dune-fem quadratures
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0 >::
+                   QuadraturePointWrapperType OriginalPoint;
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 1 >::
+                   QuadraturePointWrapperType OriginalIntersectionPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 0 >::
+                   QuadraturePointWrapperType OriginalElementPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1 >::
+                   QuadraturePointWrapperType OriginalElementIntersectionPoint;
 
   /*
   static const bool isLinear;
@@ -143,10 +154,18 @@ public:
 
   virtual bool init( const EntityType &entity) const = 0;
 
+  // virtual methods for fempy quadratures
   VirtualDiffusionModelMethods(Point)
   VirtualDiffusionModelMethods(ElementPoint)
   VirtualDiffusionModelMethods(IntersectionPoint)
   VirtualDiffusionModelMethods(ElementIntersectionPoint)
+
+  // virtual methods for fem quadratures
+  VirtualDiffusionModelMethods(OriginalPoint)
+  VirtualDiffusionModelMethods(OriginalElementPoint)
+  VirtualDiffusionModelMethods(OriginalIntersectionPoint)
+  VirtualDiffusionModelMethods(OriginalElementIntersectionPoint)
+
   VirtualDiffusionModelMethods(LocalDomainType)
 
   virtual bool hasDirichletBoundary () const = 0;
@@ -168,6 +187,10 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   typedef typename Base::IntersectionPoint IntersectionPoint;
   typedef typename Base::ElementPoint ElementPoint;
   typedef typename Base::ElementIntersectionPoint ElementIntersectionPoint;
+  typedef typename Base::OriginalPoint OriginalPoint;
+  typedef typename Base::OriginalIntersectionPoint OriginalIntersectionPoint;
+  typedef typename Base::OriginalElementPoint      OriginalElementPoint;
+  typedef typename Base::OriginalElementIntersectionPoint OriginalElementIntersectionPoint;
   typedef typename Base::LocalDomainType LocalDomainType;
   typedef typename Base::DomainType DomainType;
   typedef typename Base::DRangeType DRangeType;
@@ -188,10 +211,18 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
   }
 
+  // virtual methods for fempy quadratures
   WrapperDiffusionModelMethods(Point);
   WrapperDiffusionModelMethods(ElementPoint);
   WrapperDiffusionModelMethods(IntersectionPoint);
   WrapperDiffusionModelMethods(ElementIntersectionPoint);
+
+  // virtual methods for fem quadratures
+  WrapperDiffusionModelMethods(OriginalPoint);
+  WrapperDiffusionModelMethods(OriginalElementPoint);
+  WrapperDiffusionModelMethods(OriginalIntersectionPoint);
+  WrapperDiffusionModelMethods(OriginalElementIntersectionPoint);
+
   WrapperDiffusionModelMethods(LocalDomainType);
 
   // other virtual functions
