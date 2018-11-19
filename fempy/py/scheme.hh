@@ -216,19 +216,33 @@ namespace Dune
 
         cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
             auto info = self.solve( rhs, solution );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            return ret;
+            /*
             return std::map<std::string,std::string> {
                 {"converged",std::to_string(info.converged)},
                 {"iterations",std::to_string(info.nonlinearIterations)},
                 {"linear_iterations",std::to_string(info.linearIterations)}
               };
+            */
           } );
         cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
             auto info = self.solve( solution );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            return ret;
+            /*
             return std::map<std::string,std::string> {
                 {"converged",std::to_string(info.converged)},
                 {"iterations",std::to_string(info.nonlinearIterations)},
                 {"linear_iterations",std::to_string(info.linearIterations)}
               };
+            */
           } );
 
         cls.def( "setErrorMeasure", &Scheme::setErrorMeasure,
