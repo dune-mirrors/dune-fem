@@ -84,8 +84,7 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None,
         includes += integrands._includes
         integrandsType = integrands._typeName
 
-    import dune.create as create
-    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+
 
     if not rstorage == storage:
         typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
@@ -96,6 +95,8 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None,
                                   ['return new DuneType( dSpace.gridPart(), integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
+        import dune.create as create
+        linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
         typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
         constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
                                   ['return new DuneType( dSpace, rSpace, integrands );'],
