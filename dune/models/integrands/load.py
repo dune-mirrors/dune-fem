@@ -11,7 +11,7 @@ from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 
-from .ufl import compileUFL, fieldVectorType, integrandsSignature
+from .ufl import compileUFL, integrandsSignature
 
 def init(integrands, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
@@ -104,12 +104,11 @@ class Source(object):
         else:
             return [self.integrands.rangeValueTuple, self.integrands.domainValueTuple]
 
+    # actual code generation (the generator converts this object to a string)
     def __str__(self):
         if isinstance(self.integrands, Form):
-            coefficients = set(self.integrands.coefficients())
-            constants = [c for c in coefficients if c.is_cellwise_constant()]
-            coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
-            integrands = compileUFL(self.integrands, *self.args, constants=constants, coefficients=coefficients, tempVars=self.tempVars)
+            # actual code generation
+            integrands = compileUFL(self.integrands, *self.args, tempVars=self.tempVars)
         else:
             integrands = self.integrands
 
@@ -131,6 +130,7 @@ class Source(object):
         code.append(Include("dune/fempy/py/integrands.hh"))
 
         nameSpace = NameSpace('Integrands_' + integrands.signature())
+        # add integrands class
         nameSpace.append(integrands.code())
         code.append(nameSpace)
 
@@ -174,12 +174,19 @@ class Source(object):
         return source
 
 
+# Load the actual module - the code generation from the ufl form is done
+# when the 'Source' class is converted to a string i.e. in Source.__str__
 def load(grid, integrands, *args, renumbering=None, tempVars=True, virtualize=True):
     if isinstance(integrands, Equation):
         integrands = integrands.lhs - integrands.rhs
 
+    # set up the source class
     source = Source(grid._typeName, grid._includes, integrands,*args,
             tempVars=tempVars,virtualize=virtualize)
+    # ufl coefficient and constants only have numbers which depend on the
+    # order in whch they were generated - we need to keep track of how
+    # these numbers are translated into the tuple numbering in the
+    # generated C++ code
     if isinstance(integrands, Form):
         coefficients = set(integrands.coefficients())
         numCoefficients = len(coefficients)
@@ -191,8 +198,10 @@ def load(grid, integrands, *args, renumbering=None, tempVars=True, virtualize=Tr
     else:
         coefficientNames = integrands.coefficientNames
 
+    # call code generator
     from dune.generator import builder
     module = builder.load(source.name(), source, "integrands")
+
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)
     setattr(module.Integrands, "_rangeValueType", rangeValueTuple)
