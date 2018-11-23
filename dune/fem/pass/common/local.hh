@@ -1,6 +1,11 @@
 #ifndef DUNE_FEM_PASS_LOCAL_HH
 #define DUNE_FEM_PASS_LOCAL_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/pass.hh> instead!"
+#endif
+
+
 #include <memory>
 #include <sstream>
 #include <string>

@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_PASS_LOCALDG_MODELCALLER_HH
 #define DUNE_FEM_PASS_LOCALDG_MODELCALLER_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/modelcaller.hh> instead!"
+#endif
+
 #include <cstddef>
 #include <vector>
 
