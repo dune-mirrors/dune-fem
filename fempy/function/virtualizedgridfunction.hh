@@ -323,6 +323,14 @@ namespace Dune
         {
           return gp_;
         }
+        inline auto begin () const
+        {
+          return gridPart().template begin< 0 >();
+        }
+        inline auto end () const
+        {
+          return gridPart().template end< 0 >();
+        }
         const GridPart &gp_;
         int o_;
       };

@@ -85,7 +85,7 @@ namespace Dune
       clsVirtualizedIntegrands ( pybind11::handle scope )
       {
         typedef Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > Integrands;
-        auto cls = Python::insertClass<Integrands>(scope,"VirtualizedIntegrads",
+        auto cls = Python::insertClass<Integrands>(scope,"VirtualizedIntegrands",
             Python::GenerateTypeName("TODO") );
         if (cls.second)
           registerIntegrands( scope, cls.first );
