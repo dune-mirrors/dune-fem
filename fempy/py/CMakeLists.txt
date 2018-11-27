@@ -9,6 +9,7 @@ set(HEADERS
   scheme.hh
   space.hh
   spaceadapt.hh
+  ufllocalfunction.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fempy/py)

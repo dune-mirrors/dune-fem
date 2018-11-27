@@ -2,6 +2,7 @@
 #define DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
 
 namespace Dune
 {
@@ -32,11 +33,11 @@ namespace Dune
         return value;
       }
 
-      void bind ( const Entity &entity ) { localFunction_.init( entity ); }
+      void bind ( const Entity &entity ) { localFunction_.bind( entity ); }
       void unbind () {}
 
     private:
-      typename GF::LocalFunctionType localFunction_;
+      Dune::Fem::ConstLocalFunction<GF> localFunction_;
     };
 
     template< class GF >

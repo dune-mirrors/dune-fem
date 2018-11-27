@@ -16,6 +16,8 @@
 
 #include <dune/python/grid/numpy.hh>
 
+#include <dune/fem/function/localfunction/const.hh>
+
 #include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
@@ -38,9 +40,10 @@ namespace Dune
       const int dimGrid = GridPart::dimension;
 
       std::vector< Range > values;
+      Dune::Fem::ConstLocalFunction<GridFunction> localFunction(gridFunction);
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
-        const auto localFunction = gridFunction.localFunction( element );
+        localFunction.bind(element);
         const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
 
         for( auto it = refinement.vBegin( intervals ), end = refinement.vEnd( intervals ); it != end; ++it )
@@ -84,9 +87,10 @@ namespace Dune
       const int dimGrid = GridPart::dimension;
 
       std::vector< Range > values;
+      Dune::Fem::ConstLocalFunction<GridFunction> localFunction(gridFunction);
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
-        const auto localFunction = gridFunction.localFunction( element );
+        localFunction.bind( element );
         const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
 
         for( auto it = refinement.eBegin( intervals ), end = refinement.eEnd( intervals ); it != end; ++it )
