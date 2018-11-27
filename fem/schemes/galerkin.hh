@@ -55,8 +55,10 @@ namespace Dune
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       private:
-        typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
-        typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
+        typedef CachingQuadrature< GridPartType, 0 > InteriorQuadratureType;
+        typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
+        // typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
+        // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
 
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;
@@ -564,8 +566,8 @@ namespace Dune
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
             // const auto uLocal = u.localFunction( entity );
-            uLocal.init( entity );
-            wLocal.init( entity );
+            uLocal.bind( entity );
+            wLocal.bind( entity );
             wLocal.clear();
 
             if( integrands_.hasInterior() )
@@ -599,8 +601,8 @@ namespace Dune
           {
             // const auto uInside = u.localFunction( inside );
 
-            uInside.init( inside );
-            wInside.init( inside );
+            uInside.bind( inside );
+            wInside.bind( inside );
             wInside.clear();
 
             if( integrands_.hasInterior() )
@@ -618,12 +620,12 @@ namespace Dune
                 const EntityType &outside = intersection.outside();
 
                 Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
-                uOutside.init( outside );
+                uOutside.bind( outside );
                 if( outside.partitionType() != InteriorEntity )
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
-                  wOutside.init( outside );
+                  wOutside.bind( outside );
                   wOutside.clear();
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside, wOutside );
                   w.addLocalDofs( outside, wOutside.localDofVector() );
@@ -671,7 +673,7 @@ namespace Dune
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
             // const auto uLocal = u.localFunction( entity );
-            uLocal.init( entity );
+            uLocal.bind( entity );
 
             jOpLocal.init( entity, entity );
             jOpLocal.clear();
@@ -715,7 +717,7 @@ namespace Dune
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
             // const auto uIn = u.localFunction( inside );
-            uIn.init( inside );
+            uIn.bind( inside );
 
             jOpInIn.init( inside, inside );
             jOpInIn.clear();
@@ -738,7 +740,7 @@ namespace Dune
                 jOpOutIn.clear();
 
                 Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
-                uOut.init( outside );
+                uOut.bind( outside );
 
                 if( outside.partitionType() != InteriorEntity )
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn );

@@ -186,12 +186,11 @@ public:
       typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
       typedef typename IteratorType :: Entity EntityType;
 
+      Dune::Fem::SetSelectedLocalContribution< DiscreteFunctionType > wLocal( w );
       for( const EntityType &entity : space_ )
       {
-        typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
-
         model_.init(entity);
-        LocalFunctionType wLocal = w.localFunction( entity );
+        auto wGuard = Dune::Fem::bindGuard( wLocal, entity );
 
         // interpolate dirichlet dofs
         dirichletDofTreatment( wLocal );
@@ -207,12 +206,13 @@ public:
 
     if( hasDirichletDofs_ )
     {
+      Dune::Fem::ConstLocalFunction< GridFunctionType > uLocal( u );
+      Dune::Fem::SetSelectedLocalContribution< DiscreteFunctionType > wLocal( w );
+
       for( const auto &entity : space_ )
       {
-        typedef typename GridFunctionType :: LocalFunctionType GridLocalFunctionType;
-        typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
-        LocalFunctionType wLocal = w.localFunction( entity );
-        const GridLocalFunctionType uLocal = u.localFunction( entity );
+        auto guard = Dune::Fem::bindGuard( std::tie(uLocal,wLocal), entity );
+
         // interpolate dirichlet dofs
         if (op == Operation::sub)
           model_.init(entity);
