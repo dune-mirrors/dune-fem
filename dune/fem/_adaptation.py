@@ -71,6 +71,17 @@ def loadBalance(first, *args):
     hgrid,args = _adaptArguments(first,*args)
     module(hgrid).gridAdaptation(hgrid).loadBalance(args)
 
+def mark(indicator, refineTolerance, coarsenTolerance=0,
+         minLevel=0, maxLevel=None):
+    try:
+        if not indicator.space.grid.canAdapt:
+            raise AttributeError("indicator function must be over grid view that supports adaptation")
+    except:
+        raise AttributeError("indicator function must be over grid view that supports adaptation")
+    if maxLevel==None:
+        maxLevel = -1
+    return indicator.space.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.ELLIPSIS)

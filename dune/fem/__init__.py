@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import dune.common
 from ._fem import *
-from ._adaptation import adapt, loadBalance
+from ._adaptation import adapt, loadBalance, mark
 from ._spaceadaptation import spaceAdapt
 
 from . import view as view
