@@ -234,6 +234,8 @@ class DirichletBC:
             self.ufl_value = ufl.as_vector(self.ufl_value)
         else:
             self.ufl_value = value
+    def __str__(self):
+        return str(self.ufl_value)
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!

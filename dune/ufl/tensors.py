@@ -15,7 +15,11 @@ def keys(shape):
 
 
 def apply(op, shape, *args):
-    if len(shape) > 0:
+    if False: #len(shape) > 2:
+        return [apply(op, shape[1:], *(arg[i,:,:] for arg in args)) for i in range(0, shape[0])]
+    elif False: #len(shape) > 1:
+        return [apply(op, shape[1:], *(arg[i,:] for arg in args)) for i in range(0, shape[0])]
+    elif len(shape) > 0:
         return [apply(op, shape[1:], *(arg[i] for arg in args)) for i in range(0, shape[0])]
     else:
         return op(*args)

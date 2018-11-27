@@ -135,7 +135,7 @@ def load(grid, model, *args, **kwargs):
     code += [TypeAlias("GridPart", "typename Dune::FemPy::GridPart< " + grid._typeName + " >")]
 
     rangeTypes = ["Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >" for c in model._coefficients]
-    coefficients = ["Dune::FemPy::VirtualizedLocalFunction< GridPart, " + r + " >" for r in rangeTypes]
+    coefficients = ["Dune::FemPy::VirtualizedGridFunction< GridPart, " + r + " >" for r in rangeTypes]
     code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join(["GridPart"] + coefficients) + " >")]
 
     code += [TypeAlias("ModelWrapper", "DiffusionModelWrapper< Model >")]

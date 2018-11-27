@@ -108,7 +108,8 @@ class EllipticModel:
     def code(self, name='Model', targs=[]):
         constants_ = Variable('std::tuple< ' + ', '.join('std::shared_ptr< ' + c  + ' >' for c in self._constants) + ' >', 'constants_')
         # coefficients_ = Variable('std::tuple< ' + ', '.join(c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
-        coefficients_ = Variable('std::tuple< ' + ', '.join(self.cppTypeIdentifier(c['name'],"coefficient",i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
+        coefficients_ = Variable('std::tuple< ' + ', '.join(\
+                'Dune::Fem::ConstLocalFunction<' + self.cppTypeIdentifier(c['name'],"coefficient",i) + '> ' for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
         entity_ = Variable('const EntityType *', 'entity_')
 
         # code = Struct(name, targs=(['class GridPart'] + ['class ' + c['name'] if c['name'] is not None else 'class Coefficient' + str(i) for i, c in enumerate(self._coefficients)] + targs))
@@ -144,7 +145,9 @@ class EllipticModel:
         if self.hasCoefficients:
             # args = [Variable("const " + c['name'] if c['name'] is not None else "const Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
             args = [Variable("const " + self.cppTypeIdentifier(c['name'],"coefficient",i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
-            init = ["coefficients_( " + ", ".join("coefficient" + str(i) for i, c in enumerate(self._coefficients)) + " )"]
+            init = ["coefficients_(" + ",".\
+                  join("CoefficientType<"+str(i)+">"\
+                        +"(coefficient" + str(i)+")" for i, c in enumerate(self._coefficients)) + " )"]
         constructor = Constructor(args=args, init=init)
         constructor.append([assign(get(str(i))(constants_), make_shared(c)()) for i, c in enumerate(self._constants)])
         for name, idx in self._parameterNames.items():
@@ -152,7 +155,7 @@ class EllipticModel:
         code.append(constructor)
 
         init = ['entity_ = &entity;']
-        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).init( entity );' for i, c in enumerate(self._coefficients)]
+        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').bind( entity );' for i, c in enumerate(self._coefficients)]
         init = [UnformattedBlock(init)] + self.init + [return_(True)]
         code.append(Method('bool', 'init', args=['const EntityType &entity'], code=init, const=True))
 
@@ -237,7 +240,7 @@ class EllipticModel:
         # TODO
         sourceWriter.emit('cls.def( pybind11::init( [] ( ' + ', '.join( [] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
         if self.hasCoefficients:
-            sourceWriter.emit('  return new  ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' );')
+            sourceWriter.emit('  return new  ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) for i, c in enumerate(coefficients)) + ' );')
         else:
             sourceWriter.emit('  return new  ' + wrapperClass + '();')
         #if self.coefficients:

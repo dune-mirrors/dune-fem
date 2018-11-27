@@ -14,6 +14,7 @@ from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl import UFLException
+from dune.ufl.codegen import uflSignature
 from dune.ufl.tensors import ExprTensor
 from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
 
@@ -183,15 +184,6 @@ def toFileName(value):
     value = unicode(re.sub('[-\s]+', '-', value))
     return value
 
-def integrandsSignature(form,*args):
-    dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
-    sig = form.signature()
-    if len(dirichletBCs) > 0:
-        dirichletBCs.append(sig)
-        sig = hashIt( dirichletBCs )
-    return sig
-
-
 def compileUFL(form, *args, tempVars=True):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
@@ -225,7 +217,7 @@ def compileUFL(form, *args, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(integrandsSignature(form,*args),
+    integrands = Integrands(uflSignature(form,*dirichletBCs),
                             (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                             uflExpr)
     try:

@@ -57,11 +57,18 @@ def partitionFunction(gridview,name="rank"):
 
 
 def cppFunction(gridview, name, order, code, *args, **kwargs):
+    raise NotImplementedError("cpp function is not working at the moment")
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
 
 
 def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
-    func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, virtualize, *args, **kwargs)
+    Func = dune.models.localfunction.UFLFunction(gridview, name, order,
+            ufl, renumbering=None,
+            virtualize=virtualize, *args, **kwargs)
+    if Func is None:
+        return None
+    Func = Func.UFLLocalFunction
+    func = Func(gridview,name,order,*args,**kwargs)
     return func.as_ufl() if func is not None else None
 
 def discreteFunction(space, name, expr=None, dofVector=None):
@@ -83,7 +90,7 @@ def discreteFunction(space, name, expr=None, dofVector=None):
 
     if expr is None and dofVector is None:
         df.clear()
-    elif dofVector is None:
+    elif expr is not None:
         df.interpolate(expr)
     return df.as_ufl()
 

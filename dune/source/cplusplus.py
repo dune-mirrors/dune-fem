@@ -116,8 +116,8 @@ class Declaration:
 
 class Using:
     def __init__(self, obj):
-        if not isinstance(obj, BuiltInFunction):
-            raise Exception('Only built-in functions can be used for now')
+        # if not isinstance(obj, BuiltInFunction):
+        #     raise Exception('Only built-in functions can be used for now')
         self.obj = obj
 
     def __eq__(self, other):

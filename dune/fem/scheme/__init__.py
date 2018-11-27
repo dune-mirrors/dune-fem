@@ -20,7 +20,7 @@ def solve( scheme, rhs=None, target=None, name=None ):
             if hasattr(scheme, 'name'):
                 name = scheme.name
             else:
-                name = "default"
+                name = "solution"
         target = function.discreteFunction(scheme.space, name=name)
     if rhs is None:
         info = scheme._solve(target)

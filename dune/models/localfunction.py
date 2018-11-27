@@ -17,253 +17,266 @@ from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
 from dune.source import BaseModel
 from dune.source.fem import declareFunctionSpace
 import ufl
-from dune.source.cplusplus import maxEdgeLength, UnformattedExpression
+from ufl import Coefficient, Constant, constantvalue
+from ufl import checks
+from ufl.classes import FloatValue, IntValue
+from dune.source.cplusplus import maxEdgeLength, UnformattedExpression,\
+       NameSpace
+from dune.source.algorithm.extractincludes import extractIncludesFromStatements
+from dune.ufl import GridFunction
+from dune.ufl.tensors import ExprTensor
+from dune.ufl.codegen import uflSignature, TooHighDerivative
 
-# method to add to gridpart.function call
-def generatedFunction(grid, name, order, code, **kwargs):
-    coef = kwargs.pop("coefficients", {})
-    const = kwargs.pop("constants", {})
-    Gf = gridFunction(grid, code, coef, const).GFWrapper
-    return Gf(name, order, grid, coef)
+from dune.ufl import codegen
+
+class UFLFunctionSource(codegen.ModelClass):
+    def __init__(self, gridType, gridIncludes, expr,
+            name,order,
+            tempVars=True, virtualize=True):
+        dimRange = expr.ufl_shape[0]
+        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],dimRange=dimRange)
+        self.evalCode = []
+        self.jacCode = []
+        self.hessCode = []
+        self.gridType = gridType
+        self.gridIncludes = gridIncludes
+
+        self.functionName = name
+        self.functionOrder = order
+        self.expr = expr
+        self.tempVars = tempVars
+        self.virtualize = virtualize
+
+    def includes(self):
+        incs = set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.evalCode,)])
+        ret = [Include(i) for i in incs]
+        ret.sort()
+        return ret
+
+    def methods(self,code):
+        x = ufl.SpatialCoordinate(ufl.triangle) # NOTE: to do get right dimension
+        predefined = {}
+        predefined[x] = self.spatialCoordinate('x')
+        self.predefineCoefficients(predefined, False)
+        codegen.generateMethod(code, self.expr,
+            'typename FunctionSpaceType::RangeType', 'evaluate',
+            returnResult=False,
+            args=['const Point &x'],
+            targs=['class Point'], const=True,
+            predefined=predefined)
+        if checks.is_globally_constant(self.expr):
+        # if all(isinstance(e,FloatValue)
+        #         or isinstance(e,IntValue)
+        #         or isinstance(e,Constant)
+        #         or isinstance(e,constantvalue)
+        #         for e in self.expr):
+            code.append( Method('void', 'jacobian', targs=['class Point'],
+                args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
+                code=['result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))
+            code.append( Method('void', 'hessian', targs=['class Point'],
+                args=['const Point &x','typename FunctionSpaceType::HessianRangeType &result'],
+                code=['result=typename FunctionSpaceType::HessianRangeType(0);'], const=True))
+        else:
+            try:
+                codegen.generateMethod(code, ufl.grad(self.expr),
+                    'typename FunctionSpaceType::JacobianRangeType', 'jacobian',
+                    returnResult=False,
+                    args=['const Point &x'],
+                    targs=['class Point'], const=True,
+                    predefined=predefined)
+            except TooHighDerivative:
+                code.append( Method('void', 'jacobian', targs=['class Point'],
+                    args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
+                    code=['DUNE_THROW(Dune::NotImplemented,"jacobian method could not be generated for local function");',
+                          'result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))
+                pass
+            try:
+                codegen.generateMethod(code, ufl.grad(ufl.grad(self.expr)),
+                    'typename FunctionSpaceType::HessianRangeType', 'hessian',
+                    returnResult=False,
+                    args=['const Point &x'],
+                    targs=['class Point'], const=True,
+                    predefined=predefined)
+            except TooHighDerivative:
+                code.append( Method('void', 'hessian', targs=['class Point'],
+                    args=['const Point &x','typename FunctionSpaceType::HessianRangeType &result'],
+                    code=['DUNE_THROW(Dune::NotImplemented,"hessian method could not be generated for local function");',
+                          'result=typename FunctionSpaceType::HessianRangeType(0);'], const=True))
+                pass
+
+    def signature(self):
+        return uflSignature(None, self.expr)
+
+    def name(self):
+        from dune.common.hashit import hashIt
+        if self.virtualize:
+            return 'localfunction_' + self.signature() + '_' + hashIt(self.gridType)
+        else:
+            return 'localfunction_nv' + self.signature() + '_' + hashIt(self.gridType)
+
+    def compileUFL(self):
+        pass
+
+    # actual code generation (the generator converts this object to a string)
+    def __str__(self):
+        self.compileUFL()
+        code = [Include('config.h')]
+        code += [Include(i) for i in self.gridIncludes]
+        code += [Include(i) for i in self.includeFiles]
+
+        code += self.includes()
+        code.append(Include("dune/python/pybind11/pybind11.h"))
+        code.append(Include("dune/python/pybind11/extensions.h"))
+        code.append(Include("dune/fempy/py/grid/gridpart.hh"))
+        code.append(Include('dune/common/exceptions.hh'))
+
+        if self._coefficients:
+            if self.virtualize:
+                code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
+            else:
+                for c in self._coefficients:
+                    for i in c._includes:
+                        code.append(Include(i))
+        code.append(Include("dune/fempy/py/ufllocalfunction.hh"))
+
+        nameSpace = NameSpace('UFLLocalFunctions_' + self.signature())
+        # add localfunction class
+        nameSpace.append(self.code())
+        code.append(nameSpace)
+
+        code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
+        if self._coefficients:
+            if self.virtualize:
+                coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in self._coefficients]
+            else:
+                coefficients = [c._typeName for c in self._coefficients]
+        else:
+            coefficients = []
+        localFunctionName = nameSpace.name + '::UFLLocalFunction< ' + ', '.join(['GridPart'] + coefficients) + ' >'
+        code.append(TypeAlias('UFLLocalFunction', localFunctionName))
+
+        writer = SourceWriter()
+        writer.emit(code);
+
+        name = self.name()
+        writer.openPythonModule(name)
+        writer.emit('auto cls = Dune::Python::insertClass<UFLLocalFunction>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        writer.emit('Dune::FemPy::registerUFLLocalFunction( module, cls );')
+
+        initArgs = 'pybind11::object gridView, const std::string &name, int order'
+        keepAlive = 'pybind11::keep_alive< 1, 2 >()'
+        initCall = 'Dune::FemPy::gridPart<'+self.gridType+'>(gridView),name,order'
+        if coefficients:
+            coefficientNames = self.coefficientNames
+            initArgs += ', ' + ', '.join('const ' + t + ' &' + n for t, n in zip(coefficients, coefficientNames))
+            keepAlive += ', ' + ', '.join('pybind11::keep_alive< 1, ' + str(i+3) + ' >()' for i in range(len(coefficientNames)))
+            initCall += ', ' + ', '.join(coefficientNames)
+        writer.emit('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
+                + 'return new UFLLocalFunction ( ' + initCall
+                + '); } ), ' + keepAlive + ' );')
+
+        for t, n in zip(self.constantTypes, self.constantNames):
+            te = "UFLLocalFunction::" + t
+            writer.emit('cls.def_property( "' + n + '", [] ( UFLLocalFunction &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( UFLLocalFunction &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        writer.emit('cls.def_property_readonly( "virtualized", [] ( UFLLocalFunction& ) -> bool { return '+str(self.virtualize).lower()+';});')
+
+        writer.closePythonModule(name)
+
+        source = writer.writer.getvalue()
+        writer.close()
+        return source
 
 
-def generateCode(predefined, tensor, coefficients, tempVars=True):
-    from dune.ufl import codegen
-    keys = tensor.keys()
-    expressions = [tensor[i] for i in keys]
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
-    result = Variable('auto', 'result')
-    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
+def init(lf, gridView, name, order, *args, **kwargs):
+    coefficients = kwargs.pop('coefficients', dict())
+    coefficientNames = lf._coefficientNames
+    if len(args) == 1 and isinstance(args[0], dict):
+        coefficients.update(args[0])
+    args = []
 
+    args += [None] * (len(coefficientNames) - len(args))
 
-def UFLFunction(grid, name, order, expr, virtualize=True, **kwargs):
-    import ufl
-    from dune.ufl import GridFunction
-    from dune.ufl.tensors import ExprTensor
+    for name, value in kwargs.items():
+        try:
+            i = coefficientNames[name]
+        except KeyError:
+            raise ValueError('No such coefficent: ' + name + '.')
+
+        if args[i] is not None:
+            raise ValueError('Coefficient already given as positional argument: ' + name + '.')
+        args[i] = value
+
+    for key, value in coefficients.items():
+        if isinstance(key, Coefficient):
+            try:
+                i = lf._renumbering[key]
+            except AttributeError:
+                raise ValueError('Cannot map UFL coefficients, because model was not generated from UFL form.')
+            except KeyError:
+                raise ValueError('No such coefficient: ' + str(key) + '.')
+        elif isString(key):
+            try:
+                i = coefficientNames[key]
+            except KeyError:
+                raise ValueError('No such coefficent: ' + key + '.')
+        else:
+            raise ValueError('Expecting keys of coefficient map to be strings or  intances of ufl.Coefficient.')
+        if args[i] is not None:
+            raise ValueError('Coefficient already given as positional or keyword argument: ' + str(key) + '.')
+        args[i] = value
+
+    if hasattr(lf, '_renumbering'):
+        for c, i in lf._renumbering.items():
+            if isinstance(c, GridFunction):
+                if args[i] is None:
+                    args[i] = c.gf
+
+    if any(arg is None for arg in args):
+        missing = [name for name, i in coefficientNames.items() if args[i] is None]
+        raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
+
+    lf._init(gridView,name,order,*args)
+
+def setConstant(lf, index, value):
+    try:
+        index = lf._renumbering[index]
+    except KeyError:
+        pass
+    lf._setConstant(index, value)
+
+def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True, **kwargs):
     if type(expr) == list or type(expr) == tuple:
         expr = ufl.as_vector(expr)
-    if not isinstance(expr, ufl.core.expr.Expr):
-        return None
-    _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-    coef = set(c)
-    idxConst = 0
-    idxCoeff = 0
-    coefficients = []
-    for coefficient in coef:
-        if coefficient.is_cellwise_constant():
-            idx = idxConst
-            idxConst += 1
-            field = None  # must be improved for 'complex'
-            dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
-        else:
-            idx = idxCoeff
-            idxCoeff += 1
-            field = coefficient.ufl_function_space().field()
-            dimR = coefficient.ufl_shape[0]
-
-        try:
-            coeffName = getattr(coefficient, "name")
-        except AttributeError:
-            coeffName = str(coefficient)
-        coefficients.append({ \
-                    'name' : coeffName, \
-                    'number' : idx, \
-                    'counter' : coefficient.count(), \
-                    'dimRange' : dimR,\
-                    'constant' : coefficient.is_cellwise_constant(),
-                    'field': field } )
-
-    if expr.ufl_shape == ():
-        expr = ufl.as_vector([expr])
-    dimR = expr.ufl_shape[0]
-    dimD = grid.dimension
-
-    writer = SourceWriter(ListWriter())
-    cellGeometry = UnformattedExpression('auto', 'entity().geometry()')
-    maxCellEdgeLength = ufl.MaxCellEdgeLength(ufl.triangle)
-    predefined = {}
-    predefined[maxCellEdgeLength] = maxEdgeLength(cellGeometry)
-
-    writer.emit(generateCode(predefined, ExprTensor((dimR, ), [expr[int(i)] for i in range(dimR)]), coefficients, False), context=Method('void', 'evaluate'))
-    code = '\n'.join(writer.writer.lines)
-    evaluate = code.replace("result", "value")
     try:
-        jac = []
-        for r in range(dimR):
-            jacForm = [\
-                ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
-                    ufl.grad(expr)[r, d]*ufl.dx\
-                ))) for d in range(dimD)]
-            jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(dimD)] )
-        jac = ufl.as_matrix(jac)
-        writer = SourceWriter(ListWriter())
-        writer.emit(generateCode({}, ExprTensor((dimR, dimD), jac), coefficients, False), context=Method('void', 'jacobian'))
-        code = '\n'.join(writer.writer.lines)
-        jacobian = code.replace("result", "value")
-        code = {"evaluate" : evaluate, "jacobian" : jacobian}
+        if expr.ufl_shape == ():
+            expr = ufl.as_vector([expr])
     except:
-        code = {"evaluate" : evaluate}
+        return None
 
-    Gf = gridFunction(grid, code, coefficients, None, virtualize).GFWrapper
+    # set up the source class
+    source = UFLFunctionSource(grid._typeName, grid._includes, expr,
+            name,order,
+            tempVars=tempVars,virtualize=virtualize)
 
-    coefficients = kwargs.pop("coefficients", {})
-    fullCoeff = {c:c.gf for c in coef if isinstance(c, GridFunction)}
-    fullCoeff.update(coefficients)
-    kwargs["coefficients"] = fullCoeff
-    return Gf(name, order, grid, **kwargs)
+    _, coefficients = ufl.algorithms.analysis.extract_arguments_and_coefficients(source.expr)
+    numCoefficients = len(coefficients)
+    if renumbering is None:
+        renumbering = dict()
+        renumbering.update((c, i) for i, c in enumerate(sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())))
+        renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
+    coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
 
+    # call code generator
+    from dune.generator import builder
+    module = builder.load(source.name(), source, "localfunctionufl")
 
-def gridFunction(grid, code, coefficients, constants, virtualize=True):
-    startTime = timeit.default_timer()
-
-    if type(code) is not dict:
-        code = {'eval': code}
-    cppCode = ''
-    eval = ''
-    jac = ''
-    hess = ''
-    for key, value in code.items():
-        if key == 'eval' or key == 'evaluate':
-            eval, dimRange = BaseModel.codeDimRange(value)
-            cppCode += eval + '\n'
-        elif key == 'jac' or key == 'jacobian':
-            jac, dimRange = BaseModel.codeDimRange(value)
-            cppCode += jac + '\n'
-        elif key == 'hess' or key == 'hessian':
-            hess, dimRange = BaseModel.codeDimRange(value)
-            cppCode += hess + '\n'
-        else:
-            print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
-            exit(1)
-
-    if isinstance(coefficients, dict):
-        for entry in coefficients.items():
-            cppCode += entry[0]
-    else:
-        for coefficient in coefficients:
-            cppCode += str(coefficient.get('name'))
-
-    myCodeHash = hashIt(cppCode)
-    locname = 'LocalFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
-    pyname = 'localfunction_' + myCodeHash + '_' + hashIt(grid._typeName)
-    wrappername = 'GridFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
-
-    base = BaseModel(dimRange, myCodeHash)
-    if isinstance(coefficients, dict):
-        eval = base.codeCoefficient(eval, coefficients, constants)
-
-        jac = base.codeCoefficient(jac, coefficients, constants)
-        hess = base.codeCoefficient(hess, coefficients, constants)
-    else:
-        base.coefficients.extend(coefficients)
-
-    code = []
-
-    code.append(Include("config.h"))
-
-    code += [Include(i) for i in grid._includes]
-
-    code.append(Include("dune/python/pybind11/pybind11.h"))
-    code.append(Include("dune/python/pybind11/extensions.h"))
-    code.append(Include("dune/fem/space/common/functionspace.hh"))
-    code.append(Include("dune/fem/function/common/localfunctionadapter.hh"))
-
-    code.append(Include("dune/fempy/py/grid/gridpart.hh"))
-    code.append(Include("dune/fempy/py/grid/function.hh"))
-    code.append(Include("dune/fempy/geometry/edgelength.hh"))
-
-    struct = Struct(locname, targs=['class GridPart', 'class Range', 'class... Coefficients'])
-    struct.append(base.pre(name=locname))
-
-    struct.append(TypeAlias('LocalCoordinateType', 'typename EntityType::Geometry::LocalCoordinate'))
-
-    evaluate = Method('void', 'evaluate', args=['const Point &x', 'RangeType &value'], targs=['class Point'], const=True)
-    if eval:
-        eval = eval.strip()
-        if 'xGlobal' in eval:
-            evaluate.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
-        evaluate.append(UnformattedBlock(eval.split('\n')))
-    else:
-        evaluate.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "evaluate not implemented." );'));
-    struct.append(evaluate)
-
-    jacobian = Method('void', 'jacobian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
-    if jac:
-        jac = jac.strip()
-        if 'xGlobal' in jac:
-            jacobian.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
-        jacobian.append(UnformattedBlock(jac.split('\n')))
-    else:
-        jacobian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented." );'));
-    struct.append(jacobian)
-
-    hessian = Method('void', 'hessian', args=['const Point &x', 'HessianRangeType &value'], targs=['class Point'], const=True)
-    if hess:
-        hess = hess.strip()
-        if 'xGlobal' in hess:
-            hessian.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
-        hessian.append(UnformattedBlock(hess.split('\n')))
-    else:
-        hessian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "hessian not implemented." );'));
-    struct.append(hessian)
-
-    struct.append(base.post())
-    code.append(struct)
-
-    code.append(TypeAlias('GridPartType', 'Dune::FemPy::GridPart< ' + grid._typeName + ' >'))
-    code.append(TypeAlias('GridView', 'typename GridPartType::GridViewType'))
-    code.append(declareFunctionSpace("typename GridPartType::ctype", "double", UnformattedExpression("int", "GridPartType::dimensionworld"), dimRange))
-
-    if base.coefficients:
-        code.append(TypeAlias('LocalFunction', locname + '< GridPartType, RangeType '
-            + ''.join([(', Dune::FemPy::VirtualizedLocalFunction< GridPartType, Dune::FieldVector< ' \
-                      + SourceWriter.cpp_fields(coefficient['field']) + ', ' + str(coefficient['dimRange']) + ' > >') \
-                      for coefficient in base.coefficients if not coefficient["constant"]]) + ' >'))
-    else:
-        code.append(TypeAlias('LocalFunction', locname + '< GridPartType, RangeType >'))
-    code.append(TypeAlias('GridFunction', 'Dune::Fem::LocalFunctionAdapter< LocalFunction >'))
-
-    wrapper = Struct(wrappername, targs=['class GridView', 'class Range'], bases=['GridFunction'])
-    wrapper.append(TypeAlias('BaseType', 'GridFunction'))
-    wrapper.append(Constructor(args=['const std::string name', 'int order', 'pybind11::handle gridView'], init=['BaseType(name, LocalFunction(), Dune::FemPy::gridPart< GridView >( gridView ), order )']))
-    wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('auto', 'this->localFunctionImpl()'))))
-    code.append(wrapper)
-
-    typeName = wrappername + '< GridView, RangeType >'
-    code.append(TypeAlias('GFWrapper', typeName))
-
-    writer = SourceWriter(StringWriter())
-    writer.emit(code)
-
-    if base.coefficients:
-        base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
-
-    writer.openPythonModule(pyname)
-    writer.emit('')
-    writer.emit('// export function class')
-    writer.emit('')
-    if not virtualize:
-        writer.emit('pybind11::class_< GFWrapper > cls ='+\
-          'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
-          'Dune::Python::GenerateTypeName("'+typeName+'"),'+\
-          'Dune::Python::IncludeFiles{"python/dune/generated/'+pyname+'.cc"}'+\
-          ').first;')
-    else:
-        virtTypeName = "Dune::FemPy::VirtualizedGridFunction<"+\
-                "Dune::FemPy::GridPartAdapter<"+grid._typeName+">, "+\
-                "Dune::FieldVector<double,"+str(dimRange)+">>"
-        writer.emit('pybind11::class_< GFWrapper > cls ='+\
-          'Dune::Python::insertClass<GFWrapper>(module,"GFWrapper",'+\
-          'Dune::Python::GenerateTypeName("'+virtTypeName+'"),'+\
-          'Dune::Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"}'+\
-          ').first;')
-    writer.emit('Dune::FemPy::registerGridFunction( module, cls );')
-    writer.emit('')
-    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridView', 'pybind11::handle')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
-    writer.emit('')
-    writer.closePythonModule(pyname)
-
-    builder.load(pyname, writer.writer.getvalue(), "localFunction")
-    writer.close()
-
-    return importlib.import_module('dune.generated.' + pyname)
+    if not hasattr(module.UFLLocalFunction, "_init"):
+        setattr(module.UFLLocalFunction, '_coefficientNames', {n: i for i, n in enumerate(source.coefficientNames)})
+        module.UFLLocalFunction._init = module.UFLLocalFunction.__dict__['__init__']
+        setattr(module.UFLLocalFunction, '__init__', init)
+        if renumbering is not None:
+            setattr(module.UFLLocalFunction, '_renumbering', renumbering)
+            module.UFLLocalFunction._setConstant = module.UFLLocalFunction.__dict__['setConstant']
+            setattr(module.UFLLocalFunction, 'setConstant', setConstant)
+        setattr(module.UFLLocalFunction, "constantShape", source._constantShapes)
+    return module

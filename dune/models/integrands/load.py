@@ -10,8 +10,9 @@ from dune.source.cplusplus import SourceWriter
 from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
+from dune.ufl.codegen import uflSignature
 
-from .ufl import compileUFL, integrandsSignature
+from .ufl import compileUFL
 
 def init(integrands, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
@@ -88,7 +89,7 @@ class Source(object):
         self.args = args
 
     def signature(self):
-        return integrandsSignature(self.integrands, *self.args)
+        return uflSignature(self.integrands, *[a for a in self.args if isinstance(a,DirichletBC)])
 
     def name(self):
         from dune.common.hashit import hashIt
@@ -124,7 +125,7 @@ class Source(object):
             if self.virtualize:
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
             else:
-                for c in coefficients:
+                for c in integrands._coefficients:
                     for i in c._includes:
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/integrands.hh"))
@@ -139,7 +140,7 @@ class Source(object):
             if self.virtualize:
                 coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in integrands._coefficients]
             else:
-                coefficients = [c._typeName for c in coefficients]
+                coefficients = [c._typeName for c in integrands._coefficients]
         else:
             coefficients = []
         integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
@@ -205,6 +206,7 @@ def load(grid, integrands, *args, renumbering=None, tempVars=True, virtualize=Tr
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)
     setattr(module.Integrands, "_rangeValueType", rangeValueTuple)
+    # redirect the __init__ method to take care of setting coefficient and renumbering
     if not hasattr(module.Integrands, "_init"):
         setattr(module.Integrands, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
         module.Integrands._init = module.Integrands.__dict__['__init__']

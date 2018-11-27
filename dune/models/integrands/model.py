@@ -27,7 +27,7 @@ class Integrands(codegen.ModelClass):
         length as the constants tuple. For constants without parameter name,
         pass None instead of a string.
         """
-        codegen.ModelClass.__init__(self, uflExpr)
+        codegen.ModelClass.__init__(self, "Integrands", uflExpr)
 
         if rangeValue is None:
             rangeValue = domainValue
@@ -41,13 +41,6 @@ class Integrands(codegen.ModelClass):
         self.dimRange = rangeValue[0][0]
 
         self.field = "double"
-
-        self.init = None
-        self.vars = None
-        self.targs = ['class GridPart']
-        self.gridPartType = TypeAlias("GridPartType", "GridPart")
-        self.ctor_args = []
-        self.ctor_init = []
 
         self.interior = None
         self.linearizedInterior = None
@@ -68,31 +61,6 @@ class Integrands(codegen.ModelClass):
 
     def signature(self):
         return self._signature
-
-    def spatialCoordinate(self, x):
-        return UnformattedExpression('GlobalCoordinateType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
-
-    def facetNormal(self, x):
-        return UnformattedExpression('GlobalCoordinateType', 'intersection_.unitOuterNormal( ' + x + '.localPosition() )')
-
-    def cellVolume(self, side=None):
-        entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
-        return UnformattedExpression('auto', entity + '.geometry().volume()')
-
-    def cellGeometry(self, side=None):
-        entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
-        return UnformattedExpression('auto', entity + '.geometry()')
-
-    def facetArea(self):
-        return UnformattedExpression('auto', 'intersection_.geometry().volume()')
-
-    def facetGeometry(self):
-        return UnformattedExpression('auto', 'intersection_.geometry()')
-
-    def code(self, name='Integrands', targs=[]):
-        self.name = name
-        self.targs += targs
-        return codegen.generateModelClass(self)
 
     def methods(self,code):
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))

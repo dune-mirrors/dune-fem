@@ -159,7 +159,7 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     if virtualize is None:
         virtualize = integrands.virtualized
 
-    includes = integrands._includes
+    includes = [] # integrands._includes
     includes += space._includes + dfIncludes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
     includes += ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
