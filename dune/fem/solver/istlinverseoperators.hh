@@ -280,7 +280,10 @@ namespace Dune
 
       ISTLInverseOperator ( double redEps, double absLimit,
                             const SolverParameter & parameter )
-        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), parameter.verbose(), parameter.parameter() ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter.parameter() ) {}
+
+      ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
+        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter.parameter() ) {}
 
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,
                             const ParameterReader & parameter = Parameter::container() )

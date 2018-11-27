@@ -268,6 +268,15 @@ namespace Dune
         Fem::ForLoop< HessianAll, 0, setIterationSize >::apply( x, dofs, hessian, offset_, basisFunctionSetTuple_ );
       }
 
+      //! \brief evaluate the hessian of all basis functions and store the result in the hessians array
+      template< class QuadratureType, class DofVector, class HessianArray >
+      void hessianAll ( const QuadratureType &quad, const DofVector &dofs, HessianArray &hessians ) const
+      {
+        const int nop = quad.nop();
+        for( int qp = 0; qp < nop; ++qp )
+          hessianAll( quad[ qp ], dofs, hessians[ qp ] );
+      }
+
       //! \copydoc BasisFunctionSet::hessianAll( x, hessians )
       template< class Point, class HessianRangeArray >
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
