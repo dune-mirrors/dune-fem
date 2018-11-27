@@ -141,6 +141,30 @@ namespace Dune
         }
       };
 
+
+      // SetSelectedBase
+      // ---------------
+
+      template< class DiscreteFunction >
+      struct SetSelectedBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
+      {
+        typedef typename DiscreteFunction::DofType DofType;
+
+        typedef Global::Set< DiscreteFunction > GlobalOperationType;
+
+        template< class Entity, class LocalDofVector >
+        void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
+        {
+          df.getLocalDofs ( entity, localDofVector );
+        }
+
+        template< class Entity, class LocalDofVector >
+        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
+        {
+          df.setLocalDofs( entity, localDofVector );
+        }
+      };
+
     } // namespace Assembly
 
   } // namespace Fem
@@ -194,6 +218,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::DofType DofType;
 
       typedef typename DiscreteFunctionType::RangeType RangeType;
+      typedef typename RangeType::field_type RangeFieldType;
       typedef typename DiscreteFunctionType::JacobianRangeType JacobianRangeType;
 
       typedef std::vector< DofType > LocalDofVectorType;

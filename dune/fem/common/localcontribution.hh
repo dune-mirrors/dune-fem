@@ -66,6 +66,8 @@ namespace Dune
       template< class DiscreteFunction, class = void >
       struct SetBase;
 
+      template< class DiscreteFunction, class = void >
+      struct SetSelectedBase;
 
 
       // Add
@@ -102,6 +104,17 @@ namespace Dune
         using SetBase< DiscreteFunction >::SetBase;
       };
 
+
+      // SetSelected
+      // ---
+
+      template< class DiscreteFunction >
+      struct SetSelected
+        : public SetSelectedBase< DiscreteFunction >
+      {
+        using SetSelectedBase< DiscreteFunction >::SetSelectedBase;
+      };
+
     } // namespace Assembly
 
 
@@ -127,6 +140,13 @@ namespace Dune
 
     template< class DiscreteFunction >
     using SetLocalContribution = LocalContribution< DiscreteFunction, Assembly::Set >;
+
+
+    // SetSelectedLocalContribution
+    // ----------------------------
+
+    template< class DiscreteFunction >
+    using SetSelectedLocalContribution = LocalContribution< DiscreteFunction, Assembly::SetSelected >;
 
   } // namespace Fem
 
