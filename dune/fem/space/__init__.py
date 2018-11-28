@@ -35,6 +35,23 @@ def interpolate(space, func, name=None, **kwargs):
         name = func.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=func, **kwargs)
+def project(space, func, name=None, **kwargs):
+    """project a (discrete) function into a discrete function space
+
+    Args:
+        space: discrete function space to project into
+        func:  function to project
+        name:  name of the resulting discrete function
+
+    Returns:
+        DiscreteFunction: the constructed discrete function
+    """
+    if name is None:
+        name = func.name
+    # assert func.dimRange == space.dimRange, "range dimension mismatch"
+    df = function.discreteFunction(space, name=name, expr=None, **kwargs)
+    df.project(func)
+    return df
 
 def dfInterpolate(self, f):
     if ufl and (isinstance(f, list) or isinstance(f, tuple)):
@@ -58,6 +75,28 @@ def dfInterpolate(self, f):
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
                 func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
     return self._interpolate(func)
+def dfProject(self, f):
+    if ufl and (isinstance(f, list) or isinstance(f, tuple)):
+        if isinstance(f[0], ufl.core.expr.Expr):
+            f = ufl.as_vector(f)
+    if ufl and isinstance(f, GridFunction):
+        func = f.gf
+    elif ufl and isinstance(f, ufl.core.expr.Expr):
+        func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+    else:
+        try:
+            gl = len(inspect.getargspec(f)[0])
+            func = None
+        except TypeError:
+            func = f
+        if func is None:
+            if gl == 1:   # global function
+                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 2: # local function
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 3: # local function with self argument (i.e. from @gridFunction)
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+    return self._project(func)
 
 def localContribution(self, assembly):
     if assembly == "set":
@@ -71,6 +110,8 @@ def addDFAttr(module, cls, storage):
     setattr(cls, "_module", module)
     setattr(cls, "_storage", storage)
     setattr(cls, "interpolate", dfInterpolate )
+    if hasattr(cls,"_project"):
+        setattr(cls, "project", dfProject )
     setattr(cls, "localContribution", localContribution )
 
 def addBackend(Df,backend):
@@ -99,6 +140,9 @@ def addAttr(module, cls, field):
     setattr(cls, "_module", module)
     setattr(cls, "field", field)
     setattr(cls, "interpolate", interpolate)
+    DF = module.DiscreteFunction
+    if hasattr(DF,"_project"):
+        setattr(cls, "project", project)
     setattr(cls, "function", function.discreteFunction)
 
 def addStorage(obj, storage):
