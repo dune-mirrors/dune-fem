@@ -327,7 +327,7 @@ def fieldVectorType(shape, field = None, useScalar = False):
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
 class ModelClass():
-    def __init__(self, name, uflExpr,dimRange=None):
+    def __init__(self, name, uflExpr, virtualize, dimRange=None):
         self.className = name
         self.targs = ['class GridPart']
         if dimRange is not None:
@@ -389,6 +389,13 @@ class ModelClass():
         if len(self._parameterNames) != len(self._constants):
             raise ValueError("Length of parameterNames must match length of constants")
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
+        if self._coefficients:
+            if virtualize:
+                self.coefficientCppTypes = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in self._coefficients]
+            else:
+                self.coefficientCppTypes = [c._typeName for c in self._coefficients]
+        else:
+            self.coefficientCppTypes = []
 
     @property
     def constantTypes(self):
@@ -710,15 +717,21 @@ def generateMethod(struct,expr, cppType, name,
     struct.append(meth)
 
 def uflSignature(form,*args):
-    from ufl import dot,dx
+    import ufl
+    from ufl.algorithms.renumbering import renumber_indices
     sig = ''
-    additional = [str(arg) for arg in args]
+    hashList  = [str(arg) for arg in args if not isinstance(arg,ufl.core.expr.Expr)]
+    #   the following fails in the ufl algorithm in the rentrant corner problem:
+    #   phi = atan_2(x[1], x[0]) + conditional(x[1] < 0, 2*math.pi, 0)
+    #   create.function("ufl",gridview=grid,name="tmp",order=1,ufl=phi)
+    # hashList += [str(renumber_indices(arg)) for arg in args if isinstance(arg,ufl.core.expr.Expr)]
+    for arg in args:
+        if isinstance(arg,ufl.core.expr.Expr):
+            try:
+                hashList += [str(renumber_indices(arg))]
+            except ValueError:  # I don't think this should happen
+                hashList += [str(arg)]
+
     if form is not None:
-        sig = form.signature()
-    else:
-        sig = ''
-        assert len(additional) > 0
-    if len(additional) > 0:
-        additional.append(sig)
-        sig = hashIt( additional )
-    return sig
+        hashList.append(form.signature())
+    return hashIt( hashList )

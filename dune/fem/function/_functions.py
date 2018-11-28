@@ -67,7 +67,6 @@ def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
             virtualize=virtualize, *args, **kwargs)
     if Func is None:
         return None
-    Func = Func.UFLLocalFunction
     func = Func(gridview,name,order,*args,**kwargs)
     return func.as_ufl() if func is not None else None
 

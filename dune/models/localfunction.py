@@ -34,7 +34,7 @@ class UFLFunctionSource(codegen.ModelClass):
             name,order,
             tempVars=True, virtualize=True):
         dimRange = expr.ufl_shape[0]
-        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],dimRange=dimRange)
+        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],virtualize,dimRange=dimRange)
         self.evalCode = []
         self.jacCode = []
         self.hessCode = []
@@ -105,7 +105,7 @@ class UFLFunctionSource(codegen.ModelClass):
                 pass
 
     def signature(self):
-        return uflSignature(None, self.expr)
+        return uflSignature(None, *self.coefficientCppTypes, *self._constantNames, self.expr)
 
     def name(self):
         from dune.common.hashit import hashIt
@@ -145,13 +145,7 @@ class UFLFunctionSource(codegen.ModelClass):
         code.append(nameSpace)
 
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        if self._coefficients:
-            if self.virtualize:
-                coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in self._coefficients]
-            else:
-                coefficients = [c._typeName for c in self._coefficients]
-        else:
-            coefficients = []
+        coefficients = self.coefficientCppTypes
         localFunctionName = nameSpace.name + '::UFLLocalFunction< ' + ', '.join(['GridPart'] + coefficients) + ' >'
         code.append(TypeAlias('UFLLocalFunction', localFunctionName))
 
@@ -235,7 +229,7 @@ def init(lf, gridView, name, order, *args, **kwargs):
         missing = [name for name, i in coefficientNames.items() if args[i] is None]
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
-    lf._init(gridView,name,order,*args)
+    lf.base.__init__(lf,gridView,name,order,*args)
 
 def setConstant(lf, index, value):
     try:
@@ -252,6 +246,9 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
             expr = ufl.as_vector([expr])
     except:
         return None
+
+    if len(expr.ufl_shape) > 1:
+        raise AttributeError("can only generate grid functions from vector values UFL expressions not from expressions with shape=",expr.ufl_shape)
 
     # set up the source class
     source = UFLFunctionSource(grid._typeName, grid._includes, expr,
@@ -270,13 +267,15 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     from dune.generator import builder
     module = builder.load(source.name(), source, "localfunctionufl")
 
-    if not hasattr(module.UFLLocalFunction, "_init"):
-        setattr(module.UFLLocalFunction, '_coefficientNames', {n: i for i, n in enumerate(source.coefficientNames)})
-        module.UFLLocalFunction._init = module.UFLLocalFunction.__dict__['__init__']
-        setattr(module.UFLLocalFunction, '__init__', init)
-        if renumbering is not None:
-            setattr(module.UFLLocalFunction, '_renumbering', renumbering)
-            module.UFLLocalFunction._setConstant = module.UFLLocalFunction.__dict__['setConstant']
-            setattr(module.UFLLocalFunction, 'setConstant', setConstant)
-        setattr(module.UFLLocalFunction, "constantShape", source._constantShapes)
-    return module
+    class LocalFunction(module.UFLLocalFunction):
+        def __init__(self, gridView, name, order, *args, **kwargs):
+            self.base = module.UFLLocalFunction
+            init(self, gridView, name, order, *args, **kwargs)
+
+    setattr(LocalFunction, '_coefficientNames', {n: i for i, n in enumerate(source.coefficientNames)})
+    if renumbering is not None:
+        setattr(LocalFunction, '_renumbering', renumbering)
+        LocalFunction._setConstant = module.UFLLocalFunction.__dict__['setConstant']
+        setattr(LocalFunction, 'setConstant', setConstant)
+    setattr(LocalFunction, "constantShape", source._constantShapes)
+    return LocalFunction

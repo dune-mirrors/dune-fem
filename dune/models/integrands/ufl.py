@@ -14,7 +14,6 @@ from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl import UFLException
-from dune.ufl.codegen import uflSignature
 from dune.ufl.tensors import ExprTensor
 from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
 
@@ -184,7 +183,8 @@ def toFileName(value):
     value = unicode(re.sub('[-\s]+', '-', value))
     return value
 
-def compileUFL(form, *args, tempVars=True):
+
+def _compileUFL(integrands, form, *args, tempVars=True):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
     if not isinstance(form, Form):
@@ -217,9 +217,6 @@ def compileUFL(form, *args, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(uflSignature(form,*dirichletBCs),
-                            (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
-                            uflExpr)
     try:
         integrands.field = u.ufl_function_space().field()
     except AttributeError:
@@ -363,3 +360,29 @@ def compileUFL(form, *args, tempVars=True):
         integrands.dirichlet = [switch]
 
     return integrands
+
+def compileUFL(form, *args, tempVars=True, virtualize=True):
+    if isinstance(form, Equation):
+        form = form.lhs - form.rhs
+
+    if not isinstance(form, Form):
+        raise ValueError("ufl.Form or ufl.Equation expected.")
+
+    # added for dirichlet treatment same as elliptic model
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+
+    uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
+    if len(form.arguments()) < 2:
+        raise ValueError("Integrands model requires form with at least two arguments.")
+
+    phi, u = form.arguments()
+
+    derivatives = gatherDerivatives(form, [phi, u])
+
+    derivatives_phi = derivatives[0]
+    derivatives_u = derivatives[1]
+
+    integrands = Integrands((d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
+                            uflExpr,virtualize)
+
+    return _compileUFL(integrands,form,*args,tempVars)

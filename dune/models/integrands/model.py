@@ -9,11 +9,10 @@ from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 
 
 class Integrands(codegen.ModelClass):
-    def __init__(self, signature, domainValue, rangeValue=None, uflExpr=None):
+    def __init__(self, domainValue, rangeValue=None, uflExpr=None, virtualize=True):
         """construct new integrands
 
         Args:
-            signature:        unique signature for these integrands
             domainValue:      structure of domain value tuple
             rangeVlue:        structure of range value tuple
 
@@ -27,12 +26,13 @@ class Integrands(codegen.ModelClass):
         length as the constants tuple. For constants without parameter name,
         pass None instead of a string.
         """
-        codegen.ModelClass.__init__(self, "Integrands", uflExpr)
+        codegen.ModelClass.__init__(self, "Integrands", uflExpr, virtualize)
+
+        self.form = uflExpr[0]
 
         if rangeValue is None:
             rangeValue = domainValue
 
-        self._signature = signature
         domainValue = tuple(domainValue)
         rangeValue  = tuple(rangeValue)
         self.domainValueTuple = 'std::tuple< ' + ', '.join(fieldTensorType(v) for v in domainValue) + ' >'
@@ -60,7 +60,7 @@ class Integrands(codegen.ModelClass):
         self.arg_x = Variable("const Point &", "x")
 
     def signature(self):
-        return self._signature
+        return self.form.signature()
 
     def methods(self,code):
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))
