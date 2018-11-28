@@ -152,6 +152,13 @@ namespace Dune
           extension_ = extension;
         }
 
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          indices.resize( numDofs(element) );
+          std::fill(indices.begin(),indices.end(),false);
+          indices[i] = true;
+        }
+
         /* \} */
 
         /* \name AdaptiveDofMapper interface methods
