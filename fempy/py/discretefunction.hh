@@ -19,6 +19,7 @@
 #include <utility>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/grid.hh>
@@ -261,6 +262,29 @@ namespace Dune
         registerSubDiscreteFunction( cls, PriorityTag< 42 >() );
       }
 
+      template< class GridFunction, class DiscreteFunction, class... options >
+      inline static auto registerProjection ( pybind11::class_< DiscreteFunction, options... > cls, PriorityTag< 1 > )
+      -> std::enable_if_t<std::is_void< decltype(
+           Fem::VtxProjectionImpl::project(
+             std::declval<const GridFunction&>(),
+             std::declval<DiscreteFunction&>()
+           )) >::value>
+      {
+        using pybind11::operator""_a;
+        cls.def( "_project", [] ( DiscreteFunction &self, const GridFunction &gridFunction ) {
+            Fem::VtxProjectionImpl::project( gridFunction, self );
+          }, "gridFunction"_a );
+      }
+
+      template< class GridFunction, class DiscreteFunction, class... options >
+      inline static void registerProjection ( pybind11::class_< DiscreteFunction, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class GridFunction, class DiscreteFunction, class... options >
+      inline static void registerProjection ( pybind11::class_< DiscreteFunction, options... > cls )
+      {
+        registerProjection<GridFunction>( cls, PriorityTag< 42 >() );
+      }
 
 
       // registerDiscreteFunction
@@ -317,13 +341,14 @@ namespace Dune
         cls.def( "__imul__", [] ( DF &self, double a ) { return self *= a; }, "a"_a );
 
         typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
-        cls.def( "_interpolate", [] ( DF &self, const GridFunction &gf ) {
-            Fem::interpolate( gf, self );
+        cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
+            Fem::interpolate( gridFunction, self );
           }, "gridFunction"_a );
         cls.def( "_interpolate", [] ( DF &self, typename Space::RangeType value ) {
             const auto gf = simpleGridFunction( self.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 );
             Fem::interpolate( gf, self );
           }, "value"_a );
+        registerProjection<GridFunction>(cls);
 
 
         addDofVector(cls);
