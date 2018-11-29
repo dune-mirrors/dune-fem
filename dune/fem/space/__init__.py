@@ -241,7 +241,7 @@ def module(field, includes, typeName, *args,
 
     module = generator.load(includes+dfIncludes, [typeName,dfTypeName], moduleName,
                             ((*args,), (*dfArgs,)),
-                            dynamicAttr=[True,False],
+                            dynamicAttr=[True,True],
                             bufferProtocol=[False,True],
                             options=[["std::shared_ptr<DuneType>"],[]],
                             defines=defines)

@@ -137,25 +137,19 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     return df.as_ufl()
 
 def tupleDiscreteFunction(*spaces, **kwargs):
-    from dune.fem.discretefunction import module, addAttr
+    # from dune.fem.discretefunction import module, addAttr
+    name = kwargs.get("name", "")
     try:
         tupleSpace = spaces[0]
         spaces = spaces[0].components
     except AttributeError:
         tupleSpace = dune.fem.space.tuple(*spaces)
-    dfIncludes = (space.storage[1] for space in spaces)
-    dfTypeNames = (space.storage[2] for space in spaces)
-    includes = sum(dfIncludes, ["dune/fem/function/tuplediscretefunction.hh"])
-    typeName = "Dune::Fem::TupleDiscreteFunction< " + ", ".join(dfTypeNames) + " >"
-    name = kwargs.get("name", "")
-    df = module(tupleSpace.storage, includes, typeName, dynamicAttr=True).DiscreteFunction(tupleSpace, name)
-    # create a discrete function for each space to ensure the DiscreteFunction is registered with pybind11
-    for s in spaces:
-        discreteFunction(s, "")
+    DiscreteFunction = tupleSpace.DiscreteFunction
+    df = DiscreteFunction(tupleSpace,name)
     compNames = kwargs.get("components", None)
     if not compNames is None:
         components = df.components
         assert len(compNames) == len(components)
         for c, n in zip(components, compNames):
-            df.__dict__[n] = c
+            setattr(df,n,c)
     return df.as_ufl()

@@ -442,7 +442,11 @@ def product(*spaces, **kwargs):
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
-    mod = module(combinedField, includes, typeName, constructor)
+
+    storage = lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
+                        "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
+                        None,None,None]
+    mod = module(combinedField, includes, typeName, constructor, storage=storage)
     try:
         mod.Space.componentNames = kwargs["components"]
     except KeyError:
@@ -459,10 +463,11 @@ def product(*spaces, **kwargs):
             DiscreteFunction: the constructed discrete function
         """
         if name is None: name = func.name
-        try:
-            df = tupleDiscreteFunction(space, name=name, components=space.componentNames,**kwargs)
-        except AttributeError:
-            df = tupleDiscreteFunction(space, name=name, **kwargs)
+        print(name,space.componentNames)
+        # try:
+        df = tupleDiscreteFunction(space, name=name, components=space.componentNames,**kwargs)
+        # except AttributeError:
+        #     df = tupleDiscreteFunction(space, name=name, **kwargs)
         df.interpolate(func)
         return df
     setattr(mod.Space, "interpolate", interpolate)
