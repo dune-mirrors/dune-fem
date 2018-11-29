@@ -189,6 +189,18 @@ class GridFunction(ufl.Coefficient):
             result = tocontainer(result)
             # result.func.__doc__ = doc
         return result
+    def __setattr__(self, item, v):
+        super(GridFunction, self).__setattr__(item, v)
+        if item == 'gf' or item == '__impl__' or item == 'GridFunctionClass':
+            super(GridFunction, self).__setattr__(item, v)
+        else:
+            propobj = getattr(self.gf.__class__, item, None)
+            if isinstance(propobj, property):
+                if propobj.fset is None:
+                    raise AttributeError("can't set attribute")
+                propobj.fset(self, v)
+            else:
+                super(GridFunction, self).__setattr__(item, v)
     def __repr__(self):
         return repr(self.__impl__)
     def __str__(self):
