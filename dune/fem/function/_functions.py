@@ -66,7 +66,7 @@ def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
             ufl, renumbering=None,
             virtualize=virtualize, *args, **kwargs)
     if Func is None:
-        return None
+        raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
     func = Func(gridview,name,order,*args,**kwargs)
     return func.as_ufl() if func is not None else None
 
