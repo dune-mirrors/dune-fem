@@ -930,8 +930,10 @@ namespace Dune
 
   template <>
   struct IsNumber< Double > : public IsNumber< double > {};
+#if DUNE_VERSION_GT(DUNE_COMMON, 2, 6)
   template <>
   struct HasNaN < Double > : public HasNaN < double > {};
+#endif
 
 } // namespace Dune
 
