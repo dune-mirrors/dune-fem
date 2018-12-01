@@ -24,10 +24,11 @@
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/operator/matrix/functor.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/mapper/petsc.hh>
 #include <dune/fem/storage/objectstack.hh>
+
+#include <dune/fem/solver/parameter.hh>
 
 #if HAVE_PETSC
 
@@ -39,16 +40,16 @@ namespace Dune
   namespace Fem
   {
 
-    struct PetscMatrixParameter
-      : public MatrixParameter
+    struct PetscSolverParameter : public LocalParameter< SolverParameter, PetscSolverParameter >
     {
-      typedef MatrixParameter BaseType;
+      typedef LocalParameter< SolverParameter, PetscSolverParameter > BaseType;
 
-      std::string keyPrefix_;
+      PetscSolverParameter( const std::string keyPrefix = "petscmatrix." )
+        : BaseType( keyPrefix )
+      {}
 
-      PetscMatrixParameter( const std::string keyPrefix = "petscmatrix." )
-        : BaseType( keyPrefix ),
-          keyPrefix_( keyPrefix )
+      PetscSolverParameter( const SolverParameter* other )
+        : BaseType( other )
       {}
 
       bool viennaCL () const {
@@ -58,7 +59,6 @@ namespace Dune
       bool blockedMode () const {
         return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", true );
       }
-
     };
 
     /* ========================================
@@ -127,7 +127,7 @@ namespace Dune
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
       PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
-                            const MatrixParameter& param = PetscMatrixParameter() )
+                            const PetscSolverParameter& param = PetscSolverParameter() )
         : domainMappers_( domainSpace ),
           rangeMappers_( rangeSpace ),
           localMatrixStack_( *this ),
@@ -137,7 +137,7 @@ namespace Dune
       {}
 
       PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
-                            const MatrixParameter& param = PetscMatrixParameter() )
+                            const PetscSolverParameter& param = PetscSolverParameter() )
         : PetscLinearOperator( domainSpace, rangeSpace, param )
       {}
 

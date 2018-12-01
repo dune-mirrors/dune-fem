@@ -22,71 +22,15 @@
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/objectstack.hh>
-
 #include <dune/fem/operator/common/stencil.hh>
-
 #include <dune/fem/operator/matrix/functor.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
-
-    struct MatrixParameter
-      : public Dune::Fem::LocalParameter< MatrixParameter, MatrixParameter >
-    {
-
-      MatrixParameter( const std::string keyPrefix = "" )
-      {}
-
-      MatrixParameter( const ParameterReader &parameter, const std::string keyPrefix = "istl." )
-      {}
-
-      virtual double overflowFraction () const
-      {
-        return 1.0;
-      }
-
-      virtual int numIterations () const
-      {
-        return 0;
-      }
-
-      virtual double relaxation () const
-      {
-        return 1.0;
-      }
-
-      virtual int method () const
-      {
-        return 0;
-      }
-
-      virtual bool fastILUStorage () const { return false; }
-
-      virtual std::string preconditionName() const
-      {
-        return "None";
-      }
-
-      virtual bool viennaCL () const { return false; }
-      virtual bool blockedMode () const { return false; }
-    };
-
-
-    struct SparseRowMatrixParameter
-      : public MatrixParameter
-    {
-      typedef MatrixParameter BaseType;
-
-      SparseRowMatrixParameter( const std::string keyPrefix = "spmatrix." )
-        : BaseType( keyPrefix )
-      {}
-    };
-
-
-
 
     //! SparseRowMatrix
     template <class T>
@@ -402,14 +346,14 @@ namespace Dune
       //! construct matrix object
       SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                              const RangeSpaceType &rangeSpace,
-                             const MatrixParameter& param = SparseRowMatrixParameter() )
+                             const SolverParameter& param = SolverParameter() )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         domainMapper_( domainSpace_.blockMapper() ),
         rangeMapper_( rangeSpace_.blockMapper() ),
         sequence_( -1 ),
         matrix_(),
-        preconditioning_( param.method() != 0 ),
+        preconditioning_( param.preconditionMethod() != SolverParameter::none ),
         localMatrixStack_( *this )
       {}
 

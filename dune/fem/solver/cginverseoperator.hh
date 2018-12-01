@@ -9,6 +9,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/solver/diagonalpreconditioner.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
@@ -183,6 +184,14 @@ namespace Dune
                             const ParameterReader &parameter = Parameter::container() )
           : solver_( absLimit, maxIter, verbose, parameter ),
             parameter_( parameter )
+        {}
+
+        CGInverseOperator ( const SolverParameter& param = SolverParameter(Parameter::container() ) )
+          : solver_( param.linAbsTolParameter(),
+                     param.maxLinearIterationsParameter(),
+                     param.verbose(),
+                     param.parameter() ),
+            parameter_( param.parameter() )
         {}
 
 
@@ -392,6 +401,11 @@ namespace Dune
 
       // Preconditioner is to approximate op^-1 !
       typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
+
+      CGInverseOperator ( const SolverParameter& param = SolverParameter(Parameter::container()) )
+        : BaseType( param )
+      {}
+
 
       /** \brief constructor of CGInverseOperator
        *

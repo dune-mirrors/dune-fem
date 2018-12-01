@@ -8,6 +8,7 @@
 #include <string>
 
 //- Dune includes
+#include <dune/common/version.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/common/visibility.hh>
 

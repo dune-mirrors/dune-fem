@@ -5,6 +5,7 @@
 #include <string>
 
 // local includes
+#include <dune/fem/solver/parameter.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune
@@ -31,7 +32,7 @@ namespace Dune
       SparseRowLinearOperator( const std::string & ,
                                const DomainSpaceType &domainSpace,
                                const RangeSpaceType &rangeSpace,
-                               const MatrixParameter& param = SparseRowMatrixParameter() ) :
+                               const SolverParameter& param = SolverParameter() ) :
         BaseType( domainSpace, rangeSpace, param )
       {}
 

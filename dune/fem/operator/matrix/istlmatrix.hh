@@ -700,14 +700,14 @@ namespace Dune
       mutable std::unique_ptr< RowBlockVectorType >    Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
-      ISTLMatrixParameter param_;
+      ISTLSolverParameter param_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
-      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLMatrixParameter& param = ISTLMatrixParameter() ) :
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLSolverParameter& param = ISTLSolverParameter() ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
         , rowMapper_( rangeSpace.blockMapper() )
@@ -741,7 +741,7 @@ namespace Dune
         return "";
       }
 
-      void createMatrixAdapter ( const ISTLMatrixParameter& param ) const
+      void createMatrixAdapter ( const ISTLSolverParameter& param ) const
       {
         if( !matrixAdap_ )
         {
@@ -751,9 +751,16 @@ namespace Dune
       }
 
       //! return matrix adapter object
-      MatrixAdapterType& matrixAdapter( const ISTLMatrixParameter& parameter ) const
+      MatrixAdapterType& matrixAdapter( const SolverParameter& parameter ) const
       {
-        createMatrixAdapter( parameter );
+        const ISTLSolverParameter* param = dynamic_cast< const ISTLSolverParameter* > (&parameter);
+        if( param )
+          createMatrixAdapter( *param );
+        else
+        {
+          ISTLSolverParameter newparam( &parameter );
+          createMatrixAdapter( newparam );
+        }
         return *matrixAdap_;
       }
 

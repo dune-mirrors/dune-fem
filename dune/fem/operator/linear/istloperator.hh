@@ -43,7 +43,7 @@ namespace Dune
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
-                          const ISTLMatrixParameter& param = ISTLMatrixParameter() )
+                          const ISTLSolverParameter& param = ISTLSolverParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
 
@@ -96,7 +96,7 @@ namespace Dune
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
-                          const ISTLMatrixParameter& param = ISTLMatrixParameter() )
+                          const ISTLSolverParameter& param = ISTLSolverParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
 

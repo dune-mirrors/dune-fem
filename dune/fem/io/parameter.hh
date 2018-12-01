@@ -539,8 +539,7 @@ namespace Dune
 
     // Helper class for Parameter structures for classes
     template< class ParamDefault, class ParamImpl >
-    struct LocalParameter
-    : public ParamDefault
+    struct LocalParameter : public ParamDefault
     {
       virtual ~LocalParameter ()
       {}
@@ -549,6 +548,9 @@ namespace Dune
       {
         return new ParamImpl( asImp() );
       }
+
+      template <class... Args>
+      LocalParameter( Args... args ) : ParamDefault( args... ) {}
 
     protected:
       const ParamImpl &asImp () const

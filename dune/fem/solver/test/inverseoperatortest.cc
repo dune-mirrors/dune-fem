@@ -79,6 +79,19 @@ using RealType  = typename Dune::FieldTraits< FieldType >::real_type;
 using SpaceType         = Dune::Fem::FunctionSpace< FieldType, FieldType, dim, 1 >;
 using DiscreteSpaceType = Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder >;
 
+struct NewSolverParameter : public Dune::Fem::LocalParameter< Dune::Fem::SolverParameter, NewSolverParameter >
+{
+  double eps_;
+  int maxIter_;
+  bool verbose_;
+
+  NewSolverParameter(const double eps, int maxIter, const bool verbose) : eps_( eps ), maxIter_( maxIter ), verbose_( verbose ) {}
+  virtual bool verbose () const { return verbose_; }
+  virtual double linAbsTolParameter () const { return eps_; }
+  virtual double linReductionParameter() const { return eps_; }
+  virtual int krylovMethod () const { return 0; }
+};
+
 
 struct Function
 {
@@ -109,7 +122,7 @@ struct Algorithm
   static_assert( std::is_base_of< typename InverseOperator::OperatorType, LinearOperator >::value, "type mismatch in Algorithm." );
   static_assert( std::is_same< typename InverseOperator::RangeFunctionType, DiscreteFunctionType >::value, "type mismatch in Algorithm." );
 
-  static bool apply( GridType& grid, const std::string& designation, bool verboseSolver = false )
+  static bool apply( GridType& grid, const std::string& designation, const bool verboseSolver = false )
   {
     GridPartType gridPart( grid );
     DiscreteSpaceType space( gridPart );
@@ -127,7 +140,13 @@ struct Algorithm
     unsigned long maxIter = space.size();
     maxIter = space.gridPart().comm().sum( maxIter );
 
-    InverseOperatorType inverseOperator ( 1e-10, 1e-10, maxIter, verboseSolver );
+    NewSolverParameter testSolverParam( 1e-10, maxIter, verboseSolver );
+    NewSolverParameter copyParam ( testSolverParam );
+
+    Dune::Fem::ISTLSolverParameter newParam2( &copyParam );
+
+    const Dune::Fem::SolverParameter& param = newParam2;
+    InverseOperatorType inverseOperator ( param );
     inverseOperator.bind( massOperator );
     inverseOperator( rhs, u );
 
@@ -157,7 +176,7 @@ int main(int argc, char** argv)
   const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
   grid.globalRefine( 2*step );
 
-  bool verboseSolver = false;
+  bool verboseSolver = true;
   bool pass = true;
 
   // CGInverseOperator + SparseRowLinearOperator
@@ -192,6 +211,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
 
+  /*
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
   {
@@ -215,6 +235,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
+*/
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
@@ -294,6 +315,7 @@ int main(int argc, char** argv)
   }
 #endif // HAVE_PETSC
 
+  /*
 #if HAVE_EIGEN
   // EigenCGInverseOperator + EigenLinearOperator
   {
@@ -329,6 +351,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif
+*/
 
 /*
 #if HAVE_AMGXSOLVER

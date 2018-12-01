@@ -27,7 +27,7 @@ namespace Dune
     // wrapper for Fem Preconditioners (Operators acting as preconditioners) into ISTL preconditioners
     template< class Preconditioner >
     class ISTLPreconditionAdapter
-    :public Dune::Preconditioner< typename Preconditioner::RangeFunctionType::DofStorageType, typename Preconditioner::DomainFunctionType::DofStorageType >
+     : public Dune::Preconditioner< typename Preconditioner::RangeFunctionType::DofStorageType, typename Preconditioner::DomainFunctionType::DofStorageType >
     {
       typedef ISTLPreconditionAdapter< Preconditioner > ThisType;
       typedef Dune::Preconditioner< typename Preconditioner::RangeFunctionType::DofStorageType, typename Preconditioner::DomainFunctionType::DofStorageType > BaseType;
@@ -270,20 +270,20 @@ namespace Dune
       typedef typename SolverAdapterType::ReductionType ReductionType;
     public:
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const ParameterReader & parameter = Parameter::container() )
-        : solverAdapter_( ReductionType( redEps, absLimit, SolverParameter(parameter) ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, SolverParameter(parameter) )
+                            const SolverParameter& parameter = SolverParameter( Parameter::container()) )
+        : solverAdapter_( ReductionType( redEps, absLimit, parameter ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
       {}
 
       ISTLInverseOperator ( double redEps, double absLimit,
                             const ParameterReader & parameter = Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), SolverParameter(parameter).verbose(), parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
 
       ISTLInverseOperator ( double redEps, double absLimit,
                             const SolverParameter & parameter )
-        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter.parameter() ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
-      ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
-        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter.parameter() ) {}
+      ISTLInverseOperator ( const SolverParameter& parameter = SolverParameter(Parameter::container()) )
+        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,
                             const ParameterReader & parameter = Parameter::container() )
@@ -377,8 +377,7 @@ namespace Dune
 
         if( matrixOp_ )
         {
-          ISTLMatrixParameter matparm( solverAdapter_.parameter().parameter() );
-          auto& matrix = matrixOp_->matrixAdapter( matparm );
+          auto& matrix = matrixOp_->matrixAdapter( solverAdapter_.parameter() );
           // if preconditioner_ was set use that one, otherwise the one from the matrix object
           typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > PreconditionerType;
           PreconditionerType& matrixPre = matrix.preconditionAdapter();
