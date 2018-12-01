@@ -6,6 +6,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #if HAVE_PETSC
 #include <dune/fem/operator/linear/petscoperator.hh>
@@ -29,11 +30,25 @@ namespace Dune
 
     // PETScSolver
     // --------------
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
+    class PetscInverseOperator;
+
+    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
+    struct PetscInverseOperatorTraits
+    {
+    private:
+      typedef typename DF :: DiscreteFunctionSpaceType SpaceType ;
+    public:
+      typedef Op                                   OperatorType;
+      typedef OperatorType                         PreconditionerType;
+      typedef PetscDiscreteFunction< SpaceType >   NativeDiscreteFunctionType;
+      typedef PetscLinearOperator< DF, DF >        AssembledOperatorType;
+      typedef PetscInverseOperator< DF, Op >       InverseOperatorType;
+    };
 
     /** \brief PETSc KSP solver context for PETSc Mat and PETSc Vec */
-    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    class PetscInverseOperator
-      : public Operator< DF, DF >
+    template< class DF, class Op >
+    class PetscInverseOperator : public InverseOperatorInterface< PetscInverseOperatorTraits< DF, Op > >
     {
     protected:
       // monitor function for PETSc solvers
@@ -60,16 +75,14 @@ namespace Dune
         }
       };
 
+      typedef PetscInverseOperatorTraits< DF, Op > Traits;
+      typedef InverseOperatorInterface< Traits > BaseType;
+      friend class InverseOperatorInterface< Traits >;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef DiscreteFunctionType  DestinationType;
 
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
-      typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > PetscDiscreteFunctionType;
-
-      typedef PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >  AssembledOperatorType;
-
-      typedef Op OperatorType;
+      typedef typename BaseType :: NativeDiscreteFunctionType    PetscDiscreteFunctionType;
+      typedef typename BaseType :: AssembledOperatorType         AssembledOperatorType;
+      typedef typename BaseType :: OperatorType                  OperatorType;
 
       /** \brief constructor
        *
@@ -130,11 +143,7 @@ namespace Dune
        */
       PetscInverseOperator ( double reduction, double absLimit, int maxIter, bool verbose,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : reduction_( reduction ),
-        absLimit_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        parameter_( parameter )
+      : BaseType( parameter )
       {}
 
       /** \brief constructor
@@ -161,39 +170,38 @@ namespace Dune
       PetscInverseOperator ( double redEps, double absLimit,
                              unsigned int maxIterations, bool verbose,
                              const ParameterReader& parameter )
-        : PetscInverseOperator( redEps, absLimit, maxIterations, verbose,
-            SolverParameter( parameter ) ) {}
+        : PetscInverseOperator( redEps, absLimit, maxIterations, verbose, SolverParameter( parameter ) ) {}
 
       void bind ( const OperatorType &op )
       {
-        op_ = &op;
-        matrixOp_ = dynamic_cast<const AssembledOperatorType*> ( &op );
+        BaseType :: bind( op );
         initialize( parameter_ );
       }
 
       void unbind ()
       {
-        op_ = nullptr; matrixOp_ = nullptr;
-        Arg_.reset();
-        Dest_.reset();
+        BaseType :: unbind();
         ksp_.reset();
       }
 
+      void printTexInfo(std::ostream& out) const
+      {
+        out << "Solver: " << solverName_ << " eps = " << reduction_ ;
+        out  << "\\\\ \n";
+      }
+
+    protected:
       void initialize ( const SolverParameter& parameter )
       {
-        if( !matrixOp_ )
+        if( !assembledOperator_ )
           DUNE_THROW(NotImplemented,"Petsc solver with matrix free implementations not yet supported!");
-
-        // reset temporary functions
-        Arg_.reset();
-        Dest_.reset();
 
         // Create linear solver context
         ksp_.reset( new KSP() );
         ::Dune::Petsc::KSPCreate( &ksp() );
 
         // attach Matrix to linear solver context
-        Mat& A = const_cast<Mat &> (matrixOp_->petscMatrix());
+        Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
         ::Dune::Petsc::KSPSetOperators( ksp(), A, A, SAME_PRECONDITIONER);
 #else
@@ -204,7 +212,7 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = maxIter_ ;
+        PetscInt  maxits = 100 ; //maxIterations_ ;
         PetscReal reduc  = reduction_;
         ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
 
@@ -431,53 +439,7 @@ namespace Dune
         }
       }
 
-      void setMaxIterations ( std::size_t maxIter )
-      {
-        maxIter_ = maxIter;
-      }
-
-      void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-      {}
-
-      void finalize () const
-      {}
-
-      void printTexInfo(std::ostream& out) const
-      {
-        out << "Solver: " << solverName_ << " eps = " << reduction_ ;
-        out  << "\\\\ \n";
-      }
-
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      template <class DiscreteFunction>
-      void apply( const DiscreteFunction& arg, DiscreteFunction& dest ) const
-      {
-        // copy discrete functions
-        if( !Arg_ )
-        {
-          Arg_.reset( new PetscDiscreteFunctionType("PetscSolver::arg", arg.space() ) );
-        }
-
-        Arg_->assign( arg );
-
-        if( ! Dest_ )
-        {
-          // also copy initial destination in case this is used a solver init value
-          Dest_.reset( new PetscDiscreteFunctionType("PetscSolver::dest", dest.space() ) );
-        }
-
-        Dest_->assign( dest );
-
-        apply( *Arg_, *Dest_ );
-
-        // copy destination back
-        dest.assign( *Dest_ );
-      }
-
-      void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
+      int apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
         // need to have a 'distributed' destination vector for continuous spaces
         if( dest.space().continuous() )
@@ -495,51 +457,22 @@ namespace Dune
         // get number of iterations
         PetscInt its ;
         ::Dune::Petsc::KSPGetIterationNumber( *ksp_, &its );
-        iterations_ = its;
-      }
-
-      // return number of iterations
-      int iterations() const
-      {
-        return iterations_;
-      }
-
-      //! return accumulated communication time
-      double averageCommTime() const
-      {
-        return -1;
-      }
-
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-      {
-        apply(arg,dest);
-      }
-
-      template <class DiscreteFunction>
-      void operator() ( const DiscreteFunction& arg, DiscreteFunction& dest ) const
-      {
-        apply(arg,dest);
+        // TODO: check converged
+        return its;
       }
 
     protected:
       KSP & ksp () { assert( ksp_ ); return *ksp_; }
 
-      const OperatorType  *op_ = nullptr; // linear operator
-      const AssembledOperatorType* matrixOp_ = nullptr; // assembled operator
-
-      mutable std::unique_ptr< PetscDiscreteFunctionType > Arg_, Dest_;
+      using BaseType :: assembledOperator_;
+      using BaseType :: parameter_;
+      using BaseType :: iterations_;
+      using BaseType :: maxIterations_;
+      using BaseType :: reduction_;
 
       std::unique_ptr< KSP, KSPDeleter > ksp_;   // PETSc Krylov Space solver context
-      double reduction_;
-      double absLimit_;
-      int maxIter_;
+
       bool verbose_ ;
-      mutable int iterations_ = 0;
-      SolverParameter parameter_;
       std::string solverName_;
     };
 
