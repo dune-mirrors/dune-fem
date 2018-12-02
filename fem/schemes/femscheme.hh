@@ -105,7 +105,6 @@ public:
     // the elliptic operator (implicit)
     implicitOperator_( space, space, std::forward<ModelType&>(model_), parameter ),
     // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( "assembled elliptic operator", space_, space_), // , parameter ),
     parameter_( parameter ),
     invOp_( parameter_ )
   {}
@@ -192,10 +191,9 @@ public:
             )
           ), void >::value, int> i = 0
     >
-  const JacobianOperatorType &assemble( const GridFunction &ubar )
+  void jacobian( const GridFunction &ubar, JacobianOperatorType &linOp ) const
   {
-    implicitOperator_.jacobian(ubar, linearOperator_);
-    return linearOperator_;
+    implicitOperator_.jacobian(ubar, linOp);
   }
 
   const GridPartType &gridPart () const { return space().gridPart(); }
@@ -214,7 +212,6 @@ protected:
   ModelType &model_;   // the mathematical model
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
-  JacobianOperatorType linearOperator_;
   const Dune::Fem::ParameterReader parameter_;
   mutable InverseOperatorType invOp_;
 };

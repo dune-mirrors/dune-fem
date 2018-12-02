@@ -139,14 +139,10 @@ namespace Dune
       // getSpace
       // --------
 
-      template< class T >
-      pybind11::object getSpace ( const T &obj, pybind11::handle parent = pybind11::handle() )
+      template< class T, class Space >
+      pybind11::object getSpaceObject ( const T &obj, pybind11::handle parent, const Space &space )
       {
-        typedef std::decay_t< decltype( std::declval< const T & >().space() ) > Space;
-
-        const Space &space = obj.space();
         pybind11::object pySpace = pybind11::reinterpret_borrow< pybind11::object >( pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) ) );
-
         if( !pySpace )
         {
           if( !parent )
@@ -154,6 +150,13 @@ namespace Dune
           pySpace = pybind11::cast( space, pybind11::return_value_policy::reference_internal, parent );
         }
         return pySpace;
+      }
+      template< class T >
+      pybind11::object getSpace ( const T &obj, pybind11::handle parent = pybind11::handle() )
+      {
+        typedef std::decay_t< decltype( std::declval< const T & >().space() ) > Space;
+        const Space &space = obj.space();
+        return getSpaceObject(obj, parent, space);
       }
 
     } // namespace detail

@@ -975,6 +975,7 @@ namespace Dune
       typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
       typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
       typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
+      typedef typename DifferentiableOperatorType::JacobianOperatorType JacobianOperatorType;
 
       typedef RangeFunctionType DiscreteFunctionType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
@@ -983,8 +984,6 @@ namespace Dune
 
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-      typedef LinearOperator JacobianOperatorType;
 
       typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
       typedef InverseOperator LinearInverseOperatorType;
@@ -1004,7 +1003,6 @@ namespace Dune
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),
-          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace), // ,parameter_  ),
           invOp_(parameter_)
       {}
 
@@ -1035,6 +1033,7 @@ namespace Dune
         invOp_.unbind();
         return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
+
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
         DiscreteFunctionType bnd( solution );
@@ -1043,10 +1042,9 @@ namespace Dune
       }
 
       template< class GridFunction >
-      const LinearOperatorType &assemble ( const GridFunction &ubar )
+      void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
       {
-        fullOperator().jacobian( ubar, linearOperator_ );
-        return linearOperator_;
+        fullOperator().jacobian( ubar, linearOp );
       }
 
       const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
@@ -1073,6 +1071,7 @@ namespace Dune
       {
         fullOperator().subConstraints( u, v );
       }
+
     protected:
       std::enable_if_t<addDirichletBC,void>
       setZeroConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u ); }
@@ -1080,7 +1079,6 @@ namespace Dune
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
-      LinearOperatorType linearOperator_;
       mutable NewtonOperatorType invOp_;
     };
 

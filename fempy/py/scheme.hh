@@ -84,42 +84,6 @@ namespace Dune
         registerSchemeConstructor( cls, PriorityTag< 42 >() );
       }
 
-
-
-      // registerSchemeAssemble
-      // ----------------------
-      // register assemble method if data method is available (and return value is registered)
-      //
-      template< class GF, class Scheme, class... options, std::enable_if_t<
-            std::is_same< std::decay_t< decltype(std::declval< Scheme >().assemble( std::declval< const GF& >() )) >,
-                  typename Scheme::JacobianOperatorType>::value, int > _i = 0 >
-      inline static auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< const typename Scheme::JacobianOperatorType & >() ) >
-      {
-        using pybind11::operator""_a;
-        cls.def( "assemble", [] ( Scheme &self, const GF &ubar )
-          -> const typename Scheme::JacobianOperatorType&
-          {
-            return self.assemble( ubar );
-          }, "ubar"_a, pybind11::return_value_policy::reference_internal );
-
-      }
-      template< class GF, class Scheme, class... options >
-      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
-      {
-      }
-
-      template< class Scheme, class... options >
-      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls )
-      {
-        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-        typedef typename DiscreteFunction::RangeType RangeType;
-        typedef typename Scheme::GridPartType GridPart;
-
-        registerSchemeAssemble< DiscreteFunction >( cls, PriorityTag< 42 >() );
-        registerSchemeAssemble< VirtualizedGridFunction< GridPart, RangeType > >( cls, PriorityTag< 42 >() );
-      }
-
       template< class Scheme, class... options, std::enable_if_t<
         std::is_constructible<typename Scheme::LinearInverseOperatorType,double,double,Dune::Fem::SolverParameter>::value,int > _i=0 >
       inline static void registerInverseLinearOperator ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
@@ -155,53 +119,6 @@ namespace Dune
         registerInverseLinearOperator( cls, PriorityTag<42>() );
       }
 
-#if 0
-      // registerSchemeGeneralCall
-      // -------------------------
-      template< class Scheme, class... options >
-      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< Scheme & >()(
-                     std::declval< const VirtualizedGridFunction< typename Scheme::GridPartType, typename Scheme::DiscreteFunctionSpaceType::RangeType > & >(),
-                     std::declval< typename Scheme::DiscreteFunctionType & >()
-                   ) ) >
-      {
-        typedef typename Scheme::DiscreteFunctionSpaceType::RangeType RangeType;
-        typedef typename Scheme::GridPartType GridPart;
-        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-        cls.def( "__call__", [] ( Scheme &self, const VirtualizedGridFunction< GridPart, RangeType > &arg, DiscreteFunction &dest ) { self( arg, dest ); } );
-      }
-
-      template< class Scheme, class... options >
-      inline static void registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class Scheme, class... options >
-      inline static void registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls )
-      {
-        registerSchemeGeneralCall( cls, PriorityTag< 42 >() );
-      }
-
-      // registerSchemeModel
-      // -------------------
-
-      template< class Scheme, class... options >
-      inline static auto registerSchemeModel ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< Scheme >().model() ) >
-      {
-        cls.def_property_readonly( "model", &Scheme::model );
-      }
-
-      template< class Scheme, class... options >
-      inline static void registerSchemeModel ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class Scheme, class... options >
-      inline static void registerSchemeModel ( pybind11::class_< Scheme, options... > cls )
-      {
-        registerSchemeModel( cls, PriorityTag< 42 >() );
-      }
-#endif
-
       // registerScheme
       // --------------
 
@@ -221,13 +138,6 @@ namespace Dune
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             return ret;
-            /*
-            return std::map<std::string,std::string> {
-                {"converged",std::to_string(info.converged)},
-                {"iterations",std::to_string(info.nonlinearIterations)},
-                {"linear_iterations",std::to_string(info.linearIterations)}
-              };
-            */
           } );
         cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
             auto info = self.solve( solution );
@@ -236,13 +146,6 @@ namespace Dune
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             return ret;
-            /*
-            return std::map<std::string,std::string> {
-                {"converged",std::to_string(info.converged)},
-                {"iterations",std::to_string(info.nonlinearIterations)},
-                {"linear_iterations",std::to_string(info.linearIterations)}
-              };
-            */
           } );
 
         cls.def( "setErrorMeasure", &Scheme::setErrorMeasure,
@@ -250,6 +153,8 @@ namespace Dune
 
         cls.def_property_readonly( "dimRange", [] ( Scheme & ) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
+        cls.def_property_readonly( "domainSpace", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
+        cls.def_property_readonly( "rangeSpace", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
 
         auto clsInvOp = Dune::Python::insertClass< typename Scheme::LinearInverseOperatorType >
               ( cls, "LinearInverseOperator", Dune::Python::GenerateTypeName(cls,"LinearInverseOperatorType"));
@@ -265,7 +170,6 @@ namespace Dune
           });
         }
         registerInverseLinearOperator( cls );
-        registerSchemeAssemble( cls );
         Dune::FemPy::registerOperator(module,cls);
       }
 
