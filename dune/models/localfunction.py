@@ -67,11 +67,6 @@ class UFLFunctionSource(codegen.ModelClass):
             targs=['class Point'], const=True,
             predefined=predefined)
         if checks.is_globally_constant(self.expr):
-        # if all(isinstance(e,FloatValue)
-        #         or isinstance(e,IntValue)
-        #         or isinstance(e,Constant)
-        #         or isinstance(e,constantvalue)
-        #         for e in self.expr):
             code.append( Method('void', 'jacobian', targs=['class Point'],
                 args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
                 code=['result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))
