@@ -9,11 +9,14 @@ import os.path
 import re
 # from termcolor import colored
 
+from dune.deprecate import deprecated
 from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, rhs=None, target=None, name=None ):
+@deprecated("the solve method on the 'scheme' now requires the 'target' argument, so first construct a discrete function using the 'interpolate' method on the 'space'",
+        "solve")
+def depSolve( scheme, target, rhs=None, name=None ):
     import dune.fem.function as function
     if target == None:
         if name == None:
@@ -27,6 +30,16 @@ def solve( scheme, rhs=None, target=None, name=None ):
     else:
         info = scheme._solve(rhs, target)
     return target,info
+
+def solve( scheme, target=None, rhs=None, name=None ):
+    if target==None:
+        return depSolve( scheme, target, rhs, name )
+    else:
+        if rhs is None:
+            return scheme._solve(target)
+        else:
+            return scheme._solve(rhs, target)
+
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
 
