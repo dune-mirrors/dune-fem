@@ -491,7 +491,27 @@ def bdm(view, order=1, field="double", storage=None, **unused):
 
     includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + view._includes
     dimw = view.dimWorld
-    typeName = "Dune::Fem::BDMDiscreteFunctionSpace< " +\
+    typeName = "Dune::Fem::BrezziDouglasMariniSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
+      "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
+
+    spc = module(field, includes, typeName, storage=storage).Space(view)
+    # addStorage(spc, storage)
+    return spc.as_ufl()
+
+def raviartThomas(view, order=1, field="double", storage=None, **unused):
+    from dune.fem.space import module, addStorage
+    if order < 1:
+        raise KeyError(\
+            "Parameter error in RTSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be equal to 1 or 2")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/raviartthomas.hh" ] + view._includes
+    dimw = view.dimWorld
+    typeName = "Dune::Fem::RaviartThomasSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 

@@ -32,6 +32,7 @@ registry["space"] = {
          "combined"      : space.combined,
          "product"       : space.product,
          "bdm"           : space.bdm,
+         "raviartthomas" : space.raviartThomas,
          "rannacherTurek": space.rannacherTurek
      }
 registry["discretefunction"] = {
