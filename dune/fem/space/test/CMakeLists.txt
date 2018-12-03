@@ -58,7 +58,7 @@ COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT
 LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
-dune_add_test( SOURCES test-raviartthomasinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune_localfunctions_FOUND LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
 if( ${TORTURE_TESTS} )
   # test adaptation of combinedspaces
