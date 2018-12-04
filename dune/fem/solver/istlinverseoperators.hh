@@ -287,68 +287,89 @@ namespace Dune
       typedef ISTLSolverAdapter< method, BlockVectorType > SolverAdapterType;
       typedef typename SolverAdapterType::ReductionType ReductionType;
     public:
-      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const SolverParameter& parameter = SolverParameter( Parameter::container()) )
-        : solverAdapter_( ReductionType( redEps, absLimit, parameter ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
+      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                            const SolverParameter & parameter = SolverParameter() )
+        : solverAdapter_( ReductionType( redEps, absLimit, parameter ), maxIterations, (parameter.verbose() && verbose) ? 2 : 0, parameter )
       {}
 
+      ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
+        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
+
+      [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
-                            const ParameterReader & parameter = Parameter::container() )
+                            const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
 
+      [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
                             const SolverParameter & parameter )
         : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
-
-      ISTLInverseOperator ( const SolverParameter& parameter = SolverParameter(Parameter::container()) )
-        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
+      [[deprecated]]
 
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter = Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, maxIterations, false, parameter ) {}
+                            const ParameterReader & parameter )
+        : ISTLInverseOperator( redEps, absLimit, maxIterations, false, SolverParameter(parameter) ) {}
 
       ISTLInverseOperator ( const OperatorType &op,
-                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const ParameterReader & parameter = Parameter::container() )
+                            double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                            const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator ( redEps, absLimit, maxIterations, verbose, parameter )
       {
         bind( op );
       }
 
+      ISTLInverseOperator ( const OperatorType &op,
+                            const SolverParameter & parameter = SolverParameter() )
+        : ISTLInverseOperator ( parameter )
+      {
+        bind( op );
+      }
+
+      [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, double redEps, double absLimit,
-                            const ParameterReader & parameter = Parameter::container() )
+                            const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, parameter )
       {
         bind( op );
       }
 
+      [[deprecated]]
       ISTLInverseOperator ( const OperatorType& op,
                             double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter = Parameter::container() )
+                            const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
       {
         bind( op );
       }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const ParameterReader & parameter = Parameter::container() )
+                            double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                            const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
       {
         bind( op, preconditioner );
       }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
+                            const SolverParameter & parameter = SolverParameter() )
+        : ISTLInverseOperator( parameter )
+      {
+        bind( op, preconditioner );
+      }
+
+      [[deprecated]]
+      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit,
-                            const ParameterReader & parameter = Parameter::container() )
+                            const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, parameter )
       {
         bind( op, preconditioner );
       }
 
+      [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter = Parameter::container() )
+                            const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
       {
         bind( op, preconditioner );
