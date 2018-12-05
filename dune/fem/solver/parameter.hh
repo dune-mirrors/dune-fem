@@ -89,7 +89,7 @@ namespace Dune
         }
       }
 
-      virtual double linAbsTolParameter ()  const
+      virtual double linAbsTol ()  const
       {
         if( other_ )
           return other_->linAbsTolParameter();
@@ -97,7 +97,7 @@ namespace Dune
           return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
       }
 
-      virtual double linReductionParameter () const
+      virtual double linReduction () const
       {
         if( other_ )
           return other_->linReductionParameter();
@@ -105,7 +105,7 @@ namespace Dune
           return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
       }
 
-      virtual int maxLinearIterationsParameter () const
+      virtual int maxLinearIterations () const
       {
         if( other_ )
           return other_->maxLinearIterationsParameter();
@@ -182,6 +182,26 @@ namespace Dune
       }
 
       virtual SolverParameter* clone () const { return new SolverParameter(); }
+
+      //deprecated methods
+      [[deprecated]]
+      virtual double linAbsTolParameter ()  const
+      {
+        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
+      }
+
+      [[deprecated]]
+      virtual double linReductionParameter () const
+      {
+        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
+      }
+
+      [[deprecated]]
+      virtual int maxLinearIterationsParameter () const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+      }
+
     };
 
   }
