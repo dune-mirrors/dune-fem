@@ -22,11 +22,11 @@
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 #include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
-#include <dune/fem/solver/petscsolver.hh>
+#include <dune/fem/solver/petscinverseoperators.hh>
 #elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
-#include <dune/fem/solver/istlsolver.hh>
+#include <dune/fem/solver/istlinverseoperators.hh>
 #elif HAVE_EIGEN && defined USE_EIGEN
 #include <dune/fem/storage/eigenvector.hh>
 #include <dune/fem/function/vectorfunction.hh>
@@ -38,7 +38,7 @@
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 #include <dune/fem/solver/umfpacksolver.hh>
 #else
-#include <dune/fem/solver/cginverseoperator.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #endif
 #endif
 
