@@ -53,13 +53,13 @@ namespace Dune
 
       //! construct matrix of zero size
       explicit SparseRowMatrix() :
-        values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
+        values_(0), columns_(0), rows_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), compressed_( false )
       {}
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
       SparseRowMatrix(size_type rows, size_type cols, size_type nz) :
-        values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
+        values_(0), columns_(0), rows_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), compressed_( false )
       {
         reserve(rows,cols,nz);
       }
@@ -90,13 +90,11 @@ namespace Dune
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        auto whichCol = colIndex(row,col);
-        assert( whichCol != defaultCol );
+        const size_type column = colIndex(row,col) ;
+        assert( column != defaultCol );
 
-        values_[row*nz_ + whichCol] = val;
-        if(whichCol >= nonZeros_[row])
-          nonZeros_[row]++;
-        col_[row*nz_ + whichCol] = col;
+        values_ [ column ] = val;
+        columns_[ column ] = col;
       }
 
       //! add value to row,col entry
@@ -105,34 +103,34 @@ namespace Dune
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        auto whichCol = colIndex(row,col);
-        assert( whichCol != defaultCol );
+        const size_type column = colIndex(row,col) ;
+        assert( column != defaultCol );
 
-        values_[row*nz_ + whichCol] += val;
-        col_[row*nz_ + whichCol] = col;
+        values_ [ column ] += val;
+        columns_[ column ] = col;
       }
 
       //! ret = A*f
       template<class ArgDFType, class DestDFType>
-      void apply(const ArgDFType& f, DestDFType& ret) const
+      void apply(const ArgDFType& f, DestDFType& ret ) const
       {
         constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
         auto ret_it = ret.dbegin();
 
-        for(auto row=decltype(dim_[0]){0}; row<dim_[0]; ++row)
+        for(size_type row = 0; row<dim_[0]; ++row)
         {
+          const size_type endCol = rows_[ row+1 ];
           (*ret_it) = 0.0;
-          for(auto col=firstCol; col<nz_; ++col)
+          for(size_type col = rows_[ row ]; col<endCol; ++col)
           {
-            const auto thisCol = row*nz_ + col;
-            const auto realCol = col_[thisCol];
+            const auto realCol = columns_[ col ];
 
-            if( realCol == defaultCol )
+            if( ! compressed_ && (realCol == defaultCol) )
               continue;
 
             const auto blockNr = realCol / blockSize ;
-            const auto dofNr = realCol % blockSize ;
-            (*ret_it) += values_[thisCol] * f.dofVector()[ blockNr ][ dofNr ];
+            const auto dofNr   = realCol % blockSize ;
+            (*ret_it) += values_[ col ] * f.dofVector()[ blockNr ][ dofNr ];
           }
 
           ++ret_it;
@@ -145,13 +143,11 @@ namespace Dune
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        const auto nonZ = nonZeros_[row];
-        auto thisCol = row*nz_;
-        for(auto i=firstCol; i<nonZ; ++i)
+        const size_type endRow = rows_[ row ];
+        for( size_type i = rows_[ row ]; i<endRow; ++i )
         {
-          if(col_[thisCol] == col)
-            return values_[thisCol];
-          ++thisCol;
+          if(columns_[ i ] == col)
+            return values_[ i ];
         }
         return 0;
       }
@@ -159,12 +155,9 @@ namespace Dune
       //! set all matrix entries to zero
       void clear()
       {
-        for(auto& entry : values_)
-          entry = 0;
-        for(auto& entry : col_)
-          entry = defaultCol;
-        for(auto& entry : nonZeros_)
-          entry = 0;
+        std::fill( values_.begin(), values_.end(), 0 );
+        std::fill( columns_.begin(), columns_.end(), defaultCol );
+        std::fill( nonZeros_.begin(), nonZeros_.end(), 0 );
       }
 
       //! set all entries in row to zero
@@ -172,13 +165,11 @@ namespace Dune
       {
         assert((row>=0) && (row <= dim_[0]));
 
-        nonZeros_[row] = firstCol;
-        auto col = row * nz_;
-        for(auto i=decltype(nz_){0}; i<nz_; ++i)
+        const size_type endCol = rows_[ row+1 ];
+        for(size_type col = rows_[ row ] ; col<endCol; ++col )
         {
           values_ [col] = 0;
-          col_[col] = defaultCol;
-          ++col;
+          columns_[col] = defaultCol;
         }
       }
 
@@ -197,10 +188,10 @@ namespace Dune
       }
 
       //! return pair (value,column)
-      //! used in ColCompMatrix::setMatrix
+      //! used in ColCompMatrix::setMatrix and FemPy CRS matrix export
       std::pair<const field_type, size_type> realValue(size_type index) const
       {
-        return std::pair<const field_type, size_type>(values_[index], col_[index]);
+        return std::pair<const field_type, size_type>(values_[index], columns_[index]);
       }
 
       //! print matrix
@@ -208,15 +199,17 @@ namespace Dune
       {
         std::size_t pos(0);
         for(std::size_t row=0; row<dim_[0]; ++row)
-          while(pos < (nz_*(row+1)))
+        {
+          const size_type endRow = rows_[ row+1 ];
+          for( size_type pos = rows_[ row ]; pos<endRow; ++pos )
           {
             const auto rv(realValue(pos));
             const auto column(rv.second);
             const auto value(rv.first);
             if((std::abs(value) > 1.e-15) && (column != defaultCol))
               s << row+offset << " " << column+offset << " " << value << std::endl;
-            ++pos;
           }
+        }
       }
 
       template <class SizeT, class NumericT >
@@ -225,19 +218,45 @@ namespace Dune
         matrix.resize( rows() );
 
         size_type thisCol = 0;
-        for(size_type i = 0; i<dim_[ 0 ]; ++i )
+        for(size_type row = 0; row<dim_[ 0 ]; ++row )
         {
-          auto& matRow = matrix[ i ];
-          for(size_type col=firstCol; col<nz_; ++col, ++thisCol)
+          auto& matRow = matrix[ row ];
+          const size_type endRow = rows_[ row+1 ];
+          for(size_type col = rows_[ row ]; col<endRow; ++col)
           {
-            const size_type realCol = col_[thisCol];
+            const size_type realCol = columns_[ col ];
 
-            if( realCol == defaultCol )
+            if( ! compressed_ && (realCol == defaultCol) )
               continue;
 
             matRow[ realCol ] = values_[ thisCol ];
           }
         }
+      }
+
+      void compress()
+      {
+        size_type lastNewRow = nonZeros_[ 0 ];
+
+        // TODO: improve
+        for( size_type row = 1; row<dim_[0]; ++row )
+        {
+          const size_type endRow = rows_[ row+1 ];
+          size_type col = rows_[ row ];
+          rows_[ row ] = lastNewRow;
+          size_type newpos = lastNewRow;
+          for(size_type i=0; i<nonZeros_[row]; ++i, ++col, ++newpos )
+          {
+            assert( newpos < col );
+            values_ [ newpos ] = values_ [ col ];
+            columns_[ newpos ] = columns_[ col ];
+          }
+          lastNewRow = col ;
+        }
+        rows_[ dim_[0] ] = lastNewRow ;
+
+        values_.resize( lastNewRow );
+        columns_.resize( lastNewRow );
       }
 
     private:
@@ -246,8 +265,16 @@ namespace Dune
       {
         constexpr auto colVal = defaultCol;
         values_.resize( rows*nz , 0 );
-        col_.resize( rows*nz , colVal );
+        columns_.resize( rows*nz , colVal );
+        rows_.resize( rows+1 , 0 );
         nonZeros_.resize( rows , 0 );
+        rows_[ 0 ] = 0;
+        for( size_type i=1; i <= rows; ++i )
+        {
+          rows_[ i ] = rows_[ i-1 ] + nz ;
+        }
+        compressed_ = false;
+
         dim_[0] = rows;
         dim_[1] = cols;
         nz_ = nz+firstCol;
@@ -259,42 +286,63 @@ namespace Dune
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        size_type i = 0;
-        while( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
-          ++i;
-        if(col_[row*nz_+i] == col)
+        const size_type endRow = rows_[ row + 1 ];
+        size_type i = rows_[ row ];
+        // find local column or empty spot
+        for( ;  i < endRow; ++i )
+        {
+          if( columns_[ i ] == defaultCol )
+          {
+            ++nonZeros_[row];
+            return i;
+          }
+          if( columns_[ i ] == col )
+            return i;
+        }
+
+        std::abort();
+        return defaultCol;
+
+        /*
+        if(columns_[ i ] == col)
           return i;  // column already in matrix
-        else if( col_[row*nz_+i] == defaultCol )
+        else if( columns_[ i ] == defaultCol )
         { // add this column at end of this row
           ++nonZeros_[row];
           return i;
         }
         else
         {
+          std::abort();
+          // TODO re-implement
+          //
           ++nonZeros_[row];
           // must shift this row to add col at the position i
           auto j = nz_-1; // last column
-          if (col_[row*nz_+j] != defaultCol)
+          if (columns_[row*nz_+j] != defaultCol)
           { // new space available - so resize
             resize( rows(), cols(), (2 * nz_) );
             j++;
           }
           for(;j>i;--j)
           {
-            col_[row*nz_+j] = col_[row*nz_+j-1];
+            columns_[row*nz_+j] = columns_[row*nz_+j-1];
             values_[row*nz_+j] = values_[row*nz_+j-1];
           }
-          col_[row*nz_+i] = col;
+          columns_[row*nz_+i] = col;
           values_[row*nz_+i] = 0;
           return i;
         }
+        */
       }
 
       std::vector<field_type> values_;
-      std::vector<size_type> col_;
+      std::vector<size_type> columns_;
+      std::vector<size_type> rows_;
       std::vector<size_type> nonZeros_;
       std::array<size_type,2> dim_;
       size_type nz_;
+      bool compressed_;
     };
 
 
@@ -573,25 +621,6 @@ namespace Dune
         matrix_.resort();
       }
 
-      //! mult method of matrix object used by oem solver
-      field_type ddotOEM( const field_type *v, const field_type *w ) const
-      {
-        typedef AdaptiveDiscreteFunction< DomainSpace > DomainFunctionType;
-        DomainFunctionType V( "ddot V", domainSpace_, v );
-        DomainFunctionType W( "ddot W", domainSpace_, w );
-        return V.scalarProductDofs( W );
-      }
-
-      //! mult method of matrix object used by oem solver
-      void multOEM( const field_type *arg, field_type *dest ) const
-      {
-        typedef AdaptiveDiscreteFunction< DomainSpace > DomainFunctionType;
-        typedef AdaptiveDiscreteFunction< RangeSpace > RangeFunctionType;
-
-        DomainFunctionType farg( "multOEM arg", domainSpace_, arg );
-        RangeFunctionType fdest( "multOEM dest", rangeSpace_, dest );
-        apply( farg, fdest );
-      }
     protected:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
