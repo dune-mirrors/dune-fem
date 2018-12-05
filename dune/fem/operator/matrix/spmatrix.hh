@@ -53,13 +53,13 @@ namespace Dune
 
       //! construct matrix of zero size
       explicit SparseRowMatrix() :
-        values_(0), columns_(0), rows_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), compressed_( false )
+        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false )
       {}
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
       SparseRowMatrix(size_type rows, size_type cols, size_type nz) :
-        values_(0), columns_(0), rows_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), compressed_( false )
+        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false )
       {
         reserve(rows,cols,nz);
       }
@@ -67,7 +67,7 @@ namespace Dune
       //! reserve memory for given rows, columns and number of non zeros
       void reserve(size_type rows, size_type cols, size_type nz)
       {
-        if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != nz_))
+        if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != maxNzPerRow_))
           resize(rows,cols,nz);
         clear();
       }
@@ -157,7 +157,6 @@ namespace Dune
       {
         std::fill( values_.begin(), values_.end(), 0 );
         std::fill( columns_.begin(), columns_.end(), defaultCol );
-        std::fill( nonZeros_.begin(), nonZeros_.end(), 0 );
       }
 
       //! set all entries in row to zero
@@ -175,16 +174,24 @@ namespace Dune
 
       //! return max number of non zeros
       //! used in SparseRowMatrixObject::reserve
+      size_type maxNzPerRow() const
+      {
+        return maxNzPerRow_;
+      }
+
+      //! return max number of non zeros
+      //! used in SparseRowMatrixObject::reserve
       size_type numNonZeros() const
       {
-        return nz_;
+        return rows_[ dim_[0] ];
       }
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
       size_type numNonZeros(size_type i) const
       {
-        return nonZeros_[i];
+        assert( i >= 0 && i< rows() );
+        return rows_[ i+1 ] - rows_[ i ];
       }
 
       //! return pair (value,column)
@@ -236,27 +243,37 @@ namespace Dune
 
       void compress()
       {
-        size_type lastNewRow = nonZeros_[ 0 ];
+        // determine first row nonZeros
+        size_type lastNewRow = 0 ;
+        for( lastNewRow = rows_[ 0 ]; lastNewRow<rows_[1]; ++lastNewRow )
+        {
+          if( columns_[ lastNewRow ] == defaultCol )
+            break;
+        }
 
-        // TODO: improve
         for( size_type row = 1; row<dim_[0]; ++row )
         {
           const size_type endRow = rows_[ row+1 ];
-          size_type col = rows_[ row ];
-          rows_[ row ] = lastNewRow;
           size_type newpos = lastNewRow;
-          for(size_type i=0; i<nonZeros_[row]; ++i, ++col, ++newpos )
+          size_type col = rows_[ row ];
+          for(; col<endRow; ++col, ++newpos )
           {
+            if( columns_[ col ] == defaultCol )
+              break ;
+
             assert( newpos < col );
             values_ [ newpos ] = values_ [ col ];
             columns_[ newpos ] = columns_[ col ];
           }
+          // update row counters
+          rows_[ row ] = lastNewRow;
           lastNewRow = col ;
         }
         rows_[ dim_[0] ] = lastNewRow ;
 
         values_.resize( lastNewRow );
         columns_.resize( lastNewRow );
+        compressed_ = true ;
       }
 
     private:
@@ -267,7 +284,6 @@ namespace Dune
         values_.resize( rows*nz , 0 );
         columns_.resize( rows*nz , colVal );
         rows_.resize( rows+1 , 0 );
-        nonZeros_.resize( rows , 0 );
         rows_[ 0 ] = 0;
         for( size_type i=1; i <= rows; ++i )
         {
@@ -277,7 +293,7 @@ namespace Dune
 
         dim_[0] = rows;
         dim_[1] = cols;
-        nz_ = nz+firstCol;
+        maxNzPerRow_ = nz+firstCol;
       }
 
       //! returns local col index for given global (row,col)
@@ -291,15 +307,14 @@ namespace Dune
         // find local column or empty spot
         for( ;  i < endRow; ++i )
         {
-          if( columns_[ i ] == defaultCol )
+          if( columns_[ i ] == defaultCol || columns_[ i ] == col )
           {
-            ++nonZeros_[row];
             return i;
           }
-          if( columns_[ i ] == col )
-            return i;
         }
 
+
+        // TODO: implement resize with 2*nz
         std::abort();
         return defaultCol;
 
@@ -339,9 +354,9 @@ namespace Dune
       std::vector<field_type> values_;
       std::vector<size_type> columns_;
       std::vector<size_type> rows_;
-      std::vector<size_type> nonZeros_;
+
       std::array<size_type,2> dim_;
-      size_type nz_;
+      size_type maxNzPerRow_;
       bool compressed_;
     };
 
@@ -572,7 +587,7 @@ namespace Dune
             }
             // reserve matrix
             const auto nonZeros = std::max( static_cast<size_type>(stencil.maxNonZerosEstimate()*DomainSpaceType::localBlockSize),
-                                            matrix_.numNonZeros() );
+                                            matrix_.maxNzPerRow() );
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros );
           }
           sequence_ = domainSpace_.sequence();
