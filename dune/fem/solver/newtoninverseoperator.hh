@@ -63,6 +63,7 @@ namespace Dune
       const ParameterReader &parameter () const { return parameter_; }
       const SolverParameter& solverParameter () const { return *baseParam_; }
 
+      const SolverParameter& linear () const { return *baseParam_; }
 
       //These methods affect the nonlinear solver
       virtual double tolerance () const
@@ -109,13 +110,17 @@ namespace Dune
       [[deprecated("please use the linear solver parameters instead")]]
       virtual double linAbsTolParameter ( const double &tolerance )  const
       {
-        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
+        if(parameter_.exists(keyPrefix_ + "linabstol"))
+          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
+        return linear().linAbsTol();
       }
 
       [[deprecated("please use the linear solver parameters instead")]]
       virtual double linReductionParameter ( const double &tolerance ) const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
+        if(parameter_.exists(keyPrefix_ + "linreduction"))
+          return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
+        return linear().linReduction();
       }
 
       [[deprecated("Replaced by verbose ()")]]
@@ -141,7 +146,9 @@ namespace Dune
       [[deprecated("please use the linear solver parameters instead")]]
       virtual int maxLinearIterationsParameter () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
+          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return linear().maxLinearIterations();
       }
 
       [[deprecated]]
@@ -219,7 +226,7 @@ namespace Dune
        */
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const NewtonParameter &parameter )
-        : NewtonInverseOperator( std::move( jInv ), parameter.toleranceParameter(), parameter )
+        : NewtonInverseOperator( std::move( jInv ), parameter.tolerance(), parameter )
       {}
 
       explicit NewtonInverseOperator ( LinearInverseOperatorType jInv,
@@ -237,10 +244,10 @@ namespace Dune
        */
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const NewtonParameter &parameter )
-        : verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
-          maxIterations_( parameter.maxIterationsParameter() ),
-          maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
-          maxLineSearchIterations_( parameter.maxLineSearchIterationsParameter() ),
+        : verbose_( parameter.verbose() && MPIManager::rank () == 0 ),
+          maxIterations_( parameter.maxIterations() ),
+          maxLinearIterations_( parameter.linear().maxLinearIterations() ),
+          maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
@@ -259,7 +266,7 @@ namespace Dune
        *        <b>fem.solver.newton.tolerance</b>
        */
       explicit NewtonInverseOperator ( const NewtonParameter &parameter )
-        : NewtonInverseOperator( parameter.toleranceParameter(), parameter )
+        : NewtonInverseOperator( parameter.tolerance(), parameter )
       {}
 
       explicit NewtonInverseOperator ( const ParameterReader &parameter = Parameter::container() )
@@ -272,11 +279,11 @@ namespace Dune
        */
       NewtonInverseOperator ( const DomainFieldType &epsilon, const NewtonParameter &parameter )
         : NewtonInverseOperator(
-            LinearInverseOperatorType( parameter.linReductionParameter( epsilon ),
-                                       parameter.linAbsTolParameter( epsilon ),
-                                       parameter.maxLinearIterationsParameter(),
-                                       parameter.linearSolverVerbose(),
-                                       parameter.parameter() ),
+            LinearInverseOperatorType( parameter.linear().linReduction( epsilon ),
+                                       parameter.linear().linAbsTol( epsilon ),
+                                       parameter.linear().maxLinearIterations(),
+                                       parameter.linear().verbose(),
+                                       parameter.linear() ),
             epsilon, parameter )
       {}
 

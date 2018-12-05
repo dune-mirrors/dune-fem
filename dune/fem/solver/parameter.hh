@@ -89,20 +89,20 @@ namespace Dune
         }
       }
 
-      virtual double linAbsTol ()  const
+      virtual double linAbsTol ( double eps = 1e-8 )  const
       {
         if( other_ )
           return other_->linAbsTolParameter();
         else
-          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
+          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", eps );
       }
 
-      virtual double linReduction () const
+      virtual double linReduction ( double eps = 1e-2 ) const
       {
         if( other_ )
           return other_->linReductionParameter();
         else
-          return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
+          return parameter_.getValue< double >( keyPrefix_ + "linreduction", eps );
       }
 
       virtual int maxLinearIterations () const
