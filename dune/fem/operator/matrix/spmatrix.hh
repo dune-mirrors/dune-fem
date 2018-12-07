@@ -58,14 +58,14 @@ namespace Dune
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      SparseRowMatrix(size_type rows, size_type cols, size_type nz) :
+      SparseRowMatrix(const size_type rows, const size_type cols, const size_type nz) :
         values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false )
       {
         reserve(rows,cols,nz);
       }
 
       //! reserve memory for given rows, columns and number of non zeros
-      void reserve(size_type rows, size_type cols, size_type nz)
+      void reserve(const size_type rows, const size_type cols, const size_type nz)
       {
         if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != maxNzPerRow_))
           resize(rows,cols,nz);
@@ -85,7 +85,7 @@ namespace Dune
       }
 
       //! set entry to value (also setting 0 will result in an entry)
-      void set(size_type row, size_type col, field_type val)
+      void set(const size_type row, const size_type col, const field_type val)
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
@@ -98,7 +98,7 @@ namespace Dune
       }
 
       //! add value to row,col entry
-      void add(size_type row, size_type col, field_type val)
+      void add(const size_type row, const size_type col, const field_type val)
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
@@ -138,18 +138,24 @@ namespace Dune
       }
 
       //! return value of entry (row,col)
-      field_type operator()(size_type row, size_type col) const
+      field_type get(const size_type row, const size_type col) const
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        const size_type endRow = rows_[ row ];
-        for( size_type i = rows_[ row ]; i<endRow; ++i )
+        const size_type endrow = endRow( row );
+        for( size_type i = startRow( row ); i<endrow; ++i )
         {
           if(columns_[ i ] == col)
             return values_[ i ];
         }
         return 0;
+      }
+
+      //! return value of entry (row,col)
+      field_type operator()(const size_type row, const size_type col) const
+      {
+        return get( row, col );
       }
 
       //! set all matrix entries to zero
@@ -160,7 +166,7 @@ namespace Dune
       }
 
       //! set all entries in row to zero
-      void clearRow(size_type row)
+      void clearRow(const size_type row)
       {
         assert((row>=0) && (row <= dim_[0]));
 
@@ -207,8 +213,8 @@ namespace Dune
         std::size_t pos(0);
         for(std::size_t row=0; row<dim_[0]; ++row)
         {
-          const size_type endRow = rows_[ row+1 ];
-          for( size_type pos = rows_[ row ]; pos<endRow; ++pos )
+          const size_type endrow = endRow( row );
+          for( size_type pos = startRow( row ); pos<endrow; ++pos )
           {
             const auto rv(realValue(pos));
             const auto column(rv.second);
@@ -228,8 +234,8 @@ namespace Dune
         for(size_type row = 0; row<dim_[ 0 ]; ++row )
         {
           auto& matRow = matrix[ row ];
-          const size_type endRow = rows_[ row+1 ];
-          for(size_type col = rows_[ row ]; col<endRow; ++col)
+          const size_type endrow = endRow( row );
+          for(size_type col = startRow( row ); col<endrow; ++col)
           {
             const size_type realCol = columns_[ col ];
 
@@ -253,10 +259,10 @@ namespace Dune
 
         for( size_type row = 1; row<dim_[0]; ++row )
         {
-          const size_type endRow = rows_[ row+1 ];
+          const size_type endrow = endRow( row );
           size_type newpos = lastNewRow;
-          size_type col = rows_[ row ];
-          for(; col<endRow; ++col, ++newpos )
+          size_type col = startRow(  row );
+          for(; col<endrow; ++col, ++newpos )
           {
             if( columns_[ col ] == defaultCol )
               break ;
@@ -276,7 +282,17 @@ namespace Dune
         compressed_ = true ;
       }
 
-    private:
+    protected:
+      size_type startRow( const size_type row ) const
+      {
+        return rows_[ row ];
+      }
+
+      size_type endRow( const size_type row ) const
+      {
+        return rows_[ row+1 ];
+      }
+
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
       {
@@ -302,10 +318,10 @@ namespace Dune
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        const size_type endRow = rows_[ row + 1 ];
-        size_type i = rows_[ row ];
+        const size_type endR  = endRow( row );
+        size_type i = startRow( row );
         // find local column or empty spot
-        for( ;  i < endRow; ++i )
+        for( ;  i < endR; ++i )
         {
           if( columns_[ i ] == defaultCol || columns_[ i ] == col )
           {
