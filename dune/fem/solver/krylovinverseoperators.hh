@@ -84,7 +84,7 @@ namespace Dune
       : KrylovInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
       KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
+      : KrylovInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
 
       [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,

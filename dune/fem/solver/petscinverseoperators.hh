@@ -160,11 +160,11 @@ namespace Dune
 
       PetscInverseOperator ( double reduction, double absLimit,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( reduction, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter )
+      : PetscInverseOperator( reduction, absLimit, parameter.maxLinearIterations(), parameter.verbose(), parameter )
       {}
 
       PetscInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter )
+      : PetscInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter )
       {}
 
       PetscInverseOperator ( double redEps, double absLimit,

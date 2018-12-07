@@ -293,7 +293,7 @@ namespace Dune
       {}
 
       ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
-        : ISTLInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
+        : ISTLInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
 
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
@@ -303,7 +303,7 @@ namespace Dune
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
                             const SolverParameter & parameter )
-        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
       [[deprecated]]
 
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,

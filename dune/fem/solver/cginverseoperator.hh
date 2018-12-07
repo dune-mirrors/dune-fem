@@ -187,8 +187,8 @@ namespace Dune
         {}
 
         CGInverseOperator ( const SolverParameter& param = SolverParameter(Parameter::container() ) )
-          : solver_( param.linAbsTolParameter(),
-                     param.maxLinearIterationsParameter(),
+          : solver_( param.linAbsTol(),
+                     param.maxLinearIterations(),
                      param.verbose(),
                      param.parameter() ),
             parameter_( param.parameter() )

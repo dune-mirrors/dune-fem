@@ -87,8 +87,8 @@ struct NewSolverParameter : public Dune::Fem::LocalParameter< Dune::Fem::SolverP
 
   NewSolverParameter(const double eps, int maxIter, const bool verbose) : eps_( eps ), maxIter_( maxIter ), verbose_( verbose ) {}
   virtual bool verbose () const { return verbose_; }
-  virtual double linAbsTolParameter () const { return eps_; }
-  virtual double linReductionParameter() const { return eps_; }
+  virtual double linAbsTol () const { return eps_; }
+  virtual double linReduction() const { return eps_; }
   virtual int krylovMethod () const { return 0; }
 };
 
