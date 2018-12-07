@@ -17,7 +17,8 @@ namespace Dune
     //! SparseRowLinearOperator
     template< class DomainFunction, class RangeFunction >
     struct SparseRowLinearOperator
-    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
+    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType,
+                                    typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;

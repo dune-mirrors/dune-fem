@@ -33,14 +33,16 @@ namespace Dune
   {
 
     //! SparseRowMatrix
-    template <class T>
+    template <class T, class IndexT = std::size_t,
+              class ValuesVector = std::vector< T >,
+              class IndicesVector = std::vector< IndexT > >
     class SparseRowMatrix
     {
     public:
       //! matrix field type
       typedef T field_type;
       //! matrix index type
-      typedef std::size_t size_type;
+      typedef IndexT size_type;
       typedef SparseRowMatrix<field_type> ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
@@ -150,12 +152,6 @@ namespace Dune
             return values_[ i ];
         }
         return 0;
-      }
-
-      //! return value of entry (row,col)
-      field_type operator()(const size_type row, const size_type col) const
-      {
-        return get( row, col );
       }
 
       //! set all matrix entries to zero
@@ -368,9 +364,9 @@ namespace Dune
         */
       }
 
-      std::vector<field_type> values_;
-      std::vector<size_type> columns_;
-      std::vector<size_type> rows_;
+      ValuesVector  values_;
+      IndicesVector columns_;
+      IndicesVector rows_;
 
       std::array<size_type,2> dim_;
       size_type maxNzPerRow_;
@@ -566,7 +562,7 @@ namespace Dune
       {
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< size_type, size_type >& global )
         {
-          localMat.set( local.first, local.second, matrix_( global.first, global.second ) );
+          localMat.set( local.first, local.second, matrix_.get( global.first, global.second ) );
         };
 
         rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
@@ -635,7 +631,7 @@ namespace Dune
         for( auto dofIt = diag.dbegin(); dofIt != dofEnd; ++dofIt, ++row )
         {
           assert( row < matrix_.rows() );
-          (*dofIt) = matrix_( row, row );
+          (*dofIt) = matrix_.get( row, row );
         }
       }
 
@@ -779,7 +775,7 @@ namespace Dune
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
-        return matrix_( rowIndices_[ localRow ], columnIndices_[ localCol ] );
+        return matrix_.get( rowIndices_[ localRow ], columnIndices_[ localCol ] );
       }
 
       //! set matrix entry to value
