@@ -28,17 +28,6 @@ namespace Dune
   namespace Fem
   {
 
-    struct EigenMatrixParameter
-      : public SparseRowMatrixParameter
-    {
-      typedef SparseRowMatrixParameter BaseType;
-
-      EigenMatrixParameter( const std::string keyPrefix = "eigenmatrix." )
-        : BaseType( keyPrefix )
-      {}
-
-    };
-
     //! EigenMatrix
     template <class T>
     class EigenMatrix
@@ -186,7 +175,7 @@ namespace Dune
 
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,
-                                const MatrixParameter& param = EigenMatrixParameter() )
+                                const SolverParameter& param = SolverParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
     };
