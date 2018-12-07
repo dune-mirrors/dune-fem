@@ -119,9 +119,9 @@ namespace Dune
 
         for(size_type row = 0; row<dim_[0]; ++row)
         {
-          const size_type endCol = rows_[ row+1 ];
+          const size_type endrow = endRow( row );
           (*ret_it) = 0.0;
-          for(size_type col = rows_[ row ]; col<endCol; ++col)
+          for(size_type col = startRow( row ); col<endrow; ++col)
           {
             const auto realCol = columns_[ col ];
 
@@ -170,8 +170,8 @@ namespace Dune
       {
         assert((row>=0) && (row <= dim_[0]));
 
-        const size_type endCol = rows_[ row+1 ];
-        for(size_type col = rows_[ row ] ; col<endCol; ++col )
+        const size_type endrow = endRow( row );
+        for(size_type col = startRow( row ); col<endrow; ++col )
         {
           values_ [col] = 0;
           columns_[col] = defaultCol;
@@ -194,10 +194,10 @@ namespace Dune
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
-      size_type numNonZeros(size_type i) const
+      size_type numNonZeros(size_type row) const
       {
-        assert( i >= 0 && i< rows() );
-        return rows_[ i+1 ] - rows_[ i ];
+        assert( row >= 0 && row< rows() );
+        return endRow( row ) - startRow( row );
       }
 
       //! return pair (value,column)
@@ -249,37 +249,40 @@ namespace Dune
 
       void compress()
       {
-        // determine first row nonZeros
-        size_type lastNewRow = 0 ;
-        for( lastNewRow = rows_[ 0 ]; lastNewRow<rows_[1]; ++lastNewRow )
+        if( ! compressed_ )
         {
-          if( columns_[ lastNewRow ] == defaultCol )
-            break;
-        }
-
-        for( size_type row = 1; row<dim_[0]; ++row )
-        {
-          const size_type endrow = endRow( row );
-          size_type newpos = lastNewRow;
-          size_type col = startRow(  row );
-          for(; col<endrow; ++col, ++newpos )
+          // determine first row nonZeros
+          size_type lastNewRow = 0 ;
+          for( lastNewRow = startRow( 0 ); lastNewRow < endRow( 0 ); ++lastNewRow )
           {
-            if( columns_[ col ] == defaultCol )
-              break ;
-
-            assert( newpos < col );
-            values_ [ newpos ] = values_ [ col ];
-            columns_[ newpos ] = columns_[ col ];
+            if( columns_[ lastNewRow ] == defaultCol )
+              break;
           }
-          // update row counters
-          rows_[ row ] = lastNewRow;
-          lastNewRow = col ;
-        }
-        rows_[ dim_[0] ] = lastNewRow ;
 
-        values_.resize( lastNewRow );
-        columns_.resize( lastNewRow );
-        compressed_ = true ;
+          for( size_type row = 1; row<dim_[0]; ++row )
+          {
+            const size_type endrow = endRow( row );
+            size_type newpos = lastNewRow;
+            size_type col = startRow(  row );
+            for(; col<endrow; ++col, ++newpos )
+            {
+              if( columns_[ col ] == defaultCol )
+                break ;
+
+              assert( newpos < col );
+              values_ [ newpos ] = values_ [ col ];
+              columns_[ newpos ] = columns_[ col ];
+            }
+            // update row counters
+            rows_[ row ] = lastNewRow;
+            lastNewRow = col ;
+          }
+          rows_[ dim_[0] ] = lastNewRow ;
+
+          //values_.resize( lastNewRow );
+          //columns_.resize( lastNewRow );
+          compressed_ = true ;
+        }
       }
 
     protected:
@@ -576,6 +579,9 @@ namespace Dune
       {
         matrix_.clear();
       }
+
+      //! compress matrix after setup
+      void communicate() {} //matrix_.compress(); }
 
       void flushAssembly() {}
 
