@@ -247,40 +247,38 @@ namespace Dune
         }
       }
 
-      void compress()
+      void compress ()
       {
         if( ! compressed_ )
         {
           // determine first row nonZeros
-          size_type lastNewRow = 0 ;
-          for( lastNewRow = startRow( 0 ); lastNewRow < endRow( 0 ); ++lastNewRow )
+          size_type newpos = 0 ;
+          for( newpos = startRow( 0 ); newpos < endRow( 0 ); ++newpos )
           {
-            if( columns_[ lastNewRow ] == defaultCol )
+            if( columns_[ newpos ] == defaultCol )
               break;
           }
 
           for( size_type row = 1; row<dim_[0]; ++row )
           {
             const size_type endrow = endRow( row );
-            size_type newpos = lastNewRow;
-            size_type col = startRow(  row );
+            size_type col = startRow( row );
+            // update new row start position
+            rows_[ row ] = newpos;
             for(; col<endrow; ++col, ++newpos )
             {
               if( columns_[ col ] == defaultCol )
                 break ;
 
-              assert( newpos < col );
+              assert( newpos <= col );
               values_ [ newpos ] = values_ [ col ];
               columns_[ newpos ] = columns_[ col ];
             }
-            // update row counters
-            rows_[ row ] = lastNewRow;
-            lastNewRow = col ;
           }
-          rows_[ dim_[0] ] = lastNewRow ;
+          rows_[ dim_[0] ] = newpos ;
 
-          //values_.resize( lastNewRow );
-          //columns_.resize( lastNewRow );
+          values_.resize( newpos );
+          columns_.resize( newpos );
           compressed_ = true ;
         }
       }
@@ -581,7 +579,7 @@ namespace Dune
       }
 
       //! compress matrix after setup
-      void communicate() {} //matrix_.compress(); }
+      void communicate() { matrix_.compress(); }
 
       void flushAssembly() {}
 
