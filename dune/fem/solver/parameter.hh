@@ -92,7 +92,7 @@ namespace Dune
       virtual double linAbsTol ( double eps = 1e-8 )  const
       {
         if( other_ )
-          return other_->linAbsTolParameter();
+          return other_->linAbsTol();
         else
           return parameter_.getValue< double >(keyPrefix_ +  "linabstol", eps );
       }
@@ -100,7 +100,7 @@ namespace Dune
       virtual double linReduction ( double eps = 1e-2 ) const
       {
         if( other_ )
-          return other_->linReductionParameter();
+          return other_->linReduction();
         else
           return parameter_.getValue< double >( keyPrefix_ + "linreduction", eps );
       }
@@ -108,7 +108,7 @@ namespace Dune
       virtual int maxLinearIterations () const
       {
         if( other_ )
-          return other_->maxLinearIterationsParameter();
+          return other_->maxLinearIterations();
         else
           return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
@@ -187,19 +187,28 @@ namespace Dune
       [[deprecated]]
       virtual double linAbsTolParameter ()  const
       {
-        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
+        if( other_ )
+          return other_->linAbsTolParameter();
+        else
+          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
       }
 
       [[deprecated]]
       virtual double linReductionParameter () const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
+        if( other_ )
+          return other_->linReductionParameter();
+        else
+          return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
       }
 
       [[deprecated]]
       virtual int maxLinearIterationsParameter () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        if( other_ )
+          return other_->maxLinearIterationsParameter();
+        else
+          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
     };
