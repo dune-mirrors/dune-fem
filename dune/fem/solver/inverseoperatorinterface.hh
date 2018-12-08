@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_INVERSEOPERATORINTERFACE_HH
 #define DUNE_FEM_SOLVER_INVERSEOPERATORINTERFACE_HH
 
-#include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/parameter.hh>

@@ -33,7 +33,7 @@ namespace Dune
       EigenLinearOperator( const std::string & ,
                            const DomainSpaceType &domainSpace,
                            const RangeSpaceType &rangeSpace,
-                           const MatrixParameter& param = EigenMatrixParameter() ) :
+                           const SolverParameter& param = SolverParameter() ) :
         BaseType( domainSpace, rangeSpace, param )
       {}
 
