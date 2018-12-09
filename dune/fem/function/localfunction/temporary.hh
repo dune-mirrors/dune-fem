@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
 
+#include <dune/common/ftraits.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 
@@ -120,6 +121,11 @@ namespace Dune
       void bind ( const EntityType &entity ) { init( entity ); }
       void unbind () {}
 
+      const DiscreteFunctionSpaceType &space() const
+      {
+        return dfSpace_;
+      }
+
     protected:
       const DiscreteFunctionSpaceType &dfSpace_;
     };
@@ -140,6 +146,16 @@ namespace Dune
         \param DiscreteFunctionSpaceImp type of the discrete function space, the
                                         local function shall belong to
      */
+
+    template< class DiscreteFunctionSpace, class Dof >
+    class TemporaryLocalFunction;
+  }
+  template< class DiscreteFunctionSpace, class Dof  >
+  struct FieldTraits< Fem::TemporaryLocalFunction<DiscreteFunctionSpace,Dof> >
+  : public FieldTraits< Dof >
+  {};
+  namespace Fem
+  {
     template< class DiscreteFunctionSpace, class Dof = typename DiscreteFunctionSpace::RangeFieldType >
     class TemporaryLocalFunction
     : public BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::DynamicVector< Dof > >
