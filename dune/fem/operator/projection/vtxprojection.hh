@@ -27,11 +27,16 @@ namespace Dune
       template <class EntityType>
       void setEntity(const EntityType& en) {
         volume_ = en.geometry().volume();
+        baryCenter_ = en.geometry().center();
       }
       double operator()(const DomainType& point) {
-        return volume_;
+        // return volume_;
+        DomainType tau(baryCenter_);
+        tau -= point;
+        return tau.two_norm() / volume_;
       }
       double volume_;
+      DomainType baryCenter_;
     };
 
     struct VtxProjectionImpl

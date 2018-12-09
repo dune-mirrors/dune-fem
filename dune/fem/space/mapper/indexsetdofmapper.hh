@@ -151,9 +151,8 @@ namespace Dune
          *  pair.
          *  A local dof is attached to a subentity S if it is attached either to that
          *  subentity or to a subentity S'<S i.e. S' has codimension greater than c
-         *  which and lies within S. For example all dofs are attached to the element itself
-         *  and dofs are attached to an edge also in the case where they are attached to
-         *  the vertices of that edge.
+         *  and lies within S. For example all dofs are attached to the element itself
+         *  and dofs attached to a vertex of an edge are also attached to that edge.
          **/
         void onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const;
 
