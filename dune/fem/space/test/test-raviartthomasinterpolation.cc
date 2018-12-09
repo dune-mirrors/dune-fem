@@ -1,7 +1,5 @@
 #include <config.h>
 
-#if HAVE_DUNE_LOCALFUNCTIONS
-
 #include <cmath>
 
 #include <iomanip>
@@ -269,9 +267,3 @@ int main ( int argc, char **argv )
 
   return 0;
 }
-#else // #if HAVE_DUNE_LOCALFUNCTIONS
-int main()
-{
-  return 0;
-}
-#endif
