@@ -85,7 +85,7 @@ namespace Dune {
         assembledOperator_ = dynamic_cast<const AssembledOperatorType*>( &op );
       }
 
-      void bind ( const OperatorType &op, PreconditionerType &preconditioner )
+      void bind ( const OperatorType &op, const PreconditionerType &preconditioner )
       {
         bind( op );
         preconditioner_ = &preconditioner;
@@ -110,7 +110,7 @@ namespace Dune {
 
       const OperatorType *operator_                   = nullptr;
       const AssembledOperatorType* assembledOperator_ = nullptr;
-      PreconditionerType *preconditioner_             = nullptr;
+      const PreconditionerType *preconditioner_       = nullptr;
 
       // temporary functions for solver compatibility
       mutable std::unique_ptr< DomainFunctionType > rhs_;
