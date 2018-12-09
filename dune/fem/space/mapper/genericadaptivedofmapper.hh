@@ -10,6 +10,7 @@
 #include <dune/fem/common/forloop.hh>
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/metaprogramming.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/localkey.hh>
 #include <dune/fem/space/lagrange/lagrangepoints.hh>
@@ -34,6 +35,7 @@ namespace Dune
 
     public:
       typedef TraitsImp Traits;
+      typedef std::size_t SizeType;
 
       // true if all dofs are associated with entities of codim 0
       static const bool discontinuousMapper = Traits :: discontinuousMapper ;
@@ -611,6 +613,35 @@ namespace Dune
         const int n = numEntityDofs( entity );
         for( int i = 0; i < n; ++i )
           f( i, dofContainer( Entity::codimension )[ entity ].entityDof( i ) );
+      }
+
+      void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+      {
+        indices.resize( numDofs(element) );
+        if( discontinuousMapper )
+        {
+          if (c == 0)
+            std::fill(indices.begin(),indices.end(),true);
+          else
+            std::fill(indices.begin(),indices.end(),false);
+        }
+        else
+        {
+          DUNE_THROW( NotImplemented, "Method onSubEntity(...) not yet implemented for TupleMapper" );
+        }
+      }
+
+      void map ( const ElementType &element, std::vector< SizeType > &indices ) const
+      {
+        indices.resize( numDofs( element ) );
+        mapEach( element, AssignFunctor< std::vector< SizeType > >( indices ) );
+      }
+
+      template< class Entity >
+      void mapEntityDofs ( const Entity &entity, std::vector< SizeType > &indices ) const
+      {
+        indices.resize( numEntityDofs( entity ) );
+        mapEachEntityDof( entity, AssignFunctor< std::vector< SizeType > >( indices ) );
       }
 
       /** \copydoc Dune::Fem::DofMapper::maxNumDofs() const */
