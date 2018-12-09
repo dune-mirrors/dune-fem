@@ -249,7 +249,7 @@ namespace Dune
       typedef Preconditioner PreconditionerType;
 
       typedef Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
-      typedef ISTLBlockVectorDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > NativeDiscreteFunctionType ;
+      typedef ISTLBlockVectorDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType ;
 
       typedef ISTLInverseOperator< DiscreteFunction, method, Preconditioner >  InverseOperatorType;
     };
@@ -290,7 +290,8 @@ namespace Dune
       ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
                             const SolverParameter & parameter = SolverParameter() )
         : solverAdapter_( ReductionType( redEps, absLimit, parameter ), maxIterations, (parameter.verbose() && verbose) ? 2 : 0, parameter )
-      {}
+      {
+      }
 
       ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
         : ISTLInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}

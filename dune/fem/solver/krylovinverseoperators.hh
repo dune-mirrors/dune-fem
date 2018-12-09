@@ -11,6 +11,7 @@
 #include <dune/fem/solver/linear/gmres.hh>
 #include <dune/fem/solver/linear/bicgstab.hh>
 #include <dune/fem/solver/linear/cg.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
 
@@ -24,19 +25,41 @@ namespace Dune
     // ---------------------
 
     template< class DiscreteFunction, int method = -1 >
-    class KrylovInverseOperator
-    : public Operator< DiscreteFunction, DiscreteFunction >
+    class KrylovInverseOperator;
+
+    template< class DiscreteFunction, int method >
+    struct KrylovInverseOperatorTraits
     {
-      typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
-
-      typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
-    public:
-      typedef typename BaseType::DomainFunctionType DomainFunctionType;
-      typedef typename BaseType::RangeFunctionType RangeFunctionType;
-
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
-      typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
+      typedef OperatorType  PreconditionerType;
 
+      typedef OperatorType AssembledOperatorType;
+      typedef DiscreteFunction SolverDiscreteFunctionType ;
+
+      typedef KrylovInverseOperator< DiscreteFunction, method >  InverseOperatorType;
+    };
+
+
+    template< class DiscreteFunction, int method >
+    class KrylovInverseOperator
+    : public InverseOperatorInterface< KrylovInverseOperatorTraits< DiscreteFunction, method > >
+    {
+      typedef KrylovInverseOperatorTraits< DiscreteFunction, method > Traits;
+      typedef InverseOperatorInterface< Traits > BaseType;
+
+      friend class InverseOperatorInterface< Traits >;
+    public:
+      typedef typename BaseType::DomainFunctionType     DomainFunctionType;
+      typedef typename BaseType::RangeFunctionType      RangeFunctionType;
+      typedef typename BaseType::OperatorType           OperatorType;
+      typedef typename BaseType::PreconditionerType     PreconditionerType;
+      typedef typename BaseType::AssembledOperatorType  AssembledOperatorType;
+
+      using BaseType :: bind;
+      using BaseType :: unbind;
+      using BaseType :: setMaxIterations;
+
+    public:
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op,
                               double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
@@ -100,19 +123,28 @@ namespace Dune
 
       //! main constructor
       KrylovInverseOperator ( double redEps, double absLimit,
-                                  unsigned int maxIterations, bool verbose,
-                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : precondObj_(),
+                              unsigned int maxIterations, bool verbose,
+                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : BaseType( parameter ),
+        precondObj_(),
         tolerance_( absLimit ),
         errorType_( parameter.errorMeasure() ),
-        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
-        numOfIterations_( 0 ),
         verbose_( verbose ? true : parameter.verbose() ), // verbose overrules parameter.verbose()
         method_( method < 0 ? parameter.krylovMethod() : method ),
         restart_( method_ == SolverParameter::gmres ? parameter.gmresRestart() : 0 )
-      {}
+      {
+      }
 
-      virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+      void bind ( const OperatorType &op )
+      {
+        if( precondObj_ )
+          BaseType::bind( op, *precondObj_ );
+        else
+          BaseType::bind( op );
+      }
+
+    protected:
+      int apply( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
         std::ostream* os = nullptr;
         // only set output when general verbose mode is enabled
@@ -184,47 +216,15 @@ namespace Dune
                                       errorType_, os );
         }
 
-        // only store number of iterations when solver converged, otherwise numIter < 0
-        numOfIterations_ = ( numIter > 0 ) ? numIter : 0;
+        return numIter;
       }
 
-      unsigned int iterations () const
-      {
-        return numOfIterations_;
-      }
-
-      void bind ( const OperatorType &op )
-      {
-        unbind();
-
-        operator_ = &op;
-        // if internal preconditioner is active set to preconditioner
-        if( precondObj_ )
-        {
-          preconditioner_ = precondObj_.operator->();
-        }
-      }
-
-      void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
-      {
-        operator_ = &op;
-        preconditioner_ = &preconditioner;
-      }
-
-      void unbind () { operator_ = nullptr; preconditioner_ = nullptr;  numOfIterations_ = 0; }
-
-      void setMaxIterations ( unsigned int maxIterations )
-      {
-        maxIterations_ = std::min( static_cast< unsigned int >( std::numeric_limits< int >::max() ), maxIterations );
-      }
-
-    private:
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op,
-                                  const PreconditionerType *preconditioner,
-                                  double redEps, double absLimit,
-                                  unsigned int maxIterations, bool verbose,
-                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+                              const PreconditionerType *preconditioner,
+                              double redEps, double absLimit,
+                              unsigned int maxIterations, bool verbose,
+                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
       {
         bind(op);
@@ -240,17 +240,19 @@ namespace Dune
         }
       }
 
-      const OperatorType *operator_ = nullptr;
+    protected:
+      using BaseType :: operator_;
+      using BaseType :: preconditioner_;
+
+      using BaseType :: maxIterations_;
+      using BaseType :: iterations_;
+
       std::unique_ptr< PreconditionerType > precondObj_;
-      const PreconditionerType *preconditioner_;
 
       mutable std::vector< DomainFunctionType > v_;
 
       const double tolerance_;
       const int errorType_;
-
-      unsigned int maxIterations_;
-      mutable unsigned int numOfIterations_;
 
       const bool verbose_;
 

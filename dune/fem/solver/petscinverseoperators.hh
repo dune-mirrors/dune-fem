@@ -41,7 +41,7 @@ namespace Dune
     public:
       typedef Op                                   OperatorType;
       typedef OperatorType                         PreconditionerType;
-      typedef PetscDiscreteFunction< SpaceType >   NativeDiscreteFunctionType;
+      typedef PetscDiscreteFunction< SpaceType >   SolverDiscreteFunctionType;
       typedef PetscLinearOperator< DF, DF >        AssembledOperatorType;
       typedef PetscInverseOperator< DF, Op >       InverseOperatorType;
     };
@@ -80,7 +80,7 @@ namespace Dune
       friend class InverseOperatorInterface< Traits >;
     public:
 
-      typedef typename BaseType :: NativeDiscreteFunctionType    PetscDiscreteFunctionType;
+      typedef typename BaseType :: SolverDiscreteFunctionType    PetscDiscreteFunctionType;
       typedef typename BaseType :: AssembledOperatorType         AssembledOperatorType;
       typedef typename BaseType :: OperatorType                  OperatorType;
 
@@ -144,7 +144,9 @@ namespace Dune
       PetscInverseOperator ( double reduction, double absLimit, int maxIter, bool verbose,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
-      {}
+      {
+        reduction_ = reduction;
+      }
 
       /** \brief constructor
        *
@@ -212,7 +214,7 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = 100 ; //maxIterations_ ;
+        PetscInt  maxits = maxIterations_ ;
         PetscReal reduc  = reduction_;
         ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
 
@@ -457,8 +459,12 @@ namespace Dune
         // get number of iterations
         PetscInt its ;
         ::Dune::Petsc::KSPGetIterationNumber( *ksp_, &its );
-        // TODO: check converged
-        return its;
+        KSPConvergedReason reason;
+        ::Dune::Petsc::KSPGetConvergedReason( *ksp_, &reason );
+
+        bool converged = int(reason) >= 0 ;
+
+        return (converged) ? its : -its;
       }
 
     protected:

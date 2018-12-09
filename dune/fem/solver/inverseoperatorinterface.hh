@@ -26,21 +26,23 @@ namespace Dune {
       typedef typename BaseType :: DomainFunctionType DomainFunctionType;
       typedef typename BaseType :: RangeFunctionType  RangeFunctionType;
 
-      typedef typename Traits :: NativeDiscreteFunctionType   NativeDiscreteFunctionType;
+      typedef typename Traits :: SolverDiscreteFunctionType   SolverDiscreteFunctionType;
       typedef typename Traits :: OperatorType                 OperatorType;
       typedef typename Traits :: AssembledOperatorType        AssembledOperatorType;
       typedef typename Traits :: PreconditionerType           PreconditionerType;
 
       InverseOperatorInterface( const SolverParameter& parameter = SolverParameter(Parameter::container() ) )
         : parameter_( parameter )
-      {}
+      {
+        setMaxIterations( parameter_.maxLinearIterations() );
+      }
 
       //! application of operator, i.e. solution of inverse operator with given right hand side and initial guess
       // TODO: improve docu
-      virtual void operator() ( const NativeDiscreteFunctionType& u, NativeDiscreteFunctionType& w ) const
+      virtual void operator() ( const SolverDiscreteFunctionType& u, SolverDiscreteFunctionType& w ) const
       {
         rightHandSideCopied_ = false;
-        asImp().apply( u, w );
+        iterations_ = asImp().apply( u, w );
       }
 
       //! application of operator, here solution and right hand side can be of any discrete function type
@@ -70,7 +72,7 @@ namespace Dune {
         // copy initial guess
         x_->assign( w );
 
-        asImp().apply( *rhs_, *x_ );
+        iterations_ = asImp().apply( *rhs_, *x_ );
 
         // store result in destination
         w.assign( *x_ );
@@ -93,8 +95,8 @@ namespace Dune {
 
       int iterations () const { return iterations_; }
 
-      virtual void setMaxIterations ( int iter ) {
-
+      virtual void setMaxIterations ( const int iter ) {
+        maxIterations_ = iter ;
       }
 
       //! return accumulated communication time

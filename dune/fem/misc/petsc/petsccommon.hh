@@ -155,6 +155,8 @@ namespace Dune
     }
     inline static void KSPGetIterationNumber( KSP ksp, PetscInt* its )
     { ErrorCheck( ::KSPGetIterationNumber( ksp, its ) ); }
+    inline static void KSPGetConvergedReason(KSP ksp, KSPConvergedReason *reason)
+    { ErrorCheck( ::KSPGetConvergedReason( ksp, reason ) ); }
 
 
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
