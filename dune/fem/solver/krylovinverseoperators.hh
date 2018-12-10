@@ -60,12 +60,7 @@ namespace Dune
       using BaseType :: setMaxIterations;
 
     public:
-      template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op,
-                              double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
-                              const SolverParameter &parameter = SolverParameter() )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
-
+      //deprecated constructors
       template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
@@ -81,18 +76,11 @@ namespace Dune
       : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
-                              double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
-                              const SolverParameter &parameter = SolverParameter() )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
-
-      template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit,
                               const SolverParameter &parameter )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(),
-                               parameter.verbose(), parameter ) {}
+      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter) {}
 
       template <class LinearOperator>
       [[deprecated]]
@@ -106,14 +94,27 @@ namespace Dune
                               const SolverParameter &parameter )
       : KrylovInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
-      KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
-
       [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations,
                               const SolverParameter &parameter )
       : KrylovInverseOperator( redEps, absLimit, maxIterations,  parameter.verbose(), parameter ) {}
+
+      //non-deprecated constructors
+      KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
+
+      template <class LinearOperator>
+      KrylovInverseOperator ( const LinearOperator &op,
+                              double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
+
+      template <class LinearOperator>
+      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
+                              double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
