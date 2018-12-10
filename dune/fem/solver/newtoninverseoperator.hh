@@ -71,6 +71,11 @@ namespace Dune
         return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
       }
 
+      virtual void setTolerance ( const double tol )
+      {
+        Parameter::append( keyPrefix_ + "tolerance", std::to_string(tol), true );
+      }
+
       virtual bool verbose () const
       {
         const bool v = baseParam_? baseParam_->verbose() : false;
@@ -82,9 +87,31 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
+      virtual void setMaxIterations ( const int maxIter )
+      {
+        Parameter::append( keyPrefix_ + "maxiterations", std::to_string(maxIter), true);
+      }
+
+      //Maximum Linear Iterations in total
+      //!= max iterations of each linear solve
+      virtual int maxLinearIterations () const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+      }
+
+      virtual void setMaxLinearIterations ( const int maxLinearIter )
+      {
+        Parameter::append( keyPrefix_ + "maxlineariterations", std::to_string(maxLinearIter), true);
+      }
+
       virtual int maxLineSearchIterations () const
       {
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
+      }
+
+      virtual void setMaxLineSearchIterations ( const int maxLineSearchIter )
+      {
+        Parameter::append( keyPrefix_ + "maxlinesearchiterations", std::to_string(maxLineSearchIter), true);
       }
 
       enum class LineSearchMethod {
@@ -96,6 +123,12 @@ namespace Dune
       {
         const std::string lineSearchMethods[] = { "none", "simple" };
         return static_cast< LineSearchMethod>( parameter_.getEnum( keyPrefix_ + "lineSearch", lineSearchMethods, 0 ) );
+      }
+
+      virtual void setLineSearch ( const LineSearchMethod method )
+      {
+        const std::string lineSearchMethods[] = { "none", "simple" };
+        Parameter::append( keyPrefix_ + "lineSearch", lineSearchMethods[int(method)], true );
       }
 
       //deprecated methods
@@ -143,7 +176,7 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
-      [[deprecated("please use the linear solver parameters instead")]]
+      [[deprecated("Replaced by maxLinearIterations")]]
       virtual int maxLinearIterationsParameter () const
       {
         if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
@@ -245,8 +278,6 @@ namespace Dune
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const NewtonParameter &parameter )
         : verbose_( parameter.verbose() && MPIManager::rank () == 0 ),
-          maxIterations_( parameter.maxIterations() ),
-          maxLinearIterations_( parameter.linear().maxLinearIterations() ),
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
@@ -344,9 +375,9 @@ namespace Dune
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
       int iterations () const { return iterations_; }
-      void setMaxIterations ( int maxIterations ) { maxIterations_ = maxIterations; }
+      void setMaxIterations ( int maxIterations ) { parameter_.setMaxIterations( maxIterations ); }
       int linearIterations () const { return linearIterations_; }
-      void setMaxLinearIterations ( int maxLinearIterations ) { maxLinearIterations_ = maxLinearIterations; }
+      void setMaxLinearIterations ( int maxLinearIterations ) { parameter_.setMaxLinearIterations( maxLinearIterations ); }
       bool verbose() const { return verbose_; }
 
       NewtonFailure failed () const
@@ -355,9 +386,9 @@ namespace Dune
         // nan test not working with optimization flags...
         if( !(delta_ < std::numeric_limits< DomainFieldType >::max()) || std::isnan( delta_ ) )
           return NewtonFailure::InvalidResidual;
-        else if( iterations_ >= maxIterations_ )
+        else if( iterations_ >= parameter_.maxIterations() )
           return NewtonFailure::TooManyIterations;
-        else if( linearIterations_ >= maxLinearIterations_ )
+        else if( linearIterations_ >= parameter_.maxLinearIterations() )
           return NewtonFailure::TooManyLinearIterations;
         else if( !stepCompleted_ )
           return NewtonFailure::LineSearchFailed;
@@ -422,8 +453,6 @@ namespace Dune
       const OperatorType *op_ = nullptr;
 
       const bool verbose_;
-      const int maxIterations_;
-      const int maxLinearIterations_;
       const int maxLineSearchIterations_;
 
       mutable DomainFieldType delta_;
@@ -472,7 +501,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
         jInv_.bind( jOp );
-        jInv_.setMaxIterations( maxLinearIterations_ - linearIterations_ );
+        jInv_.setMaxIterations( parameter_.maxLinearIterations() - linearIterations_ );
 
         dw.clear();
         jInv_( residual, dw );
