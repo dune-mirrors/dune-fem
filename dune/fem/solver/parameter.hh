@@ -2,6 +2,7 @@
 #define DUNE_FEM_SOLVERPARAMETER_HH
 
 #include <dune/fem/io/parameter.hh>
+#include <dune/common/std/optional.hh>
 
 namespace Dune
 {
@@ -102,19 +103,16 @@ namespace Dune
         if( other_ )
           return other_->setErrorMeasure( errorType );
         else
-        {
-          const std::string errorTypeTable[] =
-            { "absolute", "relative", "residualreduction" };
-          Parameter::append( keyPrefix_ + "errormeasure", errorTypeTable[errorType], true );
-        }
+          errorMeasure_ = errorType;
       }
 
       virtual double linAbsTol ( double eps = 1e-8 )  const
       {
         if( other_ )
           return other_->linAbsTol();
-        else
-          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", eps );
+        else if( ! linAbsTol_ )
+          linAbsTol_ = parameter_.getValue< double >(keyPrefix_ +  "linabstol", eps );
+        return linAbsTol_.value();
       }
 
       virtual void setLinAbsTol ( const double eps )
@@ -122,15 +120,16 @@ namespace Dune
         if( other_ )
           return other_->setLinAbsTol( eps );
         else
-          Parameter::append(keyPrefix_ +  "linabstol", std::to_string(eps), true );
+          linAbsTol_ = eps;
       }
 
       virtual double linReduction ( double eps = 1e-2 ) const
       {
         if( other_ )
           return other_->linReduction();
-        else
-          return parameter_.getValue< double >( keyPrefix_ + "linreduction", eps );
+        else if ( !linReduction_ )
+          linReduction_ = parameter_.getValue< double >( keyPrefix_ + "linreduction", eps );
+        return linReduction_.value();
       }
 
       virtual void setLinReduction ( const double eps )
@@ -138,15 +137,16 @@ namespace Dune
         if( other_ )
           return other_->setLinReduction( eps );
         else
-          Parameter::append( keyPrefix_ + "linreduction", std::to_string(eps), true );
+          linReduction_ = eps;
       }
 
       virtual int maxLinearIterations () const
       {
         if( other_ )
           return other_->maxLinearIterations();
-        else
-          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        else if (! maxLinearIterations_ )
+          maxLinearIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return maxLinearIterations_.value();
       }
 
       virtual void  setMaxLinearIterations ( const int maxIter )
