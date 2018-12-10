@@ -34,7 +34,6 @@ namespace Dune {
       InverseOperatorInterface( const SolverParameter& parameter = SolverParameter(Parameter::container() ) )
         : parameter_( parameter )
       {
-        setMaxIterations( parameter_.maxLinearIterations() );
       }
 
       //! application of operator, i.e. solution of inverse operator with given right hand side and initial guess
@@ -95,8 +94,12 @@ namespace Dune {
 
       int iterations () const { return iterations_; }
 
+      virtual void setMaxLinearIterations ( const int iter ) {
+        parameter_.setMaxLinearIterations( iter );
+      }
+
       virtual void setMaxIterations ( const int iter ) {
-        maxIterations_ = iter ;
+        parameter_.setMaxLinearIterations( iter );
       }
 
       //! return accumulated communication time
@@ -117,9 +120,6 @@ namespace Dune {
       mutable std::unique_ptr< RangeFunctionType  > x_;
 
       mutable int iterations_ = -1 ;
-      mutable int maxIterations_ = -1;
-
-      double reduction_ = 0.0;
 
       mutable bool rightHandSideCopied_ = false ;
     };
