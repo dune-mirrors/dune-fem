@@ -57,6 +57,7 @@ namespace Dune
 
       using BaseType :: bind;
       using BaseType :: unbind;
+      using BaseType :: setMaxLinearIterations;
       using BaseType :: setMaxIterations;
 
     public:
@@ -128,12 +129,11 @@ namespace Dune
                               const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter ),
         precondObj_(),
-        tolerance_( absLimit ),
-        errorType_( parameter.errorMeasure() ),
         verbose_( verbose ? true : parameter.verbose() ), // verbose overrules parameter.verbose()
-        method_( method < 0 ? parameter.krylovMethod() : method ),
-        restart_( method_ == SolverParameter::gmres ? parameter.gmresRestart() : 0 )
+        method_( method < 0 ? parameter.krylovMethod() : method )
       {
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setMaxLinearIterations( maxIterations );
       }
 
       void bind ( const OperatorType &op )
@@ -161,8 +161,8 @@ namespace Dune
         {
           if( v_.empty() )
           {
-            v_.reserve( restart_+1 );
-            for( int i=0; i<=restart_; ++i )
+            v_.reserve( parameter_.gmresRestart()+1 );
+            for( int i=0; i<=parameter_.gmresRestart(); ++i )
             {
               v_.emplace_back( DiscreteFunction( "GMRes::v", u.space() ) );
             }
@@ -172,9 +172,9 @@ namespace Dune
 
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::gmres( *operator_, preconditioner_,
-                                         v_, w, u, restart_,
-                                         tolerance_, maxIterations_,
-                                         errorType_, os );
+                                         v_, w, u, parameter_.gmresRestart(),
+                                         parameter_.linAbsTol(), parameter_.maxLinearIterations(),
+                                         parameter_.errorMeasure(), os );
         }
         else if( method_ == SolverParameter::bicgstab )
         {
@@ -192,8 +192,8 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::bicgstab( *operator_, preconditioner_,
                                             v_, w, u,
-                                            tolerance_, maxIterations_,
-                                            errorType_, os );
+                                            parameter_.linAbsTol(), parameter_.maxLinearIterations(),
+                                            parameter_.errorMeasure(), os );
         }
         else if( method_ == SolverParameter::cg )
         {
@@ -213,8 +213,8 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::cg( *operator_, preconditioner_,
                                       v_, w, u,
-                                      tolerance_, maxIterations_,
-                                      errorType_, os );
+                                      parameter_.linAbsTol(), parameter_.maxLinearIterations(),
+                                      parameter_.errorMeasure(), os );
         }
 
         return numIter;
@@ -245,20 +245,16 @@ namespace Dune
       using BaseType :: operator_;
       using BaseType :: preconditioner_;
 
-      using BaseType :: maxIterations_;
+      using BaseType :: parameter_;
       using BaseType :: iterations_;
 
       std::unique_ptr< PreconditionerType > precondObj_;
 
       mutable std::vector< DomainFunctionType > v_;
 
-      const double tolerance_;
-      const int errorType_;
-
       const bool verbose_;
 
       const int method_;
-      const int restart_;
     };
 
 

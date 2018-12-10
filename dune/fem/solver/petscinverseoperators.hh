@@ -145,7 +145,7 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        reduction_ = reduction;
+        parameter_.setLinReduction( reduction );
       }
 
       /** \brief constructor
@@ -188,7 +188,7 @@ namespace Dune
 
       void printTexInfo(std::ostream& out) const
       {
-        out << "Solver: " << solverName_ << " eps = " << reduction_ ;
+        out << "Solver: " << solverName_ << " eps = " << parameter_.linReduction() ;
         out  << "\\\\ \n";
       }
 
@@ -214,8 +214,8 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = maxIterations_ ;
-        PetscReal reduc  = reduction_;
+        PetscInt  maxits = parameter_.maxLinearIterations();
+        PetscReal reduc  = parameter_.linReduction();
         ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
 
         enum class PetscSolver {
@@ -473,8 +473,6 @@ namespace Dune
       using BaseType :: assembledOperator_;
       using BaseType :: parameter_;
       using BaseType :: iterations_;
-      using BaseType :: maxIterations_;
-      using BaseType :: reduction_;
 
       std::unique_ptr< KSP, KSPDeleter > ksp_;   // PETSc Krylov Space solver context
 
