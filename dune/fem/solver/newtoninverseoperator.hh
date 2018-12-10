@@ -68,12 +68,14 @@ namespace Dune
       //These methods affect the nonlinear solver
       virtual double tolerance () const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+        if(!tolerance_)
+          tolerance_ =  parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+        return tolerance_.value();
       }
 
       virtual void setTolerance ( const double tol )
       {
-        Parameter::append( keyPrefix_ + "tolerance", std::to_string(tol), true );
+        tolerance_ = tol;
       }
 
       virtual bool verbose () const
@@ -84,24 +86,28 @@ namespace Dune
 
       virtual int maxIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        if(!maxIterations_)
+          maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        return maxIterations_.value();
       }
 
       virtual void setMaxIterations ( const int maxIter )
       {
-        Parameter::append( keyPrefix_ + "maxiterations", std::to_string(maxIter), true);
+        maxIterations_ = maxIter;
       }
 
       //Maximum Linear Iterations in total
       //!= max iterations of each linear solve
       virtual int maxLinearIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        if(!maxLinearIterations_)
+          maxLinearIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return maxLinearIterations_.value();
       }
 
       virtual void setMaxLinearIterations ( const int maxLinearIter )
       {
-        Parameter::append( keyPrefix_ + "maxlineariterations", std::to_string(maxLinearIter), true);
+        maxLinearIterations_ = maxLinearIter;
       }
 
       virtual int maxLineSearchIterations () const
@@ -189,7 +195,10 @@ namespace Dune
       {
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
       }
-
+    private:
+      Std::optional<double> tolerance_;
+      Std::optional<int> maxLinearIterations_;
+      Std::optional<int> maxIterations_;
     };
 
 
