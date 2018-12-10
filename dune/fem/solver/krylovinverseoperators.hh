@@ -30,6 +30,7 @@ namespace Dune
     template< class DiscreteFunction, int method >
     struct KrylovInverseOperatorTraits
     {
+      typedef DiscreteFunction    DiscreteFunctionType;
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef OperatorType  PreconditionerType;
 

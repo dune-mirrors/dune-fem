@@ -33,12 +33,13 @@ namespace Dune
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     class PetscInverseOperator;
 
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
+    template <class DF, class Op >
     struct PetscInverseOperatorTraits
     {
     private:
       typedef typename DF :: DiscreteFunctionSpaceType SpaceType ;
     public:
+      typedef DF                                   DiscreteFunctionType;
       typedef Op                                   OperatorType;
       typedef OperatorType                         PreconditionerType;
       typedef PetscDiscreteFunction< SpaceType >   SolverDiscreteFunctionType;
@@ -81,7 +82,6 @@ namespace Dune
     public:
 
       typedef typename BaseType :: SolverDiscreteFunctionType    PetscDiscreteFunctionType;
-      typedef typename BaseType :: AssembledOperatorType         AssembledOperatorType;
       typedef typename BaseType :: OperatorType                  OperatorType;
 
       /** \brief constructor
@@ -172,7 +172,8 @@ namespace Dune
       PetscInverseOperator ( double redEps, double absLimit,
                              unsigned int maxIterations, bool verbose,
                              const ParameterReader& parameter )
-        : PetscInverseOperator( redEps, absLimit, maxIterations, verbose, SolverParameter( parameter ) ) {}
+      : PetscInverseOperator( redEps, absLimit, maxIterations, verbose, SolverParameter( parameter ) )
+      {}
 
       void bind ( const OperatorType &op )
       {

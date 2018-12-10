@@ -241,6 +241,7 @@ namespace Dune
     template< class DiscreteFunction, int method, class Preconditioner >
     struct ISTLInverseOperatorTraits
     {
+      typedef DiscreteFunction  DiscreteFunctionType;
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef Preconditioner PreconditionerType;
 
