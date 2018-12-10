@@ -12,7 +12,7 @@ namespace Dune {
 
     template <class Traits>
     class InverseOperatorInterface :
-      public Traits::OperatorType, // Dune::Fem::Operator
+      public Dune::Fem::Operator< typename Traits::DiscreteFunctionType, typename Traits::DiscreteFunctionType >,
       public BartonNackmanInterface< InverseOperatorInterface< Traits >, typename Traits::InverseOperatorType >
     {
     protected:
@@ -108,15 +108,15 @@ namespace Dune {
     protected:
       SolverParameter parameter_;
 
-      const OperatorType *operator_                   = nullptr;
+      const OperatorType*                   operator_ = nullptr;
       const AssembledOperatorType* assembledOperator_ = nullptr;
-      const PreconditionerType *preconditioner_       = nullptr;
+      const PreconditionerType*       preconditioner_ = nullptr;
 
       // temporary functions for solver compatibility
       mutable std::unique_ptr< DomainFunctionType > rhs_;
       mutable std::unique_ptr< RangeFunctionType  > x_;
 
-      mutable int iterations_ = -1 ;
+      mutable int iterations_    = -1 ;
       mutable int maxIterations_ = -1;
 
       double reduction_ = 0.0;
