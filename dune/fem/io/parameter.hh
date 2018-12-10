@@ -212,7 +212,7 @@ namespace Dune
        *  \param[in]  key    key of the parameter to add
        *  \param[in]  value  value of the parameter to add
        */
-      static void append ( const std::string &key, const std::string &value ) { container().append( key, value ); }
+      static void append ( const std::string &key, const std::string &value, const bool force = false ) { container().append( key, value, force ); }
 
       /** \brief add parameters from a file to the container
        *

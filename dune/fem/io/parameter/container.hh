@@ -350,6 +350,8 @@ namespace Dune
       if( force && paramExists )
       {
         paramValue = pos->second.value;
+        if( paramValue == value )
+          return value;
         parameter_.map.erase( key );
       }
       auto info  = parameter_.map.insert( std::make_pair( key, Value( value, curFileName_ ) ) );
