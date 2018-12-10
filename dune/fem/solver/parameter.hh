@@ -73,8 +73,11 @@ namespace Dune
       {
         if( other_ )
           return other_->verbose();
-        else
-          return parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+        else if(! verbose_ )
+        {
+          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+        }
+        return verbose_.value();
       }
 
       virtual void setVerbose( const bool verb )
@@ -82,20 +85,21 @@ namespace Dune
         if( other_ )
           other_->setVerbose( verb );
         else
-          Parameter::append( keyPrefix_ + "verbose", std::to_string(verb), true);
+          verbose_ = verb;
       }
 
       virtual int errorMeasure() const
       {
         if( other_ )
           return other_->errorMeasure();
-        else
+        else if( !errorMeasure_)
         {
           const std::string errorTypeTable[] =
-            { "absolute", "relative", "residualreduction" };
+          { "absolute", "relative", "residualreduction" };
           const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
-          return errorType ;
+          errorMeasure_ = errorType ;
         }
+        return errorMeasure_.value();
       }
 
       virtual void setErrorMeasure( const int errorType )
@@ -154,24 +158,25 @@ namespace Dune
         if( other_ )
           return other_->setMaxLinearIterations( maxIter );
         else
-          Parameter::append( keyPrefix_ + "maxlineariterations", std::to_string(maxIter), true );
+          maxLinearIterations_ = maxIter;
       }
 
       virtual int krylovMethod() const
       {
         if( other_ )
           return other_->krylovMethod();
-        else
+        else if (! krylovMethod_ )
         {
           const std::string krylovMethodTable[] =
-            { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+          { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
           int methodType = gmres;
           if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
             methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
           else
             methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
-          return methodType;
+          krylovMethod_ =  methodType;
         }
+        return krylovMethod_.value();
       }
 
       virtual void setKrylovMethod( const int method )
@@ -179,22 +184,19 @@ namespace Dune
         if( other_ )
           return other_->setKrylovMethod( method);
         else
-        {
-          const std::string krylovMethodTable[] =
-            { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-          Parameter::append( keyPrefix_ + "krylovmethod", krylovMethodTable[method], true );
-        }
+          krylovMethod_ = method;
       }
 
       virtual int gmresRestart() const
       {
         if( other_ )
           return other_->gmresRestart();
-        else
+        else if (! gmresRestart_ )
         {
           int defaultRestart = 20;
-          return parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
+          gmresRestart_ =  parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
         }
+        return gmresRestart_.value();
       }
 
       virtual void setGmresRestart( const int restart )
@@ -202,23 +204,28 @@ namespace Dune
         if( other_ )
           return other_->setGmresRestart( restart );
         else
-        {
-          Parameter::append( keyPrefix_ + "gmres.restart", std::to_string(restart), true );
-        }
+          gmresRestart_ = restart;
       }
 
       virtual int preconditionMethod () const
       {
-        static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
-        return parameter_.getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
+        if( other_ )
+          return other_ -> preconditionMethod();
+        else if(!preconditionMethod_)
+        {
+          static const std::string preConTable[]
+            = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
+          preconditionMethod_ =  parameter_.getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
+        }
+        return preconditionMethod_.value();
       }
 
       virtual void setPreconditionMethod ( const int precMethod )
       {
-        static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
-        Parameter::append(  keyPrefix_ + "preconditioning.method", preConTable[precMethod], true );
+        if( other_ )
+          return other_-> setPreconditionMethod( precMethod );
+        else
+          preconditionMethod_ = precMethod;
       }
 
       virtual std::string preconditionName() const
@@ -239,8 +246,9 @@ namespace Dune
       {
         if( other_ )
           return other_->relaxation();
-        else
-          return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        else if (! relaxation_ )
+          relaxation_ = parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        return relaxation_.value();
       }
 
       virtual void setRelaxation ( const double relaxation )
@@ -248,7 +256,7 @@ namespace Dune
         if( other_ )
           return other_->setRelaxation( relaxation );
         else
-          Parameter::append( keyPrefix_ + "preconditioning.relaxation", std::to_string(relaxation), true );
+          relaxation_ = relaxation;
       }
 
 
@@ -256,11 +264,12 @@ namespace Dune
       {
         if( other_ )
           return other_->preconditionerIteration();
-        else
+        else if (! preconditionerIteration_ )
         {
           // TODO: add also check for level
-          return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
+          preconditionerIteration_ =  parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
         }
+        return preconditionerIteration_.value();
       }
 
       virtual void setPreconditionerIteration ( const int precIter)
@@ -268,10 +277,7 @@ namespace Dune
         if( other_ )
           return other_->setPreconditionerIteration( precIter );
         else
-        {
-          // TODO: add also check for level
-          Parameter::append( keyPrefix_ + "preconditioning.iterations", std::to_string(precIter), true );
-        }
+          preconditionerIteration_ = precIter;
       }
 
 
@@ -305,6 +311,17 @@ namespace Dune
           return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
+    private:
+      mutable Std::optional<bool> verbose_;
+      mutable Std::optional<int> errorMeasure_;
+      mutable Std::optional<double> linAbsTol_;
+      mutable Std::optional<double> linReduction_;
+      mutable Std::optional<int> maxLinearIterations_;
+      mutable Std::optional<int> krylovMethod_;
+      mutable Std::optional<int> gmresRestart_;
+      mutable Std::optional<int> preconditionMethod_;
+      mutable Std::optional<double> relaxation_;
+      mutable Std::optional<int> preconditionerIteration_;
     };
 
   }
