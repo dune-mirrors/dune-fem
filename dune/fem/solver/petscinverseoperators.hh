@@ -302,6 +302,7 @@ namespace Dune
         PC pc;
         ::Dune::Petsc::KSPGetPC( ksp(), &pc );
 
+
         switch( pcType )
         {
           case PetscPrec::defaults:
@@ -368,7 +369,7 @@ namespace Dune
           case PetscPrec::ilu:
             {
               if ( MPIManager::size() > 1 )
-                DUNE_THROW( InvalidStateException, "PetscInverseOperator: ilu preconditioner does not worl in parallel." );
+                DUNE_THROW( InvalidStateException, "PetscInverseOperator: ilu preconditioner does not work in parallel." );
 
               // get fill-in level
               PetscInt pcLevel = reader.getValue<int>("petsc.preconditioning.levels", 0 );
