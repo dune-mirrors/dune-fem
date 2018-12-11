@@ -10,6 +10,8 @@
 #include <string>
 #include <utility>
 
+#include <dune/common/std/optional.hh>
+
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -196,9 +198,9 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
       }
     private:
-      Std::optional<double> tolerance_;
-      Std::optional<int> maxLinearIterations_;
-      Std::optional<int> maxIterations_;
+      mutable Std::optional<double> tolerance_;
+      mutable Std::optional<int> maxLinearIterations_;
+      mutable Std::optional<int> maxIterations_;
     };
 
 
