@@ -86,8 +86,11 @@ namespace Dune
 
           std::string solverconfig = reader.template getValue< std::string >("amgx.config", "./amgxconfig.json");
 
-          // matrixOp_->space().gridPart.comm().communicator()
           amgXSolver_.initialize(PETSC_COMM_WORLD, modes[ mode ], solverconfig);
+
+          // check that PetscMat was assembled not in block mode
+          if( assembledOperator_->blockedMode() )
+            DUNE_THROW(InvalidStateException, "AMGXInverseOperator only works with PetscLinearOperator in non-blocked mode!");
 
           // attach Matrix to linear solver context
           Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());

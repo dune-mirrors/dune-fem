@@ -327,6 +327,8 @@ namespace Dune
         ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
       }
 
+      bool blockedMode() const { return blockedMode_; }
+
     protected:
       template< class PetscOp >
       void applyToBlock ( const PetscInt row, const PetscInt col, const MatrixBlockType& block, PetscOp op )
