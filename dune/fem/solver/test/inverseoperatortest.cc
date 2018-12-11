@@ -353,9 +353,8 @@ int main(int argc, char** argv)
 #endif
 */
 
-/*
 #if HAVE_AMGXSOLVER
-  // EigenBiCGStabInverseOperator + EigenLinearOperator
+  // AMGX solver wrapper + PetscLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction >;
@@ -365,7 +364,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif
-*/
 
   return pass ? 0 : 1;
 }
