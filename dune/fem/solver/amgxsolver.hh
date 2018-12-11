@@ -82,9 +82,9 @@ namespace Dune
         {
           const auto& reader = parameter_.parameter();
           const std::string modes [] = { "dDDI" , "dDFI", "dFFI", "hDDI", "hDFI", "hFFI" };
-          int mode = reader.getEnum("amgx.mode", modes, 0 );
+          int mode = reader.getEnum("fem.solver.amgx.mode", modes, 0 );
 
-          std::string solverconfig = reader.template getValue< std::string >("amgx.config", "./amgxconfig.json");
+          std::string solverconfig = reader.template getValue< std::string >("fem.solver.amgx.config", "./amgxconfig.json");
 
           amgXSolver_.initialize(PETSC_COMM_WORLD, modes[ mode ], solverconfig);
 

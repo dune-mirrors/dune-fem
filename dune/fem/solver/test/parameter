@@ -28,3 +28,6 @@ fem.solver.row.maxlineariterations: 1000
 fem.solver.row.linreduction: 1e-11
 fem.solver.row.linabstol: 1e-11
 fem.solver.row.linear.verbose: true
+
+#fem.solver.amgx.mode: dDDI
+#fem.solver.amgx.config: ./amgxconfig1.json
