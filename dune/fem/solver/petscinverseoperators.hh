@@ -100,8 +100,12 @@ namespace Dune
                              int maxIter,
                              bool verbose,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( reduction, absLimit, maxIter, verbose, parameter )
+      : BaseType( parameter )
       {
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setLinReduction( reduction );
+        parameter_.setMaxLinearIterations( maxIter );
+        parameter_.setVerbose( verbose );
         bind( op );
       }
 
@@ -119,6 +123,9 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : PetscInverseOperator( reduction, absLimit, maxIter, parameter.verbose(), parameter )
       {
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setLinReduction( reduction );
+        parameter_.setMaxLinearIterations( maxIter );
         bind( op );
       }
 
@@ -126,8 +133,10 @@ namespace Dune
                              double reduction,
                              double absLimit,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( reduction, absLimit, std::numeric_limits< int >::max(), parameter.verbose(), parameter )
+      : BaseType( parameter )
       {
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setLinReduction( reduction );
         bind( op );
       }
 
@@ -145,7 +154,10 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
+        parameter_.setLinAbsTol( absLimit );
         parameter_.setLinReduction( reduction );
+        parameter_.setMaxLinearIterations( maxIter );
+        parameter_.setVerbose( verbose );
       }
 
       /** \brief constructor
@@ -157,23 +169,35 @@ namespace Dune
        */
       PetscInverseOperator ( double reduction, double absLimit, int maxIter,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( reduction, absLimit, maxIter, parameter.verbose(), parameter )
-      {}
+      : BaseType( parameter )
+      {
+        parameter_.setLinReduction( reduction );
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setMaxLinearIterations( maxIter );
+      }
 
       PetscInverseOperator ( double reduction, double absLimit,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( reduction, absLimit, parameter.maxLinearIterations(), parameter.verbose(), parameter )
-      {}
+      : BaseType( parameter )
+      {
+        parameter_.setLinReduction( reduction );
+        parameter_.setLinAbsTol( absLimit );
+      }
 
       PetscInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : PetscInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter )
+      : BaseType( parameter )
       {}
 
-      PetscInverseOperator ( double redEps, double absLimit,
-                             unsigned int maxIterations, bool verbose,
+      PetscInverseOperator ( double reduction, double absLimit,
+                             unsigned int maxIter, bool verbose,
                              const ParameterReader& parameter )
-      : PetscInverseOperator( redEps, absLimit, maxIterations, verbose, SolverParameter( parameter ) )
-      {}
+      : BaseType( SolverParameter( parameter ) )
+      {
+        parameter_.setLinAbsTol( absLimit );
+        parameter_.setLinReduction( reduction );
+        parameter_.setMaxLinearIterations( maxIter );
+        parameter_.setVerbose( verbose );
+     }
 
       void bind ( const OperatorType &op )
       {
