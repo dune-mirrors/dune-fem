@@ -289,18 +289,17 @@ namespace Dune
       //deprecated constructors
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
-                            const ParameterReader & parameter )
+                            const ParameterReader & parameter = Parameter::container() )
         : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
 
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
-                            const SolverParameter & parameter )
+                            const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
-      [[deprecated]]
 
       [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, double redEps, double absLimit,
-                            const ParameterReader & parameter )
+                            const ParameterReader & parameter = Parameter::container() )
         : ISTLInverseOperator( redEps, absLimit, parameter )
       {
         bind( op );
@@ -309,7 +308,7 @@ namespace Dune
       [[deprecated]]
       ISTLInverseOperator ( const OperatorType& op,
                             double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter )
+                            const ParameterReader & parameter = Parameter::container() )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
       {
         bind( op );
@@ -318,7 +317,7 @@ namespace Dune
       [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit,
-                            const ParameterReader & parameter )
+                            const ParameterReader & parameter =Parameter::container() )
         : ISTLInverseOperator( redEps, absLimit, parameter )
       {
         bind( op, preconditioner );
@@ -327,7 +326,7 @@ namespace Dune
       [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter )
+                            const ParameterReader & parameter = Parameter::container() )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
       {
         bind( op, preconditioner );
@@ -338,18 +337,16 @@ namespace Dune
                             const ParameterReader & parameter )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, false, SolverParameter(parameter) ) {}
 
-      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const SolverParameter & parameter = SolverParameter() )
         : solverAdapter_( ReductionType( redEps, absLimit, parameter ), maxIterations, (parameter.verbose() && verbose) ? 2 : 0, parameter )
-      {
-      }
+      {}
 
       ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
         : ISTLInverseOperator( parameter.linReduction(), parameter.linAbsTol(), parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
 
-
       ISTLInverseOperator ( const OperatorType &op,
-                            double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator ( redEps, absLimit, maxIterations, verbose, parameter )
       {
@@ -365,7 +362,7 @@ namespace Dune
 
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            double redEps, double absLimit, unsigned int maxIterations = std::numeric_limits< unsigned int >::max(), bool verbose = false,
+                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
       {

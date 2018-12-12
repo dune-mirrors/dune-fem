@@ -66,40 +66,40 @@ namespace Dune
       template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
-                              const SolverParameter &parameter )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, redEps, absLimit,
                                    parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
       template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
                               unsigned int maxIterations,
-                              const SolverParameter &parameter )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
 
       template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit,
-                              const SolverParameter &parameter )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter) {}
 
       template <class LinearOperator>
       [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit, unsigned int maxIterations,
-                              const SolverParameter &parameter )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
 
       [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
-                              const SolverParameter &parameter )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
       [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations,
-                              const SolverParameter &parameter )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, maxIterations,  parameter.verbose(), parameter ) {}
 
       //non-deprecated constructors
@@ -118,8 +118,9 @@ namespace Dune
       KrylovInverseOperator ( const LinearOperator &op,
                               double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                               const SolverParameter &parameter = SolverParameter() )
-      : KrylovInverseOperator( op, nullptr, parameter )
+      : KrylovInverseOperator( parameter )
       {
+        bind( op );
         parameter_.setLinReduction( redEps );
         parameter_.setLinAbsTol( absLimit );
         parameter_.setMaxLinearIterations( maxIterations );
