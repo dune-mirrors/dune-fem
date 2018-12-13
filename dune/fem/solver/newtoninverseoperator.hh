@@ -321,11 +321,7 @@ namespace Dune
        */
       NewtonInverseOperator ( const DomainFieldType &epsilon, const NewtonParameter &parameter )
         : NewtonInverseOperator(
-            LinearInverseOperatorType( parameter.linear().linReduction( epsilon ),
-                                       parameter.linear().linAbsTol( epsilon ),
-                                       parameter.linear().maxLinearIterations(),
-                                       parameter.linear().verbose(),
-                                       parameter.linear() ),
+            LinearInverseOperatorType( parameter.linear() ),
             epsilon, parameter )
       {}
 

@@ -101,6 +101,11 @@ namespace Dune {
         parameter_->setMaxLinearIterations( iter );
       }
 
+      SolverParameter & parameter () const
+      {
+        return *parameter_;
+      }
+
       //! return accumulated communication time
       double averageCommTime() const
       {

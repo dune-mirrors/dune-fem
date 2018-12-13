@@ -288,7 +288,7 @@ namespace Dune
       virtual double linAbsTolParameter ()  const
       {
         if( other_ )
-          return other_->linAbsTolParameter();
+          return other_->linAbsTol();
         else
           return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
       }
@@ -297,7 +297,7 @@ namespace Dune
       virtual double linReductionParameter () const
       {
         if( other_ )
-          return other_->linReductionParameter();
+          return other_->linReduction();
         else
           return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
       }
@@ -306,7 +306,7 @@ namespace Dune
       virtual int maxLinearIterationsParameter () const
       {
         if( other_ )
-          return other_->maxLinearIterationsParameter();
+          return other_->maxLinearIterations();
         else
           return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
