@@ -96,13 +96,14 @@ namespace Dune
                               const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
+
       [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations,
                               const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, maxIterations,  parameter.verbose(), parameter ) {}
 
-      //non-deprecated constructors
+      [[deprecated]]
       KrylovInverseOperator (  double redEps, double absLimit,
                                unsigned int maxIterations, bool verbose,
                                const SolverParameter &parameter = SolverParameter(Parameter::container()) )
@@ -115,6 +116,7 @@ namespace Dune
       }
 
       template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op,
                               double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                               const SolverParameter &parameter = SolverParameter() )
@@ -128,6 +130,7 @@ namespace Dune
      }
 
       template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                               const SolverParameter &parameter = SolverParameter() )
@@ -139,11 +142,24 @@ namespace Dune
         parameter_.setVerbose( verbose );
       }
 
+      [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
                               const ParameterReader& parameter )
         : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose,
             SolverParameter( parameter ) ) {}
+
+      //non-deprecated constructors
+      KrylovInverseOperator ( const OperatorType &op, const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+        : KrylovInverseOperator( parameter )
+      {
+        bind( op );
+      }
+
+      KrylovInverseOperator ( const OperatorType &op, const PreconditionerType& preconditioner,
+                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+        : KrylovInverseOperator( op, &preconditioner, parameter )
+      {}
 
       //! main constructor
       KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )

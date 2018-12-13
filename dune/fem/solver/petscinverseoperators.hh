@@ -94,6 +94,7 @@ namespace Dune
        *
        *  \note PETSc Krylov solvers uses the relative reduction.
        */
+      [[deprecated]]
       PetscInverseOperator ( const OperatorType &op,
                              double reduction,
                              double absLimit,
@@ -116,6 +117,7 @@ namespace Dune
        *  \param[in] absLimit  absolute limit of residual (not used here)
        *  \param[in] maxIter   maximal iteration steps
        */
+      [[deprecated]]
       PetscInverseOperator ( const OperatorType &op,
                              double reduction,
                              double absLimit,
@@ -129,6 +131,7 @@ namespace Dune
         bind( op );
       }
 
+      [[deprecated]]
       PetscInverseOperator ( const OperatorType &op,
                              double reduction,
                              double absLimit,
@@ -150,6 +153,7 @@ namespace Dune
        *
        *  \note PETSc Krylov solvers uses the relative reduction.
        */
+      [[deprecated]]
       PetscInverseOperator ( double reduction, double absLimit, int maxIter, bool verbose,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
@@ -167,6 +171,7 @@ namespace Dune
        *  \param[in] absLimit  absolute limit of residual (not used here)
        *  \param[in] maxIter   maximal iteration steps
        */
+      [[deprecated]]
       PetscInverseOperator ( double reduction, double absLimit, int maxIter,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
@@ -176,6 +181,7 @@ namespace Dune
         parameter_.setMaxLinearIterations( maxIter );
       }
 
+      [[deprecated]]
       PetscInverseOperator ( double reduction, double absLimit,
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
@@ -184,10 +190,7 @@ namespace Dune
         parameter_.setLinAbsTol( absLimit );
       }
 
-      PetscInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : BaseType( parameter )
-      {}
-
+      [[deprecated]]
       PetscInverseOperator ( double reduction, double absLimit,
                              unsigned int maxIter, bool verbose,
                              const ParameterReader& parameter )
@@ -197,7 +200,18 @@ namespace Dune
         parameter_.setLinReduction( reduction );
         parameter_.setMaxLinearIterations( maxIter );
         parameter_.setVerbose( verbose );
-     }
+      }
+
+      //non-deprecated constructors
+      PetscInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : BaseType( parameter )
+      {}
+
+      PetscInverseOperator (  const OperatorType &op, const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : BaseType( parameter )
+      {
+        bind( op );
+      }
 
       void bind ( const OperatorType &op )
       {
