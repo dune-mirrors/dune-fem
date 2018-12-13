@@ -32,9 +32,8 @@ namespace Dune {
       typedef typename Traits :: PreconditionerType           PreconditionerType;
 
       InverseOperatorInterface( const SolverParameter& parameter = SolverParameter(Parameter::container() ) )
-        : parameter_( parameter )
-      {
-      }
+        : parameter_( std::make_shared< SolverParameter >( parameter ) )
+      {}
 
       //! application of operator, i.e. solution of inverse operator with given right hand side and initial guess
       // TODO: improve docu
@@ -95,11 +94,11 @@ namespace Dune {
       int iterations () const { return iterations_; }
 
       virtual void setMaxLinearIterations ( const int iter ) {
-        parameter_.setMaxLinearIterations( iter );
+        parameter_->setMaxLinearIterations( iter );
       }
 
       virtual void setMaxIterations ( const int iter ) {
-        parameter_.setMaxLinearIterations( iter );
+        parameter_->setMaxLinearIterations( iter );
       }
 
       //! return accumulated communication time
@@ -109,7 +108,7 @@ namespace Dune {
       }
 
     protected:
-      SolverParameter parameter_;
+      std::shared_ptr<SolverParameter> parameter_;
 
       const OperatorType*                   operator_ = nullptr;
       const AssembledOperatorType* assembledOperator_ = nullptr;

@@ -103,10 +103,10 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setLinReduction( reduction );
-        parameter_.setMaxLinearIterations( maxIter );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
+        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setVerbose( verbose );
         bind( op );
       }
 
@@ -125,9 +125,9 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : PetscInverseOperator( reduction, absLimit, maxIter, parameter.verbose(), parameter )
       {
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setLinReduction( reduction );
-        parameter_.setMaxLinearIterations( maxIter );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
+        parameter_->setMaxLinearIterations( maxIter );
         bind( op );
       }
 
@@ -138,8 +138,8 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setLinReduction( reduction );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
         bind( op );
       }
 
@@ -158,10 +158,10 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setLinReduction( reduction );
-        parameter_.setMaxLinearIterations( maxIter );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
+        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setVerbose( verbose );
       }
 
       /** \brief constructor
@@ -176,9 +176,9 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        parameter_.setLinReduction( reduction );
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setMaxLinearIterations( maxIter );
+        parameter_->setLinReduction( reduction );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setMaxLinearIterations( maxIter );
       }
 
       [[deprecated]]
@@ -186,8 +186,8 @@ namespace Dune
                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
-        parameter_.setLinReduction( reduction );
-        parameter_.setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
+        parameter_->setLinAbsTol( absLimit );
       }
 
       [[deprecated]]
@@ -196,10 +196,10 @@ namespace Dune
                              const ParameterReader& parameter )
       : BaseType( SolverParameter( parameter ) )
       {
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setLinReduction( reduction );
-        parameter_.setMaxLinearIterations( maxIter );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setLinReduction( reduction );
+        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setVerbose( verbose );
       }
 
       //non-deprecated constructors
@@ -216,7 +216,7 @@ namespace Dune
       void bind ( const OperatorType &op )
       {
         BaseType :: bind( op );
-        initialize( parameter_ );
+        initialize( *parameter_ );
       }
 
       void unbind ()
@@ -227,7 +227,7 @@ namespace Dune
 
       void printTexInfo(std::ostream& out) const
       {
-        out << "Solver: " << solverName_ << " eps = " << parameter_.linReduction() ;
+        out << "Solver: " << solverName_ << " eps = " << parameter_->linReduction() ;
         out  << "\\\\ \n";
       }
 
@@ -253,8 +253,8 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = parameter_.maxLinearIterations();
-        PetscReal reduc  = parameter_.linReduction();
+        PetscInt  maxits = parameter_->maxLinearIterations();
+        PetscReal reduc  = parameter_->linReduction();
         ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
 
         enum class PetscSolver {

@@ -90,8 +90,8 @@ namespace Dune
     template< class BlockVector >
     struct ISTLSolverReduction
     {
-      ISTLSolverReduction ( const SolverParameter& parameter )
-        : parameter_(parameter)
+      ISTLSolverReduction ( std::shared_ptr< SolverParameter > parameter )
+        : parameter_(  parameter )
       {}
 
       double operator() ( const Dune::LinearOperator< BlockVector, BlockVector > &op,
@@ -99,19 +99,19 @@ namespace Dune
                           const BlockVector &rhs, const BlockVector &x ) const
       {
 
-        if( parameter_.errorMeasure() == 0 && (parameter_.linAbsTol() < std::numeric_limits< double >::max()) )
+        if( parameter_->errorMeasure() == 0 && (parameter_->linAbsTol() < std::numeric_limits< double >::max()) )
         {
           BlockVector residuum( rhs );
           op.applyscaleadd( -1., x, residuum );
           const double res = scp.norm( residuum );
-          return (res > 0 ? parameter_.linAbsTol() / res : 1e-3);
+          return (res > 0 ? parameter_->linAbsTol() / res : 1e-3);
         }
         else
-          return parameter_.linReduction();
+          return parameter_->linReduction();
       }
 
     private:
-      SolverParameter parameter_;
+      std::shared_ptr<SolverParameter> parameter_;
     };
 
     template< int method,
@@ -124,9 +124,9 @@ namespace Dune
       typedef X domain_type;
       typedef X range_type;
 
-      ISTLSolverAdapter ( const ReductionType &reduction, const SolverParameter& parameter )
+      ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<SolverParameter> parameter )
         : reduction_( reduction ),
-          method_( method < 0 ? parameter.krylovMethod() : method ),
+          method_( method < 0 ? parameter->krylovMethod() : method ),
           parameter_( parameter )
       {}
 
@@ -135,45 +135,45 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_.maxLinearIterations() );
+        int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxLinearIterations() );
         if( method_ == SolverParameter::cg )
         {
           typedef Dune::CGSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::bicgstab )
         {
           typedef Dune::BiCGSTABSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::gmres )
         {
           typedef Dune::RestartedGMResSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_.gmresRestart(), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::minres )
         {
           typedef Dune::MINRESSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
         }
         else if( method_ == SolverParameter::gradient )
         {
           typedef Dune::GradientSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::loop )
         {
           typedef Dune::LoopSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_.verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
           solver.apply( x, rhs, result );
           return ;
         }
@@ -187,10 +187,10 @@ namespace Dune
         }
       }
 
-      void setMaxLinearIterations( unsigned int maxIterations ) { parameter_.setMaxLinearIterations(maxIterations); }
-      void setMaxIterations( unsigned int maxIterations ) { parameter_.setMaxLinearIterations(maxIterations); }
+      void setMaxLinearIterations( unsigned int maxIterations ) { parameter_->setMaxLinearIterations(maxIterations); }
+      void setMaxIterations( unsigned int maxIterations ) { parameter_->setMaxLinearIterations(maxIterations); }
 
-      const SolverParameter& parameter () const { return parameter_; }
+      std::shared_ptr<SolverParameter> parameter () const { return parameter_; }
 
     protected:
       template< class ImprovedMatrix >
@@ -201,7 +201,7 @@ namespace Dune
 #if HAVE_SUPERLU
         typedef typename ImprovedMatrix :: BaseType Matrix;
         const ImprovedMatrix& matrix = op.getmat();
-        SuperLU< Matrix > solver( matrix, parameter_.verbose() );
+        SuperLU< Matrix > solver( matrix, parameter_->verbose() );
         solver.apply( x, rhs, result );
 #else
         DUNE_THROW(NotImplemented,"ISTLSolverAdapter::callSuperLU: SuperLU solver selected but SuperLU not available!");
@@ -218,7 +218,7 @@ namespace Dune
       ReductionType reduction_;
       const int method_;
 
-      SolverParameter parameter_;
+      std::shared_ptr<SolverParameter> parameter_;
     };
 
 
@@ -334,10 +334,10 @@ namespace Dune
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator( parameter )
       {
-        parameter_.setLinReduction( redEps );
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setMaxLinearIterations( maxIterations );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinReduction( redEps );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setVerbose( verbose );
       }
 
       [[deprecated]]
@@ -346,10 +346,10 @@ namespace Dune
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator ( parameter )
       {
-        parameter_.setLinReduction( redEps );
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setMaxLinearIterations( maxIterations );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinReduction( redEps );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setVerbose( verbose );
         bind( op );
       }
 
@@ -360,15 +360,15 @@ namespace Dune
         : ISTLInverseOperator( parameter )
       {
         bind( op, preconditioner );
-        parameter_.setLinReduction( redEps );
-        parameter_.setLinAbsTol( absLimit );
-        parameter_.setMaxLinearIterations( maxIterations );
-        parameter_.setVerbose( verbose );
+        parameter_->setLinReduction( redEps );
+        parameter_->setLinAbsTol( absLimit );
+        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setVerbose( verbose );
      }
 
       //non-deprecated constructors
       ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
-        : solverAdapter_( ReductionType( parameter ), parameter )
+        : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
       {}
 
       ISTLInverseOperator ( const OperatorType &op,
@@ -398,7 +398,7 @@ namespace Dune
 
         if( assembledOperator_ )
         {
-          auto& matrix = assembledOperator_->matrixAdapter( solverAdapter_.parameter() );
+          auto& matrix = assembledOperator_->matrixAdapter( solverAdapter_.parameter().get() );
           // if preconditioner_ was set use that one, otherwise the one from the matrix object
           typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > PreconditionerType;
           PreconditionerType& matrixPre = matrix.preconditionAdapter();
@@ -436,7 +436,7 @@ namespace Dune
         }
 
         Dune::InverseOperatorResult result;
-        solverAdapter_.setMaxIterations( parameter_.maxLinearIterations() );
+        solverAdapter_.setMaxIterations( parameter_->maxLinearIterations() );
         solverAdapter_( istlOperator, scp, preconditioner, rhs_->blockVector(), w.blockVector(), result );
         return (result.converged) ? result.iterations : -(result.iterations);
       }
