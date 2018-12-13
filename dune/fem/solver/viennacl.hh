@@ -9,8 +9,10 @@
 
 // OpenCL overrules OpenMP
 #if HAVE_OPENCL
-#define VIENNACL_WITH_OPENCL
+//#warning "Using OpneCL"
+//#define VIENNACL_WITH_OPENCL
 #elif _OPENMP
+#error
 #define VIENNACL_WITH_OPENMP
 #endif
 
@@ -84,7 +86,8 @@ namespace Dune
       typedef viennacl::compressed_matrix< Field > ViennaCLMatrix;
       typedef viennacl::vector< Field > ViennaCLVector;
 
-      typedef viennacl::linalg::ilu0_precond< ViennaCLMatrix > Preconditioner;
+      //typedef viennacl::linalg::ilu0_precond< ViennaCLMatrix > Preconditioner;
+      typedef viennacl::linalg::no_precond Preconditioner;
     public:
       ViennaCLInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose )
         : ViennaCLInverseOperator( redEps, absLimit, maxIter, verbose )
@@ -158,7 +161,7 @@ namespace Dune
 
         if( method_ == SolverParameter::cg )
         {
-          Preconditioner ilu0( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
           viennacl::linalg::cg_tag tag( absLimit_, maxIterations );
           vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
           iterations = tag.iters();
@@ -179,14 +182,14 @@ namespace Dune
           */
 
           //typedef viennacl::linalg::block_ilu_precond< ViennaCLMatrix, viennacl::linalg::ilu0_tag > Preconditioner;
-          Preconditioner ilu0( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
           viennacl::linalg::bicgstab_tag tag( absLimit_, maxIterations );
           vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
           iterations = tag.iters();
         }
         else if ( method_ == SolverParameter::gmres )
         {
-          Preconditioner ilu0( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
           viennacl::linalg::gmres_tag tag( absLimit_, maxIterations );
           vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
           iterations = tag.iters();

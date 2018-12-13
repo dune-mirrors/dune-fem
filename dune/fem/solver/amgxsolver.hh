@@ -88,6 +88,8 @@ namespace Dune
       typedef InverseOperatorInterface< Traits >  BaseType;
       friend class InverseOperatorInterface< Traits >;
     public:
+      using BaseType :: parameter;
+
       typedef typename BaseType::SolverDiscreteFunctionType  SolverDiscreteFunctionType;
       typedef typename BaseType::OperatorType                OperatorType;
       typedef typename BaseType::PreconditionerType          PreconditionerType;
@@ -105,14 +107,14 @@ namespace Dune
       void bind( const OperatorType& op )
       {
         BaseType::bind( op );
-        const AMGXSolverParameter* param = dynamic_cast< const AMGXSolverParameter* > (&parameter_);
+        const AMGXSolverParameter* param = dynamic_cast< const AMGXSolverParameter* > (&parameter());
         if( param )
         {
           init( *param );
         }
         else
         {
-          AMGXSolverParameter newParam( &parameter_ );
+          AMGXSolverParameter newParam( &parameter() );
           init( newParam );
         }
       }

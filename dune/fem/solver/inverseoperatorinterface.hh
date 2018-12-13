@@ -101,7 +101,7 @@ namespace Dune {
         parameter_->setMaxLinearIterations( iter );
       }
 
-      SolverParameter & parameter () const
+      SolverParameter& parameter () const
       {
         return *parameter_;
       }

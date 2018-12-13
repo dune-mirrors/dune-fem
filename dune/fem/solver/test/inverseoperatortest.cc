@@ -65,6 +65,7 @@
 // local includes
 #include "../../test/massoperator.hh"
 
+#include "../amgistl.hh"
 
 
 static constexpr int dim = 2;
@@ -286,6 +287,16 @@ int main(int argc, char** argv)
     using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLRestartedGMRes >;
 
     std::string designation(" === ISTLInverseOperator< ISTLRestartedGMRes > + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // ISTL::InverseOperator< LinearOperator > + ISTLLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::ISTL::InverseOperator< LinearOperator >;
+
+    std::string designation(" === ISTL::InverseOperator + ISTLLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
