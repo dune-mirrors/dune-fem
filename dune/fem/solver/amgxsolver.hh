@@ -29,6 +29,33 @@ namespace Dune
         @{
     **/
 
+    struct AMGXSolverParameter : public LocalParameter< SolverParameter, AMGXSolverParameter >
+    {
+      typedef LocalParameter< SolverParameter, AMGXSolverParameter > BaseType;
+
+      AMGXSolverParameter( const std::string keyPrefix = "fem.solver." )
+        : BaseType( keyPrefix )
+      {}
+
+      AMGXSolverParameter( const SolverParameter* other )
+        : BaseType( other )
+      {}
+
+      virtual std::string solvermode () const
+      {
+        const std::string modes [] = { "dDDI" , "dDFI", "dFFI", "hDDI", "hDFI", "hFFI" };
+        int mode = this->parameter_.getEnum(keyPrefix_ + "amgx.mode", modes, 0 );
+        return modes[ mode ];
+      }
+
+      virtual std::string solverconfig () const
+      {
+        return this->parameter_.template getValue< std::string >( keyPrefix_ + "amgx.config", "amgxconfig.json");
+      }
+    };
+
+
+
     // AMGXSolver
     // --------------
 
@@ -78,15 +105,32 @@ namespace Dune
       void bind( const OperatorType& op )
       {
         BaseType::bind( op );
+        const AMGXSolverParameter* param = dynamic_cast< const AMGXSolverParameter* > (&parameter_);
+        if( param )
+        {
+          init( *param );
+        }
+        else
+        {
+          AMGXSolverParameter newParam( &parameter_ );
+          init( newParam );
+        }
+      }
+
+      void unbind()
+      {
+        amgXSolver_.finalize();
+        BaseType :: unbind();
+      }
+
+    protected:
+      void init( const AMGXSolverParameter& parameter )
+      {
         if( assembledOperator_ )
         {
-          const auto& reader = parameter_.parameter();
-          const std::string modes [] = { "dDDI" , "dDFI", "dFFI", "hDDI", "hDFI", "hFFI" };
-          int mode = reader.getEnum("fem.solver.amgx.mode", modes, 0 );
-
-          std::string solverconfig = reader.template getValue< std::string >("fem.solver.amgx.config", "./amgxconfig.json");
-
-          amgXSolver_.initialize(PETSC_COMM_WORLD, modes[ mode ], solverconfig);
+          std::string mode   = parameter.solvermode();
+          std::string config = parameter.solverconfig();
+          amgXSolver_.initialize(PETSC_COMM_WORLD, mode, config );
 
           // check that PetscMat was assembled not in block mode
           if( assembledOperator_->blockedMode() )
@@ -100,13 +144,6 @@ namespace Dune
         }
       }
 
-      void unbind()
-      {
-        amgXSolver_.finalize();
-        BaseType :: unbind();
-      }
-
-    protected:
       int apply( const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest ) const
       {
         if( !assembledOperator_ )
