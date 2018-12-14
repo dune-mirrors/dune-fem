@@ -70,14 +70,12 @@ namespace Dune
       //These methods affect the nonlinear solver
       virtual double tolerance () const
       {
-        if(!tolerance_)
-          tolerance_ =  parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
-        return tolerance_.value();
+        return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
       }
 
       virtual void setTolerance ( const double tol )
       {
-        tolerance_ = tol;
+        Parameter::append( keyPrefix_ + "tolerance", tol, true );
       }
 
       virtual bool verbose () const
@@ -88,28 +86,24 @@ namespace Dune
 
       virtual int maxIterations () const
       {
-        if(!maxIterations_)
-          maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
-        return maxIterations_.value();
+        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
       virtual void setMaxIterations ( const int maxIter )
       {
-        maxIterations_ = maxIter;
+        Parameter::append( keyPrefix_ + "maxiterations", maxIter, true);
       }
 
       //Maximum Linear Iterations in total
       //!= max iterations of each linear solve
       virtual int maxLinearIterations () const
       {
-        if(!maxLinearIterations_)
-          maxLinearIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
-        return maxLinearIterations_.value();
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
       virtual void setMaxLinearIterations ( const int maxLinearIter )
       {
-        maxLinearIterations_ = maxLinearIter;
+        Parameter::append( keyPrefix_ + "maxlineariterations", maxLinearIter, true);
       }
 
       virtual int maxLineSearchIterations () const
@@ -197,10 +191,6 @@ namespace Dune
       {
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
       }
-    private:
-      mutable Std::optional<double> tolerance_;
-      mutable Std::optional<int> maxLinearIterations_;
-      mutable Std::optional<int> maxIterations_;
     };
 
 

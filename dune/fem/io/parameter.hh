@@ -214,6 +214,14 @@ namespace Dune
        */
       static void append ( const std::string &key, const std::string &value, const bool force = false ) { container().append( key, value, force ); }
 
+      /** \brief add a single parameter to the container
+       *
+       *  \param[in]  key    key of the parameter to add
+       *  \param[in]  value  value of the parameter to add
+       */
+      template<class NumberType>
+      static void append ( const std::string &key, const NumberType &value, const bool force = false ) { container().append( key, value, force ); }
+
       /** \brief add parameters from a file to the container
        *
        * \param[in]  filename  name of the file containing the parameters

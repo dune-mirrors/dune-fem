@@ -144,7 +144,7 @@ struct Algorithm
     NewSolverParameter testSolverParam( 1e-10, maxIter, verboseSolver );
     NewSolverParameter copyParam ( testSolverParam );
 
-    Dune::Fem::ISTLSolverParameter newParam2( &copyParam );
+    Dune::Fem::ISTLSolverParameter newParam2( copyParam );
 
     const Dune::Fem::SolverParameter& param = newParam2;
     InverseOperatorType inverseOperator ( param );

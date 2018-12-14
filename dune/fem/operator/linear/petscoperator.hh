@@ -48,10 +48,6 @@ namespace Dune
         : BaseType( keyPrefix )
       {}
 
-      PetscSolverParameter( const SolverParameter* other )
-        : BaseType( other )
-      {}
-
       bool viennaCL () const {
         return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "viennacl", false );
       }

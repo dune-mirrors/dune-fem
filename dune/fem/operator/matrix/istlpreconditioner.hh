@@ -50,8 +50,8 @@ namespace Dune
         : BaseType( keyPrefix, parameter )
       {}
 
-      ISTLSolverParameter( const SolverParameter* other )
-        : BaseType( other )
+      ISTLSolverParameter( const SolverParameter& other )
+        : BaseType( other.keyPrefix(), other.parameter() )
       {}
 
       virtual double overflowFraction () const
@@ -644,7 +644,7 @@ namespace Dune
         std::unique_ptr< ISTLSolverParameter > paramPtr;
         if( ! parameter )
         {
-          paramPtr.reset( new ISTLSolverParameter( &param ) );
+          paramPtr.reset( new ISTLSolverParameter( param ) );
           parameter = paramPtr.operator->();
         }
 

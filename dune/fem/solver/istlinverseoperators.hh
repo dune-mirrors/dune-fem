@@ -398,7 +398,7 @@ namespace Dune
 
         if( assembledOperator_ )
         {
-          auto& matrix = assembledOperator_->matrixAdapter( solverAdapter_.parameter().get() );
+          auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_.parameter()) );
           // if preconditioner_ was set use that one, otherwise the one from the matrix object
           typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > PreconditionerType;
           PreconditionerType& matrixPre = matrix.preconditionAdapter();

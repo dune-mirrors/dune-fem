@@ -129,6 +129,37 @@ namespace Dune
           append( value );
       }
 
+
+      /**
+       * \brief A helper function to convert numbers to scientific strings
+       *
+       * \param[in] value     the value to be converted (needs a << operator)
+       */
+      template <class T>
+      std::string toString( const T& value )
+      {
+        std::stringstream str;
+        str << std::scientific;
+        str << value;
+        return str.str();
+      }
+
+      /**
+       * \brief add a single Floating number parameter to the container
+       *
+       * \param[in]  key    key of the parameter to add
+       * \param[in]  value  value of the parameter to add
+       * \param[in]  force  replace parameter, if it exists
+       */
+      template<class NumberType, std::enable_if_t< std::is_floating_point_v< NumberType > || std::is_integral_v< NumberType >, int> = 0 >
+      void append ( const std::string &key, NumberType value, bool force = false )
+      {
+        assert( key != "paramfile" );
+        curFileName_ = "program code";
+        std::string valueString = toString( value );
+        insert( key, valueString, force );
+      }
+
       /**
        * \brief add parameters from a DGF file
        *

@@ -758,7 +758,7 @@ namespace Dune
           createMatrixAdapter( *param );
         else
         {
-          ISTLSolverParameter newparam( &parameter );
+          ISTLSolverParameter newparam( parameter );
           createMatrixAdapter( newparam );
         }
         return *matrixAdap_;

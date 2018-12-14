@@ -19,8 +19,6 @@ namespace Dune
 
       ParameterReader parameter_;
 
-      std::shared_ptr< SolverParameter > other_;
-
     public:
       // identifier for Fem, ISTL and Petsc solvers
       static const int cg       = 0 ; // CG
@@ -42,169 +40,101 @@ namespace Dune
       static const int ildl         = 8 ; // ILDL from istl
 
       explicit SolverParameter ( const ParameterReader &parameter = Parameter::container() )
-        : keyPrefix_( "fem.solver." ), parameter_( parameter ), other_()
+        : keyPrefix_( "fem.solver." ), parameter_( parameter )
       {
-      }
-
-      //! constructor passing other implementation as interface which is needed
-      //to overload internal default implementations
-      SolverParameter ( const SolverParameter* other )
-        : keyPrefix_( other->keyPrefix_ ),
-          parameter_( other->parameter() ),
-          other_()
-      {
-        // if other is a derived type
-        // then store a copy of that object
-        if( typeid(SolverParameter) != typeid(*other) )
-        {
-          //std::cout << typeid(*other).name() << std::endl;
-          other_.reset( other->clone() );
-        }
       }
 
       explicit SolverParameter ( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
-        : keyPrefix_( keyPrefix ), parameter_( parameter ), other_()
+        : keyPrefix_( keyPrefix ), parameter_( parameter )
       {}
+
+      const std::string keyPrefix() const { return keyPrefix_; }
 
       const ParameterReader& parameter() const { return parameter_; }
 
       virtual bool verbose() const
       {
-        if( other_ )
-          return other_->verbose();
-        else
-          return parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+        return parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
       }
 
       virtual void setVerbose( const bool verb )
       {
-        if( other_ )
-          other_->setVerbose( verb );
-        else
-          Parameter::append( keyPrefix_ + "verbose", std::to_string(verb), true);
+        Parameter::append( keyPrefix_ + "verbose", std::to_string(verb), true);
       }
 
       virtual int errorMeasure() const
       {
-        if( other_ )
-          return other_->errorMeasure();
-        else
-        {
-          const std::string errorTypeTable[] =
-            { "absolute", "relative", "residualreduction" };
-          const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
-          return errorType ;
-        }
+        const std::string errorTypeTable[] =
+        { "absolute", "relative", "residualreduction" };
+        const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
+        return errorType ;
       }
 
       virtual void setErrorMeasure( const int errorType )
       {
-        if( other_ )
-          return other_->setErrorMeasure( errorType );
-        else
-        {
-          const std::string errorTypeTable[] =
-            { "absolute", "relative", "residualreduction" };
-          Parameter::append( keyPrefix_ + "errormeasure", errorTypeTable[errorType], true );
-        }
+        const std::string errorTypeTable[] =
+        { "absolute", "relative", "residualreduction" };
+        Parameter::append( keyPrefix_ + "errormeasure", errorTypeTable[errorType], true );
       }
 
-      virtual double linAbsTol ( double eps = 1e-8 )  const
+      virtual double linAbsTol ( )  const
       {
-        if( other_ )
-          return other_->linAbsTol();
-        else
-          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", eps );
+        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
       }
 
       virtual void setLinAbsTol ( const double eps )
       {
-        if( other_ )
-          return other_->setLinAbsTol( eps );
-        else
-          Parameter::append(keyPrefix_ +  "linabstol", std::to_string(eps), true );
+        Parameter::append(keyPrefix_ +  "linabstol", eps, true );
       }
 
-      virtual double linReduction ( double eps = 1e-2 ) const
+      virtual double linReduction (  ) const
       {
-        if( other_ )
-          return other_->linReduction();
-        else
-          return parameter_.getValue< double >( keyPrefix_ + "linreduction", eps );
+        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
       }
 
       virtual void setLinReduction ( const double eps )
       {
-        if( other_ )
-          return other_->setLinReduction( eps );
-        else
-          Parameter::append( keyPrefix_ + "linreduction", std::to_string(eps), true );
+        Parameter::append( keyPrefix_ + "linreduction", eps, true );
       }
 
       virtual int maxLinearIterations () const
       {
-        if( other_ )
-          return other_->maxLinearIterations();
-        else
-          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
       virtual void  setMaxLinearIterations ( const int maxIter )
       {
-        if( other_ )
-          return other_->setMaxLinearIterations( maxIter );
-        else
-          Parameter::append( keyPrefix_ + "maxlineariterations", std::to_string(maxIter), true );
+        Parameter::append( keyPrefix_ + "maxlineariterations", maxIter, true );
       }
 
       virtual int krylovMethod() const
       {
-        if( other_ )
-          return other_->krylovMethod();
+        const std::string krylovMethodTable[] =
+        { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+        int methodType = gmres;
+        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
+          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
         else
-        {
-          const std::string krylovMethodTable[] =
-            { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-          int methodType = gmres;
-          if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
-            methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
-          else
-            methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
-          return methodType;
-        }
+          methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
+        return methodType;
       }
 
       virtual void setKrylovMethod( const int method )
       {
-        if( other_ )
-          return other_->setKrylovMethod( method);
-        else
-        {
-          const std::string krylovMethodTable[] =
-            { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-          Parameter::append( keyPrefix_ + "krylovmethod", krylovMethodTable[method], true );
-        }
+        const std::string krylovMethodTable[] =
+        { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+        Parameter::append( keyPrefix_ + "krylovmethod", krylovMethodTable[method], true );
       }
 
       virtual int gmresRestart() const
       {
-        if( other_ )
-          return other_->gmresRestart();
-        else
-        {
-          int defaultRestart = 20;
-          return parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
-        }
+        int defaultRestart = 20;
+        return parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
       }
 
       virtual void setGmresRestart( const int restart )
       {
-        if( other_ )
-          return other_->setGmresRestart( restart );
-        else
-        {
-          Parameter::append( keyPrefix_ + "gmres.restart", std::to_string(restart), true );
-        }
+        Parameter::append( keyPrefix_ + "gmres.restart", std::to_string(restart), true );
       }
 
       virtual int preconditionMethod () const
@@ -237,72 +167,44 @@ namespace Dune
 
       virtual double relaxation () const
       {
-        if( other_ )
-          return other_->relaxation();
-        else
-          return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
       }
 
       virtual void setRelaxation ( const double relaxation )
       {
-        if( other_ )
-          return other_->setRelaxation( relaxation );
-        else
-          Parameter::append( keyPrefix_ + "preconditioning.relaxation", std::to_string(relaxation), true );
+        Parameter::append( keyPrefix_ + "preconditioning.relaxation", std::to_string(relaxation), true );
       }
 
 
       virtual int preconditionerIteration () const
       {
-        if( other_ )
-          return other_->preconditionerIteration();
-        else
-        {
-          // TODO: add also check for level
-          return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
-        }
+        // TODO: add also check for level
+        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
       }
 
       virtual void setPreconditionerIteration ( const int precIter)
       {
-        if( other_ )
-          return other_->setPreconditionerIteration( precIter );
-        else
-        {
-          // TODO: add also check for level
-          Parameter::append( keyPrefix_ + "preconditioning.iterations", std::to_string(precIter), true );
-        }
+        // TODO: add also check for level
+        Parameter::append( keyPrefix_ + "preconditioning.iterations", std::to_string(precIter), true );
       }
-
-
-      virtual SolverParameter* clone () const { return new SolverParameter(); }
 
       //deprecated methods
       [[deprecated]]
       virtual double linAbsTolParameter ()  const
       {
-        if( other_ )
-          return other_->linAbsTol();
-        else
-          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
+        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
       }
 
       [[deprecated]]
       virtual double linReductionParameter () const
       {
-        if( other_ )
-          return other_->linReduction();
-        else
-          return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
+        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
       }
 
       [[deprecated]]
       virtual int maxLinearIterationsParameter () const
       {
-        if( other_ )
-          return other_->maxLinearIterations();
-        else
-          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
     };
