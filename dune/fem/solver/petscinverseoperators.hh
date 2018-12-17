@@ -351,7 +351,6 @@ namespace Dune
         PC pc;
         ::Dune::Petsc::KSPGetPC( ksp(), &pc );
 
-
         switch( pcType )
         {
           case PetscPrec::defaults:
