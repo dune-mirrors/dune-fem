@@ -74,8 +74,12 @@ class SPQROp:public Operator<DF, DF>
     SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
   {}
 
-  SPQROp(const ParameterReader &parameter = Parameter::container() ) :
-    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+  explicit SPQROp(const ParameterReader &parameter ) :
+    SPQROp( SolverParameter( parameter ) )
+  {}
+
+  SPQROp(const SolverParameter& parameter = SolverParameter( Parameter::container() ) ) :
+    SPQROp(parameter.verbose())
   {}
 
   /** \brief Constructor.
