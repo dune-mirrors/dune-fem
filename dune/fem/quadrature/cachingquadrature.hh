@@ -69,6 +69,9 @@ namespace Dune
       //! type of the coordinates in the codim-0 reference element
       typedef typename BaseType :: CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename BaseType::QuadratureKeyType QuadratureKeyType;
+
       //! type of the quadrature point
       typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
       //! type of iterator
@@ -85,22 +88,22 @@ namespace Dune
 
       /** \brief constructor
        *
-       *  \param[in]  entity  entity, on whose reference element the quadratre
+       *  \param[in]  entity  entity, on whose reference element the quadrature
        *                      lives
-       *  \param[in]  order   desired minimal order of the quadrature
+       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
        */
-      CachingQuadrature( const EntityType &entity, int order )
-      : BaseType( entity.type(), order )
+      CachingQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
+      : BaseType( entity.type(), quadKey )
       {}
 
       /** \brief constructor
        *
-       *  \param[in]  type    geometry type, on whose reference element the quadratre
+       *  \param[in]  type    geometry type, on whose reference element the quadrature
        *                      lives
-       *  \param[in]  order   desired minimal order of the quadrature
+       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
        */
-      CachingQuadrature( const GeometryType &type, int order )
-      : BaseType( type, order )
+      CachingQuadrature( const GeometryType &type, const QuadratureKeyType& quadKey )
+      : BaseType( type, quadKey )
       {}
 
       /** \brief copy constructor
@@ -160,6 +163,9 @@ namespace Dune
       //! the coordinates of the quadrature points in the codim-0 reference element
       typedef typename BaseType::CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename BaseType::QuadratureKeyType QuadratureKeyType;
+
       //! type of the quadrature point
       typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
       //! type of iterator
@@ -187,8 +193,8 @@ namespace Dune
        *                            which the ElementQuadrature shall be created
        */
       CachingQuadrature( const GridPartType &gridPart, const IntersectionType &intersection,
-                         int order, typename BaseType::Side side )
-      : BaseType( gridPart, intersection, order, side )
+                         const QuadratureKeyType& quadKey, typename BaseType::Side side )
+      : BaseType( gridPart, intersection, quadKey, side )
       {}
 
       /** \brief copy constructor

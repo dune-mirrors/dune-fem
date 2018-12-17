@@ -12,6 +12,8 @@
 
 #include <dune/fem/common/hybrid.hh>
 
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
+
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
@@ -401,6 +403,70 @@ namespace Dune
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
+      }
+
+      // assign from other given SimpleBlockVector with same block size
+      template <class Container>
+      void assignVector( const SimpleBlockVector< Container, blockSize >& other )
+      {
+        Vec& vec = *getGhostedVector();
+
+        const PetscInt blocks = other.size();
+        const PetscInt bs = blockSize ;
+        const PetscInt b = 0;
+
+        const PetscScalar* vecData = static_cast< const PetscScalar* > (other.data());
+        ::Dune::Petsc::VecSetBlockSize( vec, bs * blocks );
+        ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, vecData, INSERT_VALUES );
+        ::Dune::Petsc::VecSetBlockSize( vec, blockSize );
+
+        updateGhostRegions();
+      }
+
+      // assign from other given ISTLBlockVector with same block size
+      template <class DofBlock>
+      void assignVector( const ISTLBlockVector< DofBlock >& other )
+      {
+        assert( DofBlock :: dimension == blockSize );
+        Vec& vec = *getGhostedVector();
+
+        const PetscInt blocks = other.size();
+        for( PetscInt b=0; b<blocks; ++b )
+        {
+          const PetscScalar* values = static_cast< const PetscScalar* > (&(other[ b ][ 0 ])) ;
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
+        }
+
+        updateGhostRegions();
+      }
+
+      // assign from other given SimpleBlockVector with same block size
+      template <class Container>
+      void copyTo( SimpleBlockVector< Container, blockSize >& other ) const
+      {
+        PetscScalar *array = nullptr;
+        VecGetArray( ghostedVec_, &array );
+        std::copy_n( array, blockSize * other.size(), other.data() );
+      }
+
+      // assign from other given ISTLBlockVector with same block size
+      template <class DofBlock>
+      void copyTo ( ISTLBlockVector< DofBlock >& other ) const
+      {
+        assert( DofBlock :: dimension == blockSize );
+
+        PetscScalar *array = nullptr;
+        VecGetArray( ghostedVec_, &array );
+
+        const PetscInt blocks = other.size();
+        for( PetscInt b=0, id = 0; b<blocks; ++b )
+        {
+          auto& block = other[ b ];
+          for( int d=0; d<blockSize; ++d, ++id )
+          {
+            block[ d ] = array[ id ];
+          }
+        }
       }
 
       PetscVector& operator= ( const ThisType& other )

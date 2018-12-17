@@ -80,7 +80,16 @@ namespace Dune
       : data_( std::move( other.data_ ) )
       {}
 
-      using BaseType::operator=;
+      // issue with gcc 5.5 and ambiguity of
+      //      operator= ( const DenseVector< V > &other )
+      // using BaseType::operator=;
+      // to avoid this adding to missing operator= overload:
+      ThisType& operator= (const value_type& k)
+      {
+        for (size_type i=0; i<size(); i++)
+          data_[i] = k;
+        return *this;
+      }
 
       template< class V >
       ThisType & operator= ( const DenseVector< V > &other )

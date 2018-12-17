@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_PASS_COMMON_SELECTOR_HH
 #define DUNE_FEM_PASS_COMMON_SELECTOR_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/selector.hh> instead!"
+#endif
+
 #include <type_traits>
 #include <tuple>
 

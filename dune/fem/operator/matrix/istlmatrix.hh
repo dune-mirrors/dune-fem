@@ -26,6 +26,7 @@
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/io/parameter.hh>
@@ -140,17 +141,18 @@ namespace Dune
           BaseType(org)
         {}
 
-        template <class RowKeyType, class ColKeyType>
-        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices)
+        template < class SparsityPattern >
+        void createEntries(const SparsityPattern& sparsityPattern)
         {
           // not insert map of indices into matrix
           auto endcreate = this->createend();
+          const auto endsp = sparsityPattern.end();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
-            const auto it = indices.find( create.index() );
-            if (it == indices.end() )
+            const auto row = sparsityPattern.find( create.index() );
+            if ( row == endsp )
               continue;
-            const auto& localIndices = it->second;
+            const auto& localIndices = ( *row ).second;
             const auto end = localIndices.end();
             // insert all indices for this row
             for (auto it = localIndices.begin(); it != end; ++it)
@@ -164,6 +166,25 @@ namespace Dune
           for (auto& row : *this)
             for (auto& entry : row)
               entry = 0;
+        }
+
+        //! clear Matrix, i.e. set all entires to 0
+        void unitRow( const size_t row )
+        {
+          block_type idBlock( 0 );
+          for (int i = 0; i < idBlock.rows; ++i)
+              idBlock[i][i] = 1.0;
+
+          auto& matRow = (*this)[ row ];
+          auto colIt = matRow.begin();
+          const auto& colEndIt = matRow.end();
+          for (; colIt != colEndIt; ++colIt)
+          {
+              if( colIt.index() == row )
+                  *colIt = idBlock;
+              else
+                  *colIt = 0.0;
+          }
         }
 
         //! setup like the old matrix but remove rows with hanging nodes
@@ -635,6 +656,7 @@ namespace Dune
       enum { littleRows = RangeSpaceType  :: localBlockSize };
 
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
+      typedef LittleBlockType  block_type;
 
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType, RangeBlock >     RowDiscreteFunctionType;
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType, DomainBlock >   ColumnDiscreteFunctionType;
@@ -678,14 +700,14 @@ namespace Dune
       mutable std::unique_ptr< RowBlockVectorType >    Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
-
+      ISTLMatrixParameter param_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
-      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const MatrixParameter& param = ISTLMatrixParameter() ) :
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLMatrixParameter& param = ISTLMatrixParameter() ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
         , rowMapper_( rangeSpace.blockMapper() )
@@ -694,6 +716,7 @@ namespace Dune
         , sequence_(-1)
         , localMatrixStack_( *this )
         , overflowFraction_( param.overflowFraction() )
+        , param_( param )
       {}
 
       ThisType &systemMatrix () { return *this; }
@@ -718,26 +741,26 @@ namespace Dune
         return "";
       }
 
-      void createMatrixAdapter () const
+      void createMatrixAdapter ( const ISTLMatrixParameter& param ) const
       {
         if( !matrixAdap_ )
         {
-          matrixAdap_ = ISTLMatrixAdapterFactory< ThisType > :: matrixAdapter( *this );
+          matrixAdap_ = ISTLMatrixAdapterFactory< ThisType > :: matrixAdapter( *this, param );
         }
         assert( matrixAdap_ );
       }
 
       //! return matrix adapter object
-      const MatrixAdapterType& matrixAdapter() const
+      MatrixAdapterType& matrixAdapter( const ISTLMatrixParameter& parameter ) const
       {
-        createMatrixAdapter();
+        createMatrixAdapter( parameter );
         return *matrixAdap_;
       }
 
-      MatrixAdapterType& matrixAdapter()
+      //! return matrix adapter object
+      MatrixAdapterType& matrixAdapter() const
       {
-        createMatrixAdapter();
-        return *matrixAdap_;
+        return matrixAdapter( param_ );
       }
 
     public:
@@ -753,6 +776,11 @@ namespace Dune
           return false;
       }
 
+      void flushAssembly()
+      {
+        // nothing to do here
+      }
+
       // compress matrix if not already done before and only in implicit build mode
       void communicate( )
       {
@@ -766,6 +794,11 @@ namespace Dune
         matrix().clear();
         // clean matrix adapter and other helper classes
         removeObj();
+      }
+
+      void unitRow( const size_t row )
+      {
+        matrix().unitRow( row );
       }
 
       template <class Vector>
@@ -797,6 +830,14 @@ namespace Dune
           assert(set);
         }
       }
+
+      //! reserve memory for assemble based on the provided stencil
+      template <class Set>
+      void reserve (const std::vector< Set >& sparsityPattern )
+      {
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ), false );
+      }
+
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
       void reserve(const Stencil &stencil, const bool implicit = true )
@@ -1009,6 +1050,35 @@ namespace Dune
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType ( *this, domainEntity );
+      }
+
+      template< class LocalBlock, class Operation >
+      void applyToBlock ( const size_t row, const size_t col,
+                          const LocalBlock &localBlock,
+                          Operation& operation )
+      {
+        LittleBlockType& block = ( implicitModeActive() ) ? matrix().entry( row, col ) : matrix()[ row ][ col ];
+        for( int i  = 0; i < littleRows; ++i )
+          for( int j = 0; j < littleCols; ++j )
+            operation( block[ i ][ j ], localBlock[ i ][ j ] );
+      }
+
+      template< class LocalBlock >
+      void setBlock ( const size_t row, const size_t col,
+                      const LocalBlock &localBlock )
+      {
+        typedef typename DomainSpaceType :: RangeFieldType Field;
+        auto copy = [] ( Field& a, const typename LocalBlock::field_type& b ) { a = b; };
+        applyToBlock( row, col, localBlock, copy );
+      }
+
+      template< class LocalBlock >
+      void addBlock ( const size_t row, const size_t col,
+                      const LocalBlock &localBlock )
+      {
+        typedef typename DomainSpaceType :: RangeFieldType Field;
+        auto add = [] ( Field& a, const typename LocalBlock::field_type& b ) { a += b; };
+        applyToBlock( row, col, localBlock, add );
       }
 
       template< class LocalMatrix, class Operation >

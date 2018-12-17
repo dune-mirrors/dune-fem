@@ -27,11 +27,16 @@ namespace Dune
       template <class EntityType>
       void setEntity(const EntityType& en) {
         volume_ = en.geometry().volume();
+        baryCenter_ = en.geometry().center();
       }
       double operator()(const DomainType& point) {
-        return volume_;
+        // return volume_;
+        DomainType tau(baryCenter_);
+        tau -= point;
+        return tau.two_norm() / volume_;
       }
       double volume_;
+      DomainType baryCenter_;
     };
 
     struct VtxProjectionImpl
@@ -60,14 +65,19 @@ namespace Dune
 
         typedef typename Intersection::LocalGeometry GeometryType;
 
-        explicit OutsideLocalFunction ( const DiscreteFunction &df ) : localFunction_( df ) {}
+        explicit OutsideLocalFunction ( const DiscreteFunction &df ) : order_(df.order()), localFunction_( df ) {}
 
         void init ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
         {
           localFunction_.init( outside );
           geoIn_ = &geoIn;
           geoOut_ = &geoOut;
+          entity_ = outside;
         }
+
+        const EntityType &entity() const { return entity_; }
+
+        int order() const { return order_; }
 
         template< class Point >
         void evaluate ( const Point &x, RangeType &value ) const
@@ -113,9 +123,11 @@ namespace Dune
           hessian( x, value );
         };
 
+        int order_;
         LocalFunctionType localFunction_;
         const GeometryType *geoIn_ = nullptr;
         const GeometryType *geoOut_ = nullptr;
+        EntityType entity_;
       };
 
 
@@ -189,13 +201,21 @@ namespace Dune
         }
       }
 
-
       template< class Function, class DiscreteFunction, class Weight >
-      static void project ( const Function &f, DiscreteFunction &u, Weight &weight )
+      static auto project ( const Function &f, DiscreteFunction &u, Weight &weight )
+      -> std::enable_if_t<std::is_void< decltype( interpolate(f,u,weight,u )) >::value>
+      // -> std::enable_if_t<std::is_void< decltype( interpolate(f,u,weight,std::declval<std::remove_cv<std::remove_reference<DiscreteFunction>>&>()) ) >::value>
       {
         DiscreteFunction w ( "weight", u.space() );
         interpolate( f, u, weight, w );
         makeConforming( u );
+      }
+      template< class Function, class DiscreteFunction >
+      static auto project ( const Function &f, DiscreteFunction &u )
+      -> std::enable_if_t< std::is_void< decltype( project( f,u,std::declval<WeightDefault<typename DiscreteFunction::GridPartType>&>() ) ) >::value>
+      {
+        WeightDefault<typename DiscreteFunction::GridPartType> weight;
+        project(f, u, weight);
       }
     };
 
@@ -203,7 +223,8 @@ namespace Dune
     /*! \ingroup VtxProjectionOperator
      *  \class VtxProjection
      *  \brief The Projection class which average
-     *         discontinuous function in the Lagrangepoints
+     *         discontinuous function using the interpolation of the space
+     *         (e.g. the Lagrangepoints)
      */
     /*======================================================================*/
     template < typename DType, typename RType >
@@ -229,8 +250,7 @@ namespace Dune
       //! apply projection with default weight
       void operator() (const DomainType& f, RangeType& discFunc) const
       {
-        WeightDefault<GridPartType> weight;
-        VtxProjectionImpl::project(f,discFunc, weight);
+        VtxProjectionImpl::project(f,discFunc);
       }
 
     private:

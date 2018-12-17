@@ -10,6 +10,7 @@
 #include <dune/fem/quadrature/elementquadrature.hh>
 
 #include <dune/fem/quadrature/dunequadratures.hh>
+#include <dune/fem/quadrature/lumpingquadrature.hh>
 
 #include "checkleafcodim1.hh"
 
@@ -59,6 +60,8 @@ private:
   typedef typename QuadratureChooser<GridPartType, 0, caching, QuadratureTraits>::Quadrature VolumeQuadratureType;
   typedef typename QuadratureChooser<GridPartType, 0, false,   QuadratureTraits>::Quadrature ElementQuadratureType;
   typedef typename QuadratureChooser<GridPartType, 1, caching>::Quadrature FaceQuadratureType;
+
+  typedef CachingLumpingQuadrature< GridPartType, 0> LumpingQuadratureType;
 
   GridPartType & gridPart_;
   int order_;
@@ -182,6 +185,39 @@ public:
       std::cout << "Outside twst: " << (*it) << std::endl;
     }
   }
+
+  void testLumpingQuadrature()
+  {
+    IteratorType endit = gridPart_.template end<0>();
+    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it)
+    {
+      const EntityType & entity = *it;
+      const Geometry& geo = entity.geometry();
+
+      LumpingQuadratureType lumpQuad( entity, order_ );
+      const int quadNop = lumpQuad.nop();
+      if( quadNop != int(geo.corners()) )
+      {
+        std::cout << " Error: nops not equal: lumpQuad = " << quadNop
+                  << "   geo.corners = " << geo.corners() << std::endl;
+        return ;
+      }
+
+      for (int qp = 0; qp < quadNop; ++qp)
+      {
+        Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalElem, globalCache;
+        globalCache  = geo.global( lumpQuad.point( qp ) );
+        globalElem   = geo.corner( qp );
+        if( (globalCache-globalElem).two_norm() > eps_)
+        {
+          std::cout << " Error: x(cache) = " << globalCache << " != "
+                    << globalElem << " = x(elem) " << std::endl;
+          break;
+        }
+      }
+    }
+  }
+
 };
 
 // main program
@@ -268,6 +304,11 @@ int main(int argc, char ** argv)
         std::cout << "Testing DUNE CachingQuadratures: " << std::endl;
         TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
         testCaching.runTest();
+      }
+      {
+        std::cout << "Testing DUNE CachingLumpiongQuadrature: " << std::endl;
+        TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
+        testCaching.testLumpingQuadrature();
       }
       grid.globalRefine( 1 );
     }

@@ -29,6 +29,8 @@ namespace Dune
       typedef CachingShapeFunctionSet< ShapeFunctionSet > ThisType;
 
     public:
+      typedef ShapeFunctionSet  ShapeFunctionSetType;
+
       typedef typename ShapeFunctionSet::FunctionSpaceType FunctionSpaceType;
 
       typedef typename ShapeFunctionSet::DomainType DomainType;
@@ -53,8 +55,8 @@ namespace Dune
       }
 
       ~CachingShapeFunctionSet ();
-      CachingShapeFunctionSet ( const ThisType& ) = delete;
-      const ThisType& operator= ( const ThisType& ) = delete;
+      //CachingShapeFunctionSet ( const ThisType& ) = delete;
+      //const ThisType& operator= ( const ThisType& ) = delete;
 
       int order () const
       {
@@ -113,6 +115,9 @@ namespace Dune
         return ReturnCache< QuadratureType, std::is_convertible< QuadratureType, CachingInterface >::value > ::
           jacobians( *this, quadrature, jacobianCaches_, *localJacobianCache_ );
       }
+
+      const ThisType& scalarShapeFunctionSet() const { return *this; }
+      const ThisType& impl() const { return *this; }
 
     private:
       template< class Quad, bool cacheable >

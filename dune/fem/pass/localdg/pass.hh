@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_PASS_LOCALDG_HH
 #define DUNE_FEM_PASS_LOCALDG_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/dgpass.hh> instead!"
+#endif
+
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>

@@ -171,6 +171,11 @@ namespace Dune
             } );
         }
 
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          DUNE_THROW( NotImplemented, "Method onSubEntity(...) not yet implemented for TupleMapper" );
+        }
+
         int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
 
         SizeType numDofs ( const ElementType &element ) const { return numDofs( element, std::index_sequence_for< Mapper ... >() ); }

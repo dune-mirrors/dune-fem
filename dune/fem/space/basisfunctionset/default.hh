@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
+
 // C++ includes
 #include <cassert>
 #include <cstddef>
@@ -301,6 +302,18 @@ namespace Dune
         Transformation transformation( geo, coordinate( x ) );
         AssignFunctor< JacobianRangeArray, Transformation > f( jacobians, transformation );
         shapeFunctionSet().jacobianEach( x, f );
+      }
+
+      //! \todo please doc me
+      template< class QuadratureType, class DofVector, class HessianArray >
+      void hessianAll ( const QuadratureType &quad, const DofVector &dofs, HessianArray &hessians ) const
+      {
+        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop; ++qp )
+        {
+          hessianAll( quad[ qp ], dofs, hessians[ qp ] );
+        }
       }
 
       //! \todo please doc me

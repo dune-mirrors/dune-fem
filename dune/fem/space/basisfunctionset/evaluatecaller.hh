@@ -2,10 +2,12 @@
 #define DUNE_FEM_EVALUATECALLER_HH
 
 #include <cstdlib>
+#include <iostream>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
+
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define CODEGEN_INCLUDEMAXNUMS
@@ -275,7 +277,8 @@ namespace Dune
                                const FactorType& rangeFactors,
                                LocalDofVectorType & dofs ) const
       {
-        abort();
+        std::cerr << "ERROR: EvaluateImplementation::axpyRanges not overloaded!" << std::endl;
+        std::abort();
       }
 
       virtual void axpyJacobians( const QuadratureType& quad,
@@ -283,14 +286,16 @@ namespace Dune
                                   const FactorType& jacFactors,
                                   LocalDofVectorType& dofs) const
       {
-        abort();
+        std::cerr << "ERROR: EvaluateImplementation::axpyJacobians not overloaded!" << std::endl;
+        std::abort();
       }
 
       virtual void evaluateRanges( const QuadratureType& quad,
                                    const LocalDofVectorType & dofs,
                                    FactorType& rangeFactors) const
       {
-        abort();
+        std::cerr << "ERROR: EvaluateImplementation::evaluateRanges not overloaded!" << std::endl;
+        std::abort();
       }
 
       virtual void evaluateJacobians( const QuadratureType& quad,
@@ -298,7 +303,8 @@ namespace Dune
                                       const LocalDofVectorType& dofs,
                                       FactorType& jacFactors) const
       {
-        abort();
+        std::cerr << "ERROR: EvaluateImplementation::evaluateJacobians not overloaded!" << std::endl;
+        std::abort();
       }
 
       static InterfaceType* create( const RangeVectorType& )
@@ -361,7 +367,8 @@ namespace Dune
           return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
         else
         {
-          abort();
+          std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::createObj: no working combination!" << std::endl;
+          std::abort();
         }
       }
     };
@@ -381,7 +388,10 @@ namespace Dune
         if( numBaseFct == numbase )
           return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
         else
-          abort();
+        {
+          std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::createObj: no working combination!" << std::endl;
+          std::abort();
+        }
       }
 
       static InterfaceType* create( const RangeVectorType& rangeStorage,
@@ -411,7 +421,10 @@ namespace Dune
         if( numBaseFct == numbase )
           return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
         else
-          abort();
+        {
+          std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::createObj: no working combination!" << std::endl;
+          std::abort();
+        }
       }
 
       static InterfaceType* create( const RangeVectorType& rangeStorage,
@@ -421,7 +434,8 @@ namespace Dune
           return EvaluateCaller< Traits, quadNop, numBaseFct > :: createObj( rangeStorage, numbase );
         else
         {
-          abort();
+          std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::create: no working combination!" << std::endl;
+          std::abort();
         }
       }
     };

@@ -58,6 +58,8 @@ namespace Dune
 
       typedef SimplexQuadratureType PointQuadratureType;
       typedef SimplexQuadratureType LineQuadratureType;
+
+      typedef int QuadratureKeyType ;
     };
 
 

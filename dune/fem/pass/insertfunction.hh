@@ -1,6 +1,11 @@
 #ifndef DUNE_FEM_PASS_INSERTFUNCTION_HH
 #define DUNE_FEM_PASS_INSERTFUNCTION_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/insertfunction.hh> instead!"
+#endif
+
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/pass/common/pass.hh>

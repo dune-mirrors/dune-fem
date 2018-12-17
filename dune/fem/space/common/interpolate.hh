@@ -105,16 +105,20 @@ namespace Dune
 
         typedef typename FunctionSpaceType::DomainType DomainType;
         typedef typename FunctionSpaceType::RangeType RangeType;
+        typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+        typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
         typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
         static constexpr int dimDomain = FunctionSpaceType::dimDomain;
         static constexpr int dimRange = FunctionSpaceType::dimRange;
 
-        explicit WeightLocalFunction ( Weight &weight ) : weight_( weight ) {}
+        explicit WeightLocalFunction ( Weight &weight, int order ) : weight_( weight ), order_(order) {}
 
-        void bind ( const EntityType &entity ) { weight_.setEntity( entity ); }
+        void bind ( const EntityType &entity ) { entity_ = entity; weight_.setEntity( entity ); }
         void unbind () {}
+
+        const EntityType entity() const { return entity_; }
 
         template< class Point >
         void evaluate ( const Point &x, RangeType &value ) const
@@ -132,8 +136,12 @@ namespace Dune
             evaluate( qp, values[ qp.index() ] );
         }
 
+        int order() const
+        { return order_; }
       private:
         Weight &weight_;
+        int order_;
+        Entity entity_;
       };
 
     } // namespace Impl
@@ -166,7 +174,7 @@ namespace Dune
       typedef typename DiscreteFunction::DiscreteFunctionSpaceType::EntityType EntityType;
 
       const auto &space = w.space();
-      Impl::WeightLocalFunction< EntityType, std::remove_reference_t< typename DiscreteFunction::FunctionSpaceType >, Weight > localWeight( weight );
+      Impl::WeightLocalFunction< EntityType, std::remove_reference_t< typename DiscreteFunction::FunctionSpaceType >, Weight > localWeight( weight, w.order() );
       interpolate( u, v, [ &space, &localWeight ] ( const EntityType &entity, AddLocalContribution< DiscreteFunction > &w ) {
           auto weightGuard = bindGuard( localWeight, entity );
           space.interpolation( entity )( localWeight, w );

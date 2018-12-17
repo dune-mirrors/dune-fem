@@ -95,6 +95,9 @@ namespace Dune
       {
         return InterpolationType( entity );
       }
+
+      /** \brief extend size of space beyond what the index set is delivering */
+      void extendSize( const size_t extension ) { this->blockMapper().extendSize( extension ); }
     };
 
 

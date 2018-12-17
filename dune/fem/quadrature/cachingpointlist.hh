@@ -91,6 +91,9 @@ namespace Dune
       //! The type of the coordinates in the codim-0 reference element.
       typedef typename Base::CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename Base::QuadratureKeyType QuadratureKeyType;
+
       //! the type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
       //! type of iterator
@@ -103,10 +106,10 @@ namespace Dune
       using Base::localPoint;
       using Base::nop;
 
-      /** \copydoc Dune::Fem::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
+      /** \copydoc Dune::Fem::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry, const QuadratureKeyType& quadKey)
        */
-      CachingPointList( const GeometryType &geometry, int order )
-      : Base( geometry, order )
+      CachingPointList( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+      : Base( geometry, quadKey )
       {
         CacheProvider< GridPartType, codimension >::registerQuadrature( quadImp() );
       }
@@ -154,6 +157,9 @@ namespace Dune
       //! Type of coordinates in codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
 
+      //! type of quadrature identifier on user side (default is the order of quadrature)
+      typedef typename Base::QuadratureKeyType QuadratureKeyType;
+
       //! Type of the intersection iterator
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -194,14 +200,14 @@ namespace Dune
        *
        *  \param[in]  gridPart      grid partition
        *  \param[in]  intersection  intersection
-       *  \param[in]  order         desired order of the quadrature
+       *  \param[in]  quadKey       desired order of the quadrature or other means of quadrature identification
        *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        */
       CachingPointList ( const GridPartType &gridPart,
                          const IntersectionType &intersection,
-                         int order, const typename Base :: Side side )
-        : Base( getPointList( intersection, order, side ) ),
+                         const QuadratureKeyType& quadKey, const typename Base :: Side side )
+        : Base( getPointList( intersection, quadKey, side ) ),
           mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), getTwist( gridPart, intersection, side ) ) ),
           points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
       {
@@ -245,18 +251,18 @@ namespace Dune
 
     protected:
       Base getPointList ( const IntersectionType &intersection,
-                          const int order,
+                          const QuadratureKeyType& key,
                           const typename Base :: Side side )
       {
         switch( side )
         {
           case Base :: INSIDE:
             return Base( TwistUtilityType::elementGeometry( intersection, true ),
-                         intersection.indexInInside(), order );
+                         intersection.indexInInside(), key );
 
           case Base :: OUTSIDE:
             return Base( TwistUtilityType::elementGeometry( intersection, false ),
-                         intersection.indexInOutside(), order );
+                         intersection.indexInOutside(), key );
 
           default:
             DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );

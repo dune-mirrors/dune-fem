@@ -8,6 +8,8 @@ endif()
 
 set( MARCOGRIDFILES 1dgrid.dgf  2dgrid.dgf 3dgrid.dgf )
 
+exclude_from_headercheck( checkgridpart.hh )
+
 # copy data to build source to make tests work
 foreach( file ${MARCOGRIDFILES} )
   configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )

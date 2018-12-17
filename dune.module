@@ -1,5 +1,5 @@
 Module: dune-fem
-Version: 2.6.0
+Version: 2.7.0
 Maintainer: dune-fem@lists.dune-project.org
 Whitespace-Hook: Yes
 Depends: dune-grid (>= 2.6)

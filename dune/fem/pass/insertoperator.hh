@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_PASS_INSERTOPERATOR_HH
 #define DUNE_FEM_PASS_INSERTOPERATOR_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/insertoperator.hh> instead!"
+#endif
+
 #include <memory>
 #include <string>
 #include <tuple>

@@ -51,8 +51,24 @@ include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
 
-set(PETSC_DIR $ENV{PETSC_DIR})
-set(PETSC_ARCH $ENV{PETSC_ARCH})
+# PETSC_ROOT overrules PETSC_DIR which overrules ENV PETSC_DIR
+if( PETSC_ROOT )
+  set(PETSC_DIR ${PETSC_ROOT})
+endif()
+
+if( NOT PETSC_DIR )
+  set(PETSC_DIR $ENV{PETSC_DIR})
+else()
+  # set PETSC_DIR as environment variable to avoid trouble
+  set(ENV{PETSC_DIR} ${PETSC_DIR})
+endif()
+if( NOT PETSC_ARCH )
+  set(PETSC_ARCH $ENV{PETSC_ARCH})
+else()
+  # set PETSC_ARCH as environment variable to avoid trouble
+  set(ENV{PETSC_ARCH} ${PETSC_ARCH})
+endif()
+
 find_package(PETSc)
 if(PETSC_FOUND)
   # set HAVE_PETSC for config.h
@@ -86,6 +102,11 @@ else()
     "Library directory: ${PETSC_LIBRARIES}\n\n")
 endif()
 
+# AMGX solver (AmgXWrapper) needs PETSC matrix structures, therefore PETSC is needed
+if(PETSC_FOUND)
+  find_package(AmgXSolver)
+endif()
+
 # check for Eigen3
 find_package(Eigen3 CONFIG)
 if(EIGEN3_FOUND)
@@ -93,6 +114,8 @@ if(EIGEN3_FOUND)
   add_definitions(${EIGEN3_DEFINITIONS})
   include_directories(${EIGEN3_INCLUDE_DIRS})
 endif()
+
+find_package(ViennaCL)
 
 ####### abbreviations
 include(FemShort)

@@ -123,6 +123,7 @@ namespace Dune
       typedef std::remove_const_t< DiscreteFunction > DiscreteFunctionType;
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
       typedef DiscreteFunctionType GridFunctionType;
 
@@ -176,6 +177,12 @@ namespace Dune
           \param[in] entity  entity for initialize the local function to
        */
       ConstLocalDiscreteFunction ( const DiscreteFunctionType &df, const EntityType &entity )
+      : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
+        discreteFunction_( &df )
+      {
+        discreteFunction().getLocalDofs( entity, localDofVector() );
+      }
+      ConstLocalDiscreteFunction ( const EntityType &entity, const DiscreteFunctionType &df )
       : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
         discreteFunction_( &df )
       {
@@ -297,6 +304,10 @@ namespace Dune
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
           {}
+          explicit Type ( const EntityType &entity, const GridFunctionType &gridFunction )
+            : GridFunctionType::LocalFunctionType( gridFunction ),
+              gridFunction_( gridFunction )
+          { bind(entity); }
 
           using GF::LocalFunctionType::evaluate;
           using GF::LocalFunctionType::jacobian;
@@ -355,11 +366,16 @@ namespace Dune
           typedef typename GridFunctionDecayType::RangeType RangeType;
           typedef typename GridFunctionDecayType::JacobianRangeType JacobianRangeType;
           typedef typename GridFunctionDecayType::HessianRangeType HessianRangeType;
+          typedef typename GridFunctionDecayType::FunctionSpaceType FunctionSpaceType;
 
           template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
           explicit Type ( Arg&& gridFunction )
             :  gridFunction_( std::forward<Arg>(gridFunction) )
           {}
+          template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
+          explicit Type ( const EntityType &entity, Arg&& gridFunction )
+            :  gridFunction_( std::forward<Arg>(gridFunction) )
+          { bind(entity); }
 
           template <class Point>
           void evaluate(const Point &x, RangeType &ret) const
@@ -409,32 +425,14 @@ namespace Dune
           void evaluateQuadrature ( const Quadrature &quad, Vectors & ... values ) const
           {
             static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
-            std::ignore = std::make_tuple( ( evaluateQuadrature( quad, values ), 1 ) ... );
+            evaluateFullQuadrature( PriorityTag<42>(), quad, values... );
           }
-
-          template< class Quadrature, class Vector >
-          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
-          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, RangeType >::value >
-          {
-            for( const auto qp : quad )
-              v[ qp.index() ] = evaluate( qp );
-          }
-
-          template< class Quadrature, class Vector >
-          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
-          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, JacobianRangeType >::value >
-          {
-            for( const auto qp : quad )
-              v[ qp.index() ] = jacobian( qp );
-          }
-
-          template< class Quadrature, class Vector >
-          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
-          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, HessianRangeType >::value >
-          {
-            for( const auto qp : quad )
-              v[ qp.index() ] = hessian( qp );
-          }
+          template< class Quadrature, class Jacobians >
+          void jacobianQuadrature ( const Quadrature &quadrature, Jacobians &jacobians ) const
+          { jacobianQuadrature(quadrature,jacobians, PriorityTag<42>() ); }
+          template< class Quadrature, class Hessians >
+          void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians ) const
+          { hessianQuadrature(quadrature,hessians, PriorityTag<42>() ); }
 
           void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
           void unbind () { gridFunction_.unbind(); }
@@ -447,6 +445,52 @@ namespace Dune
           const GridFunctionDecayType &gridFunction () const { return gridFunction_; }
 
         private:
+          template< class Quadrature, class ... Vectors, class GF_=GridFunctionDecayType >
+          auto evaluateFullQuadrature ( PriorityTag<1>, const Quadrature &quad, Vectors & ... values ) const
+          -> std::enable_if_t< std::is_void< decltype( std::declval< const GF_& >().evaluateQuadrature(quad,values...))>::value >
+          { gridFunction().evaluateQuadrature(quad,values...); }
+          template< class Quadrature, class ... Vectors >
+          void evaluateFullQuadrature ( PriorityTag<0>, const Quadrature &quad, Vectors & ... values ) const
+          { std::ignore = std::make_tuple( ( evaluateSingleQuadrature( quad, values ), 1 ) ... ); }
+
+          template< class Quadrature, class Jacobians, class GF_=GridFunctionDecayType>
+          auto jacobianQuadrature ( const Quadrature &quadrature, Jacobians &jacobians, PriorityTag<1> ) const
+          -> std::enable_if_t< std::is_void< decltype( std::declval< const GF_& >().jacobianQuadrature(quadrature,jacobians))>::value >
+          { gridFunction().jacobianQuadrature(quadrature,jacobians); }
+          template< class Quadrature, class Jacobians >
+          void jacobianQuadrature ( const Quadrature &quadrature, Jacobians &jacobians, PriorityTag<0> ) const
+          {
+            for( const auto qp : quadrature )
+              jacobians[ qp.index() ] = jacobian( qp );
+          }
+
+          template< class Quadrature, class Hessians, class GF_=GridFunctionDecayType >
+          auto hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians, PriorityTag<1> ) const
+          -> std::enable_if_t< std::is_void< decltype( std::declval< const GF_& >().hessianQuadrature(quadrature,hessians))>::value >
+          { gridFunction().hessianQuadrature(quadrature,hessians); }
+          template< class Quadrature, class Hessians >
+          void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians, PriorityTag<0> ) const
+          {
+            for( const auto qp : quadrature )
+              hessians[ qp.index() ] = hessian( qp );
+          }
+
+          template< class Quadrature, class Vector >
+          auto evaluateSingleQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, RangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = evaluate( qp );
+          }
+          template< class Quadrature, class Vector >
+          auto evaluateSingleQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, JacobianRangeType >::value >
+          { jacobianQuadrature(quad,v); }
+          template< class Quadrature, class Vector >
+          auto evaluateSingleQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, HessianRangeType >::value >
+          { hessianQuadrature(quad,v); }
+
           GridFunctionType gridFunction_;
         };
       };

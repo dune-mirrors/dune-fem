@@ -226,6 +226,15 @@ namespace Dune
           return numDofs( entity, Codim< Entity::codimension >() );
         }
 
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          indices.resize( numDofs(element) );
+          if (c == 0)
+            std::fill(indices.begin(),indices.end(),true);
+          else
+            std::fill(indices.begin(),indices.end(),false);
+        }
+
         /** \brief return \b true if dofs are associated to codimension */
         static constexpr bool contains ( const int codim ) { return (codim == 0); }
 

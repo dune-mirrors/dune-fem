@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_PASS_COMMON_PASS_HH
 #define DUNE_FEM_PASS_COMMON_PASS_HH
 
+#if HAVE_DUNE_FEM_DG
+#error "Outdated header, #include <dune/fem-dg/pass/pass.hh> instead!"
+#endif
+
 #include <limits>
 #include <string>
 #include <tuple>
