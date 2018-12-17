@@ -244,7 +244,8 @@ namespace Dune
       typedef typename BlockMapperType::SizeType SizeType;
 
       const BlockMapperType &blockMapper = this->space().blockMapper();
-      for( SizeType i = 0; i < blockMapper.size(); ++i )
+      const SizeType nBlocks = blockMapper.size();
+      for( SizeType i = 0; i < nBlocks; ++i )
       {
         auto &&block = this->dofVector()[ i ];
         Hybrid::forEach( LocalBlockIndices(), [ &in, &block ] ( auto j ) { in >> block[ j ]; } );
@@ -281,7 +282,8 @@ namespace Dune
       typedef typename BlockMapperType::SizeType SizeType;
 
       const BlockMapperType &blockMapper = this->space().blockMapper();
-      for( SizeType i = 0; i < blockMapper.size(); ++i )
+      const SizeType nBlocks = blockMapper.size();
+      for( SizeType i = 0; i < nBlocks; ++i )
       {
         const auto block = this->dofVector()[ i ];
         Hybrid::forEach( LocalBlockIndices(), [ &out, &block ] ( auto j ) { out << block[ j ]; } );
