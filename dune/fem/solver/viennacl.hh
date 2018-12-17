@@ -154,7 +154,7 @@ namespace Dune
         viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
         viennacl::copy( u.dbegin(), u.dend(), vclU.begin() );
 
-        int maxIterations = parameter_.maxLinearIterations();
+        int maxIterations = parameter().maxLinearIterations();
         int iterations = -1;
 
         //std::cout << "Using ViennaCL " << std::endl;
@@ -208,7 +208,7 @@ namespace Dune
 
       using BaseType :: assembledOperator_;
       using BaseType :: iterations_;
-      using BaseType :: parameter_;
+      using BaseType :: parameter;
 #if HAVE_EIGEN
       const EigenOperatorType* eigenOperator_ = nullptr;
 #endif

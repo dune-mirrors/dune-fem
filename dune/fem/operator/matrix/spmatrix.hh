@@ -279,7 +279,6 @@ namespace Dune
         }
       }
 
-    protected:
       size_type startRow( const size_type row ) const
       {
         return rows_[ row ];
@@ -290,6 +289,7 @@ namespace Dune
         return rows_[ row+1 ];
       }
 
+    protected:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
       {

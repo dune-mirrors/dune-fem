@@ -142,19 +142,22 @@ namespace Dune
       M_=mat.cols();
 
       // count the number of nonzeros per column
-      colstart_=new int[M_+1];
+      colstart_= new int[M_+1];
       for(size_type i=0;i!=(M_+1);++i)
         colstart_[i]=0;
-      Nnz_=0;
-      size_type count(0);
-      for(size_type i=0;i!=N_;++i)
+
+      Nnz_ = 0;
+      for(size_type row=0; row < N_; ++row)
       {
-        Nnz_+=mat.numNonZeros(i);
-        for(;count<(mat.numNonZeros()*(i+1));++count)
+        const size_type endRow = mat.endRow( row );
+        for( size_type col = mat.startRow( row ); col < endRow; ++col )
         {
-          const auto pairIdx(mat.realValue(count));
-          if(pairIdx.second!=Matrix::defaultCol)
+          const auto pairIdx(mat.realValue( col ));
+          if( pairIdx.second!=Matrix::defaultCol )
+          {
             ++(colstart_[pairIdx.second+1]);
+            ++Nnz_;
+          }
         }
       }
 
@@ -169,16 +172,16 @@ namespace Dune
       // fill the values and the index arrays
       values_=new B[Nnz_];
       rowindex_=new int[Nnz_];
-      count=0;
-      for(size_type i=0;i!=N_;++i)
+      for(size_type row = 0; row < N_ ; ++ row)
       {
-        for(size_type localCount=0;localCount<mat.numNonZeros();++localCount,++count)
+        const size_type endRow = mat.endRow( row );
+        for( size_type col = mat.startRow( row ); col < endRow; ++col )
         {
-          const auto pairIdx(mat.realValue(count));
+          const auto pairIdx(mat.realValue( col ));
           if(pairIdx.second!=Matrix::defaultCol)
           {
-            values_[tempPos[pairIdx.second]]=pairIdx.first;
-            rowindex_[tempPos[pairIdx.second]]=i;
+            values_[tempPos[pairIdx.second]] = pairIdx.first;
+            rowindex_[tempPos[pairIdx.second]] = row ;
             ++(tempPos[pairIdx.second]);
           }
         }

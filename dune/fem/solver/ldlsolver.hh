@@ -15,6 +15,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
+#include <dune/fem/solver/parameter.hh>
 
 #if HAVE_SUITESPARSE_LDL
 
@@ -80,8 +81,12 @@ class LDLOp:public Operator<DF, DF>
     verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
   {}
 
-  LDLOp(const ParameterReader &parameter = Parameter::container() ) :
-    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
+  explicit LDLOp( const ParameterReader &parameter ) :
+    LDLOp( SolverParameter( parameter ) )
+  {}
+
+  LDLOp(const SolverParameter &parameter = SolverParameter(Parameter::container()) ) :
+    verbose_( parameter.verbose() )
   {}
 
   /** \brief Constructor.

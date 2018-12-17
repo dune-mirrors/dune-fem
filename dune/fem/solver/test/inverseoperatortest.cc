@@ -212,7 +212,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
 
-  /*
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
   {
@@ -236,7 +235,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
-*/
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
@@ -350,19 +348,21 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif //HAVE_EIGEN
+*/
 
+  /*
 #if HAVE_VIENNACL
-  // EigenCGInverseOperator + EigenLinearOperator
+  // ViennaCLInverseOperator + SparseRowLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
     using InverseOperator   = Dune::Fem::ViennaCLInverseOperator< DiscreteFunction >;
 
-    std::string designation(" === EigenCGInverseOperator + EigenLinearOperator === ");
+    std::string designation(" === ViennaCLInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif
-*/
+  */
 
 #if HAVE_AMGXSOLVER
   // AMGX solver wrapper + PetscLinearOperator
