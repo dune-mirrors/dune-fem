@@ -473,7 +473,7 @@ namespace Dune
         }
 
         // set monitor in verbose mode
-        if( verbose_ )
+        if( parameter.verbose() )
         {
           ::Dune::Petsc::KSPView( ksp() );
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
@@ -515,7 +515,6 @@ namespace Dune
 
       std::unique_ptr< KSP, KSPDeleter > ksp_;   // PETSc Krylov Space solver context
 
-      bool verbose_ ;
       std::string solverName_;
     };
 
