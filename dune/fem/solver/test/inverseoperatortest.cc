@@ -80,16 +80,16 @@ using RealType  = typename Dune::FieldTraits< FieldType >::real_type;
 using SpaceType         = Dune::Fem::FunctionSpace< FieldType, FieldType, dim, 1 >;
 using DiscreteSpaceType = Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder >;
 
-struct NewSolverParameter : public Dune::Fem::LocalParameter< Dune::Fem::SolverParameter, NewSolverParameter >
+struct NewSolverParameter
+  : public Dune::Fem::LocalParameter< Dune::Fem::SolverParameter, NewSolverParameter >
 {
-  double eps_;
-  int maxIter_;
-  bool verbose_;
-
-  NewSolverParameter(const double eps, int maxIter, const bool verbose) : eps_( eps ), maxIter_( maxIter ), verbose_( verbose ) {}
-  virtual bool verbose () const { return verbose_; }
-  virtual double linAbsTol () const { return eps_; }
-  virtual double linReduction() const { return eps_; }
+  NewSolverParameter(const double eps, int maxIter, const bool verbose)
+  {
+    // user set method to store parameter in base class parameter_
+    this->setLinReduction( eps );
+    this->setLinAbsTol( eps );
+    this->setVerbose( verbose );
+  }
   virtual int krylovMethod () const { return 0; }
 };
 
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
   const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
   grid.globalRefine( 2*step );
 
-  bool verboseSolver = false;
+  bool verboseSolver = Dune::Fem::SolverParameter().verbose();
   bool pass = true;
 
   // CGInverseOperator + SparseRowLinearOperator

@@ -600,10 +600,10 @@ namespace Dune
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
         {
-          std::cerr << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
+          std::cout << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
           // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
-            std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
+            std::cout << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
 
         averageCommTime_ += exchangeTime;
@@ -670,10 +670,10 @@ namespace Dune
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
         {
-          std::cerr << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
+          std::cout << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
           // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
-            std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
+            std::cout << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
 
         averageCommTime_ += exchangeTime;

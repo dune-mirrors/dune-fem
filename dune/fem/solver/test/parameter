@@ -1,4 +1,5 @@
-fem.verboserank: -1
+# solver parameter file
+# fem.verboserank: 0
 
 fem.ode.order: 3
 fem.ode.verbose: none # noconv # ode output: none, cfl, full
@@ -16,6 +17,7 @@ fem.timeprovider.updatestep: 1
 # parameter for the implicit solvers
 fem.solver.krylovmethod: gmres
 fem.solver.verbose: false
+fem.solver.linreduction: 1e-11
 fem.solver.gmres.restart: 15
 fem.solver.newton.verbose: false
 fem.solver.newton.maxiteration: 50
@@ -30,4 +32,4 @@ fem.solver.row.linabstol: 1e-11
 fem.solver.row.linear.verbose: true
 
 fem.solver.amgx.mode: dDDI
-fem.solver.amgx.config: ./amgxconfig1.json
+fem.solver.amgx.config: ./amgxconfig.json

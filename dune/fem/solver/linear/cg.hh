@@ -109,7 +109,7 @@ namespace LinearSolver
 
       if( os )
       {
-        (*os) << "Fem::CG it: " << iterations << " : " << residuum << std::endl;
+        (*os) << "Fem::CG it: " << iterations << " : sqr(residuum) " << residuum << std::endl;
       }
     }
 
