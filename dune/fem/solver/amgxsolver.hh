@@ -33,12 +33,21 @@ namespace Dune
     {
       typedef LocalParameter< SolverParameter, AMGXSolverParameter > BaseType;
 
-      AMGXSolverParameter( const std::string keyPrefix = "fem.solver." )
-        : BaseType( keyPrefix )
+      AMGXSolverParameter( const ParameterReader &parameter = Parameter::container() )
+        : BaseType( parameter )
       {}
 
-      AMGXSolverParameter( const SolverParameter* other )
-        : BaseType( other )
+      AMGXSolverParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( keyPrefix, parameter )
+      {}
+
+      AMGXSolverParameter( const SolverParameter& other )
+        : BaseType( other.keyPrefix(), other.parameter() )
+      {}
+
+
+      AMGXSolverParameter( const std::string keyPrefix = "fem.solver." )
+        : BaseType( keyPrefix )
       {}
 
       virtual std::string solvermode () const
@@ -114,7 +123,7 @@ namespace Dune
         }
         else
         {
-          AMGXSolverParameter newParam( &parameter() );
+          AMGXSolverParameter newParam( parameter().parameter() );
           init( newParam );
         }
       }
