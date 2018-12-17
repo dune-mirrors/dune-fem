@@ -151,7 +151,7 @@ namespace Dune
        * \param[in]  value  value of the parameter to add
        * \param[in]  force  replace parameter, if it exists
        */
-      template<class NumberType, std::enable_if_t< std::is_floating_point_v< NumberType > || std::is_integral_v< NumberType >, int> = 0 >
+      template<class NumberType, std::enable_if_t< std::is_floating_point< NumberType >::value || std::is_integral< NumberType >::value, int> = 0 >
       void append ( const std::string &key, NumberType value, bool force = false )
       {
         assert( key != "paramfile" );
