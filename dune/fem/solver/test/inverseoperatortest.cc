@@ -177,7 +177,7 @@ int main(int argc, char** argv)
   const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
   grid.globalRefine( 2*step );
 
-  bool verboseSolver = true;
+  bool verboseSolver = false;
   bool pass = true;
 
   // CGInverseOperator + SparseRowLinearOperator

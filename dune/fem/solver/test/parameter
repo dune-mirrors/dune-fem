@@ -1,4 +1,4 @@
-fem.verboserank: 0
+fem.verboserank: -1
 
 fem.ode.order: 3
 fem.ode.verbose: none # noconv # ode output: none, cfl, full
@@ -15,7 +15,7 @@ fem.timeprovider.updatestep: 1
 
 # parameter for the implicit solvers
 fem.solver.krylovmethod: gmres
-fem.solver.verbose: true
+fem.solver.verbose: false
 fem.solver.gmres.restart: 15
 fem.solver.newton.verbose: false
 fem.solver.newton.maxiteration: 50
