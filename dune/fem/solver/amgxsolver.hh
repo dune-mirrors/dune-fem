@@ -8,11 +8,13 @@
 #include <dune/fem/io/parameter.hh>
 
 #if HAVE_AMGXSOLVER
+#include <dune/fem/solver/inverseoperatorinterface.hh>
+#include <dune/fem/solver/parameter.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
-#include <dune/fem/solver/parameter.hh>
 
+// AMGX solver wrapper based on Petsc data structures
 #include <AmgXSolver.hpp>
 
 namespace Dune
