@@ -310,6 +310,30 @@ namespace Dune
       }
 
       template< class LocalFunction, class LocalDofVector >
+      void interiorTrace ( int facet, const LocalFunction& lf, LocalDofVector& dofs ) const
+      {
+        if ( !hasInterior() )
+          return;
+
+        assert( dofs.size() >= localBasis().size( 0 ) + referenceElement().size( 1 ) * localBasis().size( 1 ) );
+        interior_.resize( localBasis().size( 0 ) );
+
+        auto embedding = referenceElement().template geometry< 1 >( facet );
+
+        for( const auto& qp : getQuadrature( facet, (order_ == -1) ? localBasis().order( 0 ) : order_ ) )
+        {
+          auto p = embedding.global( qp.position() );
+          auto invPiola = inverseTransformation( p );
+
+          localBasis().interior( p, interior_ );
+          auto value = invPiola.apply( lf( p ) );
+
+          for ( const auto& base : interior_ )
+            dofs[ base.first ] += qp.weight() * (value * base.second);
+        }
+      }
+
+      template< class LocalFunction, class LocalDofVector >
       void operator() ( const LocalFunction& lf, LocalDofVector& dofs ) const
       {
         for ( int facet : range( referenceElement().size( 1 ) ) )
