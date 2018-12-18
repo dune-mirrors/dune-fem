@@ -95,7 +95,7 @@ namespace Dune
 
       typedef typename BaseMapperType::ElementType ElementType;
 
-      ParallelDofMapper ( const GridPartType &gridPart, BaseMapperType &baseMapper )
+      ParallelDofMapper ( const GridPartType &gridPart, const BaseMapperType &baseMapper )
         : gridPart_( gridPart ), baseMapper_( baseMapper )
       {
         update();
@@ -212,7 +212,7 @@ namespace Dune
 #endif // #if HAVE_MPI
 
       const GridPartType &gridPart_;
-      BaseMapperType &baseMapper_;
+      const BaseMapperType &baseMapper_;
       std::vector< GlobalKeyType > mapping_;
       SizeType offset_, size_;
     };
