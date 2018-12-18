@@ -13,9 +13,9 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
-#include <dune/fem/solver/parameter.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #if HAVE_SUITESPARSE_LDL
 
@@ -41,24 +41,53 @@ namespace Fem
  *  (see DiscreteFunctionInterface) can be found.
  */
 
-/** \class LDLOp
+
+template< class DiscreteFunction >
+class LDLInverseOperator;
+
+template< class DiscreteFunction >
+struct LDLInverseOperatorTraits
+{
+  typedef DiscreteFunction    DiscreteFunctionType;
+  typedef AdaptiveDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType;
+
+  typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+  typedef OperatorType  PreconditionerType;
+
+  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+
+  typedef LDLInverseOperator< DiscreteFunction >  InverseOperatorType;
+};
+
+
+
+/** \class LDLInverseOperator
  *  \ingroup DirectSolver
  *  \brief The %LDL direct sparse solver
  *   Details on %LDL can be found on
  *   http://www.cise.ufl.edu/research/sparse/ldl/
  *  \note This will only work if dune-fem has been configured to use LDL
  */
-template<class DF, class Op, bool symmetric=false>
-class LDLOp:public Operator<DF, DF>
+template< class DF >
+class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTraits< DF > >
 {
-  public:
-  typedef DF DiscreteFunctionType;
-  typedef Op OperatorType;
+  typedef LDLInverseOperatorTraits< DF > Traits;
+  typedef InverseOperatorInterface< Traits > BaseType;
+
+  friend class InverseOperatorInterface< Traits >;
+public:
+
+  typedef typename BaseType :: SolverDiscreteFunctionType
+    SolverDiscreteFunctionType;
+
+  typedef typename BaseType :: OperatorType           OperatorType;
+  typedef typename BaseType :: AssembledOperatorType  AssembledOperatorType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename OperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
-  typedef typename DiscreteFunctionType::DofType DofType;
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
+
+  typedef typename SolverDiscreteFunctionType::DofType DofType;
+  typedef typename SolverDiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   /** \brief Constructor.
    *  \param[in] redEps relative tolerance for residual (not used here)
@@ -66,7 +95,7 @@ class LDLOp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
-  LDLOp(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+  LDLInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
         const ParameterReader &parameter = Parameter::container() ) :
     verbose_(verbose), ccsmat_()
   {}
@@ -76,16 +105,16 @@ class LDLOp:public Operator<DF, DF>
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
-  LDLOp(const double& redEps, const double& absLimit, const int& maxIter,
+  LDLInverseOperator(const double& redEps, const double& absLimit, const int& maxIter,
         const ParameterReader &parameter = Parameter::container() ) :
     verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
   {}
 
-  explicit LDLOp( const ParameterReader &parameter ) :
-    LDLOp( SolverParameter( parameter ) )
+  explicit LDLInverseOperator( const ParameterReader &parameter ) :
+    LDLInverseOperator( SolverParameter( parameter ) )
   {}
 
-  LDLOp(const SolverParameter &parameter = SolverParameter(Parameter::container()) ) :
+  LDLInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) ) :
     verbose_( parameter.verbose() )
   {}
 
@@ -96,7 +125,7 @@ class LDLOp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
-  LDLOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+  LDLInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
         const ParameterReader &parameter = Parameter::container() ) :
     verbose_(verbose), ccsmat_(), isloaded_(false)
   {
@@ -109,46 +138,48 @@ class LDLOp:public Operator<DF, DF>
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
-  LDLOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
+  LDLInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
         const ParameterReader &parameter = Parameter::container() ) :
     verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
   {
     bind(op);
   }
 
-  LDLOp(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
+  LDLInverseOperator(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
     verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
   {
     bind(op);
   }
 
   // \brief Destructor.
-  ~LDLOp()
+  ~LDLInverseOperator()
   {
-    finalize();
+    unbind();
   }
 
-  void bind (const OperatorType& op) { op_ = &op; }
-  void unbind () { op_ = nullptr; finalize(); }
-
-  /** \brief Solve the system
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   */
-  void operator()(const DiscreteFunctionType& arg, DiscreteFunctionType& dest) const
+  void bind( const OperatorType& op )
   {
-    prepare();
-    apply(arg,dest);
+    // clear old storage
     finalize();
+    BaseType::bind( op );
+  }
+
+  void unbind ()
+  {
+    finalize();
+    BaseType::unbind();
   }
 
   // \brief Decompose matrix.
   template<typename... A>
   void prepare(A... ) const
   {
-    if(op_ && !isloaded_)
+    if( ! assembledOperator_ )
+      DUNE_THROW(NotImplemented,"LDLInverseOperator only works for assembled systems!");
+
+    if(!isloaded_)
     {
-      ccsmat_ = op_->systemMatrix().matrix();
+      ccsmat_ = assembledOperator_->systemMatrix().matrix();
       decompose();
       isloaded_ = true;
     }
@@ -177,53 +208,6 @@ class LDLOp:public Operator<DF, DF>
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const DofType* arg, DofType* dest) const
-  {
-    const std::size_t dimMat(ccsmat_.N());
-    ldl_perm(dimMat, Y_, const_cast<DofType*>(arg), P_);
-    ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
-    ldl_dsolve(dimMat, Y_, D_);
-    ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
-    ldl_permt(dimMat, dest, Y_, P_);
-  }
-
-  /** \brief Solve the system.
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
-   *   and you have free the decompistion when is not needed anymore (using the method finalize).
-   */
-  void apply(const AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& arg,
-             AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
-  {
-    apply(arg.leakPointer(),dest.leakPointer());
-  }
-
-  /** \brief Solve the system.
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
-   *   and you have free the decompistion when is not needed anymore (using the method finalize).
-   */
-  void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
-             ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
-  {
-    // copy DOF's arg into a consecutive vector
-    std::vector<DofType> vecArg(arg.size());
-    std::copy(arg.dbegin(),arg.dend(),vecArg.begin());
-    std::vector<DofType> vecDest(dest.size());
-    // apply operator
-    apply(vecArg.data(),vecDest.data());
-    // copy back solution into dest
-    std::copy(vecDest.begin(),vecDest.end(),dest.dbegin());
-  }
-
-  /** \brief Solve the system.
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
-   *   and you have free the decompistion when is not needed anymore (using the method finalize).
-   */
   template<typename... DFs>
   void apply(const TupleDiscreteFunction<DFs...>& arg,TupleDiscreteFunction<DFs...>& dest) const
   {
@@ -240,6 +224,7 @@ class LDLOp:public Operator<DF, DF>
     Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},[&](auto i){for(auto& dof:dofs(std::get<i>(dest))) dof=(*(vecDestIt++));});
   }
 
+protected:
   void printTexInfo(std::ostream& out) const
   {
     out<<"Solver: LDL direct solver"<<std::endl;
@@ -250,17 +235,6 @@ class LDLOp:public Operator<DF, DF>
   {
     amd_info(info_);
   }
-
-  double averageCommTime() const
-  {
-    return 0.0;
-  }
-
-  int iterations() const
-  {
-    return 0;
-  }
-  void setMaxIterations ( int ) {}
 
   /** \brief Get factorization diagonal matrix D.
    *  \warning It is up to the user to preserve consistency.
@@ -302,8 +276,46 @@ class LDLOp:public Operator<DF, DF>
     return ccsmat_;
   }
 
-  private:
-  const OperatorType* op_;
+protected:
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  void apply(const DofType* arg, DofType* dest) const
+  {
+    prepare();
+
+    // apply part of the call
+    const std::size_t dimMat(ccsmat_.N());
+    ldl_perm(dimMat, Y_, const_cast<DofType*>(arg), P_);
+    ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
+    ldl_dsolve(dimMat, Y_, D_);
+    ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
+    ldl_permt(dimMat, dest, Y_, P_);
+
+    finalize();
+  }
+
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  int apply(const SolverDiscreteFunctionType& arg,
+             SolverDiscreteFunctionType& dest) const
+  {
+    apply(arg.leakPointer(),dest.leakPointer());
+    return 0;
+  }
+
+
+protected:
+  using BaseType :: assembledOperator_;
+
+
   const bool verbose_;
   mutable CCSMatrixType ccsmat_;
   mutable bool isloaded_ = false;
@@ -361,8 +373,12 @@ class LDLOp:public Operator<DF, DF>
   }
 };
 
-}
-}
+// deprecated old type
+template<class DF, class Op, bool symmetric=false>
+using LDLOp = LDLInverseOperator< DF >;
+
+} // end namespace Fem
+} // end namespace Dune
 
 #endif // #if HAVE_SUITESPARSE_LDL
 
