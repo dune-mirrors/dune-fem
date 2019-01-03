@@ -15,6 +15,10 @@
 #include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
+#if HAVE_OPM_GRID
+#include <opm/grid/CpGrid.hpp>
+#endif
+
 namespace Dune
 {
 
@@ -392,6 +396,20 @@ namespace Dune
         return entity;
       }
     };
+
+#if HAVE_OPM_GRID
+    template< int codim >
+    struct GridEntityAccess< Dune::cpgrid::Entity< codim > >
+    {
+      typedef Dune::cpgrid::Entity< codim > EntityType;
+      typedef Dune::cpgrid::Entity< codim > GridEntityType;
+
+      static const GridEntityType& gridEntity ( const EntityType &entity )
+      {
+        return entity;
+      }
+    };
+#endif
 
     template< class Entity >
     const typename GridEntityAccess< Entity >::GridEntityType &
