@@ -8,6 +8,9 @@
 
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/finitevolume.hh>
+#include <dune/fem/space/mapper/parallel.hh>
 
 namespace Dune
 {
@@ -24,26 +27,53 @@ namespace Dune
       typedef GridPart GridPartType;
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+      typedef FunctionSpace< double, int, GridPartType::dimensionworld, 1 >  FunctionSpaceType;
+      typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 > SpaceType;
+
+      typedef ParallelDofMapper< GridPartType, typename SpaceType::BlockMapperType > ParallelMapperType;
+      typedef typename ParallelMapperType :: GlobalKeyType  GlobalKeyType;
+
       explicit DefaultUniqueFacetOrientation ( const GridPartType &gridPart )
-        : gridPart_( gridPart )
-      {}
+        : gridPart_( gridPart ),
+          space_( const_cast< GridPartType& > (gridPart_) ),
+          parallelMapper_( gridPart_, space_.blockMapper() ),
+          sequence_( -1 )
+      {
+      }
 
       unsigned int operator() ( const EntityType &entity ) const
       {
+        if( sequence_ != space_.sequence() )
+          parallelMapper_.update();
+
         unsigned int orientations = 0;
         const auto &indexSet = gridPart().indexSet();
         for( auto intersection : intersections( gridPart(), entity ) )
         {
-          if( intersection.neighbor() && (indexSet.index( entity ) < indexSet.index( intersection.outside() )) )
+          //if( intersection.neighbor() && (indexSet.index( entity ) < indexSet.index( intersection.outside() )) )
+          //  orientations |= (1 << intersection.indexInInside());
+
+          if( intersection.neighbor() && (globallyUniqueIndex( entity ) < globallyUniqueIndex( intersection.outside() )) )
             orientations |= (1 << intersection.indexInInside());
         }
         return orientations;
       }
 
+      template <class Entity>
+      GlobalKeyType globallyUniqueIndex( const Entity& entity ) const
+      {
+        GlobalKeyType index = -1;
+        parallelMapper_.mapEach( entity, [ &index ] ( auto local, auto global ) { assert( local == 0 ); index = global; } );
+        return index;
+      }
+
       const GridPartType &gridPart () const { return gridPart_; }
 
-    private:
-      const GridPartType &gridPart_;
+    protected:
+      const GridPartType& gridPart_;
+      SpaceType           space_;
+      mutable ParallelMapperType  parallelMapper_;
+      mutable int sequence_;
     };
 
 
@@ -83,25 +113,11 @@ namespace Dune
     // UniqueFacetOrientation
     // ----------------------
 
-    namespace Impl
-    {
-
-      template< class GridPart, class = void >
-      struct UniqueFacetOrientationType
-      {
-        typedef DefaultUniqueFacetOrientation< GridPart > Type;
-      };
-
-      template< class GridPart >
-      struct UniqueFacetOrientationType< GridPart, std::enable_if_t< GridPartCapabilities::isCartesian< GridPart >::v > >
-      {
-        typedef CartesianUniqueFacetOrientation< GridPart > Type;
-      };
-
-    } // namespace Impl
-
     template< class GridPart >
-    using UniqueFacetOrientation = typename Impl::UniqueFacetOrientationType< GridPart >::Type;
+    using UniqueFacetOrientation =
+      typename std::conditional< GridPartCapabilities::isCartesian< GridPart >::v,
+                                 CartesianUniqueFacetOrientation< GridPart>,
+                                 DefaultUniqueFacetOrientation< GridPart > >::type;
 
   } // namespace Fem
 
