@@ -82,6 +82,32 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
         maxLevel = -1
     return indicator.space.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
+def doerflerMark(indicator, tolerance, maxLevel=None):
+    try:
+        if not indicator.space.grid.canAdapt:
+            raise AttributeError("indicator function must be over grid view that supports adaptation")
+    except:
+        raise AttributeError("indicator function must be over grid view that supports adaptation")
+    if maxLevel==None:
+        maxLevel = -1
+    return indicator.space.grid.doerflerMark(indicator,tolerance,maxLevel)
+
+def globalRefine(level, first, *args):
+    hgrid,args = _adaptArguments(first,*args)
+
+    # make sure all args are over the same grid
+    assert all([a.grid.hierarchicalGrid==hgrid for a in args]),\
+            "all discrete functions must be over the same hierarchical grid"
+    # make sure all gridview can be adapted
+    try:
+        adapt = all([a.grid.canAdapt==True for a in args])
+    except AttributeError:
+        adapt = False
+    assert adapt,\
+            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view"
+
+    module(hgrid).gridAdaptation(hgrid).globalRefine(level, args)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.ELLIPSIS)
