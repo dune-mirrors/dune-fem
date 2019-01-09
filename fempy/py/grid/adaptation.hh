@@ -75,14 +75,20 @@ namespace Dune
 
       typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
 
+      cls.def( "globalRefine", [] ( GridAdaptation< Grid > &self, int level, const std::list< RestrictProlong > &rpList ) {
+          for (int i=0;i<level;++i)
+          {
+            self.markAll();
+            self.adapt( rpList.begin(), rpList.end() );
+          }
+        } );
+
       cls.def( "adapt", [] ( GridAdaptation< Grid > &self ) {
           std::array< RestrictProlong, 0 > rpList;
           self.adapt( rpList.begin(), rpList.end() );
         } );
 
       cls.def( "adapt", [] ( GridAdaptation< Grid > &self, const std::list< RestrictProlong > &rpList ) {
-          // if( self.grid().comm().rank() == 0 )
-          //   std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
           self.adapt( rpList.begin(), rpList.end() );
         } );
 

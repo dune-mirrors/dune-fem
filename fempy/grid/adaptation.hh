@@ -145,6 +145,12 @@ namespace Dune
         restrictProlong_.clear();
       }
 
+      void markAll ( )
+      {
+        for ( const auto &e : elements(grid().leafGridView()) )
+          grid().mark(1,e);
+      }
+
       void globalRefine ( int level )
       {
         Fem::GlobalRefine::apply( grid(), level );
