@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import dune.common
 from ._fem import *
-from ._adaptation import adapt, loadBalance, mark
+from ._adaptation import adapt, loadBalance, mark, globalRefine
 from ._spaceadaptation import spaceAdapt
 
 from . import view as view
@@ -22,6 +22,7 @@ registry["view"] = {
      }
 registry["space"] = {
          "lagrange"      : space.lagrange,
+         "lagrangehp"    : space.lagrangehp,
          "dgonb"         : space.dgonb,
          "dgonbhp"       : space.dgonbhp,
          "dglegendre"    : space.dglegendre,

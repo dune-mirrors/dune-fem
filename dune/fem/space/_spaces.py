@@ -290,6 +290,56 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
     # addStorage(spc, storage)
     return spc.as_ufl()
 
+def lagrangehp(view, maxOrder=1, dimrange=1, field="double", storage=None,
+               interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
+               **unused):
+    """create a Lagrange space
+
+    Args:
+        view: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module, addStorage, codegen
+    if dimrange < 1:
+        raise KeyError(\
+            "Parameter error in LagrangeSpace with "+
+            "dimrange=" + str(dimrange) + ": " +\
+            "dimrange has to be greater or equal to 1")
+    if maxOrder < 1:
+        raise KeyError(\
+            "Parameter error in LagrangeHP with "+
+            "maxOrder=" + str(maxOrder) + ": " +\
+            "maximum order has to be greater or equal to 1")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = view._includes + [ "dune/fem/space/padaptivespace/lagrange.hh" ]
+    dimw = view.dimWorld
+    typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(maxOrder) + " >"
+
+    spc = module(field, includes, typeName, storage=storage).Space(view)
+    if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
+        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
+        typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(maxOrder) + ", " +\
+          "Dune::Fem::CodegenStorage" +\
+          " >"
+        spc = module(field, includes, typeName,
+                    interiorQuadratureOrders=interiorQuadratureOrders,
+                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage).Space(view)
+    # addStorage(spc, storage)
+    return spc.as_ufl()
+
 def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
     """create a finite volume space
 
@@ -501,11 +551,11 @@ def bdm(view, order=1, field="double", storage=None, **unused):
 
 def raviartThomas(view, order=1, field="double", storage=None, **unused):
     from dune.fem.space import module, addStorage
-    if order < 1:
+    if order > 2:
         raise KeyError(\
             "Parameter error in RTSpace with "+
             "order=" + str(order) + ": " +\
-            "order has to be equal to 1 or 2")
+            "order has to be equal to 0,1 or 2")
     if field == "complex":
         field = "std::complex<double>"
 
