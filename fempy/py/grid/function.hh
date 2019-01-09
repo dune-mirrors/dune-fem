@@ -157,7 +157,7 @@ namespace Dune
         cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c ) {
             return makePyLocalGridFunction( self.gridPart(), self.name() + "_" + std::to_string(c), self.space().order(),
                 pybind11::cpp_function( [ self, c ] ( const Entity &e, const typename Entity::Geometry::LocalCoordinate &x ) {
-                    return Fem::ConstLocalFunction<GridFunction>(e,self).evaluate(x);
+                    return Fem::ConstLocalFunction<GridFunction>(e,self).evaluate(x)[c];
                   } ), std::integral_constant< int, 1 >() );
           }, pybind11::keep_alive< 0, 1 >() );
 
