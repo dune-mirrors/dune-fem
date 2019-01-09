@@ -47,6 +47,8 @@ class UFLFunctionSource(codegen.ModelClass):
         self.tempVars = tempVars
         self.virtualize = virtualize
 
+        self.codeString = self.toString()
+
     def includes(self):
         incs = set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.evalCode,)])
         ret = [Include(i) for i in incs]
@@ -104,21 +106,26 @@ class UFLFunctionSource(codegen.ModelClass):
                           'result=typename FunctionSpaceType::HessianRangeType(0);'], const=True))
                 pass
 
+    def _signature(self):
+        from dune.common.hashit import hashIt
+        return hashIt(self.codeString)
     def signature(self):
+        return self._signature()
         return uflSignature(None, *self.coefficientCppTypes, *self._constantNames, self.expr)
 
     def name(self):
         from dune.common.hashit import hashIt
         if self.virtualize:
-            return 'localfunction_' + self.signature() + '_' + hashIt(self.gridType)
+            return 'localfunction_' + self._signature() + '_' + hashIt(self.gridType)
         else:
-            return 'localfunction_nv' + self.signature() + '_' + hashIt(self.gridType)
+            return 'localfunction_nv' + self._signature() + '_' + hashIt(self.gridType)
 
     def compileUFL(self):
         pass
 
     # actual code generation (the generator converts this object to a string)
     def __str__(self):
+        coefficients = self.coefficientCppTypes
         self.compileUFL()
         code = [Include('config.h')]
         code += [Include(i) for i in self.gridIncludes]
@@ -139,20 +146,20 @@ class UFLFunctionSource(codegen.ModelClass):
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/ufllocalfunction.hh"))
 
+        # main part
         nameSpace = NameSpace('UFLLocalFunctions_' + self.signature())
-        # add localfunction class
-        nameSpace.append(self.code())
+        nameSpace.append(self.codeString)
+        localFunctionName = 'UFLLocalFunction< ' + ', '.join(['GridPart'] + self.coefficientCppTypes) + ' >'
+        nameSpace.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
+        nameSpace.append(TypeAlias('UFLLocalFunctionType', localFunctionName))
         code.append(nameSpace)
-
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        coefficients = self.coefficientCppTypes
-        localFunctionName = nameSpace.name + '::UFLLocalFunction< ' + ', '.join(['GridPart'] + coefficients) + ' >'
-        code.append(TypeAlias('UFLLocalFunction', localFunctionName))
-
-        writer = SourceWriter()
-        writer.emit(code);
+        localFunctionName = nameSpace.name+'::UFLLocalFunctionType'
+        code.append([TypeAlias('UFLLocalFunction', localFunctionName)])
 
         name = self.name()
+        writer = SourceWriter()
+        writer.emit(code)
         writer.openPythonModule(name)
         writer.emit('auto cls = Dune::Python::insertClass<UFLLocalFunction>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         writer.emit('Dune::FemPy::registerUFLLocalFunction( module, cls );')
@@ -175,7 +182,12 @@ class UFLFunctionSource(codegen.ModelClass):
         writer.emit('cls.def_property_readonly( "virtualized", [] ( UFLLocalFunction& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
         writer.closePythonModule(name)
-
+        source = writer.writer.getvalue()
+        writer.close()
+        return source
+    def toString(self):
+        writer = SourceWriter()
+        writer.emit(self.code());
         source = writer.writer.getvalue()
         writer.close()
         return source

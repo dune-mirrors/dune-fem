@@ -23,7 +23,7 @@ def init(integrands, *args, **kwargs):
         coefficients.update(args[0])
         args = []
     else:
-        args = list(a for a in args if not isinstance(a,DirichletBC))
+        args = list(a for a in args if not isinstance(a,DirichletBC) and not a is None)
         dirichletBCs = list(a for a in args if isinstance(a,DirichletBC))
         if len(args) > len(coefficientNames) + len(dirichletBCs):
             raise ValueError('Too many coefficients passed.')
@@ -219,7 +219,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
             renumbering = dict()
             renumbering.update((c, i) for i, c in enumerate(sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())))
             renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
-        coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
+        coefficientNames = integrands._coefficientNames # ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
     else:
         coefficientNames = form.coefficientNames
 

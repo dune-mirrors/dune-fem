@@ -358,12 +358,24 @@ class ModelClass():
         self.constantList = [c for c in coefficients if c.is_cellwise_constant()]
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
 
-        constants=(fieldVectorType(c,useScalar=True) for c in self.constantList)
+        constants=[fieldVectorType(c,useScalar=True) for c in self.constantList]
         coefficients=(fieldVectorType(c) for c in self.coefficientList)
-        constantNames=(getattr(c, 'name', None) for c in self.constantList)
-        constantShapes=(getattr(c, 'ufl_shape', None) for c in self.constantList)
-        coefficientNames=(getattr(c, 'name', None) for c in self.coefficientList)
-        parameterNames=(getattr(c, 'parameter', None) for c in self.constantList)
+        constantNames=[getattr(c, 'name', None) for c in self.constantList]
+        constantShapes=[getattr(c, 'ufl_shape', None) for c in self.constantList]
+        coefficientNames=[getattr(c, 'name', None) for c in self.coefficientList]
+        parameterNames=[getattr(c, 'parameter', None) for c in self.constantList]
+
+        if not len(set(constantNames)) == len(constantNames):
+            raise AttributeError("two constants have the same name which will lead to failure during code generation:"+','.join(c for c in constantNames))
+
+        # this part modifies duplicate names in coefficient - slow version
+        # can be improved
+        coefficientNames_ = coefficientNames
+        coefficientNames = []
+        for c in coefficientNames_:
+            while c in coefficientNames:
+                c = c+"A"
+            coefficientNames.append(c)
 
         self._constants = [] if constants is None else list(constants)
         self._coefficients = [] if coefficients is None else list(coefficients)
@@ -729,9 +741,9 @@ def uflSignature(form,*args):
         if isinstance(arg,ufl.core.expr.Expr):
             try:
                 hashList += [str(renumber_indices(arg))]
-            except ValueError:  # I don't think this should happen
+            except ValueError:  # I don't think this should happen but it does :-<
                 hashList += [str(arg)]
 
     if form is not None:
         hashList.append(form.signature())
-    return hashIt( hashList )
+    return hashIt( sorted(hashList) )
