@@ -4,6 +4,7 @@ from numpy import amin, amax, linspace, linalg
 from matplotlib.collections import PolyCollection
 
 from dune.plotting import block, disable
+globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
         xlim=None, ylim=None, clim=None, cmap=None, colorbar=True, triplot=False):
@@ -81,7 +82,8 @@ from dune.ufl import expression2GF
 def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
         xlim=None, ylim=None, clim=None, cmap=None,
-        colorbar=True, grid=None, triplot=False):
+        colorbar=True, grid=None, triplot=False,
+        block=globalBlock):
     if disable: return
     try:
         grid = solution.grid
@@ -115,7 +117,8 @@ def plotPointData(solution, figure=None,
     # return figure
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
-        xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
+        xlim=None, ylim=None, clim=None, cmap=None,
+        block=globalBlock, **kwargs):
     if disable: return
     try:
         grid = solution.grid
@@ -151,14 +154,14 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
         pyplot.subplot(subfig+offset+p)
         _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,False)
 
-    pyplot.show(block=block)
+    pyplot.show(block=globalBlock)
     # return fig
 
-def mayaviPointData(grid, solution, level=0, component=0):
+def mayaviPointData(grid, solution, level=0, component=0, block=globalBlock):
     if disable: return
     from mayavi import mlab
     triangulation = grid.triangulation(level)
     z = uh.pointData(level)[:,component]
     s = mlab.triangular_mesh(triangulation.x, triangulation.y, z,
                                 triangulation.triangles)
-    mlab.show(block=block)
+    mlab.show(block=globalBlock)
