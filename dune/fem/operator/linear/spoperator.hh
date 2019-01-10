@@ -15,16 +15,18 @@ namespace Dune
   {
 
     //! SparseRowLinearOperator
-    template< class DomainFunction, class RangeFunction >
+    template< class DomainFunction, class RangeFunction,
+              class Matrix = SparseRowMatrix< typename DomainFunction::DiscreteFunctionSpaceType::RangeFieldType > >
     struct SparseRowLinearOperator
     : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType,
-                                    typename RangeFunction::DiscreteFunctionSpaceType >,
+                                    typename RangeFunction::DiscreteFunctionSpaceType,
+                                    Matrix >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
-      typedef SparseRowLinearOperator< DomainFunction, RangeFunction > ThisType;
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
+      typedef SparseRowLinearOperator< DomainFunction, RangeFunction, Matrix > ThisType;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Matrix > BaseType;
 
       static constexpr bool assembled = true;
 
