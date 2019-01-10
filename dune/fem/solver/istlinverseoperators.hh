@@ -5,6 +5,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/solver/inverseoperatorinterface.hh>
@@ -135,45 +136,46 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
+        const int verbosity = (MPIManager::rank() == 0 && parameter_->verbose()) ? 2 : 0;
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxLinearIterations() );
         if( method_ == SolverParameter::cg )
         {
           typedef Dune::CGSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::bicgstab )
         {
           typedef Dune::BiCGSTABSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::gmres )
         {
           typedef Dune::RestartedGMResSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::minres )
         {
           typedef Dune::MINRESSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
         }
         else if( method_ == SolverParameter::gradient )
         {
           typedef Dune::GradientSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::loop )
         {
           typedef Dune::LoopSolver< X > SolverType;
-          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, parameter_->verbose() );
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
@@ -199,9 +201,10 @@ namespace Dune
                          Dune::InverseOperatorResult &result ) const
       {
 #if HAVE_SUPERLU
+        const int verbosity = (MPIManager::rank() == 0 && parameter_->verbose()) ? 2 : 0;
         typedef typename ImprovedMatrix :: BaseType Matrix;
         const ImprovedMatrix& matrix = op.getmat();
-        SuperLU< Matrix > solver( matrix, parameter_->verbose() );
+        SuperLU< Matrix > solver( matrix, verbosity );
         solver.apply( x, rhs, result );
 #else
         DUNE_THROW(NotImplemented,"ISTLSolverAdapter::callSuperLU: SuperLU solver selected but SuperLU not available!");
