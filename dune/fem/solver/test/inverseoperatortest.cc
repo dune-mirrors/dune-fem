@@ -31,6 +31,7 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
+#include <dune/fem/solver/amgistl.hh>
 #endif // HAVE_DUNE_ISTL
 
 #if HAVE_PETSC
@@ -65,8 +66,8 @@
 // local includes
 #include "../../test/massoperator.hh"
 
-#include "../amgistl.hh"
-
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 static constexpr int dim = 2;
 static constexpr int polOrder = 2;
@@ -165,6 +166,32 @@ struct Algorithm
   }
 };
 
+std::shared_ptr< GridType > createGrid( const double length, const int cells )
+{
+  std::stringstream file;
+  file << "DGF" << std::endl;
+  file << "Interval" << std::endl;
+  for( int i=0; i<dim; ++i )
+    file << "0 ";
+  file << std::endl;
+  for( int i=0; i<dim; ++i )
+    file << length << " ";
+  file << std::endl;
+  for( int i=0; i<dim; ++i )
+    file << cells << " ";
+  file << std::endl;
+
+  file << "#" << std::endl;
+  file << "GridParameters" << std::endl;
+  file << "overlap 0" << std::endl;
+  file << "#" << std::endl;
+
+  std::cout << file.str() << std::endl;
+
+  std::shared_ptr< GridType > ptr;
+  ptr.reset( Dune::GridPtr< GridType > (file).release() );
+  return ptr;
+}
 
 int main(int argc, char** argv)
 {
@@ -173,9 +200,12 @@ int main(int argc, char** argv)
   Dune::Fem::Parameter::append( argc, argv );
   Dune::Fem::Parameter::append( (argc < 2) ? "parameter" : argv[ 1 ] );
 
-  GridType grid({1., 1.}, {4, 4});
+  //GridType grid({1., 1.}, {16, 16});
+  auto gridPtr = createGrid( 1., 16 );
+  GridType& grid = *gridPtr;
+
   const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
-  grid.globalRefine( 2*step );
+  grid.globalRefine( step );
 
   bool verboseSolver = Dune::Fem::SolverParameter().verbose();
   bool pass = true;
@@ -214,6 +244,7 @@ int main(int argc, char** argv)
 
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
+  if( Dune::Fem::MPIManager::size() == 1 )
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
@@ -226,6 +257,7 @@ int main(int argc, char** argv)
 
 #if HAVE_SUITESPARSE_SPQR
   // CGInverseOperator + SparseRowLinearOperator
+  if( Dune::Fem::MPIManager::size() == 1 )
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
@@ -300,6 +332,7 @@ int main(int argc, char** argv)
 
 #if HAVE_SUPERLU
   // ISTLInverseOperator< ISTLSuperLU > + ISTLLinearOperator
+  if( Dune::Fem::MPIManager::size() == 1 )
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction >;

@@ -14,6 +14,12 @@ fem.timeprovider.updatestep: 1
 # fixedTimeStep: 0.002 # when 0 then use dynamic time step
 #fixedTimeStepEocLoopFactor: 1. # fixed time step is scaled with the inverse of this in each eoc loop
 
+istl.solver.verbosity: full
+istl.solver.type: gmres
+istl.preconditioner.smoother: ilu
+istl.preconditioner.type: smoother
+istl.preconditioner.amg.debuglevel: 3
+
 # parameter for the implicit solvers
 fem.solver.krylovmethod: gmres
 fem.solver.verbose: false
