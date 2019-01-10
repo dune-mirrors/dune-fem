@@ -19,7 +19,13 @@ def compile(inputFileName, predefined=None, outputFileName=None, namespace=None,
 
 def version(package_name):
     import pip
-    for package in pip.get_installed_distributions():
+    try:
+        from pip._internal.utils.misc import get_installed_distributions
+        packages = get_installed_distributions()
+    except:
+        'using pip version < 10'
+        packages = pip.get_installed_distributions()
+    for package in packages:
         if package.project_name == package_name and package.has_version():
             return str(package.version)
     return "?.?"
