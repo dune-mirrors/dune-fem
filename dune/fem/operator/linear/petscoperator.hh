@@ -558,7 +558,12 @@ namespace Dune
 
       void setStatus(const Status &newstatus) const
       {
-        status_ = newstatus;
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+        {
+          status_ = newstatus;
+        }
       }
 
       template< class DFS, class Entity >
