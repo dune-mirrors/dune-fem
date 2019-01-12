@@ -48,8 +48,8 @@ namespace Dune
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
 
-      static constexpr size_type defaultCol = std::numeric_limits<size_type>::max();
-      static constexpr size_type firstCol = 0;
+      static const size_t defaultCol = std::numeric_limits<size_t>::max();
+      static const int firstCol = 0;
 
       SparseRowMatrix(const ThisType& ) = delete;
 
@@ -158,7 +158,7 @@ namespace Dune
       void clear()
       {
         std::fill( values_.begin(), values_.end(), 0 );
-        std::fill( columns_.begin(), columns_.end(), defaultCol );
+        for (c : columns_) c = defaultCol;
       }
 
       //! set all entries in row to zero
@@ -170,7 +170,8 @@ namespace Dune
         for(size_type col = startRow( row ); col<endrow; ++col )
         {
           values_ [col] = 0;
-          columns_[col] = defaultCol;
+          if ( !compressed_ )
+            columns_[col] = defaultCol;
         }
       }
 
@@ -326,6 +327,7 @@ namespace Dune
           }
         }
 
+        DUNE_THROW( InvalidStateException, "Could not store entry in sparse matrix - no space available" );
 
         // TODO: implement resize with 2*nz
         std::abort();
