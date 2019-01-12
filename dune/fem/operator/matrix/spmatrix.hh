@@ -158,7 +158,7 @@ namespace Dune
       void clear()
       {
         std::fill( values_.begin(), values_.end(), 0 );
-        for (c : columns_) c = defaultCol;
+        for (auto c : columns_) c = defaultCol;
       }
 
       //! set all entries in row to zero
