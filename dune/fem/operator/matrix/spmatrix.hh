@@ -158,7 +158,7 @@ namespace Dune
       void clear()
       {
         std::fill( values_.begin(), values_.end(), 0 );
-        for (auto c : columns_) c = defaultCol;
+        for (auto &c : columns_) c = defaultCol;
       }
 
       //! set all entries in row to zero
@@ -327,6 +327,7 @@ namespace Dune
           }
         }
 
+        assert(0);
         DUNE_THROW( InvalidStateException, "Could not store entry in sparse matrix - no space available" );
 
         // TODO: implement resize with 2*nz
