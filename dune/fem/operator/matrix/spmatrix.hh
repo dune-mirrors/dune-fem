@@ -69,8 +69,8 @@ namespace Dune
       //! reserve memory for given rows, columns and number of non zeros
       void reserve(const size_type rows, const size_type cols, const size_type nz)
       {
-        if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != maxNzPerRow_))
-          resize(rows,cols,nz);
+        // if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != maxNzPerRow_))
+        resize(rows,cols,nz);
         clear();
       }
 
@@ -274,8 +274,8 @@ namespace Dune
           }
           rows_[ dim_[0] ] = newpos ;
 
-          values_.resize( newpos );
-          columns_.resize( newpos );
+          // values_.resize( newpos );
+          // columns_.resize( newpos );
           compressed_ = true ;
         }
       }
@@ -288,6 +288,11 @@ namespace Dune
       size_type endRow( const size_type row ) const
       {
         return rows_[ row+1 ];
+      }
+
+      std::tuple< ValuesVector&, IndicesVector&, IndicesVector& > data()
+      {
+        return std::tie(values_,columns_,rows_);
       }
 
     protected:
@@ -313,8 +318,8 @@ namespace Dune
       //! returns local col index for given global (row,col)
       size_type colIndex(size_type row, size_type col)
       {
-        assert((col>=0) && (col <= dim_[1]));
-        assert((row>=0) && (row <= dim_[0]));
+        assert((col>=0) && (col < dim_[1]));
+        assert((row>=0) && (row < dim_[0]));
 
         const size_type endR  = endRow( row );
         size_type i = startRow( row );
