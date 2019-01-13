@@ -134,7 +134,7 @@ namespace Dune
         using pybind11::operator""_a;
         cls.def_property_readonly( "_backend", [] ( AssembledLinearOperator &self ) {
             auto& mat = self.matrix();
-
+#if 0
             pybind11::array_t<size_t> outerIndices(mat.rows() + 1);
 
             size_t nnz = 0;
@@ -162,6 +162,15 @@ namespace Dune
               }
               outerIndices.mutable_at(i+1) = fill;
             }
+#else
+            auto crs = mat.data();
+            auto &values = std::get<0>(crs);
+            auto &inner  = std::get<1>(crs);
+            auto &outer  = std::get<2>(crs);
+            pybind11::array_t<size_t> outerIndices(outer.size(),&(outer[0]));
+            pybind11::array_t<size_t> innerIndices(inner.size(),&(inner[0]));
+            pybind11::array_t<double> data(values.size(),&(values[0]));
+#endif
             pybind11::object matrix_type = pybind11::module::import("scipy.sparse").attr("csr_matrix");
             pybind11::object scipy_mat = matrix_type(
                 std::make_tuple(data, innerIndices, outerIndices),
