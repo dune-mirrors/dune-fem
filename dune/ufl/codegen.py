@@ -373,8 +373,9 @@ class ModelClass():
         coefficientNames_ = coefficientNames
         coefficientNames = []
         for c in coefficientNames_:
-            while c in coefficientNames:
-                c = c+"A"
+            if c is not None:
+                while c in coefficientNames:
+                    c = c+"A"
             coefficientNames.append(c)
 
         self._constants = [] if constants is None else list(constants)
