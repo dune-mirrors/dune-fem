@@ -226,7 +226,7 @@ namespace Dune
           {
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJVIENNACL );
           }
-          else if( blockedMatrix )
+          else if( blockedMode_ )
           {
             bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
