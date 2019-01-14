@@ -147,7 +147,7 @@ namespace Dune
       {
         if(parameter_.exists(keyPrefix_ + "linabstol"))
           return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
-        return linear().linAbsTol();
+        return linear().absoluteTol();
       }
 
       [[deprecated("please use the linear solver parameters instead")]]
@@ -155,7 +155,7 @@ namespace Dune
       {
         if(parameter_.exists(keyPrefix_ + "linreduction"))
           return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
-        return linear().linReduction();
+        return linear().reductionTol();
       }
 
       [[deprecated("Replaced by verbose ()")]]

@@ -87,8 +87,8 @@ struct NewSolverParameter
   NewSolverParameter(const double eps, int maxIter, const bool verbose)
   {
     // user set method to store parameter in base class parameter_
-    this->setLinReduction( eps );
-    this->setLinAbsTol( eps );
+    this->setReductionTol( eps );
+    this->setAbsoluteTol( eps );
     this->setVerbose( verbose );
   }
   virtual int krylovMethod () const { return 0; }
