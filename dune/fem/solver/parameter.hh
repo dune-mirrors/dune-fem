@@ -77,24 +77,24 @@ namespace Dune
         Parameter::append( keyPrefix_ + "errormeasure", errorTypeTable[errorType], true );
       }
 
-      virtual double linAbsTol ( )  const
+      virtual double absoluteTol ( )  const
       {
-        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
+        return parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
       }
 
-      virtual void setLinAbsTol ( const double eps )
+      virtual void setAbsoluteTol ( const double eps )
       {
-        Parameter::append(keyPrefix_ +  "linabstol", eps, true );
+        Parameter::append(keyPrefix_ +  "absolutetol", eps, true );
       }
 
-      virtual double linReduction (  ) const
+      virtual double reductionTol (  ) const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
+        return parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
       }
 
-      virtual void setLinReduction ( const double eps )
+      virtual void setReductionTol ( const double eps )
       {
-        Parameter::append( keyPrefix_ + "linreduction", eps, true );
+        Parameter::append( keyPrefix_ + "reductiontol", eps, true );
       }
 
       virtual int maxLinearIterations () const

@@ -100,15 +100,15 @@ namespace Dune
                           const BlockVector &rhs, const BlockVector &x ) const
       {
 
-        if( parameter_->errorMeasure() == 0 && (parameter_->linAbsTol() < std::numeric_limits< double >::max()) )
+        if( parameter_->errorMeasure() == 0 && (parameter_->absoluteTol() < std::numeric_limits< double >::max()) )
         {
           BlockVector residuum( rhs );
           op.applyscaleadd( -1., x, residuum );
           const double res = scp.norm( residuum );
-          return (res > 0 ? parameter_->linAbsTol() / res : 1e-3);
+          return (res > 0 ? parameter_->absoluteTol() / res : 1e-3);
         }
         else
-          return parameter_->linReduction();
+          return parameter_->reductionTol();
       }
 
     private:
@@ -336,8 +336,8 @@ namespace Dune
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator( parameter )
       {
-        parameter_->setLinReduction( redEps );
-        parameter_->setLinAbsTol( absLimit );
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
         parameter_->setMaxLinearIterations( maxIterations );
         parameter_->setVerbose( verbose );
       }
@@ -348,8 +348,8 @@ namespace Dune
                             const SolverParameter & parameter = SolverParameter() )
         : ISTLInverseOperator ( parameter )
       {
-        parameter_->setLinReduction( redEps );
-        parameter_->setLinAbsTol( absLimit );
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
         parameter_->setMaxLinearIterations( maxIterations );
         parameter_->setVerbose( verbose );
         bind( op );
@@ -362,8 +362,8 @@ namespace Dune
         : ISTLInverseOperator( parameter )
       {
         bind( op, preconditioner );
-        parameter_->setLinReduction( redEps );
-        parameter_->setLinAbsTol( absLimit );
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
         parameter_->setMaxLinearIterations( maxIterations );
         parameter_->setVerbose( verbose );
      }

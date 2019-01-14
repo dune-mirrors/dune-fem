@@ -105,14 +105,14 @@ namespace Dune
                                 const bool verbose = false,
                                 const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
         : BaseType( parameter ),
-          absLimit_( parameter.linReduction() ),
+          absLimit_( parameter.reductionTol() ),
           method_( method < 0 ? parameter.krylovMethod() : method )
       {
       }
 
       ViennaCLInverseOperator ( const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
-        : ViennaCLInverseOperator( parameter.linReduction(),
-            parameter.linAbsTol(), parameter.maxLinearIterations(),
+        : ViennaCLInverseOperator( parameter.reductionTol(),
+            parameter.absoluteTol(), parameter.maxLinearIterations(),
             parameter.verbose(), parameter )
       {
       }
