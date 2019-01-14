@@ -193,18 +193,18 @@ namespace Dune
 
       void reserve ()
       {
-        reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
+        reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0), true );
       }
 
       template <class Set>
       void reserve (const std::vector< Set >& sparsityPattern )
       {
-        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ) );
+        reserve( StencilWrapper< DomainSpaceType,RangeSpaceType, Set >( sparsityPattern ), true );
       }
 
       //! reserve memory for assemble based on the provided stencil
       template <class StencilType>
-      void reserve (const StencilType &stencil)
+      void reserve (const StencilType &stencil, const bool isSimpleStencil = false )
       {
         domainMappers_.update();
         rangeMappers_.update();
@@ -220,6 +220,15 @@ namespace Dune
 
           // create matrix
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
+
+          // set sizes of the matrix (columns == domain and rows == range)
+          const PetscInt localCols = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
+          const PetscInt localRows = rangeMappers_.ghostMapper().interiorSize() * rangeLocalBlockSize;
+
+          const PetscInt globalCols = domainMappers_.parallelMapper().size() * domainLocalBlockSize;
+          const PetscInt globalRows = rangeMappers_.parallelMapper().size() * rangeLocalBlockSize;
+
+          ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, globalRows, globalCols );
 
           PetscInt bs = 1;
           if( viennaCL_ )
@@ -238,20 +247,13 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          // set sizes of the matrix (columns == domain and rows == range)
-          const PetscInt localCols = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
-          const PetscInt localRows = rangeMappers_.ghostMapper().interiorSize() * rangeLocalBlockSize;
-
-          const PetscInt globalCols = domainMappers_.parallelMapper().size() * domainLocalBlockSize;
-          const PetscInt globalRows = rangeMappers_.parallelMapper().size() * rangeLocalBlockSize;
-
-          ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, globalRows, globalCols );
-
           DomainSlaveDofsType domainSlaveDofs( domainMappers_.ghostMapper() );
           RangeSlaveDofsType rangeSlaveDofs( rangeMappers_.ghostMapper() );
 
-          if (std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
-            ::Dune::Petsc::MatSetUp( petscMatrix_, bs, stencil.maxNonZerosEstimate() );
+          if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
+          {
+            ::Dune::Petsc::MatSetUp( petscMatrix_, bs, domainLocalBlockSize * stencil.maxNonZerosEstimate() );
+          }
           else
           {
             std::vector< PetscInt > d_nnz( localRows / bs, 0 );
@@ -556,7 +558,7 @@ namespace Dune
         sequence_ = -1;
       }
 
-      void setStatus(const Status &newstatus) const
+      void setStatus (const Status &newstatus) const
       {
 #ifdef _OPENMP
 #pragma omp critical
