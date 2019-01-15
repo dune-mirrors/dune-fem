@@ -182,13 +182,14 @@ def h1(model, domainSpace=None, rangeSpace=None):
     scheme.model = model
     return scheme
 
-def linear(domainSpace=None, rangeSpace=None):
-    if rangeSpace is None:
-        if hasattr(domainSpace, "domainSpace"):
-            rangeSpace = domainSpace.rangeSpace
-            domainSpace = domainSpace.domainSpace
-        else:
-            rangeSpace = domainSpace
+# TODO: linear could also return the 'affine shift' and the point of
+#       linearization (0 now) could also be passed in
+#       The returning operator could have a 'update' method and then we
+#       remove the 'jacobian' from the official interface
+def linear(operator, ubar=None):
+    assert hasattr(operator,"jacobian"), "operator does not allow assembly"
+    rangeSpace  = operator.rangeSpace
+    domainSpace = operator.domainSpace
 
     domainSpaceType = domainSpace._typeName
     rangeSpaceType = rangeSpace._typeName
@@ -209,5 +210,9 @@ def linear(domainSpace=None, rangeSpace=None):
                               ['return new ' + typeName + '( "tmp", dSpace, rSpace );'],
                               ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
 
-    op = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace)
-    return op
+    lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace)
+    if ubar is None:
+        operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
+    else:
+        operator.jacobian(ubar, lin)
+    return lin
