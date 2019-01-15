@@ -159,6 +159,8 @@ namespace Dune
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
         status_ = statAssembled;
+
+        print( std::cout );
       }
 
       const DomainSpaceType &domainSpace () const { return domainMappers_.space(); }
@@ -319,9 +321,10 @@ namespace Dune
       }
 
     public:
-      void unitRow( const PetscInt row, const PetscScalar diag = 1.0 )
+      void unitRow( const PetscInt localRow, const PetscScalar diag = 1.0 )
       {
         std::array< PetscInt, domainLocalBlockSize > rows;
+        const PetscInt row = rangeMappers_.parallelIndex( localRow );
         for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
           rows[ i ] = r;
 
@@ -331,14 +334,20 @@ namespace Dune
 
     protected:
       template< class PetscOp >
-      void applyToBlock ( const PetscInt row, const PetscInt col, const MatrixBlockType& block, PetscOp op )
+      void applyToBlock ( const PetscInt localRow, const PetscInt localCol, const MatrixBlockType& block, PetscOp op )
       {
         if( blockedMode_ )
         {
+          // convert process local indices to global indices
+          const PetscInt row = rangeMappers_.parallelIndex( localRow );
+          const PetscInt col = rangeMappers_.parallelIndex( localCol );
           ::Dune::Petsc::MatSetValuesBlocked( petscMatrix_, 1, &row, 1, &col, block.data(), op );
         }
         else
         {
+          // convert process local indices to global indices
+          const PetscInt row = rangeMappers_.parallelIndex( localRow );
+          const PetscInt col = rangeMappers_.parallelIndex( localCol );
           std::array< PetscInt, domainLocalBlockSize > rows;
           std::array< PetscInt, domainLocalBlockSize > cols;
           for( unsigned int i=0, r = row * domainLocalBlockSize, c = col * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r, ++c )
@@ -435,7 +444,7 @@ namespace Dune
         std::vector< PetscInt >& r = r_;
         std::vector< PetscInt >& c = c_;
 
-        if( blockedMatrix )
+        if( blockedMode_ )
         {
           setupIndicesBlocked( rangeMappers_,  rangeEntity,  r );
           setupIndicesBlocked( domainMappers_, domainEntity, c );
