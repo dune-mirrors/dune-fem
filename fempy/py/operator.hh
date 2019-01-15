@@ -53,17 +53,17 @@ namespace Dune
       // registerGeneralOperatorJacobian
       // -------------------------------
 
-      template< class Operator, class... options, decltype( std::declval< const Operator & >().jacobian( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::JacobianOperatorType >() ), 0 ) = 0 >
+      template< class Operator, class... options, decltype( std::declval< const Operator & >().jacobian( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::JacobianOperatorType& >() ), 0 ) = 0 >
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianRangeType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
-
+#if 0
       template< class Operator, class... options >
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
-
+#endif
 
       // registerOperatorJacobian
       // ------------------------
@@ -243,45 +243,15 @@ namespace Dune
       inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def_property_readonly( "_backend", [] ( AssembledLinearOperator &self ) {
-            auto& mat = self.matrix();
-#if 0
-            pybind11::array_t<size_t> outerIndices(mat.rows() + 1);
-
-            size_t nnz = 0;
-            for(size_t i=0;i<mat.rows();++i)
-              nnz += mat.numNonZeros(i);
-
-            pybind11::array_t<size_t> innerIndices(nnz);
-            pybind11::array_t<double> data(nnz);
-
-            size_t fill = 0;
-            outerIndices.mutable_at(0) = 0;
-            for(size_t i=0;i<mat.rows();++i)
-            {
-              size_t count = i*mat.numNonZeros();
-              for(size_t j=0;j<mat.numNonZeros();++j,++count)
-              {
-                const auto pairIdx = mat.realValue(count);
-                if (pairIdx.second < mat.cols())
-                {
-                  innerIndices.mutable_at(fill) = pairIdx.second;
-                  data.mutable_at(fill) = pairIdx.first;
-                  ++fill;
-                }
-                else break;
-              }
-              outerIndices.mutable_at(i+1) = fill;
-            }
-#else
+        cls.def_property_readonly( "_backend", [] ( pybind11::handle self ) {
+            auto& mat = self.cast< AssembledLinearOperator &>().matrix();
             auto crs = mat.data();
             auto &values = std::get<0>(crs);
             auto &inner  = std::get<1>(crs);
             auto &outer  = std::get<2>(crs);
-            pybind11::array_t<size_t> outerIndices(outer.size(),&(outer[0]));
-            pybind11::array_t<size_t> innerIndices(inner.size(),&(inner[0]));
-            pybind11::array_t<double> data(values.size(),&(values[0]));
-#endif
+            pybind11::array_t<size_t> outerIndices(outer.size(),&(outer[0]),self);
+            pybind11::array_t<size_t> innerIndices(inner.size(),&(inner[0]),self);
+            pybind11::array_t<double> data(values.size(),&(values[0]),self);
             pybind11::object matrix_type = pybind11::module::import("scipy.sparse").attr("csr_matrix");
             pybind11::object scipy_mat = matrix_type(
                 std::make_tuple(data, innerIndices, outerIndices),
@@ -302,12 +272,14 @@ namespace Dune
         typedef typename Operator::DomainFunctionType DomainFunction;
         typedef typename Operator::RangeFunctionType RangeFunction;
 
+#if 0 // linear operators are always assembled
         // check whether Operator is of type
         // AssembledOperator and thus offers a method matrix.
         static constexpr std::size_t priority =
             std::is_base_of< Dune::Fem::AssembledOperator< DomainFunction, RangeFunction>,
                            Operator > :: value ? 42 : 0;
-        addMatrixBackend(cls, PriorityTag< priority >());
+#endif
+        addMatrixBackend(cls, PriorityTag< 42 >());
       }
 
     } // namespace detail
