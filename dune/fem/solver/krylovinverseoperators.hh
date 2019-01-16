@@ -111,7 +111,7 @@ namespace Dune
       {
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
       }
 
@@ -125,7 +125,7 @@ namespace Dune
         bind( op );
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
      }
 
@@ -138,7 +138,7 @@ namespace Dune
       {
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
       }
 
@@ -206,7 +206,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::gmres( *operator_, preconditioner_,
                                          v_, w, u, parameter_->gmresRestart(),
-                                         parameter_->absoluteTol(), parameter_->maxLinearIterations(),
+                                         parameter_->absoluteTol(), parameter_->maxIterations(),
                                          parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::bicgstab )
@@ -225,7 +225,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::bicgstab( *operator_, preconditioner_,
                                             v_, w, u,
-                                            parameter_->absoluteTol(), parameter_->maxLinearIterations(),
+                                            parameter_->absoluteTol(), parameter_->maxIterations(),
                                             parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::cg )
@@ -246,7 +246,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::cg( *operator_, preconditioner_,
                                       v_, w, u,
-                                      parameter_->absoluteTol(), parameter_->maxLinearIterations(),
+                                      parameter_->absoluteTol(), parameter_->maxIterations(),
                                       parameter_->errorMeasure(), os );
         }
 

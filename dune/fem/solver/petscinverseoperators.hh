@@ -105,7 +105,7 @@ namespace Dune
       {
         parameter_->setAbsoluteTol( absLimit );
         parameter_->setReductionTol( reduction );
-        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setMaxIterations( maxIter );
         parameter_->setVerbose( verbose );
         bind( op );
       }
@@ -127,7 +127,7 @@ namespace Dune
       {
         parameter_->setAbsoluteTol( absLimit );
         parameter_->setReductionTol( reduction );
-        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setMaxIterations( maxIter );
         bind( op );
       }
 
@@ -160,7 +160,7 @@ namespace Dune
       {
         parameter_->setAbsoluteTol( absLimit );
         parameter_->setReductionTol( reduction );
-        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setMaxIterations( maxIter );
         parameter_->setVerbose( verbose );
       }
 
@@ -178,7 +178,7 @@ namespace Dune
       {
         parameter_->setReductionTol( reduction );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setMaxIterations( maxIter );
       }
 
       [[deprecated]]
@@ -198,7 +198,7 @@ namespace Dune
       {
         parameter_->setAbsoluteTol( absLimit );
         parameter_->setReductionTol( reduction );
-        parameter_->setMaxLinearIterations( maxIter );
+        parameter_->setMaxIterations( maxIter );
         parameter_->setVerbose( verbose );
       }
 
@@ -253,7 +253,7 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = parameter_->maxLinearIterations();
+        PetscInt  maxits = parameter_->maxIterations();
         PetscReal reduc  = parameter_->reductionTol();
         ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
 

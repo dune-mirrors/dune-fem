@@ -176,7 +176,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   InverseOperatorType inverseOperator ( massOperator );
   inverseOperator.parameter().setAbsoluteTol( 1e-10 );
   inverseOperator.parameter().setReductionTol( 1e-10 );
-  inverseOperator.parameter().setMaxLinearIterations( maxIter );
+  inverseOperator.parameter().setMaxIterations( maxIter );
 
   inverseOperator( rhs, solution );
   return finalize( solution );

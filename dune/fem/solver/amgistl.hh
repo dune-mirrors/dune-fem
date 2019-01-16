@@ -514,7 +514,7 @@ namespace Dune
         {}
 
         InverseOperator ( const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
-          : InverseOperator( parameter.reductionTol(), parameter.absoluteTol(), parameter.maxLinearIterations() )
+          : InverseOperator( parameter.reductionTol(), parameter.absoluteTol(), parameter.maxIterations() )
         {}
 
         void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const override
