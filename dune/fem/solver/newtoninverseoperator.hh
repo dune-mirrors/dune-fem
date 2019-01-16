@@ -67,53 +67,80 @@ namespace Dune
 
       const SolverParameter& linear () const { return *baseParam_; }
 
+      virtual void reset ()
+      {
+        baseParam_->reset();
+        tolerance_ = Std::nullopt;
+        verbose_ = Std::nullopt;
+        maxIterations_ = Std::nullopt;
+        maxLinearIterations_ = Std::nullopt;
+        maxLineSearchIterations_ = Std::nullopt;
+      }
+
       //These methods affect the nonlinear solver
       virtual double tolerance () const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+        if(!tolerance_)
+          tolerance_ =  parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+        return *tolerance_;
       }
 
       virtual void setTolerance ( const double tol )
       {
-        Parameter::append( keyPrefix_ + "tolerance", tol, true );
+        tolerance_ = tol;
       }
 
       virtual bool verbose () const
       {
-        const bool v = baseParam_? baseParam_->verbose() : false;
-        return parameter_.getValue< bool >(keyPrefix_ +  "verbose", v );
+        if(!verbose_)
+        {
+          const bool v = baseParam_? baseParam_->verbose() : false;
+          verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v );
+        }
+        return *verbose_;
+      }
+
+      virtual void setVerbose( bool verb)
+      {
+        verbose_ = verb;
       }
 
       virtual int maxIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        if(!maxIterations_)
+          maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        return *maxIterations_;
       }
 
       virtual void setMaxIterations ( const int maxIter )
       {
-        Parameter::append( keyPrefix_ + "maxiterations", maxIter, true);
+        maxIterations_ = maxIter;
       }
 
       //Maximum Linear Iterations in total
       //!= max iterations of each linear solve
       virtual int maxLinearIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        if(!maxLinearIterations_)
+          maxLinearIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return *maxLinearIterations_;
       }
 
       virtual void setMaxLinearIterations ( const int maxLinearIter )
       {
-        Parameter::append( keyPrefix_ + "maxlineariterations", maxLinearIter, true);
+        maxLinearIterations_ = maxLinearIter;
       }
 
       virtual int maxLineSearchIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
+        if(!maxLineSearchIterations_)
+          maxLineSearchIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
+        return *maxLineSearchIterations_;
       }
 
       virtual void setMaxLineSearchIterations ( const int maxLineSearchIter )
       {
-        Parameter::append( keyPrefix_ + "maxlinesearchiterations", std::to_string(maxLineSearchIter), true);
+        maxLineSearchIterations_ = maxLineSearchIter;
       }
 
       enum class LineSearchMethod {
@@ -191,6 +218,13 @@ namespace Dune
       {
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
       }
+
+    private:
+      mutable Std::optional<double> tolerance_;
+      mutable Std::optional<bool> verbose_;
+      mutable Std::optional<int> maxIterations_;
+      mutable Std::optional<int> maxLinearIterations_;
+      mutable Std::optional<int> maxLineSearchIterations_;
     };
 
 

@@ -3,6 +3,8 @@
 
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/common/std/optional.hh>
+
 namespace Dune
 {
 
@@ -52,14 +54,24 @@ namespace Dune
 
       const ParameterReader& parameter() const { return parameter_; }
 
+      virtual void reset()
+      {
+        verbose_ = Std::nullopt;
+        absoluteTol_ = Std::nullopt;
+        reductionTol_ = Std::nullopt;
+        maxIterations_ = Std::nullopt;
+      }
+
       virtual bool verbose() const
       {
-        return parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+        if(!verbose_)
+          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+        return *verbose_;
       }
 
       virtual void setVerbose( const bool verb )
       {
-        Parameter::append( keyPrefix_ + "verbose", std::to_string(verb), true);
+        verbose_ = verb;
       }
 
       virtual int errorMeasure() const
@@ -79,47 +91,62 @@ namespace Dune
 
       virtual double absoluteTol ( )  const
       {
-        if(parameter_.exists(keyPrefix_ + "linabstol"))
+        if(!absoluteTol_)
         {
-          std::cout << "WARNING: Parameter " + keyPrefix_ + "linabstol is deprecated. Please use " + keyPrefix_ + "absolutetol instead." << std::endl;
-          return parameter_.getValue< double >(keyPrefix_ + "linabstol");
+          if(parameter_.exists(keyPrefix_ + "linabstol"))
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ + "linabstol is deprecated. Please use " + keyPrefix_ + "absolutetol instead." << std::endl;
+            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ + "linabstol");
+          }
+          else
+            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
         }
-        return parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
+        return *absoluteTol_;
       }
 
       virtual void setAbsoluteTol ( const double eps )
       {
-        Parameter::append(keyPrefix_ +  "absolutetol", eps, true );
+        absoluteTol_ = eps;
       }
 
       virtual double reductionTol (  ) const
       {
-        if(parameter_.exists(keyPrefix_ + "linreduction"))
+        if(!reductionTol_)
         {
-          std::cout << "WARNING: Parameter " + keyPrefix_ +"linreduction is deprecated. Please use " + keyPrefix_ + "reductiontol instead." << std::endl;
-          return parameter_.getValue< double >(keyPrefix_ + "linreduction");
+          if(parameter_.exists(keyPrefix_ + "linreduction"))
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ +"linreduction is deprecated. Please use " + keyPrefix_ + "reductiontol instead." << std::endl;
+            reductionTol_ =  parameter_.getValue< double >(keyPrefix_ + "linreduction");
+          }
+          else
+            reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
         }
-        return parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
+        return *reductionTol_;
       }
 
       virtual void setReductionTol ( const double eps )
       {
-        Parameter::append( keyPrefix_ + "reductiontol", eps, true );
+        reductionTol_ = eps;
       }
 
       virtual int maxIterations () const
       {
-        if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
+        if(!maxIterations_)
         {
-          std::cout << "WARNING: Parameter " + keyPrefix_ +"maxlineariterations is deprecated. Please use " + keyPrefix_ + "maxiterations instead." << std::endl;
-          return parameter_.getValue< double >(keyPrefix_ + "maxlineariterations");
+          if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ +"maxlineariterations is deprecated. Please use " + keyPrefix_ + "maxiterations instead." << std::endl;
+            maxIterations_ =  parameter_.getValue< double >(keyPrefix_ + "maxlineariterations");
+          }
+          else
+            maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
         }
-        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        return *maxIterations_;
       }
 
       virtual void  setMaxIterations ( const int maxIter )
       {
-        Parameter::append( keyPrefix_ + "maxiterations", maxIter, true );
+        maxIterations_ = maxIter;
       }
 
       virtual int krylovMethod() const
@@ -222,6 +249,11 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
+     private:
+      mutable Std::optional<bool> verbose_;
+      mutable Std::optional<double> absoluteTol_;
+      mutable Std::optional<double> reductionTol_;
+      mutable Std::optional<int> maxIterations_;
     };
 
   }
