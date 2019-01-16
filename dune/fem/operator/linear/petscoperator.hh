@@ -151,16 +151,14 @@ namespace Dune
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FLUSH_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FLUSH_ASSEMBLY );
-        status_ = statAssembled;
+        setStatus( statAssembled );
       }
 
       void communicate ()
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        status_ = statAssembled;
-
-        print( std::cout );
+        setStatus( statAssembled );
       }
 
       const DomainSpaceType &domainSpace () const { return domainMappers_.space(); }
@@ -249,15 +247,15 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          DomainSlaveDofsType domainSlaveDofs( domainMappers_.ghostMapper() );
-          RangeSlaveDofsType rangeSlaveDofs( rangeMappers_.ghostMapper() );
-
           if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
           {
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, domainLocalBlockSize * stencil.maxNonZerosEstimate() );
           }
           else
           {
+            DomainSlaveDofsType domainSlaveDofs( domainMappers_.ghostMapper() );
+            RangeSlaveDofsType rangeSlaveDofs( rangeMappers_.ghostMapper() );
+
             std::vector< PetscInt > d_nnz( localRows / bs, 0 );
             std::vector< PetscInt > o_nnz( localRows / bs, 0 );
             for( const auto entry : stencil.globalStencil() )
@@ -283,8 +281,7 @@ namespace Dune
         }
 
         flushAssembly();
-
-        status_ = statAssembled;
+        status_ = statAssembled ;
       }
 
       void clear ()
@@ -336,6 +333,13 @@ namespace Dune
       template< class PetscOp >
       void applyToBlock ( const PetscInt localRow, const PetscInt localCol, const MatrixBlockType& block, PetscOp op )
       {
+#ifndef NDEBUG
+        const PetscInt localCols = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
+        const PetscInt localRows = rangeMappers_.ghostMapper().interiorSize() * rangeLocalBlockSize;
+        assert( localRow < localRows );
+        assert( localCol < localCols );
+#endif
+
         if( blockedMode_ )
         {
           // convert process local indices to global indices
@@ -377,7 +381,9 @@ namespace Dune
       template< class LocalBlock >
       void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
+#ifndef _OPENMP
         assert( status_==statAssembled || status_==statInsert );
+#endif
         assert( row < std::numeric_limits< int > :: max() );
         assert( col < std::numeric_limits< int > :: max() );
 
@@ -388,7 +394,9 @@ namespace Dune
       template< class LocalBlock >
       void addBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
+#ifndef _OPENMP
         assert( status_==statAssembled || status_==statInsert );
+#endif
         assert( row < std::numeric_limits< int > :: max() );
         assert( col < std::numeric_limits< int > :: max() );
 
@@ -562,19 +570,17 @@ namespace Dune
         if( status_ != statNothing )
         {
           ::Dune::Petsc::MatDestroy( &petscMatrix_ );
-          setStatus( statNothing );
+          status_ = statNothing ;
         }
         sequence_ = -1;
       }
 
       void setStatus (const Status &newstatus) const
       {
-#ifdef _OPENMP
-#pragma omp critical
+        // in case OpenMP is used simply avoid status check
+#ifndef _OPENMP
+        status_ = newstatus;
 #endif
-        {
-          status_ = newstatus;
-        }
       }
 
       template< class DFS, class Entity >
