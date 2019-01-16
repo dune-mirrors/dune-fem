@@ -79,6 +79,11 @@ namespace Dune
 
       virtual double absoluteTol ( )  const
       {
+        if(parameter_.exists(keyPrefix_ + "linabstol"))
+        {
+          std::cout << "WARNING: Parameter " + keyPrefix_ + "linabstol is deprecated. Please use " + keyPrefix_ + "absolutetol instead." << std::endl;
+          return parameter_.getValue< double >(keyPrefix_ + "linabstol");
+        }
         return parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
       }
 
@@ -89,6 +94,11 @@ namespace Dune
 
       virtual double reductionTol (  ) const
       {
+        if(parameter_.exists(keyPrefix_ + "linreduction"))
+        {
+          std::cout << "WARNING: Parameter " + keyPrefix_ +"linreduction is deprecated. Please use " + keyPrefix_ + "reductiontol instead." << std::endl;
+          return parameter_.getValue< double >(keyPrefix_ + "linreduction");
+        }
         return parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
       }
 
