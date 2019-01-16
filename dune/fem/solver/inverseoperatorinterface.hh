@@ -94,11 +94,11 @@ namespace Dune {
       int iterations () const { return iterations_; }
 
       virtual void setMaxLinearIterations ( const int iter ) {
-        parameter_->setMaxLinearIterations( iter );
+        parameter_->setMaxIterations( iter );
       }
 
       virtual void setMaxIterations ( const int iter ) {
-        parameter_->setMaxLinearIterations( iter );
+        parameter_->setMaxIterations( iter );
       }
 
       SolverParameter& parameter () const

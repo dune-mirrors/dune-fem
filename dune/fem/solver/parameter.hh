@@ -107,14 +107,19 @@ namespace Dune
         Parameter::append( keyPrefix_ + "reductiontol", eps, true );
       }
 
-      virtual int maxLinearIterations () const
+      virtual int maxIterations () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
+        {
+          std::cout << "WARNING: Parameter " + keyPrefix_ +"maxlineariterations is deprecated. Please use " + keyPrefix_ + "maxiterations instead." << std::endl;
+          return parameter_.getValue< double >(keyPrefix_ + "maxlineariterations");
+        }
+        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
-      virtual void  setMaxLinearIterations ( const int maxIter )
+      virtual void  setMaxIterations ( const int maxIter )
       {
-        Parameter::append( keyPrefix_ + "maxlineariterations", maxIter, true );
+        Parameter::append( keyPrefix_ + "maxiterations", maxIter, true );
       }
 
       virtual int krylovMethod() const

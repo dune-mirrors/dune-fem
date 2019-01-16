@@ -137,7 +137,7 @@ namespace Dune
                          Dune::InverseOperatorResult &result ) const
       {
         const int verbosity = (MPIManager::rank() == 0 && parameter_->verbose()) ? 2 : 0;
-        int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxLinearIterations() );
+        int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
         {
           typedef Dune::CGSolver< X > SolverType;
@@ -189,8 +189,8 @@ namespace Dune
         }
       }
 
-      void setMaxLinearIterations( unsigned int maxIterations ) { parameter_->setMaxLinearIterations(maxIterations); }
-      void setMaxIterations( unsigned int maxIterations ) { parameter_->setMaxLinearIterations(maxIterations); }
+      void setMaxLinearIterations( unsigned int maxIterations ) { parameter_->setMaxIterations(maxIterations); }
+      void setMaxIterations( unsigned int maxIterations ) { parameter_->setMaxIterations(maxIterations); }
 
       std::shared_ptr<SolverParameter> parameter () const { return parameter_; }
 
@@ -289,7 +289,7 @@ namespace Dune
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
                             const SolverParameter & parameter = SolverParameter() )
-        : ISTLInverseOperator( redEps, absLimit, parameter.maxLinearIterations(), parameter.verbose(), parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter.maxIterations(), parameter.verbose(), parameter ) {}
 
       [[deprecated]]
       ISTLInverseOperator ( const OperatorType &op, double redEps, double absLimit,
@@ -338,7 +338,7 @@ namespace Dune
       {
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
       }
 
@@ -350,7 +350,7 @@ namespace Dune
       {
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
         bind( op );
       }
@@ -364,7 +364,7 @@ namespace Dune
         bind( op, preconditioner );
         parameter_->setReductionTol( redEps );
         parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxLinearIterations( maxIterations );
+        parameter_->setMaxIterations( maxIterations );
         parameter_->setVerbose( verbose );
      }
 
@@ -438,7 +438,7 @@ namespace Dune
         }
 
         Dune::InverseOperatorResult result;
-        solverAdapter_.setMaxIterations( parameter_->maxLinearIterations() );
+        solverAdapter_.setMaxIterations( parameter_->maxIterations() );
         solverAdapter_( istlOperator, scp, preconditioner, rhs_->blockVector(), w.blockVector(), result );
         return (result.converged) ? result.iterations : -(result.iterations);
       }

@@ -183,7 +183,7 @@ namespace Dune
       {
         if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
           return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
-        return linear().maxLinearIterations();
+        return linear().maxIterations();
       }
 
       [[deprecated]]

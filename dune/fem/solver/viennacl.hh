@@ -112,7 +112,7 @@ namespace Dune
 
       ViennaCLInverseOperator ( const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
         : ViennaCLInverseOperator( parameter.reductionTol(),
-            parameter.absoluteTol(), parameter.maxLinearIterations(),
+            parameter.absoluteTol(), parameter.maxIterations(),
             parameter.verbose(), parameter )
       {
       }
@@ -154,7 +154,7 @@ namespace Dune
         viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
         viennacl::copy( u.dbegin(), u.dend(), vclU.begin() );
 
-        int maxIterations = parameter().maxLinearIterations();
+        int maxIterations = parameter().maxIterations();
         int iterations = -1;
 
         //std::cout << "Using ViennaCL " << std::endl;
