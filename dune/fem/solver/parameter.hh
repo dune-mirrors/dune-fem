@@ -65,7 +65,7 @@ namespace Dune
       virtual bool verbose() const
       {
         if(!verbose_)
-          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false );
+          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false )?1:0;
         return *verbose_;
       }
 
@@ -250,7 +250,7 @@ namespace Dune
       }
 
      private:
-      mutable Std::optional<bool> verbose_;
+      mutable Std::optional<int> verbose_;         // Std::optional<bool> seems broken
       mutable Std::optional<double> absoluteTol_;
       mutable Std::optional<double> reductionTol_;
       mutable Std::optional<int> maxIterations_;
