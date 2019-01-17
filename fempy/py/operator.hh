@@ -59,11 +59,9 @@ namespace Dune
         using pybind11::operator""_a;
         cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
-#if 0
       template< class Operator, class... options >
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
-#endif
 
       // registerOperatorJacobian
       // ------------------------
