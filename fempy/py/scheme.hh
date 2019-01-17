@@ -70,7 +70,8 @@ namespace Dune
             return new Scheme( space, std::ref(model) );
           } ), "space"_a, "model"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >() );
         cls.def( pybind11::init( [] ( Space &space, ModelType &model, const pybind11::dict &parameters ) {
-            return new Scheme( space, std::ref(model), pyParameter( parameters, std::make_shared< std::string >() ) );
+            return new Scheme( space, std::ref(model),
+                pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
           } ), "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >() );
       }
 

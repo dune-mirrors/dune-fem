@@ -124,14 +124,12 @@ namespace Dune
               return res;
             },  pybind11::keep_alive< 0, 1 >() );
 
-#if 0
         cls.def( "_generateQuadratureCode", []( Space &self,
                  const std::vector<unsigned int> &interiorOrders,
                  const std::vector<unsigned int> &skeletonOrders,
                  const std::string &path) {
             Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path);
             } );
-#endif
       }
 
 

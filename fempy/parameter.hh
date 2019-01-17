@@ -38,16 +38,22 @@ namespace Dune
     // pyParameter
     // -----------
 
-    inline static Fem::ParameterReader pyParameter ( const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
+    inline static Fem::ParameterReader pyParameter ( const std::string &rmPrefix, const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
     {
-      return Fem::ParameterReader( [ dict, tmp ] ( const std::string &key, const std::string *def ) -> const std::string * {
+      return Fem::ParameterReader( [ rmPrefix, dict, tmp ] ( const std::string &key, const std::string *def ) -> const std::string * {
+          assert(key.size()>rmPrefix.size());
+          std::string reducedKey = key.substr(rmPrefix.size(),key.size());
           try {
-            pybind11::object value = dict[ key.c_str() ];
+            pybind11::object value = dict[ reducedKey.c_str() ];
             *tmp = static_cast< std::string >( pybind11::str(value) );
             return tmp.get();
           } catch( ... ) {
             if( !Fem::Parameter::exists( key ) )
+            {
+              if( *def == Dune::Fem::checkParameterExistsString() )
+                return nullptr;
               return def;
+            }
             if (def)
               Fem::Parameter::get( key, *def, *tmp );
             else
@@ -55,6 +61,10 @@ namespace Dune
             return tmp.get();
           }
         } );
+    }
+    inline static Fem::ParameterReader pyParameter ( const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
+    {
+      return pyParameter("", dict, tmp);
     }
 
   } // namespace FemPy
