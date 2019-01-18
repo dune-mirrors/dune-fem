@@ -95,7 +95,7 @@ namespace Dune
         if(!verbose_)
         {
           const bool v = baseParam_? baseParam_->verbose() : false;
-          verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v );
+          verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v ) ? 1 : 0 ;
         }
         return *verbose_;
       }
@@ -221,7 +221,7 @@ namespace Dune
 
     private:
       mutable Std::optional<double> tolerance_;
-      mutable Std::optional<bool> verbose_;
+      mutable Std::optional<int> verbose_;  //Std::optional<bool> seems broken
       mutable Std::optional<int> maxIterations_;
       mutable Std::optional<int> maxLinearIterations_;
       mutable Std::optional<int> maxLineSearchIterations_;
