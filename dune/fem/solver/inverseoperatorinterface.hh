@@ -101,6 +101,12 @@ namespace Dune {
         parameter_->setMaxIterations( iter );
       }
 
+      void setParameters( const SolverParameter& newParams)
+      {
+        std::shared_ptr< SolverParameter > sharedNewParams = std::make_shared< SolverParameter > (newParams);
+        parameter_.swap( sharedNewParams );
+      }
+
       SolverParameter& parameter () const
       {
         return *parameter_;
