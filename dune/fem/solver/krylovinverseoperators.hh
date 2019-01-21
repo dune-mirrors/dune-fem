@@ -249,6 +249,10 @@ namespace Dune
                                       parameter_->absoluteTol(), parameter_->maxIterations(),
                                       parameter_->errorMeasure(), os );
         }
+        else
+        {
+          DUNE_THROW(InvalidStateException,"KrylovInverseOperator: invalid method " << method_ );
+        }
 
         return numIter;
       }
