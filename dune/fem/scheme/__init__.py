@@ -14,8 +14,7 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-@deprecated("the solve method on the 'scheme' now requires the 'target' argument, so first construct a discrete function using the 'interpolate' method on the 'space'",
-        "solve")
+@deprecated("the solve method on the 'scheme' now requires the 'target' argument, so first construct a discrete function using the 'interpolate' method on the 'space'")
 def depSolve( scheme, target, rhs=None, name=None ):
     import dune.fem.function as function
     if target == None:
