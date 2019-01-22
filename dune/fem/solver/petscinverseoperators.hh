@@ -291,7 +291,10 @@ namespace Dune
                 }, { "kspoptions" } )
             );
 
-        solverName_ = SolverParameter::krylovMethodTable( static_cast< int >( kspType ) );
+        if (kspType > PetscSolver::kspoptions)
+          solverName_ = SolverParameter::krylovMethodTable( static_cast< int >( kspType ) );
+        else
+          solverName_ = "kspoptions";
 
         //  select linear solver
         switch( kspType )
