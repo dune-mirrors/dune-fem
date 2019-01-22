@@ -127,7 +127,16 @@ namespace Dune
 
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<SolverParameter> parameter )
         : reduction_( reduction ),
-          method_( method < 0 ? parameter->krylovMethod() : method ),
+          method_( method < 0 ?
+              parameter->krylovMethod({ SolverParameter::gmres,
+                                       SolverParameter::cg,
+                                       SolverParameter::bicgstab,
+                                       SolverParameter::minres,
+                                       SolverParameter::gradient,
+                                       SolverParameter::loop,
+                                       SolverParameter::superlu
+                                     })
+              : method ),
           parameter_( parameter )
       {}
 
@@ -136,7 +145,7 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        const int verbosity = (MPIManager::rank() == 0 && parameter_->verbose()) ? 2 : 0;
+        const int verbosity = (Dune::Fem::Parameter::verbose() && parameter_->verbose()) ? 2 : 0;
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
         {
@@ -201,7 +210,7 @@ namespace Dune
                          Dune::InverseOperatorResult &result ) const
       {
 #if HAVE_SUPERLU
-        const int verbosity = (MPIManager::rank() == 0 && parameter_->verbose()) ? 2 : 0;
+        const int verbosity = (Dune::Fem::Parameter::verbose() && parameter_->verbose()) ? 2 : 0;
         typedef typename ImprovedMatrix :: BaseType Matrix;
         const ImprovedMatrix& matrix = op.getmat();
         SuperLU< Matrix > solver( matrix, verbosity );

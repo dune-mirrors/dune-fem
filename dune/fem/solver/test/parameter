@@ -21,17 +21,14 @@ istl.preconditioner.type: smoother
 istl.preconditioner.amg.debuglevel: 3
 
 # parameter for the implicit solvers
-fem.solver.krylovmethod: gmres
-fem.solver.verbose: false
+fem.solver.verbose: true
+fem.solver.krylovmethod: bicgstab  # this is fixed to gmres in the test
 fem.solver.reductiontol: 1e-11
+fem.solver.absolutetol: 1e-11
 fem.solver.gmres.restart: 15
-fem.solver.newton.verbose: false
-fem.solver.newton.maxiteration: 50
-fem.solver.newton.maxlineariterations: 100
-fem.solver.newton.tolerance: 1e-8
-fem.solver.newton.linear.reductiontol: 1e-11
-fem.solver.newton.linear.absolutetol: 1e-11
+fem.solver.maxiterations: 100
 
+# what are these for?
 fem.solver.row.maxlineariterations: 1000
 fem.solver.row.linreduction: 1e-11
 fem.solver.row.linabstol: 1e-11

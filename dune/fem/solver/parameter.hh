@@ -23,13 +23,21 @@ namespace Dune
 
     public:
       // identifier for Fem, ISTL and Petsc solvers
-      static const int cg       = 0 ; // CG
-      static const int bicgstab = 1 ; // BiCGStab
-      static const int gmres    = 2 ; // GMRES
-      static const int minres   = 3 ; // MinRes
-      static const int gradient = 4 ; // GradientSolver
-      static const int loop     = 5 ; // LoopSolver
-      static const int superlu  = 6 ; // SuperLUSolver
+      static const int cg       = 1 ; // CG
+      static const int bicgstab = 2 ; // BiCGStab
+      static const int gmres    = 3 ; // GMRES
+      static const int minres   = 4 ; // MinRes
+      static const int gradient = 5 ; // GradientSolver
+      static const int loop     = 6 ; // LoopSolver
+      static const int superlu  = 7 ; // SuperLUSolver
+      static const int bicg     = 8 ; // BiCG
+      static const int preonly  = 9 ; // only preconder
+      static const std::string krylovMethodTable(int i)
+      {
+        std::string methods[] =
+           { "cg", "bicgstab", "gmres", "minres", "gradient", "loop", "superlu", "bicg", "preonly"  };
+        return methods[i-1]; // starting to count from 1,...
+      }
 
       static const int none         = 0 ; // no preconditioner
       static const int ssor         = 1 ; // SSOR preconditioner
@@ -80,13 +88,6 @@ namespace Dune
         { "absolute", "relative", "residualreduction" };
         const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
         return errorType ;
-      }
-
-      virtual void setErrorMeasure( const int errorType )
-      {
-        const std::string errorTypeTable[] =
-        { "absolute", "relative", "residualreduction" };
-        Parameter::append( keyPrefix_ + "errormeasure", errorTypeTable[errorType], true );
       }
 
       virtual double absoluteTol ( )  const
@@ -149,34 +150,36 @@ namespace Dune
         maxIterations_ = maxIter;
       }
 
-      virtual int krylovMethod() const
+      virtual int krylovMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
       {
-        const std::string krylovMethodTable[] =
-        { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-        int methodType = gmres;
+        std::vector<std::string> methodTable(standardMethods.size()+additionalMethods.size());
+        for (std::size_t i=0;i<standardMethods.size();++i)
+          methodTable[i] = krylovMethodTable(standardMethods[i]);
+        for (std::size_t i=0;i<additionalMethods.size();++i)
+          methodTable[standardMethods.size()+i] = additionalMethods[i];
+        int method;
         if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
-          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );
+          method = parameter_.getEnum( keyPrefix_ + "krylovmethod", methodTable, defaultMethod );
         else
-          methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
-        return methodType;
-      }
-
-      virtual void setKrylovMethod( const int method )
-      {
-        const std::string krylovMethodTable[] =
-        { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-        Parameter::append( keyPrefix_ + "krylovmethod", krylovMethodTable[method], true );
+        {
+          method = parameter_.getEnum( "krylovmethod", methodTable, defaultMethod );
+          std::cout << "Warning: using old parameter name 'krylovmethod' "
+                    << "please switch to '" << keyPrefix_ << "krylovmethod'\n";
+        }
+        if (method < standardMethods.size())
+          return standardMethods[method];
+        else
+          return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
       }
 
       virtual int gmresRestart() const
       {
         int defaultRestart = 20;
         return parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
-      }
-
-      virtual void setGmresRestart( const int restart )
-      {
-        Parameter::append( keyPrefix_ + "gmres.restart", std::to_string(restart), true );
       }
 
       virtual int preconditionMethod () const
@@ -193,41 +196,15 @@ namespace Dune
         Parameter::append(  keyPrefix_ + "preconditioning.method", preConTable[precMethod], true );
       }
 
-      virtual std::string preconditionName() const
-      {
-        static const std::string preConTable[]
-          = { "None", "SSOR", "SOR", "ILU", "Gauss-Seidel", "Jacobi", "AMG-ILU", "AMG-Jacobi", "ILDL" };
-        const int precond = preconditionMethod();
-        std::stringstream tmp;
-        tmp << preConTable[precond];
-
-        if( precond != 3 )
-          tmp << " n=" << preconditionerIteration();
-        tmp << " relax=" << relaxation();
-        return tmp.str();
-      }
-
       virtual double relaxation () const
       {
         return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
       }
 
-      virtual void setRelaxation ( const double relaxation )
-      {
-        Parameter::append( keyPrefix_ + "preconditioning.relaxation", std::to_string(relaxation), true );
-      }
-
-
       virtual int preconditionerIteration () const
       {
         // TODO: add also check for level
         return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
-      }
-
-      virtual void setPreconditionerIteration ( const int precIter)
-      {
-        // TODO: add also check for level
-        Parameter::append( keyPrefix_ + "preconditioning.iterations", std::to_string(precIter), true );
       }
 
       //deprecated methods

@@ -166,7 +166,11 @@ namespace Dune
       : BaseType( parameter ),
         precondObj_(),
         verbose_( parameter.verbose() ),
-        method_( method < 0 ? parameter.krylovMethod() : method )
+        method_( method < 0 ?
+            parameter.krylovMethod({ SolverParameter::gmres,
+                                     SolverParameter::cg,
+                                     SolverParameter::bicgstab })
+            : method )
       {}
 
       void bind ( const OperatorType &op )

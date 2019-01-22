@@ -278,7 +278,16 @@ namespace Dune
           kspType = static_cast< PetscSolver >( reader.getEnum("petsc.kspsolver.method", kspNames, int(PetscSolver::defaults) ) );
         }
         else
-          kspType = static_cast< PetscSolver >( parameter.krylovMethod() );
+          kspType = static_cast< PetscSolver >(
+              parameter.krylovMethod({
+                SolverParameter::gmres,
+                SolverParameter::bicgstab,
+                SolverParameter::cg,
+                SolverParameter::minres,
+                SolverParameter::bicg,
+                SolverParameter::preonly
+                })
+            );
 
         solverName_ = kspNames[ static_cast< int >( kspType ) ];
 

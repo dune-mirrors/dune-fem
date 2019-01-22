@@ -289,7 +289,7 @@ class SPQROp:public Operator<DF, DF>
 
   private:
   explicit SPQROp(const bool& verbose) :
-    verbose_(verbose), ccsmat_(), cc_(new cholmod_common())
+    verbose_(verbose && Dune::Fem::Parameter::verbose()), ccsmat_(), cc_(new cholmod_common())
   {
     cholmod_l_start(cc_);
   }

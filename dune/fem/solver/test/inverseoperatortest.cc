@@ -81,17 +81,26 @@ using RealType  = typename Dune::FieldTraits< FieldType >::real_type;
 using SpaceType         = Dune::Fem::FunctionSpace< FieldType, FieldType, dim, 1 >;
 using DiscreteSpaceType = Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder >;
 
+// Note: this class is not actually passed on to the inverseOperators!
 struct NewSolverParameter
   : public Dune::Fem::LocalParameter< Dune::Fem::SolverParameter, NewSolverParameter >
 {
   NewSolverParameter(const double eps, int maxIter, const bool verbose)
   {
-    // user set method to store parameter in base class parameter_
+    // user set method to store parameter in base class -
+    // this will override anything set in the parameter file
     this->setReductionTol( eps );
     this->setAbsoluteTol( eps );
     this->setVerbose( verbose );
   }
-  virtual int krylovMethod () const { return 0; }
+
+  virtual int krylovMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const override
+  { return SolverParameter::gmres; }
+
 };
 
 
@@ -126,6 +135,7 @@ struct Algorithm
 
   static bool apply( GridType& grid, const std::string& designation, const bool verboseSolver = false )
   {
+    std::cout << "description:" << designation << " " << verboseSolver << std::endl;
     GridPartType gridPart( grid );
     DiscreteSpaceType space( gridPart );
 

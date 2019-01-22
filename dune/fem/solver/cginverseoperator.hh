@@ -67,7 +67,7 @@ namespace Dune
                                 const ParameterReader &parameter = Parameter::container() )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
-        verbose_( verbose ),
+        verbose_( verbose && Fem::Parameter::verbose() ),
         averageCommTime_( 0.0 ),
         realCount_( 0 )
 
@@ -559,8 +559,6 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
       ::solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
-
       const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
@@ -598,7 +596,7 @@ namespace Dune
         residuum = r.normSquaredDofs( );
 
         double exchangeTime = h.space().communicator().exchangeTime();
-        if( verbose )
+        if( verbose_ )
         {
           std::cout << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
           // only for parallel apps
@@ -615,7 +613,6 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
     ::solve ( const OperatorType &op, const PreconditionerType &precond, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
       const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
@@ -668,7 +665,7 @@ namespace Dune
         residuum = p.scalarProductDofs( s );//<rk,B*rk>
 
         double exchangeTime = h.space().communicator().exchangeTime();
-        if( verbose )
+        if( verbose_ )
         {
           std::cout << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
           // only for parallel apps
