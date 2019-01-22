@@ -236,6 +236,20 @@ namespace Dune
         return getEnumeration( key, *string, values );
       }
 
+      int getEnum ( const std::string &key, const std::vector<std::string> &values ) const
+      {
+        const std::string *string = parameter_( key, nullptr );
+        if( !string )
+          DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." );
+        return getEnumeration( key, *string, values );
+      }
+
+      int getEnum ( const std::string &key, const std::vector<std::string> &values, int defaultValue ) const
+      {
+        const std::string *string = parameter_( key, &values[ defaultValue ] );
+        return getEnumeration( key, *string, values );
+      }
+
     private:
       template< int n >
       static int getEnumeration ( const std::string &key, const std::string& value, const std::string (&values)[ n ] )
@@ -255,6 +269,28 @@ namespace Dune
           std::cerr << "Valid values are: ";
           for( int i = 0; i < n; ++i )
             std::cerr << values[ i ] << (i < n-1 ? ", " : "");
+          std::cerr << std::endl << std::endl;
+          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+        }
+        return j;
+      }
+      static int getEnumeration ( const std::string &key, const std::string& value, const std::vector<std::string> &values )
+      {
+        for( int i = 0; i < values.size(); ++i )
+        {
+          if( value == values[ i ] )
+            return i;
+        }
+
+        int j = -1;
+        if( !ParameterParser< int >::parse( value, j ) )
+          j = -1;
+        if( (j < 0) || (j >= values.size()) )
+        {
+          std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
+          std::cerr << "Valid values are: ";
+          for( int i = 0; i < values.size(); ++i )
+            std::cerr << values[ i ] << (i < values.size()-1 ? ", " : "");
           std::cerr << std::endl << std::endl;
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
         }
