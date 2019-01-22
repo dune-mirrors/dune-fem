@@ -3,8 +3,6 @@
 
 #include <dune/fem/io/parameter.hh>
 
-#include <dune/common/std/optional.hh>
-
 namespace Dune
 {
 
@@ -56,22 +54,24 @@ namespace Dune
 
       virtual void reset()
       {
-        verbose_ = Std::nullopt;
-        absoluteTol_ = Std::nullopt;
-        reductionTol_ = Std::nullopt;
-        maxIterations_ = Std::nullopt;
+        verbose_       = -1;
+        absoluteTol_   = -1;
+        reductionTol_  = -1;
+        maxIterations_ = -1;
       }
 
       virtual bool verbose() const
       {
-        if(!verbose_)
-          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false )?1:0;
-        return *verbose_;
+        if( verbose_ < 0 )
+        {
+          verbose_ = parameter_.getValue< bool >( keyPrefix_ + "verbose", false ) ? 1 : 0;
+        }
+        return bool(verbose_);
       }
 
       virtual void setVerbose( const bool verb )
       {
-        verbose_ = verb;
+        verbose_ = verb ? 1 : 0;
       }
 
       virtual int errorMeasure() const
@@ -91,7 +91,7 @@ namespace Dune
 
       virtual double absoluteTol ( )  const
       {
-        if(!absoluteTol_)
+        if( absoluteTol_ < 0 )
         {
           if(parameter_.exists(keyPrefix_ + "linabstol"))
           {
@@ -101,17 +101,18 @@ namespace Dune
           else
             absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
         }
-        return *absoluteTol_;
+        return absoluteTol_;
       }
 
       virtual void setAbsoluteTol ( const double eps )
       {
+        assert( eps >= 0.0 );
         absoluteTol_ = eps;
       }
 
       virtual double reductionTol (  ) const
       {
-        if(!reductionTol_)
+        if( reductionTol_ < 0 )
         {
           if(parameter_.exists(keyPrefix_ + "linreduction"))
           {
@@ -121,17 +122,18 @@ namespace Dune
           else
             reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
         }
-        return *reductionTol_;
+        return reductionTol_;
       }
 
       virtual void setReductionTol ( const double eps )
       {
+        assert( eps >= 0.0 );
         reductionTol_ = eps;
       }
 
       virtual int maxIterations () const
       {
-        if(!maxIterations_)
+        if( maxIterations_ < 0 )
         {
           if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
           {
@@ -141,11 +143,12 @@ namespace Dune
           else
             maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
         }
-        return *maxIterations_;
+        return maxIterations_;
       }
 
       virtual void  setMaxIterations ( const int maxIter )
       {
+        assert( maxIter >= 0 );
         maxIterations_ = maxIter;
       }
 
@@ -250,10 +253,10 @@ namespace Dune
       }
 
      private:
-      mutable Std::optional<int> verbose_;         // Std::optional<bool> seems broken
-      mutable Std::optional<double> absoluteTol_;
-      mutable Std::optional<double> reductionTol_;
-      mutable Std::optional<int> maxIterations_;
+      mutable int    verbose_       = -1;
+      mutable int    maxIterations_ = -1;
+      mutable double absoluteTol_   = -1.;
+      mutable double reductionTol_  = -1.;
     };
 
   }
