@@ -10,8 +10,6 @@
 #include <string>
 #include <utility>
 
-#include <dune/common/std/optional.hh>
-
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -70,50 +68,52 @@ namespace Dune
       virtual void reset ()
       {
         baseParam_->reset();
-        tolerance_ = Std::nullopt;
-        verbose_ = Std::nullopt;
-        maxIterations_ = Std::nullopt;
-        maxLinearIterations_ = Std::nullopt;
-        maxLineSearchIterations_ = Std::nullopt;
+        tolerance_ = -1;
+        verbose_ = -1;
+        maxIterations_ = -1;
+        maxLinearIterations_ = -1;
+        maxLineSearchIterations_ = -1;
       }
 
       //These methods affect the nonlinear solver
       virtual double tolerance () const
       {
-        if(!tolerance_)
+        if(tolerance_ < 0)
           tolerance_ =  parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
-        return *tolerance_;
+        return tolerance_;
       }
 
       virtual void setTolerance ( const double tol )
       {
+        assert( tol > 0 );
         tolerance_ = tol;
       }
 
       virtual bool verbose () const
       {
-        if(!verbose_)
+        if(verbose_ < 0)
         {
           const bool v = baseParam_? baseParam_->verbose() : false;
           verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v ) ? 1 : 0 ;
         }
-        return *verbose_;
+        return verbose_;
       }
 
       virtual void setVerbose( bool verb)
       {
-        verbose_ = verb;
+        verbose_ = verb ? 1 : 0;
       }
 
       virtual int maxIterations () const
       {
-        if(!maxIterations_)
+        if(maxIterations_ < 0)
           maxIterations_ =  parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
-        return *maxIterations_;
+        return maxIterations_;
       }
 
       virtual void setMaxIterations ( const int maxIter )
       {
+        assert(maxIter >= 0);
         maxIterations_ = maxIter;
       }
 
@@ -121,25 +121,27 @@ namespace Dune
       //!= max iterations of each linear solve
       virtual int maxLinearIterations () const
       {
-        if(!maxLinearIterations_)
+        if(maxLinearIterations_ < 0)
           maxLinearIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
-        return *maxLinearIterations_;
+        return maxLinearIterations_;
       }
 
       virtual void setMaxLinearIterations ( const int maxLinearIter )
       {
+        assert(maxLinearIter >=0);
         maxLinearIterations_ = maxLinearIter;
       }
 
       virtual int maxLineSearchIterations () const
       {
-        if(!maxLineSearchIterations_)
+        if(maxLineSearchIterations_ < 0)
           maxLineSearchIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
-        return *maxLineSearchIterations_;
+        return maxLineSearchIterations_;
       }
 
       virtual void setMaxLineSearchIterations ( const int maxLineSearchIter )
       {
+        assert( maxLineSearchIter >= 0);
         maxLineSearchIterations_ = maxLineSearchIter;
       }
 
@@ -220,11 +222,11 @@ namespace Dune
       }
 
     private:
-      mutable Std::optional<double> tolerance_;
-      mutable Std::optional<int> verbose_;  //Std::optional<bool> seems broken
-      mutable Std::optional<int> maxIterations_;
-      mutable Std::optional<int> maxLinearIterations_;
-      mutable Std::optional<int> maxLineSearchIterations_;
+      mutable double tolerance_ = -1;
+      mutable int verbose_ = -1;
+      mutable int maxIterations_ = -1;
+      mutable int maxLinearIterations_ = -1;
+      mutable int maxLineSearchIterations_ = -1;
     };
 
 
