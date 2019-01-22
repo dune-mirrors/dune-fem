@@ -96,11 +96,10 @@ struct NewSolverParameter
 
   virtual int krylovMethod(
             const std::vector<int> standardMethods,
-            const std::vector<std::string> additionalMethods = {},
+            const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
           ) const override
   { return SolverParameter::gmres; }
-
 };
 
 

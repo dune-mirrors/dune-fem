@@ -262,34 +262,36 @@ namespace Dune
             bicgstab  = SolverParameter::bicgstab,
             gmres     = SolverParameter::gmres,
             minres    = SolverParameter::minres,
-            bicg      = minres+1,
-            only_prec = bicg+1,
-            defaults  = only_prec+1
+            bicg      = SolverParameter::bicg,
+            preonly   = SolverParameter::preonly,
+            kspoptions  = 0
           };
 
         // if special petsc solver parameter exists use that one, otherwise
         // use krylovMethod from SolverParameter
         const auto& reader = parameter.parameter();
-        PetscSolver kspType = PetscSolver::defaults;
-        const std::string kspNames[] = { "cg" , "bicgstab", "gmres", "minres", "bicg", "preonly", "defaults" };
+        PetscSolver kspType = PetscSolver::gmres;
         if( reader.exists("petsc.kspsolver.method") )
         {
           // see PETSc docu for more types
-          kspType = static_cast< PetscSolver >( reader.getEnum("petsc.kspsolver.method", kspNames, int(PetscSolver::defaults) ) );
+          const std::string kspNames[] = { "default", "cg", "bicgstab", "gmres", "minres", "gradient", "loop", "superlu", "bicg", "preonly"  };
+          kspType = static_cast< PetscSolver >( reader.getEnum("petsc.kspsolver.method", kspNames, int(PetscSolver::gmres) ) );
+          std::cout << "WARNING: using deprecated parameter 'petsc.kpsolver.method' use "
+                    << parameter.keyPrefix() << "krylovmethod instead\n";
         }
         else
           kspType = static_cast< PetscSolver >(
-              parameter.krylovMethod({
-                SolverParameter::gmres,
-                SolverParameter::bicgstab,
-                SolverParameter::cg,
-                SolverParameter::minres,
-                SolverParameter::bicg,
-                SolverParameter::preonly
-                })
+              parameter.krylovMethod (
+                { SolverParameter::gmres,
+                  SolverParameter::bicgstab,
+                  SolverParameter::cg,
+                  SolverParameter::minres,
+                  SolverParameter::bicg,
+                  SolverParameter::preonly
+                }, { "kspoptions" } )
             );
 
-        solverName_ = kspNames[ static_cast< int >( kspType ) ];
+        solverName_ = SolverParameter::krylovMethodTable( static_cast< int >( kspType ) );
 
         //  select linear solver
         switch( kspType )
@@ -307,6 +309,8 @@ namespace Dune
               if( reader.exists("petsc.gmresrestart") )
               {
                 restart = reader.getValue<int>("petsc.gmresrestart", restart );
+                std::cout << "WARNING: using deprecated parameter 'petsc.gmresrestart' use "
+                    << parameter.keyPrefix() << "gmres.restart instead\n";
               }
               else
                 restart = parameter.gmresRestart() ;
@@ -320,10 +324,11 @@ namespace Dune
           case PetscSolver::bicg:
             ::Dune::Petsc::KSPSetType( ksp(), KSPBICG );
               break;
-          case PetscSolver::only_prec:
+          case PetscSolver::preonly:
             ::Dune::Petsc::KSPSetType( ksp(), KSPPREONLY );
               break;
-          case PetscSolver::defaults:
+          case PetscSolver::kspoptions:
+            std::cout << "using command line\n";
             // setup solver context from database/cmdline options
             ::Dune::Petsc::KSPSetFromOptions( ksp() );
             ::Dune::Petsc::KSPSetUp( ksp() );
@@ -364,7 +369,7 @@ namespace Dune
         {
           case PetscPrec::defaults:
             // don't setup the pc context twice
-            if ( kspType != PetscSolver::defaults )
+            if ( kspType != PetscSolver::kspoptions )
             {
               // setup pc context from database/cmdline options
               ::Dune::Petsc::PCSetFromOptions( pc );

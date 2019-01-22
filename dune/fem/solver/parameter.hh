@@ -155,7 +155,7 @@ namespace Dune
 
       virtual int krylovMethod(
             const std::vector<int> standardMethods,
-            const std::vector<std::string> additionalMethods = {},
+            const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
           ) const
       {
@@ -170,13 +170,23 @@ namespace Dune
         else
         {
           method = parameter_.getEnum( "krylovmethod", methodTable, defaultMethod );
-          std::cout << "Warning: using old parameter name 'krylovmethod' "
+          std::cout << "WARNING: using old parameter name 'krylovmethod' "
                     << "please switch to '" << keyPrefix_ << "krylovmethod'\n";
         }
         if (method < standardMethods.size())
           return standardMethods[method];
         else
           return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
+      }
+
+      [[ deprecated ]]
+      virtual int krylovMethod() const
+      {
+        const std::string krylovMethodTable[] = { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+        int methodType = gmres;
+        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
+          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );         else           methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
+        return methodType;
       }
 
       virtual int gmresRestart() const
