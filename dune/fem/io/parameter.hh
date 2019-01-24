@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <dune/common/visibility.hh>
 
@@ -579,6 +580,53 @@ namespace Dune
       }
     };
 
+    struct ParameterDict
+    {
+      std::string tmp_;
+      const std::string rmPrefix_;
+      std::unordered_map<std::string,std::string> dict_;
+      ParameterDict(const std::string &rmPrefix,
+                    const std::unordered_map<std::string,std::string> &dict )
+      : rmPrefix_(rmPrefix), dict_(dict) {}
+      const std::string* operator()( const std::string &key, const std::string *def )
+      {
+        // first determine if the `prefix` of the provided key corresponds
+        // to the prefix to be removed:
+        if (key.compare(0,rmPrefix_.size(),rmPrefix_) == 0)
+        {
+          // check the provided map - stripping prefix
+          assert(key.size()>rmPrefix_.size());
+          std::string reducedKey = key.substr(rmPrefix_.size(),key.size());
+          auto pos = dict_.find( reducedKey );
+          if (pos != dict_.end())
+            return &(pos->second);
+        }
+        // the key either does not have the correct prefix or it was not
+        // found in the provided map so check the global Parameter container
+        if( !Fem::Parameter::exists( key ) )
+        {
+          if( *def == Dune::Fem::checkParameterExistsString() )
+            return nullptr;  // this call was simply to check if key exists
+          return def;        // return default
+        }
+        if (def)
+          Fem::Parameter::get( key, *def, tmp_ );
+        else
+          Fem::Parameter::get( key, tmp_ );
+        return &tmp_;
+      }
+    };
+    Fem::ParameterReader parameterDict (
+        const std::string &rmPrefix,
+        const std::unordered_map<std::string,std::string> &dict )
+    {
+      return Fem::ParameterReader( ParameterDict(rmPrefix,dict) );
+    }
+    Fem::ParameterReader parameterDict (
+        const std::unordered_map<std::string,std::string> &dict )
+    {
+      return parameterDict("",dict);
+    }
   } // namespace Fem
 
 } // namespace Dune
