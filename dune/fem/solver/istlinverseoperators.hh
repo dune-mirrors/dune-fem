@@ -380,19 +380,19 @@ namespace Dune
      }
 
       //non-deprecated constructors
-      ISTLInverseOperator ( const ISTLSolverParameter & parameter = SolverParameter(Parameter::container()) )
+      ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter(Parameter::container()) )
         : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
       {}
 
       ISTLInverseOperator ( const OperatorType &op,
-                            const SolverParameter & parameter = SolverParameter() )
+                            const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : ISTLInverseOperator ( parameter )
       {
         bind( op );
       }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            const SolverParameter & parameter = SolverParameter() )
+                            const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : ISTLInverseOperator( parameter )
       {
         bind( op, preconditioner );

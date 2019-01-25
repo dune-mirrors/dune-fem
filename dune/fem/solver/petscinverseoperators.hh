@@ -210,7 +210,7 @@ namespace Dune
       : BaseType( parameter )
       {}
 
-      PetscInverseOperator (  const OperatorType &op, const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      PetscInverseOperator (  const OperatorType &op, const PetscSolverParameter &parameter = PetscSolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {
         bind( op );
