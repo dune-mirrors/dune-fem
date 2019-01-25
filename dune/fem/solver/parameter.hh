@@ -171,7 +171,7 @@ namespace Dune
           methodTable[i] = krylovMethodTable(standardMethods[i]);
         for (std::size_t i=0;i<additionalMethods.size();++i)
           methodTable[standardMethods.size()+i] = additionalMethods[i];
-        int method;
+        std::size_t method;
         if( parameter_.exists( keyPrefix_ + "krylovmethod" ) ||
            !parameter_.exists( "krylovmethod" ) )
           method = parameter_.getEnum( keyPrefix_ + "krylovmethod", methodTable, defaultMethod );
@@ -214,7 +214,7 @@ namespace Dune
           methodTable[i] = preconditionMethodTable(standardMethods[i]);
         for (std::size_t i=0;i<additionalMethods.size();++i)
           methodTable[standardMethods.size()+i] = additionalMethods[i];
-        int method = parameter_.getEnum( keyPrefix_ + "preconditioning.method", methodTable, defaultMethod );
+        std::size_t method = parameter_.getEnum( keyPrefix_ + "preconditioning.method", methodTable, defaultMethod );
         if (method < standardMethods.size())
           return standardMethods[method];
         else
