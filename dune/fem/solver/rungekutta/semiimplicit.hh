@@ -120,8 +120,8 @@ namespace DuneODE
     typedef typename BaseType::SourceTermType SourceTermType;
 
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
-    typedef typename BaseType::ParametersType                  ParametersType;
-    typedef typename BaseType::NonlinearSolverParametersType   NonlinearSolverParametersType;
+    typedef typename BaseType::ParameterType                  ParameterType;
+    typedef typename BaseType::NonlinearSolverParameterType   NonlinearSolverParameterType;
 
     /** \brief constructor
      *
@@ -135,8 +135,8 @@ namespace DuneODE
     SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
                                    TimeProviderType &timeProvider, int order,
-                                   const ParametersType& tscParams,
-                                   const NonlinearSolverParametersType& nlsParams )
+                                   const ParameterType& tscParams,
+                                   const NonlinearSolverParameterType& nlsParams )
     : BaseType( helmholtzOp,
                 defaultButcherTable( order, false ),
                 TimeStepControlType( timeProvider, tscParams ),
@@ -153,7 +153,7 @@ namespace DuneODE
                 defaultButcherTable( order, false ),
                 TimeStepControlType( timeProvider, parameter ),
                 SourceTermType( explicitOp, defaultButcherTable( order, true ), defaultButcherTable( order, false ).A() ),
-                NonlinearSolverParametersType( parameter ) )
+                NonlinearSolverParameterType( parameter ) )
     {}
 
     /** \brief constructor
@@ -167,8 +167,8 @@ namespace DuneODE
     SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
                                    TimeProviderType &timeProvider,
-                                   const ParametersType& tscParams,
-                                   const NonlinearSolverParametersType& nlsParams )
+                                   const ParameterType& tscParams,
+                                   const NonlinearSolverParameterType& nlsParams )
     : BaseType( helmholtzOp,
                 defaultButcherTable( 1, false ),
                 TimeStepControlType( timeProvider, tscParams ),
@@ -184,7 +184,7 @@ namespace DuneODE
                 defaultButcherTable( 1, false ),
                 TimeStepControlType( timeProvider, parameter ),
                 SourceTermType( explicitOp, defaultButcherTable( 1, true ), defaultButcherTable( 1, false ).A() ),
-                NonlinearSolverParametersType( parameter ) )
+                NonlinearSolverParameterType( parameter ) )
     {}
 
 
@@ -198,7 +198,7 @@ namespace DuneODE
                 implButcherTable,
                 TimeStepControlType( timeProvider, parameter ),
                 SourceTermType( explicitOp, explButcherTable, implButcherTable.A() ),
-                NonlinearSolverParametersType( parameter ) )
+                NonlinearSolverParameterType( parameter ) )
     {}
   protected:
     static SimpleButcherTable< double > defaultButcherTable ( int order, bool expl )

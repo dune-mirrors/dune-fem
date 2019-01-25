@@ -32,8 +32,8 @@ namespace DuneODE
     typedef typename BaseType::TimeStepControlType TimeStepControlType;
 
     typedef typename TimeStepControlType::TimeProviderType   TimeProviderType;
-    typedef typename BaseType::ParametersType                ParametersType;
-    typedef typename BaseType::NonlinearSolverParametersType NonlinearSolverParametersType;
+    typedef typename BaseType::ParameterType                ParameterType;
+    typedef typename BaseType::NonlinearSolverParameterType NonlinearSolverParameterType;
 
     /** \brief constructor
      *
@@ -48,8 +48,8 @@ namespace DuneODE
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
                 butcherTable,
-                TimeStepControlType( timeProvider, ParametersType( parameter ) ),
-                NonlinearSolverParametersType( parameter )
+                TimeStepControlType( timeProvider, ParameterType( parameter ) ),
+                NonlinearSolverParameterType( parameter )
               )
     {}
 
@@ -64,8 +64,8 @@ namespace DuneODE
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
                                int order,
-                               const ParametersType& tscParam,
-                               const NonlinearSolverParametersType& nlsParam )
+                               const ParameterType& tscParam,
+                               const NonlinearSolverParameterType& nlsParam )
     : BaseType( helmholtzOp,
                 defaultButcherTables( tscParam.selectedSolver( order ) ),
                 TimeStepControlType( timeProvider, tscParam ),
@@ -85,9 +85,9 @@ namespace DuneODE
                                int order,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                defaultButcherTables( ParametersType( parameter ).selectedSolver( order ) ),
-                TimeStepControlType( timeProvider, ParametersType( parameter ) ),
-                NonlinearSolverParametersType( parameter ) )
+                defaultButcherTables( ParameterType( parameter ).selectedSolver( order ) ),
+                TimeStepControlType( timeProvider, ParameterType( parameter ) ),
+                NonlinearSolverParameterType( parameter ) )
     {}
 
     /** \brief constructor
@@ -99,8 +99,8 @@ namespace DuneODE
      */
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
-                               const ParametersType& tscParam,
-                               const NonlinearSolverParametersType& nlsParam )
+                               const ParameterType& tscParam,
+                               const NonlinearSolverParameterType& nlsParam )
     : BaseType( helmholtzOp,
                 defaultButcherTables( tscParam.selectedSolver( 1 ) ),
                 TimeStepControlType( timeProvider, tscParam ),
@@ -117,9 +117,9 @@ namespace DuneODE
                                TimeProviderType &timeProvider,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                defaultButcherTables( ParametersType( parameter ).selectedSolver( 1 ) ),
-                TimeStepControlType( timeProvider, ParametersType( parameter ) ),
-                NonlinearSolverParametersType( parameter ) )
+                defaultButcherTables( ParameterType( parameter ).selectedSolver( 1 ) ),
+                TimeStepControlType( timeProvider, ParameterType( parameter ) ),
+                NonlinearSolverParameterType( parameter ) )
     {}
 
   protected:

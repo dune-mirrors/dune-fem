@@ -111,8 +111,8 @@ namespace DuneODE
     typedef TimeStepControl TimeStepControlType;
     typedef SourceTerm SourceTermType;
 
-    typedef ROWSolverParameter                           ParametersType;
-    typedef typename NonlinearSolver::ParametersType     NonlinearSolverParametersType;
+    typedef ROWSolverParameter                           ParameterType;
+    typedef typename NonlinearSolver::ParameterType     NonlinearSolverParameterType;
 
     typedef typename HelmholtzOperator::SpaceOperatorType::PreconditionOperatorType PreconditionOperatorType;
 
@@ -131,8 +131,8 @@ namespace DuneODE
                                const ButcherTable &butcherTable,
                                const TimeStepControlType &timeStepControl,
                                const SourceTermType &sourceTerm,
-                               const ParametersType& parameter,
-                               const NonlinearSolverParametersType& nlsParam )
+                               const ParameterType& parameter,
+                               const NonlinearSolverParameterType& nlsParam )
     : helmholtzOp_( helmholtzOp ),
       nonlinearSolver_( helmholtzOp_, nlsParam ),
       timeStepControl_( timeStepControl ),
@@ -162,8 +162,8 @@ namespace DuneODE
                                const TimeStepControlType &timeStepControl,
                                const SourceTermType &sourceTerm,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, timeStepControl, sourceTerm, ParametersType( parameter ),
-        NonlinearSolverParametersType( parameter ) )
+    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, timeStepControl, sourceTerm, ParameterType( parameter ),
+        NonlinearSolverParameterType( parameter ) )
     {}
 
     /** \brief constructor
@@ -177,8 +177,8 @@ namespace DuneODE
                                TimeProviderType& timeProvider,
                                const ButcherTable &butcherTable,
                                const TimeStepControlType &timeStepControl,
-                               const ParametersType& parameter,
-                               const NonlinearSolverParametersType& nlsParam )
+                               const ParameterType& parameter,
+                               const NonlinearSolverParameterType& nlsParam )
     : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, timeStepControl, SourceTermType(), parameter, nlsParam )
     {}
 
@@ -188,8 +188,8 @@ namespace DuneODE
                                const ButcherTable &butcherTable,
                                const TimeStepControlType &timeStepControl,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, timeStepControl, SourceTermType(), ParametersType( parameter ),
-        NonlinearSolverParametersType( parameter ) )
+    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, timeStepControl, SourceTermType(), ParameterType( parameter ),
+        NonlinearSolverParameterType( parameter ) )
     {}
 
     /** \brief constructor
@@ -201,8 +201,8 @@ namespace DuneODE
     BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType& timeProvider,
                                const ButcherTable &butcherTable,
-                               const ParametersType& parameter,
-                               const NonlinearSolverParametersType& nlsParam )
+                               const ParameterType& parameter,
+                               const NonlinearSolverParameterType& nlsParam )
     : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, TimeStepControlType(), SourceTermType(), parameter, nlsParam )
     {}
 
@@ -211,8 +211,8 @@ namespace DuneODE
                                TimeProviderType& timeProvider,
                                const ButcherTable &butcherTable,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, TimeStepControlType(), SourceTermType(), ParametersType( parameter ),
-        NonlinearSolverParametersType( parameter ) )
+    : BasicROWRungeKuttaSolver( helmholtzOp, timeProvider, butcherTable, TimeStepControlType(), SourceTermType(), ParameterType( parameter ),
+        NonlinearSolverParameterType( parameter ) )
     {}
 
     template< class ButcherTable >

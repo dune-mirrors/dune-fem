@@ -66,8 +66,8 @@ namespace DuneODE
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
 
-    typedef typename TimeStepControlType::ParametersType ParametersType;
-    typedef typename NonlinearSolver::ParametersType     NonlinearSolverParametersType;
+    typedef typename TimeStepControlType::ParameterType ParameterType;
+    typedef typename NonlinearSolver::ParameterType     NonlinearSolverParameterType;
 
     /** \brief constructor
      *
@@ -81,7 +81,7 @@ namespace DuneODE
                                     const ButcherTable &butcherTable,
                                     const TimeStepControlType &timeStepControl,
                                     const SourceTermType &sourceTerm,
-                                    const NonlinearSolverParametersType& parameters )
+                                    const NonlinearSolverParameterType& parameters )
     : helmholtzOp_( helmholtzOp ),
       nonlinearSolver_( helmholtzOp_, parameters ),
       timeStepControl_( timeStepControl ),
@@ -107,7 +107,7 @@ namespace DuneODE
     BasicImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                     const ButcherTable &butcherTable,
                                     const TimeStepControlType &timeStepControl,
-                                    const NonlinearSolverParametersType& parameters )
+                                    const NonlinearSolverParameterType& parameters )
     : helmholtzOp_( helmholtzOp ),
       nonlinearSolver_( helmholtzOp_, parameters ),
       timeStepControl_( timeStepControl ),
