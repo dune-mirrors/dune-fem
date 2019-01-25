@@ -57,6 +57,7 @@ struct LDLInverseOperatorTraits
   typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
 
   typedef LDLInverseOperator< DiscreteFunction >  InverseOperatorType;
+  typedef SolverParameter SolverParameterType;
 };
 
 

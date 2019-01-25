@@ -437,7 +437,9 @@ namespace Dune
         rangeMapper_( rangeSpace_.blockMapper() ),
         sequence_( -1 ),
         matrix_(),
-        preconditioning_( param.preconditionMethod() != SolverParameter::none ),
+        preconditioning_(
+            param.preconditionMethod({SolverParameter::none,SolverParameter::jacobi})
+              == SolverParameter::jacobi ),
         localMatrixStack_( *this )
       {}
 

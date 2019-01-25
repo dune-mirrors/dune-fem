@@ -388,6 +388,7 @@ namespace Dune
       typedef Fem::Solver::CGInverseOperator< DiscreteFunction > BaseType;
 
     public:
+      typedef SolverParameter SolverParameterType;
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 

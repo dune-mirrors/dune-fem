@@ -38,6 +38,7 @@ namespace Dune
       typedef DiscreteFunction SolverDiscreteFunctionType ;
 
       typedef KrylovInverseOperator< DiscreteFunction, method >  InverseOperatorType;
+      typedef SolverParameter SolverParameterType;
     };
 
 

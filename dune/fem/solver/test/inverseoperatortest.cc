@@ -26,6 +26,7 @@
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/solver/viennacl.hh>
+#include <dune/fem/solver/newtoninverseoperator.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -81,7 +82,6 @@ using RealType  = typename Dune::FieldTraits< FieldType >::real_type;
 using SpaceType         = Dune::Fem::FunctionSpace< FieldType, FieldType, dim, 1 >;
 using DiscreteSpaceType = Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder >;
 
-// Note: this class is not actually passed on to the inverseOperators!
 struct NewSolverParameter
   : public Dune::Fem::LocalParameter< Dune::Fem::SolverParameter, NewSolverParameter >
 {
@@ -99,7 +99,10 @@ struct NewSolverParameter
             const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
           ) const override
-  { return SolverParameter::gmres; }
+  {
+    // std::cout << "fixing krylov method to gmres\n";
+    return SolverParameter::gmres;
+  }
 };
 
 
@@ -126,19 +129,21 @@ struct Algorithm
   using InverseOperatorType = InverseOperator;
   using LinearOperatorType  = LinearOperator;
 
-  using DiscreteFunctionType  = typename InverseOperatorType::DomainFunctionType;
-  using MassOperatorType      = MassOperator< DiscreteFunctionType, LinearOperatorType >;
+  using DiscreteFunctionType   = typename InverseOperatorType::DomainFunctionType;
+  using MassOperatorType       = MassOperator< DiscreteFunctionType, LinearOperatorType >;
+  using AffineMassOperatorType = AffineMassOperator< DiscreteFunctionType, LinearOperatorType >;
 
   static_assert( std::is_base_of< typename InverseOperator::OperatorType, LinearOperator >::value, "type mismatch in Algorithm." );
   static_assert( std::is_same< typename InverseOperator::RangeFunctionType, DiscreteFunctionType >::value, "type mismatch in Algorithm." );
 
-  static bool apply( GridType& grid, const std::string& designation, const bool verboseSolver = false )
+  template <class SolverParam = Dune::Fem::SolverParameter>
+  static bool apply( GridType& grid, const std::string& designation, const bool verboseSolver = false,
+                     SolverParam *param = nullptr)
   {
-    std::cout << "description:" << designation << " " << verboseSolver << std::endl;
+    const double eps = 5e-6;
+
     GridPartType gridPart( grid );
     DiscreteSpaceType space( gridPart );
-
-    MassOperatorType massOperator( space );
 
     DiscreteFunctionType u( "u", space );
     DiscreteFunctionType rhs( "rhs", space );
@@ -146,31 +151,85 @@ struct Algorithm
 
     Function f;
     auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, space.order()+1 );
-    massOperator.assembleRHS( gridFunction, rhs );
+    MassOperatorType massOperator( space );
+    massOperator.assembleRHS(gridFunction, rhs);
+    AffineMassOperatorType affineMassOperator( space, gridFunction );
 
-    unsigned long maxIter = space.size();
+    unsigned long maxIter = 2*space.size();
     maxIter = space.gridPart().comm().sum( maxIter );
 
-    NewSolverParameter testSolverParam( 1e-10, maxIter, verboseSolver );
-    NewSolverParameter copyParam ( testSolverParam );
-
-    Dune::Fem::ISTLSolverParameter newParam2( copyParam );
-
-    const Dune::Fem::SolverParameter& param = newParam2;
-    InverseOperatorType inverseOperator ( param );
-    inverseOperator.bind( massOperator );
-    inverseOperator( rhs, u );
-
     auto f_ = gridFunctionAdapter( "exact", f, gridPart, polOrder+2 );
-
     Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
 
-    auto dist = l2norm.distance( f_, u );
-    bool pass = dist < 3e-5;
+    bool pass = true;
 
-    if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-      std::cout << designation << "\n" << dist << "\n" << std::endl;
+    if (param)
+    {
+      InverseOperatorType inverseOperator ( *param );
+      inverseOperator.bind( massOperator );
+      inverseOperator( rhs, u );
+      auto dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
 
+      rhs.clear();
+      Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOp( *param );
+      newtonInvOp.bind( affineMassOperator );
+      newtonInvOp( rhs, u );
+      dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+    }
+    else
+    {
+      InverseOperatorType inverseOperator;
+      inverseOperator.bind( massOperator );
+      inverseOperator( rhs, u );
+      auto dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+
+      NewSolverParameter testSolverParam( 1e-10, maxIter, verboseSolver );
+      NewSolverParameter copyParam ( testSolverParam );
+      const SolverParam& param = copyParam;
+      InverseOperatorType inverseOperatorA( param );
+      inverseOperatorA.bind( massOperator );
+      inverseOperatorA( rhs, u );
+      dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+
+      rhs.clear();
+      Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOp;
+      newtonInvOp.bind( affineMassOperator );
+      newtonInvOp( rhs, u );
+      dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+
+      Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOpA( param );
+      newtonInvOpA.bind( affineMassOperator );
+      newtonInvOpA( rhs, u );
+      dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+
+      Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType>
+        newtonInvOpB( Dune::Fem::parameterDict( "fem.solver.newton.",
+              { {"linear.krylovmethod","gmres"} } ) );
+      newtonInvOpB.bind( affineMassOperator );
+      newtonInvOpB( rhs, u );
+      dist = l2norm.distance( f_, u );
+      pass &= dist < eps;
+      if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
+        std::cout << designation << "\n" << dist << "\n" << std::endl;
+    }
     return pass;
   }
 };
@@ -238,6 +297,14 @@ int main(int argc, char** argv)
     std::string designation1(" === KrylovInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver );
 
+    designation1 = std::string(" === KrylovInverseOperator + SparseRowLinearOperator + SolverParameter === ");
+    Dune::Fem::SolverParameter param( Dune::Fem::parameterDict(
+            "fem.solver.",
+            { {"krylovmethod","cg"},
+              {"newton.linear.krylovmethod","gmres"}
+            } ));
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver, &param);
+
     using CgInverseOperator = Dune::Fem::CgInverseOperator< DiscreteFunction >;
     std::string designation2(" === CgInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< CgInverseOperator, LinearOperator >::apply( grid, designation2, verboseSolver );
@@ -251,6 +318,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
 
+#if 0 // can not be used with NewtonInvOp at the moment
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -276,6 +344,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
+#endif
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
@@ -286,6 +355,12 @@ int main(int argc, char** argv)
 
     std::string designation(" === ISTLInverseOperator + ISTLLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+
+    designation = std::string(" === ISTLInverseOperator + ISTLLinearOperator + ISTLSolverParameter === ");
+    Dune::Fem::ISTLSolverParameter param(std::string("istlparam."));
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver,
+                    &param );
+
   }
 
 
@@ -329,6 +404,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
+#if 0 // the inverse linear operator ignores all verbosity setting
   // ISTL::InverseOperator< LinearOperator > + ISTLLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
@@ -338,6 +414,7 @@ int main(int argc, char** argv)
     std::string designation(" === ISTL::InverseOperator + ISTLLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
+#endif
 
 #if HAVE_SUPERLU
   // ISTLInverseOperator< ISTLSuperLU > + ISTLLinearOperator
@@ -363,6 +440,22 @@ int main(int argc, char** argv)
 
     std::string designation(" === PetscInverseOperator + PetscLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+
+    // REMARK: note that in this version of passing in the parameters both
+    // a direct call to the inverse operator and the to the newton inverse
+    // operator will use the default prefix of the SolverParameter (i.e.  fem.solver.)
+    // In this example the prefix is set to "petsctest" (again for linear and non linear)
+    // An empty prefix leads to issues since 'krylovmethod' without prefix leads to a Warning
+    // The same issue happens if one passes  "petsctest." as first argument to parameterDict
+    designation = std::string(" === PetscInverseOperator + PetscLinearOperator + PetscParameter === ");
+    Dune::Fem::PetscSolverParameter param( "petsctest.", Dune::Fem::parameterDict(
+            "petsctest.",
+            {
+              {"preconditioning.method","hypre"},
+              {"petsc.hypre.method", "pilu-t"},
+              {"verbose","true"}
+            } ));
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
   }
 #endif // HAVE_PETSC
 

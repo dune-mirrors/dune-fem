@@ -28,6 +28,19 @@ fem.solver.absolutetol: 1e-11
 fem.solver.gmres.restart: 15
 fem.solver.maxiterations: 100
 
+# parameter for the newton solver test
+fem.solver.newton.verbose: true
+fem.solver.newton.linear.verbose: true
+fem.solver.newton.linear.krylovmethod: bicgstab  # this is fixed to gmres in the test
+fem.solver.newton.linear.reductiontol: 1e-11
+fem.solver.newton.linear.absolutetol: 1e-11
+fem.solver.newton.linear.gmres.restart: 15
+fem.solver.newton.linear.maxiterations: 100
+
+# parameter used to test istl solver passing in istl parameter
+istlparam.krylovmethod: cg
+istlparam.verbose: true
+
 # what are these for?
 fem.solver.row.maxlineariterations: 1000
 fem.solver.row.linreduction: 1e-11

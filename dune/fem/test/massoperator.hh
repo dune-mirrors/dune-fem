@@ -104,6 +104,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
       wLocal.axpy( qp, uValue );
     }
   }
+  w.communicate();
 }
 
 

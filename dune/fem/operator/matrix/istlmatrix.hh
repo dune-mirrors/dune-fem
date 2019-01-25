@@ -751,7 +751,7 @@ namespace Dune
       }
 
       //! return matrix adapter object
-      MatrixAdapterType& matrixAdapter( const SolverParameter& parameter ) const
+      MatrixAdapterType& matrixAdapter( const ISTLSolverParameter& parameter ) const
       {
         const ISTLSolverParameter* param = dynamic_cast< const ISTLSolverParameter* > (&parameter);
         if( param )

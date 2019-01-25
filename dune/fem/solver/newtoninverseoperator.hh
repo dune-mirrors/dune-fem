@@ -24,46 +24,53 @@ namespace Dune
     // NewtonParameter
     // ---------------
 
+    template <class SolverParam = SolverParameter>
     struct NewtonParameter
-      : public Dune::Fem::LocalParameter< NewtonParameter, NewtonParameter >
+      : public Dune::Fem::LocalParameter< NewtonParameter<SolverParam>, NewtonParameter<SolverParam> >
     {
       protected:
 
-      std::shared_ptr<SolverParameter> baseParam_;
+      std::shared_ptr<SolverParam> baseParam_;
       // key prefix, default is fem.solver.newton. (can be overloaded by user)
       const std::string keyPrefix_;
 
       ParameterReader parameter_;
 
     public:
-      NewtonParameter( const SolverParameter& baseParameter, const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton" )
         : baseParam_( baseParameter.clone() ),
           keyPrefix_( keyPrefix ),
-          parameter_( parameter )
+          parameter_( baseParameter.parameter() )
       {}
 
-      explicit NewtonParameter( const SolverParameter& baseParameter, const ParameterReader &parameter = Parameter::container() )
-        : baseParam_( baseParameter.clone() ),
+      template <class Parameter>
+      NewtonParameter( const Parameter& solverParameter)
+        : baseParam_( SolverParam(solverParameter).clone() ),
+          keyPrefix_( "fem.solver.newton." ),
+          parameter_( solverParameter.parameter() )
+      {}
+
+      NewtonParameter( const ParameterReader &parameter )
+        : baseParam_( std::make_shared<SolverParam>("fem.solver.newton.linear.", parameter) ),
           keyPrefix_( "fem.solver.newton." ),
           parameter_( parameter )
       {}
 
-      NewtonParameter( const ParameterReader &parameter = Parameter::container() )
-        : baseParam_( std::make_shared<SolverParameter>("fem.solver.newton.linear.", parameter) ),
+      NewtonParameter( const ParameterContainer &parameter = Parameter::container() )
+        : baseParam_( std::make_shared<SolverParam>("fem.solver.newton.linear.", parameter) ),
           keyPrefix_( "fem.solver.newton." ),
           parameter_( parameter )
       {}
 
       NewtonParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
-        : baseParam_( std::make_shared<SolverParameter>(keyPrefix + "linear.", parameter) ),
+        : baseParam_( std::make_shared<SolverParam>(keyPrefix + "linear.", parameter) ),
           keyPrefix_( keyPrefix ),
           parameter_( parameter )
       {}
 
       const ParameterReader &parameter () const { return parameter_; }
-      const SolverParameter& solverParameter () const { return *baseParam_; }
-
-      const SolverParameter& linear () const { return *baseParam_; }
+      const SolverParam& solverParameter () const { return *baseParam_; }
+      const SolverParam& linear () const { return *baseParam_; }
 
       virtual void reset ()
       {
@@ -93,7 +100,11 @@ namespace Dune
       {
         if(verbose_ < 0)
         {
-          const bool v = baseParam_? baseParam_->verbose() : false;
+          // the following causes problems with different default values
+          // used if baseParam_->keyPrefix is not default but the default is
+          // also used in the program
+          // const bool v = baseParam_? baseParam_->verbose() : false;
+          const bool v = false;
           verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v ) ? 1 : 0 ;
         }
         return verbose_;
@@ -283,7 +294,7 @@ namespace Dune
 
       typedef typename BaseType::DomainFieldType DomainFieldType;
 
-      typedef NewtonParameter ParametersType;
+      typedef NewtonParameter<typename LinearInverseOperatorType::SolverParameterType> ParameterType;
 
       typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
 
@@ -295,13 +306,15 @@ namespace Dune
        *        <b>fem.solver.newton.tolerance</b>
        */
 
-      NewtonInverseOperator ( LinearInverseOperatorType jInv, const NewtonParameter &parameter )
+      [[ deprecated ]]
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const ParameterType &parameter )
         : NewtonInverseOperator( std::move( jInv ), parameter.tolerance(), parameter )
       {}
 
+      [[ deprecated ]]
       explicit NewtonInverseOperator ( LinearInverseOperatorType jInv,
-                                       const ParameterReader &parameter = Parameter::container() )
-        : NewtonInverseOperator( std::move( jInv ), ParametersType( parameter ) )
+                                       const ParameterReader &parameter ) // = Parameter::container() )
+        : NewtonInverseOperator( std::move( jInv ), ParameterType( parameter ) )
       {}
 
       /** constructor
@@ -313,8 +326,8 @@ namespace Dune
        *        <b>fem.solver.newton.tolerance</b>
        */
 
-      NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const NewtonParameter &parameter )
-        : verbose_( parameter.verbose() && MPIManager::rank () == 0 ),
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const ParameterType &parameter )
+        : verbose_( parameter.verbose() && Parameter::verbose() ),
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
@@ -322,9 +335,10 @@ namespace Dune
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } )
       {}
 
+      [[ deprecated ]]
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon,
                               const ParameterReader &parameter = Parameter::container() )
-        : NewtonInverseOperator( std::move( jInv ), epsilon, ParametersType( parameter ) )
+        : NewtonInverseOperator( std::move( jInv ), epsilon, ParameterType( parameter ) )
       {}
 
 
@@ -333,27 +347,32 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      explicit NewtonInverseOperator ( const NewtonParameter &parameter )
+      /*
+      explicit NewtonInverseOperator ( const ParameterType &parameter )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
       {}
+      */
 
-      explicit NewtonInverseOperator ( const ParameterReader &parameter = Parameter::container() )
-        : NewtonInverseOperator( ParametersType( parameter ) )
-      {}
+      explicit NewtonInverseOperator ( const ParameterType &parameter = Parameter::container() )
+        : NewtonInverseOperator( parameter.tolerance(), parameter )
+      {
+        // std::cout << "in Newton inv op should use:" << parameter.linear().krylovMethod({SolverParameter::gmres,SolverParameter::bicgstab,SolverParameter::minres}) << std::endl;
+      }
 
       /** constructor
        *
        *  \param[in]  epsilon  tolerance for norm of residual
        */
-      NewtonInverseOperator ( const DomainFieldType &epsilon, const NewtonParameter &parameter )
+      NewtonInverseOperator ( const DomainFieldType &epsilon, const ParameterType &parameter )
         : NewtonInverseOperator(
             LinearInverseOperatorType( parameter.linear() ),
             epsilon, parameter )
       {}
 
+      [[ deprecated ]]
       NewtonInverseOperator ( const DomainFieldType &epsilon,
                               const ParameterReader &parameter = Parameter::container() )
-        : NewtonInverseOperator( epsilon, ParametersType( parameter ) )
+        : NewtonInverseOperator( epsilon, ParameterType( parameter ) )
       {}
 
 
@@ -365,13 +384,14 @@ namespace Dune
        *        <b>fem.solver.newton.tolerance</b>
        */
 
-
-      NewtonInverseOperator ( const OperatorType &op, const NewtonParameter &parameter )
+      [[ deprecated ]]
+      NewtonInverseOperator ( const OperatorType &op, const ParameterType &parameter )
         : NewtonInverseOperator( parameter )
       {
         bind( op );
       }
 
+      [[ deprecated ]]
       explicit NewtonInverseOperator ( const OperatorType &op,
                                        const ParameterReader &parameter = Parameter::container() )
         : NewtonInverseOperator( parameter )
@@ -385,13 +405,15 @@ namespace Dune
        *  \param[in]  epsilon  tolerance for norm of residual
        */
 
+      [[ deprecated ]]
       NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
-                              const NewtonParameter &parameter )
+                              const ParameterType &parameter )
         : NewtonInverseOperator( epsilon, parameter )
       {
         bind( op );
       }
 
+      [[ deprecated ]]
       NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
                               const ParameterReader &parameter = Parameter::container() )
         : NewtonInverseOperator( epsilon, parameter )
@@ -436,7 +458,7 @@ namespace Dune
       {
         double deltaOld = delta_;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
-        if (lsMethod_ == NewtonParameter::LineSearchMethod::none)
+        if (lsMethod_ == ParameterType::LineSearchMethod::none)
           return 0;
         if (failed() == NewtonFailure::InvalidResidual)
         {
@@ -493,9 +515,9 @@ namespace Dune
       mutable int linearIterations_;
       mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
-      NewtonParameter parameter_;
+      ParameterType parameter_;
       mutable int stepCompleted_;
-      NewtonParameter::LineSearchMethod lsMethod_;
+      typename ParameterType::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
     };
 

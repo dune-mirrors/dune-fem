@@ -37,20 +37,27 @@ namespace Dune
         return methods[i-1]; // starting to count from 1,...
       }
 
-      static const int none         = 0 ; // no preconditioner
-      static const int ssor         = 1 ; // SSOR preconditioner
-      static const int sor          = 2 ; // SOR preconditioner
-      static const int ilu          = 3 ; // ILU preconditioner
-      static const int gauss_seidel = 4 ; // Gauss-Seidel preconditioner
-      static const int jacobi       = 5 ; // Jacobi preconditioner
-      static const int amg_ilu      = 6 ; // AMG with ILU-0 smoother (deprecated)
-      static const int amg_jacobi   = 7 ; // AMG with Jacobi smoother
-      static const int ildl         = 8 ; // ILDL from istl
+      static const int none         = 1 ; // no preconditioner
+      static const int ssor         = 2 ; // SSOR preconditioner
+      static const int sor          = 3 ; // SOR preconditioner
+      static const int ilu          = 4 ; // ILU preconditioner
+      static const int gauss_seidel = 5 ; // Gauss-Seidel preconditioner
+      static const int jacobi       = 6 ; // Jacobi preconditioner
+      static const int amg_ilu      = 7 ; // AMG with ILU-0 smoother (deprecated)
+      static const int amg_jacobi   = 8 ; // AMG with Jacobi smoother
+      static const int ildl         = 9 ; // ILDL from istl
+      static const int oas          = 10; // Overlapping Additive Schwarz
+      static const int icc          = 11; // Incomplete Cholesky factorization
+      static const std::string preconditionMethodTable(int i)
+      {
+        static const std::string methods[]
+          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl", "oas", "icc" };
+        return methods[i-1]; // starting to count from 1,...
+      }
 
       explicit SolverParameter ( const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( "fem.solver." ), parameter_( parameter )
-      {
-      }
+      {}
 
       explicit SolverParameter ( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( keyPrefix ), parameter_( parameter )
@@ -121,7 +128,7 @@ namespace Dune
             reductionTol_ =  parameter_.getValue< double >(keyPrefix_ + "linreduction");
           }
           else
-            reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-2 );
+            reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-8 );
         }
         return reductionTol_;
       }
@@ -165,7 +172,8 @@ namespace Dune
         for (std::size_t i=0;i<additionalMethods.size();++i)
           methodTable[standardMethods.size()+i] = additionalMethods[i];
         int method;
-        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
+        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) ||
+           !parameter_.exists( "krylovmethod" ) )
           method = parameter_.getEnum( keyPrefix_ + "krylovmethod", methodTable, defaultMethod );
         else
         {
@@ -195,18 +203,30 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "gmres.restart", defaultRestart );
       }
 
+      virtual int preconditionMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> &additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
+      {
+        std::vector<std::string> methodTable(standardMethods.size()+additionalMethods.size());
+        for (std::size_t i=0;i<standardMethods.size();++i)
+          methodTable[i] = preconditionMethodTable(standardMethods[i]);
+        for (std::size_t i=0;i<additionalMethods.size();++i)
+          methodTable[standardMethods.size()+i] = additionalMethods[i];
+        int method = parameter_.getEnum( keyPrefix_ + "preconditioning.method", methodTable, defaultMethod );
+        if (method < standardMethods.size())
+          return standardMethods[method];
+        else
+          return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
+      }
+
+      [[ deprecated ]]
       virtual int preconditionMethod () const
       {
         static const std::string preConTable[]
           = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
         return parameter_.getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
-      }
-
-      virtual void setPreconditionMethod ( const int precMethod )
-      {
-        static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
-        Parameter::append(  keyPrefix_ + "preconditioning.method", preConTable[precMethod], true );
       }
 
       virtual double relaxation () const

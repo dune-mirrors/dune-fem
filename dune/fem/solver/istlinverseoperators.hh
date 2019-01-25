@@ -91,7 +91,7 @@ namespace Dune
     template< class BlockVector >
     struct ISTLSolverReduction
     {
-      ISTLSolverReduction ( std::shared_ptr< SolverParameter > parameter )
+      ISTLSolverReduction ( std::shared_ptr< ISTLSolverParameter > parameter )
         : parameter_(  parameter )
       {}
 
@@ -112,7 +112,7 @@ namespace Dune
       }
 
     private:
-      std::shared_ptr<SolverParameter> parameter_;
+      std::shared_ptr<ISTLSolverParameter> parameter_;
     };
 
     template< int method,
@@ -125,7 +125,7 @@ namespace Dune
       typedef X domain_type;
       typedef X range_type;
 
-      ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<SolverParameter> parameter )
+      ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
           method_( method < 0 ?
               parameter->krylovMethod({ SolverParameter::gmres,
@@ -145,6 +145,7 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
+        assert( parameter_->isISTLSolverParameter() );
         const int verbosity = (Dune::Fem::Parameter::verbose() && parameter_->verbose()) ? 2 : 0;
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
@@ -201,7 +202,7 @@ namespace Dune
       void setMaxLinearIterations( unsigned int maxIterations ) { parameter_->setMaxIterations(maxIterations); }
       void setMaxIterations( unsigned int maxIterations ) { parameter_->setMaxIterations(maxIterations); }
 
-      std::shared_ptr<SolverParameter> parameter () const { return parameter_; }
+      std::shared_ptr<ISTLSolverParameter> parameter () const { return parameter_; }
 
     protected:
       template< class ImprovedMatrix >
@@ -230,7 +231,7 @@ namespace Dune
       ReductionType reduction_;
       const int method_;
 
-      std::shared_ptr<SolverParameter> parameter_;
+      std::shared_ptr<ISTLSolverParameter> parameter_;
     };
 
 
@@ -253,6 +254,7 @@ namespace Dune
       typedef ISTLBlockVectorDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType ;
 
       typedef ISTLInverseOperator< DiscreteFunction, method, Preconditioner >  InverseOperatorType;
+      typedef ISTLSolverParameter SolverParameterType;
     };
 
     template< class DiscreteFunction, int method, class Preconditioner >
@@ -378,7 +380,7 @@ namespace Dune
      }
 
       //non-deprecated constructors
-      ISTLInverseOperator ( const SolverParameter & parameter = SolverParameter(Parameter::container()) )
+      ISTLInverseOperator ( const ISTLSolverParameter & parameter = SolverParameter(Parameter::container()) )
         : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
       {}
 

@@ -40,22 +40,84 @@ namespace Dune
   namespace Fem
   {
 
-    struct PetscSolverParameter : public LocalParameter< SolverParameter, PetscSolverParameter >
+    struct PetscSolverParameter : public LocalParameter< PetscSolverParameter, PetscSolverParameter >
     {
-      typedef LocalParameter< SolverParameter, PetscSolverParameter > BaseType;
+      typedef LocalParameter< PetscSolverParameter, PetscSolverParameter >  BaseType;
+    protected:
+      std::shared_ptr<SolverParameter> solverParameter_;
+      SolverParameter& solverParameter() { return *solverParameter_; }
+      const SolverParameter& solverParameter() const { return *solverParameter_; }
 
-      PetscSolverParameter( const std::string keyPrefix = "petscmatrix." )
-        : BaseType( keyPrefix )
+    public:
+      PetscSolverParameter( const ParameterContainer &parameter = Parameter::container() )
+        : solverParameter_( std::make_shared<SolverParameter>(parameter) )
       {}
 
+      PetscSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : solverParameter_( std::make_shared<SolverParameter>(keyPrefix, parameter) )
+      {}
+
+      template <class Parameter>
+      PetscSolverParameter( const Parameter &other )
+        : solverParameter_( other.clone() )
+      { }
+
+      bool isPetscSolverParameter() const { return true; }
+
+      static const int boomeramg = 0;
+      static const int parasails = 1;
+      static const int pilut = 2;
+      int hypreMethod() const
+      {
+        const std::string hyprePCNames[] = { "boomer-amg", "parasails", "pilu-t" };
+        int hypreType = 0;
+        if (parameter().exists("petsc.preconditioning.method"))
+        {
+          hypreType = parameter().getEnum( "petsc.preconditioning.hypre.method", hyprePCNames, 0 );
+          std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.hypre.method' use "
+              << keyPrefix() << "preconditioning.hypre.method instead\n";
+        }
+        else
+          hypreType = parameter().getEnum( keyPrefix()+"petsc.hypre.method", hyprePCNames, 0 );
+        return hypreType;
+      }
       bool viennaCL () const {
-        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "viennacl", false );
+        return parameter().getValue< bool > ( keyPrefix() + "petsc.viennacl", false );
+      }
+      bool blockedMode () const {
+        return parameter().getValue< bool > ( keyPrefix() + "petsc.blockedmode", true );
       }
 
-      bool blockedMode () const {
-        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", true );
-      }
+      const std::string keyPrefix() const { return solverParameter().keyPrefix(); }
+      const ParameterReader& parameter() const { return solverParameter().parameter(); }
+      virtual void reset() { solverParameter().reset(); }
+      virtual bool verbose() const { return solverParameter().verbose(); }
+      virtual void setVerbose( const bool verb ) { solverParameter().setVerbose(verb); }
+      virtual int errorMeasure() const { return solverParameter().errorMeasure(); }
+      virtual double absoluteTol ( ) const { return solverParameter().absoluteTol(); }
+      virtual void setAbsoluteTol ( const double eps ) { solverParameter().setAbsoluteTol(eps); }
+      virtual double reductionTol ( ) const { return solverParameter().reductionTol(); }
+      virtual void setReductionTol ( const double eps ) { return solverParameter().setReductionTol(eps); }
+      virtual int maxIterations () const { return solverParameter().maxIterations(); }
+      virtual void setMaxIterations ( const int maxIter ) { solverParameter().setMaxIterations(maxIter); }
+      virtual int krylovMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> &additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
+      { return solverParameter().krylovMethod( standardMethods, additionalMethods, defaultMethod ); }
+      virtual int gmresRestart() const { return solverParameter().gmresRestart(); }
+      virtual int preconditionMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> &additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
+      { return solverParameter().preconditionMethod( standardMethods, additionalMethods, defaultMethod ); }
+      virtual double relaxation () const { return solverParameter().relaxation(); }
+      virtual int preconditionerIteration () const { return solverParameter().preconditionerIteration(); }
     };
+
+
 
     /* ========================================
      * class PetscLinearOperator

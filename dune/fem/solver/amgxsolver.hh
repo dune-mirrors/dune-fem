@@ -85,6 +85,8 @@ namespace Dune
       typedef Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
 
       typedef AMGXInverseOperator< DiscreteFunction >  InverseOperatorType;
+
+      typedef ISTLSolverParameter SolverParameterType;
     };
 
 

@@ -50,6 +50,7 @@ namespace Dune
       typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
 
       typedef ViennaCLInverseOperator< DiscreteFunction, method >  InverseOperatorType;
+      typedef SolverParameter SolverParameterType;
     };
 
 

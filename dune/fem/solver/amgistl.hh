@@ -468,6 +468,8 @@ namespace Dune
 
         typedef typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type RealType;
 
+        typedef SolverParameter SolverParameterType;
+
       private:
         typedef VectorType< DiscreteFunctionType > vector_type;
         typedef MatrixType< LinearOperatorType > matrix_type;

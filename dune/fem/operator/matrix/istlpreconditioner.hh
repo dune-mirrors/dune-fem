@@ -34,35 +34,67 @@ namespace Dune
     template <class MatrixImp>
     class DGParallelMatrixAdapter;
 
-    struct ISTLSolverParameter : public LocalParameter< SolverParameter, ISTLSolverParameter >
+    struct ISTLSolverParameter : public LocalParameter< ISTLSolverParameter, ISTLSolverParameter >
     {
-      typedef LocalParameter< SolverParameter, ISTLSolverParameter >  BaseType;
+      typedef LocalParameter< ISTLSolverParameter, ISTLSolverParameter >  BaseType;
     protected:
-      using SolverParameter :: keyPrefix_;
-      using SolverParameter :: parameter_ ;
+      std::shared_ptr<SolverParameter> solverParameter_;
+      SolverParameter& solverParameter() { return *solverParameter_; }
+      const SolverParameter& solverParameter() const { return *solverParameter_; }
 
     public:
       ISTLSolverParameter( const ParameterReader &parameter = Parameter::container() )
-        : BaseType( parameter )
+        : solverParameter_( std::make_shared<SolverParameter>(parameter) )
       {}
 
-      ISTLSolverParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
-        : BaseType( keyPrefix, parameter )
+      ISTLSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : solverParameter_( std::make_shared<SolverParameter>(keyPrefix, parameter) )
       {}
 
-      ISTLSolverParameter( const SolverParameter& other )
-        : BaseType( other.keyPrefix(), other.parameter() )
-      {}
+      template <class Parameter>
+      ISTLSolverParameter( const Parameter &other )
+        : solverParameter_( other.clone() )
+      { }
+
+      bool isISTLSolverParameter() const { return true; }
 
       virtual double overflowFraction () const
       {
-        return parameter_.getValue< double >( keyPrefix_ + "matrix.overflowfraction", 1.0 );
+        return solverParameter().parameter().getValue< double >( keyPrefix() + "matrix.overflowfraction", 1.0 );
       }
 
       virtual bool fastILUStorage () const
       {
-        return parameter_.getValue< bool >( keyPrefix_ + "preconditioning.fastilustorage", true );
+        return solverParameter().parameter().getValue< bool >( keyPrefix() + "preconditioning.fastilustorage", true );
       }
+
+      const std::string keyPrefix() const { return solverParameter().keyPrefix(); }
+      const ParameterReader& parameter() const { return solverParameter().parameter(); }
+      virtual void reset() { solverParameter().reset(); }
+      virtual bool verbose() const { return solverParameter().verbose(); }
+      virtual void setVerbose( const bool verb ) { solverParameter().setVerbose(verb); }
+      virtual int errorMeasure() const { return solverParameter().errorMeasure(); }
+      virtual double absoluteTol ( ) const { return solverParameter().absoluteTol(); }
+      virtual void setAbsoluteTol ( const double eps ) { solverParameter().setAbsoluteTol(eps); }
+      virtual double reductionTol ( ) const { return solverParameter().reductionTol(); }
+      virtual void setReductionTol ( const double eps ) { return solverParameter().setReductionTol(eps); }
+      virtual int maxIterations () const { return solverParameter().maxIterations(); }
+      virtual void setMaxIterations ( const int maxIter ) { solverParameter().setMaxIterations(maxIter); }
+      virtual int krylovMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> &additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
+      { return solverParameter().krylovMethod( standardMethods, additionalMethods, defaultMethod ); }
+      virtual int gmresRestart() const { return solverParameter().gmresRestart(); }
+      virtual int preconditionMethod(
+            const std::vector<int> standardMethods,
+            const std::vector<std::string> &additionalMethods = {},
+            int defaultMethod = 0   // this is the first method passed in
+          ) const
+      { return solverParameter().preconditionMethod( standardMethods, additionalMethods, defaultMethod ); }
+      virtual double relaxation () const { return solverParameter().relaxation(); }
+      virtual int preconditionerIteration () const { return solverParameter().preconditionerIteration(); }
     };
 
 #if HAVE_DUNE_ISTL
@@ -401,7 +433,7 @@ namespace Dune
       //! return matrix adapter object that works with ISTL linear solvers
       static std::unique_ptr< MatrixAdapterInterfaceType >
       matrixAdapter( const MatrixObjectType& matrixObj,
-                     const SolverParameter& param)
+                     const ISTLSolverParameter& param)
       {
         std::unique_ptr< MatrixAdapterInterfaceType > ptr;
         if( matrixObj.domainSpace().continuous() )
@@ -422,7 +454,7 @@ namespace Dune
       static MatrixAdapterType*
       matrixAdapterObject( const MatrixObjectType& matrixObj,
                            const MatrixAdapterType*,
-                           const SolverParameter& param )
+                           const ISTLSolverParameter& param )
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         return new MatrixAdapterType( matrixObj.matrix(),
@@ -438,17 +470,6 @@ namespace Dune
     class ISTLMatrixAdapterFactory< MatrixObject< Space, Space, DomainBlock, RangeBlock > >
     {
     public:
-      enum ISTLPreConder_Id { none         = SolverParameter::none,        // no preconditioner
-                              ssor         = SolverParameter::ssor,        // SSOR preconditioner
-                              sor          = SolverParameter::sor ,        // SOR preconditioner
-                              ilu          = SolverParameter::ilu ,        // ILU preconditioner (deprecated)
-                              gauss_seidel = SolverParameter::gauss_seidel,// Gauss-Seidel preconditioner
-                              jacobi       = SolverParameter::jacobi,      // Jacobi preconditioner
-                              amg_ilu      = SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
-                              amg_jacobi   = SolverParameter::jacobi,      // AMG with Jacobi smoother
-                              ildl         = SolverParameter::ildl        // ILDL from istl
-      };
-
       typedef Space       DomainSpaceType ;
       typedef Space       RangeSpaceType;
 
@@ -494,7 +515,17 @@ namespace Dune
                            const MatrixAdapterType*,
                            const ISTLSolverParameter& param )
       {
-        ISTLPreConder_Id preconditioning = (ISTLPreConder_Id)param.preconditionMethod() ;
+        int preconditioning = param.preconditionMethod(
+                  { SolverParameter::none,        // no preconditioner
+                    SolverParameter::ssor,        // SSOR preconditioner
+                    SolverParameter::sor ,        // SOR preconditioner
+                    SolverParameter::ilu ,        // ILU preconditioner (deprecated)
+                    SolverParameter::gauss_seidel,// Gauss-Seidel preconditioner
+                    SolverParameter::jacobi,      // Jacobi preconditioner
+                    SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
+                    SolverParameter::jacobi,      // AMG with Jacobi smoother
+                    SolverParameter::ildl         // ILDL from istl
+                  } );
         const double relaxFactor         = param.relaxation();
         const size_t numIterations       = param.preconditionerIteration();
 
@@ -511,12 +542,12 @@ namespace Dune
         typedef typename MatrixObjectType :: ColumnBlockVectorType   ColumnBlockVectorType;
 
         // no preconditioner
-        if( preconditioning == none )
+        if( preconditioning == SolverParameter::none )
         {
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, PreConType() );
         }
         // SSOR
-        else if( preconditioning == ssor )
+        else if( preconditioning == SolverParameter::ssor )
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
@@ -527,7 +558,7 @@ namespace Dune
                                       matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
         // SOR
-        else if(preconditioning == sor )
+        else if(preconditioning == SolverParameter::sor )
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
@@ -538,7 +569,7 @@ namespace Dune
                                       matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
         // ILU
-        else if(preconditioning == ilu)
+        else if(preconditioning == SolverParameter::ilu)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILU not working in parallel computations");
@@ -549,7 +580,7 @@ namespace Dune
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Gauss-Seidel
-        else if(preconditioning == gauss_seidel)
+        else if(preconditioning == SolverParameter::gauss_seidel)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
@@ -560,7 +591,7 @@ namespace Dune
                                       matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
         // Jacobi
-        else if(preconditioning == jacobi)
+        else if(preconditioning == SolverParameter::jacobi)
         {
           if( numIterations == 1 ) // diagonal preconditioning
           {
@@ -582,7 +613,7 @@ namespace Dune
           }
         }
         // AMG ILU-0
-        else if(preconditioning == amg_ilu)
+        else if(preconditioning == SolverParameter::amg_ilu)
         {
           // use original SeqILU because of some AMG traits classes.
           typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
@@ -591,7 +622,7 @@ namespace Dune
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
         // AMG Jacobi
-        else if(preconditioning == amg_jacobi)
+        else if(preconditioning == SolverParameter::amg_jacobi)
         {
           typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
@@ -599,7 +630,7 @@ namespace Dune
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
         // ILDL
-        else if(preconditioning == ildl)
+        else if(preconditioning == SolverParameter::ildl)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILDL not working in parallel computations");
@@ -638,7 +669,7 @@ namespace Dune
       //! return matrix adapter object that works with ISTL linear solvers
       static std::unique_ptr< MatrixAdapterInterfaceType >
       matrixAdapter( const MatrixObjectType& matrixObj,
-                     const SolverParameter& param)
+                     const ISTLSolverParameter& param)
       {
         const ISTLSolverParameter* parameter = dynamic_cast< const ISTLSolverParameter* > (&param);
         std::unique_ptr< ISTLSolverParameter > paramPtr;

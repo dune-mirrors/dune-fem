@@ -30,9 +30,10 @@ namespace Dune {
       typedef typename Traits :: OperatorType                 OperatorType;
       typedef typename Traits :: AssembledOperatorType        AssembledOperatorType;
       typedef typename Traits :: PreconditionerType           PreconditionerType;
+      typedef typename Traits :: SolverParameterType          SolverParameterType;
 
-      InverseOperatorInterface( const SolverParameter& parameter = SolverParameter(Parameter::container() ) )
-        : parameter_( std::make_shared< SolverParameter >( parameter ) )
+      InverseOperatorInterface( const SolverParameterType& parameter = SolverParameterType(Parameter::container() ) )
+        : parameter_( std::make_shared< SolverParameterType >( parameter ) )
       {}
 
       //! application of operator, i.e. solution of inverse operator with given right hand side and initial guess
@@ -101,13 +102,13 @@ namespace Dune {
         parameter_->setMaxIterations( iter );
       }
 
-      void setParameters( const SolverParameter& newParams)
+      void setParameters( const SolverParameterType& newParams)
       {
-        std::shared_ptr< SolverParameter > sharedNewParams = std::make_shared< SolverParameter > (newParams);
+        std::shared_ptr< SolverParameterType > sharedNewParams = std::make_shared< SolverParameterType > (newParams);
         parameter_.swap( sharedNewParams );
       }
 
-      SolverParameter& parameter () const
+      SolverParameterType& parameter () const
       {
         return *parameter_;
       }
@@ -119,7 +120,7 @@ namespace Dune {
       }
 
     protected:
-      std::shared_ptr<SolverParameter> parameter_;
+      std::shared_ptr<SolverParameterType> parameter_;
 
       const OperatorType*                   operator_ = nullptr;
       const AssembledOperatorType* assembledOperator_ = nullptr;

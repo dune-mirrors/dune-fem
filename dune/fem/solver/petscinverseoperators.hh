@@ -45,11 +45,14 @@ namespace Dune
       typedef PetscDiscreteFunction< SpaceType >   SolverDiscreteFunctionType;
       typedef PetscLinearOperator< DF, DF >        AssembledOperatorType;
       typedef PetscInverseOperator< DF, Op >       InverseOperatorType;
+      typedef PetscSolverParameter                 SolverParameterType;
     };
+
 
     /** \brief PETSc KSP solver context for PETSc Mat and PETSc Vec */
     template< class DF, class Op >
-    class PetscInverseOperator : public InverseOperatorInterface< PetscInverseOperatorTraits< DF, Op > >
+    class PetscInverseOperator
+    : public InverseOperatorInterface< PetscInverseOperatorTraits< DF, Op > >
     {
     protected:
       // monitor function for PETSc solvers
@@ -203,7 +206,7 @@ namespace Dune
       }
 
       //non-deprecated constructors
-      PetscInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      PetscInverseOperator ( const PetscSolverParameter &parameter = PetscSolverParameter(Parameter::container()) )
       : BaseType( parameter )
       {}
 
@@ -232,7 +235,7 @@ namespace Dune
       }
 
     protected:
-      void initialize ( const SolverParameter& parameter )
+      void initialize ( const PetscSolverParameter& parameter )
       {
         if( !assembledOperator_ )
           DUNE_THROW(NotImplemented,"Petsc solver with matrix free implementations not yet supported!");
@@ -304,7 +307,7 @@ namespace Dune
             break;
           case PetscSolver::bicgstab:
             ::Dune::Petsc::KSPSetType( ksp(), KSPBCGS );
-              break;
+            break;
           case PetscSolver::gmres:
             {
               ::Dune::Petsc::KSPSetType( ksp(), KSPGMRES );
@@ -331,7 +334,6 @@ namespace Dune
             ::Dune::Petsc::KSPSetType( ksp(), KSPPREONLY );
               break;
           case PetscSolver::kspoptions:
-            std::cout << "using command line\n";
             // setup solver context from database/cmdline options
             ::Dune::Petsc::KSPSetFromOptions( ksp() );
             ::Dune::Petsc::KSPSetUp( ksp() );
@@ -344,25 +346,34 @@ namespace Dune
         //  preconditioning
         /////////////////////////////////////////////
 
-        enum class PetscPrec {
-            defaults  = 0,
-            none      = 1,   // no preconditioning
-             // parallel preconditioners
-            oas       = 2,   // Overlapping Additive Schwarz
-            sor       = 3,   // SOR and SSOR
-            jacobi    = 4,   // Jacobi preconditioning
-             // requiring additional packages
-            hypre     = 5,   // Hypre preconditioning
-            ml        = 6,   // ML preconditioner (from Trilinos)
-            // serial preconditioners
-            ilu       = 7,   // ILU preconditioning
-            icc       = 8,   // Incomplete Cholesky factorization
-            // direct solvers
-            lu        = 9,   // LU factorization
-          };
-
-        const std::string pcNames[] = { "default", "none", "asm", "sor", "jacobi", "hypre", "ml", "ilu", "icc", "lu" };
-        PetscPrec pcType = static_cast< PetscPrec >( reader.getEnum("petsc.preconditioning.method", pcNames, int(PetscPrec::defaults) ) );
+        int pcType = SolverParameter::none;
+        if( reader.exists("petsc.preconditioning.method") )
+        {
+          const std::string pcNames[] = { "default", "none", "asm", "sor", "jacobi", "ilu", "icc", "superlu", "hypre", "ml", "lu" };
+          pcType = reader.getEnum("petsc.preconditioning.method", pcNames, 0 );
+          std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.method' use "
+                    << parameter.keyPrefix() << "preconditioning.method instead\n";
+          if (pcType >= 8)
+            pcType = 7-pcType;  // hypre=-1, ml=-2, lu=-3
+        }
+        else
+        {
+          pcType = parameter.preconditionMethod(
+                {
+                  SolverParameter::none,   // no preconditioning
+                  SolverParameter::oas,    // Overlapping Additive Schwarz
+                  SolverParameter::sor,    // SOR and SSOR
+                  SolverParameter::jacobi, // Jacobi preconditioning
+                  SolverParameter::ilu,    // ILU preconditioning
+                  SolverParameter::icc,    // Incomplete Cholesky factorization
+                  SolverParameter::superlu // SuperLU direct factorization
+                 },
+                 {"kspoptions", // =  0,   // use command line options -ksp...
+                  "hypre",      // = -1,   // Hypre preconditioning
+                  "ml",         // = -2,   // ML preconditioner (from Trilinos)
+                  "lu",         // = -3,   // LU factorization
+                 });
+        }
 
         // setup preconditioning context
         PC pc;
@@ -370,7 +381,7 @@ namespace Dune
 
         switch( pcType )
         {
-          case PetscPrec::defaults:
+          case 0:
             // don't setup the pc context twice
             if ( kspType != PetscSolver::kspoptions )
             {
@@ -379,39 +390,31 @@ namespace Dune
               ::Dune::Petsc::PCSetUp( pc );
             }
             break;
-          case PetscPrec::none:
+          case SolverParameter::none:
             ::Dune::Petsc::PCSetType( pc, PCNONE );
             break;
-          case PetscPrec::oas:
+          case SolverParameter::oas:
             {
               ::Dune::Petsc::PCSetType( pc, PCASM );
               ::Dune::Petsc::PCSetUp( pc );
               break;
             }
-          case PetscPrec::sor:
+          case SolverParameter::sor:
             ::Dune::Petsc::PCSetType( pc, PCSOR );
             break;
-          case PetscPrec::jacobi:
+          case SolverParameter::jacobi:
             ::Dune::Petsc::PCSetType( pc, PCJACOBI );
             break;
-          case PetscPrec::hypre:
+          case -1: // PetscPrec::hypre:
             {
 #ifdef PETSC_HAVE_HYPRE
-              enum class HyprePrec {
-                  boomeramg = 0,
-                  parasails = 1,
-                  pilut = 2
-                };
-
-              const std::string hyprePCNames[] = { "boomer-amg", "parasails", "pilu-t" };
-              HyprePrec hypreType = static_cast< HyprePrec >( reader.getEnum( "petsc.preconditioning.hypre.method", hyprePCNames, 0 ) );
-
+              int hypreType = parameter.hypreMethod();
               std::string hypre;
-              if ( hypreType == HyprePrec::boomeramg )
+              if ( hypreType == PetscSolverParameter::boomeramg )
                 hypre = "boomeramg";
-              else if ( hypreType == HyprePrec::parasails )
+              else if ( hypreType == PetscSolverParameter::parasails )
                 hypre = "parasails";
-              else if ( hypreType == HyprePrec::pilut )
+              else if ( hypreType == PetscSolverParameter::pilut )
                 hypre = "pilut";
               else
                 DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid hypre preconditioner choosen." );
@@ -420,18 +423,18 @@ namespace Dune
               ::Dune::Petsc::PCHYPRESetType( pc, hypre.c_str() );
               ::Dune::Petsc::PCSetUp( pc );
 #else // PETSC_HAVE_HYPRE
-              DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with hyper support." );
+              DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with hypre support." );
 #endif // PETSC_HAVE_HYPRE
               break;
             }
-          case PetscPrec::ml:
+          case -2: // PetscPrec::ml:
 #ifdef PETSC_HAVE_ML
             ::Dune::Petsc::PCSetType( pc, PCML );
 #else // PETSC_HAVE_ML
               DUNE_THROW( InvalidStateException, "PetscInverseOperator: petsc not build with ml support." );
 #endif // PETSC_HAVE_ML
             break;
-          case PetscPrec::ilu:
+          case SolverParameter::ilu:
             {
               if ( MPIManager::size() > 1 )
                 DUNE_THROW( InvalidStateException, "PetscInverseOperator: ilu preconditioner does not work in parallel." );
@@ -444,7 +447,7 @@ namespace Dune
               break;
             }
             ::Dune::Petsc::PCSetType( pc, PCML );
-          case PetscPrec::icc:
+          case SolverParameter::icc:
             {
 #ifdef PETSC_HAVE_ICC
               if ( MPIManager::size() > 1 )
@@ -460,16 +463,18 @@ namespace Dune
 #endif // PETSC_HAVE_ICC
               break;
             }
-          case PetscPrec::lu:
+          case -3: // PetscPrec::lu:
+          case SolverParameter::superlu:
             {
               enum class Factorization {
-                  petsc = 0,
-                  superlu = 1,
-                  mumps = 2
+                  petsc = 0, superlu = 1, mumps = 2
                 };
-
-              const std::string factorizationNames[] = { "petsc", "superlu", "mumps" };
-              Factorization factorType = static_cast< Factorization >( reader.getEnum( "petsc.preconditioning.lu.method", factorizationNames, 0 ) );
+              Factorization factorType = Factorization::superlu;
+              if (pcType != SolverParameter::superlu)
+              {
+                const std::string factorizationNames[] = { "petsc", "superlu", "mumps" };
+                factorType = static_cast< Factorization >( reader.getEnum( "petsc.preconditioning.lu.method", factorizationNames, 0 ) );
+              }
 
               ::Dune::Petsc::PCSetType( pc, PCLU );
 
@@ -490,7 +495,7 @@ namespace Dune
         }
 
         // set monitor in verbose mode
-        if( parameter.verbose() )
+        if( parameter.verbose() && Parameter::verbose() )
         {
           ::Dune::Petsc::KSPView( ksp() );
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
