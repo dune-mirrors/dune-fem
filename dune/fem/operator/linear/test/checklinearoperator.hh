@@ -171,6 +171,25 @@ namespace Dune
       Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > temp( dSpace, rSpace );
 
       // test assamble
+      // check {add,addScaled}LocalMatrix
+      for( const auto &entry : range )
+      {
+        auto domainEntity = entry.first;
+        auto rangeEntity = entry.second;
+
+        {
+          temp.init( domainEntity, rangeEntity );
+          temp.clear();
+          for( const auto &p : permutation )
+            temp.set( p.first, p.second, 1.0 );
+
+          linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
+          linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
+        }
+      }
+      linOp.communicate();
+
+      // check {set}LocalMatrix
       for( const auto &entry : range )
       {
         auto domainEntity = entry.first;
@@ -183,10 +202,8 @@ namespace Dune
           for( const auto &p : permutation )
             temp.set( p.first, p.second, 1.0 );
 
+          // linOp.communicate();
           linOp.setLocalMatrix( domainEntity, rangeEntity, temp );
-
-          linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
-          linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
         }
       }
       linOp.communicate();
