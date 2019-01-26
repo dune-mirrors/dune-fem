@@ -265,7 +265,6 @@ namespace Dune
       mutable double absoluteTol_   = -1.;
       mutable double reductionTol_  = -1.;
     };
-
   }
 }
 

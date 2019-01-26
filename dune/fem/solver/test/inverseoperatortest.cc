@@ -171,7 +171,7 @@ struct Algorithm
       auto dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " InvOp(myParam)\n" << dist << "\n" << std::endl;
 
       rhs.clear();
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOp( *param );
@@ -180,7 +180,7 @@ struct Algorithm
       dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " NewtonInvOp(myParam)\n" << dist << "\n" << std::endl;
     }
     else
     {
@@ -190,7 +190,7 @@ struct Algorithm
       auto dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " inverseOp()\n" << dist << "\n" << std::endl;
 
       NewSolverParameter testSolverParam( 1e-10, maxIter, verboseSolver );
       NewSolverParameter copyParam ( testSolverParam );
@@ -201,7 +201,7 @@ struct Algorithm
       dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " inverseOp(NewSParam)\n" << dist << "\n" << std::endl;
 
       rhs.clear();
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOp;
@@ -210,7 +210,7 @@ struct Algorithm
       dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " NewtonInvOp()\n" << dist << "\n" << std::endl;
 
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType> newtonInvOpA( param );
       newtonInvOpA.bind( affineMassOperator );
@@ -218,17 +218,17 @@ struct Algorithm
       dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " NewtonInvOp(NewSParam)\n" << dist << "\n" << std::endl;
 
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType>
         newtonInvOpB( Dune::Fem::parameterDict( "fem.solver.newton.",
-              { {"linear.krylovmethod","gmres"} } ) );
+              { {"linear.krylovmethod","cg"} } ) );
       newtonInvOpB.bind( affineMassOperator );
       newtonInvOpB( rhs, u );
       dist = l2norm.distance( f_, u );
       pass &= dist < eps;
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
-        std::cout << designation << "\n" << dist << "\n" << std::endl;
+        std::cout << designation << " NewtonInvOp(paramDict)\n" << dist << "\n" << std::endl;
     }
     return pass;
   }

@@ -43,7 +43,7 @@ namespace Dune
       const SolverParameter& solverParameter() const { return *solverParameter_; }
 
     public:
-      ISTLSolverParameter( const ParameterReader &parameter = Parameter::container() )
+      ISTLSolverParameter( const ParameterContainer &parameter = Parameter::container() )
         : solverParameter_( std::make_shared<SolverParameter>(parameter) )
       {}
 
@@ -51,8 +51,8 @@ namespace Dune
         : solverParameter_( std::make_shared<SolverParameter>(keyPrefix, parameter) )
       {}
 
-      template <class Parameter>
-      ISTLSolverParameter( const Parameter &other )
+      template <class BaseParameter>
+      ISTLSolverParameter( const BaseParameter &other )
         : solverParameter_( other.clone() )
       { }
 
