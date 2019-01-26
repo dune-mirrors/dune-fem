@@ -156,16 +156,18 @@ struct MyInverseOperatorTraits
 
 template<int N>
 class MyLinearInverseOperator
-  : public Dune::Fem::InverseOperatorInterface< MyInverseOperatorTraits< N > >
+  : public Dune::Fem::LinearOperator<DummyFunction<N>, DummyFunction<N> >
+  // : public Dune::Fem::InverseOperatorInterface< MyInverseOperatorTraits< N > >
 {
   typedef Dune::Fem::InverseOperatorInterface< MyInverseOperatorTraits< N > > BaseType;
  public:
   typedef typename BaseType::DomainFunctionType DomainFunctionType;
   typedef typename BaseType::RangeFunctionType RangeFunctionType;
   typedef MyLinearOperator<N> LinearOperatorType;
-  typedef typename BaseType::SolverParameterType SolverParameterType;
+  // typedef typename BaseType::SolverParameterType SolverParameterType;
+  typedef Dune::Fem::ParameterReader SolverParameterType;
 
-  MyLinearInverseOperator(const SolverParameterType& parameter = SolverParameterType() ) : BaseType(parameter) {}
+  MyLinearInverseOperator(const SolverParameterType& parameter = SolverParameterType() ) {}
   void bind ( const LinearOperatorType& jOp ) { jOp_ = &jOp; }
   void unbind () { jOp_ = nullptr; }
 
@@ -174,7 +176,7 @@ class MyLinearInverseOperator
     (*jOp_).matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
   }
 
-  int apply(const DomainFunctionType& u, RangeFunctionType& w) const
+  void apply(const DomainFunctionType& u, RangeFunctionType& w) const
   {
     (*jOp_).matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
   }
