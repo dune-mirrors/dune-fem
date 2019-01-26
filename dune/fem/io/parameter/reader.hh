@@ -29,6 +29,7 @@ namespace Dune
     template< class Parameter >
     struct BasicParameterReader
     {
+      typedef BasicParameterReader<Parameter> ThisType;
       explicit BasicParameterReader ( Parameter parameter = Parameter() )
         : parameter_( std::move( parameter ) )
       {}
@@ -250,6 +251,11 @@ namespace Dune
         return getEnumeration( key, *string, values );
       }
 
+      ThisType* clone() const { return new ThisType(parameter_); }
+      Parameter parameter() { return parameter_; }
+      const Parameter parameter() const { return parameter_; }
+      void reset() {}
+
     private:
       template< int n >
       static int getEnumeration ( const std::string &key, const std::string& value, const std::string (&values)[ n ] )
@@ -276,7 +282,7 @@ namespace Dune
       }
       static int getEnumeration ( const std::string &key, const std::string& value, const std::vector<std::string> &values )
       {
-        for( int i = 0; i < values.size(); ++i )
+        for( unsigned int i = 0; i < values.size(); ++i )
         {
           if( value == values[ i ] )
             return i;
@@ -285,11 +291,11 @@ namespace Dune
         int j = -1;
         if( !ParameterParser< int >::parse( value, j ) )
           j = -1;
-        if( (j < 0) || (j >= values.size()) )
+        if( (j < 0) || (j >= (int)values.size()) )
         {
           std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
           std::cerr << "Valid values are: ";
-          for( int i = 0; i < values.size(); ++i )
+          for( unsigned int i = 0; i < values.size(); ++i )
             std::cerr << values[ i ] << (i < values.size()-1 ? ", " : "");
           std::cerr << std::endl << std::endl;
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
