@@ -119,6 +119,15 @@ namespace Dune {
         return -1;
       }
 
+      InverseOperatorInterface(const InverseOperatorInterface &other)
+        : parameter_(other.parameter_), operator_(nullptr),
+          assembledOperator_(nullptr),
+          preconditioner_(nullptr),
+          rhs_(nullptr),
+          x_(nullptr),
+          iterations_(-1),
+          rightHandSideCopied_(false)
+      {}
     protected:
       std::shared_ptr<SolverParameterType> parameter_;
 
