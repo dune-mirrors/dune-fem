@@ -616,16 +616,60 @@ namespace Dune
         return &tmp_;
       }
     };
-    Fem::ParameterReader parameterDict (
+    ParameterReader parameterDict (
         const std::string &rmPrefix,
         const std::unordered_map<std::string,std::string> &dict )
     {
       return Fem::ParameterReader( ParameterDict(rmPrefix,dict) );
     }
-    Fem::ParameterReader parameterDict (
+    ParameterReader parameterDict (
         const std::unordered_map<std::string,std::string> &dict )
     {
       return parameterDict("",dict);
+    }
+
+    namespace {
+      std::pair<std::string,std::string> convertValueToString(const std::pair<const char*,const char*> &keyValue)
+      { return keyValue; }
+      template <class V>
+      std::pair<std::string,std::string> convertValueToString(const std::pair<const char*,V> &keyValue)
+      { return std::make_pair(keyValue.first,std::to_string(keyValue.second)); }
+      std::pair<std::string,std::string> convertValueToString(const std::pair<std::string,const char*> &keyValue)
+      { return keyValue; }
+      template <class V>
+      std::pair<std::string,std::string> convertValueToString(const std::pair<std::string,V> &keyValue)
+      { return std::make_pair(keyValue.first,std::to_string(keyValue.second)); }
+    }
+#if 0
+    // this solution needs the user to call the function using `make_pair`
+    // becuase {"key",value} will not be deduced correctly
+    template<class... Values>
+    ParameterReader parameterDict (const std::string &rmPrefix, std::pair< const char*, Values > const &... keyValues)
+    {
+      std::unordered_map<std::string,std::string> dict;
+      dict.insert({convertValueToString(keyValues)...});
+      return parameterDict( rmPrefix, dict);
+    }
+#endif
+    namespace {
+      template<class V>
+      void insertIntoMap(std::unordered_map<std::string,std::string> &dict,
+          const std::string &key, const V &v)
+      { dict.insert(convertValueToString( std::make_pair(key,v) )); }
+      template<class V, class... Values>
+      void insertIntoMap(std::unordered_map<std::string,std::string> &dict,
+          const std::string &key, const V &v, Values... keyValues)
+      {
+        dict.insert(convertValueToString( std::make_pair(key,v) ));
+        insertIntoMap(dict,keyValues...);
+      }
+    }
+    template<class... Values>
+    ParameterReader parameterDict (const std::string &rmPrefix, Values... keyValues)
+    {
+      std::unordered_map<std::string,std::string> dict;
+      insertIntoMap(dict,keyValues...);
+      return parameterDict( rmPrefix, dict);
     }
   } // namespace Fem
 
