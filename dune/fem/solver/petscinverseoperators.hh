@@ -271,7 +271,7 @@ namespace Dune
           };
 
         // if special petsc solver parameter exists use that one, otherwise
-        // use krylovMethod from SolverParameter
+        // use solverMethod from SolverParameter
         const auto& reader = parameter.parameter();
         PetscSolver kspType = PetscSolver::gmres;
         if( reader.exists("petsc.kspsolver.method") )
@@ -280,11 +280,11 @@ namespace Dune
           const std::string kspNames[] = { "default", "cg", "bicgstab", "gmres", "minres", "gradient", "loop", "superlu", "bicg", "preonly"  };
           kspType = static_cast< PetscSolver >( reader.getEnum("petsc.kspsolver.method", kspNames, int(PetscSolver::gmres) ) );
           std::cout << "WARNING: using deprecated parameter 'petsc.kpsolver.method' use "
-                    << parameter.keyPrefix() << "krylovmethod instead\n";
+                    << parameter.keyPrefix() << "method instead\n";
         }
         else
           kspType = static_cast< PetscSolver >(
-              parameter.krylovMethod (
+              parameter.solverMethod (
                 { SolverParameter::gmres,
                   SolverParameter::bicgstab,
                   SolverParameter::cg,
@@ -295,7 +295,7 @@ namespace Dune
             );
 
         if (kspType > PetscSolver::kspoptions)
-          solverName_ = SolverParameter::krylovMethodTable( static_cast< int >( kspType ) );
+          solverName_ = SolverParameter::solverMethodTable( static_cast< int >( kspType ) );
         else
           solverName_ = "kspoptions";
 

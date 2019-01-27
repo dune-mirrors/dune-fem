@@ -168,7 +168,7 @@ namespace Dune
         precondObj_(),
         verbose_( parameter.verbose() ),
         method_( method < 0 ?
-            parameter.krylovMethod({ SolverParameter::gmres,
+            parameter.solverMethod({ SolverParameter::gmres,
                                      SolverParameter::cg,
                                      SolverParameter::bicgstab })
             : method )

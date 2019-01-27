@@ -100,12 +100,12 @@ namespace Dune
       virtual void setReductionTol ( const double eps ) { return solverParameter().setReductionTol(eps); }
       virtual int maxIterations () const { return solverParameter().maxIterations(); }
       virtual void setMaxIterations ( const int maxIter ) { solverParameter().setMaxIterations(maxIter); }
-      virtual int krylovMethod(
+      virtual int solverMethod(
             const std::vector<int> standardMethods,
             const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
           ) const
-      { return solverParameter().krylovMethod( standardMethods, additionalMethods, defaultMethod ); }
+      { return solverParameter().solverMethod( standardMethods, additionalMethods, defaultMethod ); }
       virtual int gmresRestart() const { return solverParameter().gmresRestart(); }
       virtual int preconditionMethod(
             const std::vector<int> standardMethods,

@@ -94,7 +94,7 @@ struct NewSolverParameter
     this->setVerbose( verbose );
   }
 
-  virtual int krylovMethod(
+  virtual int solverMethod(
             const std::vector<int> standardMethods,
             const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
@@ -222,7 +222,7 @@ struct Algorithm
 
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType>
         newtonInvOpB( Dune::Fem::parameterDict( "fem.solver.newton.",
-              { {"linear.krylovmethod","cg"} } ) );
+              { {"linear.method","cg"} } ) );
       newtonInvOpB.bind( affineMassOperator );
       newtonInvOpB( rhs, u );
       dist = l2norm.distance( f_, u );
@@ -300,8 +300,8 @@ int main(int argc, char** argv)
     designation1 = std::string(" === KrylovInverseOperator + SparseRowLinearOperator + SolverParameter === ");
     Dune::Fem::SolverParameter param( Dune::Fem::parameterDict(
             "fem.solver.",
-            { {"krylovmethod","cg"},
-              {"newton.linear.krylovmethod","gmres"}
+            { {"method","cg"},
+              {"newton.linear.method","gmres"}
             } ));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver, &param);
 
@@ -317,6 +317,19 @@ int main(int argc, char** argv)
     std::string designation4(" === BicgstabInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
+
+#if HAVE_SUITESPARSE_UMFPACK
+  // CGInverseOperator + SparseRowLinearOperator
+  if( Dune::Fem::MPIManager::size() == 1 )
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::UMFPACKInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === LDLOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+#endif // HAVE_SUITESPARSE_LDL
 
 #if 0 // can not be used with NewtonInvOp at the moment
 #if HAVE_SUITESPARSE_LDL
@@ -445,7 +458,7 @@ int main(int argc, char** argv)
     // a direct call to the inverse operator and the to the newton inverse
     // operator will use the default prefix of the SolverParameter (i.e.  fem.solver.)
     // In this example the prefix is set to "petsctest" (again for linear and non linear)
-    // An empty prefix leads to issues since 'krylovmethod' without prefix leads to a Warning
+    // An empty prefix leads to issues since 'method' without prefix leads to a Warning
     // The same issue happens if one passes  "petsctest." as first argument to parameterDict
     designation = std::string(" === PetscInverseOperator + PetscLinearOperator + PetscParameter === ");
     Dune::Fem::PetscSolverParameter param( "petsctest.", Dune::Fem::parameterDict(

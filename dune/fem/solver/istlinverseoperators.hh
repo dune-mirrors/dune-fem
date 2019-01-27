@@ -128,7 +128,7 @@ namespace Dune
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
           method_( method < 0 ?
-              parameter->krylovMethod({ SolverParameter::gmres,
+              parameter->solverMethod({ SolverParameter::gmres,
                                        SolverParameter::cg,
                                        SolverParameter::bicgstab,
                                        SolverParameter::minres,

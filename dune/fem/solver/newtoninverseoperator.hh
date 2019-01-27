@@ -395,7 +395,7 @@ namespace Dune
       explicit NewtonInverseOperator ( const ParameterType &parameter = Parameter::container() )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
       {
-        // std::cout << "in Newton inv op should use:" << parameter.linear().krylovMethod({SolverParameter::gmres,SolverParameter::bicgstab,SolverParameter::minres}) << std::endl;
+        // std::cout << "in Newton inv op should use:" << parameter.linear().solverMethod({SolverParameter::gmres,SolverParameter::bicgstab,SolverParameter::minres}) << std::endl;
       }
 
       /** constructor

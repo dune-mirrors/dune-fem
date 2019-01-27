@@ -107,7 +107,7 @@ namespace Dune
                                 const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
         : BaseType( parameter ),
           absLimit_( parameter.reductionTol() ),
-          method_( method < 0 ? parameter.krylovMethod() : method )
+          method_( method < 0 ? parameter.solverMethod() : method )
       {
       }
 

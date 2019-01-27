@@ -30,7 +30,7 @@ namespace Dune
       static const int superlu  = 7 ; // SuperLUSolver
       static const int bicg     = 8 ; // BiCG
       static const int preonly  = 9 ; // only preconder
-      static const std::string krylovMethodTable(int i)
+      static const std::string solverMethodTable(int i)
       {
         std::string methods[] =
            { "cg", "bicgstab", "gmres", "minres", "gradient", "loop", "superlu", "bicg", "preonly"  };
@@ -160,7 +160,7 @@ namespace Dune
         maxIterations_ = maxIter;
       }
 
-      virtual int krylovMethod(
+      virtual int solverMethod(
             const std::vector<int> standardMethods,
             const std::vector<std::string> &additionalMethods = {},
             int defaultMethod = 0   // this is the first method passed in
@@ -168,18 +168,18 @@ namespace Dune
       {
         std::vector<std::string> methodTable(standardMethods.size()+additionalMethods.size());
         for (std::size_t i=0;i<standardMethods.size();++i)
-          methodTable[i] = krylovMethodTable(standardMethods[i]);
+          methodTable[i] = solverMethodTable(standardMethods[i]);
         for (std::size_t i=0;i<additionalMethods.size();++i)
           methodTable[standardMethods.size()+i] = additionalMethods[i];
         std::size_t method;
-        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) ||
-           !parameter_.exists( "krylovmethod" ) )
-          method = parameter_.getEnum( keyPrefix_ + "krylovmethod", methodTable, defaultMethod );
+        if( parameter_.exists( keyPrefix_ + "method" ) ||
+           !parameter_.exists( "method" ) )
+          method = parameter_.getEnum( keyPrefix_ + "method", methodTable, defaultMethod );
         else
         {
           method = parameter_.getEnum( "krylovmethod", methodTable, defaultMethod );
           std::cout << "WARNING: using old parameter name 'krylovmethod' "
-                    << "please switch to '" << keyPrefix_ << "krylovmethod'\n";
+                    << "please switch to '" << keyPrefix_ << "method'\n";
         }
         if (method < standardMethods.size())
           return standardMethods[method];
@@ -190,10 +190,16 @@ namespace Dune
       [[ deprecated ]]
       virtual int krylovMethod() const
       {
-        const std::string krylovMethodTable[] = { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
+        const std::string solverMethodTable[] = { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
         int methodType = gmres;
-        if( parameter_.exists( keyPrefix_ + "krylovmethod" ) )
-          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", krylovMethodTable, gmres );         else           methodType = parameter_.getEnum( "krylovmethod", krylovMethodTable, gmres );
+        if( parameter_.exists( keyPrefix_ + "krylomethod" ) )
+          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", solverMethodTable, gmres );
+        else
+        {
+          methodType = parameter_.getEnum( "krylovmethod", solverMethodTable, gmres );
+          std::cout << "WARNING: using old parameter name 'krylovmethod' "
+                    << "please switch to '" << keyPrefix_ << "method'\n";
+        }
         return methodType;
       }
 
