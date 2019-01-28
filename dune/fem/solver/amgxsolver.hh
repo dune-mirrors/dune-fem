@@ -150,7 +150,9 @@ namespace Dune
 
       void unbind()
       {
+#if HAVE_AMGXSOLVER
         amgXSolver_.finalize();
+#endif
         BaseType :: unbind();
       }
 
@@ -222,7 +224,5 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
-
-#endif // #if HAVE_PETSC
 
 #endif // #ifndef DUNE_FEM_PETSCSOLVER_HH
