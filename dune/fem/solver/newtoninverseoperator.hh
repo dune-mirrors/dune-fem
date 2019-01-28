@@ -37,14 +37,14 @@ namespace Dune
       ParameterReader parameter_;
 
     public:
-      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton" )
+      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
         : baseParam_( baseParameter.clone() ),
           keyPrefix_( keyPrefix ),
           parameter_( baseParameter.parameter() )
       {}
 
       template <class Parameter, std::enable_if_t<!std::is_base_of<SolverParam,Parameter>::value && !std::is_same<Parameter,ParameterReader>::value,int> i=0>
-      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.newton" )
+      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.newton." )
         : baseParam_( SolverParam(solverParameter).clone() ),
           keyPrefix_( keyPrefix ),
           parameter_( solverParameter.parameter() )
