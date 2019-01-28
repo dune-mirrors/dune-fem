@@ -14,6 +14,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #if HAVE_SUITESPARSE_SPQR
 #include <SuiteSparseQR.hpp>
@@ -32,22 +33,48 @@ namespace Fem
  *  (see DiscreteFunctionInterface) can be found.
  */
 
-/** \class SPQROp
+/** \class SPQRInverseOperator
  *  \ingroup DirectSolver
  *  \brief The %SPQR direct sparse solver
  *  %SPQR will always go double precision and supports complex numbers.
  *  Details on SPQR can be found on http://www.cise.ufl.edu/research/sparse/spqr/
  *  \note This will only work if dune-fem has been configured to use SPQR
  */
-template<class DF, class Op, bool symmetric=false>
-class SPQROp:public Operator<DF, DF>
+
+template<class DiscreteFunction>
+class SPQRInverseOperator;
+
+template<class DiscreteFunction>
+struct SPQRInverseOperatorTraits
 {
-  public:
+  typedef DiscreteFunction    DiscreteFunctionType;
+  typedef AdaptiveDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType;
+
+  typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+  typedef OperatorType  PreconditionerType;
+
+  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType > CCSMatrixType;
+
+  typedef SPQRInverseOperator< DiscreteFunction>  InverseOperatorType;
+  typedef SolverParameter SolverParameterType;
+};
+
+
+
+template<class DF, bool symmetric=false>
+class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DiscreteFunction > >
+{
+  typedef SPQRInverseOperatorTraits< DiscreteFunction > Traits;
+  typedef InverseOperatorInterface< Traits > BaseType;
+  typedef SPQRInverseOperator< DF, symmetric > ThisType;
+public:
   typedef DF DiscreteFunctionType;
-  typedef Op OperatorType;
+  typedef typename BaseType :: OperatorType OperatorType;
+  typedef typename BaseType :: SolverDiscreteFunctionType SolverDiscreteFunctionType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename OperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
+  typedef typename Traits :: CCSMatrixType  CSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -58,9 +85,9 @@ class SPQROp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
-  SPQROp(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+  SPQRInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
          const ParameterReader &paramter = Parameter::container() ) :
-    SPQROp(verbose)
+    SPQRInverseOperator(verbose)
   {}
 
   /** \brief Constructor.
@@ -69,17 +96,17 @@ class SPQROp:public Operator<DF, DF>
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
-  SPQROp(const double& redEps, const double& absLimit, const int& maxIter,
+  SPQRInverseOperator(const double& redEps, const double& absLimit, const int& maxIter,
          const ParameterReader &parameter = Parameter::container() ) :
-    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
   {}
 
-  explicit SPQROp(const ParameterReader &parameter ) :
-    SPQROp( SolverParameter( parameter ) )
+  explicit SPQRInverseOperator(const ParameterReader &parameter ) :
+    SPQRInverseOperator( SolverParameter( parameter ) )
   {}
 
-  SPQROp(const SolverParameter& parameter = SolverParameter( Parameter::container() ) ) :
-    SPQROp(parameter.verbose())
+  SPQRInverseOperator(const SolverParameter& parameter = SolverParameter( Parameter::container() ) ) :
+    SPQRInverseOperator(parameter.verbose())
   {}
 
   /** \brief Constructor.
@@ -89,9 +116,9 @@ class SPQROp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
-  SPQROp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+  SPQRInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
       const ParameterReader &paramter = Parameter::container() ) :
-    SPQROp(verbose)
+    SPQRInverseOperator(verbose)
   {
     bind(op);
   }
@@ -102,38 +129,32 @@ class SPQROp:public Operator<DF, DF>
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
-  SPQROp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
+  SPQRInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
          const ParameterReader &parameter = Parameter::container() ) :
-    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
   {
     bind(op);
   }
 
-  SPQROp(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
-    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+  SPQRInverseOperator(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
+    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
   {
     bind(op);
   }
 
   // \brief Destructor.
-  ~SPQROp()
+  ~SPQRInverseOperator()
   {
     finalize();
     cholmod_l_finish(cc_);
     delete cc_;
   }
 
-  void bind (const OperatorType& op) { op_ = &op; }
-  void unbind () { op_ = nullptr; finalize(); }
+  using BaseType :: bind;
 
-  /** \brief Solve the system
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   */
-  void operator()(const DiscreteFunctionType& arg, DiscreteFunctionType& dest) const
+  void unbind ()
   {
-    prepare();
-    apply(arg,dest);
+    BaseType::unbind();
     finalize();
   }
 
@@ -141,9 +162,9 @@ class SPQROp:public Operator<DF, DF>
   template<typename... A>
   void prepare(A... ) const
   {
-    if(op_ && !isloaded_)
+    if(assembledOperator_ && !isloaded_)
     {
-      ccsmat_ = op_->systemMatrix().matrix();
+      ccsmat_ = assembledOperator_->systemMatrix().matrix();
       decompose();
       isloaded_ = true;
     }
@@ -168,7 +189,7 @@ class SPQROp:public Operator<DF, DF>
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const DofType* arg, DofType* dest) const
+  void apply (const DofType* arg, DofType* dest) const
   {
     const std::size_t dimMat(ccsmat_.N());
     // fill B
@@ -193,10 +214,11 @@ class SPQROp:public Operator<DF, DF>
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& arg,
-             AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
+  void apply(const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest) const
   {
+    prepare();
     apply(arg.leakPointer(),dest.leakPointer());
+    finalize();
   }
 
   /** \brief Solve the system.
@@ -288,13 +310,13 @@ class SPQROp:public Operator<DF, DF>
   }
 
   private:
-  explicit SPQROp(const bool& verbose) :
+  explicit SPQRInverseOperator(const bool& verbose) :
     verbose_(verbose && Dune::Fem::Parameter::verbose()), ccsmat_(), cc_(new cholmod_common())
   {
     cholmod_l_start(cc_);
   }
 
-  const OperatorType* op_ = nullptr;
+  using BaseType :: operator_;
   const bool verbose_;
   mutable CCSMatrixType ccsmat_;
   mutable bool isloaded_ = false;
@@ -328,8 +350,13 @@ class SPQROp:public Operator<DF, DF>
   }
 };
 
-}
-}
+// deprecated old type
+template<class DF, class Op, bool symmetric=false>
+using SPQROp = SPQRInverseOperator< DF, symmetric >;
+
+
+} // end namespace Fem
+} // end namespace Dune
 
 #endif // #if HAVE_SUITESPARSE_SPQR
 
