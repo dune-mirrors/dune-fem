@@ -63,7 +63,7 @@ namespace Dune
         : keyPrefix_( keyPrefix ), parameter_( parameter )
       {}
 
-      const std::string keyPrefix() const { return keyPrefix_; }
+      const std::string& keyPrefix() const { return keyPrefix_; }
 
       const ParameterReader& parameter() const { return parameter_; }
 

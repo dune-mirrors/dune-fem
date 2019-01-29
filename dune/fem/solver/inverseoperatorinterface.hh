@@ -32,20 +32,38 @@ namespace Dune {
       typedef typename Traits :: PreconditionerType           PreconditionerType;
       typedef typename Traits :: SolverParameterType          SolverParameterType;
 
+      /** \brief default constructor
+       *  \note parameter  SolverParameter object to steer the linear solvers
+       */
       InverseOperatorInterface( const SolverParameterType& parameter = SolverParameterType(Parameter::container() ) )
         : parameter_( std::make_shared< SolverParameterType >( parameter ) )
-      {}
+      {
+        unbind();
+      }
 
-      //! application of operator, i.e. solution of inverse operator with given right hand side and initial guess
-      // TODO: improve docu
+      /** \brief application of operator to compute
+       *   @f[
+       *     w = op^-1( u )
+       *   @f].
+       *  \param u parameter right hand side of linear problem
+       *  \param w initial guess for linear solver
+       */
       virtual void operator() ( const SolverDiscreteFunctionType& u, SolverDiscreteFunctionType& w ) const
       {
         rightHandSideCopied_ = false;
         iterations_ = asImp().apply( u, w );
       }
 
-      //! application of operator, here solution and right hand side can be of any discrete function type
-      // TODO: improve docu
+      /** \brief application of operator to compute
+       *   @f[
+       *     w = op^-1( u )
+       *   @f].
+       *  \param u parameter right hand side of linear problem
+       *  \param w initial guess for linear solver
+       *
+       *  \note Calling the inverse operator for arbitrary discrete functions
+       *  a copy to solver compatible discrete function is made.
+       */
       template <class DImpl, class RImpl>
       void operator() ( const DiscreteFunctionInterface< DImpl >&u,
                         DiscreteFunctionInterface< RImpl >& w ) const
@@ -78,30 +96,50 @@ namespace Dune {
         rightHandSideCopied_ = false;
       }
 
+      /** \brief store pointer to linear operator
+       *  \param op linear operator following the Dune::Fem:Operator interface
+       *
+       *  \note A dynamic cast to AssembledOperatorType is carried out. For some solvers this is necessary.
+       */
       void bind ( const OperatorType &op )
       {
         operator_ = &op;
         assembledOperator_ = dynamic_cast<const AssembledOperatorType*>( &op );
       }
 
+      /** \brief store pointer to linear operator and preconditioner
+       *  \param op               linear operator following the Dune::Fem:Operator interface
+       *  \param preconditioner   precondition operator
+       *
+       *  \note A dynamic cast to AssembledOperatorType is carried out. For some solvers this is necessary.
+       */
       void bind ( const OperatorType &op, const PreconditionerType &preconditioner )
       {
         bind( op );
         preconditioner_ = &preconditioner;
       }
 
+      /** \brief reset all pointers and internal temporary memory */
       void unbind () { operator_ = nullptr; assembledOperator_ = nullptr; preconditioner_ = nullptr; rhs_.reset(); x_.reset(); }
 
+      /** \brief return number of iterations used in previous call of application operator */
       int iterations () const { return iterations_; }
 
+      /** \brief set number of max linear iterations to be used before an exception is thrown
+       *  \param iter  number of max linear iterations
+       */
       virtual void setMaxLinearIterations ( const int iter ) {
         parameter_->setMaxIterations( iter );
       }
 
+      /** \brief \copydoc Dune::Fem::InverseOperartorInterface::setMaxLinearIterations */
       virtual void setMaxIterations ( const int iter ) {
         parameter_->setMaxIterations( iter );
       }
 
+      /** \brief set complete set of linear inverse operator parameters
+       *  \note newParams  set of new parameters
+       */
       void setParameters( const SolverParameterType& newParams)
       {
         std::shared_ptr< SolverParameterType > sharedNewParams = std::make_shared< SolverParameterType > (newParams);
@@ -116,18 +154,21 @@ namespace Dune {
       //! return accumulated communication time
       double averageCommTime() const
       {
-        return -1;
+        return -1.;
       }
 
+      //! copy constructor setting defaults
       InverseOperatorInterface(const InverseOperatorInterface &other)
-        : parameter_(other.parameter_), operator_(nullptr),
+        : parameter_(other.parameter_),
+          operator_(nullptr),
           assembledOperator_(nullptr),
           preconditioner_(nullptr),
-          rhs_(nullptr),
-          x_(nullptr),
+          rhs_(),
+          x_(),
           iterations_(-1),
           rightHandSideCopied_(false)
       {}
+
     protected:
       std::shared_ptr<SolverParameterType> parameter_;
 
@@ -139,8 +180,7 @@ namespace Dune {
       mutable std::unique_ptr< DomainFunctionType > rhs_;
       mutable std::unique_ptr< RangeFunctionType  > x_;
 
-      mutable int iterations_ = -1 ;
-
+      mutable int  iterations_ = -1 ;
       mutable bool rightHandSideCopied_ = false ;
     };
   } // end namespace Fem

@@ -329,7 +329,7 @@ int main(int argc, char** argv)
   }
 #endif // HAVE_SUITESPARSE_LDL
 
-#if 0 // can not be used with NewtonInvOp at the moment
+#if 1 // can not be used with NewtonInvOp at the moment
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -510,6 +510,7 @@ int main(int argc, char** argv)
 #endif
   */
 
+#if 0
   // AMGX solver wrapper + PetscLinearOperator
   try
   {
@@ -524,6 +525,7 @@ int main(int argc, char** argv)
   {
     std::cout << "Caught " << e.what() << std::endl;
   }
+#endif
 
   return pass ? 0 : 1;
 }
