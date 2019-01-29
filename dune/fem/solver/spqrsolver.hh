@@ -63,9 +63,9 @@ struct SPQRInverseOperatorTraits
 
 
 template< class DF, bool symmetric >
-class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DiscreteFunction, symmetric > >
+class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DF, symmetric > >
 {
-  typedef SPQRInverseOperatorTraits< DiscreteFunction, symmetric > Traits;
+  typedef SPQRInverseOperatorTraits< DF, symmetric > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
   typedef SPQRInverseOperator< DF, symmetric > ThisType;
 public:
@@ -74,7 +74,7 @@ public:
   typedef typename BaseType :: SolverDiscreteFunctionType SolverDiscreteFunctionType;
 
   // \brief The column-compressed matrix type.
-  typedef typename Traits :: CCSMatrixType  CSMatrixType;
+  typedef typename Traits :: CCSMatrixType  CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -187,7 +187,7 @@ public:
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply (const DofType* arg, DofType* dest) const
+  int apply (const DofType* arg, DofType* dest) const
   {
     const std::size_t dimMat(ccsmat_.N());
     // fill B
@@ -204,6 +204,7 @@ public:
     // output some statistics
     if(verbose_ > 0)
       printDecompositionInfo();
+    return 1;
   }
 
   /** \brief Solve the system.
@@ -212,11 +213,12 @@ public:
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest) const
+  int apply(const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest) const
   {
     prepare();
     apply(arg.leakPointer(),dest.leakPointer());
     finalize();
+    return 1;
   }
 
   /** \brief Solve the system.
@@ -225,7 +227,7 @@ public:
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
+  int apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
              ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
     // copy DOF's arg into a consecutive vector
@@ -236,6 +238,7 @@ public:
     apply(vecArg.data(),vecDest.data());
     // copy back solution into dest
     std::copy(vecDest.begin(),vecDest.end(),dest.dbegin());
+    return 1;
   }
 
   /** \brief Solve the system.
@@ -245,7 +248,7 @@ public:
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
   template<typename... DFs>
-  void apply(const TupleDiscreteFunction<DFs...>& arg,TupleDiscreteFunction<DFs...>& dest) const
+  int apply(const TupleDiscreteFunction<DFs...>& arg,TupleDiscreteFunction<DFs...>& dest) const
   {
     // copy DOF's arg into a consecutive vector
     std::vector<DofType> vecArg(arg.size());
@@ -258,6 +261,7 @@ public:
     // copy back solution into dest
     auto vecDestIt(vecDest.begin());
     Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},[&](auto i){for(auto& dof:dofs(std::get<i>(dest))) dof=(*(vecDestIt++));});
+    return 1;
   }
 
   void printTexInfo(std::ostream& out) const
@@ -316,6 +320,7 @@ public:
   }
 
   using BaseType :: operator_;
+  using BaseType :: assembledOperator_;
   const bool verbose_;
   mutable std::unique_ptr< CCSMatrixType > ccsmat_;
   mutable cholmod_common* cc_;
