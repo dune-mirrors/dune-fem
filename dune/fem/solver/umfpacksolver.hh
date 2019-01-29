@@ -60,7 +60,7 @@ struct UMFPACKInverseOperatorTraits
 template<class DiscreteFunction>
 class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOperatorTraits< DiscreteFunction > >
 {
-  public:
+public:
   typedef UMFPACKInverseOperatorTraits< DiscreteFunction > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
 
@@ -161,39 +161,26 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
     BaseType::unbind();
   }
 
-  /** \brief Solve the system
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   */
-  void operator()(const DiscreteFunctionType& arg, DiscreteFunctionType& dest) const
-  {
-    prepare();
-    apply(arg,dest);
-    finalize();
-  }
-
   // \brief Decompose matrix.
   template<typename... A>
   void prepare(A... ) const
   {
-    if(assembledOperator_ && !isloaded_)
+    if(assembledOperator_ && !ccsmat_)
     {
       ccsmat_ = std::make_unique<CCSMatrixType>(assembledOperator_->systemMatrix().matrix());
       decompose();
-      isloaded_ = true;
     }
   }
 
   // \brief Free allocated memory.
   void finalize() const
   {
-    if(isloaded_)
+    if( ccsmat_ )
     {
       getCCSMatrix().free();
-      ccsmat_ = nullptr;
+      ccsmat_.reset();
       Caller::free_symbolic(&UMF_Symbolic);
       Caller::free_numeric(&UMF_Numeric);
-      isloaded_ = false;
     }
   }
 
@@ -205,6 +192,8 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
    */
   int apply(const DofType* arg, DofType* dest) const
   {
+    prepare();
+
     double UMF_Apply_Info[UMFPACK_INFO];
     Caller::solve(UMFPACK_A, getCCSMatrix().getColStart(), getCCSMatrix().getRowIndex(), getCCSMatrix().getValues(),
                   dest, const_cast<DofType*>(arg), UMF_Numeric, UMF_Control, UMF_Apply_Info);
@@ -218,6 +207,9 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
       std::cout << "Iterative Refinement steps taken: " << UMF_Apply_Info[UMFPACK_IR_TAKEN] << std::endl;
       std::cout << "Error Estimate: " << UMF_Apply_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Apply_Info[UMFPACK_OMEGA2] << std::endl;
     }
+
+    finalize();
+
     return 1;
   }
 
@@ -227,30 +219,9 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  int apply(const AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& arg,
-             AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
+  int apply(const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest) const
   {
-    return apply(arg.leakPointer(),dest.leakPointer());
-  }
-
-  /** \brief Solve the system.
-   *  \param[in] arg right hand side
-   *  \param[out] dest solution
-   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
-   *   and you have free the decompistion when is not needed anymore (using the method finalize).
-   */
-  int apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
-             ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
-  {
-    // copy DOF's arg into a consecutive vector
-    std::vector<DofType> vecArg(arg.size());
-    std::copy(arg.dbegin(),arg.dend(),vecArg.begin());
-    std::vector<DofType> vecDest(dest.size());
-    // apply operator
-    apply(vecArg.data(),vecDest.data());
-    // copy back solution into dest
-    std::copy(vecDest.begin(),vecDest.end(),dest.dbegin());
-    return 1;
+    return apply(arg.leakPointer(), dest.leakPointer());
   }
 
   /** \brief Solve the system.
@@ -281,15 +252,6 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
     out<<"Solver: UMFPACK direct solver"<<std::endl;
   }
 
-  double averageCommTime() const
-  {
-    return 0.0;
-  }
-
-  int iterations() const
-  {
-    return 0;
-  }
   void setMaxIterations ( int ) {}
 
   /** \brief Get CCS matrix of the operator to solve.
@@ -309,7 +271,6 @@ class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOp
   using BaseType::assembledOperator_;
   const bool verbose_;
   mutable std::unique_ptr<CCSMatrixType> ccsmat_;
-  mutable bool isloaded_ = false;
   mutable void *UMF_Symbolic;
   mutable void *UMF_Numeric;
   mutable double UMF_Control[UMFPACK_CONTROL];
