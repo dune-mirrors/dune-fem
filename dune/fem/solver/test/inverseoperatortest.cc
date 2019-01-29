@@ -32,7 +32,7 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
-#include <dune/fem/solver/amgistl.hh>
+//#include <dune/fem/solver/amgistl.hh>
 #endif // HAVE_DUNE_ISTL
 
 #if HAVE_PETSC
@@ -371,7 +371,6 @@ int main(int argc, char** argv)
                     &param );
 
   }
-
 
   // ISTLInverseOperator< ISTLCGSolver > + SparseRowLinearOperator
   {
