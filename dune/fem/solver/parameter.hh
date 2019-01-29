@@ -55,7 +55,7 @@ namespace Dune
         return methods[i-1]; // starting to count from 1,...
       }
 
-      explicit SolverParameter ( const ParameterReader &parameter = Parameter::container() )
+      SolverParameter ( const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( "fem.solver." ), parameter_( parameter )
       {}
 
