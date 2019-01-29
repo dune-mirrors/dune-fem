@@ -65,7 +65,7 @@ struct SPQRInverseOperatorTraits
 template< class DF, bool symmetric >
 class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DiscreteFunction, symmetric > >
 {
-  typedef SPQRInverseOperatorTraits< DiscreteFunction > Traits;
+  typedef SPQRInverseOperatorTraits< DiscreteFunction, symmetric > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
   typedef SPQRInverseOperator< DF, symmetric > ThisType;
 public:
