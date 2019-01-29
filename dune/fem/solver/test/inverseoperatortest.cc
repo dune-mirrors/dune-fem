@@ -329,7 +329,6 @@ int main(int argc, char** argv)
   }
 #endif // HAVE_SUITESPARSE_LDL
 
-#if 1 // can not be used with NewtonInvOp at the moment
 #if HAVE_SUITESPARSE_LDL
   // CGInverseOperator + SparseRowLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -355,7 +354,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
-#endif
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
