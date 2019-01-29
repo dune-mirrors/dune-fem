@@ -41,10 +41,10 @@ namespace Fem
  *  \note This will only work if dune-fem has been configured to use SPQR
  */
 
-template<class DiscreteFunction>
+template<class DiscreteFunction, bool symmetric=false >
 class SPQRInverseOperator;
 
-template<class DiscreteFunction>
+template<class DiscreteFunction, bool symmetric>
 struct SPQRInverseOperatorTraits
 {
   typedef DiscreteFunction    DiscreteFunctionType;
@@ -56,14 +56,14 @@ struct SPQRInverseOperatorTraits
   typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
   typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType > CCSMatrixType;
 
-  typedef SPQRInverseOperator< DiscreteFunction>  InverseOperatorType;
+  typedef SPQRInverseOperator< DiscreteFunction, symmetric >  InverseOperatorType;
   typedef SolverParameter SolverParameterType;
 };
 
 
 
-template<class DF, bool symmetric=false>
-class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DiscreteFunction > >
+template< class DF, bool symmetric >
+class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DiscreteFunction, symmetric > >
 {
   typedef SPQRInverseOperatorTraits< DiscreteFunction > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
@@ -162,24 +162,22 @@ public:
   template<typename... A>
   void prepare(A... ) const
   {
-    if(assembledOperator_ && !isloaded_)
+    if(assembledOperator_ && !ccsmat_ )
     {
-      ccsmat_ = assembledOperator_->systemMatrix().matrix();
+      ccsmat_.reset( new CCSMatrixType(assembledOperator_->systemMatrix().matrix() ) );
       decompose();
-      isloaded_ = true;
     }
   }
 
   // \brief Free allocated memory.
   void finalize() const
   {
-    if(isloaded_)
+    if( ccsmat_ )
     {
-      ccsmat_.free();
+      ccsmat_.reset();
       cholmod_l_free_sparse(&A_, cc_);
       cholmod_l_free_dense(&B_, cc_);
       SuiteSparseQR_free<DofType>(&spqrfactorization_, cc_);
-      isloaded_ = false;
     }
   }
 
@@ -270,7 +268,7 @@ public:
   // \brief Print some statistics about the SPQR decomposition.
   void printDecompositionInfo() const
   {
-    if(isloaded_)
+    if( ccsmat_ )
     {
       std::cout<<std::endl<<"Solving with SuiteSparseQR"<<std::endl;
       std::cout<<"Flops Taken: "<<cc_->SPQR_flopcount<<std::endl;
@@ -306,7 +304,8 @@ public:
    */
   CCSMatrixType& getCCSMatrix()
   {
-    return ccsmat_;
+    assert( ccsmat_ );
+    return *ccsmat_;
   }
 
   private:
@@ -318,8 +317,7 @@ public:
 
   using BaseType :: operator_;
   const bool verbose_;
-  mutable CCSMatrixType ccsmat_;
-  mutable bool isloaded_ = false;
+  mutable std::unique_ptr< CCSMatrixType > ccsmat_;
   mutable cholmod_common* cc_;
   mutable cholmod_sparse* A_;
   mutable cholmod_dense* B_;
@@ -328,8 +326,10 @@ public:
   // \brief Computes the SPQR decomposition.
   void decompose() const
   {
-    const std::size_t dimMat(ccsmat_.N());
-    const std::size_t nnz(ccsmat_.getColStart()[dimMat]);
+    CCSMatrixType& ccsmat = getCCSMatrix();
+
+    const std::size_t dimMat(ccsmat.N());
+    const std::size_t nnz(ccsmat.getColStart()[dimMat]);
     // initialise the matrix A
     bool sorted(true);
     bool packed(true);
@@ -337,11 +337,11 @@ public:
     A_ = cholmod_l_allocate_sparse(dimMat, dimMat, nnz, sorted, packed, symmetric, real, cc_);
     // copy all the entries of Ap, Ai, Ax
     for(std::size_t k = 0; k != (dimMat+1); ++k)
-      (static_cast<long int *>(A_->p))[k] = ccsmat_.getColStart()[k];
+      (static_cast<long int *>(A_->p))[k] = ccsmat.getColStart()[k];
     for(std::size_t k = 0; k != nnz; ++k)
     {
-      (static_cast<long int*>(A_->i))[k] = ccsmat_.getRowIndex()[k];
-      (static_cast<DofType*>(A_->x))[k] = ccsmat_.getValues()[k];
+      (static_cast<long int*>(A_->i))[k] = ccsmat.getRowIndex()[k];
+      (static_cast<DofType*>(A_->x))[k] = ccsmat.getValues()[k];
     }
     // initialise the vector B
     B_ = cholmod_l_allocate_dense(dimMat, 1, dimMat, A_->xtype, cc_);
