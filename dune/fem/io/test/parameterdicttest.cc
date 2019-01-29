@@ -18,24 +18,47 @@
 int main(int argc, char** argv)
 {
   try{
-    // works: auto param = Dune::Fem::parameterMap({{"test","test"},{"one","1"},{"one.one","1.1"}});
-#if 0
-    // fails because initializer lists can't be used with variadic templates?
-    auto param = Dune::Fem::parameterDict("",{"test","test"},{"one",1},{"one.one",1.1});
-#elif 0
-    // first version in parameter.hh requires make_pair
-    // would like to avoid the make pair
-    auto param = Dune::Fem::parameterDict("",
-        std::make_pair("test","test"),
-        std::make_pair("one",1),
-        std::make_pair("one.one",1.1));
-#else
-    auto param = Dune::Fem::parameterDict("","test","test","one",1,"one.one",1.1);
-#endif
-    std::cout << param.getValue<std::string>("test") << " "
-              << param.getValue<int>("one") << " "
-              << param.getValue<double>("one.one") << std::endl;
-    return 0;
+    double a = 2;
+    auto param = Dune::Fem::parameterDict("prefix.",
+                    "test","test",  "one",1,  "one.one",1.1,
+                    "lambdaS",[&a](){ return "a="+std::to_string(int(a)); },
+                    "lambdaD",[&a](){ return a; }
+                    );
+    bool pass = true;
+    pass &= ( param.exists("prefix.test") &&
+              param.exists("prefix.one") &&
+              param.exists("prefix.one.one") &&
+              param.exists("prefix.lambdaS") &&
+              param.exists("prefix.lambdaD") &&
+             !param.exists("prefix.notfound") &&
+             !param.exists("notfound") );
+    pass &= param.getValue<std::string>("prefix.test") == "test";
+    pass &= param.getValue<int>("prefix.one") == 1;
+    pass &= param.getValue<double>("prefix.one.one") == 1.1;
+    pass &= param.getValue<std::string>("prefix.lambdaS") == "a=2";
+    pass &= param.getValue<double>("prefix.lambdaD") == 2;
+    try{
+      std::cout << param.getValue<std::string>("prefix.notfound");
+      pass = false;
+    } catch (Dune::Fem::ParameterNotFound &e) { }
+    try{
+      std::cout << param.getValue<std::string>("notfound");
+      pass = false;
+    } catch (Dune::Fem::ParameterNotFound &e) { }
+
+    pass &= param.getValue<std::string>("prefix.test","testing") == "test";
+    pass &= param.getValue<int>("prefix.one",2) == 1;
+    pass &= param.getValue<double>("prefix.one.one",2.2) == 1.1;
+    pass &= param.getValue<std::string>("prefix.lambdaS","a=5.") == "a=2";
+    pass &= param.getValue<double>("prefix.lambdaD",5.) == 2;
+    pass &= param.getValue<std::string>("prefix.notfound","not_found") == "not_found";
+    pass &= param.getValue<std::string>("notfound","not_found") == "not_found";
+
+    a = 4;
+    pass &= param.getValue<std::string>("prefix.lambdaS") == "a=4";
+    pass &= param.getValue<double>("prefix.lambdaD") == 4;
+
+    return pass ? 0 : 1;
   }
   catch (Dune::Exception &e){
     std::cerr << "Dune reported error: " << e << std::endl;
