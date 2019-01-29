@@ -268,6 +268,17 @@ public:
     Caller::report_info(UMF_Control,UMF_Decomposition_Info);
   }
 
+  UMFPACKInverseOperator(const UMFPACKInverseOperator &other)
+    : BaseType(other), verbose_(other.verbose_),
+      ccsmat_(),
+      UMF_Symbolic(other.UMF_Symbolic),
+      UMF_Numeric(other.UMF_Numeric)
+  {
+    for (int i=0;i<UMFPACK_CONTROL;++i) UMF_Control[i] = other.UMF_Control[i];
+    for (int i=0;i<UMFPACK_INFO;++i) UMF_Decomposition_Info[i] = other.UMF_Decomposition_Info[i];
+  }
+
+protected:
   using BaseType::assembledOperator_;
   const bool verbose_;
   mutable std::unique_ptr<CCSMatrixType> ccsmat_;
@@ -276,17 +287,7 @@ public:
   mutable double UMF_Control[UMFPACK_CONTROL];
   mutable double UMF_Decomposition_Info[UMFPACK_INFO];
 
-  UMFPACKInverseOperator(const UMFPACKInverseOperator &other)
-    : BaseType(other), verbose_(other.verbose_),
-      ccsmat_(nullptr),
-      UMF_Symbolic(other.UMF_Symbolic),
-      UMF_Numeric(other.UMF_Numeric)
-  {
-    for (int i=0;i<UMFPACK_CONTROL;++i) UMF_Control[i] = other.UMF_Control[i];
-    for (int i=0;i<UMFPACK_INFO;++i) UMF_Decomposition_Info[i] = other.UMF_Decomposition_Info[i];
-  }
-
-  private:
+private:
   explicit UMFPACKInverseOperator ( const bool &verbose ) :
     verbose_(verbose), ccsmat_(nullptr)
   {
