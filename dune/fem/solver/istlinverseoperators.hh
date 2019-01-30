@@ -129,12 +129,12 @@ namespace Dune
         : reduction_( reduction ),
           method_( method < 0 ?
               parameter->solverMethod({ SolverParameter::gmres,
-                                       SolverParameter::cg,
-                                       SolverParameter::bicgstab,
-                                       SolverParameter::minres,
-                                       SolverParameter::gradient,
-                                       SolverParameter::loop,
-                                       SolverParameter::superlu
+                                        SolverParameter::cg,
+                                        SolverParameter::bicgstab,
+                                        SolverParameter::minres,
+                                        SolverParameter::gradient,
+                                        SolverParameter::loop,
+                                        SolverParameter::superlu
                                      })
               : method ),
           parameter_( parameter )
@@ -145,7 +145,6 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        assert( parameter_->isISTLSolverParameter() );
         const int verbosity = (Dune::Fem::Parameter::verbose() && parameter_->verbose()) ? 2 : 0;
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
@@ -380,7 +379,7 @@ namespace Dune
      }
 
       //non-deprecated constructors
-      ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter(Parameter::container()) )
+      ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
       {}
 

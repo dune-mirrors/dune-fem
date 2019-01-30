@@ -313,7 +313,6 @@ int main(int argc, char** argv)
   }
 #endif // HAVE_SUITESPARSE_LDL
 
-#if 0 // still fails
 #if HAVE_SUITESPARSE_SPQR
   // CGInverseOperator + SparseRowLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -326,7 +325,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
-#endif
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
@@ -479,7 +477,6 @@ int main(int argc, char** argv)
 #endif
   */
 
-#if 0
   // AMGX solver wrapper + PetscLinearOperator
   try
   {
@@ -494,7 +491,6 @@ int main(int argc, char** argv)
   {
     std::cout << "Caught " << e.what() << std::endl;
   }
-#endif
 
   return pass ? 0 : 1;
 }

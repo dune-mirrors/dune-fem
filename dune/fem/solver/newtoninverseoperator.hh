@@ -28,7 +28,7 @@ namespace Dune
     struct NewtonParameter
       : public Dune::Fem::LocalParameter< NewtonParameter<SolverParam>, NewtonParameter<SolverParam> >
     {
-      protected:
+    protected:
 
       std::shared_ptr<SolverParam> baseParam_;
       // key prefix, default is fem.solver.newton. (can be overloaded by user)
@@ -38,14 +38,14 @@ namespace Dune
 
     public:
       NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
-        : baseParam_( baseParameter.clone() ),
+        : baseParam_( static_cast< SolverParam* > (baseParameter.clone()) ),
           keyPrefix_( keyPrefix ),
           parameter_( baseParameter.parameter() )
       {}
 
       template <class Parameter, std::enable_if_t<!std::is_base_of<SolverParam,Parameter>::value && !std::is_same<Parameter,ParameterReader>::value,int> i=0>
       NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.newton." )
-        : baseParam_( SolverParam(solverParameter).clone() ),
+        : baseParam_( new SolverParam(solverParameter) ),
           keyPrefix_( keyPrefix ),
           parameter_( solverParameter.parameter() )
       {}

@@ -34,67 +34,34 @@ namespace Dune
     template <class MatrixImp>
     class DGParallelMatrixAdapter;
 
-    struct ISTLSolverParameter : public LocalParameter< ISTLSolverParameter, ISTLSolverParameter >
+    struct ISTLSolverParameter : public LocalParameter< SolverParameter, ISTLSolverParameter >
     {
-      typedef LocalParameter< ISTLSolverParameter, ISTLSolverParameter >  BaseType;
-    protected:
-      std::shared_ptr<SolverParameter> solverParameter_;
-      SolverParameter& solverParameter() { return *solverParameter_; }
-      const SolverParameter& solverParameter() const { return *solverParameter_; }
-
+      typedef LocalParameter< SolverParameter, ISTLSolverParameter > BaseType;
     public:
-      ISTLSolverParameter( const ParameterContainer &parameter = Parameter::container() )
-        : solverParameter_( std::make_shared<SolverParameter>(parameter) )
+      using BaseType :: parameter ;
+      using BaseType :: keyPrefix ;
+
+      ISTLSolverParameter( const ParameterReader &parameter = Parameter::container() )
+        : BaseType( parameter )
       {}
 
       ISTLSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
-        : solverParameter_( std::make_shared<SolverParameter>(keyPrefix, parameter) )
+        : BaseType( keyPrefix, parameter )
       {}
 
-      template <class BaseParameter>
-      ISTLSolverParameter( const BaseParameter &other )
-        : solverParameter_( other.clone() )
-      { }
-
-      bool isISTLSolverParameter() const { return true; }
+      ISTLSolverParameter( const SolverParameter& sp )
+        : ISTLSolverParameter( sp.parameter() )
+      {}
 
       virtual double overflowFraction () const
       {
-        return solverParameter().parameter().getValue< double >( keyPrefix() + "matrix.overflowfraction", 1.0 );
+        return parameter().getValue< double >( keyPrefix() + "matrix.overflowfraction", 1.0 );
       }
 
       virtual bool fastILUStorage () const
       {
-        return solverParameter().parameter().getValue< bool >( keyPrefix() + "preconditioning.fastilustorage", true );
+        return parameter().getValue< bool >( keyPrefix() + "preconditioning.fastilustorage", true );
       }
-
-      const std::string keyPrefix() const { return solverParameter().keyPrefix(); }
-      const ParameterReader& parameter() const { return solverParameter().parameter(); }
-      virtual void reset() { solverParameter().reset(); }
-      virtual bool verbose() const { return solverParameter().verbose(); }
-      virtual void setVerbose( const bool verb ) { solverParameter().setVerbose(verb); }
-      virtual int errorMeasure() const { return solverParameter().errorMeasure(); }
-      virtual double absoluteTol ( ) const { return solverParameter().absoluteTol(); }
-      virtual void setAbsoluteTol ( const double eps ) { solverParameter().setAbsoluteTol(eps); }
-      virtual double reductionTol ( ) const { return solverParameter().reductionTol(); }
-      virtual void setReductionTol ( const double eps ) { return solverParameter().setReductionTol(eps); }
-      virtual int maxIterations () const { return solverParameter().maxIterations(); }
-      virtual void setMaxIterations ( const int maxIter ) { solverParameter().setMaxIterations(maxIter); }
-      virtual int solverMethod(
-            const std::vector<int> standardMethods,
-            const std::vector<std::string> &additionalMethods = {},
-            int defaultMethod = 0   // this is the first method passed in
-          ) const
-      { return solverParameter().solverMethod( standardMethods, additionalMethods, defaultMethod ); }
-      virtual int gmresRestart() const { return solverParameter().gmresRestart(); }
-      virtual int preconditionMethod(
-            const std::vector<int> standardMethods,
-            const std::vector<std::string> &additionalMethods = {},
-            int defaultMethod = 0   // this is the first method passed in
-          ) const
-      { return solverParameter().preconditionMethod( standardMethods, additionalMethods, defaultMethod ); }
-      virtual double relaxation () const { return solverParameter().relaxation(); }
-      virtual int preconditionerIteration () const { return solverParameter().preconditionerIteration(); }
     };
 
 #if HAVE_DUNE_ISTL

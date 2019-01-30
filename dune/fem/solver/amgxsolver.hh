@@ -40,20 +40,18 @@ namespace Dune
       using BaseType :: parameter;
       using BaseType :: keyPrefix;
 
-      AMGXSolverParameter( const ParameterContainer &parameter = Parameter::container() )
+      AMGXSolverParameter( const ParameterReader& parameter = Parameter::container() )
         : BaseType( parameter )
       {}
+
 
       AMGXSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : BaseType( keyPrefix, parameter )
       {}
 
-      template <class BaseParameter>
-      AMGXSolverParameter( const BaseParameter &other )
-        : BaseType( other.parameter() )
-      { }
-
-      bool isAMGXSolverParameter() const { return true; }
+      AMGXSolverParameter( const SolverParameter& sp )
+        : AMGXSolverParameter( sp.parameter() )
+      {}
 
       virtual std::string solvermode () const
       {
@@ -115,43 +113,43 @@ namespace Dune
        *
        *  \param[in] parameter parameter for the solver
        */
-      AMGXInverseOperator ( const AMGXSolverParameter& parameter = AMGXSolverParameter(Parameter::container()) )
+      AMGXInverseOperator ( const AMGXSolverParameter& parameter = AMGXSolverParameter() )
         : BaseType( parameter )
       {
       }
 
-      /** \brief constructor
-       *
-       *  \param[in] parameter parameter for the solver
-       */
-      AMGXInverseOperator ( const SolverParameter& parameter )
-        : AMGXInverseOperator( AMGXSolverParameter( parameter ) )
+      AMGXInverseOperator ( const OperatorType &op,
+                            const AMGXSolverParameter & parameter = AMGXSolverParameter() )
+        : AMGXInverseOperator ( parameter )
       {
+        bind( op );
+      }
+
+      AMGXInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
+                            const AMGXSolverParameter & parameter = AMGXSolverParameter() )
+        : AMGXInverseOperator( parameter )
+      {
+        bind( op, preconditioner );
+      }
+
+      AMGXInverseOperator ( const AMGXInverseOperator& other )
+        : AMGXInverseOperator( other.parameter() )
+      {
+        if( other.operator_ )
+          bind( *(other.operator_) );
       }
 
       void bind( const OperatorType& op )
       {
         BaseType::bind( op );
         init( parameter() );
-        /*
-
-        const AMGXSolverParameter* param = dynamic_cast< const AMGXSolverParameter* > (&parameter());
-        if( param )
-        {
-          init( *param );
-        }
-        else
-        {
-          AMGXSolverParameter newParam( parameter().parameter() );
-          init( newParam );
-        }
-        */
       }
 
       void unbind()
       {
 #if HAVE_AMGXSOLVER
-        amgXSolver_.finalize();
+        amgXSolver_->finalize();
+        amgXSolver_.reset();
 #endif
         BaseType :: unbind();
       }
@@ -159,12 +157,13 @@ namespace Dune
     protected:
       void init( const AMGXSolverParameter& parameter )
       {
-        if( assembledOperator_ )
+        if( assembledOperator_ && !amgXSolver_ )
         {
-#if HAVE_AMGXSOLVER
           std::string mode   = parameter.solvermode();
           std::string config = parameter.solverconfig();
-          amgXSolver_.initialize(PETSC_COMM_WORLD, mode, config );
+#if HAVE_AMGXSOLVER
+          amgXSolver_.reset( new AmgXSolver() );
+          amgXSolver_->initialize(PETSC_COMM_WORLD, mode, config );
 
           // check that PetscMat was assembled not in block mode
           if( assembledOperator_->blockedMode() )
@@ -174,7 +173,7 @@ namespace Dune
           Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());
 
           // set matrix
-          amgXSolver_.setA( A );
+          amgXSolver_->setA( A );
 #else
           DUNE_THROW(InvalidStateException,"AMGX solver not found during cmake config. Please reconfigure!");
 #endif
@@ -186,6 +185,8 @@ namespace Dune
         if( !assembledOperator_ )
           DUNE_THROW(NotImplemented,"AMGX solver with matrix free implementations is not supported!");
 
+        assert( amgXSolver_ );
+
         int iterations = -1;
 #if HAVE_AMGXSOLVER
         // need to have a 'distributed' destination vector for continuous spaces
@@ -195,7 +196,7 @@ namespace Dune
         // call PETSc solvers, dest = x, arg = rhs
         Vec& x = *dest.petscVec();
         Vec& rhs = *(const_cast< SolverDiscreteFunctionType& > (arg).petscVec());
-        amgXSolver_.solve( x, rhs );
+        amgXSolver_->solve( x, rhs );
 
         // a continuous solution is 'distributed' so need a communication here
         if( dest.space().continuous() )
@@ -204,7 +205,7 @@ namespace Dune
         }
 
         // get number of iterations
-        amgXSolver_.getIters( iterations );
+        amgXSolver_->getIters( iterations );
 #else
         DUNE_THROW(InvalidStateException,"AMGX solver not found during cmake config. Please reconfigure!");
 #endif
@@ -213,7 +214,7 @@ namespace Dune
 
     protected:
 #if HAVE_AMGXSOLVER
-      mutable AmgXSolver amgXSolver_;
+      mutable std::unique_ptr< AmgXSolver > amgXSolver_;
 #endif
       using BaseType :: assembledOperator_;
       using BaseType :: parameter_;
