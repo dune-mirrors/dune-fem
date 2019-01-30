@@ -142,6 +142,13 @@ public:
     bind(op);
   }
 
+  SPQRInverseOperator(const SPQRInverseOperator& other) :
+    SPQRInverseOperator(other.verbose_)
+  {
+    if( other.operator_ )
+      bind( *(other.operator_) );
+  }
+
   // \brief Destructor.
   ~SPQRInverseOperator()
   {
@@ -189,7 +196,7 @@ public:
    */
   int apply (const DofType* arg, DofType* dest) const
   {
-    const std::size_t dimMat(ccsmat_.N());
+    const std::size_t dimMat(ccsmat_->N());
     // fill B
     for(std::size_t k = 0; k != dimMat; ++k)
       (static_cast<DofType*>(B_->x))[k] = arg[k];
@@ -284,15 +291,6 @@ public:
     }
   }
 
-  double averageCommTime() const
-  {
-    return 0.0;
-  }
-
-  int iterations() const
-  {
-    return 0;
-  }
   void setMaxIterations( int ) {}
 
   /** \brief Get QR factorization.
@@ -306,13 +304,13 @@ public:
   /** \brief Get CCS matrix of the operator to solve.
    *  \warning It is up to the user to preserve consistency.
    */
-  CCSMatrixType& getCCSMatrix()
+  CCSMatrixType& getCCSMatrix() const
   {
     assert( ccsmat_ );
     return *ccsmat_;
   }
 
-  private:
+private:
   explicit SPQRInverseOperator(const bool& verbose) :
     verbose_(verbose && Dune::Fem::Parameter::verbose()), ccsmat_(), cc_(new cholmod_common())
   {
@@ -323,10 +321,10 @@ public:
   using BaseType :: assembledOperator_;
   const bool verbose_;
   mutable std::unique_ptr< CCSMatrixType > ccsmat_;
-  mutable cholmod_common* cc_;
-  mutable cholmod_sparse* A_;
-  mutable cholmod_dense* B_;
-  mutable SuiteSparseQR_factorization<DofType>* spqrfactorization_;
+  mutable cholmod_common* cc_   = nullptr ;
+  mutable cholmod_sparse* A_    = nullptr ;
+  mutable cholmod_dense* B_     = nullptr ;
+  mutable SuiteSparseQR_factorization<DofType>* spqrfactorization_ = nullptr;
 
   // \brief Computes the SPQR decomposition.
   void decompose() const
