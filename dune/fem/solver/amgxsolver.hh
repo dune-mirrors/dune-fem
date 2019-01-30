@@ -185,10 +185,11 @@ namespace Dune
         if( !assembledOperator_ )
           DUNE_THROW(NotImplemented,"AMGX solver with matrix free implementations is not supported!");
 
-        assert( amgXSolver_ );
 
         int iterations = -1;
 #if HAVE_AMGXSOLVER
+        assert( amgXSolver_ );
+
         // need to have a 'distributed' destination vector for continuous spaces
         if( dest.space().continuous() )
           dest.dofVector().clearGhost();
