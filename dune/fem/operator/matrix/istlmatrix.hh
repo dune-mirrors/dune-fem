@@ -657,6 +657,7 @@ namespace Dune
 
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
       typedef LittleBlockType  block_type;
+      typedef LittleBlockType  MatrixBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType, RangeBlock >     RowDiscreteFunctionType;
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType, DomainBlock >   ColumnDiscreteFunctionType;

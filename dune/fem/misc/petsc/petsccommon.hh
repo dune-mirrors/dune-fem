@@ -262,16 +262,61 @@ namespace Dune
     inline static void MatSetSizes ( Mat A, PetscInt m, PetscInt n, PetscInt M, PetscInt N ) { ErrorCheck( ::MatSetSizes( A, m, n, M, N ) ); }
     inline static void MatSetFromOptions ( Mat B ) { ErrorCheck( ::MatSetFromOptions( B ) ); }
     inline static void MatSetType ( Mat mat, const MatType matype ) { ErrorCheck( ::MatSetType( mat, matype ) ); }
-    inline static void MatSetValue ( Mat v, PetscInt i, PetscInt j, PetscScalar va, InsertMode mode ) { ErrorCheck( ::MatSetValue( v, i, j, va, mode ) ); }
+
+    inline static void MatSetValue ( Mat v, PetscInt i, PetscInt j, PetscScalar va, InsertMode mode )
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        ErrorCheck( ::MatSetValue( v, i, j, va, mode ) );
+      }
+    }
+
     inline static void MatSetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
-      { ErrorCheck( ::MatSetValues( mat, m, idxm, n, idxn, v, addv ) ); }
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        ErrorCheck( ::MatSetValues( mat, m, idxm, n, idxn, v, addv ) );
+      }
+    }
+
     inline static void MatSetValuesBlocked ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv )
-      { ErrorCheck( ::MatSetValuesBlocked( mat, m, idxm, n, idxn, v, addv ) ); }
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        ErrorCheck( ::MatSetValuesBlocked( mat, m, idxm, n, idxn, v, addv ) );
+      }
+    }
+
     inline static void MatGetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[] )
       { ErrorCheck( ::MatGetValues( mat, m, idxm, n, idxn, v ) ); }
-    inline static void MatZeroRows ( Mat mat, PetscInt m, const PetscInt idxm[], const PetscScalar v ) { ErrorCheck( ::MatZeroRows( mat, m, idxm, v, 0, 0 ) ); }
+
+    inline static void MatZeroRows ( Mat mat, PetscInt m, const PetscInt idxm[], const PetscScalar v )
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        ErrorCheck( ::MatZeroRows( mat, m, idxm, v, 0, 0 ) );
+      }
+    }
+
     inline static void MatView ( Mat mat, PetscViewer viewer ) { ErrorCheck( ::MatView( mat, viewer ) ); }
-    inline static void MatZeroEntries ( Mat mat ) { ErrorCheck( ::MatZeroEntries( mat ) ); }
+    inline static void MatZeroEntries ( Mat mat )
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        ErrorCheck( ::MatZeroEntries( mat ) );
+      }
+    }
+
     inline static void PetscBarrier ( PetscObject obj ) { ErrorCheck( ::PetscBarrier( obj ) ); }
     inline static void PetscFinalize () { ErrorCheck( ::PetscFinalize() ); }
     inline static void PetscInitialize( int *argc, char ***args, const char file[], const char help[] ) { ErrorCheck( ::PetscInitialize( argc, args, file, help ) ); }
