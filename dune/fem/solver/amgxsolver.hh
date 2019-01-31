@@ -157,7 +157,7 @@ namespace Dune
     protected:
       void init( const AMGXSolverParameter& parameter )
       {
-        if( assembledOperator_ && !amgXSolver_ )
+        if( assembledOperator_ )
         {
           std::string mode   = parameter.solvermode();
           std::string config = parameter.solverconfig();
