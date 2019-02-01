@@ -9,11 +9,11 @@ fem.verboserank: -1
 # verbosity of the cg inverse operator
 fem.solver.verbose: 0
 
-# valid are: "default", "cg", "minres" , "bicg", "bicgstab", "gmres" 
-petsc.kspsolver.method: cg
+# valid are: "default", "cg", "minres" , "bicg", "bicgstab", "gmres"
+fem.solver.method: cg
 
 # valid are:  "default", "none", "asm", "sor", "jacobi", "ilu", "icc", "hypre", "lu"
-petsc.preconditioning.method: default
+fem.solver.preconditioning.method: kspoptions
 petsc.preconditioning.levels: 2
 
 fem.io.macroGridFile: macrogrid
