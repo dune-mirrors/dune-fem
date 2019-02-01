@@ -158,6 +158,22 @@ namespace Dune
         dofVector().assignVector( g.dofVector() );
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::beginAssemble() */
+      template< class AssembleOperation >
+      void beginAssemble ()
+      {
+        dofVector().beginAssemble();
+        BaseType :: template beginAssemble< AssembleOperation > ();
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::endAssemble() */
+      template< class AssembleOperation >
+      void endAssemble ()
+      {
+        dofVector().endAssemble();
+        BaseType :: template endAssemble< AssembleOperation > ();
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */

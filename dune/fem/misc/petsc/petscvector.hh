@@ -269,6 +269,16 @@ namespace Dune
         return &ghostedVec_;
       }
 
+      void beginAssemble()
+      {
+        ::Dune::Petsc::VecAssemblyBegin( vec_ );
+      }
+
+      void endAssemble()
+      {
+        ::Dune::Petsc::VecAssemblyEnd( vec_ );
+      }
+
       // force communication _now_
       template <class Operation>
       void communicateNow (const Operation& operation) const
