@@ -50,7 +50,9 @@ namespace Dune
           } catch( ... ) {
             if( !Fem::Parameter::exists( key ) )
             {
-              if( *def == Dune::Fem::checkParameterExistsString() )
+              if (def == nullptr)
+                return nullptr; // not found and no default
+              else if( *def == Dune::Fem::checkParameterExistsString() )
                 return nullptr;
               return def;
             }
