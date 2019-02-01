@@ -162,16 +162,16 @@ namespace Dune
       template< class AssembleOperation >
       void beginAssemble ()
       {
-        dofVector().beginAssemble();
         BaseType :: template beginAssemble< AssembleOperation > ();
+        dofVector().beginAssemble();
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::endAssemble() */
       template< class AssembleOperation >
       void endAssemble ()
       {
-        dofVector().endAssemble();
         BaseType :: template endAssemble< AssembleOperation > ();
+        dofVector().endAssemble();
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
@@ -179,7 +179,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
-      /** \brief obtain a constand pointer to the underlying PETSc Vec */
+      /** \brief obtain a constant pointer to the underlying PETSc Vec */
       const Vec* petscVec () const { return dofVector().getVector(); }
 
       /** \brief obtain a pointer to the underlying PETSc Vec */

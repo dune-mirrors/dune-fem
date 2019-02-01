@@ -913,6 +913,9 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      /** \brief Initiate the assemble of values using the LocalContribution concept
+       *  \tparam AssembleOperation the specific operation (Add, Set, ...)
+       */
       template< class AssembleOperation >
       void beginAssemble ()
       {
@@ -928,6 +931,9 @@ namespace Dune
         ++assembleCount_;
       }
 
+      /** \brief Finalize the assemble of values using the LocalContribution concept
+       *  \tparam AssembleOperation the specific operation (Add, Set, ...)
+       */
       template< class AssembleOperation >
       void endAssemble ()
       {
