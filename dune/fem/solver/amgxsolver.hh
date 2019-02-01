@@ -191,7 +191,7 @@ namespace Dune
 
 
         int iterations = -1;
-#if HAVE_AMGXSOLVER
+#if HAVE_AMGXSOLVER && HAVE_PETSC
         assert( amgXSolver_ );
 
         // need to have a 'distributed' destination vector for continuous spaces
@@ -212,7 +212,7 @@ namespace Dune
         // get number of iterations
         amgXSolver_->getIters( iterations );
 #else
-        DUNE_THROW(InvalidStateException,"AMGX solver not found during cmake config. Please reconfigure!");
+        DUNE_THROW(InvalidStateException,"AMGX solver or PETSc not found during cmake config. Please reconfigure!");
 #endif
         return iterations;
       }
