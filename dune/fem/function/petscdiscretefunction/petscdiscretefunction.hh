@@ -141,12 +141,6 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
-      void communicate ()
-      {
-        dofVector().communicateNow();
-      }
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g)
        *  \note This is a specialization when the right hand side is an AdaptiveDiscreteFunction */
       void assign( const AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > &g )

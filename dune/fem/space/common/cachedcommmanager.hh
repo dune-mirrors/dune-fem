@@ -296,7 +296,7 @@ namespace Dune
           Dune::Timer exchTimer;
 
           // PetscDiscreteFunction has it's own communication
-          discreteFunction.communicate();
+          discreteFunction.dofVector().communicateNow( operation );
 
           return exchTimer.elapsed();
         }

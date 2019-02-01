@@ -104,7 +104,7 @@ namespace Dune
         void send( const DiscreteFunction& discreteFunction )
         {
           // nothing to do here, since DUNE does not support
-          // non-blocking communcation yet
+          // non-blocking communication yet
         }
 
         //! receive data for discrete function and given operation
@@ -116,7 +116,7 @@ namespace Dune
           Dune::Timer exchangeT;
 
           // PetscDiscreteFunction has it's own communication
-          discreteFunction.communicate();
+          discreteFunction.dofVector().communicateNow( operation );
 
           return exchangeT.elapsed();
         }
