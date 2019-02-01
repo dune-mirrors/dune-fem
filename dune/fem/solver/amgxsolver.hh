@@ -83,7 +83,7 @@ namespace Dune
       typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef OperatorType  PreconditionerType;
 
-#if HAVE_PETSC
+#if HAVE_AMGXSOLVER
       typedef Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
 #else
       typedef OperatorType  AssembledOperatorType;
@@ -165,7 +165,7 @@ namespace Dune
         {
           std::string mode   = parameter.solvermode();
           std::string config = parameter.solverconfig();
-#if HAVE_AMGXSOLVER && HAVE_PETSC
+#if HAVE_AMGXSOLVER
           amgXSolver_.reset( new AmgXSolver() );
           amgXSolver_->initialize(PETSC_COMM_WORLD, mode, config );
 
@@ -191,7 +191,7 @@ namespace Dune
 
 
         int iterations = -1;
-#if HAVE_AMGXSOLVER && HAVE_PETSC
+#if HAVE_AMGXSOLVER
         assert( amgXSolver_ );
 
         // need to have a 'distributed' destination vector for continuous spaces

@@ -475,8 +475,8 @@ int main(int argc, char** argv)
 #endif
   */
 
+#if HAVE_AMGXSOLVER && HAVE_PETSC
   // AMGX solver wrapper + PetscLinearOperator
-  try
   {
     using DiscreteFunction  = Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction >;
@@ -485,10 +485,7 @@ int main(int argc, char** argv)
     std::string designation(" === AMGXInverseOperator + PetscLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
-  catch (const Dune::Exception& e)
-  {
-    std::cout << "Caught " << e.what() << std::endl;
-  }
+#endif
 
   return pass ? 0 : 1;
 }
