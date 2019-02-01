@@ -166,7 +166,7 @@ struct Algorithm
       if( Dune::Fem::Parameter::verbose() || (Dune::Fem::MPIManager::rank() == 0 && !pass) )
         std::cout << designation << " inverseOp()\n" << dist << "\n" << std::endl;
 
-      auto param = Dune::Fem::parameterDict("fem.solver", "method",Dune::Fem::SolverParameter::gmres);
+      auto param = Dune::Fem::parameterDict("fem.solver", "method",Dune::Fem::SolverParameter::cg);
       InverseOperatorType inverseOperatorA( param );
       inverseOperatorA.bind( massOperator );
       inverseOperatorA( rhs, u );

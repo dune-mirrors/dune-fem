@@ -83,7 +83,7 @@ namespace DuneODE
                                     const SourceTermType &sourceTerm,
                                     const NonlinearSolverParameterType& parameters )
     : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_, parameters ),
+      nonlinearSolver_( parameters ),
       timeStepControl_( timeStepControl ),
       sourceTerm_( sourceTerm ),
       stages_( butcherTable.stages() ),
@@ -92,6 +92,7 @@ namespace DuneODE
       beta_( stages() ),
       c_( butcherTable.c() ),
       rhs_( "RK rhs", helmholtzOp_.space() ),
+      updateStorage_(),
       update_( stages(), nullptr )
     {
       setup( butcherTable );
@@ -109,7 +110,7 @@ namespace DuneODE
                                     const TimeStepControlType &timeStepControl,
                                     const NonlinearSolverParameterType& parameters )
     : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_, parameters ),
+      nonlinearSolver_( parameters ),
       timeStepControl_( timeStepControl ),
       stages_( butcherTable.stages() ),
       alpha_( butcherTable.A() ),
@@ -117,6 +118,7 @@ namespace DuneODE
       beta_( stages() ),
       c_( butcherTable.c() ),
       rhs_( "RK rhs", helmholtzOp_.space() ),
+      updateStorage_(),
       update_( stages(), nullptr )
     {
       setup( butcherTable );
@@ -127,48 +129,34 @@ namespace DuneODE
                                     const ButcherTable &butcherTable,
                                     const TimeStepControlType &timeStepControl,
                                     const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_, parameter ),
-      timeStepControl_( timeStepControl ),
-      stages_( butcherTable.stages() ),
-      alpha_( butcherTable.A() ),
-      gamma_( stages() ),
-      beta_( stages() ),
-      c_( butcherTable.c() ),
-      rhs_( "RK rhs", helmholtzOp_.space() ),
-      update_( stages(), nullptr )
+    : BasicImplicitRungeKuttaSolver( helmholtzOp, butcherTable, timeStepControl,
+        NonlinearSolverParameterType( parameter ) )
     {
-      setup( butcherTable );
     }
 
     template< class ButcherTable >
     BasicImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                     const ButcherTable &butcherTable,
                                     const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
-    : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_, parameter ),
-      timeStepControl_( parameter ),
-      stages_( butcherTable.stages() ),
-      alpha_( butcherTable.A() ),
-      gamma_( stages() ),
-      beta_( stages() ),
-      c_( butcherTable.c() ),
-      rhs_( "RK rhs", helmholtzOp_.space() ),
-      update_( stages(), nullptr )
+    : BasicImplicitRungeKuttaSolver( helmholtzOp, butcherTable,
+        TimeStepControlType( parameter ), NonlinearSolverParameterType( parameter ) )
     {
-      setup( butcherTable );
     }
-
 
     template< class ButcherTable >
     void setup( const ButcherTable& butcherTable )
     {
+      update_.clear();
+      update_.resize( stages(), nullptr );
+      updateStorage_.resize( stages() );
+
       // create intermediate functions
       for( int i = 0; i < stages(); ++i )
       {
         std::ostringstream name;
         name << "RK stage " << i;
-        update_[ i ] = new DestinationType( name.str(), helmholtzOp_.space() );
+        updateStorage_[ i ].reset( new DestinationType( name.str(), helmholtzOp_.space() ) );
+        update_[ i ] = updateStorage_[ i ].operator ->();
       }
 
       // compute coefficients
@@ -199,15 +187,6 @@ namespace DuneODE
 
     }
 
-
-
-    /** \brief destructor */
-    ~BasicImplicitRungeKuttaSolver ()
-    {
-      for( int i = 0; i < stages(); ++i )
-        delete update_[ i ];
-    }
-
     //! apply operator once to get dt estimate
     void initialize ( const DestinationType &U0 )
     {
@@ -236,6 +215,7 @@ namespace DuneODE
       assert( timeStepSize > 0.0 );
       for( int s = 0; s < stages(); ++s )
       {
+        assert( update_[ s ] );
         // update for stage s
         DestinationType& updateStage = *update_[ s ];
 
@@ -259,7 +239,9 @@ namespace DuneODE
 
         // solve the system
         helmholtzOp_.setLambda( alpha_[ s ][ s ]*timeStepSize );
+        nonlinearSolver_.bind( helmholtzOp_ );
         nonlinearSolver_( rhs_, updateStage );
+        nonlinearSolver_.unbind();
 
         // update monitor
         monitor.newtonIterations_       += nonlinearSolver_.iterations();
@@ -334,10 +316,10 @@ namespace DuneODE
       return res;
     }
 
-    HelmholtzOperatorType &helmholtzOp_;
-    NonlinearSolverType nonlinearSolver_;
-    TimeStepControl timeStepControl_;
-    SourceTerm sourceTerm_;
+    HelmholtzOperatorType&   helmholtzOp_;
+    NonlinearSolverType      nonlinearSolver_;
+    TimeStepControl          timeStepControl_;
+    SourceTerm               sourceTerm_;
 
     int stages_;
     double delta_;
@@ -345,7 +327,8 @@ namespace DuneODE
     Dune::DynamicVector< double > gamma_, beta_, c_;
 
     DestinationType rhs_;
-    std::vector< DestinationType * > update_;
+    std::vector< std::unique_ptr< DestinationType > > updateStorage_;
+    std::vector< DestinationType* > update_;
   };
 
 } // namespace DuneODE

@@ -88,8 +88,7 @@ namespace DuneODE
                                const SourceTermType &sourceTerm,
                                const NonlinearSolverParameterType& parameter )
     : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_, parameter ),
-      jInv_( parameter.linear() ),
+      linearSolver_( parameter.linear() ),
       timeStepControl_( timeStepControl ),
       sourceTerm_( sourceTerm ),
       stages_( butcherTable.stages() ),
@@ -250,17 +249,17 @@ namespace DuneODE
         }
         const int remLinearIts = maxLinearIterations_;
 
-        jInv_.setMaxIterations( remLinearIts );
+        linearSolver_.setMaxIterations( remLinearIts );
 
         if (preconditioner_)
-          jInv_.bind( jOp, *preconditioner_ );
+          linearSolver_.bind( jOp, *preconditioner_ );
         else
-          jInv_.bind( jOp );
+          linearSolver_.bind( jOp );
 
-        jInv_( rhs_, updateStage );
-        monitor.linearSolverIterations_ += jInv_.iterations();
+        linearSolver_( rhs_, updateStage );
+        monitor.linearSolverIterations_ += linearSolver_.iterations();
 
-        jInv_.unbind();
+        linearSolver_.unbind();
       }
 
       double error = 0.0;
@@ -328,8 +327,7 @@ namespace DuneODE
     }
 
     HelmholtzOperatorType&     helmholtzOp_;
-    NonlinearSolverType        nonlinearSolver_;
-    LinearInverseOperatorType  jInv_;
+    LinearInverseOperatorType  linearSolver_;
 
     TimeStepControl timeStepControl_;
     SourceTerm sourceTerm_;

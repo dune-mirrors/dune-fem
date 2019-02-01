@@ -8,7 +8,7 @@ fem.ode.miniterations: 95
 fem.ode.maxiterations: 105
 fem.ode.iterations: 20
 fem.ode.cflStart: 1.
-# fem.ode.cflMax: 5
+fem.ode.cflMax: 5
 fem.timeprovider.factor: 0.15
 fem.timeprovider.updatestep: 1
 # fixedTimeStep: 0.002 # when 0 then use dynamic time step
@@ -21,8 +21,8 @@ istl.preconditioner.type: smoother
 istl.preconditioner.amg.debuglevel: 3
 
 # parameter for the implicit solvers
-fem.solver.verbose: true
-fem.solver.method: bicgstab  # this is fixed to gmres in the test
+fem.solver.verbose: false
+fem.solver.method: gmres  # this is fixed to gmres in the test
 fem.solver.reductiontol: 1e-11
 fem.solver.absolutetol: 1e-11
 fem.solver.gmres.restart: 15
@@ -31,7 +31,7 @@ fem.solver.maxiterations: 100
 # parameter for the newton solver test
 fem.solver.newton.verbose: true
 fem.solver.newton.linear.verbose: true
-fem.solver.newton.linear.method: bicgstab  # this is fixed to gmres in the test
+fem.solver.newton.linear.method: gmres  # this is fixed to gmres in the test
 fem.solver.newton.linear.reductiontol: 1e-11
 fem.solver.newton.linear.absolutetol: 1e-11
 fem.solver.newton.linear.gmres.restart: 15
