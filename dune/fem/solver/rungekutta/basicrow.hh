@@ -249,7 +249,7 @@ namespace DuneODE
         }
         const int remLinearIts = maxLinearIterations_;
 
-        linearSolver_.setMaxIterations( remLinearIts );
+        linearSolver_.parameter().setMaxIterations( remLinearIts );
 
         if (preconditioner_)
           linearSolver_.bind( jOp, *preconditioner_ );

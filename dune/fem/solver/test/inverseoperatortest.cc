@@ -221,11 +221,9 @@ std::shared_ptr< GridType > createGrid( const double length, const int cells )
   file << std::endl;
 
   file << "#" << std::endl;
-  file << "GridParameters" << std::endl;
+  file << "GridParameter" << std::endl;
   file << "overlap 0" << std::endl;
   file << "#" << std::endl;
-
-  std::cout << file.str() << std::endl;
 
   std::shared_ptr< GridType > ptr;
   ptr.reset( Dune::GridPtr< GridType > (file).release() );
