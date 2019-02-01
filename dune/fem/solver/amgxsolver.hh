@@ -83,7 +83,11 @@ namespace Dune
       typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef OperatorType  PreconditionerType;
 
+#if HAVE_PETSC
       typedef Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+#else
+      typedef OperatorType  AssembledOperatorType;
+#endif
 
       typedef AMGXInverseOperator< DiscreteFunction >  InverseOperatorType;
 
@@ -161,7 +165,7 @@ namespace Dune
         {
           std::string mode   = parameter.solvermode();
           std::string config = parameter.solverconfig();
-#if HAVE_AMGXSOLVER
+#if HAVE_AMGXSOLVER && HAVE_PETSC
           amgXSolver_.reset( new AmgXSolver() );
           amgXSolver_->initialize(PETSC_COMM_WORLD, mode, config );
 
@@ -175,7 +179,7 @@ namespace Dune
           // set matrix
           amgXSolver_->setA( A );
 #else
-          DUNE_THROW(InvalidStateException,"AMGX solver not found during cmake config. Please reconfigure!");
+          DUNE_THROW(InvalidStateException,"AMGX solver or PETSc not found during cmake config. Please reconfigure!");
 #endif
         }
       }
