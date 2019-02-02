@@ -13,7 +13,7 @@ fem.solver.verbose: 0
 fem.solver.method: cg
 
 # valid are:  "default", "none", "asm", "sor", "jacobi", "ilu", "icc", "hypre", "lu"
-fem.solver.preconditioning.method: kspoptions
+# fem.solver.preconditioning.method: default
 petsc.preconditioning.levels: 2
 
 fem.io.macroGridFile: macrogrid
