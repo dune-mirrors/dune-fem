@@ -331,7 +331,6 @@ template<class GF>
 void DifferentiableEllipticOperator< JacobianOperator, Model >
   ::assemble ( const GF &u, JacobianOperator &jOp ) const
 {
-  Dune::Timer timer;
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DomainDiscreteFunctionSpaceType::BasisFunctionSetType DomainBasisFunctionSetType;
   typedef typename RangeDiscreteFunctionSpaceType::BasisFunctionSetType  RangeBasisFunctionSetType;
@@ -351,7 +350,6 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
   std::vector< typename RangeLocalFunctionType::JacobianRangeType > rdphi( rangeSpace.blockMapper().maxNumDofs()*rangeBlockSize );
 
   Dune::Fem::ConstLocalFunction< GF > uLocal( u );
-  std::cout << "   in assembly: element loop size=" << rangeSpace.gridPart().grid().size(0) << " time=  " << timer.elapsed() << std::endl;;
   for( const EntityType &entity : rangeSpace )
   {
     if( !model().init( entity ) )
@@ -443,7 +441,6 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
       }
     }
   } // end grid traversal
-  std::cout << "   in assembly: final   " << timer.elapsed() << std::endl;;
   jOp.communicate();
 }
 #endif // #ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH
