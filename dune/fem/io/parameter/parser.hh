@@ -48,6 +48,7 @@ namespace Dune
         std::string w;
         if( ParameterParser< std::string >::parse( s, w ) )
         {
+          std::transform(w.begin(), w.end(), w.begin(), ::tolower);
           if( (w == std::string( "false" )) || (w == std::string( "no" )) || (w == std::string( "0" )) )
           {
             value = false;
