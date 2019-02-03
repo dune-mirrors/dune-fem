@@ -92,11 +92,11 @@ namespace Dune
         using pybind11::operator""_a;
         cls.def("inverseLinearOperator",[] (Scheme &self, const pybind11::dict &parameters) {
           return std::make_unique<typename Scheme::LinearInverseOperatorType>
-            ( Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
+            ( pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
         }, "parameters"_a );
         cls.def("inverseLinearOperator",[] (Scheme &self, typename Scheme::JacobianOperatorType &jOp, const pybind11::dict &parameters) {
           auto invOp = std::make_unique<typename Scheme::LinearInverseOperatorType>
-            ( Dune::Fem::SolverParameter(pyParameter( parameters, std::make_shared< std::string >() )) );
+            ( pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
           invOp->bind(jOp);
           return invOp;
         }, "jOp"_a, "parameters"_a, pybind11::keep_alive<0,2>(), pybind11::keep_alive<0,3>() );
