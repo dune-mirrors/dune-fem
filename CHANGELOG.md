@@ -38,4 +38,20 @@
    and should therefore not be used. To overload some given parameter the
    `parameterDict` provides similar functionality.
 
+-  `reductionTol` and `absoluteTol` tolerance as solver parameters are
+   deprecated. Use `tolerance` instead together with the `errormeassure`
+   parameter.
+
+-  `discreteFunction.communicate` and `linearOperator.communicate` are
+   (nearly) deprecated, i.e., they shouldn't be called any more except in
+   special circumtances.  Communication is taken care of by the local contributions.
+
+-  The linear operators have a new method finalize which should be called
+   after all changes to the matrix have been made. Although changing the
+   matrix after this step could still be possible is some cases,
+   no guarantee is given. To avoid issues with a premature finalization,
+   two new methods `disableFinalize()` and `enableFinalize()` can be used -
+   after `disableFinalize` is envoked any call to `finalize` on the linear
+   operator will be ignored until `enableFinalize` is called.
+
     See dune-fem/dune-fem!290
