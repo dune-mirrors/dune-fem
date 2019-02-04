@@ -111,12 +111,8 @@ public:
     verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
   {}
 
-  explicit LDLInverseOperator( const ParameterReader &parameter ) :
-    LDLInverseOperator( SolverParameter( parameter ) )
-  {}
-
-  LDLInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) ) :
-    verbose_( parameter.verbose() && Dune::Fem::Parameter::verbose() )
+  LDLInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+  : BaseType(parameter), verbose_(BaseType::verbose())
   {}
 
   /** \brief Constructor.
@@ -315,9 +311,8 @@ protected:
 
 protected:
   using BaseType :: assembledOperator_;
-
-
   const bool verbose_;
+
   mutable CCSMatrixType ccsmat_;
   mutable bool isloaded_ = false;
   mutable int* Lp_;

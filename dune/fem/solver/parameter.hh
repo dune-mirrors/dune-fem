@@ -97,6 +97,37 @@ namespace Dune
         return errorType ;
       }
 
+      virtual double tolerance (  ) const
+      {
+        if( tolerance_ < 0 )
+        {
+          double defaultTol = 1e-8;
+          if(parameter_.exists(keyPrefix_ + "tolerance"))
+            tolerance_ = parameter_.getValue< double >( keyPrefix_ + "tolerance", defaultTol );
+          else
+            if( parameter_.exists(keyPrefix_ + "absolutetol") ||
+                parameter_.exists(keyPrefix_ + "reductiontol") )
+              // new parameter not used but old parameters exist
+            {
+              int measure = errorMeasure();
+              if (measure == 0)
+                tolerance_ = absoluteTol();
+              else
+                tolerance_ = reductionTol();
+            }
+            else tolerance_ = defaultTol; // no parameter set
+        }
+        return tolerance_;
+      }
+
+      virtual void setTolerance ( const double eps )
+      {
+        assert( eps >= 0.0 );
+        tolerance_ = eps;
+      }
+
+
+      [[ deprecated ]]
       virtual double absoluteTol ( )  const
       {
         if( absoluteTol_ < 0 )
@@ -107,17 +138,22 @@ namespace Dune
             absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ + "linabstol");
           }
           else
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ + "absolutetol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
             absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
+          }
         }
         return absoluteTol_;
       }
 
+      [[ deprecated ]]
       virtual void setAbsoluteTol ( const double eps )
       {
         assert( eps >= 0.0 );
         absoluteTol_ = eps;
       }
 
+      [[ deprecated ]]
       virtual double reductionTol (  ) const
       {
         if( reductionTol_ < 0 )
@@ -128,11 +164,15 @@ namespace Dune
             reductionTol_ =  parameter_.getValue< double >(keyPrefix_ + "linreduction");
           }
           else
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ +"reductiontol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
             reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-8 );
+          }
         }
         return reductionTol_;
       }
 
+      [[ deprecated ]]
       virtual void setReductionTol ( const double eps )
       {
         assert( eps >= 0.0 );
@@ -270,6 +310,7 @@ namespace Dune
       mutable int    maxIterations_ = -1;
       mutable double absoluteTol_   = -1.;
       mutable double reductionTol_  = -1.;
+      mutable double tolerance_     = -1.;
     };
   }
 }

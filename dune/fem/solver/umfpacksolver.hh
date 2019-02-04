@@ -102,12 +102,9 @@ public:
     UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
   {}
 
-  UMFPACKInverseOperator(const ParameterReader& parameter ) :
-    UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
-  {}
-
-  UMFPACKInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) ) :
-    verbose_( parameter.verbose() && Dune::Fem::Parameter::verbose() )
+  UMFPACKInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+  : BaseType(parameter)
+  , verbose_( BaseType::verbose() )
   {}
 
   /** \brief Constructor.

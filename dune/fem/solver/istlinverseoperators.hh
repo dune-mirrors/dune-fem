@@ -100,15 +100,15 @@ namespace Dune
                           const BlockVector &rhs, const BlockVector &x ) const
       {
 
-        if( parameter_->errorMeasure() == 0 && (parameter_->absoluteTol() < std::numeric_limits< double >::max()) )
+        if( parameter_->errorMeasure() == 0)
         {
           BlockVector residuum( rhs );
           op.applyscaleadd( -1., x, residuum );
           const double res = scp.norm( residuum );
-          return (res > 0 ? parameter_->absoluteTol() / res : 1e-3);
+          return (res > 0 ? parameter_->tolerance() / res : 1e-3);
         }
         else
-          return parameter_->reductionTol();
+          return parameter_->tolerance();
       }
 
     private:

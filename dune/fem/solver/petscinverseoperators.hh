@@ -230,7 +230,7 @@ namespace Dune
 
       void printTexInfo(std::ostream& out) const
       {
-        out << "Solver: " << solverName_ << " eps = " << parameter_->reductionTol() ;
+        out << "Solver: " << solverName_ << " eps = " << parameter_->tolerance() ;
         out  << "\\\\ \n";
       }
 
@@ -257,8 +257,11 @@ namespace Dune
 
         // set prescribed tolerances
         PetscInt  maxits = parameter_->maxIterations();
-        PetscReal reduc  = parameter_->reductionTol();
-        ::Dune::Petsc::KSPSetTolerances(ksp(), reduc, 1.e-50, PETSC_DEFAULT, maxits);
+        PetscReal tolerance  = parameter_->tolerance();
+        if (parameter_->errorMeasure() == 0)
+          ::Dune::Petsc::KSPSetTolerances(ksp(), 1e-50, tolerance, PETSC_DEFAULT, maxits);
+        else
+          ::Dune::Petsc::KSPSetTolerances(ksp(), tolerance, 1e-50, PETSC_DEFAULT, maxits);
 
         enum class PetscSolver {
             cg        = SolverParameter::cg,

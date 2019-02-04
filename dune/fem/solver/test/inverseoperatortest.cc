@@ -429,7 +429,7 @@ int main(int argc, char** argv)
             "petsctest.",
               "preconditioning.method","hypre",
               "petsc.hypre.method", "pilu-t",
-              "verbose",true
+              "verbose",false
             ));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
   }

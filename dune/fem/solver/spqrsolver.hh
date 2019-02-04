@@ -86,8 +86,8 @@ public:
    *  \param[in] verbose verbosity
    */
   SPQRInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-         const ParameterReader &paramter = Parameter::container() ) :
-    SPQRInverseOperator(verbose)
+         const ParameterReader &parameter = Parameter::container() ) :
+    SPQRInverseOperator(parameter)
   {}
 
   /** \brief Constructor.
@@ -98,16 +98,16 @@ public:
    */
   SPQRInverseOperator(const double& redEps, const double& absLimit, const int& maxIter,
          const ParameterReader &parameter = Parameter::container() ) :
-    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
+    SPQRInverseOperator(parameter)
   {}
 
-  explicit SPQRInverseOperator(const ParameterReader &parameter ) :
-    SPQRInverseOperator( SolverParameter( parameter ) )
-  {}
-
-  SPQRInverseOperator(const SolverParameter& parameter = SolverParameter( Parameter::container() ) ) :
-    SPQRInverseOperator(parameter.verbose())
-  {}
+  SPQRInverseOperator(const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
+  : BaseType(parameter)
+  , verbose_(BaseType::verbose())
+  , ccsmat_(), cc_(new cholmod_common())
+  {
+    cholmod_l_start(cc_);
+  }
 
   /** \brief Constructor.
    *  \param[in] op Operator to invert
@@ -117,8 +117,8 @@ public:
    *  \param[in] verbose verbosity
    */
   SPQRInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-      const ParameterReader &paramter = Parameter::container() ) :
-    SPQRInverseOperator(verbose)
+      const ParameterReader &parameter = Parameter::container() ) :
+    SPQRInverseOperator(parameter)
   {
     bind(op);
   }
@@ -131,19 +131,19 @@ public:
    */
   SPQRInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
          const ParameterReader &parameter = Parameter::container() ) :
-    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
+    SPQRInverseOperator(parameter)
   {
     bind(op);
   }
 
   SPQRInverseOperator(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
-    SPQRInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
+    SPQRInverseOperator(parameter)
   {
     bind(op);
   }
 
   SPQRInverseOperator(const SPQRInverseOperator& other) :
-    SPQRInverseOperator(other.verbose_)
+    SPQRInverseOperator(other.parameter())
   {
     if( other.operator_ )
       bind( *(other.operator_) );
@@ -311,12 +311,6 @@ public:
   }
 
 private:
-  explicit SPQRInverseOperator(const bool& verbose) :
-    verbose_(verbose && Dune::Fem::Parameter::verbose()), ccsmat_(), cc_(new cholmod_common())
-  {
-    cholmod_l_start(cc_);
-  }
-
   using BaseType :: operator_;
   using BaseType :: assembledOperator_;
   const bool verbose_;

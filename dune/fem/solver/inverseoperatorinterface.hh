@@ -35,8 +35,10 @@ namespace Dune {
       /** \brief default constructor
        *  \note parameter  SolverParameter object to steer the linear solvers
        */
-      InverseOperatorInterface( const SolverParameterType& parameter = SolverParameterType(Parameter::container() ) )
+      InverseOperatorInterface( const SolverParameterType& parameter )
         : parameter_( std::make_shared< SolverParameterType >( parameter ) )
+        , verbose_( parameter_->verbose() && Dune::Fem::Parameter::verbose() )
+
       {
         unbind();
       }
@@ -144,11 +146,17 @@ namespace Dune {
       {
         std::shared_ptr< SolverParameterType > sharedNewParams = std::make_shared< SolverParameterType > (newParams);
         parameter_.swap( sharedNewParams );
+        verbose_ = parameter_->verbose() && Dune::Fem::Parameter::verbose();
       }
 
       SolverParameterType& parameter () const
       {
         return *parameter_;
+      }
+
+      bool verbose() const
+      {
+        return verbose_;
       }
 
       //! return accumulated communication time
@@ -182,6 +190,7 @@ namespace Dune {
 
       mutable int  iterations_ = -1 ;
       mutable bool rightHandSideCopied_ = false ;
+      mutable bool verbose_;
     };
   } // end namespace Fem
 } // end namespace Dune

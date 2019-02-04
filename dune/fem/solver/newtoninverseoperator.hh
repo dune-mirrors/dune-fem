@@ -171,6 +171,7 @@ namespace Dune
         return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
       }
 
+#if 0
     private: // remove following as soon as deprecated methods are removed
       double linAbsTolParameter ( const double &tolerance, std::true_type )  const
       {
@@ -269,6 +270,7 @@ namespace Dune
       {
         return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
       }
+#endif
 
     private:
       mutable double tolerance_ = -1;

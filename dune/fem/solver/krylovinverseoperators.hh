@@ -172,7 +172,9 @@ namespace Dune
                                      SolverParameter::cg,
                                      SolverParameter::bicgstab })
             : method )
-      {}
+      {
+        assert( parameter_->errorMeasure() == 0 );
+      }
 
       void bind ( const OperatorType &op )
       {
@@ -211,7 +213,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::gmres( *operator_, preconditioner_,
                                          v_, w, u, parameter_->gmresRestart(),
-                                         parameter_->absoluteTol(), parameter_->maxIterations(),
+                                         parameter_->tolerance(), parameter_->maxIterations(),
                                          parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::bicgstab )
@@ -230,7 +232,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::bicgstab( *operator_, preconditioner_,
                                             v_, w, u,
-                                            parameter_->absoluteTol(), parameter_->maxIterations(),
+                                            parameter_->tolerance(), parameter_->maxIterations(),
                                             parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::cg )
@@ -251,7 +253,7 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::cg( *operator_, preconditioner_,
                                       v_, w, u,
-                                      parameter_->absoluteTol(), parameter_->maxIterations(),
+                                      parameter_->tolerance(), parameter_->maxIterations(),
                                       parameter_->errorMeasure(), os );
         }
         else
