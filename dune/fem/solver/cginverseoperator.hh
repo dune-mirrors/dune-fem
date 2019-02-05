@@ -193,7 +193,7 @@ namespace Dune
                      param.parameter() ),
             parameter_( param.parameter() )
         {
-          assert( param.errorMeasure == 0 );
+          assert( param.errorMeasure() == 0 );
         }
 
 
