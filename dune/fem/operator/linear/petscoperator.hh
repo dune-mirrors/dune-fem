@@ -77,8 +77,23 @@ namespace Dune
               << keyPrefix() << "preconditioning.hypre.method instead\n";
         }
         else
-          hypreType = parameter().getEnum( keyPrefix()+"petsc.hypre.method", hyprePCNames, 0 );
+          hypreType = parameter().getEnum( keyPrefix()+"hypre.method", hyprePCNames, 0 );
         return hypreType;
+      }
+
+      int superluMethod() const
+      {
+        const std::string factorizationNames[] = { "petsc", "superlu", "mumps" };
+        int factorType = 0;
+        if (parameter().exists("petsc.preconditioning.lu.method"))
+        {
+          factorType = parameter().getEnum( "petsc.preconditioning.lu.method", factorizationNames, 0 );
+          std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.lu.method' use "
+              << keyPrefix() << "preconditioning.lu.method instead\n";
+        }
+        else
+          factorType = parameter().getEnum( keyPrefix()+"preconditioning.lu.method", factorizationNames, 0 );
+        return factorType;
       }
 
       bool viennaCL () const {

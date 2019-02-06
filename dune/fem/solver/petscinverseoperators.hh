@@ -443,7 +443,15 @@ namespace Dune
                 DUNE_THROW( InvalidStateException, "PetscInverseOperator: ilu preconditioner does not work in parallel." );
 
               // get fill-in level
-              PetscInt pcLevel = reader.getValue<int>("petsc.preconditioning.levels", 0 );
+              PetscInt pcLevel;
+              if( reader.exists("petsc.preconditioning.levels") )
+              {
+                pcLevel = reader.getValue<int>("petsc.preconditioning.levels", 0 );
+                std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.levels' use "
+                    << parameter.keyPrefix() << "preconditioning.level instead\n";
+              }
+              else
+                pcLevel = parameter.preconditionerLevel() ;
 
               ::Dune::Petsc::PCSetType( pc, PCILU );
               ::Dune::Petsc::PCFactorSetLevels( pc, pcLevel );
@@ -457,7 +465,16 @@ namespace Dune
                 DUNE_THROW( InvalidStateException, "PetscInverseOperator: icc preconditioner does not worl in parallel." );
 
               // get fill-in level
-              PetscInt pcLevel = reader.getValue<int>("petsc.preconditioning.levels", 0 );
+              PetscInt pcLevel;
+              if( reader.exists("petsc.preconditioning.levels") )
+              {
+                pcLevel = reader.getValue<int>("petsc.preconditioning.levels", 0 );
+                std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.levels' use "
+                    << parameter.keyPrefix() << "preconditioning.level instead\n";
+              }
+              else
+                pcLevel = parameter.preconditionerLevel() ;
+
 
               ::Dune::Petsc::PCSetType( pc, PCICC );
               ::Dune::Petsc::PCFactorSetLevels( pc, pcLevel );
@@ -469,15 +486,10 @@ namespace Dune
           case -3: // PetscPrec::lu:
           case SolverParameter::superlu:
             {
-              enum class Factorization {
-                  petsc = 0, superlu = 1, mumps = 2
-                };
+              enum class Factorization { petsc = 0, superlu = 1, mumps = 2 };
               Factorization factorType = Factorization::superlu;
               if (pcType != SolverParameter::superlu)
-              {
-                const std::string factorizationNames[] = { "petsc", "superlu", "mumps" };
-                factorType = static_cast< Factorization >( reader.getEnum( "petsc.preconditioning.lu.method", factorizationNames, 0 ) );
-              }
+                factorType = static_cast<Factorization>(parameter.superluMethod());
 
               ::Dune::Petsc::PCSetType( pc, PCLU );
 
