@@ -84,7 +84,8 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
-def dg(model, space, penalty=0, solver=None, parameters={}):
+def dg(model, space, penalty=0, solver=None, parameters={},
+       penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -109,10 +110,12 @@ def dg(model, space, penalty=0, solver=None, parameters={}):
             model = elliptic(space.grid,model,*modelParam)
         else:
             model = elliptic(space.grid,model)
-
+    if penaltyClass is None:
+        spaceType = space._typeName
+        penaltyClass = "DefaultPenalty<"+spaceType+">"
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
-                                   ",".join([linOp,model]) + ">"
+                                   ",".join([linOp,model,penaltyClass]) + ">"
     parameters["penalty"] = parameters.get("penalty",penalty)
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
