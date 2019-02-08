@@ -54,6 +54,15 @@ namespace Dune
             return tmp.get();
           } catch( ... ) {}
         }
+        else
+        {
+          // check dict without removing prefix
+          try {
+            pybind11::object value = dict[ key.c_str() ];
+            *tmp = static_cast< std::string >( pybind11::str(value) );
+            return tmp.get();
+          } catch( ... ) {}
+        }
         // need to check global parameter set
         // the key either does not have the correct prefix or it was not
         // found in the provided map so check the global Parameter container

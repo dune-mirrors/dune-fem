@@ -53,7 +53,28 @@
 // EllipticOperator
 // ----------------
 
-template< class DiscreteFunction, class Model >
+template <class DFSpace>
+struct DefaultPenalty
+{
+  DefaultPenalty(const DFSpace &space, double penalty)
+  : space_(space)
+  , penalty_(penalty)
+  {}
+  template <class Intersection>
+  double operator()(const Intersection &intersection,
+                    double intersectionArea, double area, double nbArea) const
+  {
+    const double hInv = intersectionArea / std::min( area, nbArea );
+    return penalty_ * hInv;
+  }
+  const double &factor() const { return penalty_; }
+  private:
+  const DFSpace &space_;
+  double penalty_;
+};
+
+template< class DiscreteFunction, class Model,
+  class Penalty = DefaultPenalty<typename DiscreteFunction::DiscreteFunctionSpaceType > >
 struct DGEllipticOperator
 : public virtual Dune::Fem::Operator< DiscreteFunction >
 {
@@ -91,16 +112,20 @@ public:
                        const ModelType &model,
                        const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
-    penalty_( parameter.getValue< double >( "penalty", 40 ) )
-  {}
+    penalty_( space, parameter.getValue< double >( "penalty", 40 ) )
+  {
+    std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
+  }
 
   DGEllipticOperator ( const DiscreteFunctionSpaceType &dSpace,
                        const DiscreteFunctionSpaceType &rSpace,
                        const ModelType &model,
                        const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
-    penalty_( parameter.getValue< double >( "penalty", 40 ) )
-  {}
+    penalty_( dSpace, parameter.getValue< double >( "penalty", 40 ) )
+  {
+    std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
+  }
 
   //! application operator
   virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
@@ -110,22 +135,23 @@ public:
 
 protected:
   const ModelType &model () const { return model_; }
-  double penalty() const { return penalty_; }
+  Penalty penalty() const { return penalty_; }
 
 private:
   const ModelType &model_;
-  double penalty_;
+  Penalty penalty_;
 };
 
 // DifferentiableDGEllipticOperator
 // ------------------------------
 
-template< class JacobianOperator, class Model >
+template< class JacobianOperator, class Model,
+  class Penalty = DefaultPenalty<typename JacobianOperator::DomainFunctionType::DiscreteFunctionSpaceType > >
 struct DifferentiableDGEllipticOperator
-: public DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model >,
+: public DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model, Penalty >,
   public Dune::Fem::DifferentiableOperator< JacobianOperator >
 {
-  typedef DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model > BaseType;
+  typedef DGEllipticOperator< typename JacobianOperator::DomainFunctionType, Model, Penalty > BaseType;
 
   typedef JacobianOperator JacobianOperatorType;
 
@@ -196,9 +222,9 @@ protected:
 // Implementation of DGEllipticOperator
 // ----------------------------------
 
-template< class RangeDiscreteFunction, class Model >
+template< class RangeDiscreteFunction, class Model, class Penalty >
 template<class GF>
-void DGEllipticOperator< RangeDiscreteFunction, Model >
+void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
   ::apply( const GF &u, RangeDiscreteFunctionType &w ) const
 {
   // clear destination
@@ -274,7 +300,7 @@ void DGEllipticOperator< RangeDiscreteFunction, Model >
 
           // compute penalty factor
           const double intersectionArea = intersectionGeometry.volume();
-          const double beta = penalty() * intersectionArea / std::min( area, outside.geometry().volume() );
+          const double beta = penalty()(intersection,intersectionArea,area,outside.geometry().volume());
 
           auto uOutLocal = u.localFunction( outside ); // local u on outisde element
 
@@ -346,7 +372,7 @@ void DGEllipticOperator< RangeDiscreteFunction, Model >
 
           // compute penalty factor
           const double intersectionArea = intersectionGeometry.volume();
-          const double beta = penalty() * intersectionArea / area;
+          const double beta = penalty()(intersection,intersectionArea,area,area);
 
           FaceQuadratureType quadInside( dfSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::INSIDE );
           const size_t numQuadraturePoints = quadInside.nop();
@@ -410,9 +436,9 @@ void DGEllipticOperator< RangeDiscreteFunction, Model >
 
 // Implementation of DifferentiableDGEllipticOperator
 // ------------------------------------------------
-template< class JacobianOperator, class Model >
+template< class JacobianOperator, class Model, class Penalty >
 template<class GF>
-void DifferentiableDGEllipticOperator< JacobianOperator, Model >
+void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
   ::apply ( const GF &u, JacobianOperator &jOp ) const
 {
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
@@ -513,7 +539,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model >
 
         // compute penalty factor
         const double intersectionArea = intersectionGeometry.volume();
-        const double beta = penalty() * intersectionArea / std::min( area, neighbor.geometry().volume() );
+        const double beta = penalty()(intersection,intersectionArea,area,neighbor.geometry().volume());
 
         // here we assume that the intersection is conforming
         FaceQuadratureType faceQuadInside(gridPart, intersection, 2*rangeSpace.order() + 1,
@@ -615,7 +641,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model >
 
         // compute penalty factor
         const double intersectionArea = intersectionGeometry.volume();
-        const double beta = penalty() * intersectionArea / area;
+        const double beta = penalty()(intersection,intersectionArea,area,area);
 
         // here we assume that the intersection is conforming
         FaceQuadratureType faceQuadInside(gridPart, intersection, 2*rangeSpace.order() + 1,
