@@ -727,7 +727,7 @@ namespace Dune
       { return value; }
       template <class V>
       static std::string convertValueToString(const V &value)
-      { return std::to_string(value); }
+      { return ParameterParser<double>::toString(value); }
 
       template<class V, std::enable_if_t<std::is_convertible<V,const LambdaType&>::value,int> i=0>
       void insertIntoMap_(const std::string &key, const V &v, Dune::PriorityTag<2>)
@@ -742,9 +742,7 @@ namespace Dune
 
       template<class V>
       void insertIntoMap(const std::string &key, const V &v)
-      {
-        insertIntoMap_(key,v,PriorityTag<42>());
-      }
+      { insertIntoMap_(key,v,PriorityTag<42>()); }
       template<class V, class... Values>
       void insertIntoMap(const std::string &key, const V &v, Values... keyValues)
       {
