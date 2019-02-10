@@ -105,6 +105,7 @@ namespace Dune
           if(parameter_.exists(keyPrefix_ + "tolerance"))
             tolerance_ = parameter_.getValue< double >( keyPrefix_ + "tolerance", defaultTol );
           else
+          {
             if( parameter_.exists(keyPrefix_ + "absolutetol") ||
                 parameter_.exists(keyPrefix_ + "reductiontol") )
               // new parameter not used but old parameters exist
@@ -116,6 +117,7 @@ namespace Dune
                 tolerance_ = reductionTol();
             }
             else tolerance_ = defaultTol; // no parameter set
+          }
         }
         return tolerance_;
       }

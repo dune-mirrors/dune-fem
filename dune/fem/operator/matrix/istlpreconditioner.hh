@@ -490,7 +490,7 @@ namespace Dune
                     SolverParameter::gauss_seidel,// Gauss-Seidel preconditioner
                     SolverParameter::jacobi,      // Jacobi preconditioner
                     SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
-                    SolverParameter::jacobi,      // AMG with Jacobi smoother
+                    SolverParameter::amg_jacobi,  // AMG with Jacobi smoother
                     SolverParameter::ildl         // ILDL from istl
                   } );
         const double relaxFactor         = param.relaxation();
