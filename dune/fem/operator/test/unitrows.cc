@@ -129,6 +129,23 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   LinearOperatorType identityOperator( "identity", space, space );
   identityOperator.reserve( Dune::Fem::DiagonalStencil<DiscreteSpaceType,DiscreteSpaceType>( space, space ) );
   identityOperator.clear();
+
+  // first set all zeros to tests whether switching between SetContrib and
+  // AddContrib works
+  {
+    Dune::Fem::SetLocalContribution< LinearOperatorType > localMatrix( identityOperator );
+    typedef Dune::Fem::CachingQuadrature< typename DiscreteSpaceType::GridPartType, 0 > QuadratureType;
+    Dune::DynamicVector< typename SpaceType::RangeType > values;
+    for( const auto &entity : space )
+    {
+      auto guard = bindGuard( localMatrix, entity, entity );
+      const auto &basis = localMatrix.domainBasisFunctionSet();
+      const unsigned int numBasisFunctions = basis.size();
+      values.resize( numBasisFunctions, 0. );
+      for( const auto qp : QuadratureType( entity, localMatrix.order() ) )
+        localMatrix.axpy( qp, values );
+    }
+  }
   {
     Dune::Fem::AddLocalContribution< LinearOperatorType > localMatrix( identityOperator );
     typedef Dune::Fem::CachingQuadrature< typename DiscreteSpaceType::GridPartType, 0 > QuadratureType;
@@ -145,7 +162,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   }
   // this should not be necessary since it should happen in the local
   // contribution destructor
-  identityOperator.communicate();
+  identityOperator.finalize();
 
   std::vector<unsigned int> rows( {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19} );
   identityOperator.setUnitRows( rows );

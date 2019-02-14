@@ -199,7 +199,7 @@ namespace Dune
         setStatus( statAssembled );
       }
 
-      void communicate ()
+      void finalize ()
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );

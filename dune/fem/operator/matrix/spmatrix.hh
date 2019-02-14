@@ -585,9 +585,7 @@ namespace Dune
       }
 
       //! compress matrix after setup
-      void communicate() { matrix_.compress(); }
-
-      void flushAssembly() {}
+      void compress() { matrix_.compress(); }
 
       template <class Set>
       void reserve (const std::vector< Set >& sparsityPattern )

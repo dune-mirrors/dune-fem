@@ -790,7 +790,7 @@ namespace Dune
       }
 
       // compress matrix if not already done before and only in implicit build mode
-      void communicate( )
+      void compress( )
       {
         if( implicitModeActive() )
           matrix().compress();

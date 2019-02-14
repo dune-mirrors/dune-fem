@@ -44,6 +44,8 @@ namespace Dune
         apply( arg, dest );
       }
 
+      virtual void finalize () { BaseType::compress(); }
+
       const BaseType &systemMatrix() const
       {
         return *this;
