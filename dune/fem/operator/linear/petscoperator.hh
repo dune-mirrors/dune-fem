@@ -201,9 +201,9 @@ namespace Dune
 
       void finalize ()
       {
-        PetscBool assembled = false ;
+        PetscBool assembled = PETSC_FALSE ;
         ::Dune::Petsc::MatAssembled( petscMatrix_, &assembled );
-        if( ! assembled )
+        if( assembled == PETSC_FALSE )
         {
           ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
           ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );

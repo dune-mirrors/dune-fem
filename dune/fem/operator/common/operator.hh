@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_OPERATOR_HH
 #define DUNE_FEM_OPERATOR_HH
 
+#include <typeindex>
+
 #include <dune/fem/version.hh>
 #include <dune/fem/operator/common/mapping.hh>
 
