@@ -139,7 +139,7 @@ namespace Dune
       typedef MatrixBlockType  block_type;
 
     private:
-      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4,statFinalized=5};
+      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4};
 
       typedef PetscMappers< DomainSpaceType > DomainMappersType;
       typedef PetscMappers< RangeSpaceType > RangeMappersType;
@@ -201,11 +201,12 @@ namespace Dune
 
       void finalize ()
       {
-        if( status_ != statFinalized )
+        PetscBool assembled = false ;
+        ::Dune::Petsc::MatAssembled( petscMatrix_, &assembled );
+        if( ! assembled )
         {
           ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
           ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-          status_ = statFinalized;
         }
       }
 

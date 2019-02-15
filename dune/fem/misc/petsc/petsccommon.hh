@@ -203,6 +203,7 @@ namespace Dune
     // matrix routines
     inline static void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
     inline static void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
+    inline static void MatAssembled( Mat mat, PetscBool* assembled ) { ErrorCheck( ::MatAssembled( mat, assembled ) ); }
     inline static void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
     inline static void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz )
     {
