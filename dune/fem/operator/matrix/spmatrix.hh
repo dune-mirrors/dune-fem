@@ -584,7 +584,7 @@ namespace Dune
         matrix_.clear();
       }
 
-      //! compress matrix after setup
+      //! compress matrix to a real CRS format
       void compress() { matrix_.compress(); }
 
       template <class Set>

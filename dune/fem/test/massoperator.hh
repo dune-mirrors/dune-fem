@@ -142,7 +142,6 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble (LinearOperator 
       localMatrix.axpy( qp, values );
     }
   }
-  matrix.finalize();
 }
 
 #endif // #ifndef MASSOPERATOR_HH

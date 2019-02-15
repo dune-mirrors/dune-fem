@@ -762,6 +762,8 @@ namespace Dune
           ISTLSolverParameter newparam( parameter );
           createMatrixAdapter( newparam );
         }
+
+        finalizeAssembly();
         return *matrixAdap_;
       }
 
@@ -789,11 +791,18 @@ namespace Dune
         // nothing to do here
       }
 
+      void finalizeAssembly() const
+      {
+        const_cast< ThisType& > (*this).compress();
+      }
+
       // compress matrix if not already done before and only in implicit build mode
       void compress( )
       {
         if( implicitModeActive() )
+        {
           matrix().compress();
+        }
       }
 
       //! set all matrix entries to zero

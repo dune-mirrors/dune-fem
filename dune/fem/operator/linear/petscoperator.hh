@@ -139,7 +139,7 @@ namespace Dune
       typedef MatrixBlockType  block_type;
 
     private:
-      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4};
+      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4,statFinalized=5};
 
       typedef PetscMappers< DomainSpaceType > DomainMappersType;
       typedef PetscMappers< RangeSpaceType > RangeMappersType;
@@ -201,11 +201,21 @@ namespace Dune
 
       void finalize ()
       {
-        ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        setStatus( statAssembled );
+        if( status_ != statFinalized )
+        {
+          ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
+          ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
+          status_ = statFinalized;
+        }
       }
 
+    protected:
+      void finalizeAssembly () const
+      {
+        const_cast< ThisType& > (*this).finalize();
+      }
+
+    public:
       const DomainSpaceType &domainSpace () const { return domainMappers_.space(); }
       const RangeSpaceType &rangeSpace () const { return rangeMappers_.space(); }
 
@@ -221,13 +231,15 @@ namespace Dune
           petscDest_.reset( new PetscRangeFunctionType( "PetscOp-arg", rangeSpace() ) );
 
         petscArg_->assign( arg );
-        ::Dune::Petsc::MatMult( petscMatrix_, *(petscArg_->petscVec()) , *(petscDest_->petscVec()) );
+        apply( *petscArg_, *petscDest_ );
         dest.assign( *petscDest_ );
       }
 
       /** \brief application operator for PetscDiscreteFunction */
       void apply ( const PetscDomainFunctionType &arg, PetscRangeFunctionType &dest ) const
       {
+        // make sure matrix is in correct state
+        finalizeAssembly();
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
       }
 
@@ -598,15 +610,13 @@ namespace Dune
         }
       }
 
-      /* Not tested yet
-      void viewMatlab (const char *filename) const
-      {
-        ::Dune::Petsc::MatViewMatlab( petscMatrix_, filename );
-      }
-      */
-
       // return reference to PETSc matrix object
-      Mat& petscMatrix () const { return petscMatrix_; }
+      Mat& petscMatrix () const
+      {
+        // make sure matrix is in correct state
+        finalizeAssembly();
+        return petscMatrix_;
+      }
 
     private:
       PetscLinearOperator ();
