@@ -251,6 +251,52 @@ namespace Dune
         return asImp().localFunction();
       }
 
+
+      /** \brief add scaled local Dofs to dof vector associated with the entity
+       *
+       *  \param[in]  entity    Entity to focus view of discrete function
+       *  \param[in]  s         scaling factor
+       *  \param[in]  localDofs the local dofs vector to be added
+       */
+      template< class LocalDofs >
+      void addScaledLocalDofs ( const EntityType &entity, const RangeFieldType &s, const LocalDofs &localDofs )
+      {
+        asImp().addScaledLocalDofs( entity, s, localDofs );
+      }
+
+      /** \brief add local Dofs to dof vector associated with the entity
+       *
+       *  \param[in]  entity    Entity to focus view of discrete function
+       *  \param[in]  localDofs the local dofs vector to be added
+       */
+      template< class LocalDofs >
+      void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        asImp().addLocalDofs( entity, localDofs );
+      }
+
+      /** \brief set local Dofs to dof vector associated with the entity
+       *
+       *  \param[in]  entity    Entity to focus view of discrete function
+       *  \param[in]  localDofs the local dofs vector to be set
+       */
+      template< class LocalDofs >
+      void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        asImp().setLocalDofs( entity, localDofs );
+      }
+
+      /** \brief fill local Dofs to dof vector associated with the entity
+       *
+       *  \param[in]   entity    Entity to focus view of discrete function
+       *  \param[out]  localDofs the local dofs vector to be set
+       */
+      template< class Vector >
+      void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
+      {
+        asImp().getLocalDofs( entity, localDofs );
+      }
+
       /** \brief obtain an uninitialized local function (read-write)
        *
        * \note before calling any method of the local function initialize it passing an entity
