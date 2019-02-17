@@ -692,8 +692,6 @@ namespace Dune
 
             jOp.addLocalMatrix( entity, entity, jOpLocal );
           }
-
-          jOp.communicate();
         }
 
         template< class GridFunction, class JacobianOperator >
@@ -763,8 +761,6 @@ namespace Dune
 
             jOp.addLocalMatrix( inside, inside, jOpInIn );
           }
-
-          jOp.communicate();
         }
 
       public:

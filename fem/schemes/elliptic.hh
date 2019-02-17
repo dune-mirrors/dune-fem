@@ -441,6 +441,5 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
       }
     }
   } // end grid traversal
-  jOp.communicate();
 }
 #endif // #ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH

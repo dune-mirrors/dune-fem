@@ -711,7 +711,6 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
       }
     }
   } // end grid traversal
-  jOp.communicate();
 }
 
 #endif // ELLIPTIC_HH
