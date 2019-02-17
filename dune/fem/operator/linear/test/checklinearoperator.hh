@@ -187,7 +187,6 @@ namespace Dune
           linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
         }
       }
-      linOp.communicate();
 
       // check {set}LocalMatrix
       for( const auto &entry : range )
@@ -202,11 +201,9 @@ namespace Dune
           for( const auto &p : permutation )
             temp.set( p.first, p.second, 1.0 );
 
-          // linOp.communicate();
           linOp.setLocalMatrix( domainEntity, rangeEntity, temp );
         }
       }
-      linOp.communicate();
 
       // test getLocalMatrix
       for( const auto &entry : range )
