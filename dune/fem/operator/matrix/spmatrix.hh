@@ -292,6 +292,8 @@ namespace Dune
 
       std::tuple< ValuesVector&, IndicesVector&, IndicesVector& > data()
       {
+        // only return internal data in compressed status
+        compress();
         return std::tie(values_,columns_,rows_);
       }
 
