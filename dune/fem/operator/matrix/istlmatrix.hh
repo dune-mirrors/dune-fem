@@ -978,6 +978,7 @@ namespace Dune
         return LocalColumnObjectType ( *this, domainEntity );
       }
 
+    protected:
       template< class LocalBlock, class Operation >
       void applyToBlock ( const size_t row, const size_t col,
                           const LocalBlock &localBlock,
@@ -1007,6 +1008,7 @@ namespace Dune
         applyToBlock( row, col, localBlock, add );
       }
 
+    public:
       template< class LocalMatrix, class Operation >
       void applyToLocalMatrix ( const DomainEntityType &domainEntity,
                                 const RangeEntityType &rangeEntity,
@@ -1082,6 +1084,9 @@ namespace Dune
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
+        // make sure that matrix is in compressed state if build mode is implicit
+        finalizeAssembly();
+
         typedef typename MatrixType::size_type Index;
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
         {

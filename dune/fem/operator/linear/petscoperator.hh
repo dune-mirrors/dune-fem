@@ -437,7 +437,6 @@ namespace Dune
         applyToBlock( row, col, matBlock, op );
       }
 
-    public:
       template< class LocalBlock >
       void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
@@ -576,6 +575,9 @@ namespace Dune
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
+        // make sure matrix is in correct state before using
+        finalizeAssembly();
+
         assert( status_==statAssembled || status_==statGet );
         setStatus( statGet );
 

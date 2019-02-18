@@ -205,8 +205,6 @@ namespace Dune
         }
       }
 
-      linOp.finalize();
-
       // test getLocalMatrix
       for( const auto &entry : range )
       {
