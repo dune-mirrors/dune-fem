@@ -345,6 +345,7 @@ namespace Dune
       void clear ()
       {
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
+        flushAssembly();
       }
 
       template <class Vector>
