@@ -166,96 +166,105 @@ namespace Dune
       // first test initialization
       RangeStencil< DomainSpaceType, RangeSpaceType > stencil( dSpace, rSpace, range );
       linOp.reserve( stencil );
-      linOp.clear();
 
-      Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > temp( dSpace, rSpace );
-
-      // test assamble
-      // check {add,addScaled}LocalMatrix
-      for( const auto &entry : range )
+      for( int k=0; k<2; ++k )
       {
-        auto domainEntity = entry.first;
-        auto rangeEntity = entry.second;
+        // check setting operator entries to zero
+        linOp.clear();
 
+        Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > temp( dSpace, rSpace );
+
+        // test assemble
+        // check {add,addScaled}LocalMatrix
+        for( const auto &entry : range )
         {
+          auto domainEntity = entry.first;
+          auto rangeEntity = entry.second;
+
+          {
+            temp.init( domainEntity, rangeEntity );
+            temp.clear();
+            for( const auto &p : permutation )
+              temp.set( p.first, p.second, 1.0 );
+
+            linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
+            linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
+          }
+        }
+
+        linOp.flushAssembly();
+
+        // check {set}LocalMatrix
+        for( const auto &entry : range )
+        {
+          auto domainEntity = entry.first;
+          auto rangeEntity = entry.second;
+
+          {
+            // check {add,set,addScaled}LocalMatrix
+            temp.init( domainEntity, rangeEntity );
+            temp.clear();
+            for( const auto &p : permutation )
+              temp.set( p.first, p.second, 1.0 );
+
+            linOp.setLocalMatrix( domainEntity, rangeEntity, temp );
+          }
+        }
+
+        linOp.flushAssembly();
+
+        // test getLocalMatrix
+        for( const auto &entry : range )
+        {
+          auto domainEntity = entry.first;
+          auto rangeEntity = entry.second;
+
           temp.init( domainEntity, rangeEntity );
           temp.clear();
-          for( const auto &p : permutation )
-            temp.set( p.first, p.second, 1.0 );
+          linOp.getLocalMatrix( domainEntity, rangeEntity, temp );
+          CheckLinearOperator::verifyPermutation( temp, permutation );
 
-          linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
-          linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
+          // check old localMatrix implementation
+          CheckLinearOperator::verifyLocalMatrixPermutation( linOp, domainEntity, rangeEntity, permutation );
         }
-      }
 
-      // check {set}LocalMatrix
-      for( const auto &entry : range )
-      {
-        auto domainEntity = entry.first;
-        auto rangeEntity = entry.second;
-
+        // test application
+        domainFunction.clear();
+        std::size_t minNumDofs = std::min( domainFunction.blocks(), rangeFunction1.blocks() );
+        for( std::size_t i = 0; i < minNumDofs; ++i )
         {
-          // check {add,set,addScaled}LocalMatrix
-          temp.init( domainEntity, rangeEntity );
-          temp.clear();
-          for( const auto &p : permutation )
-            temp.set( p.first, p.second, 1.0 );
-
-          linOp.setLocalMatrix( domainEntity, rangeEntity, temp );
+          auto block = domainFunction.dofVector()[ i ];
+          Hybrid::forEach( typename DomainSpaceType::LocalBlockIndices(), [ &block, i ] ( auto &&j ) { block[ j ] = i; } );
         }
+        linOp( domainFunction, rangeFunction1 );
+
+        // mimic operator apply manually
+        rangeFunction2.clear();
+        Dune::DynamicVector< double > tmp;
+        std::vector< double > values;
+        for( const auto &entry : range )
+        {
+          auto domainEntity = entry.first;
+          auto rangeEntity = entry.second;
+
+          tmp.resize( dSpace.blockMapper().numDofs( domainEntity ) * DomainSpaceType::localBlockSize );
+          domainFunction.getLocalDofs( domainEntity, tmp );
+
+          values.clear();
+          values.resize( rSpace.blockMapper().numDofs( rangeEntity ) * RangeSpaceType::localBlockSize, 0.0 );
+
+          for( const auto &p : permutation )
+            values[ p.first ] = tmp[ p.second ];
+          rangeFunction2.setLocalDofs( rangeEntity, values );
+        }
+        rangeFunction2.communicate();
+
+        rangeFunction1.dofVector() -= rangeFunction2.dofVector();
+
+        double diff = rangeFunction1.scalarProductDofs( rangeFunction1 );
+        if( std::abs( diff ) > 1e-8 )
+          DUNE_THROW( Dune::NotImplemented, "Id Operator not assembled correctly" );
       }
-
-      // test getLocalMatrix
-      for( const auto &entry : range )
-      {
-        auto domainEntity = entry.first;
-        auto rangeEntity = entry.second;
-
-        temp.init( domainEntity, rangeEntity );
-        temp.clear();
-        linOp.getLocalMatrix( domainEntity, rangeEntity, temp );
-        CheckLinearOperator::verifyPermutation( temp, permutation );
-
-        // check old localMatrix implementation
-        CheckLinearOperator::verifyLocalMatrixPermutation( linOp, domainEntity, rangeEntity, permutation );
-      }
-
-      // test application
-      domainFunction.clear();
-      std::size_t minNumDofs = std::min( domainFunction.blocks(), rangeFunction1.blocks() );
-      for( std::size_t i = 0; i < minNumDofs; ++i )
-      {
-        auto block = domainFunction.dofVector()[ i ];
-        Hybrid::forEach( typename DomainSpaceType::LocalBlockIndices(), [ &block, i ] ( auto &&j ) { block[ j ] = i; } );
-      }
-      linOp( domainFunction, rangeFunction1 );
-
-      // mimic operator apply manually
-      rangeFunction2.clear();
-      Dune::DynamicVector< double > tmp;
-      std::vector< double > values;
-      for( const auto &entry : range )
-      {
-        auto domainEntity = entry.first;
-        auto rangeEntity = entry.second;
-
-        tmp.resize( dSpace.blockMapper().numDofs( domainEntity ) * DomainSpaceType::localBlockSize );
-        domainFunction.getLocalDofs( domainEntity, tmp );
-
-        values.clear();
-        values.resize( rSpace.blockMapper().numDofs( rangeEntity ) * RangeSpaceType::localBlockSize, 0.0 );
-
-        for( const auto &p : permutation )
-          values[ p.first ] = tmp[ p.second ];
-        rangeFunction2.setLocalDofs( rangeEntity, values );
-      }
-      rangeFunction2.communicate();
-
-      rangeFunction1.dofVector() -= rangeFunction2.dofVector();
-
-      double diff = rangeFunction1.scalarProductDofs( rangeFunction1 );
-      if( std::abs( diff ) > 1e-8 )
-        DUNE_THROW( Dune::NotImplemented, "Id Operator not assembled correctly" );
     }
 
   } // namespace Fem

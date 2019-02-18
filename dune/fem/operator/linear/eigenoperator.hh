@@ -29,6 +29,7 @@ namespace Dune
       static constexpr bool assembled = true ;
 
       using BaseType::apply;
+      using BaseType::exportMatrix;
 
       EigenLinearOperator( const std::string & ,
                            const DomainSpaceType &domainSpace,
@@ -42,18 +43,17 @@ namespace Dune
         apply( arg, dest );
       }
 
+      [[deprecated]]
       const BaseType &systemMatrix() const
       {
         return *this;
       }
 
+      [[deprecated]]
       BaseType &systemMatrix()
       {
         return *this;
       }
-
-      void communicate()
-      {}
     };
   } // namespace Fem
 

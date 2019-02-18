@@ -674,6 +674,8 @@ namespace Dune
 
       //! type of local matrix
       typedef ISTLLocalMatrix<ThisType> ObjectType;
+      friend class ISTLLocalMatrix<ThisType>;
+
       typedef ThisType LocalMatrixFactoryType;
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix
@@ -720,16 +722,16 @@ namespace Dune
         , param_( param )
       {}
 
-      ThisType &systemMatrix () { return *this; }
-      const ThisType &systemMatrix () const { return *this; }
-
-      //! return reference to system matrix
-      MatrixType & matrix() const
+    protected:
+      //! return reference to system matrix (may not be finalized)
+      //! For finalized matrix use exportMatrix
+      MatrixType& matrix() const
       {
         assert( matrix_ );
         return *matrix_;
       }
 
+    public:
       void printTexInfo(std::ostream& out) const
       {
         out << "ISTL MatrixObj: ";
@@ -774,6 +776,12 @@ namespace Dune
       }
 
     public:
+      MatrixType& exportMatrix() const
+      {
+        finalizeAssembly();
+        return matrix();
+      }
+
       bool implicitModeActive() const
       {
         // implicit build mode is only active when the
@@ -784,11 +792,6 @@ namespace Dune
           return true;
         else
           return false;
-      }
-
-      void flushAssembly()
-      {
-        // nothing to do here
       }
 
       void finalizeAssembly() const

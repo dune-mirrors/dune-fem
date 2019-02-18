@@ -176,7 +176,7 @@ public:
 
     if(!isloaded_)
     {
-      ccsmat_ = assembledOperator_->systemMatrix().matrix();
+      ccsmat_ = assembledOperator_->exportMatrix();
       decompose();
       isloaded_ = true;
     }

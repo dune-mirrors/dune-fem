@@ -164,7 +164,7 @@ public:
   {
     if(assembledOperator_ && !ccsmat_)
     {
-      ccsmat_ = std::make_unique<CCSMatrixType>(assembledOperator_->systemMatrix().matrix());
+      ccsmat_ = std::make_unique<CCSMatrixType>(assembledOperator_->exportMatrix());
       decompose();
     }
   }

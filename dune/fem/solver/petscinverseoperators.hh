@@ -245,7 +245,7 @@ namespace Dune
         ::Dune::Petsc::KSPCreate( &ksp() );
 
         // attach Matrix to linear solver context
-        Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());
+        Mat& A = assembledOperator_->exportMatrix();
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
         ::Dune::Petsc::KSPSetOperators( ksp(), A, A, SAME_PRECONDITIONER);
 #else

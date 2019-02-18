@@ -171,7 +171,7 @@ public:
   {
     if(assembledOperator_ && !ccsmat_ )
     {
-      ccsmat_.reset( new CCSMatrixType(assembledOperator_->systemMatrix().matrix() ) );
+      ccsmat_.reset( new CCSMatrixType(assembledOperator_->exportMatrix() ) );
       decompose();
     }
   }

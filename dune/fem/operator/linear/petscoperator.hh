@@ -614,6 +614,15 @@ namespace Dune
       }
 
       // return reference to PETSc matrix object
+      Mat& exportMatrix () const
+      {
+        // make sure matrix is in correct state
+        finalizeAssembly();
+        return petscMatrix_;
+      }
+
+      [[deprecated]]
+      // return reference to PETSc matrix object
       Mat& petscMatrix () const
       {
         // make sure matrix is in correct state

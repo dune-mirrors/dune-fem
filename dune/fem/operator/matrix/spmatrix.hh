@@ -457,11 +457,23 @@ namespace Dune
         return rangeSpace_;
       }
 
-      //! get reference to storage object
+    protected:
+      //! get reference to storage object, for internal use
       MatrixType &matrix() const
       {
         return matrix_;
       }
+
+      void finalizeAssembly() const { const_cast< ThisType& > (*this).compress(); }
+
+    public:
+      //! get reference to storage object
+      MatrixType &exportMatrix() const
+      {
+        finalizeAssembly();
+        return matrix_;
+      }
+
 
       //! interface method from LocalMatrixFactory
       ObjectType *newObject() const

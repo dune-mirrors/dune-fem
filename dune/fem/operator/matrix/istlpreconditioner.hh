@@ -424,7 +424,7 @@ namespace Dune
                            const ISTLSolverParameter& param )
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        return new MatrixAdapterType( matrixObj.matrix(),
+        return new MatrixAdapterType( matrixObj.exportMatrix(),
                                       matrixObj.domainSpace(), matrixObj.rangeSpace(), PreConType() );
       }
 
@@ -499,7 +499,7 @@ namespace Dune
         const DomainSpaceType& domainSpace = matrixObj.domainSpace();
         const RangeSpaceType&  rangeSpace  = matrixObj.rangeSpace();
 
-        MatrixType& matrix = matrixObj.matrix();
+        MatrixType& matrix = matrixObj.exportMatrix();
         const auto procs = domainSpace.gridPart().comm().size();
 
         typedef typename MatrixType :: BaseType ISTLMatrixType;

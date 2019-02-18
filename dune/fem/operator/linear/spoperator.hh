@@ -31,6 +31,7 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
+      using BaseType::exportMatrix;
 
       SparseRowLinearOperator( const std::string & ,
                                const DomainSpaceType &domainSpace,
@@ -46,11 +47,13 @@ namespace Dune
 
       virtual void finalize () { BaseType::compress(); }
 
+      [[deprecated]]
       const BaseType &systemMatrix() const
       {
         return *this;
       }
 
+      [[deprecated]]
       BaseType &systemMatrix()
       {
         return *this;
