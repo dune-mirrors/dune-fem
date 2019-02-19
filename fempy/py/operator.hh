@@ -57,7 +57,7 @@ namespace Dune
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); jOp.finalize(); }, "u"_a, "jOp"_a );
       }
       template< class Operator, class... options >
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
@@ -71,7 +71,7 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); jOp.finalize(); }, "u"_a, "jOp"_a );
       }
 
       template< class Operator, class... options >
@@ -196,9 +196,14 @@ namespace Dune
       }
 
 #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+      template< class Mat >
+      inline static const Mat &getPetscMatrix ( const Mat &matrix ) noexcept
+      {
+        return matrix;
+      }
       template< class Operator, class... options>
       inline static auto addMatrixBackend ( pybind11::class_< Operator, options... > cls, PriorityTag< 4 > )
-      -> void_t<decltype( std::declval<Operator>().petscMatrix() )>
+      -> void_t<decltype( getPetscMatrix( std::declval< const Operator & >().exportMatrix() ) ) >
       {
         using pybind11::operator""_a;
 
@@ -208,7 +213,7 @@ namespace Dune
               std::cout << "ERROR: could not import petsc4py\n";
               throw std::runtime_error("Error during import of petsc4py");
             }
-            Mat mat = self.petscMatrix();
+            Mat mat = self.exportMatrix();
             pybind11::handle petsc_mat(PyPetscMat_New(mat));
             return petsc_mat;
           });
@@ -222,27 +227,27 @@ namespace Dune
       }
       template< class Operator, class... options>
       inline static auto addMatrixBackend ( pybind11::class_< Operator, options... > cls, PriorityTag< 3 > )
-      -> void_t<decltype( getBCRSMatrix( std::declval< const Operator & >().matrix() ) ) >
+      -> void_t<decltype( getBCRSMatrix( std::declval< const Operator & >().exportMatrix() ) ) >
       {
-        typedef std::decay_t< decltype( getBCRSMatrix( std::declval< const Operator & >().matrix() ) ) > BCRSMatrix;
+        typedef std::decay_t< decltype( getBCRSMatrix( std::declval< const Operator & >().exportMatrix() ) ) > BCRSMatrix;
         if( !pybind11::already_registered< BCRSMatrix >() )
           Python::registerBCRSMatrix< BCRSMatrix >( cls );
 
         using pybind11::operator""_a;
 
         cls.def_property_readonly( "_backend", [] ( Operator &self ) {
-            return getBCRSMatrix( self.matrix() );
+            return getBCRSMatrix( self.exportMatrix() );
           });
       }
 #endif
 
       template< class AssembledLinearOperator, class... options,
-            decltype( std::declval< const AssembledLinearOperator & >().matrix(), 0 ) = 0 >
+            decltype( std::declval< const AssembledLinearOperator & >().exportMatrix(), 0 ) = 0 >
       inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def_property_readonly( "_backend", [] ( pybind11::handle self ) {
-            auto& mat = self.cast< AssembledLinearOperator &>().matrix();
+            auto& mat = self.cast< AssembledLinearOperator &>().exportMatrix();
             auto crs = mat.data();
             auto &values = std::get<0>(crs);
             auto &inner  = std::get<1>(crs);
