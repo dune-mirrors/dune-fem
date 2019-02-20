@@ -242,13 +242,13 @@ namespace Dune
 #endif
 
       template< class AssembledLinearOperator, class... options,
-            decltype( std::declval< const AssembledLinearOperator & >().exportMatrix(), 0 ) = 0 >
+            decltype( std::declval< const AssembledLinearOperator & >().exportMatrix().exportCRS(), 0 ) = 0 >
       inline static void addMatrixBackend ( pybind11::class_< AssembledLinearOperator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def_property_readonly( "_backend", [] ( pybind11::handle self ) {
             auto& mat = self.cast< AssembledLinearOperator &>().exportMatrix();
-            auto crs = mat.data();
+            auto crs = mat.exportCRS();
             auto &values = std::get<0>(crs);
             auto &inner  = std::get<1>(crs);
             auto &outer  = std::get<2>(crs);
