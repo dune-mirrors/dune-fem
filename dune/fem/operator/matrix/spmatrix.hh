@@ -49,6 +49,7 @@ namespace Dune
       typedef ThisType MatrixBaseType;
 
       static const size_t defaultCol = std::numeric_limits<size_t>::max();
+      static const size_t zeroCol    = std::numeric_limits<size_t>::max()-1;
       static const int firstCol = 0;
 
       SparseRowMatrix(const ThisType& ) = delete;
@@ -93,7 +94,7 @@ namespace Dune
         assert((row>=0) && (row <= dim_[0]));
 
         const size_type column = colIndex(row,col) ;
-        assert( column != defaultCol );
+        assert( column != defaultCol && column != zeroCol );
 
         values_ [ column ] = val;
         columns_[ column ] = col;
@@ -106,7 +107,7 @@ namespace Dune
         assert((row>=0) && (row <= dim_[0]));
 
         const size_type column = colIndex(row,col) ;
-        assert( column != defaultCol );
+        assert( column != defaultCol && column != zeroCol );
 
         values_ [ column ] += val;
         columns_[ column ] = col;
@@ -127,7 +128,7 @@ namespace Dune
           {
             const auto realCol = columns_[ col ];
 
-            if( ! compressed_ && (realCol == defaultCol) )
+            if( ! compressed_ && (realCol == defaultCol) || realCol == zeroCol )
               continue;
 
             const auto blockNr = realCol / blockSize ;
@@ -171,7 +172,7 @@ namespace Dune
         {
           values_ [col] = 0;
           if ( !compressed_ )
-            columns_[col] = defaultCol;
+             columns_[col] = zeroCol;
         }
       }
 
@@ -236,7 +237,7 @@ namespace Dune
           {
             const size_type realCol = columns_[ col ];
 
-            if( ! compressed_ && (realCol == defaultCol) )
+            if( ! compressed_ && (realCol == defaultCol || realCol == zeroCol) )
               continue;
 
             matRow[ realCol ] = values_[ thisCol ];
@@ -334,7 +335,7 @@ namespace Dune
         // find local column or empty spot
         for( ;  i < endR; ++i )
         {
-          if( columns_[ i ] == defaultCol || columns_[ i ] == col )
+          if( columns_[ i ] == defaultCol || columns_[ i ] == zeroCol || columns_[ i ] == col )
           {
             return i;
           }
