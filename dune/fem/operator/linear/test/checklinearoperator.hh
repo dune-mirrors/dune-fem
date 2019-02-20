@@ -165,11 +165,11 @@ namespace Dune
 
       // first test initialization
       RangeStencil< DomainSpaceType, RangeSpaceType > stencil( dSpace, rSpace, range );
-      linOp.reserve( stencil );
 
-      for( int k=0; k<2; ++k )
+      for( int k=0; k<4; ++k )
       {
         // check setting operator entries to zero
+        linOp.reserve( stencil );
         linOp.clear();
 
         Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > temp( dSpace, rSpace );
@@ -212,6 +212,12 @@ namespace Dune
         }
 
         linOp.flushAssembly();
+        if (k>=2) // just for checking 'clearRow' and reassmbly so don't check content of matrix
+        {
+          linOp.unitRow(0);
+          linOp.finalize();
+          continue;
+        }
 
         // test getLocalMatrix
         for( const auto &entry : range )
