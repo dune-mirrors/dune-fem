@@ -212,7 +212,7 @@ namespace Dune
         }
 
         linOp.flushAssembly();
-        if (k>=2) // just for checking 'clearRow' and reassmbly so don't check content of matrix
+        if (k>=2) // just for checking 'clearRow' and reassembly so don't check content of matrix
         {
           linOp.unitRow(0);
           linOp.finalize();
