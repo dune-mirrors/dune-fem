@@ -206,7 +206,12 @@ namespace Dune
           ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
           ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
 
-          applyCachedUnitRows();
+          if( ! unitRows_.empty() )
+          {
+            ::Dune::Petsc::MatZeroRows( petscMatrix_, unitRows_.size(), unitRows_.data(), 1. );
+            // remove all cached unit rows
+            unitRows_.clear();
+          }
         }
       }
 
@@ -221,16 +226,6 @@ namespace Dune
       void finalizeAssembly () const
       {
         const_cast< ThisType& > (*this).finalize();
-      }
-
-      void applyCachedUnitRows()
-      {
-        for( const auto& row : unitRows_ )
-        {
-          setUnitRow( row.first, row.second );
-        }
-        // remove all cached unit rows
-        unitRows_.clear();
       }
 
     public:
@@ -376,7 +371,17 @@ namespace Dune
           const PetscInt block = rangeMappers_.parallelIndex( rows[ i ] / rangeLocalBlockSize );
           r[ i ] = block * rangeLocalBlockSize + (rows[ i ] % rangeLocalBlockSize);
         }
-        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
+
+        if( finalizedAlready() )
+        {
+          ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
+        }
+        else
+        {
+          unitRows_.reserve( unitRows_.size() + r.size() );
+          for( const auto& row : r )
+            unitRows_.push_back( row );
+        }
       }
 
       //! interface method from LocalMatrixFactory
@@ -398,21 +403,6 @@ namespace Dune
     public:
       void unitRow( const PetscInt localRow, const PetscScalar diag = 1.0 )
       {
-        if( finalizedAlready() )
-        {
-          setUnitRow( localRow, diag );
-        }
-        else
-        {
-          unitRows_.insert( std::make_pair( localRow, diag ) );
-        }
-      }
-
-      bool blockedMode() const { return blockedMode_; }
-
-    protected:
-      void setUnitRow( const PetscInt localRow, const PetscScalar diag )
-      {
         std::array< PetscInt, domainLocalBlockSize > rows;
         const PetscInt row = rangeMappers_.parallelIndex( localRow );
         for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
@@ -420,10 +410,26 @@ namespace Dune
           rows[ i ] = r;
         }
 
-        // set given row to a zero row with diagonal entry equal to diag
-        ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
+        if( finalizedAlready() )
+        {
+          // set given row to a zero row with diagonal entry equal to diag
+          ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
+        }
+        else
+        {
+          // this only works for diag = 1
+          assert( std::abs( diag - 1. ) < 1e-12 );
+          unitRows_.reserve( unitRows_.size() + domainLocalBlockSize );
+          for( const auto& r : rows )
+          {
+            unitRows_.push_back( r );
+          }
+        }
       }
 
+      bool blockedMode() const { return blockedMode_; }
+
+    protected:
       template< class PetscOp >
       void applyToBlock ( const PetscInt localRow, const PetscInt localCol, const MatrixBlockType& block, PetscOp op )
       {
@@ -721,7 +727,7 @@ namespace Dune
       mutable std::vector< PetscInt    > r_;
       mutable std::vector< PetscInt    > c_;
 
-      mutable std::map< PetscInt, PetscScalar > unitRows_;
+      mutable std::vector< PetscInt    > unitRows_;
     };
 
 
