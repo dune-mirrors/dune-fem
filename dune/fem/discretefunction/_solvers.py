@@ -80,5 +80,5 @@ def petscsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::PetscInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"petsc.kspsolver.method":solverType} if solverType is not None else {}
+    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
     return "petsc",includes,typeName, parameter
