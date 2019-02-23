@@ -43,7 +43,7 @@ def dgonb(view, order=1, dimrange=1, field="double", storage=None,
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[view])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
@@ -53,7 +53,8 @@ def dgonb(view, order=1, dimrange=1, field="double", storage=None,
           " >"
         spc = module(field, includes, typeName,
                     interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage).Space(view)
+                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                    ctorArgs=[view])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -91,7 +92,7 @@ def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unuse
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(gridview)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[gridview])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -141,7 +142,7 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hier
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(gridview)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[gridview])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -185,7 +186,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(gridview)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[gridview])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -225,7 +226,7 @@ def dglagrange(view, order=1, dimrange=1, field="double", storage=None,
     typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
-    spc = module(field, includes, typeName, storage=storage).Space(view)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[view])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
@@ -235,7 +236,8 @@ def dglagrange(view, order=1, dimrange=1, field="double", storage=None,
           " >"
         spc = module(field, includes, typeName,
                     interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders, storage=storage).Space(view)
+                    skeletonQuadratureOrders=skeletonQuadratureOrders,
+                    storage=storage, ctorArgs=[view])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -276,7 +278,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[view])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
@@ -286,8 +288,8 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None,
           " >"
         spc = module(field, includes, typeName,
                     interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage).Space(view)
-    # addStorage(spc, storage)
+                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                    ctorArgs=[view])
     return spc.as_ufl()
 
 def lagrangehp(view, maxOrder=1, dimrange=1, field="double", storage=None,
@@ -326,7 +328,7 @@ def lagrangehp(view, maxOrder=1, dimrange=1, field="double", storage=None,
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(maxOrder) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[view])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
@@ -336,7 +338,8 @@ def lagrangehp(view, maxOrder=1, dimrange=1, field="double", storage=None,
           " >"
         spc = module(field, includes, typeName,
                     interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage).Space(view)
+                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                    ctorArgs=[view])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -366,7 +369,7 @@ def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
     functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridview.dimWorld) + ", " + str(dimrange) + " >"
     typeName = "Dune::Fem::FiniteVolumeSpace< " + functionSpaceType + ", Dune::FemPy::GridPart< " + gridview._typeName + " > >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(gridview)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[gridview])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -404,7 +407,7 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " > >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(gridview)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[gridview])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -446,13 +449,12 @@ def combined(*spaces, **kwargs):
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
 
-    mod = module(combinedField, includes, typeName, constructor, storage=combinedStorage)
+    spc = module(combinedField, includes, typeName, constructor,
+            storage=combinedStorage, ctorArgs=[spaces])
     try:
-        mod.Space.componentNames = kwargs["components"]
+        spc.componentNames = kwargs["components"]
     except KeyError:
         pass
-    spc = mod.Space(spaces)
-    # addStorage(spc, combinedStorage)
     return spc.as_ufl()
 
 def product(*spaces, **kwargs):
@@ -496,9 +498,10 @@ def product(*spaces, **kwargs):
     storage = lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
                         None,None,None]
-    mod = module(combinedField, includes, typeName, constructor, storage=storage)
+    spc = module(combinedField, includes, typeName, constructor,
+            storage=storage, ctorArgs=[spaces])
     try:
-        mod.Space.componentNames = kwargs["components"]
+        spc.componentNames = kwargs["components"]
     except KeyError:
         pass
     def interpolate(space, func, name=None, **kwargs):
@@ -520,10 +523,9 @@ def product(*spaces, **kwargs):
         #     df = tupleDiscreteFunction(space, name=name, **kwargs)
         df.interpolate(func)
         return df
-    setattr(mod.Space, "interpolate", interpolate)
+    setattr(spc, "interpolate", interpolate)
 
     # there is no obvious operator associated with the TupleDF used for this space
-    spc = mod.Space(spaces)
     addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
                         None,None,None] )
@@ -545,8 +547,7 @@ def bdm(view, order=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
-    # addStorage(spc, storage)
+    spc = module(field, includes, typeName, storage=storage, ctorArgs=[view])
     return spc.as_ufl()
 
 def raviartThomas(view, order=1, field="double", storage=None, **unused):
@@ -565,8 +566,7 @@ def raviartThomas(view, order=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
-    # addStorage(spc, storage)
+    spc = module(field, includes, typeName, storage=storage,ctorArgs=[view])
     return spc.as_ufl()
 
 def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
@@ -582,6 +582,6 @@ def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " > >"
 
-    spc = module(field, includes, typeName, storage=storage).Space(view)
+    spc = module(field, includes, typeName, storage=storage,ctorArgs=[view])
     # addStorage(spc, storage)
     return spc.as_ufl()

@@ -20,21 +20,21 @@ except:
     pass
 
 
-def interpolate(space, func, name=None, **kwargs):
+def interpolate(space, expr, name=None, **kwargs):
     """interpolate a function into a discrete function space
 
     Args:
         space: discrete function space to interpolate into
-        func:  function to interpolate
+        expr:  function to interpolate
         name:  name of the resulting discrete function
 
     Returns:
         DiscreteFunction: the constructed discrete function
     """
     if name is None:
-        name = func.name
+        name = expr.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
-    return function.discreteFunction(space, name=name, expr=func, **kwargs)
+    return function.discreteFunction(space, name=name, expr=expr, **kwargs)
 def project(space, func, name=None, **kwargs):
     """project a (discrete) function into a discrete function space
 
@@ -136,14 +136,17 @@ def storageToSolver(storage):
 
 generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
-def addAttr(module, cls, field):
-    setattr(cls, "_module", module)
-    setattr(cls, "field", field)
-    setattr(cls, "interpolate", interpolate)
+def addAttr(module, self, field):
+    setattr(self, "_module", module)
+    setattr(self, "field", field)
+    setattr(self, "interpolate",
+            lambda *args,**kwargs: interpolate(self,*args,**kwargs))
     DF = module.DiscreteFunction
     if hasattr(DF,"_project"):
-        setattr(cls, "project", project)
-    setattr(cls, "function", function.discreteFunction)
+        setattr(self, "project",
+            lambda *args,**kwargs: project(self,*args,**kwargs))
+    setattr(self, "function",
+            lambda *args,**kwargs: function.discreteFunction(self,*args,**kwargs))
 
 def addStorage(obj, storage):
     if not storage:
@@ -217,7 +220,8 @@ def addDiscreteFunction(space, storage):
 
 def module(field, includes, typeName, *args,
            storage=None,
-           interiorQuadratureOrders=None, skeletonQuadratureOrders=None):
+           interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
+           ctorArgs):
     includes = includes + ["dune/fempy/py/space.hh"]
     defines = []
 
@@ -245,12 +249,13 @@ def module(field, includes, typeName, *args,
                             bufferProtocol=[False,True],
                             options=[["std::shared_ptr<DuneType>"],[]],
                             defines=defines)
-    addAttr(module, module.Space, field)
-    setattr(module.Space,"DiscreteFunction",module.DiscreteFunction)
-    addDFAttr(module, module.Space.DiscreteFunction, addStorage(module.Space,storage))
+    spc = module.Space(*ctorArgs)
+    addAttr(module, spc, field)
+    setattr(spc,"DiscreteFunction",module.DiscreteFunction)
+    addDFAttr(module, module.DiscreteFunction, addStorage(spc,storage))
     if not backend is None:
-        addBackend(module.Space.DiscreteFunction, backend)
-    return module
+        addBackend(module.DiscreteFunction, backend)
+    return spc
 
 def codegen(space,interiorQuadratureOrders, skeletonQuadratureOrders):
     if interiorQuadratureOrders is None: interiorQuadratureOrders = []
