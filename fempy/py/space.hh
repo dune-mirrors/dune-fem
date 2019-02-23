@@ -169,7 +169,6 @@ namespace Dune
     {
       detail::registerSpace( module, cls );
     }
-
   } // namespace FemPy
 
 } // namespace Dune

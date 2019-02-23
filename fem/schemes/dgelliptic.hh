@@ -114,7 +114,7 @@ public:
   : model_( model ),
     penalty_( space, parameter.getValue< double >( "penalty", 40 ) )
   {
-    std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
+    // std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
   }
 
   DGEllipticOperator ( const DiscreteFunctionSpaceType &dSpace,
@@ -124,7 +124,7 @@ public:
   : model_( model ),
     penalty_( dSpace, parameter.getValue< double >( "penalty", 40 ) )
   {
-    std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
+    // std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
   }
 
   //! application operator
@@ -441,6 +441,8 @@ template<class GF>
 void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
   ::apply ( const GF &u, JacobianOperator &jOp ) const
 {
+  // std::cout << "starting assembly\n";
+  // Dune::Timer timer;
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
 
@@ -462,6 +464,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
   std::vector< RangeType > phiNb( numDofs );
   std::vector< JacobianRangeType > dphiNb( numDofs );
 
+  // std::cout << "   in assembly: start element loop size=" << rangeSpace.gridPart().grid().size(0) << " time=  " << timer.elapsed() << std::endl;;
   const IteratorType end = rangeSpace.end();
   for( IteratorType it = rangeSpace.begin(); it != end; ++it )
   {
@@ -711,6 +714,8 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
       }
     }
   } // end grid traversal
+  jOp.flushAssembly();
+  // std::cout << "   in assembly: final    " << timer.elapsed() << std::endl;;
 }
 
 #endif // ELLIPTIC_HH

@@ -775,6 +775,10 @@ namespace Dune
             assemble( u, jOp, std::true_type() );
           else
             assemble( u, jOp, std::false_type() );
+
+          // note: assembly done without local contributions so need
+          // to call flush assembly
+          jOp.flushAssembly();
         }
 
         // accessors

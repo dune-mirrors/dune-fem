@@ -178,8 +178,6 @@ namespace Dune
         registerOperatorConstraints( cls );
         registerOperatorQuadratureOrders ( cls );
 
-        typedef typename Operator::JacobianOperatorType LinearOperator;
-
         registerOperatorSpaces( cls, PriorityTag< 42 >() );
       }
 
