@@ -59,11 +59,12 @@ def adapt(first, *args):
             "all discrete functions must be over the same hierarchical grid"
     # make sure all gridview can be adapted
     try:
-        adapt = all([a.grid.canAdapt==True for a in args])
+        adapt  = all([a.grid.canAdapt==True for a in args])
+        adapt &= not any([a.space.storage[0]=="petsc" for a in args])
     except AttributeError:
         adapt = False
     assert adapt,\
-            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view"
+            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view also `petsc' storage can not be used at this point in time"
 
     module(hgrid).gridAdaptation(hgrid).adapt(args)
 
@@ -100,7 +101,8 @@ def globalRefine(level, first, *args):
             "all discrete functions must be over the same hierarchical grid"
     # make sure all gridview can be adapted
     try:
-        adapt = all([a.grid.canAdapt==True for a in args])
+        adapt  = all([a.grid.canAdapt==True for a in args])
+        adapt &= not any([a.space.storage[0]=="petsc" for a in args])
     except AttributeError:
         adapt = False
     assert adapt,\
