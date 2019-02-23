@@ -31,7 +31,6 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
-      using BaseType::communicate;
 
       //! constructor
       //! \param domainSpace space defining domain of operator
@@ -43,7 +42,7 @@ namespace Dune
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
-                          const ISTLMatrixParameter& param = ISTLMatrixParameter() )
+                          const ISTLSolverParameter& param = ISTLSolverParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
 
@@ -52,11 +51,15 @@ namespace Dune
         apply( arg, dest );
       }
 
+      virtual void finalize() { BaseType::compress(); }
+
+      [[deprecated]]
       const BaseType &systemMatrix() const
       {
         return *this;
       }
 
+      [[deprecated]]
       BaseType &systemMatrix()
       {
         return *this;
@@ -84,7 +87,6 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
-      using BaseType::communicate;
 
       //! constructor
       //! \param domainSpace space defining domain of operator
@@ -96,7 +98,7 @@ namespace Dune
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
-                          const ISTLMatrixParameter& param = ISTLMatrixParameter() )
+                          const ISTLSolverParameter& param = ISTLSolverParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
 
@@ -105,11 +107,15 @@ namespace Dune
         apply( arg, dest );
       }
 
+      virtual void finalize() { BaseType::compress(); }
+
+      [[deprecated]]
       const BaseType &systemMatrix() const
       {
         return *this;
       }
 
+      [[deprecated]]
       BaseType &systemMatrix()
       {
         return *this;

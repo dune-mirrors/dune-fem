@@ -141,12 +141,6 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
-      void communicate ()
-      {
-        dofVector().communicateNow();
-      }
-
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g)
        *  \note This is a specialization when the right hand side is an AdaptiveDiscreteFunction */
       void assign( const AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > &g )
@@ -164,12 +158,28 @@ namespace Dune
         dofVector().assignVector( g.dofVector() );
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::beginAssemble() */
+      template< class AssembleOperation >
+      void beginAssemble ()
+      {
+        BaseType :: template beginAssemble< AssembleOperation > ();
+        dofVector().beginAssemble();
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::endAssemble() */
+      template< class AssembleOperation >
+      void endAssemble ()
+      {
+        BaseType :: template endAssemble< AssembleOperation > ();
+        dofVector().endAssemble();
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
-      /** \brief obtain a constand pointer to the underlying PETSc Vec */
+      /** \brief obtain a constant pointer to the underlying PETSc Vec */
       const Vec* petscVec () const { return dofVector().getVector(); }
 
       /** \brief obtain a pointer to the underlying PETSc Vec */

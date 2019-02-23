@@ -169,23 +169,23 @@ namespace Dune
 
       typedef PetscMappers< DFSpace > MappersType;
 
-      typedef typename DFSpace::template CommDataHandle<void>::OperationType CommunicationOperationType;
+      typedef typename DFSpace::template CommDataHandle<void>::OperationType DefaultCommunicationOperationType;
 
       // note that Vec is a pointer type so no deep copy is made
       PetscVector ( const DFSpace& space, Vec vec )
         : mappers_( space ), vec_(vec), owner_(false)
       {
-        static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
-                            CommunicationOperationType::value == DFCommunicationOperation::add,
-                            "only copy/add are available communication operations for petsc");
+        static_assert( DefaultCommunicationOperationType::value == DFCommunicationOperation::copy ||
+                       DefaultCommunicationOperationType::value == DFCommunicationOperation::add,
+                       "only copy/add are available communication operations for petsc");
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
       }
       PetscVector ( const DFSpace& space )
         : mappers_( space ), owner_(true)
       {
-        static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
-                            CommunicationOperationType::value == DFCommunicationOperation::add,
-                            "only copy/add are available communication operations for petsc");
+        static_assert( DefaultCommunicationOperationType::value == DFCommunicationOperation::copy ||
+                       DefaultCommunicationOperationType::value == DFCommunicationOperation::add,
+                       "only copy/add are available communication operations for petsc");
         // init vector
         init();
       }
@@ -269,12 +269,23 @@ namespace Dune
         return &ghostedVec_;
       }
 
+      void beginAssemble()
+      {
+        ::Dune::Petsc::VecAssemblyBegin( vec_ );
+      }
+
+      void endAssemble()
+      {
+        ::Dune::Petsc::VecAssemblyEnd( vec_ );
+      }
+
       // force communication _now_
-      void communicateNow () const
+      template <class Operation>
+      void communicateNow (const Operation& operation) const
       {
         communicateFlag_ = true;
         ++sequence_;
-        communicateIfNecessary();
+        communicateIfNecessary( operation );
       }
 
       DofBlockType operator[] ( const IndexType index ) { return DofBlockType( *this,index ); }
@@ -505,14 +516,22 @@ namespace Dune
         ::Dune::Petsc::VecDestroy( &vec_ );
       }
 
+      // communicate using the space default communication option
       void communicateIfNecessary () const
+      {
+        DefaultCommunicationOperationType op;
+        communicateIfNecessary( op );
+      }
+
+      template <class Operation>
+      void communicateIfNecessary (const Operation& op) const
       {
         // communicate this process' values
         if( communicateFlag_ && memorySequence_ < sequence_ )
         {
           if ( memorySequence_ < sequence_ )
           {
-            if ( CommunicationOperationType::value == DFCommunicationOperation::add )
+            if ( Operation::value == DFCommunicationOperation::add )
             {
               ::Dune::Petsc::VecGhostUpdateBegin( vec_, ADD_VALUES, SCATTER_REVERSE );
               ::Dune::Petsc::VecGhostUpdateEnd( vec_, ADD_VALUES, SCATTER_REVERSE );

@@ -24,10 +24,11 @@
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/operator/matrix/functor.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/mapper/petsc.hh>
 #include <dune/fem/storage/objectstack.hh>
+
+#include <dune/fem/solver/parameter.hh>
 
 #if HAVE_PETSC
 
@@ -39,27 +40,71 @@ namespace Dune
   namespace Fem
   {
 
-    struct PetscMatrixParameter
-      : public MatrixParameter
+    struct PetscSolverParameter : public LocalParameter< SolverParameter, PetscSolverParameter >
     {
-      typedef MatrixParameter BaseType;
+      typedef LocalParameter< SolverParameter, PetscSolverParameter >  BaseType;
 
-      std::string keyPrefix_;
+    public:
+      using BaseType :: parameter ;
+      using BaseType :: keyPrefix ;
 
-      PetscMatrixParameter( const std::string keyPrefix = "petscmatrix." )
-        : BaseType( keyPrefix ),
-          keyPrefix_( keyPrefix )
+      PetscSolverParameter( const ParameterReader &parameter = Parameter::container() )
+        : BaseType( parameter )
       {}
 
+      PetscSolverParameter( const SolverParameter& sp )
+        : PetscSolverParameter( sp.parameter() )
+      {}
+
+      PetscSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( keyPrefix, parameter )
+      {}
+
+      bool isPetscSolverParameter() const { return true; }
+
+      static const int boomeramg = 0;
+      static const int parasails = 1;
+      static const int pilut     = 2;
+
+      int hypreMethod() const
+      {
+        const std::string hyprePCNames[] = { "boomer-amg", "parasails", "pilu-t" };
+        int hypreType = 0;
+        if (parameter().exists("petsc.preconditioning.method"))
+        {
+          hypreType = parameter().getEnum( "petsc.preconditioning.hypre.method", hyprePCNames, 0 );
+          std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.hypre.method' use "
+              << keyPrefix() << "preconditioning.hypre.method instead\n";
+        }
+        else
+          hypreType = parameter().getEnum( keyPrefix()+"hypre.method", hyprePCNames, 0 );
+        return hypreType;
+      }
+
+      int superluMethod() const
+      {
+        const std::string factorizationNames[] = { "petsc", "superlu", "mumps" };
+        int factorType = 0;
+        if (parameter().exists("petsc.preconditioning.lu.method"))
+        {
+          factorType = parameter().getEnum( "petsc.preconditioning.lu.method", factorizationNames, 0 );
+          std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.lu.method' use "
+              << keyPrefix() << "preconditioning.lu.method instead\n";
+        }
+        else
+          factorType = parameter().getEnum( keyPrefix()+"preconditioning.lu.method", factorizationNames, 0 );
+        return factorType;
+      }
+
       bool viennaCL () const {
-        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "viennacl", false );
+        return parameter().getValue< bool > ( keyPrefix() + "petsc.viennacl", false );
       }
-
       bool blockedMode () const {
-        return Dune::Fem::Parameter::getValue< bool > ( keyPrefix_ + "blockedmode", true );
+        return parameter().getValue< bool > ( keyPrefix() + "petsc.blockedmode", true );
       }
-
     };
+
+
 
     /* ========================================
      * class PetscLinearOperator
@@ -127,7 +172,7 @@ namespace Dune
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
       PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
-                            const MatrixParameter& param = PetscMatrixParameter() )
+                            const PetscSolverParameter& param = PetscSolverParameter() )
         : domainMappers_( domainSpace ),
           rangeMappers_( rangeSpace ),
           localMatrixStack_( *this ),
@@ -137,7 +182,7 @@ namespace Dune
       {}
 
       PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
-                            const MatrixParameter& param = PetscMatrixParameter() )
+                            const PetscSolverParameter& param = PetscSolverParameter() )
         : PetscLinearOperator( domainSpace, rangeSpace, param )
       {}
 
@@ -154,13 +199,36 @@ namespace Dune
         setStatus( statAssembled );
       }
 
-      void communicate ()
+      void finalize ()
       {
-        ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        setStatus( statAssembled );
+        if( ! finalizedAlready() )
+        {
+          ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
+          ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
+
+          if( ! unitRows_.empty() )
+          {
+            ::Dune::Petsc::MatZeroRows( petscMatrix_, unitRows_.size(), unitRows_.data(), 1. );
+            // remove all cached unit rows
+            unitRows_.clear();
+          }
+        }
       }
 
+    protected:
+      bool finalizedAlready() const
+      {
+        PetscBool assembled = PETSC_FALSE ;
+        ::Dune::Petsc::MatAssembled( petscMatrix_, &assembled );
+        return assembled == PETSC_TRUE;
+      }
+
+      void finalizeAssembly () const
+      {
+        const_cast< ThisType& > (*this).finalize();
+      }
+
+    public:
       const DomainSpaceType &domainSpace () const { return domainMappers_.space(); }
       const RangeSpaceType &rangeSpace () const { return rangeMappers_.space(); }
 
@@ -176,13 +244,15 @@ namespace Dune
           petscDest_.reset( new PetscRangeFunctionType( "PetscOp-arg", rangeSpace() ) );
 
         petscArg_->assign( arg );
-        ::Dune::Petsc::MatMult( petscMatrix_, *(petscArg_->petscVec()) , *(petscDest_->petscVec()) );
+        apply( *petscArg_, *petscDest_ );
         dest.assign( *petscDest_ );
       }
 
       /** \brief application operator for PetscDiscreteFunction */
       void apply ( const PetscDomainFunctionType &arg, PetscRangeFunctionType &dest ) const
       {
+        // make sure matrix is in correct state
+        finalizeAssembly();
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
       }
 
@@ -217,6 +287,8 @@ namespace Dune
           // reset temporary Petsc discrete functions
           petscArg_.reset();
           petscDest_.reset();
+
+          unitRows_.clear();
 
           // create matrix
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
@@ -287,6 +359,7 @@ namespace Dune
       void clear ()
       {
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
+        flushAssembly();
       }
 
       template <class Vector>
@@ -298,7 +371,17 @@ namespace Dune
           const PetscInt block = rangeMappers_.parallelIndex( rows[ i ] / rangeLocalBlockSize );
           r[ i ] = block * rangeLocalBlockSize + (rows[ i ] % rangeLocalBlockSize);
         }
-        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
+
+        if( finalizedAlready() )
+        {
+          ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
+        }
+        else
+        {
+          unitRows_.reserve( unitRows_.size() + r.size() );
+          for( const auto& row : r )
+            unitRows_.push_back( row );
+        }
       }
 
       //! interface method from LocalMatrixFactory
@@ -323,11 +406,28 @@ namespace Dune
         std::array< PetscInt, domainLocalBlockSize > rows;
         const PetscInt row = rangeMappers_.parallelIndex( localRow );
         for( unsigned int i=0, r = row * domainLocalBlockSize; i<domainLocalBlockSize; ++i, ++r )
+        {
           rows[ i ] = r;
+        }
 
-        // set given row to a zero row with diagonal entry equal to diag
-        ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
+        if( finalizedAlready() )
+        {
+          // set given row to a zero row with diagonal entry equal to diag
+          ::Dune::Petsc::MatZeroRows( petscMatrix_, domainLocalBlockSize, rows.data(), diag );
+        }
+        else
+        {
+          // this only works for diag = 1
+          assert( std::abs( diag - 1. ) < 1e-12 );
+          unitRows_.reserve( unitRows_.size() + domainLocalBlockSize );
+          for( const auto& r : rows )
+          {
+            unitRows_.push_back( r );
+          }
+        }
       }
+
+      bool blockedMode() const { return blockedMode_; }
 
     protected:
       template< class PetscOp >
@@ -377,7 +477,6 @@ namespace Dune
         applyToBlock( row, col, matBlock, op );
       }
 
-    public:
       template< class LocalBlock >
       void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
@@ -516,6 +615,9 @@ namespace Dune
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
+        // make sure matrix is in correct state before using
+        finalizeAssembly();
+
         assert( status_==statAssembled || status_==statGet );
         setStatus( statGet );
 
@@ -551,15 +653,22 @@ namespace Dune
         }
       }
 
-      /* Not tested yet
-      void viewMatlab (const char *filename) const
-      {
-        ::Dune::Petsc::MatViewMatlab( petscMatrix_, filename );
-      }
-      */
-
       // return reference to PETSc matrix object
-      Mat& petscMatrix () const { return petscMatrix_; }
+      Mat& exportMatrix () const
+      {
+        // make sure matrix is in correct state
+        finalizeAssembly();
+        return petscMatrix_;
+      }
+
+      [[deprecated]]
+      // return reference to PETSc matrix object
+      Mat& petscMatrix () const
+      {
+        // make sure matrix is in correct state
+        finalizeAssembly();
+        return petscMatrix_;
+      }
 
     private:
       PetscLinearOperator ();
@@ -617,6 +726,8 @@ namespace Dune
       mutable std::vector< PetscScalar > v_;
       mutable std::vector< PetscInt    > r_;
       mutable std::vector< PetscInt    > c_;
+
+      mutable std::vector< PetscInt    > unitRows_;
     };
 
 

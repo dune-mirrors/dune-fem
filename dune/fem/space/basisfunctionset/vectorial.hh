@@ -449,12 +449,13 @@ namespace Dune
         std::vector< typename HessianAll::Scalar > scalars( size );
         HessianAll::apply( scalarBasisFunctionSet(), x, scalars );
 
+        const int xSize = x.size();
         for( int r = 0; r < dimRange; ++r )
         {
           for( std::size_t i = 0; i < size; ++i )
           {
             const GlobalDofType globalDof = dofAlignment_.globalDof( LocalDofType( r, i ) );
-            for ( int j = 0; j < x.size(); ++j )
+            for ( int j = 0; j < xSize; ++j )
               dofs[ globalDof ] += factor[ r ][ j ] * scalars[ i ][ 0 ][ j ];
           }
         }

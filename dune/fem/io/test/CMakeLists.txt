@@ -6,3 +6,4 @@ configure_file(bc.sh ${CMAKE_CURRENT_BINARY_DIR}/bc.sh COPYONLY)
 configure_file(date.sh ${CMAKE_CURRENT_BINARY_DIR}/date.sh COPYONLY)
 
 dune_add_test( NAME parametertest SOURCES parametertest.cc LINK_LIBRARIES dunefem )
+dune_add_test( NAME parameterdicttest SOURCES parameterdicttest.cc LINK_LIBRARIES dunefem )

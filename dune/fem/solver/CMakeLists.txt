@@ -1,4 +1,5 @@
-dune_install(cginverseoperator.hh diagonalpreconditioner.hh istlinverseoperators.hh
+dune_install(cginverseoperator.hh diagonalpreconditioner.hh
+             inverseoperatorinterface.hh istlinverseoperators.hh
              istlsolver.hh krylovinverseoperators.hh multistep.hh newtoninverseoperator.hh
              odesolver.hh odesolverinterface.hh oemsolver.hh
              parameter.hh pardg.hh pardginverseoperators.hh

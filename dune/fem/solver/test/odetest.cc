@@ -305,12 +305,11 @@ void solve(OdeFactory factory, const bool verbose)
   exact -= U;
   exact /= U.two_norm();
 
-  std::cout << "Two norm: " << exact.two_norm() << std::endl;
-  if( exact.two_norm() > 1e-2 )
+  auto twonorm = exact.two_norm();
+  std::cout << "Two norm: " << twonorm << std::endl;
+  if( std::to_string( twonorm ) == "nan" || twonorm > 1e-2 )
   {
-    std::cerr << "ERROR: ode solver did not converge!" << std::endl;
-    assert( false );
-    std::abort();
+    DUNE_THROW(Dune::InvalidStateException,"ERROR: ode solver did not converge!");
   }
 }
 
@@ -353,6 +352,7 @@ struct ImplicitRKFactory
 };
 
 int main( int argc, char **argv )
+try
 {
   Dune::Fem::MPIManager::initialize( argc, argv );
   Dune::Fem::Parameter::append( argc, argv );
@@ -378,20 +378,6 @@ int main( int argc, char **argv )
     solve( ImplicitRKFactory< SpaceOperatorType, DuneODE::ImplicitRungeKuttaSolver > (), verbose );
   }
 
-  // explicit RungeKutta (pardg expl)
-  {
-    std::cout << "pardg explicit rungekutta" << std::endl;
-    typedef DuneODE::ExplicitOdeSolver<DestinationType> OdeSolverType;
-    solve( SimpleFactory< OdeSolverType >(), verbose );
-  }
-
-  // implicit RungeKutta (pardg impl)
-  {
-    std::cout << "pardg implicit rungekutta" << std::endl;
-    typedef DuneODE::ImplicitOdeSolver<DestinationType> OdeSolverType;
-    solve( SimpleFactory< OdeSolverType >(), verbose );
-  }
-
   // row RungeKutta (dune row)
   {
     std::cout << "Dune-fem row rungekutta" << std::endl;
@@ -399,4 +385,11 @@ int main( int argc, char **argv )
   }
 
   return 0;
+}
+catch( const Dune::Exception &exception )
+{
+  // display the exception message on the console
+  std::cerr << exception << std::endl;
+  return 1;
+
 }

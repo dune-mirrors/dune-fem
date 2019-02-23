@@ -9,6 +9,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/solver/diagonalpreconditioner.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
@@ -58,18 +59,30 @@ namespace Dune
        *
        *  \param[in]  epsilon        tolerance
        *  \param[in]  maxIterations  maximum number of CG iterations
+       *  \param[in]  errorMeasure   use absolute (0) or relative (1) error
        *  \param[in]  verbose        verbose output
        */
+      ConjugateGradientSolver ( const RealType &epsilon,
+                                unsigned int maxIterations,
+                                int errorMeasure,
+                                bool verbose )
+      : epsilon_( epsilon ),
+        maxIterations_( maxIterations ),
+        errorMeasure_( errorMeasure ),
+        verbose_( verbose && Fem::Parameter::verbose() ),
+        averageCommTime_( 0.0 ),
+        realCount_( 0 )
+      {}
       ConjugateGradientSolver ( const RealType &epsilon,
                                 unsigned int maxIterations,
                                 bool verbose,
                                 const ParameterReader &parameter = Parameter::container() )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
-        verbose_( verbose ),
+        errorMeasure_( 1 ),
+        verbose_( verbose && Fem::Parameter::verbose() ),
         averageCommTime_( 0.0 ),
         realCount_( 0 )
-
       {}
 
       /** \brief constructor
@@ -82,6 +95,7 @@ namespace Dune
                                 const ParameterReader &parameter = Parameter::container() )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
+        errorMeasure_( 1 ),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         averageCommTime_( 0.0 ),
         realCount_( 0 )
@@ -135,6 +149,7 @@ namespace Dune
     protected:
       const RealType epsilon_;
       unsigned int maxIterations_;
+      int errorMeasure_;
       const bool verbose_;
       mutable double averageCommTime_;
       mutable unsigned int realCount_;
@@ -184,6 +199,15 @@ namespace Dune
           : solver_( absLimit, maxIter, verbose, parameter ),
             parameter_( parameter )
         {}
+
+        CGInverseOperator ( const SolverParameter& param = SolverParameter(Parameter::container() ) )
+          : solver_( param.tolerance(),
+                     param.maxIterations(),
+                     param.errorMeasure(),
+                     param.verbose() ),
+            parameter_( param )
+        {
+        }
 
 
         /** \brief constructor of CGInverseOperator
@@ -357,7 +381,7 @@ namespace Dune
         const OperatorType *operator_ = nullptr;
         const PreconditionerType *preconditioner_ = nullptr;
         SolverType solver_;
-        ParameterReader parameter_;
+        SolverParameter parameter_;
       };
     }
 
@@ -379,6 +403,7 @@ namespace Dune
       typedef Fem::Solver::CGInverseOperator< DiscreteFunction > BaseType;
 
     public:
+      typedef SolverParameter SolverParameterType;
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
@@ -392,6 +417,11 @@ namespace Dune
 
       // Preconditioner is to approximate op^-1 !
       typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
+
+      CGInverseOperator ( const SolverParameter& param = SolverParameter(Parameter::container()) )
+        : BaseType( param )
+      {}
+
 
       /** \brief constructor of CGInverseOperator
        *
@@ -524,7 +554,20 @@ namespace Dune
       template< class LinearOperator >
       void checkPreconditioning( const LinearOperator &linearOp )
       {
-        const bool preconditioning = parameter_.template getValue< bool >( "fem.preconditioning", false );
+        bool preconditioning = false;
+        if (!parameter_.parameter().exists(parameter_.keyPrefix()+"preconditioning.method") &&
+            parameter_.parameter().exists("fem.preconditioning"))
+        {
+          preconditioning = parameter_.parameter().template getValue< bool >( "fem.preconditioning", false );
+          std::cout << "WARNING: using deprecated parameter `fem.preconditioning` use "
+                    << parameter_.keyPrefix() << "preconditioning.method instead\n";
+        }
+        else
+          preconditioning = parameter_.preconditionMethod(
+                {
+                  SolverParameter::none,   // no preconditioning
+                  SolverParameter::jacobi  // Jacobi preconditioning
+                });
         if( preconditioning && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value )
         {
           // create diagonal preconditioner
@@ -545,9 +588,10 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
       ::solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
-      const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
+      RealType tolerance = (epsilon_ * epsilon_);
+      if (errorMeasure_ == 1)
+        tolerance *= b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 
@@ -584,12 +628,13 @@ namespace Dune
         residuum = r.normSquaredDofs( );
 
         double exchangeTime = h.space().communicator().exchangeTime();
-        if( verbose )
+        if( verbose_ )
         {
-          std::cerr << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
+          std::cout << "CG-Iteration: " << realCount_ << ", Residuum: " << std::sqrt(residuum)
+            << ", Tolerance: " << std::sqrt(tolerance) << std::endl;
           // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
-            std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
+            std::cout << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
 
         averageCommTime_ += exchangeTime;
@@ -601,9 +646,9 @@ namespace Dune
     inline void ConjugateGradientSolver< Operator >
     ::solve ( const OperatorType &op, const PreconditionerType &precond, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
-      const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
-
-      const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
+      RealType tolerance = (epsilon_ * epsilon_);
+      if (errorMeasure_ == 1)
+        tolerance *= b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 
@@ -654,12 +699,13 @@ namespace Dune
         residuum = p.scalarProductDofs( s );//<rk,B*rk>
 
         double exchangeTime = h.space().communicator().exchangeTime();
-        if( verbose )
+        if( verbose_ )
         {
-          std::cerr << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
+          std::cout << "CG-Iteration: " << realCount_ << ", Residuum: " << std::sqrt(residuum)
+            << ", Tolerance: " << std::sqrt(tolerance) << std::endl;
           // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
-            std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
+            std::cout << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
 
         averageCommTime_ += exchangeTime;

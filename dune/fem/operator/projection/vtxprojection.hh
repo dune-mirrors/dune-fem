@@ -23,20 +23,23 @@ namespace Dune
 
     template <class GridPartType>
     struct WeightDefault {
+      typedef typename GridPartType::template Codim<0>::EntityType EntityType;
+      typedef FieldVector<double,GridPartType::dimensionworld> WorldDomainType;
       typedef FieldVector<double,GridPartType::dimension> DomainType;
-      template <class EntityType>
       void setEntity(const EntityType& en) {
+        en_ = en;
         volume_ = en.geometry().volume();
         baryCenter_ = en.geometry().center();
       }
       double operator()(const DomainType& point) {
         // return volume_;
-        DomainType tau(baryCenter_);
-        tau -= point;
+        auto tau = en_.geometry().global(point);
+        tau -= baryCenter_;
         return tau.two_norm() / volume_;
       }
       double volume_;
-      DomainType baryCenter_;
+      WorldDomainType baryCenter_;
+      EntityType en_;
     };
 
     struct VtxProjectionImpl

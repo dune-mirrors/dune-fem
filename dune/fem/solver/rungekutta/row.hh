@@ -33,9 +33,9 @@ namespace DuneODE
     typedef typename BaseType::TimeStepControlType TimeStepControlType;
 
     typedef typename TimeStepControlType::TimeProviderType   TimeProviderType;
-    typedef typename BaseType::ParametersType                ParametersType;
-    typedef typename TimeStepControlType::ParametersType     TimeStepControlParametersType;
-    typedef typename BaseType::NonlinearSolverParametersType NonlinearSolverParametersType;
+    typedef typename TimeStepControlType::ParameterType      TimeStepControlParameterType;
+    typedef typename BaseType::NonlinearSolverParameterType  NonlinearSolverParameterType;
+    typedef NonlinearSolverParameterType  ParameterType;
 
     /** \brief constructor
      *
@@ -47,17 +47,16 @@ namespace DuneODE
      */
     ROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                           TimeProviderType &timeProvider, int order,
-                          const ParametersType& param,
-                          const TimeStepControlParametersType& tscParam,
-                          const NonlinearSolverParametersType& nlsParam )
-    : BaseType( helmholtzOp, timeProvider, butcherTable( order ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
+                          const TimeStepControlParameterType& tscParam,
+                          const NonlinearSolverParameterType& parameter )
+    : BaseType( helmholtzOp, timeProvider, butcherTable( order ), TimeStepControlType( timeProvider, tscParam ), parameter )
     {}
 
     ROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                           TimeProviderType &timeProvider, int order,
                           const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp, timeProvider, butcherTable( order ), TimeStepControlType( timeProvider, parameter ),
-        ParametersType( parameter ), NonlinearSolverParametersType( parameter ) )
+                NonlinearSolverParameterType( parameter ) )
     {}
 
     /** \brief constructor
@@ -69,17 +68,16 @@ namespace DuneODE
      */
     ROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                           TimeProviderType &timeProvider,
-                          const ParametersType& param,
-                          const TimeStepControlParametersType& tscParam,
-                          const NonlinearSolverParametersType& nlsParam )
-    : BaseType( helmholtzOp, timeProvider, butcherTable( 3 ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
+                          const TimeStepControlParameterType& tscParam,
+                          const NonlinearSolverParameterType& parameter )
+    : BaseType( helmholtzOp, timeProvider, butcherTable( 3 ), TimeStepControlType( timeProvider, tscParam ), parameter )
     {}
 
     ROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                           TimeProviderType &timeProvider,
                           const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp, timeProvider, butcherTable( 3 ), TimeStepControlType( timeProvider, parameter ),
-        ParametersType( parameter ), NonlinearSolverParametersType( parameter ) )
+        ParameterType( parameter ), NonlinearSolverParameterType( parameter ) )
     {}
 
   protected:

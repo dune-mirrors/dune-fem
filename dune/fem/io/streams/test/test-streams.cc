@@ -6,7 +6,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/sionlibstreams.hh>
 
 using namespace Dune;
@@ -153,20 +152,6 @@ int main ( int argc, char** argv )
       }
       Fem :: BinaryFileInStream bin( filename.c_str() );
       if( !read( bin, data ) )
-        failed = true ;
-    }
-
-    {
-      std::string filename( filestr.str() + "xdr" );
-      std :: cerr << "Checking XDR streams..." << std :: endl;
-      if( writeStreams )
-      {
-        Fem :: XDRFileOutStream xout( filename.c_str() );
-        write( xout, data );
-        xout.flush();
-      }
-      Fem :: XDRFileInStream xin( filename.c_str() );
-      if( !read( xin, data ) )
         failed = true ;
     }
 

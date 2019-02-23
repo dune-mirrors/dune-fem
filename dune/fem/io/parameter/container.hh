@@ -78,7 +78,7 @@ namespace Dune
 
       static std::string stripComment ( const std::string &line );
 
-      const std::string &insert ( const std::string &key, const std::string &value );
+      const std::string &insert ( const std::string &key, const std::string &value, bool force );
       bool insert ( const std::string &s, std::queue< std::string > &includes );
 
       void processFile ( const std::string &filename );
@@ -116,16 +116,48 @@ namespace Dune
        *
        * \param[in]  key    key of the parameter to add
        * \param[in]  value  value of the parameter to add
+       * \param[in]  force  replace parameter, if it exists
        */
-      void append ( const std::string &key, const std::string &value )
+      void append ( const std::string &key, const std::string &value, bool force = false )
       {
         if( key != "paramfile" )
         {
           curFileName_ = "program code";
-          insert( key, value );
+          insert( key, value, force );
         }
         else
           append( value );
+      }
+
+
+      /**
+       * \brief A helper function to convert numbers to scientific strings
+       *
+       * \param[in] value     the value to be converted (needs a << operator)
+       */
+      template <class T>
+      std::string toString( const T& value )
+      {
+        std::stringstream str;
+        str << std::scientific;
+        str << value;
+        return str.str();
+      }
+
+      /**
+       * \brief add a single Floating number parameter to the container
+       *
+       * \param[in]  key    key of the parameter to add
+       * \param[in]  value  value of the parameter to add
+       * \param[in]  force  replace parameter, if it exists
+       */
+      template<class NumberType, std::enable_if_t< std::is_floating_point< NumberType >::value || std::is_integral< NumberType >::value, int> = 0 >
+      void append ( const std::string &key, NumberType value, bool force = false )
+      {
+        assert( key != "paramfile" );
+        curFileName_ = "program code";
+        std::string valueString = toString( value );
+        insert( key, valueString, force );
       }
 
       /**
@@ -341,8 +373,18 @@ namespace Dune
     // Implementation of ParameterContainer
     // ------------------------------------
 
-    inline const std::string &ParameterContainer::insert ( const std::string &key, const std::string &value )
+    inline const std::string &ParameterContainer::insert ( const std::string &key, const std::string &value, bool force  = false)
     {
+      auto pos = parameter_.map.find( key );
+      bool paramExists = ( pos != parameter_.map.end() );
+      std::string paramValue;
+      if( force && paramExists )
+      {
+        paramValue = pos->second.value;
+        if( paramValue == value )
+          return value;
+        parameter_.map.erase( key );
+      }
       auto info  = parameter_.map.insert( std::make_pair( key, Value( value, curFileName_ ) ) );
       Value &val = info.first->second;
       if( key == "fem.verboserank" )
@@ -355,13 +397,15 @@ namespace Dune
       if( verbose() )
       {
         std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
-        if( info.second )
+        if( !paramExists )
           std::cout << "Adding " << key << " = " << value << std::endl;
-        else
+        else if ( !force )
           std::cout << "Ignored " << key << " = " << value << ", using " << val.value << std::endl;
+        else
+          std::cout << "Replacing " << key << " = " << paramValue << " by " << value << std::endl;
       }
 
-      return val.value;
+      return force ? value : val.value;
     }
 
 

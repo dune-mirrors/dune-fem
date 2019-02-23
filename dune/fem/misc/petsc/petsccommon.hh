@@ -155,6 +155,8 @@ namespace Dune
     }
     inline static void KSPGetIterationNumber( KSP ksp, PetscInt* its )
     { ErrorCheck( ::KSPGetIterationNumber( ksp, its ) ); }
+    inline static void KSPGetConvergedReason(KSP ksp, KSPConvergedReason *reason)
+    { ErrorCheck( ::KSPGetConvergedReason( ksp, reason ) ); }
 
 
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
@@ -201,6 +203,7 @@ namespace Dune
     // matrix routines
     inline static void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
     inline static void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
+    inline static void MatAssembled( Mat mat, PetscBool* assembled ) { ErrorCheck( ::MatAssembled( mat, assembled ) ); }
     inline static void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
     inline static void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz )
     {

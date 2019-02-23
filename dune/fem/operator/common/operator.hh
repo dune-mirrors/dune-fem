@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_OPERATOR_HH
 #define DUNE_FEM_OPERATOR_HH
 
+#include <typeindex>
+
+#include <dune/fem/version.hh>
 #include <dune/fem/operator/common/mapping.hh>
 
 namespace Dune
@@ -105,9 +108,56 @@ namespace Dune
      *  \interfaceclass
      */
     template< class DomainFunction, class RangeFunction = DomainFunction >
-    struct AssembledOperator
+    class AssembledOperator
       : public virtual LinearOperator<DomainFunction, RangeFunction>
-    {};
+    {
+    public:
+      /** \brief finalize linear operator assembly */
+      virtual void finalize () {}
+      /** \brief commit intermediate states of linear operator assembly */
+      virtual void flushAssembly() {}
+
+      DUNE_VERSION_DEPRECATED_2_7( "finalize" ) void communicate() { finalize(); }
+
+      /** \brief Initiate the assemble of values using the LocalContribution concept
+       *  \tparam AssembleOperation the specific operation (Add, Set, ...)
+       */
+      template< class AssembleOperation >
+      void beginAssemble ()
+      {
+        const std::type_index id( typeid( AssembleOperation ) );
+        if( assembleOperation_ != id )
+        {
+          if( assembleOperation_ != std::type_index( typeid( void ) ) )
+            DUNE_THROW( InvalidStateException, "Another assemble operation in progress" );
+          assembleOperation_ = id;
+          assert( assembleCount_ == 0 );
+          AssembleOperation::begin( *this );
+        }
+        ++assembleCount_;
+      }
+
+      /** \brief Finalize the assemble of values using the LocalContribution concept
+       *  \tparam AssembleOperation the specific operation (Add, Set, ...)
+       */
+      template< class AssembleOperation >
+      void endAssemble ()
+      {
+        const std::type_index id( typeid( AssembleOperation ) );
+        if( assembleOperation_ != id )
+          DUNE_THROW( InvalidStateException, "Assemble operation not in progress" );
+        assert( assembleCount_ > 0 );
+        if( --assembleCount_ == 0 )
+        {
+          AssembleOperation::end( *this );
+          assembleOperation_ = std::type_index( typeid( void ) );
+        }
+      }
+
+    protected:
+      std::type_index assembleOperation_ = std::type_index( typeid( void ) );
+      std::size_t assembleCount_ = 0;
+    };
 
 
     // Is*Operator

@@ -5,6 +5,7 @@
 #include <string>
 
 // local includes
+#include <dune/fem/solver/parameter.hh>
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune
@@ -14,24 +15,28 @@ namespace Dune
   {
 
     //! SparseRowLinearOperator
-    template< class DomainFunction, class RangeFunction >
+    template< class DomainFunction, class RangeFunction,
+              class Matrix = SparseRowMatrix< typename DomainFunction::DiscreteFunctionSpaceType::RangeFieldType > >
     struct SparseRowLinearOperator
-    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
+    : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType,
+                                    typename RangeFunction::DiscreteFunctionSpaceType,
+                                    Matrix >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
-      typedef SparseRowLinearOperator< DomainFunction, RangeFunction > ThisType;
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
+      typedef SparseRowLinearOperator< DomainFunction, RangeFunction, Matrix > ThisType;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Matrix > BaseType;
 
       static constexpr bool assembled = true;
 
       using BaseType::apply;
+      using BaseType::exportMatrix;
 
       SparseRowLinearOperator( const std::string & ,
                                const DomainSpaceType &domainSpace,
                                const RangeSpaceType &rangeSpace,
-                               const MatrixParameter& param = SparseRowMatrixParameter() ) :
+                               const SolverParameter& param = SolverParameter() ) :
         BaseType( domainSpace, rangeSpace, param )
       {}
 
@@ -40,18 +45,19 @@ namespace Dune
         apply( arg, dest );
       }
 
+      virtual void finalize () { BaseType::compress(); }
+
+      [[deprecated]]
       const BaseType &systemMatrix() const
       {
         return *this;
       }
 
+      [[deprecated]]
       BaseType &systemMatrix()
       {
         return *this;
       }
-
-      void communicate()
-      {}
     };
 
   } // namespace Fem

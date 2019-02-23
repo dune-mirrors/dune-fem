@@ -674,6 +674,8 @@ namespace Dune
 
       //! type of local matrix
       typedef ISTLLocalMatrix<ThisType> ObjectType;
+      friend class ISTLLocalMatrix<ThisType>;
+
       typedef ThisType LocalMatrixFactoryType;
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix
@@ -701,14 +703,14 @@ namespace Dune
       mutable std::unique_ptr< RowBlockVectorType >    Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
-      ISTLMatrixParameter param_;
+      ISTLSolverParameter param_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
-      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLMatrixParameter& param = ISTLMatrixParameter() ) :
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLSolverParameter& param = ISTLSolverParameter() ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
         , rowMapper_( rangeSpace.blockMapper() )
@@ -720,16 +722,16 @@ namespace Dune
         , param_( param )
       {}
 
-      ThisType &systemMatrix () { return *this; }
-      const ThisType &systemMatrix () const { return *this; }
-
-      //! return reference to system matrix
-      MatrixType & matrix() const
+    protected:
+      //! return reference to system matrix (may not be finalized)
+      //! For finalized matrix use exportMatrix
+      MatrixType& matrix() const
       {
         assert( matrix_ );
         return *matrix_;
       }
 
+    public:
       void printTexInfo(std::ostream& out) const
       {
         out << "ISTL MatrixObj: ";
@@ -742,7 +744,7 @@ namespace Dune
         return "";
       }
 
-      void createMatrixAdapter ( const ISTLMatrixParameter& param ) const
+      void createMatrixAdapter ( const ISTLSolverParameter& param ) const
       {
         if( !matrixAdap_ )
         {
@@ -752,9 +754,18 @@ namespace Dune
       }
 
       //! return matrix adapter object
-      MatrixAdapterType& matrixAdapter( const ISTLMatrixParameter& parameter ) const
+      MatrixAdapterType& matrixAdapter( const ISTLSolverParameter& parameter ) const
       {
-        createMatrixAdapter( parameter );
+        const ISTLSolverParameter* param = dynamic_cast< const ISTLSolverParameter* > (&parameter);
+        if( param )
+          createMatrixAdapter( *param );
+        else
+        {
+          ISTLSolverParameter newparam( parameter );
+          createMatrixAdapter( newparam );
+        }
+
+        finalizeAssembly();
         return *matrixAdap_;
       }
 
@@ -765,6 +776,12 @@ namespace Dune
       }
 
     public:
+      MatrixType& exportMatrix() const
+      {
+        finalizeAssembly();
+        return matrix();
+      }
+
       bool implicitModeActive() const
       {
         // implicit build mode is only active when the
@@ -777,16 +794,18 @@ namespace Dune
           return false;
       }
 
-      void flushAssembly()
+      void finalizeAssembly() const
       {
-        // nothing to do here
+        const_cast< ThisType& > (*this).compress();
       }
 
       // compress matrix if not already done before and only in implicit build mode
-      void communicate( )
+      void compress( )
       {
         if( implicitModeActive() )
+        {
           matrix().compress();
+        }
       }
 
       //! set all matrix entries to zero
@@ -900,101 +919,10 @@ namespace Dune
         return false;
       }
 
-      //! return true, because in case of no preconditioning we have empty
-      //! preconditioner (used by OEM methods)
-      bool hasPreconditionMatrix() const
-      {
-        return true;
-      }
-
-      //! return reference to preconditioner object (used by OEM methods)
-      const PreconditionMatrixType& preconditionMatrix() const
-      {
-        return *this;
-      }
-
-      //! precondition method for OEM Solvers
-      //! not fast but works, double is copied to block vector
-      //! and after application copied back
-      void precondition(const double* arg, double* dest) const
-      {
-        createBlockVectors();
-
-        assert( Arg_ );
-        assert( Dest_ );
-
-        RowBlockVectorType& Arg = *Arg_;
-        ColumnBlockVectorType & Dest = *Dest_;
-
-        std::copy_n( arg, Arg.size(), Arg.dbegin());
-
-        // set Dest to zero
-        Dest = 0;
-
-        assert( matrixAdap_ );
-        // not parameter swapped for preconditioner
-        matrixAdap_->preconditionAdapter().apply(Dest , Arg);
-
-        std::copy( Dest.dbegin(), Dest.dend(), dest );
-      }
-
-
-
-      //! mult method for OEM Solver
-      void multOEM(const double* arg, double* dest) const
-      {
-        createBlockVectors();
-
-        RowBlockVectorType& Arg = *Arg_;
-        ColumnBlockVectorType &Dest = *Dest_;
-
-        std::copy_n( arg, Arg.size(), Arg.dbegin() );
-
-        // call mult of matrix adapter
-        matrixAdapter().apply( Arg, Dest );
-
-        std::copy( Dest.dbegin(), Dest.dend(), dest );
-      }
-
       //! apply with discrete functions
       void apply(const ColumnDiscreteFunctionType& arg, RowDiscreteFunctionType& dest) const
       {
         matrixAdapter().apply( arg.blockVector(), dest.blockVector() );
-      }
-
-      //! apply with arbitrary discrete functions calls multOEM
-      template <class RowDFType, class ColDFType>
-      void apply(const RowDFType& arg, ColDFType& dest) const
-      {
-        multOEM( arg.leakPointer(), dest.leakPointer ());
-      }
-
-      //! mult method of matrix object used by oem solver
-      template <class ColumnLeakPointerType, class RowLeakPointerType>
-      void multOEM(const ColumnLeakPointerType& arg, RowLeakPointerType& dest) const
-      {
-        DUNE_THROW(NotImplemented,"Method has been removed");
-      }
-
-      //! dot method for OEM Solver
-      double ddotOEM(const double* v, const double* w) const
-      {
-        createBlockVectors();
-
-        RowBlockVectorType&    V = *Arg_;
-        ColumnBlockVectorType& W = *Dest_;
-
-        std::copy_n( v, V.size(), V.dbegin() );
-        std::copy_n( w, W.size(), W.dbegin() );
-
-#if HAVE_MPI
-        // in parallel use scalar product of discrete functions
-        ISTLBlockVectorDiscreteFunction< DomainSpaceType > vF("ddotOEM:vF", domainSpace(), V );
-        ISTLBlockVectorDiscreteFunction< RangeSpaceType  > wF("ddotOEM:wF", rangeSpace(), W );
-        return vF.scalarProductDofs( wF );
-#else
-        return V * W;
-#endif
       }
 
       //! resort row numbering in matrix to have ascending numbering
@@ -1053,6 +981,7 @@ namespace Dune
         return LocalColumnObjectType ( *this, domainEntity );
       }
 
+    protected:
       template< class LocalBlock, class Operation >
       void applyToBlock ( const size_t row, const size_t col,
                           const LocalBlock &localBlock,
@@ -1082,6 +1011,7 @@ namespace Dune
         applyToBlock( row, col, localBlock, add );
       }
 
+    public:
       template< class LocalMatrix, class Operation >
       void applyToLocalMatrix ( const DomainEntityType &domainEntity,
                                 const RangeEntityType &rangeEntity,
@@ -1157,6 +1087,9 @@ namespace Dune
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
+        // make sure that matrix is in compressed state if build mode is implicit
+        finalizeAssembly();
+
         typedef typename MatrixType::size_type Index;
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
         {

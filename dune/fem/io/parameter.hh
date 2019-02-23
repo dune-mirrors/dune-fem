@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <dune/common/visibility.hh>
 
@@ -212,7 +213,15 @@ namespace Dune
        *  \param[in]  key    key of the parameter to add
        *  \param[in]  value  value of the parameter to add
        */
-      static void append ( const std::string &key, const std::string &value ) { container().append( key, value ); }
+      static void append ( const std::string &key, const std::string &value, const bool force = false ) { container().append( key, value, force ); }
+
+      /** \brief add a single parameter to the container
+       *
+       *  \param[in]  key    key of the parameter to add
+       *  \param[in]  value  value of the parameter to add
+       */
+      template<class NumberType>
+      static void append ( const std::string &key, const NumberType &value, const bool force = false ) { container().append( key, value, force ); }
 
       /** \brief add parameters from a file to the container
        *
@@ -539,8 +548,7 @@ namespace Dune
 
     // Helper class for Parameter structures for classes
     template< class ParamDefault, class ParamImpl >
-    struct LocalParameter
-    : public ParamDefault
+    struct LocalParameter : public ParamDefault
     {
       virtual ~LocalParameter ()
       {}
@@ -549,6 +557,9 @@ namespace Dune
       {
         return new ParamImpl( asImp() );
       }
+
+      template <class... Args>
+      LocalParameter( Args... args ) : ParamDefault( args... ) {}
 
     protected:
       const ParamImpl &asImp () const
@@ -569,6 +580,186 @@ namespace Dune
       }
     };
 
+#if 0
+    struct ParameterDict
+    {
+      std::string tmp_;
+      const std::string rmPrefix_;
+      std::unordered_map<std::string,std::string> dict_;
+      ParameterDict(const std::string &rmPrefix,
+                    const std::unordered_map<std::string,std::string> &dict )
+      : rmPrefix_(rmPrefix), dict_(dict) {}
+      const std::string* operator()( const std::string &key, const std::string *def )
+      {
+        // first determine if the `prefix` of the provided key corresponds
+        // to the prefix to be removed:
+        if (key.compare(0,rmPrefix_.size(),rmPrefix_) == 0)
+        {
+          // check the provided map - stripping prefix
+          assert(key.size()>rmPrefix_.size());
+          std::string reducedKey = key.substr(rmPrefix_.size(),key.size());
+          auto pos = dict_.find( reducedKey );
+          if (pos != dict_.end())
+            return &(pos->second);
+        }
+        // the key either does not have the correct prefix or it was not
+        // found in the provided map so check the global Parameter container
+        if( !Fem::Parameter::exists( key ) )
+        {
+          if( *def == Dune::Fem::checkParameterExistsString() )
+            return nullptr;  // this call was simply to check if key exists
+          return def;        // return default
+        }
+        if (def)
+          Fem::Parameter::get( key, *def, tmp_ );
+        else
+          Fem::Parameter::get( key, tmp_ );
+        return &tmp_;
+      }
+    };
+    ParameterReader parameterDict (
+        const std::string &rmPrefix,
+        const std::unordered_map<std::string,std::string> &dict )
+    {
+      return Fem::ParameterReader( ParameterDict(rmPrefix,dict) );
+    }
+    ParameterReader parameterDict (
+        const std::unordered_map<std::string,std::string> &dict )
+    {
+      return parameterDict("",dict);
+    }
+#endif
+#if 0
+    namespace {
+      std::pair<std::string,std::string> convertValueToString(const std::pair<const char*,const char*> &keyValue)
+      { return keyValue; }
+      template <class V>
+      std::pair<std::string,std::string> convertValueToString(const std::pair<const char*,V> &keyValue)
+      { return std::make_pair(keyValue.first,std::to_string(keyValue.second)); }
+      std::pair<std::string,std::string> convertValueToString(const std::pair<std::string,const char*> &keyValue)
+      { return keyValue; }
+      template <class V>
+      std::pair<std::string,std::string> convertValueToString(const std::pair<std::string,V> &keyValue)
+      { return std::make_pair(keyValue.first,std::to_string(keyValue.second)); }
+    }
+#endif
+#if 0
+    // this solution needs the user to call the function using `make_pair`
+    // becuase {"key",value} will not be deduced correctly
+    template<class... Values>
+    ParameterReader parameterDict (const std::string &rmPrefix, std::pair< const char*, Values > const &... keyValues)
+    {
+      std::unordered_map<std::string,std::string> dict;
+      dict.insert({convertValueToString(keyValues)...});
+      return parameterDict( rmPrefix, dict);
+    }
+#endif
+#if 0
+    namespace {
+      template<class V>
+      void insertIntoMap(std::unordered_map<std::string,std::string> &dict,
+          const std::string &key, const V &v)
+      { dict.insert(convertValueToString( std::make_pair(key,v) )); }
+      template<class V, class... Values>
+      void insertIntoMap(std::unordered_map<std::string,std::string> &dict,
+          const std::string &key, const V &v, Values... keyValues)
+      {
+        dict.insert(convertValueToString( std::make_pair(key,v) ));
+        insertIntoMap(dict,keyValues...);
+      }
+    }
+    template<class... Values>
+    ParameterReader parameterDict (const std::string &rmPrefix, Values... keyValues)
+    {
+      std::unordered_map<std::string,std::string> dict;
+      insertIntoMap(dict,keyValues...);
+      return parameterDict( rmPrefix, dict);
+    }
+#endif
+    struct ParameterDict
+    {
+      typedef std::function<std::string()> LambdaType;
+      typedef std::unordered_map<std::string,LambdaType> DictType;
+      template <class... KeyValues>
+      ParameterDict(const std::string &rmPrefix, KeyValues... keyValues)
+      : rmPrefix_(rmPrefix), dict_()
+      {
+        insertIntoMap(keyValues...);
+      }
+      const std::string* operator()( const std::string &key, const std::string *def )
+      {
+        // first determine if the `prefix` of the provided key corresponds
+        // to the prefix to be removed:
+        if (key.compare(0,rmPrefix_.size(),rmPrefix_) == 0)
+        {
+          // check the provided map - stripping prefix
+          assert(key.size()>rmPrefix_.size());
+          std::string reducedKey = key.substr(rmPrefix_.size(),key.size());
+          auto pos = dict_.find( reducedKey );
+          if (pos != dict_.end())
+          {
+            tmp_ = pos->second();
+            return &tmp_;
+          }
+          // need to check global parameter set
+        }
+        // the key either does not have the correct prefix or it was not
+        // found in the provided map so check the global Parameter container
+        if( !Fem::Parameter::exists( key ) )
+        {
+          if (def == nullptr)
+            return nullptr;
+          else if( *def == Dune::Fem::checkParameterExistsString() )
+            return nullptr;  // this call was simply to check if key exists
+          return def;        // return default
+        }
+        if (def)
+          Fem::Parameter::get( key, *def, tmp_ );
+        else
+          Fem::Parameter::get( key, tmp_ );
+        return &tmp_;
+      }
+
+      private:
+      static std::string convertValueToString(const std::string &value)
+      { return value; }
+      static std::string convertValueToString(const char* value)
+      { return value; }
+      template <class V>
+      static std::string convertValueToString(const V &value)
+      { return ParameterParser<double>::toString(value); }
+
+      template<class V, std::enable_if_t<std::is_convertible<V,const LambdaType&>::value,int> i=0>
+      void insertIntoMap_(const std::string &key, const V &v, Dune::PriorityTag<2>)
+      { dict_.insert( std::make_pair(key, v )); }
+      template<class V>
+      auto insertIntoMap_(const std::string &key, const V &v, Dune::PriorityTag<1>)
+        -> void_t< decltype(std::declval<const V&>()()) >
+      { dict_.insert( std::make_pair(key, [v]() { return convertValueToString(v()); } )); }
+      template<class V>
+      void insertIntoMap_(const std::string &key, const V &v, Dune::PriorityTag<0>)
+      { dict_.insert( std::make_pair(key, [v]() { return convertValueToString(v); } )); }
+
+      template<class V>
+      void insertIntoMap(const std::string &key, const V &v)
+      { insertIntoMap_(key,v,PriorityTag<42>()); }
+      template<class V, class... Values>
+      void insertIntoMap(const std::string &key, const V &v, Values... keyValues)
+      {
+        insertIntoMap_(key,v,PriorityTag<42>());
+        insertIntoMap(keyValues...);
+      }
+
+      std::string tmp_;
+      const std::string rmPrefix_;
+      DictType dict_;
+    };
+
+    template<class... KeyValues>
+    ParameterReader parameterDict (const std::string &rmPrefix, KeyValues... keyValues)
+    {
+      return Fem::ParameterReader( ParameterDict(rmPrefix,keyValues...) );
+    }
   } // namespace Fem
 
 } // namespace Dune

@@ -7,11 +7,12 @@
 #define VIENNACL_WITH_EIGEN
 #endif
 
+// OpenCL overrules OpenMP
 #if HAVE_OPENCL
+//#warning "Using OpneCL"
 //#define VIENNACL_WITH_OPENCL
-#endif
-
-#if _OPENMP
+#elif _OPENMP
+#error
 #define VIENNACL_WITH_OPENMP
 #endif
 
@@ -22,6 +23,7 @@
 #include <viennacl/compressed_matrix.hpp>
 #include <viennacl/vector.hpp>
 
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/operator/linear/eigenoperator.hh>
 
@@ -32,15 +34,38 @@ namespace Dune
 
   namespace Fem
   {
+
     template< class DiscreteFunction, int method = -1 >
-    class ViennaCLInverseOperator
-      : public Fem::Operator< DiscreteFunction, DiscreteFunction >
+    class ViennaCLInverseOperator;
+
+    template< class DiscreteFunction, int method >
+    struct ViennaCLInverseOperatorTraits
     {
-      typedef Fem::Operator< DiscreteFunction, DiscreteFunction > Base;
+      typedef DiscreteFunction    DiscreteFunctionType;
+      typedef AdaptiveDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType;
+
+      typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+      typedef OperatorType  PreconditionerType;
+
+      typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+
+      typedef ViennaCLInverseOperator< DiscreteFunction, method >  InverseOperatorType;
+      typedef SolverParameter SolverParameterType;
+    };
+
+
+
+
+
+    template< class DiscreteFunction, int method >
+    class ViennaCLInverseOperator
+      : public InverseOperatorInterface< ViennaCLInverseOperatorTraits< DiscreteFunction, method > >
+    {
+      typedef InverseOperatorInterface< ViennaCLInverseOperatorTraits< DiscreteFunction, method > >  BaseType;
 
     public:
-      typedef typename Base::DomainFunctionType DomainFunction;
-      typedef typename Base::RangeFunctionType RangeFunction;
+      typedef typename BaseType::DomainFunctionType DomainFunction;
+      typedef typename BaseType::RangeFunctionType RangeFunction;
 
       typedef typename DomainFunction :: DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunction  :: DiscreteFunctionSpaceType RangeSpaceType;
@@ -51,8 +76,7 @@ namespace Dune
 
       typedef Fem::SparseRowLinearOperator< RangeFunction, DomainFunction > OperatorType;
 
-      typedef AdaptiveDiscreteFunction< DomainSpaceType > ADDomainFunctionType;
-      typedef AdaptiveDiscreteFunction< DomainSpaceType > ADRangeFunctionType;
+      typedef typename BaseType :: SolverDiscreteFunctionType   SolverDiscreteFunctionType;
 
     private:
       typedef typename OperatorType::MatrixType Matrix;
@@ -63,85 +87,86 @@ namespace Dune
       typedef viennacl::compressed_matrix< Field > ViennaCLMatrix;
       typedef viennacl::vector< Field > ViennaCLVector;
 
-      typedef viennacl::linalg::ilu0_precond< ViennaCLMatrix > Preconditioner;
+      //typedef viennacl::linalg::ilu0_precond< ViennaCLMatrix > Preconditioner;
+      typedef viennacl::linalg::no_precond Preconditioner;
     public:
       ViennaCLInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose )
         : ViennaCLInverseOperator( redEps, absLimit, maxIter, verbose )
       {
-        init( op );
+        bind( op );
       }
 
       ViennaCLInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
         : ViennaCLInverseOperator( redEps, absLimit, maxIter, false )
       {
-        init( op );
+        bind( op );
       }
 
       ViennaCLInverseOperator ( double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max(),
                                 const bool verbose = false,
                                 const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
-        : absLimit_( parameter.linReductionParameter() ),
-          maxIter_( maxIter ),
-          iterations_( 0 ),
-          method_( method < 0 ? parameter.krylovMethod() : method )
+        : BaseType( parameter ),
+          absLimit_( absLimit ),
+          method_( method < 0 ? parameter.solverMethod() : method )
       {
+      }
+
+      ViennaCLInverseOperator ( const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
+        : ViennaCLInverseOperator( -1,
+            parameter.tolerance(), parameter.maxIterations(),
+            parameter.verbose(), parameter )
+      {
+        assert( parameter.errorMeasure() == 0 );
       }
 
       void bind( const OperatorType& op )
       {
-        init( op );
-      }
-
-    protected:
-      void init( const OperatorType &op )
-      {
-        matrix_.resize( op.matrix().rows(), op.matrix().rows() );
-        std::vector< std::map< size_type, Field > > cpuMatrix;
-        op.matrix().fillCSRStorage( cpuMatrix );
-
-        viennacl::copy( cpuMatrix, matrix_ );
-      }
-
-    public:
+        BaseType::bind( op );
 #if HAVE_EIGEN
-      void bind( const EigenOperatorType& op )
-      {
-        matrix_.resize( op.matrix().rows(), op.matrix().cols() );
-        viennacl::copy( op.matrix().data(), matrix_ );
+        eigenMatrix_ = dynamic_cast<const EigenOperatorType* > (&op);
+        if( eigenMatrix_ )
+        {
+          const auto& matrix = eigenMatrix_->matrix();
+          gupMatrix_.resize( matrix.rows(), matrix.cols() );
+          viennacl::copy( matrix.data(), gpuMatrix_ );
+        }
+        else
+#endif // HAVE_EIGEN
+        if( assembledOperator_ )
+        {
+          const auto& matrix = assembledOperator_->matrix();
+          gpuMatrix_.resize( matrix.rows(), matrix.cols() );
+          std::vector< std::map< size_type, Field > > cpuMatrix;
+          matrix.fillCSRStorage( cpuMatrix );
+          viennacl::copy( cpuMatrix, gpuMatrix_ );
+        }
       }
-#endif
 
       void unbind()
       {
-        matrix_ = ViennaCLMatrix();
-        U_.reset();
-        W_.reset();
+        BaseType::unbind();
+        gpuMatrix_ = ViennaCLMatrix();
+#if HAVE_EIGEN
+        eigenOperator_ = nullptr;
+#endif
       }
 
-      virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
-      {
-        apply( u, w );
-      }
-
-      template <class DImpl, class RImpl>
-      void operator() ( const DiscreteFunctionInterface< DImpl >& u, DiscreteFunctionInterface< RImpl > &w ) const
-      {
-        apply( u, w );
-      }
-
-      void apply( const ADDomainFunctionType& u, ADRangeFunctionType& w ) const
+      int apply( const SolverDiscreteFunctionType& u, SolverDiscreteFunctionType& w ) const
       {
         viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
         viennacl::copy( u.dbegin(), u.dend(), vclU.begin() );
+
+        int maxIterations = parameter().maxIterations();
+        int iterations = -1;
 
         //std::cout << "Using ViennaCL " << std::endl;
 
         if( method_ == SolverParameter::cg )
         {
-          Preconditioner ilu0( matrix_, viennacl::linalg::ilu0_tag() );
-          viennacl::linalg::cg_tag tag( absLimit_, maxIter_ );
-          vclW = viennacl::linalg::solve( matrix_, vclU, tag, ilu0 );
-          iterations_ = tag.iters();
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          viennacl::linalg::cg_tag tag( absLimit_, maxIterations );
+          vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
+          iterations = tag.iters();
         }
         else if ( method_ == SolverParameter::bicgstab )
         {
@@ -155,21 +180,21 @@ namespace Dune
           //viennacl::linalg::chow_patel_ilu_precond< viennacl::compressed_matrix<ScalarType> > chow_patel_ilu(A, chow_patel_ilu_config);
 
           typedef viennacl::linalg::block_ilu_precond< ViennaCLMatrix > Preconditioner;
-          Preconditioner ilu0( matrix_, chow_patel_ilu_config );
+          Preconditioner ilu0( gpuMatrix_, chow_patel_ilu_config );
           */
 
           //typedef viennacl::linalg::block_ilu_precond< ViennaCLMatrix, viennacl::linalg::ilu0_tag > Preconditioner;
-          Preconditioner ilu0( matrix_, viennacl::linalg::ilu0_tag() );
-          viennacl::linalg::bicgstab_tag tag( absLimit_, maxIter_ );
-          vclW = viennacl::linalg::solve( matrix_, vclU, tag, ilu0 );
-          iterations_ = tag.iters();
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          viennacl::linalg::bicgstab_tag tag( absLimit_, maxIterations );
+          vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
+          iterations = tag.iters();
         }
         else if ( method_ == SolverParameter::gmres )
         {
-          Preconditioner ilu0( matrix_, viennacl::linalg::ilu0_tag() );
-          viennacl::linalg::gmres_tag tag( absLimit_, maxIter_ );
-          vclW = viennacl::linalg::solve( matrix_, vclU, tag, ilu0 );
-          iterations_ = tag.iters();
+          Preconditioner ilu0; // ( gpuMatrix_, viennacl::linalg::ilu0_tag() );
+          viennacl::linalg::gmres_tag tag( absLimit_, maxIterations );
+          vclW = viennacl::linalg::solve( gpuMatrix_, vclU, tag, ilu0 );
+          iterations = tag.iters();
         }
         else
         {
@@ -177,41 +202,23 @@ namespace Dune
         }
 
         viennacl::copy( vclW.begin(), vclW.end(), w.dbegin() );
+        return iterations ;
       }
-
-      template <class DImpl, class RImpl>
-      void apply( const DiscreteFunctionInterface< DImpl >& u, DiscreteFunctionInterface< RImpl > &w ) const
-      {
-        if( ! U_ )
-        {
-          U_.reset( new ADDomainFunctionType("viennacl::u", u.space() ) );
-        }
-
-        if( ! W_ )
-        {
-          W_.reset( new ADRangeFunctionType("viennacl::w", w.space() ) );
-        }
-
-        U_->assign( u );
-
-        apply( *U_, *W_ );
-
-        w.assign( *W_ );
-      }
-
-      int iterations () const { return iterations_; }
 
     protected:
-      ViennaCLMatrix matrix_;
+      ViennaCLMatrix gpuMatrix_;
+
+      using BaseType :: assembledOperator_;
+      using BaseType :: iterations_;
+      using BaseType :: parameter;
+#if HAVE_EIGEN
+      const EigenOperatorType* eigenOperator_ = nullptr;
+#endif
 
       double absLimit_;
-      unsigned int maxIter_;
-      mutable int iterations_;
+
 
       int method_;
-
-      mutable std::unique_ptr< ADDomainFunctionType > U_;
-      mutable std::unique_ptr< ADRangeFunctionType  > W_;
     };
 
 

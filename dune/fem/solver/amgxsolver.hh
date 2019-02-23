@@ -7,13 +7,16 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
 
-#if HAVE_AMGXSOLVER
+#include <dune/fem/solver/inverseoperatorinterface.hh>
+#include <dune/fem/solver/parameter.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
-#include <dune/fem/solver/parameter.hh>
 
+#if HAVE_AMGXSOLVER
+// AMGX solver wrapper based on Petsc data structures
 #include <AmgXSolver.hpp>
+#endif
 
 namespace Dune
 {
@@ -29,216 +32,176 @@ namespace Dune
         @{
     **/
 
+    struct AMGXSolverParameter : public LocalParameter< SolverParameter, AMGXSolverParameter >
+    {
+      typedef LocalParameter< SolverParameter, AMGXSolverParameter >  BaseType;
+
+    public:
+      using BaseType :: parameter;
+      using BaseType :: keyPrefix;
+
+      AMGXSolverParameter( const ParameterReader& parameter = Parameter::container() )
+        : BaseType( parameter )
+      {}
+
+
+      AMGXSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( keyPrefix, parameter )
+      {}
+
+      AMGXSolverParameter( const SolverParameter& sp )
+        : AMGXSolverParameter( sp.parameter() )
+      {}
+
+      virtual std::string solvermode () const
+      {
+        const std::string modes [] = { "dDDI" , "dDFI", "dFFI", "hDDI", "hDFI", "hFFI" };
+        int mode = parameter().getEnum(keyPrefix() + "amgx.mode", modes, 0 );
+        return modes[ mode ];
+      }
+
+      virtual std::string solverconfig () const
+      {
+        return parameter().template getValue< std::string >( keyPrefix() + "amgx.config", "amgxconfig.json");
+      }
+    };
+
+
+
     // AMGXSolver
     // --------------
 
-    /** \brief AMGX solver context for PETSc Mat and PETSc Vec */
-    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    class AMGXInverseOperator
-      : public Operator< DF, DF >
+    template< class DiscreteFunction >
+    class AMGXInverseOperator;
+
+    template< class DiscreteFunction >
+    struct AMGXInverseOperatorTraits
     {
+      typedef DiscreteFunction    DiscreteFunctionType;
+      typedef PetscDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType;
+
+      typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+      typedef OperatorType  PreconditionerType;
+
+#if HAVE_AMGXSOLVER
+      typedef Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+#else
+      typedef OperatorType  AssembledOperatorType;
+#endif
+
+      typedef AMGXInverseOperator< DiscreteFunction >  InverseOperatorType;
+
+      typedef AMGXSolverParameter SolverParameterType;
+    };
+
+
+
+
+    /** \brief AMGX solver context for PETSc Mat and PETSc Vec */
+    template< class DF >
+    class AMGXInverseOperator
+      : public InverseOperatorInterface< AMGXInverseOperatorTraits< DF > >
+    {
+      typedef AMGXInverseOperatorTraits< DF >  Traits;
+      typedef InverseOperatorInterface< Traits >  BaseType;
+      friend class InverseOperatorInterface< Traits >;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef DiscreteFunctionType  DestinationType;
+      using BaseType :: parameter;
 
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
-      typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > PetscDiscreteFunctionType;
-
-      typedef PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >  AssembledOperatorType;
-
-      typedef Op OperatorType;
+      typedef typename BaseType::SolverDiscreteFunctionType  SolverDiscreteFunctionType;
+      typedef typename BaseType::OperatorType                OperatorType;
+      typedef typename BaseType::PreconditionerType          PreconditionerType;
+      typedef typename BaseType::AssembledOperatorType       AssembledOperatorType;
 
       /** \brief constructor
        *
-       *  \param[in] op Mapping describing operator to invert
-       *  \param[in] reduction reduction epsilon
-       *  \param[in] absLimit absolut limit of residual (not used here)
-       *  \param[in] maxIter maximal iteration steps
-       *  \param[in] verbose verbosity
-       *
-       *  \note AMGX solvers uses the relative reduction.
+       *  \param[in] parameter parameter for the solver
        */
+      AMGXInverseOperator ( const AMGXSolverParameter& parameter = AMGXSolverParameter() )
+        : BaseType( parameter )
+      {
+      }
 
       AMGXInverseOperator ( const OperatorType &op,
-                             double reduction,
-                             double absLimit,
-                             int maxIter,
-                             bool verbose,
-                             const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        parameter_( parameter )
+                            const AMGXSolverParameter & parameter = AMGXSolverParameter() )
+        : AMGXInverseOperator ( parameter )
       {
         bind( op );
       }
 
-      /** \brief constructor
-       *
-       *  \param[in] op        mapping describing operator to invert
-       *  \param[in] reduction    reduction epsilon
-       *  \param[in] absLimit  absolut limit of residual (not used here)
-       *  \param[in] maxIter   maximal iteration steps
-       */
-      AMGXInverseOperator ( const OperatorType &op,
-                             double reduction,
-                             double absLimit,
-                             int maxIter,
-                             const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        parameter_( parameter )
+      AMGXInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
+                            const AMGXSolverParameter & parameter = AMGXSolverParameter() )
+        : AMGXInverseOperator( parameter )
       {
-        bind( op );
+        bind( op, preconditioner );
       }
 
-      AMGXInverseOperator ( const OperatorType &op,
-                             double reduction,
-                             double absLimit,
-                             const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( std::numeric_limits< int >::max()),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        parameter_( parameter )
+      AMGXInverseOperator ( const AMGXInverseOperator& other )
+        : AMGXInverseOperator( other.parameter() )
       {
-        bind( op );
+        if( other.operator_ )
+          bind( *(other.operator_) );
       }
 
-      /** \brief constructor
-       *
-       *  \param[in] op Mapping describing operator to invert
-       *  \param[in] reduction reduction epsilon
-       *  \param[in] absLimit absolut limit of residual (not used here)
-       *  \param[in] maxIter maximal iteration steps
-       *  \param[in] verbose verbosity
-       *
-       *  \note PETSc Krylov solvers uses the relative reduction.
-       */
-
-      AMGXInverseOperator ( double reduction, double absLimit, int maxIter, bool verbose, const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        parameter_( parameter )
-      {}
-
-      /** \brief constructor
-       *
-       *  \param[in] op        mapping describing operator to invert
-       *  \param[in] reduction    reduction epsilon
-       *  \param[in] absLimit  absolut limit of residual (not used here)
-       *  \param[in] maxIter   maximal iteration steps
-       */
-      AMGXInverseOperator ( double reduction, double absLimit, int maxIter, const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        parameter_( parameter )
-      {}
-
-      AMGXInverseOperator ( double reduction, double absLimit, const ParameterReader &parameter = Parameter::container() )
-      : reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( std::numeric_limits< int >::max()),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        parameter_( parameter )
-      {}
-
-      AMGXInverseOperator ( const OperatorType &op,
-          double reduction, double absLimit,
-          const SolverParameter &parameter )
-      : AMGXInverseOperator( reduction, absLimit, parameter.parameter() )
-      {}
-
-      AMGXInverseOperator ( double reduction, double absLimit,
-          const SolverParameter &parameter )
-      : AMGXInverseOperator( reduction, absLimit, parameter.parameter() )
-      {}
-
-      void bind ( const OperatorType &op )
+      void bind( const OperatorType& op )
       {
-        op_ = &op;
-        matrixOp_ = dynamic_cast<const AssembledOperatorType*> ( &op );
-        initialize( parameter_ );
+        BaseType::bind( op );
+        init( parameter() );
       }
 
-      void unbind ()
+      void unbind()
       {
-        op_ = nullptr; matrixOp_ = nullptr;
-        amgXSolver_.finalize();
+#if HAVE_AMGXSOLVER
+        amgXSolver_->finalize();
+        amgXSolver_.reset();
+#endif
+        BaseType :: unbind();
       }
 
-      void initialize ( const ParameterReader &parameter )
+    protected:
+      void init( const AMGXSolverParameter& parameter )
       {
-        if( !matrixOp_ )
+        if( assembledOperator_ )
+        {
+          std::string mode   = parameter.solvermode();
+          std::string config = parameter.solverconfig();
+#if HAVE_AMGXSOLVER
+          amgXSolver_.reset( new AmgXSolver() );
+          amgXSolver_->initialize(PETSC_COMM_WORLD, mode, config );
+
+          // check that PetscMat was assembled not in block mode
+          if( assembledOperator_->blockedMode() )
+            DUNE_THROW(InvalidStateException, "AMGXInverseOperator only works with PetscLinearOperator in non-blocked mode!");
+
+          // attach Matrix to linear solver context
+          Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());
+
+          // set matrix
+          amgXSolver_->setA( A );
+#else
+          DUNE_THROW(InvalidStateException,"AMGX solver or PETSc not found during cmake config. Please reconfigure!");
+#endif
+        }
+      }
+
+      int apply( const SolverDiscreteFunctionType& arg, SolverDiscreteFunctionType& dest ) const
+      {
+        if( !assembledOperator_ )
           DUNE_THROW(NotImplemented,"AMGX solver with matrix free implementations is not supported!");
 
-        std::string mode = "dDDI";
-        std::string solverconfig = "./amgxconfig";
 
-        // matrixOp_->space().gridPart.comm().communicator()
-        amgXSolver_.initialize(PETSC_COMM_WORLD, mode, solverconfig);
+        int iterations = -1;
+#if HAVE_AMGXSOLVER
+        assert( amgXSolver_ );
 
-        // attach Matrix to linear solver context
-        Mat& A = const_cast<Mat &> (matrixOp_->petscMatrix());
-
-        // set matrix
-        amgXSolver_.setA( A );
-      }
-
-      void setMaxIterations ( std::size_t maxIter )
-      {
-        maxIter_ = maxIter;
-      }
-
-      void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-      {}
-
-      void finalize () const
-      {}
-
-      void printTexInfo(std::ostream& out) const
-      {
-        out << "Solver: " << solverName_ << " eps = " << reduction_ ;
-        out  << "\\\\ \n";
-      }
-
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      template <class DiscreteFunction>
-      void apply( const DiscreteFunction& arg, DiscreteFunction& dest ) const
-      {
-        // copy discrete functions
-        PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
-        Arg.assign( arg );
-
-        // also copy initial destination in case this is used a solver init value
-        PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
-        Dest.assign( dest );
-
-        apply( Arg, Dest );
-        // copy destination back
-        dest.assign( Dest );
-      }
-
-      void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
-      {
         // need to have a 'distributed' destination vector for continuous spaces
         if( dest.space().continuous() )
           dest.dofVector().clearGhost();
 
         // call PETSc solvers, dest = x, arg = rhs
         Vec& x = *dest.petscVec();
-        Vec& rhs = *(const_cast< PetscDiscreteFunctionType& > (arg).petscVec());
-        amgXSolver_.solve( x, rhs );
+        Vec& rhs = *(const_cast< SolverDiscreteFunctionType& > (arg).petscVec());
+        amgXSolver_->solve( x, rhs );
 
         // a continuous solution is 'distributed' so need a communication here
         if( dest.space().continuous() )
@@ -247,49 +210,19 @@ namespace Dune
         }
 
         // get number of iterations
-        amgXSolver_.getIters( iterations_ );
-      }
-
-      // return number of iterations
-      int iterations() const
-      {
-        return iterations_;
-      }
-
-      //! return accumulated communication time
-      double averageCommTime() const
-      {
-        return -1;
-      }
-
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
-      {
-        apply(arg,dest);
-      }
-
-      template <class DiscreteFunction>
-      void operator() ( const DiscreteFunction& arg, DiscreteFunction& dest ) const
-      {
-        apply(arg,dest);
+        amgXSolver_->getIters( iterations );
+#else
+        DUNE_THROW(InvalidStateException,"AMGX solver or PETSc not found during cmake config. Please reconfigure!");
+#endif
+        return iterations;
       }
 
     protected:
-      const OperatorType  *op_ = nullptr; // linear operator
-      const AssembledOperatorType* matrixOp_ = nullptr; // assembled operator
-
-      mutable AmgXSolver amgXSolver_;
-
-      double reduction_;
-      double absLimit_;
-      int maxIter_;
-      bool verbose_ ;
-      mutable int iterations_ = 0;
-      ParameterReader parameter_;
-      std::string solverName_;
+#if HAVE_AMGXSOLVER
+      mutable std::unique_ptr< AmgXSolver > amgXSolver_;
+#endif
+      using BaseType :: assembledOperator_;
+      using BaseType :: parameter_;
     };
 
   ///@}
@@ -297,7 +230,5 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
-
-#endif // #if HAVE_PETSC
 
 #endif // #ifndef DUNE_FEM_PETSCSOLVER_HH

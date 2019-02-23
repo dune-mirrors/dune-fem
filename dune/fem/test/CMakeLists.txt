@@ -140,7 +140,7 @@ if( ${TORTURE_TESTS} )
   endif()
 endif()
 
-dune_add_test( NAME referencesolution SOURCES referencesolution
+dune_add_test( NAME referencesolution SOURCES referencesolution.cc
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
 set( TESTS ${TESTS} referencesolution )
 

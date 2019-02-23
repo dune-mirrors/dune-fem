@@ -12,6 +12,7 @@
 // dune includes
 #include <dune/common/fvector.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/fem/io/parameter.hh>
 
@@ -103,6 +104,7 @@ public:
   typedef DummyFunction<N> DomainFunctionType;
   typedef DummyFunction<N> RangeFunctionType;
 
+
   template<class... Args>
   MyLinearOperator(const Args & ...)
   {}
@@ -136,18 +138,36 @@ public:
 
 };
 
+template<int N> class MyLinearInverseOperator;
+
+template< int N >
+struct MyInverseOperatorTraits
+{
+  typedef DummyFunction<N>    DiscreteFunctionType;
+  typedef Dune::Fem::Operator< DiscreteFunctionType, DiscreteFunctionType > OperatorType;
+  typedef OperatorType  PreconditionerType;
+
+  typedef OperatorType AssembledOperatorType;
+  typedef DiscreteFunctionType SolverDiscreteFunctionType ;
+
+  typedef MyLinearInverseOperator< N >  InverseOperatorType;
+  typedef Dune::Fem::SolverParameter SolverParameterType;
+};
+
 template<int N>
 class MyLinearInverseOperator
   : public Dune::Fem::LinearOperator<DummyFunction<N>, DummyFunction<N> >
+  // : public Dune::Fem::InverseOperatorInterface< MyInverseOperatorTraits< N > >
 {
-  typedef Dune::Fem::LinearOperator<DummyFunction<N>, DummyFunction<N> > BaseType;
+  typedef Dune::Fem::InverseOperatorInterface< MyInverseOperatorTraits< N > > BaseType;
  public:
   typedef typename BaseType::DomainFunctionType DomainFunctionType;
   typedef typename BaseType::RangeFunctionType RangeFunctionType;
   typedef MyLinearOperator<N> LinearOperatorType;
+  // typedef typename BaseType::SolverParameterType SolverParameterType;
+  typedef Dune::Fem::ParameterReader SolverParameterType;
 
-  MyLinearInverseOperator () = default;
-
+  MyLinearInverseOperator(const SolverParameterType& parameter = SolverParameterType() ) {}
   void bind ( const LinearOperatorType& jOp ) { jOp_ = &jOp; }
   void unbind () { jOp_ = nullptr; }
 
@@ -156,6 +176,10 @@ class MyLinearInverseOperator
     (*jOp_).matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
   }
 
+  void apply(const DomainFunctionType& u, RangeFunctionType& w) const
+  {
+    (*jOp_).matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
+  }
   int iterations() const { return 1; }
   void setMaxIterations ( unsigned int ) {}
 
@@ -229,7 +253,7 @@ int main( int argc, char **argv )
 #endif
 
   OperatorType op;
-  NewtonInverseOperatorType opInv( LinearInverseOperatorType{} );
+  NewtonInverseOperatorType opInv;
   opInv.bind( op );
 
   //solve op(sol) = rhs for sol

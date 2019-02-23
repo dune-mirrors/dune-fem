@@ -11,6 +11,7 @@
 #include <dune/fem/solver/linear/gmres.hh>
 #include <dune/fem/solver/linear/bicgstab.hh>
 #include <dune/fem/solver/linear/cg.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
 
@@ -24,89 +25,167 @@ namespace Dune
     // ---------------------
 
     template< class DiscreteFunction, int method = -1 >
-    class KrylovInverseOperator
-    : public Operator< DiscreteFunction, DiscreteFunction >
+    class KrylovInverseOperator;
+
+    template< class DiscreteFunction, int method >
+    struct KrylovInverseOperatorTraits
     {
-      typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
-
-      typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
-    public:
-      typedef typename BaseType::DomainFunctionType DomainFunctionType;
-      typedef typename BaseType::RangeFunctionType RangeFunctionType;
-
+      typedef DiscreteFunction    DiscreteFunctionType;
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
-      typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
+      typedef OperatorType  PreconditionerType;
 
-      template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op,
-                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
+      typedef OperatorType AssembledOperatorType;
+      typedef DiscreteFunction SolverDiscreteFunctionType ;
 
+      typedef KrylovInverseOperator< DiscreteFunction, method >  InverseOperatorType;
+      typedef SolverParameter SolverParameterType;
+    };
+
+
+    template< class DiscreteFunction, int method >
+    class KrylovInverseOperator
+    : public InverseOperatorInterface< KrylovInverseOperatorTraits< DiscreteFunction, method > >
+    {
+      typedef KrylovInverseOperatorTraits< DiscreteFunction, method > Traits;
+      typedef InverseOperatorInterface< Traits > BaseType;
+
+      friend class InverseOperatorInterface< Traits >;
+    public:
+      typedef typename BaseType::DomainFunctionType     DomainFunctionType;
+      typedef typename BaseType::RangeFunctionType      RangeFunctionType;
+      typedef typename BaseType::OperatorType           OperatorType;
+      typedef typename BaseType::PreconditionerType     PreconditionerType;
+      typedef typename BaseType::AssembledOperatorType  AssembledOperatorType;
+
+      using BaseType :: bind;
+      using BaseType :: unbind;
+      using BaseType :: setMaxLinearIterations;
+      using BaseType :: setMaxIterations;
+
+    public:
+      //deprecated constructors
       template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, redEps, absLimit,
                                    parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
       template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
                               unsigned int maxIterations,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
-                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
-
-      template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(),
-                               parameter.verbose(), parameter ) {}
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter) {}
 
       template <class LinearOperator>
+      [[deprecated]]
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
                               double redEps, double absLimit, unsigned int maxIterations,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, parameter.verbose(), parameter ) {}
 
+      [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
-      KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( parameter.linReductionParameter(), parameter.linAbsTolParameter(), parameter.maxLinearIterationsParameter(), parameter.verbose(), parameter ) {}
 
+      [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations,
-                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+                              const SolverParameter &parameter = SolverParameter() )
       : KrylovInverseOperator( redEps, absLimit, maxIterations,  parameter.verbose(), parameter ) {}
 
+      [[deprecated]]
+      KrylovInverseOperator (  double redEps, double absLimit,
+                               unsigned int maxIterations, bool verbose,
+                               const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+        : KrylovInverseOperator( parameter )
+      {
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
+        parameter_->setMaxIterations( maxIterations );
+        parameter_->setVerbose( verbose );
+      }
+
+      template <class LinearOperator>
+      [[deprecated]]
+      KrylovInverseOperator ( const LinearOperator &op,
+                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( parameter )
+      {
+        bind( op );
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
+        parameter_->setMaxIterations( maxIterations );
+        parameter_->setVerbose( verbose );
+     }
+
+      template <class LinearOperator>
+      [[deprecated]]
+      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
+                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                              const SolverParameter &parameter = SolverParameter() )
+      : KrylovInverseOperator( op, &preconditioner, parameter )
+      {
+        parameter_->setReductionTol( redEps );
+        parameter_->setAbsoluteTol( absLimit );
+        parameter_->setMaxIterations( maxIterations );
+        parameter_->setVerbose( verbose );
+      }
+
+      [[deprecated]]
       KrylovInverseOperator ( double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
                               const ParameterReader& parameter )
         : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose,
             SolverParameter( parameter ) ) {}
 
-      //! main constructor
-      KrylovInverseOperator ( double redEps, double absLimit,
-                                  unsigned int maxIterations, bool verbose,
-                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : precondObj_(),
-        tolerance_( absLimit ),
-        errorType_( parameter.errorMeasure() ),
-        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
-        numOfIterations_( 0 ),
-        verbose_( verbose ? true : parameter.verbose() ), // verbose overrules parameter.verbose()
-        method_( method < 0 ? parameter.krylovMethod() : method ),
-        restart_( method_ == SolverParameter::gmres ? parameter.gmresRestart() : 0 )
+      //non-deprecated constructors
+      KrylovInverseOperator ( const OperatorType &op, const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+        : KrylovInverseOperator( parameter )
+      {
+        bind( op );
+      }
+
+      KrylovInverseOperator ( const OperatorType &op, const PreconditionerType& preconditioner,
+                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+        : KrylovInverseOperator( op, &preconditioner, parameter )
       {}
 
-      virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+      //! main constructor
+      KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : BaseType( parameter ),
+        precondObj_(),
+        verbose_( parameter.verbose() ),
+        method_( method < 0 ?
+            parameter.solverMethod({ SolverParameter::gmres,
+                                     SolverParameter::cg,
+                                     SolverParameter::bicgstab })
+            : method )
+      {
+        assert( parameter_->errorMeasure() == 0 );
+      }
+
+      void bind ( const OperatorType &op )
+      {
+        if( precondObj_ )
+          BaseType::bind( op, *precondObj_ );
+        else
+          BaseType::bind( op );
+      }
+
+    protected:
+      int apply( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
         std::ostream* os = nullptr;
         // only set output when general verbose mode is enabled
@@ -122,8 +201,8 @@ namespace Dune
         {
           if( v_.empty() )
           {
-            v_.reserve( restart_+1 );
-            for( int i=0; i<=restart_; ++i )
+            v_.reserve( parameter_->gmresRestart()+1 );
+            for( int i=0; i<=parameter_->gmresRestart(); ++i )
             {
               v_.emplace_back( DiscreteFunction( "GMRes::v", u.space() ) );
             }
@@ -133,9 +212,9 @@ namespace Dune
 
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::gmres( *operator_, preconditioner_,
-                                         v_, w, u, restart_,
-                                         tolerance_, maxIterations_,
-                                         errorType_, os );
+                                         v_, w, u, parameter_->gmresRestart(),
+                                         parameter_->tolerance(), parameter_->maxIterations(),
+                                         parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::bicgstab )
         {
@@ -153,8 +232,8 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::bicgstab( *operator_, preconditioner_,
                                             v_, w, u,
-                                            tolerance_, maxIterations_,
-                                            errorType_, os );
+                                            parameter_->tolerance(), parameter_->maxIterations(),
+                                            parameter_->errorMeasure(), os );
         }
         else if( method_ == SolverParameter::cg )
         {
@@ -174,52 +253,22 @@ namespace Dune
           // if solver convergence failed numIter will be negative
           numIter = LinearSolver::cg( *operator_, preconditioner_,
                                       v_, w, u,
-                                      tolerance_, maxIterations_,
-                                      errorType_, os );
+                                      parameter_->tolerance(), parameter_->maxIterations(),
+                                      parameter_->errorMeasure(), os );
         }
-
-        // only store number of iterations when solver converged, otherwise numIter < 0
-        numOfIterations_ = ( numIter > 0 ) ? numIter : 0;
-      }
-
-      unsigned int iterations () const
-      {
-        return numOfIterations_;
-      }
-
-      void bind ( const OperatorType &op )
-      {
-        unbind();
-
-        operator_ = &op;
-        // if internal preconditioner is active set to preconditioner
-        if( precondObj_ )
+        else
         {
-          preconditioner_ = precondObj_.operator->();
+          DUNE_THROW(InvalidStateException,"KrylovInverseOperator: invalid method " << method_ );
         }
+
+        return numIter;
       }
 
-      void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
-      {
-        operator_ = &op;
-        preconditioner_ = &preconditioner;
-      }
-
-      void unbind () { operator_ = nullptr; preconditioner_ = nullptr;  numOfIterations_ = 0; }
-
-      void setMaxIterations ( unsigned int maxIterations )
-      {
-        maxIterations_ = std::min( static_cast< unsigned int >( std::numeric_limits< int >::max() ), maxIterations );
-      }
-
-    private:
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op,
-                                  const PreconditionerType *preconditioner,
-                                  double redEps, double absLimit,
-                                  unsigned int maxIterations, bool verbose,
-                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-      : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
+                              const PreconditionerType *preconditioner,
+                              const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperator( parameter )
       {
         bind(op);
         if( ! preconditioner_ )
@@ -234,22 +283,20 @@ namespace Dune
         }
       }
 
-      const OperatorType *operator_ = nullptr;
+    protected:
+      using BaseType :: operator_;
+      using BaseType :: preconditioner_;
+
+      using BaseType :: parameter_;
+      using BaseType :: iterations_;
+
       std::unique_ptr< PreconditionerType > precondObj_;
-      const PreconditionerType *preconditioner_;
 
       mutable std::vector< DomainFunctionType > v_;
-
-      const double tolerance_;
-      const int errorType_;
-
-      unsigned int maxIterations_;
-      mutable unsigned int numOfIterations_;
 
       const bool verbose_;
 
       const int method_;
-      const int restart_;
     };
 
 

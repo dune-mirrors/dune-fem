@@ -11,6 +11,7 @@
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
+#include <dune/fem/operator/common/differentiableoperator.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -34,18 +35,44 @@ public:
   : BaseType( "mass operator", dfSpace , dfSpace ),
     dfSpace_( dfSpace )
   {
-    assemble();
+    assemble(*this);
   }
 
   template< class Function >
   void assembleRHS( const Function &u, DiscreteFunctionType &w ) const;
-
+  void assemble (LinearOperator &matrix) const;
 private:
-  void assemble ();
-
   const DiscreteFunctionSpaceType &dfSpace_;
 };
 
+template< class DiscreteFunction, class LinearOperator >
+class AffineMassOperator
+: public Dune::Fem::DifferentiableOperator<LinearOperator>
+{
+  public:
+  typedef DiscreteFunction DiscreteFunctionType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef LinearOperator JacobianOperatorType;
+  template< class Function >
+  explicit AffineMassOperator ( const DiscreteFunctionSpaceType &dfSpace, const Function &u )
+    : matrix_(dfSpace), rhs_("rhs", dfSpace)
+  {
+    matrix_.assembleRHS(u, rhs_);
+  }
+  const DiscreteFunctionType rhs() const { return rhs_; }
+  virtual void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
+  {
+    matrix_(u,w);
+    w -= rhs_;
+  }
+  virtual void jacobian ( const DiscreteFunctionType &u, JacobianOperatorType &jOp ) const
+  {
+    matrix_.assemble( jOp );
+  }
+  private:
+  MassOperator<DiscreteFunction,LinearOperator> matrix_;
+  DiscreteFunction rhs_;
+};
 
 template< class DiscreteFunction, class LinearOperator >
 template< class Function >
@@ -82,12 +109,12 @@ void MassOperator< DiscreteFunction, LinearOperator >
 
 
 template< class DiscreteFunction, class LinearOperator >
-void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
+void MassOperator< DiscreteFunction, LinearOperator >::assemble (LinearOperator &matrix) const
 {
-  BaseType::reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
-  BaseType::clear();
+  matrix.reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
+  matrix.clear();
 
-  Dune::Fem::AddLocalContribution< LinearOperator > localMatrix( *this );
+  Dune::Fem::AddLocalContribution< LinearOperator > localMatrix( matrix );
   Dune::DynamicVector< typename DiscreteFunctionSpaceType::RangeType > values;
 
   // run over entities
@@ -115,7 +142,6 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       localMatrix.axpy( qp, values );
     }
   }
-  BaseType::communicate();
 }
 
 #endif // #ifndef MASSOPERATOR_HH

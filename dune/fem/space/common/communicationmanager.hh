@@ -104,7 +104,7 @@ namespace Dune
         void send( const DiscreteFunction& discreteFunction )
         {
           // nothing to do here, since DUNE does not support
-          // non-blocking communcation yet
+          // non-blocking communication yet
         }
 
         //! receive data for discrete function and given operation
@@ -112,11 +112,15 @@ namespace Dune
         double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction,
                         const Operation& operation )
         {
+          // on serial runs: do nothing
+          if( space_.gridPart().comm().size() <= 1 )
+            return 0.0;
+
           // get stopwatch
           Dune::Timer exchangeT;
 
           // PetscDiscreteFunction has it's own communication
-          discreteFunction.communicate();
+          discreteFunction.dofVector().communicateNow( operation );
 
           return exchangeT.elapsed();
         }
@@ -125,14 +129,14 @@ namespace Dune
         template < class DiscreteFunction, class Operation >
         double receive( DiscreteFunction& discreteFunction, const Operation& operation )
         {
+          // on serial runs: do nothing
+          if( space_.gridPart().comm().size() <= 1 )
+            return 0.0;
+
           // get type of data handle from the discrete function space
           typedef typename DiscreteFunction
             :: template CommDataHandle< Operation > :: Type
             DataHandleType;
-
-          // on serial runs: do nothing
-          if( space_.gridPart().comm().size() <= 1 )
-            return 0.0;
 
           // get stopwatch
           Dune::Timer exchangeT;

@@ -168,9 +168,9 @@ namespace DuneODE
 
   public:
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
-    typedef ImplicitRungeKuttaSolverParameters ParametersType;
+    typedef ImplicitRungeKuttaSolverParameters ParameterType;
 
-    ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider, const ParametersType &parameters )
+    ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider, const ParameterType &parameters )
     : timeProvider_( timeProvider ),
       parameters_( parameters.clone() ),
       cfl_( parameters_->cflStart() ),
@@ -181,7 +181,7 @@ namespace DuneODE
 
     explicit ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : timeProvider_( timeProvider ),
-      parameters_( std::make_shared<ParametersType>( parameter ) ),
+      parameters_( std::make_shared<ParameterType>( parameter ) ),
       cfl_( parameters_->cflStart() ),
       cflMax_( parameters_->cflMax() ),
       verbose_( parameters_->verbose() ),
@@ -256,14 +256,14 @@ namespace DuneODE
     bool computeError () const { return false; }
 
   protected:
-    const ParametersType &parameters () const
+    const ParameterType &parameters () const
     {
       assert( parameters_ );
       return *parameters_;
     }
 
     TimeProviderType &timeProvider_;
-    std::shared_ptr< const ParametersType > parameters_;
+    std::shared_ptr< const ParameterType > parameters_;
     double cfl_, cflMax_;
     int verbose_;
     bool initialized_;
@@ -295,9 +295,9 @@ namespace DuneODE
     using BaseType :: parameters ;
   public:
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
-    typedef typename BaseType::ParametersType ParametersType;
+    typedef typename BaseType::ParameterType ParameterType;
 
-    PIDTimeStepControl ( TimeProviderType &timeProvider, const ParametersType &parameters )
+    PIDTimeStepControl ( TimeProviderType &timeProvider, const ParameterType &parameters )
     : BaseType( timeProvider, parameters ),
       errors_(),
       tol_( 1e-3 )

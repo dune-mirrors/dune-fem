@@ -33,8 +33,10 @@ namespace Dune
         template< class AssembledOperator >
         struct AddBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
         {
-          static void begin ( AssembledOperator &op ) {}
-          static void end ( AssembledOperator &op ) { op.communicate(); }
+          template <class DF, class RF>
+          static void begin ( Dune::Fem::AssembledOperator< DF, RF > &op ) {}
+          template <class DF, class RF>
+          static void end ( Dune::Fem::AssembledOperator< DF, RF > &op ) { op.flushAssembly(); }
         };
 
 
@@ -45,8 +47,10 @@ namespace Dune
         template< class AssembledOperator >
         struct SetBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
         {
-          static void begin ( AssembledOperator &op ) {}
-          static void end ( AssembledOperator &op ) { op.communicate(); }
+          template <class DF, class RF>
+          static void begin ( Dune::Fem::AssembledOperator< DF, RF > &op ) {}
+          template <class DF, class RF>
+          static void end ( Dune::Fem::AssembledOperator< DF, RF > &op ) { op.flushAssembly(); }
         };
 
       } // namespace Global
@@ -244,13 +248,13 @@ namespace Dune
           localMatrixEntries_( assembledOperator.domainSpace().maxNumDofs() * assembledOperator.rangeSpace().maxNumDofs() ),
           assemblyOperation_( std::forward< Args >( args )... )
       {
-        //assembledOperator.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
+        assembledOperator.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
 
       LocalContribution ( const ThisType & ) = delete;
       LocalContribution ( ThisType && ) = delete;
 
-      ~LocalContribution () { /*assembledOperator().template endAssemble< typename AssemblyOperationType::GlobalOperationType >();*/ }
+      ~LocalContribution () { assembledOperator().template endAssemble< typename AssemblyOperationType::GlobalOperationType >(); }
 
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
