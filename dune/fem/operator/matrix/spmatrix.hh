@@ -128,7 +128,7 @@ namespace Dune
           {
             const auto realCol = columns_[ col ];
 
-            if( ! compressed_ && (realCol == defaultCol) || realCol == zeroCol )
+            if( ! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol)) )
               continue;
 
             const auto blockNr = realCol / blockSize ;
