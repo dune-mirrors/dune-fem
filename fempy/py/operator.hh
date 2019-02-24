@@ -250,12 +250,12 @@ namespace Dune
             auto &values = std::get<0>(crs);
             auto &inner  = std::get<1>(crs);
             auto &outer  = std::get<2>(crs);
-            pybind11::array_t<size_t> outerIndices(outer.size(),&(outer[0]),self);
-            pybind11::array_t<size_t> innerIndices(inner.size(),&(inner[0]),self);
+            pybind11::array_t<int> outerIndices(outer.size(),&(outer[0]),self);
+            pybind11::array_t<int> innerIndices(inner.size(),&(inner[0]),self);
             pybind11::array_t<double> data(values.size(),&(values[0]),self);
             pybind11::object matrix_type = pybind11::module::import("scipy.sparse").attr("csr_matrix");
             pybind11::object scipy_mat = matrix_type(
-                std::make_tuple(data, innerIndices, outerIndices),
+                std::tie(data, innerIndices, outerIndices),
                 std::make_pair(mat.rows(), mat.cols())
             );
             return scipy_mat;
