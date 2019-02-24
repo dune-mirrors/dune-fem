@@ -523,7 +523,7 @@ def product(*spaces, **kwargs):
         #     df = tupleDiscreteFunction(space, name=name, **kwargs)
         df.interpolate(func)
         return df
-    setattr(spc, "interpolate", interpolate)
+    setattr(spc, "interpolate", lambda *args,**kwargs: interpolate(spc,*args,**kwargs))
 
     # there is no obvious operator associated with the TupleDF used for this space
     addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],

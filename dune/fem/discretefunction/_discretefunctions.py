@@ -17,7 +17,8 @@ def adaptive():
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
               space._includes,\
         dfType(space),\
-        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">",\
+        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
+        rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
         solvers.femsolver,\
         "as_numpy"
     ]
