@@ -171,8 +171,8 @@ namespace Dune
         for(size_type col = startRow( row ); col<endrow; ++col )
         {
           values_ [col] = 0;
-          if ( !compressed_ )
-             columns_[col] = zeroCol;
+          // if ( !compressed_ )
+          //    columns_[col] = zeroCol;
         }
       }
 
