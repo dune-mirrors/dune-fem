@@ -212,7 +212,7 @@ namespace Dune
         typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
         if( !pybind11::already_registered< SpaceType >() )
         {
-          auto spcCls = Python::insertClass<SpaceType>(vgfClass.first, "Space",
+          auto spcCls = Python::insertClass<SpaceType,std::shared_ptr<SpaceType>>(vgfClass.first, "Space",
               Python::GenerateTypeName("TODO-SPACE"));
           if (spcCls.second)
             detail::registerFunctionSpace( vgfClass.first, spcCls.first );
