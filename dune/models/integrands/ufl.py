@@ -218,7 +218,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
     try:
-        integrands.field = u.ufl_function_space().field()
+        integrands.field = u.ufl_function_space().field
     except AttributeError:
         pass
 

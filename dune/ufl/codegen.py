@@ -308,7 +308,7 @@ def fieldVectorType(shape, field = None, useScalar = False):
         if field is not None:
             raise ValueError("Cannot specify field type for coefficients")
         try:
-            field = shape.ufl_function_space().field()
+            field = shape.ufl_function_space().field
         except AttributeError:
             field = 'double'
         shape = shape.ufl_shape

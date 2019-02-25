@@ -128,7 +128,7 @@ def compileUFL(form, *args, **kwargs):
     x = SpatialCoordinate(form.ufl_cell())
 
     try:
-        field = u.ufl_function_space().field()
+        field = u.ufl_function_space().field
     except AttributeError:
         field = "double"
 
@@ -187,7 +187,7 @@ def compileUFL(form, *args, **kwargs):
                 Exception('Currently, only scalars and vectors are supported as constants')
         else:
             try:
-                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name, coefficient.ufl_function_space().field())
+                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name, coefficient.ufl_function_space().field)
             except AttributeError:
                 coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name)
 

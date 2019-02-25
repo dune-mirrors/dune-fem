@@ -43,12 +43,12 @@ class Space(ufl.FunctionSpace):
         domain = ufl.domain.default_domain(ve.cell())
         ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
-        self._field = field
+        self.field = field
         self._cell = ve.cell()
     def cell(self):
         return self._cell
-    def field(self):
-        return self._field
+    # def field(self):
+    #     return self._field
 
 class FemSpace(Space):
     def __init__(self, space):
@@ -85,12 +85,13 @@ class FemSpace(Space):
 class MixedFunctionSpace(ufl.MixedFunctionSpace):
     def __init__(self, *spaces):
         ufl.MixedFunctionSpace.__init__(self, *spaces)
+        self.field = self.ufl_sub_spaces()[0].field()
 
     def cell(self):
         return self.ufl_element().cell()
 
-    def field(self):
-        return self.ufl_sub_spaces()[0].field()
+    # def field(self):
+    #     return self.ufl_sub_spaces()[0].field()
 
 
 def NamedCoefficient(functionSpace, name, count=None):
