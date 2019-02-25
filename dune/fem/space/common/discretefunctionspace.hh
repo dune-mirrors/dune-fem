@@ -944,6 +944,7 @@ namespace Dune
     template< class FunctionSpaceImp, class GridPartImp >
     class DiscreteFunctionSpaceAdapter
     : public FunctionSpaceImp
+    , public std::enable_shared_from_this< DiscreteFunctionSpaceAdapter<FunctionSpaceImp,GridPartImp> >
     {
     public:
       // type of the underlying function space
