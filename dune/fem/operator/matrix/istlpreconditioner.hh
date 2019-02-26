@@ -50,7 +50,7 @@ namespace Dune
       {}
 
       ISTLSolverParameter( const SolverParameter& sp )
-        : ISTLSolverParameter( sp.parameter() )
+        : ISTLSolverParameter( sp.keyPrefix(), sp.parameter() )
       {}
 
       virtual double overflowFraction () const

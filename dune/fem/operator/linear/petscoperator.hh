@@ -53,7 +53,7 @@ namespace Dune
       {}
 
       PetscSolverParameter( const SolverParameter& sp )
-        : PetscSolverParameter( sp.parameter() )
+        : PetscSolverParameter( sp.keyPrefix(), sp.parameter() )
       {}
 
       PetscSolverParameter( const std::string &keyPrefix, const ParameterReader &parameter = Parameter::container() )

@@ -50,7 +50,7 @@ namespace Dune
       {}
 
       AMGXSolverParameter( const SolverParameter& sp )
-        : AMGXSolverParameter( sp.parameter() )
+        : AMGXSolverParameter( sp.keyPrefix(), sp.parameter() )
       {}
 
       virtual std::string solvermode () const
