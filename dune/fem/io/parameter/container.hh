@@ -252,7 +252,7 @@ namespace Dune
 
         auto info = map.insert( std::make_pair( key, Value( *defaultValue, "default" ) ) );
         if( info.second && verbose() )
-          std::cout << "Adding default: " << key << " = " << *defaultValue << std::endl;
+          std::cout << "Adding default: " << key << ": " << *defaultValue << std::endl;
         pos = info.first;
       }
       else
