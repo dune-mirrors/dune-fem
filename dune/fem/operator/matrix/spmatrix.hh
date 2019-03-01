@@ -43,7 +43,7 @@ namespace Dune
       typedef T field_type;
       //! matrix index type
       typedef IndexT size_type;
-      typedef SparseRowMatrix<field_type> ThisType;
+      typedef SparseRowMatrix<field_type,size_type,ValuesVector,IndicesVector> ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;

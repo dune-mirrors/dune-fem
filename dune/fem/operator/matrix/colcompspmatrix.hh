@@ -23,14 +23,14 @@ namespace Dune
    *  @brief Converter for SparseRowMatrix to column-compressed matrix.
    *  Specialization for SparseRowMatrix
    */
-  template<class B>
-  class ColCompMatrix<Fem::SparseRowMatrix<B> >
+  template <class T, class IndexT,class ValuesVector, class IndicesVector>
+  class ColCompMatrix< Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector> >
   {
     public:
     /** @brief The type of the matrix converted. */
-    typedef ColCompMatrix<Fem::SparseRowMatrix<B> > ThisType;
+    typedef ColCompMatrix< Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector>> ThisType;
     /** @brief The type of the matrix to convert. */
-    typedef Fem::SparseRowMatrix<B> Matrix;
+    typedef Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector> Matrix;
 
     typedef typename Matrix::size_type size_type;
 
@@ -74,7 +74,7 @@ namespace Dune
     }
 
     /** @brief Get the non-zero entries of the matrix. */
-    B* getValues() const
+    T* getValues() const
     {
       return values_;
     }
@@ -114,7 +114,7 @@ namespace Dune
       }
       if(Nnz_>0)
       {
-        values_ = new B[Nnz_];
+        values_ = new T[Nnz_];
         rowindex_ = new int[Nnz_];
         for(size_type i=0; i<Nnz_; ++i)
           values_[i]=mat.values[i];
@@ -170,7 +170,7 @@ namespace Dune
       }
 
       // fill the values and the index arrays
-      values_=new B[Nnz_];
+      values_=new T[Nnz_];
       rowindex_=new int[Nnz_];
       for(size_type row = 0; row < N_ ; ++ row)
       {
@@ -193,7 +193,7 @@ namespace Dune
     size_type N_;
     size_type M_;
     size_type Nnz_;
-    B* values_;
+    T* values_;
     int* rowindex_;
     int* colstart_;
   };
