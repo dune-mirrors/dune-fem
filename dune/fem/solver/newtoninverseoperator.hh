@@ -52,7 +52,7 @@ namespace Dune
 
       template <class ParamReader, std::enable_if_t<!std::is_same<ParamReader,SolverParam>::value && std::is_same<ParamReader,ParameterReader>::value,int> i=0>
       NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.newton." )
-        : baseParam_( std::make_shared<SolverParam>("fem.solver.newton.linear.", parameter) ),
+        : baseParam_( std::make_shared<SolverParam>( keyPrefix + "linear.", parameter) ),
           keyPrefix_( keyPrefix),
           parameter_( parameter )
       {}
@@ -394,7 +394,7 @@ namespace Dune
       {}
       */
 
-      explicit NewtonInverseOperator ( const ParameterType &parameter = Parameter::container() )
+      explicit NewtonInverseOperator ( const ParameterType &parameter = ParameterType( Parameter::container() ) )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
       {
         // std::cout << "in Newton inv op should use:" << parameter.linear().solverMethod({SolverParameter::gmres,SolverParameter::bicgstab,SolverParameter::minres}) << std::endl;
