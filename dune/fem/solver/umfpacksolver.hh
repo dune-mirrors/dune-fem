@@ -32,10 +32,10 @@ namespace Fem
  *  (see DiscreteFunctionInterface) can be found.
  */
 
-template<class DiscreteFunction>
+template<class DiscreteFunction, class Matrix>
 class UMFPACKInverseOperator;
 
-template<class DiscreteFunction>
+template<class DiscreteFunction, class Matrix>
 struct UMFPACKInverseOperatorTraits
 {
   typedef DiscreteFunction    DiscreteFunctionType;
@@ -44,9 +44,9 @@ struct UMFPACKInverseOperatorTraits
   typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
   typedef OperatorType  PreconditionerType;
 
-  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction, Matrix > AssembledOperatorType;
 
-  typedef UMFPACKInverseOperator< DiscreteFunction>  InverseOperatorType;
+  typedef UMFPACKInverseOperator< DiscreteFunction,Matrix>  InverseOperatorType;
   typedef SolverParameter SolverParameterType;
 };
 
@@ -57,11 +57,13 @@ struct UMFPACKInverseOperatorTraits
  *  Details on UMFPack can be found on http://www.cise.ufl.edu/research/sparse/umfpack/
  *  \note This will only work if dune-fem has been configured to use UMFPACK
  */
-template<class DiscreteFunction>
-class UMFPACKInverseOperator : public InverseOperatorInterface< UMFPACKInverseOperatorTraits< DiscreteFunction > >
+template<class DiscreteFunction,
+         class Matrix = SparseRowMatrix< typename DiscreteFunction::DiscreteFunctionSpaceType::RangeFieldType > >
+class UMFPACKInverseOperator :
+      public InverseOperatorInterface< UMFPACKInverseOperatorTraits< DiscreteFunction, Matrix > >
 {
 public:
-  typedef UMFPACKInverseOperatorTraits< DiscreteFunction > Traits;
+  typedef UMFPACKInverseOperatorTraits< DiscreteFunction, Matrix > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
 
   typedef typename BaseType :: SolverDiscreteFunctionType
@@ -150,6 +152,7 @@ public:
     // clear old storage
     finalize();
     BaseType::bind( op );
+    assert( assembledOperator_ );
   }
 
   void unbind ()
@@ -256,6 +259,7 @@ public:
    */
   CCSMatrixType& getCCSMatrix() const
   {
+    assert( ccsmat_ );
     return *ccsmat_;
   }
 
@@ -320,7 +324,7 @@ private:
 
 // deprecated old type
 template<class DF, class Op, bool symmetric=false>
-using UMFPACKOp = UMFPACKInverseOperator< DF >;
+using UMFPACKOp = UMFPACKInverseOperator< DF, typename Op::MatrixType >;
 
 }
 }

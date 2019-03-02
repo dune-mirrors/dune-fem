@@ -42,10 +42,11 @@ namespace Fem
  */
 
 
-template< class DiscreteFunction >
+template< class DiscreteFunction,
+          class Matrix = SparseRowMatrix< typename DiscreteFunction::DiscreteFunctionSpaceType::RangeFieldType > >
 class LDLInverseOperator;
 
-template< class DiscreteFunction >
+template< class DiscreteFunction, class Matrix >
 struct LDLInverseOperatorTraits
 {
   typedef DiscreteFunction    DiscreteFunctionType;
@@ -54,9 +55,9 @@ struct LDLInverseOperatorTraits
   typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
   typedef OperatorType  PreconditionerType;
 
-  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction, Matrix > AssembledOperatorType;
 
-  typedef LDLInverseOperator< DiscreteFunction >  InverseOperatorType;
+  typedef LDLInverseOperator< DiscreteFunction, Matrix >  InverseOperatorType;
   typedef SolverParameter SolverParameterType;
 };
 
@@ -69,10 +70,10 @@ struct LDLInverseOperatorTraits
  *   http://www.cise.ufl.edu/research/sparse/ldl/
  *  \note This will only work if dune-fem has been configured to use LDL
  */
-template< class DF >
-class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTraits< DF > >
+template< class DF, class Matrix >
+class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTraits< DF, Matrix > >
 {
-  typedef LDLInverseOperatorTraits< DF > Traits;
+  typedef LDLInverseOperatorTraits< DF, Matrix > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
 
   friend class InverseOperatorInterface< Traits >;
@@ -371,7 +372,7 @@ protected:
 
 // deprecated old type
 template<class DF, class Op, bool symmetric=false>
-using LDLOp = LDLInverseOperator< DF >;
+using LDLOp = LDLInverseOperator< DF, typename Op::MatrixType >;
 
 } // end namespace Fem
 } // end namespace Dune
