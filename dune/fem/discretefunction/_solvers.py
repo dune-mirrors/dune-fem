@@ -33,13 +33,13 @@ def suitesparsesolver(storage,solverType="umfpack"):
     includes = ["dune/fem/solver/ldlsolver.hh", "dune/fem/solver/spqrsolver.hh", "dune/fem/solver/umfpacksolver.hh"]
 
     if solverType == "ldl":
-        operator = lambda df,inop: "Dune::Fem::LDLOp<" + ",".join([df,linop]) + " >"
+        operator = lambda df,linop: "Dune::Fem::LDLInverseOperator< "    +df+", typename "+linop+"::MatrixType" + " >"
     elif solverType == "spqr_symmetric":
-        operator = lambda df,linop: "Dune::Fem::SPQROp< " + ",".join([df,linop,"true"]) + " >"
+        operator = lambda df,linop: "Dune::Fem::SPQRInverseOperator< "   +df+", true, typename "+linop+"::MatrixType" + " >"
     elif solverType == "spqr_nonsymmetric":
-        operator = lambda df,linop: "Dune::Fem::SPQROp< " + ",".join([df,linop,"false"]) + " >"
+        operator = lambda df,linop: "Dune::Fem::SPQRInverseOperator< "   +df+", false, typename "+linop+"::MatrixType" + " >"
     elif solverType == "umfpack":
-        operator = lambda df,linop: "Dune::Fem::UMFPACKOp< " + ",".join([df,linop]) + " >"
+        operator = lambda df,linop: "Dune::Fem::UMFPACKInverseOperator< "+df+", typename "+linop+"::MatrixType" + " >"
     else:
         raise ValueError("wrong krylov solver - only ldl,spqr_symmetric,spqr_nonsymmetric,umfpack available")
 
