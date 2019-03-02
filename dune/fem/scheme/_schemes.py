@@ -51,7 +51,7 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
     mod = module(includes, typeName, *args, backend=backend)
-    scheme = mod.Scheme(space,model, parameters=parameters, **ctorArgs)
+    scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     return scheme
 
@@ -84,7 +84,8 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
-def dg(model, space, penalty=0, solver=None, parameters={}):
+def dg(model, space, penalty=0, solver=None, parameters={},
+       penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -109,10 +110,12 @@ def dg(model, space, penalty=0, solver=None, parameters={}):
             model = elliptic(space.grid,model,*modelParam)
         else:
             model = elliptic(space.grid,model)
-
+    if penaltyClass is None:
+        spaceType = space._typeName
+        penaltyClass = "DefaultPenalty<"+spaceType+">"
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
-                                   ",".join([linOp,model]) + ">"
+                                   ",".join([linOp,model,penaltyClass]) + ">"
     parameters["penalty"] = parameters.get("penalty",penalty)
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
@@ -123,7 +126,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 
 def galerkin(integrands, space=None, solver=None, parameters={},
@@ -150,7 +153,7 @@ def galerkin(integrands, space=None, solver=None, parameters={},
         else:
             integrands = makeIntegrands(space.grid,integrands)
     if not hasattr(space,"interpolate"):
-        raise ValueError("wrong space given")
+        pass # raise ValueError("wrong space given")
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
@@ -159,9 +162,10 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     if virtualize is None:
         virtualize = integrands.virtualized
 
-    includes = ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
+    includes = [] # integrands._includes
     includes += space._includes + dfIncludes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
+    includes += ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
 
     spaceType = space._typeName
     valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'

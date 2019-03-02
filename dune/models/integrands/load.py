@@ -10,21 +10,24 @@ from dune.source.cplusplus import SourceWriter
 from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
+from dune.ufl.codegen import uflSignature
 
-from .ufl import compileUFL, fieldVectorType, integrandsSignature
+from .ufl import _compileUFL
+from .model import Integrands
+
 
 def init(integrands, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
+    coefficientNames = integrands._coefficientNames
     if len(args) == 1 and isinstance(args[0], dict):
         coefficients.update(args[0])
         args = []
     else:
-        args = list(a for a in args if not isinstance(a,DirichletBC))
+        args = list(a for a in args if not isinstance(a,DirichletBC) and not a is None)
         dirichletBCs = list(a for a in args if isinstance(a,DirichletBC))
+        if len(args) > len(coefficientNames) + len(dirichletBCs):
+            raise ValueError('Too many coefficients passed.')
 
-    coefficientNames = integrands._coefficientNames
-    if len(args) > len(coefficientNames) + len(dirichletBCs):
-        raise ValueError('Too many coefficients passed.')
     args += [None] * (len(coefficientNames) - len(args))
 
     for name, value in kwargs.items():
@@ -66,7 +69,7 @@ def init(integrands, *args, **kwargs):
         missing = [name for name, i in coefficientNames.items() if args[i] is None]
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
-    integrands._init(*args)
+    integrands.base.__init__(integrands, *args, **kwargs)
 
 
 def setConstant(integrands, index, value):
@@ -78,7 +81,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    def __init__(self, gridType, gridIncludes, integrands, *args,
+    def __init__(self, integrands, gridType, gridIncludes, form, *args,
             tempVars=True, virtualize=True):
         self.gridType = gridType
         self.gridIncludes = gridIncludes
@@ -86,9 +89,13 @@ class Source(object):
         self.tempVars = tempVars
         self.virtualize = virtualize
         self.args = args
+        self.form = form
 
     def signature(self):
-        return integrandsSignature(self.integrands, *self.args)
+        return uflSignature(self.form,
+                *self.integrands._coefficients,
+                *self.integrands._constantNames,
+                *[a for a in self.args if isinstance(a,DirichletBC)])
 
     def name(self):
         from dune.common.hashit import hashIt
@@ -98,18 +105,17 @@ class Source(object):
             return 'integrands_nv' + self.signature() + '_' + hashIt(self.gridType)
 
     def valueTuples(self):
-        if isinstance(self.integrands, Form):
-            derivatives = gatherDerivatives(self.integrands)
+        if isinstance(self.form, Form):
+            derivatives = gatherDerivatives(self.form)
             return ['std::tuple< ' + ', '.join(fieldTensorType(v.ufl_shape) for v in d) + ' >' for d in derivatives]
         else:
-            return [self.integrands.rangeValueTuple, self.integrands.domainValueTuple]
+            return [self.form.rangeValueTuple, self.form.domainValueTuple]
 
+    # actual code generation (the generator converts this object to a string)
     def __str__(self):
-        if isinstance(self.integrands, Form):
-            coefficients = set(self.integrands.coefficients())
-            constants = [c for c in coefficients if c.is_cellwise_constant()]
-            coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
-            integrands = compileUFL(self.integrands, *self.args, constants=constants, coefficients=coefficients, tempVars=self.tempVars)
+        if isinstance(self.form, Form):
+            # actual code generation
+            integrands = _compileUFL(self.integrands, self.form, *self.args, tempVars=self.tempVars)
         else:
             integrands = self.integrands
 
@@ -125,23 +131,18 @@ class Source(object):
             if self.virtualize:
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
             else:
-                for c in coefficients:
+                for c in integrands._coefficients:
                     for i in c._includes:
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/integrands.hh"))
 
-        nameSpace = NameSpace('Integrands_' + integrands.signature())
+        nameSpace = NameSpace('Integrands_' + self.signature())
+        # add integrands class
         nameSpace.append(integrands.code())
         code.append(nameSpace)
 
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        if integrands._coefficients:
-            if self.virtualize:
-                coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in integrands._coefficients]
-            else:
-                coefficients = [c._typeName for c in coefficients]
-        else:
-            coefficients = []
+        coefficients = integrands.coefficientCppTypes
         integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
         code.append(TypeAlias('Integrands', integrandsName))
 
@@ -174,34 +175,71 @@ class Source(object):
         return source
 
 
-def load(grid, integrands, *args, renumbering=None, tempVars=True, virtualize=True):
-    if isinstance(integrands, Equation):
-        integrands = integrands.lhs - integrands.rhs
+# Load the actual module - the code generation from the ufl form is done
+# when the 'Source' class is converted to a string i.e. in Source.__str__
+def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
+    if isinstance(form, Equation):
+        form = form.lhs - form.rhs
 
-    source = Source(grid._typeName, grid._includes, integrands,*args,
-            tempVars=tempVars,virtualize=virtualize)
-    if isinstance(integrands, Form):
-        coefficients = set(integrands.coefficients())
+    if isinstance(form, Integrands):
+        integrands = form
+    else:
+        if not isinstance(form, Form):
+            raise ValueError("ufl.Form or ufl.Equation expected.")
+
+        # added for dirichlet treatment same as elliptic model
+        dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+
+        uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
+        if len(form.arguments()) < 2:
+            raise ValueError("Integrands model requires form with at least two arguments.")
+
+        phi, u = form.arguments()
+
+        derivatives = gatherDerivatives(form, [phi, u])
+
+        derivatives_phi = derivatives[0]
+        derivatives_u = derivatives[1]
+
+        integrands = Integrands((d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
+                                uflExpr,virtualize)
+
+    # set up the source class
+    source = Source(integrands, grid._typeName, grid._includes, form, *args,
+             tempVars=tempVars,virtualize=virtualize)
+
+    # ufl coefficient and constants only have numbers which depend on the
+    # order in whch they were generated - we need to keep track of how
+    # these numbers are translated into the tuple numbering in the
+    # generated C++ code
+    if isinstance(form, Form):
+        coefficients = set(integrands.coefficientList+integrands.constantList)
         numCoefficients = len(coefficients)
         if renumbering is None:
             renumbering = dict()
             renumbering.update((c, i) for i, c in enumerate(sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())))
             renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
-        coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
+        coefficientNames = integrands._coefficientNames # ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
     else:
-        coefficientNames = integrands.coefficientNames
+        coefficientNames = form.coefficientNames
 
+    # call code generator
     from dune.generator import builder
     module = builder.load(source.name(), source, "integrands")
+
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)
     setattr(module.Integrands, "_rangeValueType", rangeValueTuple)
-    if not hasattr(module.Integrands, "_init"):
-        setattr(module.Integrands, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
-        module.Integrands._init = module.Integrands.__dict__['__init__']
-        setattr(module.Integrands, '__init__', init)
-        if renumbering is not None:
-            setattr(module.Integrands, '_renumbering', renumbering)
-            module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
-            setattr(module.Integrands, 'setConstant', setConstant)
-    return module
+    # redirect the __init__ method to take care of setting coefficient and renumbering
+    class Model(module.Integrands):
+        def __init__(self, *args, **kwargs):
+            self.base = module.Integrands
+            init(self,*args,**kwargs)
+
+    setattr(Model, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
+    if renumbering is not None:
+        setattr(Model, '_renumbering', renumbering)
+        Model._setConstant = module.Integrands.__dict__['setConstant']
+        setattr(Model, 'setConstant', setConstant)
+
+    return Model

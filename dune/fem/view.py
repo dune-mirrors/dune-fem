@@ -9,14 +9,14 @@ import dune.grid.grid_generator
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 
-generator = SimpleGenerator("GridView", "Dune::Python")
+generator = SimpleGenerator("GridView", "Dune::FemPy")
 
 def cppBool(value):
     return "true" if value else "false"
 
 
 def load(includes, typeName, *args):
-    includes = includes + ["dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes = includes + ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     moduleName = "view_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
     # module = generator.load(includes, typeName, moduleName, *args, options=[holder])
@@ -64,7 +64,9 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
                   "return Dune::FemPy::constructGridPart<"+gridPartName+">( grid );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
 
-    return load(includes, typeName, constructor).GridView(grid)
+    GridView = load(includes, typeName, constructor).GridView
+    # setattr(GridView,"canAdapt",True)
+    return GridView(grid)
 
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):

@@ -17,22 +17,32 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args, backend=None):
-    from dune.fem.discretefunction import addBackend
+def load(includes, typeName, *args, preamble=None):
+    from dune.fem.space import addBackend
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True)
-    JacobianOperator = getattr(module.Operator,"JacobianOperator",None)
+    module = generator.load(includes, typeName, moduleName, *args, preamble=preamble, dynamicAttr=True)
+    return module
+
+linearGenerator = SimpleGenerator("LinearOperator", "Dune::FemPy")
+
+def loadLinear(includes, typeName, *args, backend=None, preamble=None):
+    from dune.fem.space import addBackend
+    includes = includes + ["dune/fempy/py/operator.hh"]
+    moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    module = linearGenerator.load(includes, typeName, moduleName, *args, preamble=preamble, dynamicAttr=True)
+    LinearOperator = module.LinearOperator
     try:
         backend = backend[0] if backend[0] == backend[1] else None
     except:
         pass
-    if JacobianOperator is not None and hasattr(JacobianOperator,"_backend") and backend is not None:
-        addBackend(JacobianOperator,backend)
+    if hasattr(LinearOperator,"_backend") and backend is not None:
+        addBackend(LinearOperator,backend)
     return module
 
 
-def galerkin(integrands, domainSpace=None, rangeSpace=None):
+def galerkin(integrands, domainSpace=None, rangeSpace=None,
+    virtualize=None):
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -59,10 +69,13 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
         else:
             integrands = makeIntegrands(domainSpace.grid,integrands)
 
+    if virtualize is None:
+        virtualize = integrands.virtualized
+
     if not hasattr(rangeSpace,"interpolate"):
-        raise ValueError("wrong range space")
+        raise ValueError("given range space has to be a discrete space")
     if not hasattr(domainSpace,"interpolate"):
-        raise ValueError("wrong domain space")
+        raise ValueError("given domain space has to be a discrete space")
 
     domainSpaceType = domainSpace._typeName
     rangeSpaceType  = rangeSpace._typeName
@@ -74,10 +87,13 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
     includes += domainSpace._includes + domainFunctionIncludes
     includes += rangeSpace._includes + rangeFunctionIncludes
 
-    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ', ' + integrands._rangeValueType + ' >'
+    if virtualize:
+        integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
+    else:
+        includes += integrands._includes
+        integrandsType = integrands._typeName
 
-    import dune.create as create
-    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+
 
     if not rstorage == storage:
         typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
@@ -88,6 +104,8 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
                                   ['return new DuneType( dSpace.gridPart(), integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
+        import dune.create as create
+        linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
         typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
         constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
                                   ['return new DuneType( dSpace, rSpace, integrands );'],
@@ -95,8 +113,7 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None):
     if integrands.hasDirichletBoundary:
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
 
-
-    op = load(includes, typeName, constructor,backend=(dbackend,rbackend)).Operator(domainSpace,rangeSpace, integrands)
+    op = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace, integrands)
     op.model = integrands
     return op
 
@@ -161,6 +178,41 @@ def h1(model, domainSpace=None, rangeSpace=None):
                               ['return new ' + typeName + '( dSpace, rSpace, model );'],
                               ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
 
-    scheme = load(includes, typeName, constructor, backend=(dbackend,rbackend)).Operator(domainSpace,rangeSpace, model)
+    scheme = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace, model)
     scheme.model = model
     return scheme
+
+# TODO: linear could also return the 'affine shift' and the point of
+#       linearization (0 now) could also be passed in
+#       The returning operator could have a 'update' method and then we
+#       remove the 'jacobian' from the official interface
+def linear(operator, ubar=None):
+    assert hasattr(operator,"jacobian"), "operator does not allow assembly"
+    rangeSpace  = operator.rangeSpace
+    domainSpace = operator.domainSpace
+
+    domainSpaceType = domainSpace._typeName
+    rangeSpaceType = rangeSpace._typeName
+
+    storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
+    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
+    if not rstorage == storage:
+        raise ValueError("storage for both spaces must be identical to construct operator")
+
+    includes = ["dune/fempy/py/grid/gridpart.hh"]
+    includes += domainSpace._includes + domainFunctionIncludes
+    includes += rangeSpace._includes + rangeFunctionIncludes
+
+    import dune.create as create
+    typeName = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+
+    constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace'],
+                              ['return new ' + typeName + '( "tmp", dSpace, rSpace );'],
+                              ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+
+    lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace)
+    if ubar is None:
+        operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
+    else:
+        operator.jacobian(ubar, lin)
+    return lin

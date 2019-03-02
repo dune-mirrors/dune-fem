@@ -43,12 +43,12 @@ class Space(ufl.FunctionSpace):
         domain = ufl.domain.default_domain(ve.cell())
         ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
-        self._field = field
+        self.field = field
         self._cell = ve.cell()
     def cell(self):
         return self._cell
-    def field(self):
-        return self._field
+    # def field(self):
+    #     return self._field
 
 class FemSpace(Space):
     def __init__(self, space):
@@ -85,12 +85,13 @@ class FemSpace(Space):
 class MixedFunctionSpace(ufl.MixedFunctionSpace):
     def __init__(self, *spaces):
         ufl.MixedFunctionSpace.__init__(self, *spaces)
+        self.field = self.ufl_sub_spaces()[0].field()
 
     def cell(self):
         return self.ufl_element().cell()
 
-    def field(self):
-        return self.ufl_sub_spaces()[0].field()
+    # def field(self):
+    #     return self.ufl_sub_spaces()[0].field()
 
 
 def NamedCoefficient(functionSpace, name, count=None):
@@ -189,6 +190,18 @@ class GridFunction(ufl.Coefficient):
             result = tocontainer(result)
             # result.func.__doc__ = doc
         return result
+    def __setattr__(self, item, v):
+        super(GridFunction, self).__setattr__(item, v)
+        if item == 'gf' or item == '__impl__' or item == 'GridFunctionClass':
+            super(GridFunction, self).__setattr__(item, v)
+        else:
+            propobj = getattr(self.gf.__class__, item, None)
+            if isinstance(propobj, property):
+                if propobj.fset is None:
+                    raise AttributeError("can't set attribute")
+                propobj.fset(self, v)
+            else:
+                super(GridFunction, self).__setattr__(item, v)
     def __repr__(self):
         return repr(self.__impl__)
     def __str__(self):
@@ -197,8 +210,11 @@ class GridFunction(ufl.Coefficient):
     __name__   = property(lambda self:self.gf.__name__)
     __class__  = property(lambda self:self.gf.__class__)
 
-    def __call__(self,e,x):
-        return self.gf.localFunction(e).evaluate(x)
+    def __call__(self,e,x=None):
+        if x is None:
+            return ufl.Coefficient.__call__(self,e)
+        else:
+            return self.gf.localFunction(e).evaluate(x)
 
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
@@ -231,6 +247,8 @@ class DirichletBC:
             self.ufl_value = ufl.as_vector(self.ufl_value)
         else:
             self.ufl_value = value
+    def __str__(self):
+        return str(self.ufl_value)
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!

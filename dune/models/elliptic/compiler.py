@@ -18,10 +18,13 @@ def compile(inputFileName, outputFileName=None, namespace=None, tempVars=True):
 
 
 def version(package_name):
-    import pip
     try:
+        import pip
         from pip._internal.utils.misc import get_installed_distributions
         packages = get_installed_distributions()
+    except ImportError:
+        'pip not found, skipping version check'
+        return "?.?"
     except:
         'using pip version < 10'
         packages = pip.get_installed_distributions()

@@ -21,6 +21,25 @@ class Model:
 def executeUFLCode(code):
     return dune.ufl.formfiles.executeUFLCode(code, {"Model": Model})
 
+def to_alphabetic(i,base=26):
+    if base < 0 or 62 < base:
+        raise ValueError("Invalid base")
+
+    if i < 0:
+        return '-'+to_alphabetic(-i-1)
+
+    quot = int(i/base)
+    rem = i%base
+    if rem < 26:
+        letter = chr( ord("A") + rem)
+    elif rem < 36:
+        letter = str( rem-26)
+    else:
+        letter = chr( ord("a") + rem - 36)
+    if quot == 0:
+        return letter
+    else:
+        return to_alphabetic(quot-1,base) + lett
 
 def interpretUFLNamespace(namespace):
     models = namespace.get("models")
@@ -37,6 +56,19 @@ def interpretUFLNamespace(namespace):
             models = []
         else:
             raise Exception("'F' is not a form")
+    else:
+        if isinstance(models,dict):
+            models = [
+                Model(name, models[name]) if isinstance(models[name],Form) else
+                Model(name, models[name][0], *models[name][1:])
+                for name in models ]
+        elif all(isinstance(m, Form) for m in models):
+            constraints = namespace.get("constraints", [])
+            if not isinstance(constraints, (list, tuple)):
+                raise Exception("Expecting 'constraints' to be a list of a tuple, not '%s'" % type(constraints))
+            if not all(isinstance(c, DirichletBC) for c in constraints):
+                raise Exception("Expecting 'constraints' to be a list of DirichletBC instances")
+            models = [Model("Model"+to_alphabetic(i), m, *list(constraints)) for i,m in enumerate(models)]
 
     if not isinstance(models, (list, tuple)):
         raise Exception("Expecting 'models' to be a list of a tuple, not '%s'" % type(models))
@@ -55,3 +87,9 @@ def loadUFLFile(filename):
 def compileUFLFile(filename, tempVars=True):
     models = loadUFLFile(filename)
     return [compileUFL(model.form, *model.constraints, tempVars=tempVars)[0].code(model.name) for model in models]
+
+def loadModels(view,filename, *args, **kwargs):
+    from dune.fem.model import elliptic
+    models = loadUFLFile(filename)
+    return [ elliptic(view, model.form,
+             *model.constraints, *args, **kwargs) for model in models]

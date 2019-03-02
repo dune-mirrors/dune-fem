@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import dune.common
 from ._fem import *
-from ._adaptation import adapt, loadBalance
+from ._adaptation import adapt, loadBalance, mark, globalRefine
 from ._spaceadaptation import spaceAdapt
 
 from . import view as view
@@ -22,6 +22,7 @@ registry["view"] = {
      }
 registry["space"] = {
          "lagrange"      : space.lagrange,
+         "lagrangehp"    : space.lagrangehp,
          "dgonb"         : space.dgonb,
          "dgonbhp"       : space.dgonbhp,
          "dglegendre"    : space.dglegendre,
@@ -32,15 +33,16 @@ registry["space"] = {
          "combined"      : space.combined,
          "product"       : space.product,
          "bdm"           : space.bdm,
+         "raviartthomas" : space.raviartThomas,
          "rannacherTurek": space.rannacherTurek
      }
 registry["discretefunction"] = {
-         "adaptive" : discretefunction.adaptive,
-         "fem"      : discretefunction.adaptive,
-         "istl"     : discretefunction.istl,
-         "eigen"    : discretefunction.eigen,
-         "petsc"    : discretefunction.petsc,
-         "petscadapt"  : discretefunction.petscadapt
+         "adaptive"   : discretefunction.adaptive,
+         "fem"        : discretefunction.adaptive,
+         "istl"       : discretefunction.istl,
+         "eigen"      : discretefunction.eigen,
+         "petsc"      : discretefunction.petsc,
+         "petscadapt" : discretefunction.petscadapt
      }
 registry["operator"] = {
         "galerkin"   : operator.galerkin,
@@ -48,8 +50,6 @@ registry["operator"] = {
     }
 registry["solver"] = {
          "fem"         : discretefunction.femsolver,
-         "pardg"       : discretefunction.pardgsolver,
-         "femoem"      : discretefunction.oemfemsolver,
          "istl"        : discretefunction.istlsolver,
          "suitesparse" : discretefunction.suitesparsesolver,
          "eigen"       : discretefunction.eigensolver,
@@ -71,7 +71,6 @@ registry["function"] = {
          "local"      : function.localFunction,
          "cpp"        : function.cppFunction,
          "ufl"        : function.uflFunction,
-         "numpy"      : function.numpyFunction,
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
@@ -112,5 +111,9 @@ from dune.grid.grid_generator import _writeVTKDispatcher
 def vtkDispatchUFL(grid,f):
     from dune.fem.function._functions import uflFunction
     order = 5 # needs to be derived from f
-    return uflFunction(grid, "tmp", order, f)
+    try:
+        gf = uflFunction(grid, "tmp", order, f)
+    except AttributeError:
+        gf = None
+    return gf
 _writeVTKDispatcher.append(vtkDispatchUFL)

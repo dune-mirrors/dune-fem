@@ -31,6 +31,6 @@ def integrands(view, form, *args, **kwargs):
 
     tempVars   = kwargs.pop('tempVars', True)
     virtualize = kwargs.pop('virtualize',True)
-    Integrands = integrands.load(view, form, *args, tempVars=tempVars,virtualize=virtualize).Integrands
+    Integrands = integrands.load(view, form, *args, tempVars=tempVars,virtualize=virtualize)
 
     return Integrands(*args, **kwargs)

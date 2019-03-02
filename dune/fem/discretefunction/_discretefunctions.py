@@ -17,7 +17,8 @@ def adaptive():
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
               space._includes,\
         dfType(space),\
-        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">",\
+        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
+        rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
         solvers.femsolver,\
         "as_numpy"
     ]
@@ -66,8 +67,8 @@ try:
         dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
         rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
         def equalSpaces(space,rspace):
-            if not space==rspace and not rspace is None:
-                raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
+            # if not space==rspace and not rspace is None:
+            #     raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
             return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
         try:
             import petsc4py
