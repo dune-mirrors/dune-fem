@@ -537,6 +537,12 @@ namespace Dune
         ::Dune::Petsc::KSPGetIterationNumber( *ksp_, &its );
         KSPConvergedReason reason;
         ::Dune::Petsc::KSPGetConvergedReason( *ksp_, &reason );
+        if( parameter_->verbose() && Parameter::verbose() )
+        {
+          // list of reasons:
+          // https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPConvergedReason.html
+          std::cout << "Converged reason:" << reason << std::endl;
+        }
 
         bool converged = int(reason) >= 0 ;
 

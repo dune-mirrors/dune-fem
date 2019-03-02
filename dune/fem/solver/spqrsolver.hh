@@ -41,10 +41,11 @@ namespace Fem
  *  \note This will only work if dune-fem has been configured to use SPQR
  */
 
-template<class DiscreteFunction, bool symmetric=false >
+template<class DiscreteFunction, bool symmetric=false,
+          class Matrix = SparseRowMatrix< typename DiscreteFunction::DiscreteFunctionSpaceType::RangeFieldType > >
 class SPQRInverseOperator;
 
-template<class DiscreteFunction, bool symmetric>
+template<class DiscreteFunction, bool symmetric, class Matrix>
 struct SPQRInverseOperatorTraits
 {
   typedef DiscreteFunction    DiscreteFunctionType;
@@ -53,21 +54,21 @@ struct SPQRInverseOperatorTraits
   typedef Dune::Fem::Operator< DiscreteFunction, DiscreteFunction > OperatorType;
   typedef OperatorType  PreconditionerType;
 
-  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
+  typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction, Matrix > AssembledOperatorType;
   typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType > CCSMatrixType;
 
-  typedef SPQRInverseOperator< DiscreteFunction, symmetric >  InverseOperatorType;
+  typedef SPQRInverseOperator< DiscreteFunction, symmetric, Matrix >  InverseOperatorType;
   typedef SolverParameter SolverParameterType;
 };
 
 
 
-template< class DF, bool symmetric >
-class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DF, symmetric > >
+template< class DF, bool symmetric, class Matrix >
+class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperatorTraits< DF, symmetric, Matrix > >
 {
-  typedef SPQRInverseOperatorTraits< DF, symmetric > Traits;
+  typedef SPQRInverseOperatorTraits< DF, symmetric, Matrix > Traits;
   typedef InverseOperatorInterface< Traits > BaseType;
-  typedef SPQRInverseOperator< DF, symmetric > ThisType;
+  typedef SPQRInverseOperator< DF, symmetric, Matrix > ThisType;
 public:
   typedef DF DiscreteFunctionType;
   typedef typename BaseType :: OperatorType OperatorType;
@@ -196,6 +197,7 @@ public:
    */
   int apply (const DofType* arg, DofType* dest) const
   {
+    assert(ccsmat_);
     const std::size_t dimMat(ccsmat_->N());
     // fill B
     for(std::size_t k = 0; k != dimMat; ++k)
@@ -349,7 +351,7 @@ private:
 
 // deprecated old type
 template<class DF, class Op, bool symmetric=false>
-using SPQROp = SPQRInverseOperator< DF, symmetric >;
+using SPQROp = SPQRInverseOperator< DF, symmetric, typename Op::MatrixType >;
 
 
 } // end namespace Fem
