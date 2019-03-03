@@ -33,10 +33,13 @@ def Function( discreteSpace, name='U', **unused ):
     return discreteSpace.interpolate([0], name)
 
 # solve given equation using galerkin scheme and integrands model
-def solve( equation, solution, bc = None, solver='cg', **unused):
+def solve( equation, target, bc = None, solver='gmres', **unused):
     from dune.fem.scheme import galerkin
-    scheme = galerkin( equation, solution.space, solver )
-    scheme.solve( target=solution )
+    if( bc is None ):
+        scheme = galerkin( equation, target.space, solver )
+    else:
+        scheme = galerkin( [equation,bc], target.space, solver )
+    scheme.solve( target=target )
 
 # plot data or grid
 def plot( obj, **unused ):
