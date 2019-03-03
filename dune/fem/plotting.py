@@ -112,7 +112,7 @@ def plotPointData(solution, figure=None,
     _plotPointData(figure, grid, solution, level, gridLines,
                     vectors, xlim, ylim, clim, cmap, colorbar, triplot)
 
-    if newFig:
+    if newFig and block:
         pyplot.show(block=block)
     # return figure
 
