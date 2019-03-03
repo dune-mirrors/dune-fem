@@ -21,7 +21,7 @@ def Constant( value, dimRange=1, **unused ):
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( gridview, spacetype, order=1, dimRange=1, **unused ):
     from dune.fem.space import lagrange, dgonb
-    if( spacetype == 'P' ):
+    if( spacetype == 'P' or spacetype == 'Lagrange' or spacetype == 'CG' ):
         return lagrange( gridview, dimRange, order )
     elif( spacetype == 'DG' ):
         return dgonb( gridview, dimRange, order )
