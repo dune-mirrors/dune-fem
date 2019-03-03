@@ -264,10 +264,11 @@ class DirichletBC:
                 yield el
 
     def __init__(self, functionSpace, value, subDomain):
-        # try:
-        #     self.functionSpace = functionSpace.uflSpace
-        # except AttributeError:
-        self.functionSpace = functionSpace
+        if functionSpace.scalar:
+            self.functionSpace = functionSpace.toVectorSpace()
+            value = ufl.as_vector( [value] )
+        else:
+            self.functionSpace = functionSpace
         self.value = value
         self.subDomain = subDomain
         if type(value) is list:
