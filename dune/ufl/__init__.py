@@ -34,12 +34,15 @@ def cell(dimDomainOrGrid):
 
 
 class Space(ufl.FunctionSpace):
-    def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double"):
+    def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False):
         if not dimRange:
-            self.duneSpace = dimDomainOrGridOrSpace
             dimRange = dimDomainOrGridOrSpace.dimRange
             dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
-        ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+        self.scalar = scalar
+        if scalar:
+            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+        else:
+            ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
         domain = ufl.domain.default_domain(ve.cell())
         ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
@@ -47,20 +50,35 @@ class Space(ufl.FunctionSpace):
         self._cell = ve.cell()
     def cell(self):
         return self._cell
-    # def field(self):
-    #     return self._field
+    def toVectorSpace(self):
+        if not self.scalar:
+            return self
+        else:
+            ve = ufl.VectorElement("Lagrange", self.cell, 1, 1)
+            domain = ufl.domain.default_domain(ve.cell())
+            return ufl.FuntionSpace(domain, ve)
 
 class FemSpace(Space):
-    def __init__(self, space):
+    def __init__(self, space, scalar=None):
         try:
             space = space.femSpace
         except:
             pass
         self.femSpace = space
-        Space.__init__(self,space)
+        if scalar is None:
+            self.scalar = space.scalar
+        else:
+            self.scalar = scalar
+        Space.__init__(self,space, scalar=self.scalar)
         self.__impl__ = space
         __module__ = space.__module__
         self.FemSpaceClass = space.__class__
+
+    def toVectorSpace(self):
+        if not self.femSpace.scalar:
+            return self
+        else:
+            return FemSpace(self.femSpace,scalar=False)
 
     def __getattr__(self, item):
         def tocontainer(func):
@@ -76,8 +94,6 @@ class FemSpace(Space):
         return result
     def __repr__(self):
         return repr(self.__impl__)
-    # def __str__(self):
-    #     return self.name
     __dict__   = property(lambda self:self.__impl__.__dict__)
     __name__   = property(lambda self:self.__impl__.__name__)
     __class__  = property(lambda self:self.__impl__.__class__)
@@ -121,6 +137,7 @@ from ufl.index_combination_utils import create_slice_indices
 from ufl.core.multiindex import MultiIndex
 class GridIndexed(Indexed):
     def __init__(self,gc,i):
+        self.scalar = False
         component = (i,)
         shape = gc.ufl_shape
         all_indices, _, _ = create_slice_indices(component, shape, gc.ufl_free_indices)
@@ -139,7 +156,7 @@ class GridFunction(ufl.Coefficient):
         - help(self.GridFunction)
         - help(self.Coefficient)
     """
-    def __init__(self, gf):
+    def __init__(self, gf, scalar=None):
         try:
             gf = gf.gf
         except:
@@ -151,10 +168,22 @@ class GridFunction(ufl.Coefficient):
         grid = gf.grid
 
         dimRange = gf.dimRange
-        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
+        if scalar is None:
+            try:
+                scalar = gf.scalar
+            except AttributeError:
+                try:
+                    scalar = gf.space.scalar
+                except:
+                    scalar = False
+                    # raise AttributeError()
+        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange, scalar=scalar)
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
         return FemSpace(self.gf.space)
+    def toVectorCoefficient(self):
+        return GridFunction(self.gf,scalar=False)
+
     def copy(self,name=None):
         if name is None:
             return self.gf.copy().as_ufl()
@@ -265,14 +294,6 @@ class CoordWrapper:
 def expression2GF(grid,expression,order,name="expr"):
     from dune.fem.function import localFunction, uflFunction
     return uflFunction(grid, name, order, expression)
-
-    shape = expression.ufl_shape
-    assert len(shape) == 0 or len(shape) == 1,\
-            "can only generate grid function from scalar or vector valued expression, got %s" %str(shape)
-    if len(shape) == 0:
-        return localFunction(grid, name, order, lambda e,x: [expression(CoordWrapper(e,x))] )
-    if len(shape) == 1:
-        return localFunction(grid, name, order, lambda e,x: [expression[i](CoordWrapper(e,x)) for i in range(shape[0]) ] )
 
 # register markdown formatter for integrands, forms and equations to IPython
 

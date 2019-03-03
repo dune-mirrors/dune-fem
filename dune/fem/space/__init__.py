@@ -138,9 +138,10 @@ def storageToSolver(storage):
 
 generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
-def addAttr(module, self, field):
+def addAttr(module, self, field, scalar):
     setattr(self, "_module", module)
     setattr(self, "field", field)
+    setattr(self, "scalar", scalar)
     setattr(self, "interpolate",
             lambda *args,**kwargs: interpolate(self,*args,**kwargs))
     DF = module.DiscreteFunction
@@ -221,7 +222,7 @@ def addDiscreteFunction(space, storage):
     return dfIncludes, dfTypeName, backend, ctor
 
 def module(field, includes, typeName, *args,
-           storage=None,
+           storage=None, scalar=False,
            interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
            ctorArgs):
     includes = includes + ["dune/fempy/py/space.hh"]
@@ -252,7 +253,7 @@ def module(field, includes, typeName, *args,
                             options=[["std::shared_ptr<DuneType>"],[]],
                             defines=defines)
     spc = module.Space(*ctorArgs)
-    addAttr(module, spc, field)
+    addAttr(module, spc, field, scalar)
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
     addDFAttr(module, module.DiscreteFunction, addStorage(spc,storage))
     if not backend is None:

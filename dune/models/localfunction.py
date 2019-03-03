@@ -17,7 +17,7 @@ from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
 from dune.source import BaseModel
 from dune.source.fem import declareFunctionSpace
 import ufl
-from ufl import Coefficient, Constant, constantvalue
+from ufl import Coefficient, Constant, constantvalue, as_vector, replace
 from ufl import checks
 from ufl.classes import FloatValue, IntValue
 from dune.source.cplusplus import maxEdgeLength, UnformattedExpression,\
@@ -33,6 +33,8 @@ class UFLFunctionSource(codegen.ModelClass):
     def __init__(self, gridType, gridIncludes, expr,
             name,order,
             tempVars=True, virtualize=True):
+        if len(expr.ufl_shape) == 0:
+            expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
         codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],virtualize,dimRange=dimRange)
         self.evalCode = []
@@ -253,6 +255,9 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
             expr = ufl.as_vector([expr])
     except:
         return None
+    _, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0}
+    expr = replace(expr,coeff)
 
     if len(expr.ufl_shape) > 1:
         raise AttributeError("can only generate grid functions from vector values UFL expressions not from expressions with shape=",expr.ufl_shape)

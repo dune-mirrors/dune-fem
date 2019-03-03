@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import Form, Coefficient
+from ufl import Form, Coefficient, TrialFunction, TestFunction, replace
 from ufl.equation import Equation
 
 from dune.common.compatibility import isString
@@ -184,6 +184,22 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
     if isinstance(form, Integrands):
         integrands = form
     else:
+        if len(form.arguments()) < 2:
+            raise ValueError("Integrands model requires form with at least two arguments.")
+
+        phi_, u_ = form.arguments()
+
+        if phi_.ufl_function_space().scalar:
+            phi = TestFunction(phi_.ufl_function_space().toVectorSpace())
+            form = replace(form,{phi_:phi[0]})
+        else:
+            phi = phi_
+        if u_.ufl_function_space().scalar:
+            u = TrialFunction(u_.ufl_function_space().toVectorSpace())
+            form = replace(form,{u_:u[0]})
+        else:
+            u = u_
+
         if not isinstance(form, Form):
             raise ValueError("ufl.Form or ufl.Equation expected.")
 
@@ -191,10 +207,6 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
         dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
 
         uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
-        if len(form.arguments()) < 2:
-            raise ValueError("Integrands model requires form with at least two arguments.")
-
-        phi, u = form.arguments()
 
         derivatives = gatherDerivatives(form, [phi, u])
 
