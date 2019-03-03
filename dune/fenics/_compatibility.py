@@ -29,11 +29,13 @@ def Constant( value, **unused ):
 
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
-    from dune.fem.space import lagrange, dgonb
+    from dune.fem.space import lagrange, dgonb, bdm
     if( family in ['P','Lagrange', 'CG'] ):
         return lagrange(view=mesh, order=degree, dimrange=dimrange, **kwargs )
     elif( family == 'DG' ):
         return dgonb(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+    elif( family == 'BDM' ):
+        return bdm(view=mesh, order=degree, dimrange=dimrange, **kwargs )
     else:
         raise ValueError('Space with identifier',spacetype,' not known\n')
 
