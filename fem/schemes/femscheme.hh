@@ -173,15 +173,20 @@ public:
     invOp_.bind( implicitOperator_ );
     DiscreteFunctionType rhs0 = rhs;
     setZeroConstraints( rhs0 );
+    setModelConstraints( solution );
     invOp_( rhs0, solution );
     invOp_.unbind();
     return SolverInfo(invOp_.converged(),invOp_.linearIterations(),invOp_.iterations());
   }
   SolverInfo solve ( DiscreteFunctionType &solution ) const
   {
-    DiscreteFunctionType bnd(solution);
+    DiscreteFunctionType bnd( solution );
     bnd.clear();
-    return solve(bnd, solution);
+    setModelConstraints( solution );
+    invOp_.bind(fullOperator());
+    invOp_( bnd, solution );
+    invOp_.unbind();
+    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
   }
 
   template< class GridFunction, std::enable_if_t<
@@ -208,7 +213,9 @@ protected:
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
   void setZeroConstraints( ... ) const { }
-
+  std::enable_if_t<addDirichletBC,void>
+  setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
+  void setModelConstraints( ... ) const { }
   ModelType &model_;   // the mathematical model
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;

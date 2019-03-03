@@ -1026,9 +1026,11 @@ namespace Dune
 
       SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
       {
-        invOp_.bind(fullOperator());
         DiscreteFunctionType rhs0 = rhs;
         setZeroConstraints( rhs0 );
+        setModelConstraints( solution );
+
+        invOp_.bind(fullOperator());
         invOp_( rhs0, solution );
         invOp_.unbind();
         return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
@@ -1038,7 +1040,11 @@ namespace Dune
       {
         DiscreteFunctionType bnd( solution );
         bnd.clear();
-        return solve(bnd, solution);
+        setModelConstraints( solution );
+        invOp_.bind(fullOperator());
+        invOp_( bnd, solution );
+        invOp_.unbind();
+        return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
 
       template< class GridFunction >
@@ -1076,6 +1082,9 @@ namespace Dune
       std::enable_if_t<addDirichletBC,void>
       setZeroConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u ); }
       void setZeroConstraints( ... ) const { }
+      std::enable_if_t<addDirichletBC,void>
+      setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
+      void setModelConstraints( ... ) const { }
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
