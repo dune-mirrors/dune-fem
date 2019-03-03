@@ -18,6 +18,7 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
     else:
         return structuredGrid([0,0,0], [1,1,1], [xspacing,yspacing,zspaceing] )
 
+# convenience function for Fenics' Constant
 def Constant( value, **unused ):
     try:
         if len(value)>0:
@@ -27,19 +28,19 @@ def Constant( value, **unused ):
     return value
 
 # create a discrete functions space given a grid view (called mesh in Fenics)
-def FunctionSpace( gridview, spacetype, order=1, dimRange=None, **kwargs ):
+def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     from dune.fem.space import lagrange, dgonb
-    if( spacetype in ['P','Lagrange', 'CG'] ):
-        return lagrange( gridview,order,dimRange,**kwargs )
-    elif( spacetype == 'DG' ):
-        return dgonb( gridview, order,dimRange,**kwargs )
+    if( family in ['P','Lagrange', 'CG'] ):
+        return lagrange(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+    elif( family == 'DG' ):
+        return dgonb(view=mesh, order=degree, dimrange=dimrange, **kwargs )
     else:
         raise ValueError('Space with identifier',spacetype,' not known\n')
 
-def VectorFunctionSpace( gridview, spacetype, order=1, dimRange=None, **kwargs ):
+def VectorFunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     if dimRange is None:
-        dimRange = gridview.dimension
-    return FunctionSpace(gridview, spacetype, order, dimRange, **kwargs)
+        dimRange = mesh.dimension
+    return FunctionSpace(mesh, family, degree, dimrange, **kwargs)
 
 # creates a discrete function given a discrete space
 def Function( discreteSpace, name='U', **unused ):
