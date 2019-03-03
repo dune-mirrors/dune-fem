@@ -102,12 +102,11 @@ def errornorm( a, b, normid='L2', **kwargs ):
     except AttributeError:
         pass
     try:
-        order += a.order
+        order += b.order
     except AttributeError:
         pass
-    print("norm order=",order)
     if normid == 'L2':
         error = inner(a - b, a - b)
-        return integrate(grid,error,2*order)
+        return integrate(grid,error,2*order+1)
     else:
         raise ValueError('errornorm with identifier',normid,' not known\n')
