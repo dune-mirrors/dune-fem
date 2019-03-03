@@ -11,7 +11,6 @@
 #include <dune/python/common/fvector.hh>
 
 #include <dune/fempy/pybind11/pybind11.hh>
-#include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 

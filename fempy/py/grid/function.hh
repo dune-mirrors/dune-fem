@@ -206,9 +206,6 @@ namespace Dune
             Python::GenerateTypeName("VirtualizedGridFunction",adapt,MetaType<Value>()),
             Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"});
 
-        if( vgfClass.second )
-          detail::registerGridFunction( scope, vgfClass.first );
-
         typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
         if( !pybind11::already_registered< SpaceType >() )
         {
@@ -217,6 +214,9 @@ namespace Dune
           if (spcCls.second)
             detail::registerFunctionSpace( vgfClass.first, spcCls.first );
         }
+
+        if( vgfClass.second )
+          detail::registerGridFunction( scope, vgfClass.first );
 
         return vgfClass.first;
       }

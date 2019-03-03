@@ -21,6 +21,7 @@
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/common/localcontribution.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>
