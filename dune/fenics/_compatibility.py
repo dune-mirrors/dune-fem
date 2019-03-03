@@ -15,6 +15,8 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
     else:
         return structuredGrid([0,0,0], [1,1,1], [xspacing,yspacing,zspaceing] )
 
+def Constant( value, dimRange=1, **unused ):
+    return as_vector( [value,] * dimRange )
 
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( gridview, spacetype, order=1, dimRange=1, **unused ):
