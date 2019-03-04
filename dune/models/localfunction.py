@@ -173,9 +173,9 @@ class UFLFunctionSource(codegen.ModelClass):
                 + 'return new UFLLocalFunction ( ' + initCall
                 + '); } ), ' + keepAlive + ' );')
 
-        for t, n in zip(self.constantTypes, self.constantNames):
+        for t, n, sn in zip(self.constantTypes, self.constantNames, self.constantShortNames):
             te = "UFLLocalFunction::" + t
-            writer.emit('cls.def_property( "' + n + '", [] ( UFLLocalFunction &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( UFLLocalFunction &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+            writer.emit('cls.def_property( "' + sn + '", [] ( UFLLocalFunction &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( UFLLocalFunction &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
         writer.emit('cls.def_property_readonly( "virtualized", [] ( UFLLocalFunction& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
         writer.closePythonModule(name)

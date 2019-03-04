@@ -61,13 +61,14 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
 
 
-def uflFunction(gridview, name, order, ufl, virtualize=True, *args, **kwargs):
+def uflFunction(gridview, name, order, ufl, virtualize=True, scalar=False, *args, **kwargs):
     Func = dune.models.localfunction.UFLFunction(gridview, name, order,
             ufl, renumbering=None,
             virtualize=virtualize, *args, **kwargs)
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
     func = Func(gridview,name,order,*args,**kwargs)
+    func.scalar = scalar
     return func.as_ufl() if func is not None else None
 
 def discreteFunction(space, name, expr=None, dofVector=None):

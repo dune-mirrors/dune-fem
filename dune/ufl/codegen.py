@@ -388,7 +388,7 @@ class ModelClass():
             raise ValueError("Length of constantNames must match length of constants")
         invalidConstants = [n for n in self._constantNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
         if invalidConstants:
-            raise ValueError('Constant names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
+            raise ValueError('Constant names are not valid C++ identifiers:' + ', '.join(invalidConstants) + '.')
 
         self._coefficientNames = [None,] * len(self._coefficients) if coefficientNames is None else list(coefficientNames)
         self._coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(self._coefficientNames)]
@@ -412,19 +412,23 @@ class ModelClass():
 
     @property
     def constantTypes(self):
-        return [n[0].upper() + n[1:] for n in self._constantNames]
+        return ["Con" + n[0] + n[1:] for n in self._constantNames]
 
     @property
     def constantNames(self):
-        return [n[0].lower() + n[1:] for n in self._constantNames]
+        return ["con" + n[0] + n[1:] for n in self._constantNames]
+
+    @property
+    def constantShortNames(self):
+        return [n[0] + n[1:] for n in self._constantNames]
 
     @property
     def coefficientTypes(self):
-        return ["Coeff" + n[0].upper() + n[1:] for n in self._coefficientNames]
+        return ["Coeff" + n[0] + n[1:] for n in self._coefficientNames]
 
     @property
     def coefficientNames(self):
-        return ["coeff" + n[0].upper() + n[1:] for n in self._coefficientNames]
+        return ["coeff" + n[0] + n[1:] for n in self._coefficientNames]
 
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')

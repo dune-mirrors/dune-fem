@@ -161,7 +161,7 @@ class Source(object):
         else:
             writer.emit('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
 
-        for t, n in zip(integrands.constantTypes, integrands.constantNames):
+        for t, n, ns in zip(integrands.constantTypes, integrands.constantNames, integrands.constantShortNames):
             te = "Integrands::" + t
             writer.emit('cls.def_property( "' + n + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
         writer.emit('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')

@@ -137,13 +137,14 @@ from ufl.index_combination_utils import create_slice_indices
 from ufl.core.multiindex import MultiIndex
 class GridIndexed(Indexed):
     def __init__(self,gc,i):
-        self.scalar = False
+        self.scalar = True
         component = (i,)
         shape = gc.ufl_shape
         all_indices, _, _ = create_slice_indices(component, shape, gc.ufl_free_indices)
         mi = MultiIndex(all_indices)
         Indexed.__init__(self,gc,mi)
         self.__impl__ = gc.gf[i]
+        self.gf = gc
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
         return result
@@ -168,11 +169,14 @@ class GridFunction(ufl.Coefficient):
         if scalar is None:
             try:
                 scalar = gf.scalar
+                # print(scalar,"set from gf attribute")
             except AttributeError:
                 try:
                     scalar = gf.space.scalar
+                    # print(scalar,"set from space attribute")
                 except:
-                    scalar = False
+                    scalar = True
+                    # print(scalar,"not set")
                     # raise AttributeError()
         uflSpace = Space((gf.grid.dimGrid, gf.grid.dimWorld), gf.dimRange, scalar=scalar)
         ufl.Coefficient.__init__(self, uflSpace)

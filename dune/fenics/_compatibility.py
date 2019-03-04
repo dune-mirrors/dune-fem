@@ -17,6 +17,15 @@ def Point(x,y=None,z=None):
             return [x,y]
     else:
         return [x,y,z]
+def BoxMesh( lower, upper, xspacing, yspacing = None, zspaceing = None, **unused ):
+    from dune.grid import structuredGrid
+    if( zspaceing is None ):
+        if( yspacing is None ):
+            return structuredGrid(lower, upper, [xspacing] )
+        else:
+            return structuredGrid(lower, upper, [xspacing,yspacing] )
+    else:
+        return structuredGrid(lower, upper, [xspacing,yspacing,zspaceing] )
 def RectangleMesh( lower, upper, xspacing, yspacing = None, zspaceing = None, **unused ):
     from dune.grid import structuredGrid
     if( zspaceing is None ):
@@ -36,13 +45,13 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
         return RectangleMesh([0,0,0],[1,1,1],xspacing,yspacing,zspacing)
 
 # convenience function for Fenics' Constant
-def Constant( value, **unused ):
-    try:
-        if len(value)>0:
-            return as_vector(value)
-    except:
-        pass
-    return value
+# def Constant( value, **unused ):
+#     try:
+#         if len(value)>0:
+#             return as_vector(value)
+#     except:
+#         pass
+#     return value
 
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
@@ -59,8 +68,8 @@ def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
         raise ValueError('Space with identifier',spacetype,' not known\n')
 
 def VectorFunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
-    if dimRange is None:
-        dimRange = mesh.dimension
+    if dimrange is None:
+        dimrange = mesh.dimension
     return FunctionSpace(mesh, family, degree, dimrange, **kwargs)
 
 # creates a discrete function given a discrete space
@@ -85,8 +94,16 @@ def SpatialCoordinate(cell,**unused):
 
 
 # solve given equation using galerkin scheme and integrands model
-def solve( equation, target, bc = None, solver='gmres', **kwargs):
+def solve( equation, target, bc = None, solver=None, **kwargs):
     from dune.fem.scheme import galerkin
+    from dune.common.checkconfiguration import assertHave, ConfigurationError
+    if solver is None:
+        try:
+            assertHave("HAVE_UMFPACK")
+            solver = ("suitesparse","umfpack")
+        except ConfigurationError:
+            solver = "gmres"
+
     if bc is None:
         problem = equation
     else:
@@ -94,8 +111,8 @@ def solve( equation, target, bc = None, solver='gmres', **kwargs):
             problem = [equation, *bc]
         except TypeError:
             problem = [equation, bc]
+
     scheme = galerkin( problem, target.space, solver, **kwargs)
-            # parameters={"newton.verbose":True,"newton.linear.verbose":True})
     scheme.solve( target=target )
 
 # plot data or grid
@@ -150,23 +167,100 @@ def Expression(cpp_code=None, name="tmp", order=None, view=None, **kwargs):
         cpp_code = [cpp_code]
         dimRange = 0
 
-    x = SpatialCoordinate(view)
-    coeffs = {}
-    namedCoeffs = []
+    uflList = ['acos', 'asin', 'atan', 'cos',
+               'cosh', 'exp',
+               'pi', 'sin', 'sinh', 'sqrt',
+               'tan', 'tanh']
+    # creating a dictionary of safe methods
+    uflDict = dict([(k, globals()[k]) for k in uflList])
+    uflDict["x"] = SpatialCoordinate(view)
     for c in kwargs:
         if not c in ["degree","cell"]:
-            namedCoeffs.append(NamedConstant(view,c))
-            coeffs[c] = "namedCoeffs["+str(len(namedCoeffs)-1)+"]"
-    if len(coeffs)>0:
-        import re
-        coeffs = dict((re.escape(k), v) for k, v in coeffs.items())
-        pattern = re.compile("|".join(coeffs.keys()))
-        cpp_code = [ pattern.sub(lambda m: coeffs[re.escape(m.group(0))], code) for code in cpp_code ]
+            if not isinstance(kwargs[c], Coefficient) and\
+               not isinstance(kwargs[c], Indexed):
+                uflDict[c] = NamedConstant(view,c)
+            else:
+                uflDict[c] = kwargs[c]
     expr = [None,]*max(dimRange,1)
     for i in range(max(dimRange,1)):
-        expr[i] = eval(cpp_code[i])
+        expr[i] = eval(cpp_code[i], {}, uflDict)
+        # expr[i] = eval(cpp_code[i], {"__builtins__":None}, uflDict)
     # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
-    func = uflFunction(view, name, order, expr)
-    for c in namedCoeffs:
-        func.__dict__[c.name] = kwargs[c.name]
-    return func[0] if dimRange==0 else func
+    func = uflFunction(view, name, order, expr, scalar=dimRange==0)
+    for c in kwargs:
+        if not c in ["degree","cell"]:
+            if not isinstance(kwargs[c], Coefficient) and\
+               not isinstance(kwargs[c], Indexed):
+                   getattr(type(func.__impl__), c).fset(func.__impl__, kwargs[c])
+    return func
+
+
+# the following is an adapted version of the code in fenics
+# - should be adapted. This could also be used to replace our 'NamedConstants'
+# It serves a similar concept and also has a name tag. The difference is
+# that it requires an initial value - put that is perhaps reasonable
+import ufl
+import numpy
+class Constant(ufl.Coefficient):
+    constCount = 0
+    def __init__(self, value, cell=None, name=None):
+        """
+        Create constant-valued function with given value.
+
+        *Arguments*
+            value
+                The value may be either a single scalar value, or a
+                tuple/list of values for vector-valued functions, or
+                nested lists or a numpy array for tensor-valued
+                functions.
+            cell
+                Optional argument. A :py:class:`Cell
+                <ufl.Cell>` which defines the geometrical
+                dimensions the Constant is defined for.
+            name
+                Optional argument. A str which overrules the default
+                name of the Constant.
+
+        The data type Constant represents a constant value that is
+        unknown at compile-time. Its values can thus be changed
+        without requiring re-generation and re-compilation of C++
+        code.
+
+        *Examples of usage*
+
+            .. code-block:: python
+
+                p = Constant(pi/4)              # scalar
+                C = Constant((0.0, -1.0, 0.0))  # constant vector
+
+        """
+
+        # TODO: Either take mesh instead of cell, or drop cell and let
+        # grad(c) be undefined.
+        if cell is not None:
+            cell = ufl.as_cell(cell)
+        ufl_domain = None
+
+        array = numpy.array(value)
+        rank = len(array.shape)
+        floats = list(map(float, array.flat))
+
+        # Create UFL element and initialize constant
+        if rank == 0:
+            ufl_element = ufl.FiniteElement("Real", cell, 0)
+        elif rank == 1:
+            ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
+        else:
+            ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
+
+        # Initialize base classes
+        ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
+        ufl.Coefficient.__init__(self, ufl_function_space)
+        if name is None:
+            self.name = "c"+str(Constant.constCount)
+            Constant.constCount += 1
+        else:
+            self.name = name
+
+    def cell(self):
+        return self.ufl_element().cell()
