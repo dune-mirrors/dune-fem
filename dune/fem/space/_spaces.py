@@ -7,15 +7,25 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def dgonb(gridView, order=1, dimrange=None, field="double", storage=None,
+# dimrange parameter in space creation is deprecated!
+def checkDeprecated_dimrange( dimRange, dimrange ):
+    if dimRange is not None:
+        return dimRange
+    elif dimrange is not None:
+        print('parameter dimrange for spaces is deprecated, use dimRange instead!')
+        return dimrange
+    else:
+        return None
+
+def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
           interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-          scalar=False):
+          scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise orthonormal basis functions
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -25,20 +35,22 @@ def dgonb(gridView, order=1, dimrange=None, field="double", storage=None,
 
     from dune.fem.space import module, addStorage, codegen
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
 
-    if dimrange < 1:
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
             "Parameter error in DiscontinuousGalerkinSpace with "+
@@ -50,7 +62,7 @@ def dgonb(gridView, order=1, dimrange=None, field="double", storage=None,
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -59,7 +71,7 @@ def dgonb(gridView, order=1, dimrange=None, field="double", storage=None,
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
@@ -71,13 +83,13 @@ def dgonb(gridView, order=1, dimrange=None, field="double", storage=None,
     # addStorage(spc, storage)
     return spc.as_ufl()
 
-def dgonbhp(gridView, order=1, dimrange=None, field="double", storage=None, scalar=False):
+def dgonbhp(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -87,19 +99,21 @@ def dgonbhp(gridView, order=1, dimrange=None, field="double", storage=None, scal
 
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in hpDG::OrthogonalDiscontinuosGalerkinSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
             "Parameter error in hpDG::OrthogonalDiscontinuousGalerkinSpace with "+
@@ -111,7 +125,7 @@ def dgonbhp(gridView, order=1, dimrange=None, field="double", storage=None, scal
     includes = [ "dune/fem/space/hpdg/orthogonal.hh" ] + gridView._includes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -120,13 +134,13 @@ def dgonbhp(gridView, order=1, dimrange=None, field="double", storage=None, scal
     # addStorage(spc, storage)
     return spc.as_ufl()
 
-def dglegendre(gridView, order=1, dimrange=None, field="double", storage=None, hierarchical=True, scalar=False):
+def dglegendre(gridView, order=1, dimRange=None, field="double", storage=None, hierarchical=True, scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
         hierarchical: is true sort the shape function according to their
@@ -138,14 +152,16 @@ def dglegendre(gridView, order=1, dimrange=None, field="double", storage=None, h
 
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
 
     # if not (len(gridView.indexSet.types(0)) == 1 and
     #         gridView.indexSet.types(0)[0].isCube):
@@ -153,11 +169,11 @@ def dglegendre(gridView, order=1, dimrange=None, field="double", storage=None, h
         raise KeyError(\
             "the `dglegendre' space can only be used with a fully "+
             "quadrilateral grid")
-    if dimrange < 1:
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
             "Parameter error in DiscontinuousGalerkinSpace with "+
@@ -172,7 +188,7 @@ def dglegendre(gridView, order=1, dimrange=None, field="double", storage=None, h
                 if hierarchical else \
                 "Dune::Fem::LegendreDiscontinuousGalerkinSpace"
     typeName = className + "< "\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -181,13 +197,13 @@ def dglegendre(gridView, order=1, dimrange=None, field="double", storage=None, h
     # addStorage(spc, storage)
     return spc.as_ufl()
 
-def dglegendrehp(gridView, order=1, dimrange=None, field="double", storage=None, scalar=False):
+def dglegendrehp(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -197,25 +213,27 @@ def dglegendrehp(gridView, order=1, dimrange=None, field="double", storage=None,
 
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
     # if not (len(gridView.indexSet.types(0)) == 1 and
     #         gridView.indexSet.types(0)[0].isCube):
     if not (gridView.type.isCube):
         raise KeyError(\
             "the `dglegendrehp' space can only be used with a fully "+
             "quadrilateral grid")
-    if dimrange < 1:
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
             "Parameter error in hpDG::HierarchicLegendreDiscontinuousGalerkinSpace with "+
@@ -227,7 +245,7 @@ def dglegendrehp(gridView, order=1, dimrange=None, field="double", storage=None,
     includes = [ "dune/fem/space/hpdg/legendre.hh" ] + gridView._includes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -236,15 +254,15 @@ def dglegendrehp(gridView, order=1, dimrange=None, field="double", storage=None,
     # addStorage(spc, storage)
     return spc.as_ufl()
 
-def dglagrange(gridView, order=1, dimrange=None, field="double", storage=None,
+def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-            scalar=False):
+            scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise lagrange basis function
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -254,19 +272,21 @@ def dglagrange(gridView, order=1, dimrange=None, field="double", storage=None,
 
     from dune.fem.space import module, addStorage, codegen
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in LagrangeDiscontinuosGalerkinSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
             "Parameter error in LagrangeDiscontinuousGalerkinSpace with "+
@@ -279,7 +299,7 @@ def dglagrange(gridView, order=1, dimrange=None, field="double", storage=None,
 
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,
@@ -287,7 +307,7 @@ def dglagrange(gridView, order=1, dimrange=None, field="double", storage=None,
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
@@ -301,15 +321,15 @@ def dglagrange(gridView, order=1, dimrange=None, field="double", storage=None,
     return spc.as_ufl()
 
 
-def lagrange(gridView, order=1, dimrange=None, field="double", storage=None,
+def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-            scalar=False):
+            scalar=False, dimrange=None):
     """create a Lagrange space
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -319,19 +339,21 @@ def lagrange(gridView, order=1, dimrange=None, field="double", storage=None,
 
     from dune.fem.space import module, addStorage, codegen
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if order < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
@@ -343,7 +365,7 @@ def lagrange(gridView, order=1, dimrange=None, field="double", storage=None,
     includes = gridView._includes + [ "dune/fem/space/lagrange.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -352,7 +374,7 @@ def lagrange(gridView, order=1, dimrange=None, field="double", storage=None,
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
@@ -363,15 +385,15 @@ def lagrange(gridView, order=1, dimrange=None, field="double", storage=None,
                     ctorArgs=[gridView])
     return spc.as_ufl()
 
-def lagrangehp(gridView, maxOrder=1, dimrange=None, field="double", storage=None,
+def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
                interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-               scalar=False):
+               scalar=False, dimrange=None):
     """create a Lagrange space
 
     Args:
         gridView: the underlying grid view
         order: polynomial order of the finite element functions
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -381,19 +403,21 @@ def lagrangehp(gridView, maxOrder=1, dimrange=None, field="double", storage=None
 
     from dune.fem.space import module, addStorage, codegen
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if maxOrder < 1:
         raise KeyError(\
             "Parameter error in LagrangeHP with "+
@@ -405,7 +429,7 @@ def lagrangehp(gridView, maxOrder=1, dimrange=None, field="double", storage=None
     includes = gridView._includes + [ "dune/fem/space/padaptivespace/lagrange.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -414,7 +438,7 @@ def lagrangehp(gridView, maxOrder=1, dimrange=None, field="double", storage=None
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
@@ -426,7 +450,7 @@ def lagrangehp(gridView, maxOrder=1, dimrange=None, field="double", storage=None
     # addStorage(spc, storage)
     return spc.as_ufl()
 
-def finiteVolume(gridView, dimrange=None, field="double", storage=None, scalar=False):
+def finiteVolume(gridView, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     """create a finite volume space
 
     A finite volume space is a discontinuous function space, using the element
@@ -434,7 +458,7 @@ def finiteVolume(gridView, dimrange=None, field="double", storage=None, scalar=F
 
     Args:
         gridView: the underlying grid view
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -444,21 +468,26 @@ def finiteVolume(gridView, dimrange=None, field="double", storage=None, scalar=F
 
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    #if dimrange is not None:
+    #    raise ValueError('parameter dimrange for spaces is deprecated, use dimRange instead!')
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
-        raise KeyError("invalid dirRange: " + str(dimrange) + " (must be >= 1)")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
+        raise KeyError("invalid dirRange: " + str(dimRange) + " (must be >= 1)")
     if field == "complex":
         field = "std::complex<double>"
 
     includes = ["dune/fem/space/finitevolume.hh" ] + gridView._includes
-    functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridView.dimWorld) + ", " + str(dimrange) + " >"
+    functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridView.dimWorld) + ", " + str(dimRange) + " >"
     typeName = "Dune::Fem::FiniteVolumeSpace< " + functionSpaceType + ", Dune::FemPy::GridPart< " + gridView._typeName + " > >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -468,12 +497,12 @@ def finiteVolume(gridView, dimrange=None, field="double", storage=None, scalar=F
     return spc.as_ufl()
 
 
-def p1Bubble(gridView, dimrange=None, field="double", order=1, storage=None, scalar=False):
+def p1Bubble(gridView, dimRange=None, field="double", order=1, storage=None, scalar=False, dimrange=None):
     """create a P1 space enriched with element bubble functions
 
     Args:
         gridView: the underlying grid part
-        dimrange: dimension of the range space
+        dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
 
@@ -483,19 +512,21 @@ def p1Bubble(gridView, dimrange=None, field="double", order=1, storage=None, sca
 
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
         raise KeyError(\
             "Parameter error in P1BubbleSpace with "+
-            "dimrange=" + str(dimrange) + ": " +\
-            "dimrange has to be greater or equal to 1")
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
     if not order == 1:
         raise KeyError(\
             "Parameter error in P1BubbleSpace with "+
@@ -507,7 +538,7 @@ def p1Bubble(gridView, dimrange=None, field="double", order=1, storage=None, sca
     includes = [ "dune/fem/space/p1bubble.hh" ] + gridView._includes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::BubbleElementSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -643,17 +674,19 @@ def product(*spaces, **kwargs):
                         None,None,None] )
     return spc.as_ufl()
 
-def bdm(gridView, order=1, field="double", storage=None, scalar=False):
+def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
     if order < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
@@ -673,17 +706,19 @@ def bdm(gridView, order=1, field="double", storage=None, scalar=False):
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def raviartThomas(gridView, order=1, field="double", storage=None, scalar=False):
+def raviartThomas(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
     if order > 2:
         raise KeyError(\
             "Parameter error in RTSpace with "+
@@ -703,26 +738,28 @@ def raviartThomas(gridView, order=1, field="double", storage=None, scalar=False)
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def rannacherTurek(gridView, dimrange=None, field="double", storage=None, scalar=False):
+def rannacherTurek(gridView, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
-    if dimrange is None:
-        dimrange = 1
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
         scalar = True
 
-    if dimrange > 1 and scalar:
+    if dimRange > 1 and scalar:
         raise KeyError(\
-                "trying to set up a scalar space with dimrange = " +\
-                str(dimrange) + ">1")
-    if dimrange < 1:
-        raise KeyError("invalid dimrange: " + str(dimrange) + " (must be >= 1)")
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
+        raise KeyError("invalid dimRange: " + str(dimRange) + " (must be >= 1)")
     if field == "complex":
         field = "std::complex<double>"
 
     includes = [ "dune/fem/space/second.hh" ] + gridView._includes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::RannacherTurekDiscreteFunctionSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
 
     spc = module(field, includes, typeName, storage=storage,

@@ -35,6 +35,7 @@ def interpolate(space, expr, name=None, **kwargs):
         name = expr.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=expr, **kwargs)
+
 def project(space, func, name=None, **kwargs):
     """project a (discrete) function into a discrete function space
 
