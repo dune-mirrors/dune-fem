@@ -163,7 +163,7 @@ class Source(object):
 
         for t, n, ns in zip(integrands.constantTypes, integrands.constantNames, integrands.constantShortNames):
             te = "Integrands::" + t
-            writer.emit('cls.def_property( "' + n + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+            writer.emit('cls.def_property( "' + ns + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
         writer.emit('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')
         hasDirichletBC = 'true' if integrands.hasDirichletBoundary else 'false'
         writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return '+hasDirichletBC+';});')
