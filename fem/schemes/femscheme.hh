@@ -213,7 +213,8 @@ protected:
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
   void setZeroConstraints( ... ) const { }
-  std::enable_if_t<addDirichletBC,void>
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
   void setModelConstraints( ... ) const { }
   ModelType &model_;   // the mathematical model
