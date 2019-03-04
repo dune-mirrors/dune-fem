@@ -256,7 +256,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     except:
         return None
     _, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0}
+    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
     expr = replace(expr,coeff)
 
     if len(expr.ufl_shape) > 1:

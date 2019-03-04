@@ -116,9 +116,9 @@ def NamedCoefficient(functionSpace, name, count=None):
     return coefficient
 def NamedConstant(domain, name, dimRange=None, count=None):
     if dimRange is None:
-        constant = ufl.Constant(domain, count)
+        constant = ufl.Constant(cell(domain), count)
     else:
-        constant = ufl.VectorConstant(domain, dim=dimRange, count=count)
+        constant = ufl.VectorConstant(cell(domain), dim=dimRange, count=count)
     constant.name = name
     return constant
 
@@ -165,9 +165,6 @@ class GridFunction(ufl.Coefficient):
         self.__impl__ = gf
         __module__ = self.gf.__module__
         self.GridFunctionClass = gf.__class__
-        grid = gf.grid
-
-        dimRange = gf.dimRange
         if scalar is None:
             try:
                 scalar = gf.scalar
@@ -177,10 +174,13 @@ class GridFunction(ufl.Coefficient):
                 except:
                     scalar = False
                     # raise AttributeError()
-        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange, scalar=scalar)
+        uflSpace = Space((gf.grid.dimGrid, gf.grid.dimWorld), gf.dimRange, scalar=scalar)
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
-        return FemSpace(self.gf.space)
+        try:
+            return FemSpace(self.gf.space)
+        except TypeError or AttributeError:
+            return Space(self.gf.grid,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
         return GridFunction(self.gf,scalar=False)
 

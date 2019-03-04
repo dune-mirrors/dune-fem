@@ -4,19 +4,36 @@ import dune.common
 from dune.ufl import *
 from ufl import *
 from ufl.log import UFLException
-from dune.ufl import DirichletBC
+from dune.ufl import DirichletBC, NamedConstant
 from dune.ufl import cell as cell_
+from dune.fem.function import uflFunction
 
 # return a structured mesh for the unit square
-def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
+def Point(x,y=None,z=None):
+    if z is None:
+        if y is None:
+            return [x]
+        else:
+            return [x,y]
+    else:
+        return [x,y,z]
+def RectangleMesh( lower, upper, xspacing, yspacing = None, zspaceing = None, **unused ):
     from dune.grid import structuredGrid
     if( zspaceing is None ):
         if( yspacing is None ):
-            return structuredGrid([0], [1], [xspacing] )
+            return structuredGrid(lower, upper, [xspacing] )
         else:
-            return structuredGrid([0,0], [1,1], [xspacing,yspacing] )
+            return structuredGrid(lower, upper, [xspacing,yspacing] )
     else:
-        return structuredGrid([0,0,0], [1,1,1], [xspacing,yspacing,zspaceing] )
+        return structuredGrid(lower, upper, [xspacing,yspacing,zspaceing] )
+def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
+    if( zspaceing is None ):
+        if( yspacing is None ):
+            return RectangleMesh([0],[1],xspacing)
+        else:
+            return RectangleMesh([0,0],[1,1],xspacing,yspacing)
+    else:
+        return RectangleMesh([0,0,0],[1,1,1],xspacing,yspacing,zspacing)
 
 # convenience function for Fenics' Constant
 def Constant( value, **unused ):
@@ -47,8 +64,16 @@ def VectorFunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     return FunctionSpace(mesh, family, degree, dimrange, **kwargs)
 
 # creates a discrete function given a discrete space
+_counter = -1
 def Function( discreteSpace, name='U', **unused ):
-    return discreteSpace.interpolate([0,]*discreteSpace.dimRange, name)
+    global _counter
+    _counter += 1
+    return discreteSpace.interpolate([0,]*discreteSpace.dimRange,
+            name+"_"+str(_counter))
+def interpolate(expr, discreteSpace, name="U", **unuser ):
+    global _counter
+    _counter += 1
+    return discreteSpace.interpolate(expr, name+"_"+str(_counter))
 
 SpatialCoordinate_ = SpatialCoordinate
 def SpatialCoordinate(cell,**unused):
@@ -69,8 +94,8 @@ def solve( equation, target, bc = None, solver='gmres', **kwargs):
             problem = [equation, *bc]
         except TypeError:
             problem = [equation, bc]
-    scheme = galerkin( problem, target.space, solver, **kwargs,
-            parameters={"newton.verbose":True,"newton.linear.verbose":True})
+    scheme = galerkin( problem, target.space, solver, **kwargs)
+            # parameters={"newton.verbose":True,"newton.linear.verbose":True})
     scheme.solve( target=target )
 
 # plot data or grid
@@ -82,6 +107,7 @@ def interactive():
     pyplot.show()
 
 def errornorm( a, b, normid='L2', **kwargs ):
+    from math import sqrt
     from dune.fem.function import integrate
     grid = kwargs.get("grid",None)
     order = kwargs.get("order",0)
@@ -107,6 +133,40 @@ def errornorm( a, b, normid='L2', **kwargs ):
         pass
     if normid == 'L2':
         error = inner(a - b, a - b)
-        return integrate(grid,error,2*order+1)
+        return sqrt( integrate(grid,error,2*order+1)[0] )
     else:
         raise ValueError('errornorm with identifier',normid,' not known\n')
+
+def Expression(cpp_code=None, name="tmp", order=None, view=None, **kwargs):
+    if order is None:
+        order = kwargs.get("degree",1)
+    if view is None:
+        view = kwargs.get("cell",None)
+    if view is None:
+        raise ValueError("no view provided")
+    if type(cpp_code) in [tuple,list]:
+        dimRange = len(cpp_code)
+    else:
+        cpp_code = [cpp_code]
+        dimRange = 0
+
+    x = SpatialCoordinate(view)
+    coeffs = {}
+    namedCoeffs = []
+    for c in kwargs:
+        if not c in ["degree","cell"]:
+            namedCoeffs.append(NamedConstant(view,c))
+            coeffs[c] = "namedCoeffs["+str(len(namedCoeffs)-1)+"]"
+    if len(coeffs)>0:
+        import re
+        coeffs = dict((re.escape(k), v) for k, v in coeffs.items())
+        pattern = re.compile("|".join(coeffs.keys()))
+        cpp_code = [ pattern.sub(lambda m: coeffs[re.escape(m.group(0))], code) for code in cpp_code ]
+    expr = [None,]*max(dimRange,1)
+    for i in range(max(dimRange,1)):
+        expr[i] = eval(cpp_code[i])
+    # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
+    func = uflFunction(view, name, order, expr)
+    for c in namedCoeffs:
+        func.__dict__[c.name] = kwargs[c.name]
+    return func[0] if dimRange==0 else func
