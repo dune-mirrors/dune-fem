@@ -115,10 +115,14 @@ def NamedCoefficient(functionSpace, name, count=None):
     coefficient.name = name
     return coefficient
 def NamedConstant(domain, name, dimRange=None, count=None):
+    try:
+        domainCell = domain.cell()
+    except AttributeError:
+        domainCell = cell(domain)
     if dimRange is None:
-        constant = ufl.Constant(cell(domain), count)
+        constant = ufl.Constant(domainCell, count)
     else:
-        constant = ufl.VectorConstant(cell(domain), dim=dimRange, count=count)
+        constant = ufl.VectorConstant(domainCell, dim=dimRange, count=count)
     constant.name = name
     return constant
 
