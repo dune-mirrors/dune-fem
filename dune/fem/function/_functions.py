@@ -11,63 +11,63 @@ import dune.models.localfunction
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
-def registerGridFunctions(gridview):
+def registerGridFunctions(gridView):
     from dune.generator import builder
-    typeName = gridview._typeName
+    typeName = gridView._typeName
     moduleName = "femgridfunctions_" + hashIt(typeName)
 
-    includes = ["dune/fempy/py/grid/gridpart.hh", "dune/fempy/py/grid/function.hh"] + gridview._includes
+    includes = ["dune/fempy/py/grid/gridpart.hh", "dune/fempy/py/grid/function.hh"] + gridView._includes
 
     source = "#include <config.h>\n\n"
     source += "".join(["#include <" + i + ">\n" for i in includes])
     source += "\n"
     source += "PYBIND11_MODULE( " + moduleName + ", module )\n"
     source += "{\n"
-    source += "  typedef Dune::FemPy::GridPart< " + gridview._typeName + "> GridPart;\n"
+    source += "  typedef Dune::FemPy::GridPart< " + gridView._typeName + "> GridPart;\n"
     source += '  module.def( "globalGridFunction", Dune::FemPy::defGlobalGridFunction< GridPart >( module, "GlobalGridFunction", std::make_integer_sequence< int, 11 >() ));\n'
     source += '  module.def( "localGridFunction", Dune::FemPy::defLocalGridFunction< GridPart > ( module, "LocalGridFunction",  std::make_integer_sequence< int, 11 >() ));\n'
     source += "}\n"
 
     return builder.load(moduleName, source, "gridfunctions")
 
-def globalFunction(gridview, name, order, value):
-    module = registerGridFunctions(gridview)
-    return module.globalGridFunction(gridview,name,order,value).as_ufl()
+def globalFunction(gridView, name, order, value):
+    module = registerGridFunctions(gridView)
+    return module.globalGridFunction(gridView,name,order,value).as_ufl()
 
 
-def localFunction(gridview, name, order, value):
-    module = registerGridFunctions(gridview)
-    return module.localGridFunction(gridview,name,order,value).as_ufl()
+def localFunction(gridView, name, order, value):
+    module = registerGridFunctions(gridView)
+    return module.localGridFunction(gridView,name,order,value).as_ufl()
 
 
-def levelFunction(gridview,name="levels"):
-    @dune.grid.gridFunction(gridview,name=name)
+def levelFunction(gridView,name="levels"):
+    @dune.grid.gridFunction(gridView,name=name)
     def levelFunction(e,x):
         return [e.level]
     return levelFunction
 
 
-def partitionFunction(gridview,name="rank"):
+def partitionFunction(gridView,name="rank"):
     class Partition(object):
         def __init__(self,rank):
             self.rank = rank
         def __call__(self,en,x):
             return [self.rank]
-    return localFunction(gridview, name, 0, Partition(gridview.comm.rank))
+    return localFunction(gridView, name, 0, Partition(gridView.comm.rank))
 
 
-def cppFunction(gridview, name, order, code, *args, **kwargs):
+def cppFunction(gridView, name, order, code, *args, **kwargs):
     raise NotImplementedError("cpp function is not working at the moment")
-    return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
+    return dune.models.localfunction.generatedFunction(gridView, name, order, code, *args, **kwargs)
 
 
-def uflFunction(gridview, name, order, ufl, virtualize=True, scalar=False, *args, **kwargs):
-    Func = dune.models.localfunction.UFLFunction(gridview, name, order,
+def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args, **kwargs):
+    Func = dune.models.localfunction.UFLFunction(gridView, name, order,
             ufl, renumbering=None,
             virtualize=virtualize, *args, **kwargs)
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
-    func = Func(gridview,name,order,*args,**kwargs)
+    func = Func(gridView,name,order,*args,**kwargs)
     func.scalar = scalar
     return func.as_ufl() if func is not None else None
 
