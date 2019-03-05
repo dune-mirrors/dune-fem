@@ -11,6 +11,8 @@ from dune.deprecate import deprecated
 # ----
 
 def cell(dimDomainOrGrid):
+    if isinstance(dimDomainOrGrid,ufl.Cell):
+        return dimDomainOrGrid
     try:
         dimWorld = int(dimDomainOrGrid.dimWorld)
         dimDomain = int(dimDomainOrGrid.dimGrid)

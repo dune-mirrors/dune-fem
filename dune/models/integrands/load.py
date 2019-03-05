@@ -1,6 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 from ufl import Form, Coefficient, TrialFunction, TestFunction, replace
+from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 
 from dune.common.compatibility import isString
@@ -206,7 +207,15 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
         # added for dirichlet treatment same as elliptic model
         dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
 
-        uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
+        _, coeff_ = extract_arguments_and_coefficients(form)
+        coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+        form = replace(form,coeff)
+
+        uflExpr = [form]
+        for dBC in dirichletBCs:
+            _, coeff_ = extract_arguments_and_coefficients(dBC.ufl_value)
+            coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+            uflExpr += [replace(dBC.ufl_value,coeff)]
 
         derivatives = gatherDerivatives(form, [phi, u])
 
