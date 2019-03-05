@@ -9,10 +9,11 @@ import dune.common.checkconfiguration as checkconfiguration
 
 # dimrange parameter in space creation is deprecated!
 def checkDeprecated_dimrange( dimRange, dimrange ):
+    import warnings
     if dimRange is not None:
         return dimRange
     elif dimrange is not None:
-        print('parameter dimrange for spaces is deprecated, use dimRange instead!')
+        warnings.warn('DiscreteFunctionSpace: parameter dimrange for spaces is deprecated, use dimRange instead!\n')
         return dimrange
     else:
         return None
