@@ -121,6 +121,11 @@ namespace Dune
           array.dofVector()[ newIndex][ i ] = array.dofVector()[ oldIndex ][ i ];
         */
       }
+
+      static void initialize( ArrayType& array, const int /* start */ , const int /* end */ )
+      {
+        DUNE_THROW(NotImplemented,"initialize is to be implemented");
+      }
     };
 
 
