@@ -75,13 +75,13 @@ def loadBalance(first, *args):
 def mark(indicator, refineTolerance, coarsenTolerance=0,
          minLevel=0, maxLevel=None):
     try:
-        if not indicator.space.grid.canAdapt:
+        if not indicator.grid.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
     except:
         raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return indicator.space.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+    return indicator.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
 def doerflerMark(indicator, tolerance, maxLevel=None):
     try:
