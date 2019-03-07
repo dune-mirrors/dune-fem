@@ -112,9 +112,9 @@ namespace Dune
             {
               int measure = errorMeasure();
               if (measure == 0)
-                tolerance_ = absoluteTol();
+                tolerance_ = absoluteTol__();
               else
-                tolerance_ = reductionTol();
+                tolerance_ = reductionTol__();
             }
             else tolerance_ = defaultTol; // no parameter set
           }
@@ -130,23 +130,7 @@ namespace Dune
 
 
       [[ deprecated ]]
-      virtual double absoluteTol ( )  const
-      {
-        if( absoluteTol_ < 0 )
-        {
-          if(parameter_.exists(keyPrefix_ + "linabstol"))
-          {
-            std::cout << "WARNING: Parameter " + keyPrefix_ + "linabstol is deprecated. Please use " + keyPrefix_ + "absolutetol instead." << std::endl;
-            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ + "linabstol");
-          }
-          else
-          {
-            std::cout << "WARNING: Parameter " + keyPrefix_ + "absolutetol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
-            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
-          }
-        }
-        return absoluteTol_;
-      }
+      virtual double absoluteTol ( )  const { return absoluteTol__(); }
 
       [[ deprecated ]]
       virtual void setAbsoluteTol ( const double eps )
@@ -156,23 +140,7 @@ namespace Dune
       }
 
       [[ deprecated ]]
-      virtual double reductionTol (  ) const
-      {
-        if( reductionTol_ < 0 )
-        {
-          if(parameter_.exists(keyPrefix_ + "linreduction"))
-          {
-            std::cout << "WARNING: Parameter " + keyPrefix_ +"linreduction is deprecated. Please use " + keyPrefix_ + "reductiontol instead." << std::endl;
-            reductionTol_ =  parameter_.getValue< double >(keyPrefix_ + "linreduction");
-          }
-          else
-          {
-            std::cout << "WARNING: Parameter " + keyPrefix_ +"reductiontol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
-            reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-8 );
-          }
-        }
-        return reductionTol_;
-      }
+      virtual double reductionTol (  ) const { return reductionTol__(); }
 
       [[ deprecated ]]
       virtual void setReductionTol ( const double eps )
@@ -312,6 +280,42 @@ namespace Dune
       }
 
      private:
+      virtual double absoluteTol__ ( )  const
+      {
+        if( absoluteTol_ < 0 )
+        {
+          if(parameter_.exists(keyPrefix_ + "linabstol"))
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ + "linabstol is deprecated. Please use " + keyPrefix_ + "absolutetol instead." << std::endl;
+            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ + "linabstol");
+          }
+          else
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ + "absolutetol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
+            absoluteTol_ =  parameter_.getValue< double >(keyPrefix_ +  "absolutetol", 1e-8 );
+          }
+        }
+        return absoluteTol_;
+      }
+
+      virtual double reductionTol__ (  ) const
+      {
+        if( reductionTol_ < 0 )
+        {
+          if(parameter_.exists(keyPrefix_ + "linreduction"))
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ +"linreduction is deprecated. Please use " + keyPrefix_ + "reductiontol instead." << std::endl;
+            reductionTol_ =  parameter_.getValue< double >(keyPrefix_ + "linreduction");
+          }
+          else
+          {
+            std::cout << "WARNING: Parameter " + keyPrefix_ +"reductiontol is deprecated. Please use " + keyPrefix_ + "tolerance instead." << std::endl;
+            reductionTol_ = parameter_.getValue< double >( keyPrefix_ + "reductiontol", 1e-8 );
+          }
+        }
+        return reductionTol_;
+      }
+
       mutable int    verbose_       = -1;
       mutable int    maxIterations_ = -1;
       mutable double absoluteTol_   = -1.;
