@@ -174,7 +174,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException, "AMGXInverseOperator only works with PetscLinearOperator in non-blocked mode!");
 
           // attach Matrix to linear solver context
-          Mat& A = const_cast<Mat &> (assembledOperator_->petscMatrix());
+          Mat& A = const_cast<Mat &> (assembledOperator_->exportMatrix());
 
           // set matrix
           amgXSolver_->setA( A );
