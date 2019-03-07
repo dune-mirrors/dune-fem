@@ -1,3 +1,4 @@
+#if 0
 #ifndef DUNE_FEM_SOLVER_ISTL_HH
 #define DUNE_FEM_SOLVER_ISTL_HH
 
@@ -681,3 +682,5 @@ namespace Dune
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SOLVER_ISTL_HH
+
+#endif

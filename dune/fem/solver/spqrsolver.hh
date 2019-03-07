@@ -14,6 +14,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
+#include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/solver/inverseoperatorinterface.hh>
 
 #if HAVE_SUITESPARSE_SPQR

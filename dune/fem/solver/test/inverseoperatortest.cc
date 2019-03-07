@@ -487,5 +487,7 @@ int main(int argc, char** argv)
   }
 #endif
 
+  //Dune::Fem::Parameter::write( "param", ".txt", true );
+
   return pass ? 0 : 1;
 }

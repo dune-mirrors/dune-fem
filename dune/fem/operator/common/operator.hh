@@ -1,7 +1,10 @@
 #ifndef DUNE_FEM_OPERATOR_HH
 #define DUNE_FEM_OPERATOR_HH
 
+#include <cassert>
 #include <typeindex>
+
+#include <dune/common/exceptions.hh>
 
 #include <dune/fem/version.hh>
 #include <dune/fem/operator/common/mapping.hh>
