@@ -208,7 +208,6 @@ namespace Dune
       //! print matrix
       void print(std::ostream& s=std::cout, unsigned int offset=0) const
       {
-        std::size_t pos(0);
         for(std::size_t row=0; row<dim_[0]; ++row)
         {
           const size_type endrow = endRow( row );
