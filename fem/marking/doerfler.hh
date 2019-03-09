@@ -150,6 +150,7 @@ namespace Dune
         double gamma = 1;
         double nu = 0.05;
         double sum = 0;
+        double oldSum = -1;
         while ( sum < (1-tolerance)*(1-tolerance)*sumIndicator )
         {
           gamma -= nu;
@@ -159,13 +160,13 @@ namespace Dune
 
             const auto &gridEntity = Dune::Fem::gridEntity(e);
             int marked = grid.getMark( gridEntity );
-            if (marked==1) continue;
+            // if (marked==1) continue;
 
             localIndicator.bind(e);
             const auto &center = ReferenceElements::general( e.type() ).position(0,0);
             localIndicator.evaluate(center,value);
             double eta = value[0];
-            if (eta > gamma*sumIndicator && e.level()<maxLevel)
+            if (eta > gamma*sumIndicator && (e.level()<maxLevel || maxLevel==-1))
             {
               refMarked += grid.mark(Marker::refine, gridEntity);
               sum += eta;
@@ -173,14 +174,12 @@ namespace Dune
             else
               grid.mark(Marker::keep, gridEntity);
           }
+          if (std::abs(oldSum-sum)<1e-15) break;
         }
         return std::make_pair(refMarked,0);
       }
 
     } // end namespace GridAdaptation
-
-    // Backwards compatibility
-    using GridAdaptation :: doerflerMarking;
 
   } // namespace Fem
 
