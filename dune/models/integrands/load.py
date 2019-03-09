@@ -17,7 +17,7 @@ from .ufl import _compileUFL
 from .model import Integrands
 
 
-def init(integrands, *args, **kwargs):
+def init(integrands, source, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
     coefficientNames = integrands._coefficientNames
     if len(args) == 1 and isinstance(args[0], dict):
@@ -71,6 +71,11 @@ def init(integrands, *args, **kwargs):
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
     integrands.base.__init__(integrands, *args, **kwargs)
+
+    for c in source.constantList:
+        if hasattr(c,"name") and hasattr(c,"value"):
+            assert hasattr(integrands,c.name)
+            getattr(type(integrands), c.name).fset(integrands, c.value)
 
 
 def setConstant(integrands, index, value):
@@ -204,18 +209,23 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
         if not isinstance(form, Form):
             raise ValueError("ufl.Form or ufl.Equation expected.")
 
+        _, coeff_ = extract_arguments_and_coefficients(form)
+        coeff_ = set(coeff_)
+
         # added for dirichlet treatment same as elliptic model
         dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
-
-        _, coeff_ = extract_arguments_and_coefficients(form)
+        # remove the dirichletBCs
+        arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
+        for dBC in dirichletBCs:
+            _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
+            coeff_ |= set(coeff__)
         coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
-        form = replace(form,coeff)
 
+        form = replace(form,coeff)
         uflExpr = [form]
         for dBC in dirichletBCs:
-            _, coeff_ = extract_arguments_and_coefficients(dBC.ufl_value)
-            coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
-            uflExpr += [replace(dBC.ufl_value,coeff)]
+            arg.append(dBC.replace(coeff))
+            uflExpr += [dBC.ufl_value] # arg[-1].ufl_value]
 
         derivatives = gatherDerivatives(form, [phi, u])
 
@@ -255,7 +265,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
     class Model(module.Integrands):
         def __init__(self, *args, **kwargs):
             self.base = module.Integrands
-            init(self,*args,**kwargs)
+            init(self,integrands,*args,**kwargs)
 
     setattr(Model, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
     if renumbering is not None:

@@ -95,7 +95,6 @@ class CodeGenerator(MultiFunction):
         except KeyError:
             pass
 
-        # print('Warning: ' + ('Constant ' if expr.is_cellwise_constant() else 'Coefficient ') + str(expr) + ' not predefined.')
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
             var = Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx)
@@ -389,6 +388,7 @@ class ModelClass():
         invalidConstants = [n for n in self._constantNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
         if invalidConstants:
             raise ValueError('Constant names are not valid C++ identifiers:' + ', '.join(invalidConstants) + '.')
+        self._constantValues = [ None if not hasattr(c,"value") else c.value for c in self.constantList ]
 
         self._coefficientNames = [None,] * len(self._coefficients) if coefficientNames is None else list(coefficientNames)
         self._coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(self._coefficientNames)]
@@ -421,6 +421,13 @@ class ModelClass():
     @property
     def constantShortNames(self):
         return [n[0] + n[1:] for n in self._constantNames]
+
+    @property
+    def constantValues(self):
+        return [str(0.) if v is None else\
+                str(v) if not hasattr(v,"__len__") else\
+                    str(list(v)).replace("[","{").replace("]","}")\
+                for v in self._constantValues]
 
     @property
     def coefficientTypes(self):
@@ -577,8 +584,9 @@ class ModelClass():
         init = self.ctor_init + init
         args.append(Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()')))
         constructor = Constructor(args=args, init=init)
-        for idx, cppType in enumerate(self.constantTypes):
-            constructor.append(assign(get(idx)(constants_), make_shared(cppType)()))
+        for idx, (cppType, value) in enumerate(zip(self.constantTypes, self.constantValues)):
+            constructor.append(assign(get(idx)(constants_),
+                make_shared(cppType)(cppType+"("+value+")")))
         for idx, (name, cppType) in enumerate(zip(self._parameterNames, self.constantTypes)):
             if name is not None:
                 constructor.append(assign(dereference(get(idx)(constants_)), UnformattedExpression('auto', arg_param.name + '.getValue< ' + cppType + ' >( "' + name + '" )', uses=[arg_param])))

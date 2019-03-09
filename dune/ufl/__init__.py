@@ -123,8 +123,10 @@ def NamedConstant(domain, name, dimRange=None, count=None):
         domainCell = cell(domain)
     if dimRange is None:
         constant = ufl.Constant(domainCell, count)
+        constant.values = 0
     else:
         constant = ufl.VectorConstant(domainCell, dim=dimRange, count=count)
+        constant.values = (0,)*dimRange
     constant.name = name
     return constant
 
@@ -172,7 +174,7 @@ class GridFunction(ufl.Coefficient):
         self.__impl__ = gf
         __module__ = self.gf.__module__
         self.GridFunctionClass = gf.__class__
-        if scalar is None:
+        if scalar is None and gf.dimRange == 1:
             try:
                 scalar = gf.scalar
                 # print(scalar,"set from gf attribute")
@@ -289,6 +291,10 @@ class DirichletBC:
             self.ufl_value = value
     def __str__(self):
         return str(self.ufl_value)
+    def replace(self,dictionary):
+        return DirichletBC(self.functionSpace,
+                  ufl.replace(self.ufl_value,dictionary),
+                  self.subDomain)
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!

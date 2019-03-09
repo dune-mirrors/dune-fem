@@ -57,13 +57,13 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
 def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     from dune.fem.space import lagrange, dgonb, bdm, raviartThomas
     if( family in ['P','Lagrange', 'CG'] ):
-        return lagrange(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+        return lagrange(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'DG' ):
-        return dgonb(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+        return dgonb(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'BDM' ):
-        return bdm(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+        return bdm(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'RT' ):
-        return raviarThomas(view=mesh, order=degree, dimrange=dimrange, **kwargs )
+        return raviarThomas(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     else:
         raise ValueError('Space with identifier',spacetype,' not known\n')
 
@@ -154,13 +154,17 @@ def errornorm( a, b, normid='L2', **kwargs ):
     else:
         raise ValueError('errornorm with identifier',normid,' not known\n')
 
-def Expression(cpp_code=None, name="tmp", order=None, view=None, **kwargs):
-    if order is None:
-        order = kwargs.get("degree",1)
-    if view is None:
-        view = kwargs.get("cell",None)
-    if view is None:
-        raise ValueError("no view provided")
+def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
+    if name is None:
+        global _counter
+        _counter += 1
+        name = "expr"+str(_counter)
+    if degree is None:
+        degree = kwargs.get("order",1)
+    if mesh is None:
+        mesh = kwargs.get("cell",None)
+    if mesh is None:
+        raise ValueError("no mesh provided")
     if type(cpp_code) in [tuple,list]:
         dimRange = len(cpp_code)
     else:
@@ -173,12 +177,16 @@ def Expression(cpp_code=None, name="tmp", order=None, view=None, **kwargs):
                'tan', 'tanh']
     # creating a dictionary of safe methods
     uflDict = dict([(k, globals()[k]) for k in uflList])
-    uflDict["x"] = SpatialCoordinate(view)
+    uflDict["x"] = SpatialCoordinate(mesh)
     for c in kwargs:
-        if not c in ["degree","cell"]:
+        if not c in ["order","cell"]:
             if not isinstance(kwargs[c], Coefficient) and\
                not isinstance(kwargs[c], Indexed):
-                uflDict[c] = NamedConstant(view,c)
+                if hasattr(ufl.Coefficient,c):
+                    raise AttributeError("can not name a constant "+c\
+                            +" this will lead to conflicts with existing"\
+                            +" attributes on the ufl.Coefficient class")
+                uflDict[c] = NamedConstant(mesh,c)
             else:
                 uflDict[c] = kwargs[c]
     expr = [None,]*max(dimRange,1)
@@ -186,11 +194,12 @@ def Expression(cpp_code=None, name="tmp", order=None, view=None, **kwargs):
         expr[i] = eval(cpp_code[i], {}, uflDict)
         # expr[i] = eval(cpp_code[i], {"__builtins__":None}, uflDict)
     # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
-    func = uflFunction(view, name, order, expr, scalar=dimRange==0)
+    func = uflFunction(mesh, name, degree, expr, scalar=dimRange==0)
     for c in kwargs:
-        if not c in ["degree","cell"]:
+        if not c in ["order","cell"]:
             if not isinstance(kwargs[c], Coefficient) and\
                not isinstance(kwargs[c], Indexed):
+                   assert hasattr(type(func.__impl__),c)
                    getattr(type(func.__impl__), c).fset(func.__impl__, kwargs[c])
     return func
 
@@ -261,6 +270,16 @@ class Constant(ufl.Coefficient):
             Constant.constCount += 1
         else:
             self.name = name
+        self._value = value
 
     def cell(self):
         return self.ufl_element().cell()
+
+    def values(self):
+        return self._value
+    @property
+    def value(self):
+        return self._value
+    def assign(self,v):
+        assert type(self._value) == type(v)
+        self._value = v
