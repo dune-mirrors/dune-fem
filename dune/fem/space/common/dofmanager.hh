@@ -101,17 +101,6 @@ namespace Dune
       {
         array[ newIndex ] = array[ oldIndex ];
       }
-
-
-      /** \brief initialize a chunk of the array with a given value */
-      static inline
-      void initialize( ArrayType& array, const int start, const int end, const ValueType& val = ValueType(0) )
-      {
-        for( int i=start; i<end; ++i )
-        {
-          array[ i ] = val;
-        }
-      }
     };
 
     ///////////////////////////////////////////////////////////////////////
@@ -348,8 +337,6 @@ namespace Dune
 
       typedef DofManager<GridImp> DofManagerType;
 
-      typedef SpecialArrayFeatures< DofArrayType > SpecialArrayFeaturesType;
-
       // reference to dof manager
       DofManagerType &dm_;
 
@@ -391,7 +378,7 @@ namespace Dune
         dm_.addDofStorage( *this );
 
         // set memory over estimate factor, only for DofArray
-        SpecialArrayFeaturesType::setMemoryFactor(array_,dm_.memoryFactor());
+        SpecialArrayFeatures<DofArrayType>::setMemoryFactor(array_,dm_.memoryFactor());
       }
 
       //! \brief destructor deleting MemObject from resize and reserve List
@@ -420,7 +407,7 @@ namespace Dune
         resize( std::integral_constant< bool, Capabilities::isAdaptiveDofMapper< MapperType >::v >(), enlargeOnly );
       }
 
-      //! reserve memory for what is coming
+      //! reserve memory for what is comming
       inline void reserve ( const int needed )
       {
         // if index set is compressible, then add requested size
@@ -475,7 +462,7 @@ namespace Dune
 
                 assert( newIndex < nSize );
                 // implements array_[ newIndex ] = array_[ oldIndex ] ;
-                SpecialArrayFeaturesType :: assign( array_, newIndex, oldIndex );
+                SpecialArrayFeatures< DofArrayType > :: assign( array_, newIndex, oldIndex );
               }
             }
           }
@@ -488,7 +475,7 @@ namespace Dune
       //! return used memory size
       size_t usedMemorySize() const
       {
-        return ((size_t) sizeof(ThisType) + SpecialArrayFeaturesType::used(array_));
+        return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_));
       }
 
       //! enable dof compression for this MemObject
@@ -519,13 +506,7 @@ namespace Dune
         if( enlargeOnly && newSize < oldSize ) return ;
 
         if( newSize != oldSize )
-        {
           array_.resize( newSize );
-
-          // initialize new item with something meaningful
-          // otherwise NaN may occur which causes various algorithms to fail
-          SpecialArrayFeaturesType :: initialize( array_, oldSize, newSize );
-        }
       }
 
       // resize for adaptive mappers
@@ -549,13 +530,7 @@ namespace Dune
         array_.resize( nSize );
 
         // if data is only temporary data, don't adjust memory
-        if( ! dataCompressionEnabled_ || enlargeOnly )
-        {
-          // initialize new item with something meaningful
-          // otherwise NaN may occur which causes various algorithms to fail
-          SpecialArrayFeaturesType :: initialize( array_, oldSize, nSize );
-          return ;
-        }
+        if( ! dataCompressionEnabled_ || enlargeOnly ) return ;
 
         // now check all blocks beginning with the largest
         const int numBlocks = mapper().numBlocks();
@@ -583,12 +558,18 @@ namespace Dune
             // calculate block size
             const int blockSize = upperBound - oldOffSet;
             // move block backward
-            SpecialArrayFeaturesType :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
+            SpecialArrayFeatures< DofArrayType >
+              :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
 
             // update upper bound
             upperBound = oldOffSet;
           }
         }
+      }
+
+      // move array to rear insertion points
+      void resizeAndMoveToRear ()
+      {
       }
 
       //! move block to front again
@@ -615,7 +596,8 @@ namespace Dune
           const int blockSize = upperBound - oldOffSet;
 
           // move block forward
-          SpecialArrayFeaturesType :: memMoveForward( array_, blockSize, oldOffSet, newOffSet );
+          SpecialArrayFeatures< DofArrayType >
+            :: memMoveForward( array_, blockSize, oldOffSet, newOffSet );
         }
       }
     };

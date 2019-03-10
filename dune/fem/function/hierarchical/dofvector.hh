@@ -253,11 +253,6 @@ namespace Dune
         assign( array.array(), newIndex, oldIndex );
       }
 
-      static void initialize( HierarchicalDofVector< DC > &array, const int start, const int end )
-      {
-        initialize( array.array(), start, end );
-      }
-
     private:
 #if HAVE_DUNE_ISTL
       template< class... V >
@@ -318,23 +313,6 @@ namespace Dune
       static void assign ( BlockVector< B, A > &array, int newIndex, int oldIndex )
       {
         array[ newIndex ] = array[ oldIndex ];
-      }
-
-      template< class... V >
-      static void initialize ( MultiTypeBlockVector< V... > &array, const int start, const int end )
-      {
-        Hybrid::forEach( std::index_sequence_for< V... >(), [ &array, start, end ] ( auto &&i ) {
-            SpecialArrayFeatures< HierarchicalDofVector< DC > >::initialize( array[ i ], start, end );
-          } );
-      }
-
-      template< class B, class A >
-      static void initialize ( BlockVector< B, A > &array, const int start, const int end, const B& val = B(0) )
-      {
-        for( int i = start; i<end; ++i )
-        {
-          array[ i ] = val;
-        }
       }
 #endif // #if HAVE_DUNE_ISTL
     };
