@@ -47,8 +47,6 @@ namespace Dune {
   {
     typedef Dune::FieldVector< K, dim > BaseType;
     using BaseType :: operator =;
-
-    MyBlock( const K& val = 0 ) : Dune::FieldVector< K, dim >( val ) {}
   };
 
   template <class K, int dim>

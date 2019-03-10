@@ -481,14 +481,6 @@ namespace Dune
     {
       array[ newIndex ] = array[ oldIndex ];
     }
-
-    static void initialize( ArrayType& array, size_type start, size_type end, const ValueType& val = ValueType(0) )
-    {
-      for( int i = start; i<end; ++i )
-      {
-        array[ i ] = val;
-      }
-    }
   };
 
   } // namespace Fem
