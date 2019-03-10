@@ -98,6 +98,8 @@ namespace Dune
       typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename BaseType::DofVectorType DofVectorType;
 
+      using BaseType :: name;
+
       HierarchicalDiscreteFunction ( const std::string &name, const DiscreteFunctionSpaceType &space, DofVectorType &dofVector )
         : BaseType( name, space ), dofVector_( dofVector )
       {}
@@ -124,7 +126,7 @@ namespace Dune
     protected:
       DofVectorType &allocateDofStorage ( const DiscreteFunctionSpaceType &space )
       {
-        auto memPair = allocateManagedDofStorage< DofVectorType >( space.gridPart().grid(), space.blockMapper(), "" );
+        auto memPair = allocateManagedDofStorage< DofVectorType >( space.gridPart().grid(), space.blockMapper() );
         memObject_.reset( memPair.first );
         return *memPair.second;
       }

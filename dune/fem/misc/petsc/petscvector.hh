@@ -62,65 +62,13 @@ namespace Dune
     public:
       //! Constructor of ManagedDofStorageImpl, only to call from DofManager
       PetscManagedDofStorage( const DiscreteFunctionSpace& space,
-                              const MapperType& mapper,
-                              const std::string& name )
-        : BaseType( space.grid(), mapper, name, myArray_ ),
+                              const MapperType& mapper )
+        : BaseType( space.grid(), mapper, myArray_ ),
           myArray_( space )
       {}
 
     protected:
       DofArrayType myArray_;
-    };
-
-
-
-    // SpecialArrayFeatures for PetscVector
-    // ------------------------------------
-
-    /*! specialization of SpecialArrayFeatures for PetscVector
-     * dealing with the strange PetscVec */
-    template< class DFS >
-    struct SpecialArrayFeatures< PetscVector< DFS > >
-    {
-      typedef PetscVector< DFS >  ArrayType ;
-      /** \brief value type of array, i.e. double */
-      typedef typename ArrayType :: value_type ValueType;
-
-      /** \brief return used memory size of Array */
-      static std::size_t used(const ArrayType & array)
-      {
-        return array.size() * sizeof(ValueType);
-      }
-
-      /** \brief set memory overestimate factor, here does nothing */
-      static void setMemoryFactor(ArrayType & array, const double memFactor)
-      {
-        // do nothing here
-      }
-
-      /** \brief move memory blocks backwards */
-      static void memMoveBackward(ArrayType& array, const int length,
-                                  const int oldStartIdx, const int newStartIdx)
-      {
-        DUNE_THROW(NotImplemented,"memMoveBackward is to be implemented");
-      }
-
-      /** \brief move memory blocks forward */
-      static void memMoveForward(ArrayType& array, const int length,
-                                 const int oldStartIdx, const int newStartIdx)
-      {
-        DUNE_THROW(NotImplemented,"memMoveForward is to be implemented");
-      }
-
-      static void assign( ArrayType& array, const int newIndex, const int oldIndex )
-      {
-        DUNE_THROW(NotImplemented,"assign is to be implemented");
-        /*
-        const unsigned int blockSize = ArrayType :: blockSize;
-        for( unsigned int i = 0; i < blockSize; ++i )
-          array.dofVector()[ newIndex][ i ] = array.dofVector()[ oldIndex ][ i ];
-        */
-      }
     };
 
 
@@ -487,6 +435,33 @@ namespace Dune
       }
 
       const MappersType &mappers() const { return mappers_; }
+
+      std::size_t usedMemorySize() const
+      {
+        return size() * sizeof(value_type);
+      }
+
+      static void setMemoryFactor(const double memFactor)
+      {
+        // do nothing here
+      }
+
+      /** \brief move memory blocks backwards */
+      void memMoveBackward( const int length, const int oldStartIdx, const int newStartIdx)
+      {
+        DUNE_THROW(NotImplemented,"memMoveBackward is to be implemented");
+      }
+
+      /** \brief move memory blocks forward */
+      void memMoveForward(const int length, const int oldStartIdx, const int newStartIdx)
+      {
+        DUNE_THROW(NotImplemented,"memMoveForward is to be implemented");
+      }
+
+      void copyContent( const int newIndex, const int oldIndex )
+      {
+        DUNE_THROW(NotImplemented,"copyContent is to be implemented");
+      }
 
     protected:
       // setup vector according to mapping sizes

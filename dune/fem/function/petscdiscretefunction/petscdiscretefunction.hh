@@ -192,9 +192,7 @@ namespace Dune
       // allocate managed dof storage
       DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
       {
-        std::string name("deprecated");
-
-        memObject_.reset( new PetscManagedDofStorageType( space, space.blockMapper(), name ) );
+        memObject_.reset( new PetscManagedDofStorageType( space, space.blockMapper() ) );
 
         return memObject_->getArray();
       }

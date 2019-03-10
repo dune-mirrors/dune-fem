@@ -56,6 +56,7 @@ namespace Dune
 
       // generic assign method
       using BaseType::assign;
+      using BaseType::name;
 
       typedef MutableBlockVector< DynamicArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
@@ -151,17 +152,12 @@ namespace Dune
         DofVectorType dofVector_;
         typedef typename DofVectorType :: SizeType SizeType;
 
-        std::string name_;
-
       public:
         DofStorageWrapper ( const SizeType size,
                             const DofType *v )
           : array_( size, const_cast< DofType* >(v) ),
-            dofVector_( array_ ),
-            name_("deprecated")
+            dofVector_( array_ )
         {}
-
-        const std::string& name () const { return name_; }
 
         //! return array
         DofVectorType &getArray () { return dofVector_; }
@@ -192,11 +188,10 @@ namespace Dune
       // allocate managed dof storage
       DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
       {
-        std::string name("deprecated");
         // create memory object
         std::pair< DofStorageInterface*, DofVectorType* > memPair
           = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(),
-                                       name, (MutableDofVectorType *) 0 );
+                                       (MutableDofVectorType *) 0 );
 
         // save pointer
         memObject_.reset( memPair.first );

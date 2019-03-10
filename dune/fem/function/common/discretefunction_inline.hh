@@ -250,6 +250,10 @@ namespace Dune
         auto &&block = this->dofVector()[ i ];
         Hybrid::forEach( LocalBlockIndices(), [ &in, &block ] ( auto j ) { in >> block[ j ]; } );
       }
+
+      // a discrete function that is part of backup/restore
+      // most likely needs to keep the dofs consistent
+      asImp().enableDofCompression();
     }
 
 
