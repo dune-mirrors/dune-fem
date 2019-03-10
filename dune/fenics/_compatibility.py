@@ -4,7 +4,7 @@ import dune.common
 from dune.ufl import *
 from ufl import *
 from ufl.log import UFLException
-from dune.ufl import DirichletBC, NamedConstant
+from dune.ufl import DirichletBC, Constant
 from dune.ufl import cell as cell_
 from dune.fem.function import uflFunction
 
@@ -43,15 +43,6 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
             return RectangleMesh([0,0],[1,1],xspacing,yspacing)
     else:
         return RectangleMesh([0,0,0],[1,1,1],xspacing,yspacing,zspacing)
-
-# convenience function for Fenics' Constant
-# def Constant( value, **unused ):
-#     try:
-#         if len(value)>0:
-#             return as_vector(value)
-#     except:
-#         pass
-#     return value
 
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
@@ -154,6 +145,7 @@ def errornorm( a, b, normid='L2', **kwargs ):
     else:
         raise ValueError('errornorm with identifier',normid,' not known\n')
 
+
 def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
     if name is None:
         global _counter
@@ -186,7 +178,7 @@ def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
                     raise AttributeError("can not name a constant "+c\
                             +" this will lead to conflicts with existing"\
                             +" attributes on the ufl.Coefficient class")
-                uflDict[c] = NamedConstant(mesh,c)
+                uflDict[c] = Constant(kwargs[c],name=c)
             else:
                 uflDict[c] = kwargs[c]
     expr = [None,]*max(dimRange,1)
@@ -195,91 +187,10 @@ def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
         # expr[i] = eval(cpp_code[i], {"__builtins__":None}, uflDict)
     # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
     func = uflFunction(mesh, name, degree, expr, scalar=dimRange==0)
-    for c in kwargs:
-        if not c in ["order","cell"]:
-            if not isinstance(kwargs[c], Coefficient) and\
-               not isinstance(kwargs[c], Indexed):
-                   assert hasattr(type(func.__impl__),c)
-                   getattr(type(func.__impl__), c).fset(func.__impl__, kwargs[c])
+    # for c in kwargs:
+    #     if not c in ["order","cell"]:
+    #         if not isinstance(kwargs[c], Coefficient) and\
+    #            not isinstance(kwargs[c], Indexed):
+    #                assert hasattr(type(func.__impl__),c)
+    #                getattr(type(func.__impl__), c).fset(func.__impl__, kwargs[c])
     return func
-
-
-# the following is an adapted version of the code in fenics
-# - should be adapted. This could also be used to replace our 'NamedConstants'
-# It serves a similar concept and also has a name tag. The difference is
-# that it requires an initial value - put that is perhaps reasonable
-import ufl
-import numpy
-class Constant(ufl.Coefficient):
-    constCount = 0
-    def __init__(self, value, cell=None, name=None):
-        """
-        Create constant-valued function with given value.
-
-        *Arguments*
-            value
-                The value may be either a single scalar value, or a
-                tuple/list of values for vector-valued functions, or
-                nested lists or a numpy array for tensor-valued
-                functions.
-            cell
-                Optional argument. A :py:class:`Cell
-                <ufl.Cell>` which defines the geometrical
-                dimensions the Constant is defined for.
-            name
-                Optional argument. A str which overrules the default
-                name of the Constant.
-
-        The data type Constant represents a constant value that is
-        unknown at compile-time. Its values can thus be changed
-        without requiring re-generation and re-compilation of C++
-        code.
-
-        *Examples of usage*
-
-            .. code-block:: python
-
-                p = Constant(pi/4)              # scalar
-                C = Constant((0.0, -1.0, 0.0))  # constant vector
-
-        """
-
-        # TODO: Either take mesh instead of cell, or drop cell and let
-        # grad(c) be undefined.
-        if cell is not None:
-            cell = ufl.as_cell(cell)
-        ufl_domain = None
-
-        array = numpy.array(value)
-        rank = len(array.shape)
-        floats = list(map(float, array.flat))
-
-        # Create UFL element and initialize constant
-        if rank == 0:
-            ufl_element = ufl.FiniteElement("Real", cell, 0)
-        elif rank == 1:
-            ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
-        else:
-            ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
-
-        # Initialize base classes
-        ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
-        ufl.Coefficient.__init__(self, ufl_function_space)
-        if name is None:
-            self.name = "c"+str(Constant.constCount)
-            Constant.constCount += 1
-        else:
-            self.name = name
-        self._value = value
-
-    def cell(self):
-        return self.ufl_element().cell()
-
-    def values(self):
-        return self._value
-    @property
-    def value(self):
-        return self._value
-    def assign(self,v):
-        assert type(self._value) == type(v)
-        self._value = v

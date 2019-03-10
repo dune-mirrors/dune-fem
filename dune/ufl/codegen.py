@@ -23,7 +23,6 @@ from dune.source.cplusplus import assign, construct, coordinate, dereference, la
 
 from .applyrestrictions import applyRestrictions
 
-from dune.ufl import NamedConstant
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.tensors import apply as exprTensorApply
 from dune.source.cplusplus import assign, construct, TypeAlias, Declaration, Variable,\

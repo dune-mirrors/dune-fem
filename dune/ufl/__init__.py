@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from functools import wraps
 
+import numpy
 import ufl
 import ufl.domain
 import ufl.equation
@@ -112,15 +113,113 @@ class MixedFunctionSpace(ufl.MixedFunctionSpace):
     #     return self.ufl_sub_spaces()[0].field()
 
 
-def NamedCoefficient(functionSpace, name, count=None):
-    coefficient = ufl.Coefficient(functionSpace, count=count)
-    coefficient.name = name
-    return coefficient
-def NamedConstant(domain, name, dimRange=None, count=None):
+def isNumber(x):
     try:
-        domainCell = domain.cell()
-    except AttributeError:
-        domainCell = cell(domain)
+        return 0 == x*0
+    except:
+        return False
+# the following is an adapted version of the code in fenics
+class Constant(ufl.Coefficient):
+    constCount = 0
+    def __init__(self, value, name=None, cell=None):
+        """
+        Create constant-valued function with given value.
+
+        *Arguments*
+            value
+                The value may be either a single scalar value, or a
+                tuple/list of values for vector-valued functions, or
+                nested lists or a numpy array for tensor-valued
+                functions.
+            cell
+                Optional argument. A :py:class:`Cell
+                <ufl.Cell>` which defines the geometrical
+                dimensions the Constant is defined for.
+            name
+                Optional argument. A str which overrules the default
+                name of the Constant.
+
+        The data type Constant represents a constant value that is
+        unknown at compile-time. Its values can thus be changed
+        without requiring re-generation and re-compilation of C++
+        code.
+
+        *Examples of usage*
+
+            .. code-block:: python
+
+                p = Constant(pi/4)              # scalar
+                C = Constant((0.0, -1.0, 0.0))  # constant vector
+
+        """
+
+        # TODO: Either take mesh instead of cell, or drop cell and let
+        # grad(c) be undefined.
+        if cell is not None:
+            cell = ufl.as_cell(cell)
+        ufl_domain = None
+
+        array = numpy.array(value)
+        rank = len(array.shape)
+        floats = list(map(float, array.flat))
+
+        # Create UFL element and initialize constant
+        if rank == 0:
+            ufl_element = ufl.FiniteElement("Real", cell, 0)
+        elif rank == 1:
+            ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
+        else:
+            ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
+
+        # Initialize base classes
+        ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
+        ufl.Coefficient.__init__(self, ufl_function_space)
+        if name is None:
+            self.name = "c"+str(Constant.constCount)
+            Constant.constCount += 1
+        else:
+            self.name = name
+        if isNumber(value):
+            self._value = float(value)
+        else:
+            self._value = [float(v) for v in value]
+
+    def cell(self):
+        return self.ufl_element().cell()
+
+    def values(self):
+        return self._value
+    @property
+    def value(self):
+        return self._value
+    @value.setter
+    def value(self,v):
+        self.assign(v)
+    def assign(self,v):
+        if isNumber(v):
+            v = float(v)
+        else:
+            v = [float(vv) for vv in v]
+        assert type(self._value) == type(v)
+        self._value = v
+
+
+@deprecated("replace NamedConstant with Constant - the first argument can "\
+            "now also be the initial value, e.g.,a float or list/tuple of floats")
+def NamedConstant(value, name=None, dimRange=None, count=None):
+    if not isinstance(value,tuple) and not isinstance(value,list) and not isNumber(value):
+        try:
+            domainCell = value.cell()
+        except AttributeError:
+            domainCell = cell(value)
+        if dimRange is None:
+            value = 0
+        else:
+            value = (0,)*dimRange
+    else:
+        domainCell = None
+    return Constant(value, domainCell, name)
+
     if dimRange is None:
         constant = ufl.Constant(domainCell, count)
         constant.values = 0
