@@ -83,7 +83,7 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
         maxLevel = -1
     return indicator.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
-def doerflerMark(indicator, tolerance, maxLevel=None):
+def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
     try:
         if not indicator.space.grid.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
@@ -91,7 +91,7 @@ def doerflerMark(indicator, tolerance, maxLevel=None):
         raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return indicator.space.grid.doerflerMark(indicator,tolerance,maxLevel)
+    return indicator.space.grid.doerflerMark(indicator,theta,maxLevel,layered)
 
 def globalRefine(level, first, *args):
     hgrid,args = _adaptArguments(first,*args)

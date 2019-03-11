@@ -16,11 +16,12 @@ def cppBool(value):
 
 
 def load(includes, typeName, *args):
-    includes = includes + ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    # includes = includes + ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    pyIncludes = ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     moduleName = "view_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
     # module = generator.load(includes, typeName, moduleName, *args, options=[holder])
-    module = generator.load(includes, typeName, moduleName, *args)
+    module = generator.load([includes,pyIncludes], typeName, moduleName, *args)
     dune.grid.grid_generator.addAttr(module, module.GridView)
     return module
 
