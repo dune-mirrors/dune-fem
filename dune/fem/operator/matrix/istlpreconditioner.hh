@@ -189,6 +189,7 @@ namespace Dune
 
       // flag whether we have preconditioning, and if yes if it is AMG
       const int preEx_;
+      const bool verbose_;
 
       template <class XImp, class YImp>
       struct Apply
@@ -232,18 +233,20 @@ namespace Dune
 #endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       //! copy constructor
-      PreconditionerWrapper (const PreconditionerWrapper& org)
+      PreconditionerWrapper (const PreconditionerWrapper& org, bool verbose)
         : op_( org.op_ )
         , preconder_(org.preconder_)
         , preEx_(org.preEx_)
+        , verbose_( verbose )
       {
       }
 
       //! default constructor
-      PreconditionerWrapper()
+      PreconditionerWrapper(bool verbose)
         : op_()
         , preconder_()
         , preEx_( 0 )
+        , verbose_( verbose )
       {}
 
       //! create preconditioner of given type
@@ -251,10 +254,12 @@ namespace Dune
       PreconditionerWrapper(MatrixType & matrix,
                             int iter,
                             field_type relax,
-                            const PreconditionerType* p )
+                            bool verbose,
+                            const PreconditionerType* p)
         : op_()
         , preconder_( new PreconditionerType( matrix, iter, relax ) )
         , preEx_( 1 )
+        , verbose_( verbose )
       {
       }
 
@@ -262,11 +267,12 @@ namespace Dune
       //! create preconditioner with given preconditioner object
       //! owner ship is taken over here
       template <class PreconditionerType>
-      PreconditionerWrapper(MatrixType & matrix,
-                            PreconditionerType* p )
+      PreconditionerWrapper(MatrixType & matrix, bool verbose,
+                            PreconditionerType* p)
         : op_()
         , preconder_( p )
         , preEx_( 1 )
+        , verbose_( verbose )
       {
       }
 
@@ -275,8 +281,9 @@ namespace Dune
       PreconditionerWrapper(MatrixType & matrix,
                             int iter,
                             field_type relax,
+                            bool verbose,
                             const PreconditionerType* p ,
-                            const CollectiveCommunictionType& comm )
+                            const CollectiveCommunictionType& comm)
   //#if HAVE_MPI
   //      : op_( new OperatorType( matrix, comm ) )
   //#else
@@ -284,6 +291,7 @@ namespace Dune
   //#endif
         , preconder_( createAMGPreconditioner(comm, iter, relax, p) )
         , preEx_( 2 )
+        , verbose_( verbose )
       {
       }
 
@@ -358,6 +366,10 @@ namespace Dune
         criterion.setAlpha(.67);
         criterion.setBeta(1.0e-8);
         criterion.setMaxLevel(10);
+        if( verbose_ && Parameter :: verbose() )
+          criterion.setDebugLevel( 1 );
+        else
+          criterion.setDebugLevel( 0 );
 
         /*
         if( comm.size() > 1 )
@@ -425,7 +437,7 @@ namespace Dune
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         return new MatrixAdapterType( matrixObj.exportMatrix(),
-                                      matrixObj.domainSpace(), matrixObj.rangeSpace(), PreConType() );
+                                      matrixObj.domainSpace(), matrixObj.rangeSpace(), PreConType(param.verbose()) );
       }
 
     };
@@ -454,10 +466,11 @@ namespace Dune
                           const DomainSpaceType& domainSpace,
                           const RangeSpaceType& rangeSpace,
                           const double relaxFactor,
-                          std::size_t numIterations)
+                          std::size_t numIterations,
+                          bool verbose)
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        PreConType preconAdapter(matrix, numIterations, relaxFactor, preconditioning );
+        PreConType preconAdapter(matrix, numIterations, relaxFactor, verbose, preconditioning );
         return new MatrixAdapterType(matrix, domainSpace, rangeSpace, preconAdapter );
       }
 
@@ -469,10 +482,12 @@ namespace Dune
                              const DomainSpaceType& domainSpace,
                              const RangeSpaceType& rangeSpace,
                              const double relaxFactor,
-                             std::size_t numIterations)
+                             std::size_t numIterations,
+                             bool solverVerbose)
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        PreConType preconAdapter(matrix, numIterations, relaxFactor, preconditioning, domainSpace.gridPart().comm() );
+        PreConType preconAdapter(matrix, numIterations, relaxFactor, solverVerbose,
+            preconditioning, domainSpace.gridPart().comm() );
         return new MatrixAdapterType(matrix, domainSpace, rangeSpace, preconAdapter );
       }
 
@@ -511,7 +526,7 @@ namespace Dune
         // no preconditioner
         if( preconditioning == SolverParameter::none )
         {
-          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, PreConType() );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, PreConType(param.verbose()) );
         }
         // SSOR
         else if( preconditioning == SolverParameter::ssor )
@@ -522,7 +537,7 @@ namespace Dune
           typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (MatrixAdapterType *)nullptr,
                                       (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
         }
         // SOR
         else if(preconditioning == SolverParameter::sor )
@@ -533,7 +548,7 @@ namespace Dune
           typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (MatrixAdapterType *)nullptr,
                                       (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
         }
         // ILU
         else if(preconditioning == SolverParameter::ilu)
@@ -543,7 +558,8 @@ namespace Dune
 
           typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage() ) );
+          // might need to set verbosity here?
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage()) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Gauss-Seidel
@@ -555,7 +571,7 @@ namespace Dune
           typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (MatrixAdapterType *)nullptr,
                                       (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
         }
         // Jacobi
         else if(preconditioning == SolverParameter::jacobi)
@@ -564,7 +580,7 @@ namespace Dune
           {
             typedef FemDiagonalPreconditioner< MatrixObjectType, RowBlockVectorType, ColumnBlockVectorType > PreconditionerType;
             typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-            PreConType preconAdapter( matrix, new PreconditionerType( matrixObj ) );
+            PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj ) );
             return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
           }
           else if ( procs == 1 )
@@ -572,7 +588,8 @@ namespace Dune
             typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
             return createMatrixAdapter( (MatrixAdapterType *)nullptr,
                                         (PreconditionerType*)nullptr,
-                                        matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                        matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
+                                        param.verbose());
           }
           else
           {
@@ -586,7 +603,8 @@ namespace Dune
           typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
-                                         matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                         matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
+                                         param.verbose());
         }
         // AMG Jacobi
         else if(preconditioning == SolverParameter::amg_jacobi)
@@ -594,7 +612,8 @@ namespace Dune
           typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
-                                         matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+                                         matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
+                                         param.verbose());
         }
         // ILDL
         else if(preconditioning == SolverParameter::ildl)
@@ -602,14 +621,14 @@ namespace Dune
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILDL not working in parallel computations");
 
-          PreConType preconAdapter( matrix, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
+          PreConType preconAdapter( matrix, param.verbose(), new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         else
         {
           preConErrorMsg(preconditioning);
         }
-        return new MatrixAdapterType(matrix, domainSpace, rangeSpace, PreConType() );
+        return new MatrixAdapterType(matrix, domainSpace, rangeSpace,  PreConType(param.verbose()) );
       }
 
       typedef ISTLParallelMatrixAdapterInterface< MatrixType >   MatrixAdapterInterfaceType;
