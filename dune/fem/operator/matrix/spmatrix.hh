@@ -48,8 +48,8 @@ namespace Dune
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
 
-      static const size_t defaultCol = std::numeric_limits<size_t>::max();
-      static const size_t zeroCol    = std::numeric_limits<size_t>::max()-1;
+      static const size_type defaultCol = std::numeric_limits<size_type>::max();
+      static const size_type zeroCol    = std::numeric_limits<size_type>::max()-1;
       static const int firstCol = 0;
 
       SparseRowMatrix(const ThisType& ) = delete;
