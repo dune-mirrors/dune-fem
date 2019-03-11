@@ -30,9 +30,13 @@ namespace Dune
             return Dune::Fem::GridAdaptation::
                       mark( grid, indicator, refineTolerance, coarsenTolerance, minLevel, maxLevel );
           });
-        cls.def("doerflerMark",[](GridView &self, Indicator &indicator, double tolerance, int maxLevel) {
+        cls.def("doerflerMark",[](GridView &self, Indicator &indicator, double tolerance, int maxLevel,
+                                  double layered) {
             typename GridView::Grid &grid = const_cast<typename GridView::Grid&>(self.grid());
-            return Dune::Fem::GridAdaptation::layeredDoerflerMarking( grid, indicator, tolerance, maxLevel );
+            if (layered > 0)
+              return Dune::Fem::GridAdaptation::layeredDoerflerMarking( grid, indicator, tolerance, maxLevel, layered );
+            else
+              return Dune::Fem::GridAdaptation::doerflerMarking( grid, indicator, tolerance, maxLevel );
           });
       }
     }
