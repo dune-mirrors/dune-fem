@@ -157,6 +157,100 @@ namespace Dune
        *  http://www.math.umd.edu/~rhn/teaching/m714/matlab/lecture-4.pdf
        */
 
+      namespace detail
+      {
+        template <class Grid, class Indicator>
+        static inline std::pair< double, double >
+        computeSumAndMaxGridWalk( Grid& grid, const Indicator& indicator,
+                                  const double nu, std::vector< double >& buckets )
+        {
+          typedef Dune::ReferenceElements< typename Grid::ctype, Grid::dimension > ReferenceElements;
+          Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
+          typename Indicator::RangeType value;
+          double maxIndicator = 0;
+          double sumIndicator = 0;
+          for (const auto &e : indicator.space())
+          {
+            if (!e.isLeaf()) continue;
+            localIndicator.bind(e);
+            const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+            localIndicator.evaluate(center,value);
+            double eta = value[0];
+            maxIndicator = std::max(maxIndicator,eta);
+            sumIndicator += eta;
+          }
+
+          // compute global values
+          maxIndicator = indicator.space().gridPart().comm().max( maxIndicator );
+          sumIndicator = indicator.space().gridPart().comm().sum( sumIndicator );
+
+          for (const auto &e : indicator.space())
+          {
+            if (!e.isLeaf()) continue;
+            localIndicator.bind(e);
+            const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+            localIndicator.evaluate(center,value);
+            double eta = value[0];
+            int index = int(eta/maxIndicator*1./nu);
+            // std::cout << "   " << eta << " " << maxIndicator << " " << index << std::endl;
+            assert( index < buckets.size() );
+            buckets[index] += eta;
+          }
+
+          // compute global sum of all buckets in parallel
+          indicator.space().gridPart().comm().sum( buckets.data(), buckets.size() );
+
+          return std::make_pair( sumIndicator, maxIndicator );
+        }
+
+        template <class Grid, class Indicator>
+        static inline std::pair< double, double >
+        computeSumAndMax( Grid& grid, const Indicator& indicator,
+                          const double nu, std::vector< double >& buckets )
+        {
+          return computeSumAndMaxGridWalk( grid, indicator, nu, buckets );
+        }
+
+        template <class Grid, class Imp>
+        static inline std::pair< double, double >
+        computeSumAndMax( Grid& grid, const Dune::Fem::DiscreteFunctionInterface< Imp >& indicator,
+                          const double nu, std::vector< double >& buckets )
+        {
+          // if space is for some reason not constant then default to general method
+          if( indicator.space().order() > 0 )
+            return computeSumAndMaxGridWalk( indicator );
+
+          double maxIndicator = 0;
+          double sumIndicator = 0;
+          // but this way we can avoid grid traversal etc.
+          // at the moment we get a VirtualizedGF so this wouldn't work
+          for (const auto &d : Dune::Fem::dofs(indicator) )
+          {
+            maxIndicator = std::max(maxIndicator,d);
+            sumIndicator += d;
+          }
+
+          // compute global values
+          maxIndicator = indicator.space().gridPart().comm().max( maxIndicator );
+          sumIndicator = indicator.space().gridPart().comm().sum( sumIndicator );
+
+          // let's assume that indicator is a FV function (would be good to be able to check this)
+          // but this way we can avoid grid traversal etc.
+          // at the moment we get a VirtualizedGF so this wouldn't work
+          for (const auto &d : Dune::Fem::dofs(indicator) )
+          {
+            int index = int(d/maxIndicator*1./nu);
+            assert( index < buckets.size() );
+            buckets[index] += d;
+          }
+
+          // compute global sum of all buckets in parallel
+          indicator.space().gridPart().comm().sum( buckets.data(), buckets.size() );
+
+          return std::make_pair( sumIndicator, maxIndicator );
+        }
+      }
+
       template <class Grid, class Indicator>
       static inline
       std::pair<int, int>
@@ -164,68 +258,26 @@ namespace Dune
                               const double tolerance, int maxLevel = -1,
                               double nu = 0.05)
       {
+        // if maxLevel < 0 set to maximum value
+        maxLevel = ( maxLevel < 0 ) ? std::numeric_limits< int >::max() : maxLevel;
+
         int refMarked = 0;
         typedef Dune::ReferenceElements< typename Grid::ctype, Grid::dimension > ReferenceElements;
         Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
         typename Indicator::RangeType value;
-        double maxIndicator = 0;
-        double sumIndicator = 0;
-        // Part 1: compute sum and maximum of indicators
-#if 1
-        for (const auto &e : indicator.space())
-        {
-          if (!e.isLeaf()) continue;
-          localIndicator.bind(e);
-          const auto &center = ReferenceElements::general( e.type() ).position(0,0);
-          localIndicator.evaluate(center,value);
-          double eta = value[0];
-          maxIndicator = std::max(maxIndicator,eta);
-          sumIndicator += eta;
-        }
-#else // we could assume that indicator is a FV function (would be good to be able to check this)
-      // but this way we can avoid grid traversal etc.
-      // at the moment we get a VirtualizedGF so this wouldn't work
-        for (const auto &d : Dune::Fem::dofs(indicator) )
-        {
-          maxIndicator = std::max(maxIndicator,d);
-          sumIndicator += d;
-        }
-#endif
-        // TODO need to communicate sum/max here
 
+        // Part 1: compute sum and maximum of indicators
         // Part 2: subdivide [0,maxEta] into nu sized intervals and compute how
         // much of the overal error is in each interval
         std::vector<double> buckets(std::ceil(1./nu)+1);
-#if 1
-        for (const auto &e : indicator.space())
-        {
-          if (!e.isLeaf()) continue;
-          localIndicator.bind(e);
-          const auto &center = ReferenceElements::general( e.type() ).position(0,0);
-          localIndicator.evaluate(center,value);
-          double eta = value[0];
-          int index = int(eta/maxIndicator*1./nu);
-          // std::cout << "   " << eta << " " << maxIndicator << " " << index << std::endl;
-          assert( index < buckets.size() );
-          buckets[index] += eta;
-        }
-#else // let's assume that indicator is a FV function (would be good to be able to check this)
-      // but this way we can avoid grid traversal etc.
-      // at the moment we get a VirtualizedGF so this wouldn't work
-        for (const auto &d : dofs(indicator) )
-        {
-          int index = int(d/maxIndicator*1./nu);
-          assert( index < buckets.size() );
-          buckets[index] += d;
-        }
-#endif
-        // TODO: sum up all buckets in parallel
+        auto sumMax = detail::computeSumAndMax( grid, indicator, nu, buckets );
+        double sumIndicator = sumMax.first;
+        double maxIndicator = sumMax.second;
 
         // Part 3: compute how many buckets we have to use to get
         // above (1-tolerance)*(1-tolerance)*sumIndicator:
         double gamma = 1;
         double sum = 0;
-        int index = buckets.size()-1;
         for (int index=buckets.size()-1;
              index >= 0 && sum < (1-tolerance)*(1-tolerance)*sumIndicator;
              --index)
@@ -233,9 +285,12 @@ namespace Dune
           sum += buckets[index];
           gamma -= nu;
         }
+
         // no communication should be required and we can simply now
         // go ahead with the refinement:
+        //
         sum = 0; // just for checkint that it worked...
+        const double gammaMaxIndicator = gamma*maxIndicator ;
         for (const auto &e : indicator.space())
         {
           if (!e.isLeaf()) continue;
@@ -244,9 +299,9 @@ namespace Dune
           const auto &center = ReferenceElements::general( e.type() ).position(0,0);
           localIndicator.evaluate(center,value);
           double eta = value[0];
-          if (eta > gamma*maxIndicator)
+          if (eta > gammaMaxIndicator )
           {
-            if (e.level()<maxLevel || maxLevel==-1)
+            if (e.level()<maxLevel)
               refMarked += grid.mark(Marker::refine, gridEntity);
             else
               grid.mark(Marker::keep, gridEntity);
