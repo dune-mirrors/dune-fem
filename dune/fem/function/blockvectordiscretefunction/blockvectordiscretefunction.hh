@@ -78,6 +78,7 @@ namespace Dune
       typedef BlockVectorType DofVectorType;
 
       using BaseType::assign;
+      using BaseType::name;
 
       /** \brief Constructor to use if the vector storing the dofs (which is a block vector) already exists
        *
@@ -147,9 +148,8 @@ namespace Dune
     protected:
       DofVectorType& allocateDofStorage( const DiscreteFunctionSpaceType& space )
       {
-        std::string name("deprecated");
         std::pair< DofStorageInterface*, DofVectorType* > memPair(
-          allocateManagedDofStorage< DofVectorType >( space.gridPart().grid(), space.blockMapper(), name ) );
+          allocateManagedDofStorage< DofVectorType >( space.gridPart().grid(), space.blockMapper() ) );
 
         memObject_.reset( memPair.first );
         return *memPair.second;

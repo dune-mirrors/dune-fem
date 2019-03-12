@@ -44,64 +44,6 @@ namespace Dune
     template <class GridType> class DofManager;
     template <class DofManagerImp> class DofManagerFactory;
 
-    /** \brief SpecialArrayFeatures is a wrapper class to extend some array
-        classes with some special features needed for the MemObject.
-        There exsist a specialization for DynamicArray and PetscVector.
-     */
-    template<class ArrayType>
-    struct SpecialArrayFeatures
-    {
-      /** \brief value type of array, i.e. double */
-      typedef typename ArrayType :: value_type ValueType;
-
-      /** \brief return used memory size of Array */
-      static size_t used(const ArrayType & array)
-      {
-        return array.size() * sizeof(ValueType);
-      }
-
-      /** \brief set memory overestimate factor, here does nothing */
-      static void setMemoryFactor(ArrayType & array, const double memFactor)
-      {
-      }
-
-      /** \brief move memory blocks backwards */
-      static inline
-      void memMoveBackward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
-      {
-        // get new end of block which is offSet + (length of block - 1)
-        int newIdx = newStartIdx + length - 1;
-        // copy all entries backwards
-        for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
-        {
-          // move value to new location
-          array[newIdx] = array[oldIdx];
-        }
-      }
-
-      /** \brief move memory blocks forward */
-      static inline
-      void memMoveForward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
-      {
-        const int upperBound = oldStartIdx + length;
-        // get new off set that should be smaller then old one
-        int newIdx = newStartIdx;
-        for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
-        {
-          // copy to new location
-          array[newIdx] = array[oldIdx];
-        }
-      }
-
-      /** \brief implements array[ newIndex ] = array[ oldIndex ] */
-      static inline
-      void assign( ArrayType& array, const int newIndex, const int oldIndex )
-      {
-        array[ newIndex ] = array[ oldIndex ];
-      }
-    };
 
     ///////////////////////////////////////////////////////////////////////
     //
@@ -280,9 +222,6 @@ namespace Dune
       //! enable dof compression for dof storage (default is empty)
       virtual void enableDofCompression() { }
 
-      //! returns name of dof storage
-      virtual const std::string& name () const  = 0;
-
       //! size of space, i.e. mapper.size()
       virtual int size () const = 0;
     };
@@ -305,8 +244,9 @@ namespace Dune
       virtual void resize ( const bool enlargeOnly ) = 0;
       //! resize memory
       virtual void reserve (int newSize) = 0;
-      //! compressed the underlying dof vector
-      virtual void dofCompress () = 0;
+      //! compressed the underlying dof vector and clear the array if it's
+      //! temporary and clearresizedarrays is enabled (default)
+      virtual void dofCompress ( const bool clearResizedArrays ) = 0;
       //! return size of mem used by MemObject
       virtual size_t usedMemorySize() const = 0;
     };
@@ -346,9 +286,6 @@ namespace Dune
       // Array which the dofs are stored in
       DofArrayType& array_;
 
-      // name of mem object, i.e. name of discrete function
-      std::string name_;
-
       typedef ResizeMemoryObjects < ThisType > ResizeMemoryObjectType;
       typedef ReserveMemoryObjects  < ThisType > ReserveMemoryObjectType;
       ResizeMemoryObjectType  resizeMemObj_;
@@ -364,12 +301,10 @@ namespace Dune
       //! Constructor of ManagedDofStorageImplementation, only to call from derived classes
       ManagedDofStorageImplementation ( const GridImp& grid,
                                         const MapperType& mapper,
-                                        const std::string& name,
                                         DofArrayType& array )
         : dm_( DofManagerType :: instance( grid ) ),
           mapper_ ( const_cast<MapperType& >(mapper)),
           array_( array ),
-          name_ (name),
           resizeMemObj_(*this),
           reserveMemObj_(*this),
           dataCompressionEnabled_(false)
@@ -378,7 +313,7 @@ namespace Dune
         dm_.addDofStorage( *this );
 
         // set memory over estimate factor, only for DofArray
-        SpecialArrayFeatures<DofArrayType>::setMemoryFactor(array_,dm_.memoryFactor());
+        array_.setMemoryFactor( dm_.memoryFactor() );
       }
 
       //! \brief destructor deleting MemObject from resize and reserve List
@@ -394,9 +329,6 @@ namespace Dune
 
       //! return object that calls reserve of this memory object
       ReserveMemoryObjectType& reserveMemoryObject() { return reserveMemObj_; }
-
-      //! returns name of this vector
-      const std::string& name () const { return name_; }
 
       //! return size of underlying array
       int size () const { return array_.size(); }
@@ -427,7 +359,7 @@ namespace Dune
       }
 
       //! copy the dof from the rear section of the vector to the holes
-      void dofCompress ()
+      void dofCompress ( const bool clearResizedArrays )
       {
         // get current size
         const int nSize = mapper().size();
@@ -462,7 +394,7 @@ namespace Dune
 
                 assert( newIndex < nSize );
                 // implements array_[ newIndex ] = array_[ oldIndex ] ;
-                SpecialArrayFeatures< DofArrayType > :: assign( array_, newIndex, oldIndex );
+                array_.copyContent( newIndex, oldIndex );
               }
             }
           }
@@ -470,12 +402,18 @@ namespace Dune
 
         // store new size, which should be smaller then actual size
         array_.resize( nSize );
+
+        if( clearResizedArrays && ! dataCompressionEnabled_ )
+        {
+          // if enabled clear temporary data to avoid occasionally NaN values
+          array_.clear();
+        }
       }
 
       //! return used memory size
       size_t usedMemorySize() const
       {
-        return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_));
+        return ((size_t) sizeof(ThisType) + array_.usedMemorySize());
       }
 
       //! enable dof compression for this MemObject
@@ -558,8 +496,7 @@ namespace Dune
             // calculate block size
             const int blockSize = upperBound - oldOffSet;
             // move block backward
-            SpecialArrayFeatures< DofArrayType >
-              :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
+            array_.memMoveBackward( blockSize, oldOffSet, newOffSet );
 
             // update upper bound
             upperBound = oldOffSet;
@@ -596,8 +533,7 @@ namespace Dune
           const int blockSize = upperBound - oldOffSet;
 
           // move block forward
-          SpecialArrayFeatures< DofArrayType >
-            :: memMoveForward( array_, blockSize, oldOffSet, newOffSet );
+          array_.memMoveForward( blockSize, oldOffSet, newOffSet );
         }
       }
     };
@@ -612,9 +548,8 @@ namespace Dune
     public:
       //! Constructor of ManagedDofStorage
       ManagedDofStorage( const GridImp& grid,
-                         const MapperType& mapper,
-                         const std::string& name )
-        : BaseType( grid, mapper, name, myArray_ ),
+                         const MapperType& mapper )
+        : BaseType( grid, mapper, myArray_ ),
           myArray_( mapper.size() )
       {
       }
@@ -625,15 +560,13 @@ namespace Dune
     static inline std::pair< DofStorageInterface* , DofStorageType* >
       allocateManagedDofStorage( const GridType& grid,
                                  const MapperType& mapper,
-                                 const std::string& name,
                                  const DofStorageType * = 0 )
     {
       // create managed dof storage
       typedef ManagedDofStorage< GridType, MapperType,
                                  DofStorageType > ManagedDofStorageType;
 
-      ManagedDofStorageType* mds =
-        new ManagedDofStorageType( grid, mapper, name );
+      ManagedDofStorageType* mds = new ManagedDofStorageType( grid, mapper );
       assert( mds );
 
       // return pair with dof storage pointer and array pointer
@@ -907,6 +840,10 @@ namespace Dune
 
       //! memory over estimation factor for re-allocation
       double memoryFactor_;
+
+      //! true if temporary arrays should be reset to zero after resize
+      const bool clearResizedArrays_;
+
       //**********************************************************
       //**********************************************************
       //! Constructor
@@ -918,7 +855,8 @@ namespace Dune
         indexSetRestrictProlongNoResize_( *this, insertIndices_ , removeIndices_ ),
         indexRPop_(),
         memoryFactor_( Parameter :: getValidValue( "fem.dofmanager.memoryfactor",  double( 1.1 ),
-            [] ( double value ) { return value >= 1.0; } ) )
+            [] ( double value ) { return value >= 1.0; } ) ),
+        clearResizedArrays_( Parameter :: getValue("fem.dofmanager.clearresizedarrays", bool( true ) ) )
       {
         // only print memory factor if it deviates from the default value
         if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 )
@@ -1103,17 +1041,21 @@ namespace Dune
 
         // compress indexsets first
         for(auto indexSetPtr : indexList_)
+        {
           // reset compressed so the next time compress of index set is called
           indexSetPtr->compress();
+        }
 
         // compress all data now
         for(auto memObjectPtr : memList_)
+        {
           // if correponding index was not compressed yet, this is called in
           // the MemObject dofCompress, if index has not changes, nothing happens
           // if IndexSet actual needs  no compress, nothing happens to the
           // data either
           // also data is resized, which means the vector is getting shorter
-          memObjectPtr->dofCompress ();
+          memObjectPtr->dofCompress ( clearResizedArrays_ );
+        }
       }
 
       //! communicate new sequence number
@@ -1288,10 +1230,8 @@ namespace Dune
         while( memList_.rbegin() != memList_.rend())
         {
           DofStorageInterface * mobj = (* memList_.rbegin() );
+          dverb << "Removing '" << mobj << "' from DofManager!\n";
           memList_.pop_back();
-
-          // alloc new mem an copy old mem
-          dverb << "Removing '" << mobj->name() << "' from DofManager!\n";
         }
       }
 
@@ -1373,8 +1313,6 @@ namespace Dune
     template <class ManagedDofStorageImp>
     void DofManager<GridType>::addDofStorage(ManagedDofStorageImp& dofStorage)
     {
-      dverb << "Adding '" << dofStorage.name() << "' to DofManager! \n";
-
       // make sure we got an ManagedDofStorage
       ManagedDofStorageInterface* obj = &dofStorage;
 
@@ -1404,8 +1342,6 @@ namespace Dune
         {
           // alloc new mem and copy old mem
           memList_.erase( it );
-
-          dvverb << "Remove '" << dofStorage.name() << "' from DofManager!\n";
 
           // remove from list
           resizeMemObjs_.remove( dofStorage.resizeMemoryObject() );

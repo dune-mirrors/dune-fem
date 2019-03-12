@@ -139,6 +139,51 @@ namespace Dune {
       ++sequence_;
     }
 
+    /** return memory used by this block vector */
+    std::size_t usedMemorySize() const
+    {
+      return asImp().numDofs() * sizeof( FieldType ) ;
+    }
+
+    /** implements array[ newIndex ] = array[ oldIndex ] */
+    void copyContent( const size_t newIndex, const size_t oldIndex )
+    {
+      asImp()[ newIndex ] = asImp()[ oldIndex ];
+    }
+
+    /** \brief move memory blocks backwards */
+    void memMoveBackward(const size_t length, const size_t oldStartIdx, const size_t newStartIdx)
+    {
+      assert( newStartIdx >= oldStartIdx );
+      // get new end of block which is offSet + (length of block - 1)
+      size_t newIdx = newStartIdx + length - 1;
+      assert( newIdx < asImp().size() );
+      // copy all entries backwards
+      for(size_t oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+      {
+        assert( oldIdx < asImp().size() );
+        // copy to new location
+        copyContent( newIdx, oldIdx );
+      }
+    }
+
+    /** \brief move memory blocks forward */
+    void memMoveForward(const size_t length, const size_t oldStartIdx, const size_t newStartIdx)
+    {
+      assert( newStartIdx <= oldStartIdx );
+      const size_t upperBound = oldStartIdx + length;
+      // get new off set that should be smaller then old one
+      size_t newIdx = newStartIdx;
+      for(size_t oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+      {
+        // copy to new location
+        copyContent( newIdx, oldIdx );
+      }
+    }
+
+    /** \brief set memory overestimate factor, here does nothing */
+    void setMemoryFactor( const double memFactor ) {}
+
   protected:
     // Copy block vectors.
     //    Note: No '++sequence_' here, sequence_ is only changed in public methods
@@ -311,6 +356,12 @@ namespace Dune {
       delete &array_;
     }
 
+    /** \brief set memory overestimate factor, here does nothing */
+    void setMemoryFactor( const double memFactor )
+    {
+      doSetMemoryFactor( array_, memFactor );
+    }
+
     /** \brief Reserve memory.
      *
      *  This method is a no-op. It is defined here to make the block vector
@@ -330,6 +381,17 @@ namespace Dune {
       array().resize( size*blockSize );
       ++sequence_;
     }
+
+  private:
+    template <class T, class Allocator>
+    void doSetMemoryFactor( Dune::Fem::DynamicArray< T, Allocator >& array, const double memFactor )
+    {
+      array_.setMemoryFactor( memFactor );
+    }
+
+    template <class Array>
+    void doSetMemoryFactor( Array& , const double memFactor ) {}
+
   };
 
 
@@ -504,8 +566,8 @@ namespace Dune {
     typedef typename ArrayType::value_type  value_type;
 
     /** \brief Constructor */
-    explicit ISTLBlockVector ( ArrayType& array )
-    : array_( &array )
+    explicit ISTLBlockVector ( ArrayType* array )
+    : array_( array )
     {}
 
     ISTLBlockVector () = default;
@@ -543,6 +605,9 @@ namespace Dune {
     ConstIteratorType end() const  { return ConstIteratorType( array().end() ); }
 
     SizeType size() const { return array().size(); }
+
+    /** \brief Number of dofs in the block vector */
+    SizeType numDofs() const { return array().size() * DofBlock::dimension; }
 
     /** \brief Reserve memory.
      *

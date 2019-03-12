@@ -20,10 +20,10 @@ namespace Dune
     struct MemObject
     {
       template< class DofContainer, class DiscreteFunctionSpace >
-      DofContainer &allocate ( const std::string &name, const DiscreteFunctionSpace &space )
+      DofContainer &allocate ( const DiscreteFunctionSpace &space )
       {
         typedef MutableBlockVector< DofContainer, DiscreteFunctionSpace::localBlockSize > DofVector;
-        auto result = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(), name, static_cast< DofVector * >( nullptr ) );
+        auto result = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(), static_cast< DofVector * >( nullptr ) );
         interface_.reset( result.first );
         return result.second->array();
       }
@@ -63,18 +63,20 @@ namespace Dune
 
       typedef typename DiscreteFunctionSpaceType :: GridPartType :: GridType GridType;
 
+      using BaseType :: name;
+
       ManagedDiscreteFunction ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace )
-        : BaseType( name, dfSpace, MemObject::allocate< DofContainerType >( name, dfSpace ) )
+        : BaseType( name, dfSpace, MemObject::allocate< DofContainerType >( dfSpace ) )
       {}
 
       explicit ManagedDiscreteFunction ( const BaseType &other )
-        : BaseType( other.name(), other.space(), MemObject::allocate< DofContainerType >( other.name(), other.space() ) )
+        : BaseType( other.name(), other.space(), MemObject::allocate< DofContainerType >( other.space() ) )
       {
         BaseType :: assign ( other );
       }
 
       ManagedDiscreteFunction ( const ThisType &other )
-        : BaseType( other.name(), other.space(), MemObject::allocate< DofContainerType >( other.name(), other.space() ) )
+        : BaseType( other.name(), other.space(), MemObject::allocate< DofContainerType >( other.space() ) )
       {
         BaseType :: assign ( other );
       }

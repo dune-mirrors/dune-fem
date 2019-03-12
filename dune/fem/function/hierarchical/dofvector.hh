@@ -115,6 +115,12 @@ namespace Dune
     };
 
 
+    // SpecialArrayFeature for HierarhicalDofVector
+    // --------------------------------------------
+
+    template< class >
+    struct SpecialArrayFeatures;
+
 
     // HierarchicalDofVector
     // ---------------------
@@ -176,6 +182,29 @@ namespace Dune
 
       ConstIteratorType end () const { DUNE_THROW( NotImplemented, "HierarchicalDofVector does not provide iterators" ); }
       IteratorType end () { DUNE_THROW( NotImplemented, "HierarchicalDofVector does not provide iterators" ); }
+
+      std::size_t usedMemorySize() const
+      {
+        return SpecialArrayFeatures< ThisType >::used( *this );
+      }
+
+      void setMemoryFactor ( double memFactor )
+      {}
+
+      void memMoveBackward ( int length, int oldStartIdx, int newStartIdx )
+      {
+        SpecialArrayFeatures< ThisType >::memMoveBackward( *this, length, oldStartIdx, newStartIdx );
+      }
+
+      void memMoveForward ( int length, int oldStartIdx, int newStartIdx )
+      {
+        SpecialArrayFeatures< ThisType >::memMoveForward( *this, length, oldStartIdx, newStartIdx );
+      }
+
+      void copyContent ( int newIndex, int oldIndex )
+      {
+        SpecialArrayFeatures< ThisType >::assign( *this, newIndex, oldIndex );
+      }
 
     private:
 #if HAVE_DUNE_ISTL

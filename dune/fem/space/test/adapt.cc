@@ -164,6 +164,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 {
   const unsigned int order = solution.space().order();
 
+  DiscreteFunctionType tmp ( solution );
+
   {
     ExactSolution f;
     Dune::Fem::interpolate( f, solution );
@@ -173,6 +175,14 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   }
 
   adapt(grid,solution,step);
+
+  // tmp solution should be zero after adapt
+  double tmpErr = tmp.normSquaredDofs();
+  if( tmpErr > 0 )
+  {
+    // return big error
+    return 1e80;
+  }
 
 #if USE_GRAPE
   // if Grape was found, then display last solution

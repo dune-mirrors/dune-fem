@@ -529,6 +529,9 @@ namespace Dune
       /** \brief read the discrete function from a stream
        *
        *  \param[in]  in  stream to read the discrete function from
+       *
+       *  \note This call will automatically enable dof compression for this
+       *        discrete function.
        */
       template< class StreamTraits >
       void read ( InStreamInterface< StreamTraits > &in )

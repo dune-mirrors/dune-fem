@@ -130,9 +130,6 @@ namespace Dune
   {
 
 
-  template<class ArrayType>
-  struct SpecialArrayFeatures;
-
   /** \brief An implementation of DenseVector which uses a C-array of fixed size as storage
     *
     * \tparam T is the field type (use float, double, complex, etc)
@@ -430,57 +427,6 @@ namespace Dune
     double memoryFactor_;
     size_type memSize_;
     AllocatorType allocator_;
-  };
-
-  //! Specialization of SpecialArrayFeatures for DynamicArray
-  template<class ValueType>
-  struct SpecialArrayFeatures<DynamicArray<ValueType> >
-  {
-    typedef DynamicArray<ValueType> ArrayType;
-    typedef typename ArrayType::size_type size_type;
-
-    static size_type used(const ArrayType & array)
-    {
-      return array.usedMemorySize();
-    }
-
-    static void setMemoryFactor(ArrayType & array, double memFactor)
-    {
-      array.setMemoryFactor(memFactor);
-    }
-
-    static void memMoveBackward(ArrayType& array, size_type length, size_type oldStartIdx, size_type newStartIdx)
-    {
-      assert( newStartIdx >= oldStartIdx );
-      // get new end of block which is offSet + (length of block - 1)
-      size_type newIdx = newStartIdx + length - 1;
-      assert( newIdx < array.size() );
-      // copy all entries backwards
-      for(size_type oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
-      {
-        assert( oldIdx < array.size() );
-        // move value to new location
-        array[newIdx] = array[oldIdx];
-      }
-    }
-
-    static void memMoveForward(ArrayType& array, size_type length, size_type oldStartIdx, size_type newStartIdx)
-    {
-      assert( newStartIdx <= oldStartIdx );
-      const size_type upperBound = oldStartIdx + length;
-      // get new off set that should be smaller then old one
-      size_type newIdx = newStartIdx;
-      for(size_type oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
-      {
-        // copy to new location
-        array[newIdx] = array[oldIdx];
-      }
-    }
-
-    static void assign( ArrayType& array, size_type newIndex, size_type oldIndex )
-    {
-      array[ newIndex ] = array[ oldIndex ];
-    }
   };
 
   } // namespace Fem

@@ -42,6 +42,7 @@ namespace Dune
 
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef typename BaseType :: GridType                   GridType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
       typedef typename BaseType :: DofType                    DofType;
       typedef typename DofVectorType :: DofContainerType      DofContainerType;
@@ -50,6 +51,7 @@ namespace Dune
       typedef typename BaseType :: ScalarProductType          ScalarProductType;
 
       using BaseType::assign;
+      using BaseType::name;
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
        *
@@ -74,7 +76,7 @@ namespace Dune
                                        const DofContainerType& dofVector )
         : BaseType( name, space ),
           memObject_(),
-          dofVector_( const_cast< DofContainerType& > (dofVector) )
+          dofVector_( allocateDofStorage( space, const_cast< DofContainerType* > (&dofVector) ) )
       {}
 
       /** \brief Copy constructor */
@@ -90,7 +92,7 @@ namespace Dune
       ISTLBlockVectorDiscreteFunction( ThisType&& other )
         : BaseType( static_cast< BaseType && >( other ) ),
           memObject_( std::move( other.memObject_ ) ),
-          dofVector_( std::move( other.dofVector_ ) )
+          dofVector_( memObject_->getArray() )
       {}
 
       ISTLBlockVectorDiscreteFunction () = delete;
@@ -129,25 +131,59 @@ namespace Dune
     protected:
       using BaseType :: scalarProduct_;
 
-      // allocate managed dof storage
-      DofContainerType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
-      {
-        std::string name("deprecated");
-        // create memory object
-        std::pair< DofStorageInterface*, DofContainerType* > memPair
-          = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(),
-                                       name, (DofContainerType *) 0 );
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
 
-        // save pointer
-        memObject_.reset( memPair.first );
-        return *(memPair.second);
+      /*! A ISTLDofStorage holds the memory for one DiscreteFunction. */
+      class ISTLDofStorage :
+        public ManagedDofStorageImplementation< GridType,
+                                                BlockMapperType,
+                                                DofVectorType >
+      {
+        typedef ManagedDofStorageImplementation< GridType, BlockMapperType, DofVectorType >  BaseType;
+      protected:
+        // pointer to data if created here
+        std::unique_ptr< DofContainerType > myDofContainer_;
+        // array wrapper class
+        DofVectorType myArray_;
+
+        DofContainerType* createData( const size_t size, DofContainerType* otherData )
+        {
+          if( otherData )
+          {
+            // user data provided from outside
+            return otherData ;
+          }
+          else
+          {
+            // create new data vector
+            myDofContainer_.reset( new DofContainerType( size ) );
+            return myDofContainer_.operator->();
+          }
+        }
+      public:
+        //! Constructor of ManagedDofStorage
+        ISTLDofStorage( const GridType& grid,
+                        const BlockMapperType& mapper,
+                        DofContainerType* otherData = nullptr )
+          : BaseType( grid, mapper, myArray_ ),
+            myArray_( createData( mapper.size(), otherData ) )
+        {
+        }
+      };
+
+
+      // allocate managed dof storage
+      DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space, DofContainerType* otherData = nullptr )
+      {
+        memObject_.reset( new ISTLDofStorage( space.gridPart().grid(), space.blockMapper(), otherData ) );
+        return memObject_->getArray();
       }
 
       // pointer to allocated DofVector
-      std::unique_ptr< DofStorageInterface > memObject_;
+      std::unique_ptr< ISTLDofStorage > memObject_;
 
       // DofVector object holds pointer to dof container
-      DofVectorType dofVector_;
+      DofVectorType& dofVector_;
     };
 
   } // namespace Fem
