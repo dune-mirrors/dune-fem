@@ -218,7 +218,7 @@ namespace Dune
         {
           // if space is for some reason not constant then default to general method
           if( indicator.space().order() > 0 )
-            return computeSumAndMaxGridWalk( indicator );
+            return computeSumAndMaxGridWalk( grid, indicator, nu, buckets );
 
           double maxIndicator = 0;
           double sumIndicator = 0;
