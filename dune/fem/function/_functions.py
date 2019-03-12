@@ -92,7 +92,6 @@ def discreteFunction(space, name, expr=None, dofVector=None):
         df.clear()
     elif expr is not None:
         dimExpr = 0
-        print("Expression:",expr)
         try:
             dimExpr = len(expr)
         except AttributeError:
