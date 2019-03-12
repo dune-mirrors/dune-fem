@@ -7,6 +7,8 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dune/fem/function/common/rangegenerators.hh>
+
 #include <dune/fem/marking/default.hh>
 
 namespace Dune
@@ -162,13 +164,14 @@ namespace Dune
                               const double tolerance, int maxLevel = -1,
                               double nu = 0.05)
       {
+        int refMarked = 0;
         typedef Dune::ReferenceElements< typename Grid::ctype, Grid::dimension > ReferenceElements;
         Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
         typename Indicator::RangeType value;
-        int refMarked = 0;
         double maxIndicator = 0;
         double sumIndicator = 0;
-        int gridSize = 0;
+        // Part 1: compute sum and maximum of indicators
+#if 1
         for (const auto &e : indicator.space())
         {
           if (!e.isLeaf()) continue;
@@ -178,71 +181,83 @@ namespace Dune
           double eta = value[0];
           maxIndicator = std::max(maxIndicator,eta);
           sumIndicator += eta;
-          ++gridSize;
         }
-
-        bool first = true;
-        std::vector<std::pair<int,double>> buckets(std::ceil(1./nu)+1);
-        double gamma = 1 - nu;
-        double sum = 0;
-        double oldSum = -1;
-        // std::cout << "8*******88888888\n";
-        int startBucket = buckets.size()-2;
-        int count = 0;
-        while ( sum < (1-tolerance)*(1-tolerance)*sumIndicator )
+#else // we could assume that indicator is a FV function (would be good to be able to check this)
+      // but this way we can avoid grid traversal etc.
+      // at the moment we get a VirtualizedGF so this wouldn't work
+        for (const auto &d : Dune::Fem::dofs(indicator) )
         {
-          ++count;
-          for (const auto &e : indicator.space())
+          maxIndicator = std::max(maxIndicator,d);
+          sumIndicator += d;
+        }
+#endif
+        // TODO need to communicate sum/max here
+
+        // Part 2: subdivide [0,maxEta] into nu sized intervals and compute how
+        // much of the overal error is in each interval
+        std::vector<double> buckets(std::ceil(1./nu)+1);
+#if 1
+        for (const auto &e : indicator.space())
+        {
+          if (!e.isLeaf()) continue;
+          localIndicator.bind(e);
+          const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+          localIndicator.evaluate(center,value);
+          double eta = value[0];
+          int index = int(eta/maxIndicator*1./nu);
+          // std::cout << "   " << eta << " " << maxIndicator << " " << index << std::endl;
+          assert( index < buckets.size() );
+          buckets[index] += eta;
+        }
+#else // let's assume that indicator is a FV function (would be good to be able to check this)
+      // but this way we can avoid grid traversal etc.
+      // at the moment we get a VirtualizedGF so this wouldn't work
+        for (const auto &d : dofs(indicator) )
+        {
+          int index = int(d/maxIndicator*1./nu);
+          assert( index < buckets.size() );
+          buckets[index] += d;
+        }
+#endif
+        // TODO: sum up all buckets in parallel
+
+        // Part 3: compute how many buckets we have to use to get
+        // above (1-tolerance)*(1-tolerance)*sumIndicator:
+        double gamma = 1;
+        double sum = 0;
+        int index = buckets.size()-1;
+        for (int index=buckets.size()-1;
+             index >= 0 && sum < (1-tolerance)*(1-tolerance)*sumIndicator;
+             --index)
+        {
+          sum += buckets[index];
+          gamma -= nu;
+        }
+        // no communication should be required and we can simply now
+        // go ahead with the refinement:
+        sum = 0; // just for checkint that it worked...
+        for (const auto &e : indicator.space())
+        {
+          if (!e.isLeaf()) continue;
+          const auto &gridEntity = Dune::Fem::gridEntity(e);
+          localIndicator.bind(e);
+          const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+          localIndicator.evaluate(center,value);
+          double eta = value[0];
+          if (eta > gamma*maxIndicator)
           {
-            if (!e.isLeaf()) continue;
-
-            const auto &gridEntity = Dune::Fem::gridEntity(e);
-            int marked = grid.getMark( gridEntity );
-            if (marked==1) continue;
-
-            localIndicator.bind(e);
-            const auto &center = ReferenceElements::general( e.type() ).position(0,0);
-            localIndicator.evaluate(center,value);
-            double eta = value[0];
-
-            if (first)
-            {
-              int index = int(eta/maxIndicator*1./nu);
-              // std::cout << "   " << eta << " " << maxIndicator << " " << index << std::endl;
-              assert( index < buckets.size() );
-              buckets[index].first += 1;
-              buckets[index].second += eta;
-            }
-
-            if (eta > gamma*maxIndicator && (e.level()<maxLevel || maxLevel==-1))
-            {
+            if (e.level()<maxLevel || maxLevel==-1)
               refMarked += grid.mark(Marker::refine, gridEntity);
-              sum += eta;
-            }
             else
               grid.mark(Marker::keep, gridEntity);
+            // although we might not have marked for refinement due to
+            // level restriction we count this as part of the indicator
+            // taken care of
+            sum += eta;
           }
-          // if (oldSum>=sum) break;
-          oldSum = sum;
-          first = false;
-          double estSum = sum;
-          if (true)
-          {
-            for (int index = startBucket;index>=0;--index)
-            {
-              gamma -= nu;
-              startBucket -= 1;
-              estSum += buckets[index].second;
-              // std::cout << index << " " << buckets[index].first << " " << buckets[index].second << " " << estSum << std::endl;
-              if ( estSum > (1-tolerance)*(1-tolerance)*sumIndicator )
-                break;
-            }
-          }
-          else gamma -= nu;
-          // std::cout << count << ": "
-          //           << estSum << " " << sum << " " << (1-tolerance)*(1-tolerance)*sumIndicator
-          //           << " " << gamma << std::endl;
         }
+        // just checking that the algorihtm did the right thing...
+        assert( sum >= (1-tolerance)*(1-tolerance)*sumIndicator);
         return std::make_pair(refMarked,0);
       }
 
