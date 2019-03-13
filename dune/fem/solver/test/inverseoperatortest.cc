@@ -433,6 +433,32 @@ int main(int argc, char** argv)
             ));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
   }
+
+  // PetscInverseOperator + PetscLinearOperator + AdaptiveDiscreteFunction
+  // this case is appearing for adaptive simulations with PETSc as solver backend
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::PetscInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === PetscInverseOperator + PetscLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+
+    // REMARK: note that in this version of passing in the parameters both
+    // a direct call to the inverse operator and the to the newton inverse
+    // operator will use the default prefix of the SolverParameter (i.e.  fem.solver.)
+    // In this example the prefix is set to "petsctest" (again for linear and non linear)
+    // An empty prefix leads to issues since 'method' without prefix leads to a Warning
+    // The same issue happens if one passes  "petsctest." as first argument to parameterDict
+    designation = std::string(" === PetscInverseOperator + PetscLinearOperator + PetscParameter === ");
+    Dune::Fem::PetscSolverParameter param( "petsctest.", Dune::Fem::parameterDict(
+            "petsctest.",
+              "preconditioning.method","hypre",
+              "petsc.hypre.method", "pilu-t",
+              "verbose",false
+            ));
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
+  }
 #endif // HAVE_PETSC
 
   /*

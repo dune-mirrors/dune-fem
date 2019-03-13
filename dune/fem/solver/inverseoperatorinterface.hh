@@ -170,12 +170,12 @@ namespace Dune {
 
         if( ! rhs_ )
         {
-          rhs_.reset( new DomainFunctionType( "InvOp::rhs", u.space() ) );
+          rhs_.reset( new SolverDiscreteFunctionType( "InvOp::rhs", u.space() ) );
         }
 
         if( ! x_ )
         {
-          x_.reset( new RangeFunctionType( "InvOp::x", w.space() ) );
+          x_.reset( new SolverDiscreteFunctionType( "InvOp::x", w.space() ) );
         }
 
         // copy right hand side
@@ -199,8 +199,8 @@ namespace Dune {
       const PreconditionerType*       preconditioner_ = nullptr;
 
       // temporary functions for solver compatibility
-      mutable std::unique_ptr< DomainFunctionType > rhs_;
-      mutable std::unique_ptr< RangeFunctionType  > x_;
+      mutable std::unique_ptr< SolverDiscreteFunctionType > rhs_;
+      mutable std::unique_ptr< SolverDiscreteFunctionType > x_;
 
       mutable int  iterations_ = -1 ;
       mutable bool rightHandSideCopied_ = false ;
