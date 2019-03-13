@@ -50,11 +50,11 @@ namespace Dune {
        *  \param u parameter right hand side of linear problem
        *  \param w initial guess for linear solver
        */
-      virtual void operator() ( const SolverDiscreteFunctionType& u, SolverDiscreteFunctionType& w ) const
+      virtual void operator() ( const DomainFunctionType& u, RangeFunctionType& w ) const
       {
-        rightHandSideCopied_ = false;
-        iterations_ = asImp().apply( u, w );
+        opApply( u, w );
       }
+
 
       /** \brief application of operator to compute
        *   @f[
@@ -70,32 +70,7 @@ namespace Dune {
       void operator() ( const DiscreteFunctionInterface< DImpl >&u,
                         DiscreteFunctionInterface< RImpl >& w ) const
       {
-        if( ! assembledOperator_ )
-          DUNE_THROW(Dune::NotImplemented, "InverseOperator::operator() for matrix free operators only makes sense" <<
-                                           " for fixed types of domain and range functions to avoid excessive copying!");
-
-        if( ! rhs_ )
-        {
-          rhs_.reset( new DomainFunctionType( "InvOp::rhs", u.space() ) );
-        }
-
-        if( ! x_ )
-        {
-          x_.reset( new RangeFunctionType( "InvOp::x", w.space() ) );
-        }
-
-        // copy right hand side
-        rhs_->assign( u );
-        rightHandSideCopied_ = true;
-
-        // copy initial guess
-        x_->assign( w );
-
-        iterations_ = asImp().apply( *rhs_, *x_ );
-
-        // store result in destination
-        w.assign( *x_ );
-        rightHandSideCopied_ = false;
+        opApply( u, w );
       }
 
       /** \brief store pointer to linear operator
@@ -178,6 +153,45 @@ namespace Dune {
       {}
 
     protected:
+      // specialization that works with the solvers native storage type
+      void opApply( const SolverDiscreteFunctionType& u, SolverDiscreteFunctionType& w ) const
+      {
+        rightHandSideCopied_ = false;
+        iterations_ = asImp().apply( u, w );
+      }
+
+      template <class DImpl, class RImpl>
+      void opApply( const DiscreteFunctionInterface< DImpl >&u,
+                    DiscreteFunctionInterface< RImpl >& w ) const
+      {
+        if( ! assembledOperator_ )
+          DUNE_THROW(Dune::NotImplemented, "InverseOperator::operator() for matrix free operators only makes sense" <<
+                                           " for fixed types of domain and range functions to avoid excessive copying!");
+
+        if( ! rhs_ )
+        {
+          rhs_.reset( new DomainFunctionType( "InvOp::rhs", u.space() ) );
+        }
+
+        if( ! x_ )
+        {
+          x_.reset( new RangeFunctionType( "InvOp::x", w.space() ) );
+        }
+
+        // copy right hand side
+        rhs_->assign( u );
+        rightHandSideCopied_ = true;
+
+        // copy initial guess
+        x_->assign( w );
+
+        iterations_ = asImp().apply( *rhs_, *x_ );
+
+        // store result in destination
+        w.assign( *x_ );
+        rightHandSideCopied_ = false;
+      }
+
       std::shared_ptr<SolverParameterType> parameter_;
 
       const OperatorType*                   operator_ = nullptr;
