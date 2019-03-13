@@ -101,7 +101,7 @@ try:
                 raise NotImplementedError("Operator with petsc storage only with equal domain and range spaces implemented")
             return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
         return lambda space,rspace=None:[\
-            "petsc",\
+            "petscadapt",\
             ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
                   space._includes,\
             dfType(space),\
