@@ -29,10 +29,6 @@ using namespace Dune;
 #define USE_GRAPE 0
 #endif
 
-#if HAVE_PETSC && WANT_PETSC
-#define USE_PETSC 1
-#endif
-
 #if USE_GRAPE && GRIDDIM > 1
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
@@ -88,7 +84,9 @@ typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceTyp
 
 //! define the type of discrete function we are using , see
 
-#if USE_PETSC
+#if HAVE_PETSC
+// PetscDiscreteFunction uses AdaptiveDiscreteFunction for dof prolongation and
+// resttriction
 typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 #else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -178,9 +176,10 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
   DiscreteFunctionType tmp ( solution );
 
+  ExactSolution f;
+  auto gridFunc = gridFunctionAdapter(f, solution.space().gridPart(), 2);
   {
-    ExactSolution f;
-    Dune::Fem::interpolate( f, solution );
+    Dune::Fem::interpolate( gridFunc, solution );
     Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
     double new_error = l2norm.distance( f ,solution );
     std::cout << "before ref." << new_error << "\n\n";
@@ -206,12 +205,11 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   }
 #endif
 
-  ExactSolution f;
   // calculation L2 error on refined grid
   // pol ord for calculation the error chould by higher than
   // pol for evaluation the basefunctions
   Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
-  double error = l2norm.distance( f, solution );
+  double error = l2norm.distance( gridFunc, solution );
 
 #if USE_GRAPE
   // if Grape was found, then display last solution
@@ -224,8 +222,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 #endif
 
   //! perform l2-projection to refined grid
-  Dune::Fem::interpolate( f, solution );
-  double new_error = l2norm.distance( f, solution );
+  Dune::Fem::interpolate( gridFunc, solution );
+  double new_error = l2norm.distance( gridFunc, solution );
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
   // if Grape was found, then display last solution
