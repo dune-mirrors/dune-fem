@@ -52,7 +52,8 @@ namespace Dune
     /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
     template < class DiscreteFunctionSpace, class Mapper >
     class PetscManagedDofStorage
-      : public ManagedDofStorageImplementation< typename DiscreteFunctionSpace::GridPartType::GridType, Mapper, PetscVector< DiscreteFunctionSpace > >
+      //: public ManagedDofStorageImplementation< typename DiscreteFunctionSpace::GridPartType::GridType, Mapper, PetscVector< DiscreteFunctionSpace > >
+      : public ManagedDofStorageInterface
     {
       typedef typename DiscreteFunctionSpace::GridPartType::GridType GridType;
       typedef Mapper MapperType ;
@@ -63,9 +64,39 @@ namespace Dune
       //! Constructor of ManagedDofStorageImpl, only to call from DofManager
       PetscManagedDofStorage( const DiscreteFunctionSpace& space,
                               const MapperType& mapper )
-        : BaseType( space.grid(), mapper, myArray_ ),
-          myArray_( space )
-      {}
+        : myArray_( space )
+      {
+        myArray_.resize();
+      }
+
+      void resize( const bool )
+      { // do nothing here, only in compress
+      }
+      void reserve( int  )
+      { // do nothing here, only in compress
+      }
+
+      void dofCompress( const bool clearResizedArrays )
+      {
+        myArray_.resize();
+        if( clearResizedArrays )
+        {
+          myArray_.clear();
+        }
+      }
+
+      //! enable dof compression for dof storage (default is empty)
+      void enableDofCompression()
+      {
+        DUNE_THROW(NotImplemented,"PetscVector cannot handle dof compression!");
+      }
+
+      //! size of space, i.e. mapper.size()
+      int size () const { return myArray_.size(); }
+
+      size_t usedMemorySize() const { return myArray_.usedMemorySize(); }
+
+      DofArrayType& getArray() { return myArray_; }
 
     protected:
       DofArrayType myArray_;
@@ -155,7 +186,7 @@ namespace Dune
 
       std::size_t size () const { return mappers().ghostMapper().size(); }
 
-      void resize( const std::size_t newsize )
+      void resize( const std::size_t newsize = 0 )
       {
         // TODO: keep old data stored in current vector
         // remove old vectors
