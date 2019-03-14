@@ -1,8 +1,8 @@
 # select parallel process for verbose output (-1 = verbosity off)
 fem.verboserank: 0
-# max level for test 
+# max level for test
 lagrangeadapt.maxlevel: 3
-# adaptation method:  none | generic | callback 
+# adaptation method:  none | generic | callback
 fem.adaptation.method: generic
 
 # Parameters for lagrangeglobalrefine
@@ -11,8 +11,8 @@ fem.adaptation.method: generic
 # number of global refinement steps to perform
 lagrangeglobalrefine.maxlevel: 3
 
-# true if only a few elements are marked 
+# true if only a few elements are marked
 adapt.locallyadaptive: false
 
-# EOC error threshold 
+# EOC error threshold
 adapt.eocthreshold: 0.25

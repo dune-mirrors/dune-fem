@@ -5,6 +5,7 @@
 using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
@@ -26,6 +27,10 @@ using namespace Dune;
 #define USE_GRAPE 1
 #else
 #define USE_GRAPE 0
+#endif
+
+#if HAVE_PETSC && WANT_PETSC
+#define USE_PETSC 1
 #endif
 
 #if USE_GRAPE && GRIDDIM > 1
@@ -82,7 +87,14 @@ typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType:
 typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
 
 //! define the type of discrete function we are using , see
+
+#if USE_PETSC
+typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#else
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#endif
+
+
 //typedef Dune::Fem::ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, std::vector< double > > > DiscreteFunctionType;
 //typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 //typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,

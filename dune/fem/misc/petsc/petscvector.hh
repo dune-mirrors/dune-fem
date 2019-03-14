@@ -49,6 +49,7 @@ namespace Dune
     // PetscManagedDofStorage
     // ----------------------
 
+#if 0
     /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
     template < class DiscreteFunctionSpace, class Mapper >
     class PetscManagedDofStorage
@@ -66,14 +67,15 @@ namespace Dune
                               const MapperType& mapper )
         : myArray_( space )
       {
-        myArray_.resize();
       }
 
       void resize( const bool )
       { // do nothing here, only in compress
+        //myArray_.resize();
       }
       void reserve( int  )
       { // do nothing here, only in compress
+        myArray_.resize();
       }
 
       void dofCompress( const bool clearResizedArrays )
@@ -101,6 +103,53 @@ namespace Dune
     protected:
       DofArrayType myArray_;
     };
+
+#else
+    /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
+    template < class DiscreteFunctionSpace, class Mapper >
+    class PetscManagedDofStorage
+      : public ManagedDofStorageImplementation< typename DiscreteFunctionSpace::GridPartType::GridType, Mapper, PetscVector< DiscreteFunctionSpace > >
+    {
+      typedef typename DiscreteFunctionSpace::GridPartType::GridType GridType;
+      typedef Mapper MapperType ;
+      typedef PetscVector< DiscreteFunctionSpace > DofArrayType ;
+      typedef ManagedDofStorageImplementation< GridType, MapperType, DofArrayType > BaseType;
+
+    public:
+      //! Constructor of ManagedDofStorageImpl, only to call from DofManager
+      PetscManagedDofStorage( const DiscreteFunctionSpace& space,
+                              const MapperType& mapper )
+        : BaseType( space.grid(), mapper, myArray_ ),
+          myArray_( space )
+      {
+      }
+
+      void resize( const bool )
+      { // do nothing here, only in compress
+      }
+      void reserve( int  )
+      {
+        // do nothing here, only in compress
+      }
+
+      void dofCompress( const bool clearResizedArrays )
+      {
+        myArray_.resize();
+        if( clearResizedArrays )
+        {
+          myArray_.clear();
+        }
+      }
+
+      //! enable dof compression for dof storage (default is empty)
+      void enableDofCompression()
+      {
+        std::cerr << "WARNING: PetscVector cannot handle dof compression!" << std::endl;
+      }
+    protected:
+      DofArrayType myArray_;
+    };
+#endif
 
 
 

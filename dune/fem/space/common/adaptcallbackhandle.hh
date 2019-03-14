@@ -76,6 +76,9 @@ namespace Dune
         // if preAdapt was already called just return
         if( initializeCalled_ ) return ;
 
+        // initialize restrict-prolong object
+        rpOp_.initialize();
+
         // unset was changed
         wasChanged_ = false;
         // reserve memory
@@ -104,6 +107,9 @@ namespace Dune
           // unset was changed flag
           wasChanged_ = false;
         }
+
+        // initialize restrict-prolong object
+        rpOp_.finalize();
 
         // set postAdaptCalled flag
         finalizeCalled_ = true ;

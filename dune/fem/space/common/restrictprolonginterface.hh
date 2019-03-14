@@ -46,6 +46,20 @@ namespace Dune
       //! \brief field type of domain vector space
       typedef typename Traits::DomainFieldType DomainFieldType;
 
+      /** \brief initialize restrict prolong object (if necessary) before adaptation takes place
+       */
+      void initialize ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().initialize() );
+      }
+
+      /** \brief finalize restrict prolong object (if necessary) after adaptation and dof compression was finished
+       */
+      void finalize ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().finalize() );
+      }
+
       /** \brief explicit set volume ratio of son and father
        *
        *  \param[in]  weight  volume of son / volume of father
@@ -157,9 +171,13 @@ namespace Dune
         return (indexSet.index( father ) == indexSet.index( son ));
       }
 
+
     public:
       /** \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const*/
       void setFatherChildWeight ( const DomainFieldType &weight ) const {}
+
+      void initialize () {}
+      void finalize   () {}
     };
 
 

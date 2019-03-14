@@ -366,6 +366,9 @@ namespace Dune
     template <PartitionIteratorType pitype>
     void genericAdapt () const
     {
+      // initialize restrict prolong operator (e.g. PetscRestrictProlong... )
+      rpOp_.initialize();
+
       // call pre-adapt, returns true if at least
       // one element is marked for coarsening
       bool restr = grid_.preAdapt();
@@ -380,6 +383,7 @@ namespace Dune
 
       if(restr)
       {
+
         // get macro grid view
         MacroGridView macroView = grid_.levelGridView( 0 );
 
@@ -453,6 +457,9 @@ namespace Dune
 
       // do cleanup
       grid_.postAdapt();
+
+      // finalize restrict prolong operator (e.g. PetscRestrictProlong... )
+      rpOp_.finalize();
     }
 
   private:
