@@ -434,6 +434,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
   }
 
+  /*
   // PetscInverseOperator + PetscLinearOperator + AdaptiveDiscreteFunction
   // this case is appearing for adaptive simulations with PETSc as solver backend
   {
@@ -459,6 +460,7 @@ int main(int argc, char** argv)
             ));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
   }
+  */
 #endif // HAVE_PETSC
 
   /*
