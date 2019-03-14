@@ -102,7 +102,7 @@ def globalRefine(level, first, *args):
     # make sure all gridview can be adapted
     try:
         adapt  = all([a.grid.canAdapt==True for a in args])
-        adapt &= not any([a.space.storage[0]=="petsc" for a in args])
+        #adapt &= not any([a.space.storage[0]=="petsc" for a in args])
     except AttributeError:
         adapt = False
     assert adapt,\
