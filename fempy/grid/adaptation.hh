@@ -41,6 +41,18 @@ namespace Dune
         : discreteFunctionManager_( grid )
       {}
 
+      void initialize ()
+      {
+        for( auto &rp : restrictProlongs_ )
+          rp.initialize();
+      }
+
+      void finalize ()
+      {
+        for( auto &rp : restrictProlongs_ )
+          rp.finalize();
+      }
+
       void setFatherChildWeight ( const DomainFieldType &weight ) const
       {
         for( const auto &rp : restrictProlongs_ )

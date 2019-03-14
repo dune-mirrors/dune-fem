@@ -38,6 +38,9 @@ namespace Dune
         virtual ~Interface () = default;
         virtual Interface *clone () const = 0;
 
+        virtual void initialize () = 0;
+        virtual void finalize   () = 0;
+
         virtual void setFatherChildWeight ( const ctype &weight ) const = 0;
 
         virtual void restrictLocal ( const Element &father, const Element &child, bool initialize ) const = 0;
@@ -60,6 +63,9 @@ namespace Dune
         {}
 
         virtual Interface *clone () const override { return new Implementation( *this ); }
+
+        virtual void initialize () override { impl().initialize(); }
+        virtual void finalize   () override { impl().finalize(); }
 
         virtual void setFatherChildWeight ( const ctype &weight ) const override { impl().setFatherChildWeight( weight ); }
 
@@ -87,6 +93,9 @@ namespace Dune
       explicit BasicVirtualizedRestrictProlong ( DF &df )
         : impl_( new Implementation< Fem::RestrictProlongDefault< DF > >( df ) )
       {}
+
+      void initialize () { impl_->initialize(); }
+      void finalize   () { impl_->finalize(); }
 
       void setFatherChildWeight ( const ctype &weight ) const { impl_->setFatherChildWeight( weight ); }
 
