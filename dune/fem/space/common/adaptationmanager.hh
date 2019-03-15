@@ -613,6 +613,8 @@ namespace Dune
     typedef AdaptationManagerBase<GridType,RestProlOperatorImp> BaseType;
     typedef LoadBalancer<GridType> Base2Type;
 
+    using BaseType :: rpOp_;
+
     // reference counter to ensure only one instance per grid exists
     ObjectType& referenceCounter_;
 
@@ -689,8 +691,11 @@ namespace Dune
     /** @copydoc LoadBalancerInterface::loadBalance */
     virtual bool loadBalance ()
     {
+      //rpOp_.initialize () ;
       // call load balance
-      return Base2Type :: loadBalance();
+      const bool result = Base2Type :: loadBalance( );
+      rpOp_.finalize () ;
+      return result ;
     }
 
     /** @copydoc LoadBalancerInterface::loadBalanceTime */
