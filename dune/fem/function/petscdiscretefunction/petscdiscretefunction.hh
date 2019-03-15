@@ -295,7 +295,8 @@ namespace Dune
 
       void initialize ()
       {
-        adaptiveFunction_.assign( discreteFunction_ );
+        // adaptiveFunction_.assign( discreteFunction_ );
+        interpolate(discreteFunction_, adaptiveFunction_);
         rpOp_.initialize();
         initialized_ = true ;
       }
@@ -305,7 +306,8 @@ namespace Dune
         // only finalize if previously initialized
         assert( initialized_ );
         rpOp_.finalize();
-        discreteFunction_.assign( adaptiveFunction_ );
+        // discreteFunction_.assign( adaptiveFunction_ );
+        interpolate(adaptiveFunction_, discreteFunction_);
         initialized_ = false ;
       }
 
