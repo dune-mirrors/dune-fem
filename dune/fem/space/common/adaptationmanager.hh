@@ -691,9 +691,13 @@ namespace Dune
     /** @copydoc LoadBalancerInterface::loadBalance */
     virtual bool loadBalance ()
     {
-      //rpOp_.initialize () ;
+      // same as for the adapt method
+      rpOp_.initialize () ;
+
       // call load balance
       const bool result = Base2Type :: loadBalance( );
+
+      // finalize rp object (mostly RestrictProlongDefault for PetscDF)
       rpOp_.finalize () ;
       return result ;
     }
