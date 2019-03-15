@@ -451,13 +451,20 @@ namespace Dune
         Vec& vec = *getGhostedVector();
 
         const PetscInt blocks = other.size();
+        /*
+        for( PetscInt b=0, bs=0; b<blocks; ++b, bs += blockSize )
+        {
+          const PetscScalar* values = static_cast< const PetscScalar* > (other.data()+bs);
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
+        }
+        */
+        const PetscInt b  = 0;
         const PetscInt bs = blockSize ;
-        const PetscInt b = 0;
-
         const PetscScalar* vecData = static_cast< const PetscScalar* > (other.data());
         ::Dune::Petsc::VecSetBlockSize( vec, bs * blocks );
         ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, vecData, INSERT_VALUES );
         ::Dune::Petsc::VecSetBlockSize( vec, blockSize );
+        //::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
@@ -475,6 +482,7 @@ namespace Dune
           const PetscScalar* values = static_cast< const PetscScalar* > (&(other[ b ][ 0 ])) ;
           ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
         }
+        //::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
@@ -483,9 +491,10 @@ namespace Dune
       template <class Container>
       void copyTo( SimpleBlockVector< Container, blockSize >& other ) const
       {
-        PetscScalar *array = nullptr;
-        VecGetArray( ghostedVec_, &array );
+        const PetscScalar *array = nullptr;
+        VecGetArrayRead( ghostedVec_, &array );
         std::copy_n( array, blockSize * other.size(), other.data() );
+        VecRestoreArrayRead( ghostedVec_, &array );
       }
 
       // assign from other given ISTLBlockVector with same block size
@@ -494,8 +503,8 @@ namespace Dune
       {
         assert( DofBlock :: dimension == blockSize );
 
-        PetscScalar *array = nullptr;
-        VecGetArray( ghostedVec_, &array );
+        const PetscScalar *array = nullptr;
+        VecGetArrayRead( ghostedVec_, &array );
 
         const PetscInt blocks = other.size();
         for( PetscInt b=0, id = 0; b<blocks; ++b )
@@ -506,6 +515,7 @@ namespace Dune
             block[ d ] = array[ id ];
           }
         }
+        VecRestoreArrayRead( ghostedVec_, &array );
       }
 
       PetscVector& operator= ( const ThisType& other )
