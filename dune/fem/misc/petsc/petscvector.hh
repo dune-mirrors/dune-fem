@@ -451,20 +451,12 @@ namespace Dune
         Vec& vec = *getGhostedVector();
 
         const PetscInt blocks = other.size();
-        /*
         for( PetscInt b=0, bs=0; b<blocks; ++b, bs += blockSize )
         {
           const PetscScalar* values = static_cast< const PetscScalar* > (other.data()+bs);
           ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
         }
-        */
-        const PetscInt b  = 0;
-        const PetscInt bs = blockSize ;
-        const PetscScalar* vecData = static_cast< const PetscScalar* > (other.data());
-        ::Dune::Petsc::VecSetBlockSize( vec, bs * blocks );
-        ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, vecData, INSERT_VALUES );
-        ::Dune::Petsc::VecSetBlockSize( vec, blockSize );
-        //::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
@@ -482,7 +474,7 @@ namespace Dune
           const PetscScalar* values = static_cast< const PetscScalar* > (&(other[ b ][ 0 ])) ;
           ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
         }
-        //::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
