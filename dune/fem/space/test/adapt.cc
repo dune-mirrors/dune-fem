@@ -159,7 +159,8 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
     for( const auto& entity : space)
       grid.mark( mark, entity );
     adop.adapt();
-    std::cout << message << std::endl;
+    if( Parameter::verbose() )
+      std::cout << message << std::endl;
   }
 
   if( Parameter :: verbose() )
@@ -182,7 +183,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     Dune::Fem::interpolate( gridFunc, solution );
     Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
     double new_error = l2norm.distance( f ,solution );
-    std::cout << "before ref." << new_error << "\n\n";
+    if( Parameter::verbose() )
+      std::cout << "before ref." << new_error << "\n\n";
   }
 
   adapt(grid,solution,step);
@@ -224,7 +226,10 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   //! perform l2-projection to refined grid
   Dune::Fem::interpolate( gridFunc, solution );
   double new_error = l2norm.distance( gridFunc, solution );
-  std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
+  if( Parameter::verbose() )
+  {
+    std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
+  }
 #if USE_GRAPE
   // if Grape was found, then display last solution
   if(turn > 0)
@@ -281,7 +286,8 @@ try {
 
   DiscreteFunctionType solution ( "sol", space );
   solution.clear();
-  std::cout << "------------    Refining:" << std::endl;
+  if( Parameter::verbose() )
+    std::cout << "------------    Refining:" << std::endl;
   for(int i=0; i<ml; i+=1)
   {
     error[i] = algorithm ( grid , solution, step, (i==ml-1));
@@ -290,7 +296,8 @@ try {
       if ( isLocallyAdaptive )
       {
         double eoc = log( error[i-1]/error[i]) / M_LN2;
-        std::cout << "EOC = " << eoc << std::endl;
+        if( Parameter::verbose() )
+          std::cout << "EOC = " << eoc << std::endl;
         if( std::abs( eoc - (space.order()+eocThreshold) ) < 0 )
         {
           DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
@@ -300,7 +307,8 @@ try {
         std::cout << "no EOC for non-adaptive grid" << std::endl;
     }
   }
-  std::cout << "------------   Coarsening:" << std::endl;
+  if( Parameter::verbose() )
+    std::cout << "------------   Coarsening:" << std::endl;
   for(int i=ml-1; i>=0; i-=1)
   {
     error[i] = algorithm ( grid , solution,-step, 1);
@@ -309,7 +317,8 @@ try {
       if( isLocallyAdaptive )
       {
         double eoc = log( error[i+1]/error[i]) / M_LN2;
-        std::cout << "EOC = " << eoc << std::endl;
+        if( Parameter::verbose() )
+          std::cout << "EOC = " << eoc << std::endl;
         if( std::abs( eoc + (space.order()+eocThreshold) ) < 0 )
         {
           DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
