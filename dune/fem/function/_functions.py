@@ -93,17 +93,15 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     elif expr is not None:
         dimExpr = 0
         try:
-            dimExpr = len(expr)
-        except TypeError:
-            pass
-        try:
-            dimExpr = expr.ufl_shape[0]
-        except AttributeError:
-            pass
-        try:
             if expr.ufl_shape == ():
                 dimExpr = 1
+            else:
+                dimExpr = expr.ufl_shape[0]
         except AttributeError:
+            pass
+        try:
+            dimExpr = len(expr)
+        except (TypeError,NotImplementedError):
             pass
         if isinstance(expr,float) or isinstance(expr,int):
             expr = [expr]
