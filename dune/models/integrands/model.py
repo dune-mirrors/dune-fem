@@ -82,6 +82,9 @@ class Integrands(codegen.ModelClass):
         if self.hasDirichletBoundary is not None:
             code.append(TypeAlias("RRangeType",'Dune::FieldVector< double, '+ str(self.dimRange) + ' > '))
             code.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
+            # code.append(TypeAlias("BoundaryIdProviderType",\ "Dune::Fem::BoundaryIdGetter< typename GridPartType::GridType >"))
+            # idGetter = Variable('BoundaryIdProviderType', "boundaryIdGetter_")
+            # code.append(Declaration(idGetter))
             code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
             code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
             code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'], code=self.isDirichletIntersection, const=True))

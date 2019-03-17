@@ -4,7 +4,7 @@ from ufl import FiniteElementBase, FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
-from ufl import action, derivative
+from ufl import action, derivative, as_vector
 from ufl.classes import Indexed
 from ufl.core.multiindex import FixedIndex, MultiIndex
 from ufl.algorithms.apply_derivatives import apply_derivatives
@@ -15,7 +15,7 @@ from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl import UFLException
 from dune.ufl.tensors import ExprTensor
-from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign
+from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign, Block, ConstructExpression
 
 from dune.source.builtin import make_pair
 from dune.source.cplusplus import InitializerList, Variable
@@ -67,6 +67,13 @@ def generateDirichletCode(predefined, tensor, tempVars=True):
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
+def generateDirichletDomainCode(predefined, tensor, tempVars=True):
+    predefined={}
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('int', 'domainId')
+    return [assign(result, results[0])]
 
 def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True):
     """generate code for a bilinear form
@@ -313,12 +320,17 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     if dirichletBCs:
         integrands.hasDirichletBoundary = True
 
+        predefined = {}
+        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
+        integrands.predefineCoefficients(predefined, False)
+
+        maxId = 0
+        codeDomains = []
         bySubDomain = dict()
         neuman = []
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
-
             if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
             if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
@@ -334,29 +346,51 @@ def _compileUFL(integrands, form, *args, tempVars=True):
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
                 value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
-            bySubDomain[bc.subDomain] = value,neuman
+            if isinstance(bc.subDomain,int):
+                bySubDomain[bc.subDomain] = value,neuman
+                maxId = max(maxId, bc.subDomain)
+            else:
+                domain = ExprTensor(())
+                for key in domain.keys():
+                    domain[key] = Indexed(bc.subDomain, MultiIndex(tuple(FixedIndex(k) for k in key)))
+                codeDomains.append( (value,neuman,domain) )
+        defaultCode = []
+        defaultCode.append(Declaration(Variable('int', 'domainId')))
+        defaultCode.append(Declaration(Variable('auto', 'y'),
+            initializer=UnformattedExpression('auto','intersection.geometry().center()')))
+        for i,v in enumerate(codeDomains):
+            block = Block()
+            defaultCode.append(
+                    generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
+            defaultCode.append('if (domainId)')
+            block = UnformattedBlock()
+            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+1) + ' );')
+            if len(v[1])>0:
+                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            block.append('return true;')
+            defaultCode.append(block)
+        defaultCode.append(return_(False))
 
         bndId = Variable('const int', 'bndId')
-        getBndId = UnformattedExpression('int', 'Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >::boundaryId( ' + integrands.arg_i.name + ' )')
-
-        switch = SwitchStatement(bndId, default=return_(False))
+        getBndId = UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + integrands.arg_i.name + ' )')
+        # getBndId = UnformattedExpression('int', 'boundaryIdGetter_.boundaryId( ' + integrands.arg_i.name + ' )')
+        switch = SwitchStatement(bndId, default=defaultCode)
         for i,v in bySubDomain.items():
             code = []
             if len(v[1])>0:
                 [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
             code.append(return_(True))
             switch.append(i, code)
-        integrands.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + integrands.arg_i.name + ' )')),
+        integrands.isDirichletIntersection = [Declaration(bndId, initializer=getBndId),
                                          UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
                                          switch
                                         ]
 
         switch = SwitchStatement(integrands.arg_bndId, default=assign(integrands.arg_r, construct("RRangeType", 0)))
-        predefined = {}
-        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
-        integrands.predefineCoefficients(predefined, False)
         for i, v in bySubDomain.items():
             switch.append(i, generateDirichletCode(predefined, v[0], tempVars=tempVars))
+        for i,v in enumerate(codeDomains):
+            switch.append(i+maxId+1, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         integrands.dirichlet = [switch]
 
     return integrands

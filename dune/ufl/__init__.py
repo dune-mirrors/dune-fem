@@ -218,7 +218,7 @@ def NamedConstant(value, name=None, dimRange=None, count=None):
             value = (0,)*dimRange
     else:
         domainCell = None
-    return Constant(value, domainCell, name)
+    return Constant(value, cell=domainCell, name=name)
 
     if dimRange is None:
         constant = ufl.Constant(domainCell, count)
@@ -389,11 +389,21 @@ class DirichletBC:
         else:
             self.ufl_value = value
     def __str__(self):
-        return str(self.ufl_value)
+        return str(self.ufl_value)+str(self.subDomain)
     def replace(self,dictionary):
         return DirichletBC(self.functionSpace,
                   ufl.replace(self.ufl_value,dictionary),
                   self.subDomain)
+class BoxDirichletBC(DirichletBC):
+    def __init__(self, functionSpace, value, xL,xR, eps=1e-10):
+        cond = 1
+        x = ufl.SpatialCoordinate(functionSpace)
+        for l,r,c in zip(xL,xR,x):
+            if l is not None:
+                cond *= ufl.conditional(c>l-eps,1,0)
+            if r is not None:
+                cond *= ufl.conditional(c<r+eps,1,0)
+        DirichletBC.__init__(self,functionSpace,value,cond)
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!
