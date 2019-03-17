@@ -57,7 +57,7 @@ namespace Dune
           else
             grid.mark(Marker::keep, gridEntity);
         }
-        return std::make_pair(refMarked,crsMarked);
+        return std::make_pair( grid.comm().sum(refMarked), grid.comm().sum(crsMarked) );
       } // end mark
 
     } // end namespace GridAdaptation

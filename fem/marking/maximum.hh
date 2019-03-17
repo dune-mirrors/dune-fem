@@ -16,25 +16,36 @@ namespace Dune
     // maximalMarking
     // --------------
 
-    template< class LocalError, class Real, class Grid >
-    inline static std::size_t maximalMarking ( const LocalError &localError, const Real &tolerance, Grid &grid )
+    static inline
+    std::pair<int, int>
+    maximumMarking( Grid& grid, const Indicator& indicator,
+                    double theta, int maxLevel = -1)
     {
+      int refMarked = 0;
+      int crsMarked = 0;
+      maxLevel = ( maxLevel < 0 ) ? std::numeric_limits< int >::max() : maxLevel;
       using std::max;
 
-      Real maxError( 0 );
+      double maxError( 0 );
       for( const auto &element : elements( grid.leafGridView() ) )
         maxError = max( maxError, localError( element ) );
       maxError = grid.comm().max( maxError );
 
-      std::size_t marked = 0;
-      for( const auto &element : elements( grid.leafGridView() ) )
+      for (const auto &e : indicator.space())
       {
-        if( localError( element ) <= tolerance*maxError )
-          continue;
-        grid_.mark( 1, element );
-        ++marked;
+        if (!e.isLeaf()) continue;
+        const auto &gridEntity = Dune::Fem::gridEntity(e);
+        localIndicator.bind(e);
+        const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+        localIndicator.evaluate(center,value);
+        double eta = value[0];
+        if( eta > theta*maxError )
+          if (e.level()<maxLevel)
+            refMarked += grid.mark(Marker::refine, gridEntity);
+          else
+            grid.mark(Marker::keep, gridEntity);
       }
-      return grid.comm().sum( marked );
+      return std::make_pair( grid.comm().sum(refMarked), grid.comm().sum(crsMarked) );
     }
 
   } // namespace Fem

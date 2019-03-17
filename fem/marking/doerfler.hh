@@ -262,6 +262,7 @@ namespace Dune
         maxLevel = ( maxLevel < 0 ) ? std::numeric_limits< int >::max() : maxLevel;
 
         int refMarked = 0;
+        int crsMarked = 0;
         typedef Dune::ReferenceElements< typename Grid::ctype, Grid::dimension > ReferenceElements;
         Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
         typename Indicator::RangeType value;
@@ -313,7 +314,7 @@ namespace Dune
         }
         // just checking that the algorihtm did the right thing...
         assert( sum >= (1-tolerance)*(1-tolerance)*sumIndicator);
-        return std::make_pair(refMarked,0);
+        return std::make_pair( grid.comm().sum(refMarked), grid.comm().sum(crsMarked) );
       }
 
     } // end namespace GridAdaptation
