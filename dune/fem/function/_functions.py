@@ -94,7 +94,7 @@ def discreteFunction(space, name, expr=None, dofVector=None):
         dimExpr = 0
         try:
             dimExpr = len(expr)
-        except AttributeError:
+        except TypeError:
             pass
         try:
             dimExpr = expr.ufl_shape[0]
@@ -105,6 +105,9 @@ def discreteFunction(space, name, expr=None, dofVector=None):
                 dimExpr = 1
         except AttributeError:
             pass
+        if isinstance(expr,float) or isinstance(expr,int):
+            expr = [expr]
+            dimExpr = 1
         if dimExpr == 0:
             raise AttributeError("can not determine if expression shape"\
                     " fits the space's range dimension")
