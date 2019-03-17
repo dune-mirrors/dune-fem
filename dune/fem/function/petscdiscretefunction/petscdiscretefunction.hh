@@ -255,6 +255,7 @@ namespace Dune
       template< class Entity >
       void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
+        assert( initialized_ );
         rpOp_.restrictLocal( father, son, initialize );
       }
 
@@ -262,6 +263,7 @@ namespace Dune
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
+        assert( initialized_ );
         rpOp_.prolongLocal( father, son, initialize );
       }
 
@@ -269,6 +271,7 @@ namespace Dune
       template< class Communicator, class Operation >
       void addToList ( Communicator &comm, const Operation& op)
       {
+        assert( initialized_ );
         rpOp_.addToList( comm, op );
       }
 
@@ -276,6 +279,7 @@ namespace Dune
       template< class Communicator >
       void addToList ( Communicator &comm  )
       {
+        assert( initialized_ );
         rpOp_.addToList( comm );
       }
 
@@ -290,13 +294,13 @@ namespace Dune
       template< class LoadBalancer >
       void addToLoadBalancer ( LoadBalancer& lb )
       {
+        assert( initialized_ );
         rpOp_.addToLoadBalancer( lb );
       }
 
       void initialize ()
       {
-        // adaptiveFunction_.assign( discreteFunction_ );
-        interpolate(discreteFunction_, adaptiveFunction_);
+        adaptiveFunction_.assign( discreteFunction_ );
         rpOp_.initialize();
         initialized_ = true ;
       }
@@ -306,8 +310,7 @@ namespace Dune
         // only finalize if previously initialized
         assert( initialized_ );
         rpOp_.finalize();
-        // discreteFunction_.assign( adaptiveFunction_ );
-        interpolate(adaptiveFunction_, discreteFunction_);
+        discreteFunction_.assign( adaptiveFunction_ );
         initialized_ = false ;
       }
 

@@ -49,62 +49,6 @@ namespace Dune
     // PetscManagedDofStorage
     // ----------------------
 
-#if 0
-    /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
-    template < class DiscreteFunctionSpace, class Mapper >
-    class PetscManagedDofStorage
-      //: public ManagedDofStorageImplementation< typename DiscreteFunctionSpace::GridPartType::GridType, Mapper, PetscVector< DiscreteFunctionSpace > >
-      : public ManagedDofStorageInterface
-    {
-      typedef typename DiscreteFunctionSpace::GridPartType::GridType GridType;
-      typedef Mapper MapperType ;
-      typedef PetscVector< DiscreteFunctionSpace > DofArrayType ;
-      typedef ManagedDofStorageImplementation< GridType, MapperType, DofArrayType > BaseType;
-
-    public:
-      //! Constructor of ManagedDofStorageImpl, only to call from DofManager
-      PetscManagedDofStorage( const DiscreteFunctionSpace& space,
-                              const MapperType& mapper )
-        : myArray_( space )
-      {
-      }
-
-      void resize( const bool )
-      { // do nothing here, only in compress
-        //myArray_.resize();
-      }
-      void reserve( int  )
-      { // do nothing here, only in compress
-        myArray_.resize();
-      }
-
-      void dofCompress( const bool clearResizedArrays )
-      {
-        myArray_.resize();
-        if( clearResizedArrays )
-        {
-          myArray_.clear();
-        }
-      }
-
-      //! enable dof compression for dof storage (default is empty)
-      void enableDofCompression()
-      {
-        DUNE_THROW(NotImplemented,"PetscVector cannot handle dof compression!");
-      }
-
-      //! size of space, i.e. mapper.size()
-      int size () const { return myArray_.size(); }
-
-      size_t usedMemorySize() const { return myArray_.usedMemorySize(); }
-
-      DofArrayType& getArray() { return myArray_; }
-
-    protected:
-      DofArrayType myArray_;
-    };
-
-#else
     /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
     template < class DiscreteFunctionSpace, class Mapper >
     class PetscManagedDofStorage
@@ -149,8 +93,6 @@ namespace Dune
     protected:
       DofArrayType myArray_;
     };
-#endif
-
 
 
     // PetscVector
@@ -450,15 +392,19 @@ namespace Dune
       {
         Vec& vec = *getGhostedVector();
 
-        const PetscInt blocks = other.size();
-        for( PetscInt b=0, bs=0; b<blocks; ++b, bs += blockSize )
+        assert( size() <= other.size() );
+
+        const size_t blocks = size();
+        for( size_t b=0, bs = 0; b<blocks; ++b, bs += blockSize)
         {
+          PetscInt block = mappers().ghostIndex( b );
           const PetscScalar* values = static_cast< const PetscScalar* > (other.data()+bs);
-          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &block, values, INSERT_VALUES );
         }
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
+        communicateIfNecessary();
       }
 
       // assign from other given ISTLBlockVector with same block size
@@ -468,11 +414,12 @@ namespace Dune
         assert( DofBlock :: dimension == blockSize );
         Vec& vec = *getGhostedVector();
 
-        const PetscInt blocks = other.size();
-        for( PetscInt b=0; b<blocks; ++b )
+        const size_t blocks = other.size();
+        for( size_t b=0; b<blocks; ++b )
         {
+          PetscInt block = mappers().ghostIndex( b );
           const PetscScalar* values = static_cast< const PetscScalar* > (&(other[ b ][ 0 ])) ;
-          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &block, values, INSERT_VALUES );
         }
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
@@ -483,9 +430,19 @@ namespace Dune
       template <class Container>
       void copyTo( SimpleBlockVector< Container, blockSize >& other ) const
       {
+        typedef typename Container::FieldType FieldType;
         const PetscScalar *array = nullptr;
         VecGetArrayRead( ghostedVec_, &array );
-        std::copy_n( array, blockSize * other.size(), other.data() );
+        const size_t blocks = size();
+        for( size_t b=0; b<blocks; ++b )
+        {
+          const PetscScalar* petscBlock = array + (blockSize * mappers().ghostIndex( b ));
+          FieldType* otherBlock = other.data() + (b * blockSize);
+          for( int i=0; i<blockSize; ++i )
+          {
+            otherBlock[ i ] = petscBlock[ i ];
+          }
+        }
         VecRestoreArrayRead( ghostedVec_, &array );
       }
 
@@ -494,17 +451,16 @@ namespace Dune
       void copyTo ( ISTLBlockVector< DofBlock >& other ) const
       {
         assert( DofBlock :: dimension == blockSize );
-
         const PetscScalar *array = nullptr;
         VecGetArrayRead( ghostedVec_, &array );
-
-        const PetscInt blocks = other.size();
-        for( PetscInt b=0, id = 0; b<blocks; ++b )
+        const size_t blocks = size();
+        for( size_t b=0; b<blocks; ++b )
         {
-          auto& block = other[ b ];
-          for( int d=0; d<blockSize; ++d, ++id )
+          const PetscScalar* petscBlock = array + (blockSize * mappers().ghostIndex( b ));
+          DofBlock& otherBlock = other[ b ];
+          for( int i=0; i<blockSize; ++i )
           {
-            block[ d ] = array[ id ];
+            otherBlock[ i ] = petscBlock[ i ];
           }
         }
         VecRestoreArrayRead( ghostedVec_, &array );
