@@ -271,7 +271,6 @@ namespace Dune
       template< class Communicator, class Operation >
       void addToList ( Communicator &comm, const Operation& op)
       {
-        assert( initialized_ );
         rpOp_.addToList( comm, op );
       }
 
@@ -279,7 +278,6 @@ namespace Dune
       template< class Communicator >
       void addToList ( Communicator &comm  )
       {
-        assert( initialized_ );
         rpOp_.addToList( comm );
       }
 
@@ -294,7 +292,6 @@ namespace Dune
       template< class LoadBalancer >
       void addToLoadBalancer ( LoadBalancer& lb )
       {
-        assert( initialized_ );
         rpOp_.addToLoadBalancer( lb );
       }
 

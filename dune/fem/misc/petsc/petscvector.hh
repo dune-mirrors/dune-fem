@@ -78,6 +78,7 @@ namespace Dune
 
       void dofCompress( const bool clearResizedArrays )
       {
+        std::cout << "Dof Storage resize " << std::endl;
         myArray_.resize();
         if( clearResizedArrays )
         {
@@ -392,8 +393,8 @@ namespace Dune
       {
         Vec& vec = *getGhostedVector();
 
+        // due to duplicate ghost dofs other.size could be larger
         assert( size() <= other.size() );
-
         const size_t blocks = size();
         for( size_t b=0, bs = 0; b<blocks; ++b, bs += blockSize)
         {
@@ -404,7 +405,7 @@ namespace Dune
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
-        communicateIfNecessary();
+        // communicateIfNecessary();
       }
 
       // assign from other given ISTLBlockVector with same block size
@@ -414,7 +415,9 @@ namespace Dune
         assert( DofBlock :: dimension == blockSize );
         Vec& vec = *getGhostedVector();
 
-        const size_t blocks = other.size();
+        // due to duplicate ghost dofs other.size could be larger
+        assert( size() <= other.size() );
+        const size_t blocks = size();
         for( size_t b=0; b<blocks; ++b )
         {
           PetscInt block = mappers().ghostIndex( b );
@@ -433,6 +436,9 @@ namespace Dune
         typedef typename Container::FieldType FieldType;
         const PetscScalar *array = nullptr;
         VecGetArrayRead( ghostedVec_, &array );
+
+        // due to duplicate ghost dofs other.size could be larger
+        assert( size() <= other.size() );
         const size_t blocks = size();
         for( size_t b=0; b<blocks; ++b )
         {
@@ -453,6 +459,8 @@ namespace Dune
         assert( DofBlock :: dimension == blockSize );
         const PetscScalar *array = nullptr;
         VecGetArrayRead( ghostedVec_, &array );
+        // due to duplicate ghost dofs other.size could be larger
+        assert( size() <= other.size() );
         const size_t blocks = size();
         for( size_t b=0; b<blocks; ++b )
         {
