@@ -58,16 +58,27 @@ def dfInterpolate(self, f):
     if ufl and (isinstance(f, list) or isinstance(f, tuple)):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
+
+    dimExpr = 0
     if ufl and isinstance(f, GridFunction):
         func = f.gf
+        dimExpr = func.dimRange
     elif ufl and isinstance(f, ufl.core.expr.Expr):
         func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+        if func.ufl_shape == ():
+            dimExpr = 1
+        else:
+            dimExpr = func.ufl_shape[0]
     else:
         try:
             gl = len(inspect.getargspec(f)[0])
             func = None
         except TypeError:
             func = f
+            if isinstance(func,int) or isinstance(func,float):
+                dimExpr = 1
+            else:
+                dimExpr = len(func)
         if func is None:
             if gl == 1:   # global function
                 func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
@@ -75,7 +86,17 @@ def dfInterpolate(self, f):
                 func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
                 func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+            dimExpr = func.dimRange
+
+    if dimExpr == 0:
+        raise AttributeError("can not determine if expression shape"\
+                " fits the space's range dimension")
+    elif dimExpr != self.space.dimRange:
+        raise AttributeError("trying to interpolate an expression"\
+            " of size "+str(dimExpr)+" into a space with range dimension = "\
+            + str(self.space.dimRange))
     return self._interpolate(func)
+
 def dfProject(self, f):
     if ufl and (isinstance(f, list) or isinstance(f, tuple)):
         if isinstance(f[0], ufl.core.expr.Expr):

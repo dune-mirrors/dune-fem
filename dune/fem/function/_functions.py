@@ -91,28 +91,6 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     if expr is None and dofVector is None:
         df.clear()
     elif expr is not None:
-        dimExpr = 0
-        try:
-            if expr.ufl_shape == ():
-                dimExpr = 1
-            else:
-                dimExpr = expr.ufl_shape[0]
-        except AttributeError:
-            pass
-        try:
-            dimExpr = len(expr)
-        except (TypeError,NotImplementedError):
-            pass
-        if isinstance(expr,float) or isinstance(expr,int):
-            expr = [expr]
-            dimExpr = 1
-        if dimExpr == 0:
-            raise AttributeError("can not determine if expression shape"\
-                    " fits the space's range dimension")
-        elif dimExpr != space.dimRange:
-            raise AttributeError("trying to interpolate an expression"\
-                " of size "+str(dimExpr)+" into a space with range dimension = "\
-                + str(space.dimRange))
         df.interpolate(expr)
     return df.as_ufl()
 
