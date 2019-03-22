@@ -252,7 +252,7 @@ namespace Dune
 
       virtual int preconditionerIteration () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 0 );
+        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 1 );
       }
 
       virtual int preconditionerLevel () const

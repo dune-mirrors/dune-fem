@@ -65,12 +65,34 @@ namespace Dune
                               const MapperType& mapper )
         : BaseType( space.grid(), mapper, myArray_ ),
           myArray_( space )
-      {}
+      {
+      }
 
+      void resize( const bool )
+      { // do nothing here, only in compress
+      }
+      void reserve( int  )
+      {
+        // do nothing here, only in compress
+      }
+
+      void dofCompress( const bool clearResizedArrays )
+      {
+        myArray_.resize();
+        if( clearResizedArrays )
+        {
+          myArray_.clear();
+        }
+      }
+
+      //! enable dof compression for dof storage (default is empty)
+      void enableDofCompression()
+      {
+        std::cerr << "WARNING: PetscVector cannot handle dof compression!" << std::endl;
+      }
     protected:
       DofArrayType myArray_;
     };
-
 
 
     // PetscVector
@@ -155,7 +177,7 @@ namespace Dune
 
       std::size_t size () const { return mappers().ghostMapper().size(); }
 
-      void resize( const std::size_t newsize )
+      void resize( const std::size_t newsize = 0 )
       {
         // TODO: keep old data stored in current vector
         // remove old vectors
@@ -370,14 +392,17 @@ namespace Dune
       {
         Vec& vec = *getGhostedVector();
 
-        const PetscInt blocks = other.size();
-        const PetscInt bs = blockSize ;
-        const PetscInt b = 0;
-
-        const PetscScalar* vecData = static_cast< const PetscScalar* > (other.data());
-        ::Dune::Petsc::VecSetBlockSize( vec, bs * blocks );
-        ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, vecData, INSERT_VALUES );
-        ::Dune::Petsc::VecSetBlockSize( vec, blockSize );
+        // use mapping from the ghost mapper which removes duplicate dofs
+        const auto& mapping = mappers_.ghostMapper().mapping();
+        const size_t blocks = mapping.size();
+        assert( blocks == other.size() );
+        for( size_t b=0, bs = 0; b<blocks; ++b, bs += blockSize)
+        {
+          PetscInt block = mapping[ b ];
+          const PetscScalar* values = static_cast< const PetscScalar* > (other.data()+bs);
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &block, values, INSERT_VALUES );
+        }
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
@@ -389,12 +414,17 @@ namespace Dune
         assert( DofBlock :: dimension == blockSize );
         Vec& vec = *getGhostedVector();
 
-        const PetscInt blocks = other.size();
-        for( PetscInt b=0; b<blocks; ++b )
+        // use mapping from the ghost mapper which removes duplicate dofs
+        const auto& mapping = mappers_.ghostMapper().mapping();
+        const size_t blocks = mapping.size();
+        assert( blocks == other.size() );
+        for( size_t b=0; b<blocks; ++b )
         {
+          PetscInt block = mapping[ b ];
           const PetscScalar* values = static_cast< const PetscScalar* > (&(other[ b ][ 0 ])) ;
-          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &b, values, INSERT_VALUES );
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &block, values, INSERT_VALUES );
         }
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
         updateGhostRegions();
       }
@@ -403,9 +433,24 @@ namespace Dune
       template <class Container>
       void copyTo( SimpleBlockVector< Container, blockSize >& other ) const
       {
-        PetscScalar *array = nullptr;
-        VecGetArray( ghostedVec_, &array );
-        std::copy_n( array, blockSize * other.size(), other.data() );
+        typedef typename Container::FieldType FieldType;
+        const PetscScalar *array = nullptr;
+        VecGetArrayRead( ghostedVec_, &array );
+
+        // use mapping from the ghost mapper which removes duplicate dofs
+        const auto& mapping = mappers_.ghostMapper().mapping();
+        const size_t blocks = mapping.size();
+        assert( blocks == other.size() );
+        for( size_t b=0; b<blocks; ++b )
+        {
+          const PetscScalar* petscBlock = array + (blockSize * mapping[ b ]);
+          FieldType* otherBlock = other.data() + (b * blockSize);
+          for( int i=0; i<blockSize; ++i )
+          {
+            otherBlock[ i ] = petscBlock[ i ];
+          }
+        }
+        VecRestoreArrayRead( ghostedVec_, &array );
       }
 
       // assign from other given ISTLBlockVector with same block size
@@ -413,19 +458,23 @@ namespace Dune
       void copyTo ( ISTLBlockVector< DofBlock >& other ) const
       {
         assert( DofBlock :: dimension == blockSize );
+        const PetscScalar *array = nullptr;
+        VecGetArrayRead( ghostedVec_, &array );
 
-        PetscScalar *array = nullptr;
-        VecGetArray( ghostedVec_, &array );
-
-        const PetscInt blocks = other.size();
-        for( PetscInt b=0, id = 0; b<blocks; ++b )
+        // use mapping from the ghost mapper which removes duplicate dofs
+        const auto& mapping = mappers_.ghostMapper().mapping();
+        const size_t blocks = mapping.size();
+        assert( blocks == other.size() );
+        for( size_t b=0; b<blocks; ++b )
         {
-          auto& block = other[ b ];
-          for( int d=0; d<blockSize; ++d, ++id )
+          const PetscScalar* petscBlock = array + (blockSize * mapping[ b ]);
+          DofBlock& otherBlock = other[ b ];
+          for( int i=0; i<blockSize; ++i )
           {
-            block[ d ] = array[ id ];
+            otherBlock[ i ] = petscBlock[ i ];
           }
         }
+        VecRestoreArrayRead( ghostedVec_, &array );
       }
 
       PetscVector& operator= ( const ThisType& other )

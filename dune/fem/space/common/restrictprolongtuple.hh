@@ -52,6 +52,8 @@ namespace Dune
       template< int i > struct ProlongLocal;
       template< int i > struct RestrictLocal;
       template< int i > struct SetFatherChildWeight;
+      template< int i > struct Initialize;
+      template< int i > struct Finalize;
 
     public:
       /** \copydoc Dune::Fem::RestrictProlongInterface::DomainFieldType */
@@ -74,6 +76,18 @@ namespace Dune
       /** \name Interface methods
        *  \{
        */
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::initialize */
+      void initialize ()
+      {
+        Dune::Fem::ForLoop< Initialize, 0, sizeof...( Tail ) >::apply( tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::setFatherChildWeight */
+      void finalize ()
+      {
+        Dune::Fem::ForLoop< Finalize, 0, sizeof...( Tail ) >::apply( tuple_ );
+      }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::setFatherChildWeight */
       void setFatherChildWeight ( const DomainFieldType &weight ) const
@@ -236,6 +250,34 @@ namespace Dune
       static void apply ( const DomainFieldType &weight, const std::tuple< Head, Tail... > &tuple )
       {
         std::get< i >( tuple ).setFatherChildWeight( weight );
+      }
+    };
+
+
+    // RestrictProlongTuple< Head, Tail... >::Initialize
+    // -------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::Initialize
+    {
+      static void apply ( std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).initialize();
+      }
+    };
+
+
+    // RestrictProlongTuple< Head, Tail... >::Finalize
+    // -----------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::Finalize
+    {
+      static void apply ( std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).finalize();
       }
     };
 

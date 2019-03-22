@@ -25,6 +25,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/lagrange.hh>
 // #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
@@ -178,7 +179,11 @@ typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder
 //  DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
+#if HAVE_PETSC
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#else
+typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+#endif
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
@@ -256,9 +261,13 @@ void algorithm ( GridPartType &gridPart,
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
-  std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
-  std::cout << "L2 error before adaptation: " << preL2error << std::endl;
-  std::cout << "H1 error before adaptation: " << preH1error << std::endl;
+  size_t unknowns = gridPart.comm().sum( solution.space().size() );
+  if( Parameter::verbose() )
+  {
+    std::cout << "Unknowns before adaptation: " << unknowns   << std::endl;
+    std::cout << "L2 error before adaptation: " << preL2error << std::endl;
+    std::cout << "H1 error before adaptation: " << preH1error << std::endl;
+  }
 
   adapt( gridPart.grid(), solution, step, locallyAdaptive );
 
@@ -269,16 +278,20 @@ void algorithm ( GridPartType &gridPart,
   double postL2error = l2norm.distance( solution, fexact );
   double postH1error = h1norm.distance( f, solution );
 
-  std::cout << "Unknowns after "
-            << (step < 0 ? "restriction" : "prolongation")
-            << ": " << solution.space().size() << std::endl;
-  std::cout << "L2 error after "
+  unknowns = gridPart.comm().sum( solution.space().size() );
+  if( Parameter::verbose() )
+  {
+    std::cout << "Unknowns after "
               << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postL2error << std::endl;
-  std::cout << "H1 error after "
-              << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postH1error << std::endl;
+              << ": " << unknowns << std::endl;
+    std::cout << "L2 error after "
+                << (step < 0 ? "restriction" : "prolongation")
+                << ": " << postL2error << std::endl;
+    std::cout << "H1 error after "
+                << (step < 0 ? "restriction" : "prolongation")
+                << ": " << postH1error << std::endl;
 
+  }
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
       GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
@@ -286,12 +299,15 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-    interpolate( f, solution );
+  interpolate( f, solution );
   double newL2error = l2norm.distance( f, solution );
   double newH1error = h1norm.distance( f, solution );
 
-  std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
-  std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl;
+  if( Parameter::verbose() )
+  {
+    std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
+    std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl;
+  }
 
   #if USE_GRAPE && SHOW_INTERPOLATION
     if( turn > 0 ) {
@@ -303,8 +319,11 @@ void algorithm ( GridPartType &gridPart,
   double l2eoc = -log( newL2error / preL2error) / M_LN2;
   double h1eoc = -log( newH1error / preH1error) / M_LN2;
 
-  std :: cout << "L2 EOC: " << l2eoc << std :: endl;
-  std :: cout << "H1 EOC: " << h1eoc << std :: endl;
+  if( Parameter::verbose() )
+  {
+    std :: cout << "L2 EOC: " << l2eoc << std :: endl;
+    std :: cout << "H1 EOC: " << h1eoc << std :: endl;
+  }
 
   const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< GridPartType :: GridType > :: v ;
   // threshold for EOC difference to predicted value
@@ -329,7 +348,9 @@ void algorithm ( GridPartType &gridPart,
     dataio.writeData( solution, xdr, "sol", turn );
   #endif
 
-  std :: cout << std :: endl;
+
+  if( Parameter::verbose() )
+    std :: cout << std :: endl;
 }
 
 
@@ -366,11 +387,13 @@ try
 
   const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
-  std :: cout << std :: endl << "Refining: " << std :: endl;
+  if( Parameter::verbose() )
+    std :: cout << std :: endl << "Refining: " << std :: endl;
   for( int i = 0; i < ml; ++i )
     algorithm( gridPart, solution, step, (i == ml-1), locallyAdaptive );
 
-  std :: cout << std :: endl << "Coarsening:" << std::endl;
+  if( Parameter::verbose() )
+    std :: cout << std :: endl << "Coarsening:" << std::endl;
   for( int i = ml - 1; i >= 0; --i )
     algorithm( gridPart, solution, -step, 1, locallyAdaptive );
 

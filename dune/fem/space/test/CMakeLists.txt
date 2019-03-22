@@ -47,7 +47,6 @@ foreach( test ${TESTS} )
   LINK_LIBRARIES dunefem )
 endforeach()
 
-
 # dgcomm tests should run on GRIDDIM=3 meshes
 dune_add_test( NAME dgcomm SOURCES dgcomm.cc
 COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0;WANT_CACHED_COMM_MANAGER=0"

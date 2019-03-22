@@ -17,6 +17,8 @@
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
 
+#include <dune/fem/space/common/restrictprolonginterface.hh>
+
 namespace Dune
 {
   namespace Fem
@@ -202,6 +204,123 @@ namespace Dune
 
       // dof vector impl
       DofVectorType& dofVector_;
+    };
+
+
+    template <class DiscreteFunctionSpace>
+    class RestrictProlongDefault< PetscDiscreteFunction< DiscreteFunctionSpace > >
+      : public RestrictProlongInterfaceDefault< RestrictProlongTraits< RestrictProlongDefault< PetscDiscreteFunction< DiscreteFunctionSpace > >,
+                                                typename DiscreteFunctionSpace::DomainFieldType > >
+    {
+      typedef PetscDiscreteFunction< DiscreteFunctionSpace >   DiscreteFunction;
+      typedef RestrictProlongDefault< DiscreteFunction > ThisType;
+      typedef RestrictProlongInterfaceDefault< RestrictProlongTraits< ThisType, typename DiscreteFunction::DomainFieldType > > BaseType;
+
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace >         AdaptiveDiscreteFunctionType;
+      typedef RestrictProlongDefault < AdaptiveDiscreteFunctionType >   AdaptiveRestrictProlongType;
+
+    public:
+      typedef DiscreteFunction DiscreteFunctionType;
+
+      typedef typename BaseType::DomainFieldType DomainFieldType;
+
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+      typedef typename DiscreteFunctionType::GridPartType GridPartType;
+
+      typedef DefaultLocalRestrictProlong< DiscreteFunctionSpaceType > LocalRestrictProlongType;
+
+      explicit RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
+      : discreteFunction_( discreteFunction ),
+        adaptiveFunction_( discreteFunction_.name()+"-adaptive", discreteFunction_.space() ),
+        rpOp_( adaptiveFunction_ ),
+        initialized_( false )
+      {
+      }
+
+      RestrictProlongDefault ( const RestrictProlongDefault& other )
+      : discreteFunction_( const_cast< DiscreteFunction& > (other.discreteFunction_) ),
+        adaptiveFunction_( other.adaptiveFunction_.name()+"-copy", discreteFunction_.space() ),
+        rpOp_( adaptiveFunction_ ),
+        initialized_( false )
+      {
+      }
+
+      void setFatherChildWeight ( const DomainFieldType &weight ) const
+      {
+        rpOp_.setFatherChildWeight( weight );
+      }
+
+      //! restrict data to father
+      template< class Entity >
+      void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      {
+        assert( initialized_ );
+        rpOp_.restrictLocal( father, son, initialize );
+      }
+
+      //! prolong data to children
+      template< class Entity >
+      void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
+      {
+        assert( initialized_ );
+        rpOp_.prolongLocal( father, son, initialize );
+      }
+
+      //! add discrete function to communicator with given unpack operation
+      template< class Communicator, class Operation >
+      void addToList ( Communicator &comm, const Operation& op)
+      {
+        rpOp_.addToList( comm, op );
+      }
+
+      //! add discrete function to communicator
+      template< class Communicator >
+      void addToList ( Communicator &comm  )
+      {
+        rpOp_.addToList( comm );
+      }
+
+      //! remove discrete function from communicator
+      template< class Communicator >
+      void removeFromList ( Communicator &comm )
+      {
+        rpOp_.removeFromList( comm );
+      }
+
+      //! add discrete function to load balancer
+      template< class LoadBalancer >
+      void addToLoadBalancer ( LoadBalancer& lb )
+      {
+        rpOp_.addToLoadBalancer( lb );
+      }
+
+      void initialize ()
+      {
+        adaptiveFunction_.assign( discreteFunction_ );
+        rpOp_.initialize();
+        initialized_ = true ;
+      }
+
+      void finalize   ()
+      {
+        // only finalize if previously initialized
+        assert( initialized_ );
+        rpOp_.finalize();
+        discreteFunction_.assign( adaptiveFunction_ );
+        initialized_ = false ;
+      }
+
+    protected:
+      using BaseType::calcWeight;
+      using BaseType::entitiesAreCopies;
+
+    protected:
+      DiscreteFunctionType& discreteFunction_;
+      AdaptiveDiscreteFunctionType adaptiveFunction_;
+      AdaptiveRestrictProlongType  rpOp_;
+
+      bool initialized_;
     };
 
   } // namespace Fem

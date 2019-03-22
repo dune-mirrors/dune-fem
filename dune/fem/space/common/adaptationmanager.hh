@@ -366,6 +366,9 @@ namespace Dune
     template <PartitionIteratorType pitype>
     void genericAdapt () const
     {
+      // initialize restrict prolong operator (e.g. PetscRestrictProlong... )
+      rpOp_.initialize();
+
       // call pre-adapt, returns true if at least
       // one element is marked for coarsening
       bool restr = grid_.preAdapt();
@@ -380,6 +383,7 @@ namespace Dune
 
       if(restr)
       {
+
         // get macro grid view
         MacroGridView macroView = grid_.levelGridView( 0 );
 
@@ -453,6 +457,9 @@ namespace Dune
 
       // do cleanup
       grid_.postAdapt();
+
+      // finalize restrict prolong operator (e.g. PetscRestrictProlong... )
+      rpOp_.finalize();
     }
 
   private:
@@ -606,6 +613,8 @@ namespace Dune
     typedef AdaptationManagerBase<GridType,RestProlOperatorImp> BaseType;
     typedef LoadBalancer<GridType> Base2Type;
 
+    using BaseType :: rpOp_;
+
     // reference counter to ensure only one instance per grid exists
     ObjectType& referenceCounter_;
 
@@ -682,8 +691,15 @@ namespace Dune
     /** @copydoc LoadBalancerInterface::loadBalance */
     virtual bool loadBalance ()
     {
+      // same as for the adapt method
+      rpOp_.initialize () ;
+
       // call load balance
-      return Base2Type :: loadBalance();
+      const bool result = Base2Type :: loadBalance( );
+
+      // finalize rp object (mostly RestrictProlongDefault for PetscDF)
+      rpOp_.finalize () ;
+      return result ;
     }
 
     /** @copydoc LoadBalancerInterface::loadBalanceTime */
