@@ -68,7 +68,8 @@ def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
     func = Func(gridView,name,order,*args,**kwargs)
-    func.scalar = scalar
+    if not hasattr(func,"scalar"):
+        func.scalar = scalar
     return func.as_ufl() if func is not None else None
 
 def discreteFunction(space, name, expr=None, dofVector=None):

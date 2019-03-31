@@ -183,6 +183,7 @@ class Constant(ufl.Coefficient):
             self._value = float(value)
         else:
             self._value = [float(v) for v in value]
+        self.models = []
 
     def cell(self):
         return self.ufl_element().cell()
@@ -202,7 +203,14 @@ class Constant(ufl.Coefficient):
             v = [float(vv) for vv in v]
         assert type(self._value) == type(v)
         self._value = v
-
+        for m in self.models:
+            m.setConstant(self,v)
+            # m(v)
+    def registerModel(self,model):
+        self.models += [model]
+        # self.models += [
+        #   lambda x: getattr(model.__class__,prop).__set__(model,x)
+        # ]
 
 @deprecated("replace NamedConstant with Constant - the first argument can "\
             "now also be the initial value, e.g.,a float or list/tuple of floats")

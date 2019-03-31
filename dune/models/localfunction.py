@@ -17,13 +17,13 @@ from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
 from dune.source import BaseModel
 from dune.source.fem import declareFunctionSpace
 import ufl
-from ufl import Coefficient, Constant, constantvalue, as_vector, replace
+from ufl import Coefficient, as_vector, replace
 from ufl import checks
 from ufl.classes import FloatValue, IntValue
 from dune.source.cplusplus import maxEdgeLength, UnformattedExpression,\
        NameSpace
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
-from dune.ufl import GridFunction
+from dune.ufl import GridFunction, Constant
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.codegen import uflSignature, TooHighDerivative
 
@@ -239,6 +239,8 @@ def init(lf, gridView, name, order, *args, **kwargs):
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
     lf.base.__init__(lf,gridView,name,order,*args)
+    for c in lf._constants:
+        c.registerModel(lf)
 
 def setConstant(lf, index, value):
     try:
@@ -248,11 +250,16 @@ def setConstant(lf, index, value):
     lf._setConstant(index, value)
 
 def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True, **kwargs):
+    scalar = False
     if type(expr) == list or type(expr) == tuple:
         expr = ufl.as_vector(expr)
+    elif type(expr) == int or type(expr) == float:
+        expr = ufl.as_vector( [expr] )
+        scalar = True
     try:
         if expr.ufl_shape == ():
             expr = ufl.as_vector([expr])
+            scalar = True
     except:
         return None
     _, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
@@ -282,12 +289,14 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     class LocalFunction(module.UFLLocalFunction):
         def __init__(self, gridView, name, order, *args, **kwargs):
             self.base = module.UFLLocalFunction
+            self._coefficientNames = {n: i for i, n in enumerate(source.coefficientNames)}
+            if renumbering is not None:
+                self._renumbering = renumbering
+                self._setConstant = self.setConstant # module.UFLLocalFunction.__dict__['setConstant']
+                self.setConstant = lambda *args: setConstant(self,*args)
+            self.constantShape = source._constantShapes
+            self._constants = [c for c in source.constantList if isinstance(c,Constant)]
+            self.scalar = scalar
             init(self, gridView, name, order, *args, **kwargs)
 
-    setattr(LocalFunction, '_coefficientNames', {n: i for i, n in enumerate(source.coefficientNames)})
-    if renumbering is not None:
-        setattr(LocalFunction, '_renumbering', renumbering)
-        LocalFunction._setConstant = module.UFLLocalFunction.__dict__['setConstant']
-        setattr(LocalFunction, 'setConstant', setConstant)
-    setattr(LocalFunction, "constantShape", source._constantShapes)
     return LocalFunction
