@@ -299,12 +299,12 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     dimw = gridView.dimWorld
 
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
-    typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
+    typeName = "Dune::Fem::DGLagrangeSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,
-            ctorArgs=[gridView])
+            ctorArgs=[gridView,order])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
@@ -365,13 +365,13 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
 
     includes = gridView._includes + [ "dune/fem/space/lagrange.hh" ]
     dimw = gridView.dimWorld
-    typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
+    typeName = "Dune::Fem::LagrangeSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,
-            ctorArgs=[gridView])
+            ctorArgs=[gridView,order])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
@@ -383,7 +383,7 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                     interiorQuadratureOrders=interiorQuadratureOrders,
                     skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
                     scalar=scalar,
-                    ctorArgs=[gridView])
+                    ctorArgs=[gridView,order])
     return spc.as_ufl()
 
 def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
@@ -690,7 +690,7 @@ def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=
                 str(dimRange) + ">1")
     if order < 1:
         raise KeyError(\
-            "Parameter error in LagrangeSpace with "+
+            "Parameter error in BDMSpace with "+
             "order=" + str(order) + ": " +\
             "order has to be equal to 1 or 2")
     if field == "complex":
