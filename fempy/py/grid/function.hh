@@ -166,7 +166,12 @@ namespace Dune
         cls.def( "cellData", [] ( const GridFunction &self, int level ) { return cellData( self, refinementLevels( level ) ); }, "level"_a = 0 );
         cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, refinementLevels( level ) ); }, "level"_a = 0 );
 
-        cls.def( "integrate", [] ( const GridFunction &self ) { return Dune::Fem::Integral< GridPartType >( self.gridPart(), self.space().order() ).norm( self ); } );
+        cls.def( "integrate", [] ( pybind11::handle self )
+            { const GridFunction &gf = self.template cast<GridFunction>();
+              auto value = Dune::Fem::Integral< GridPartType >( gf.gridPart(), gf.space().order() ).norm( gf );
+              return self.attr("scalar").template cast<bool>() ?
+                 pybind11::cast(value[0]) : pybind11::cast(value);
+            } );
 
 
 #if 0
