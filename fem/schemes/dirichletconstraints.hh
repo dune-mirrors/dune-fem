@@ -51,6 +51,7 @@ public:
   enum Operation { set = 0, sub = 1 };
   typedef Model ModelType;
   typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+  typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
@@ -74,6 +75,7 @@ public:
     const ModelType& impl_;
     int bndId_;
     public:
+    typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpace::RangeType RangeType;
     BoundaryWrapper( const ModelType& impl, int bndId )
     : impl_( impl ), bndId_(bndId) {}

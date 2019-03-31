@@ -41,10 +41,26 @@ namespace Dune
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
       template< class Space, class... options >
+      void registerSpaceConstructorWithOrder ( pybind11::class_< Space, options... > cls, std::false_type )
+      {}
+      template< class Space, class... options >
+      void registerSpaceConstructorWithOrder ( pybind11::class_< Space, options... > cls, std::true_type )
+      {
+        using pybind11::operator""_a;
+
+        typedef typename Space::GridPartType GridPart;
+        typedef typename GridPart::GridViewType GridView;
+
+        cls.def( pybind11::init( [] ( const GridView &gridView, int order ) {
+            return new Space( gridPart< GridView >( gridView ), order );
+          } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a, "order"_a );
+      }
+      template< class Space, class... options >
       void registerSpaceConstructor ( pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::GridPartType GridPart;
         registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
+        registerSpaceConstructorWithOrder( cls, std::is_constructible< Space, GridPart&, int >() );
       }
 
       template< class Space, class... options >
