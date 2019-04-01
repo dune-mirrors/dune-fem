@@ -164,7 +164,7 @@ namespace Dune
       typedef SingletonList< LFEMapType *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
-      typedef LocalFiniteElementInterpolation< BasisFunctionSetType, LocalInterpolationType > InterpolationType;
+      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, LocalBasisType::dimRange==1 > InterpolationType;
 
       using BaseType::order;
 

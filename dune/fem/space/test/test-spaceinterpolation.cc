@@ -34,6 +34,8 @@
 #include <dune/fem/space/rannacherturek.hh>
 #include <dune/fem/space/raviartthomas.hh>
 
+#include <dune/fem/io/file/dataoutput.hh>
+
 #include <dune/fem/space/test/checklocalinterpolation.hh>
 
 
@@ -90,33 +92,31 @@ static const int dimRange = GridPartType::dimensionworld;
 typedef Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimRange > > FunctionSpaceType;
 
 typedef std::tuple<
-  Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  // Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
+  // Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
+  // Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+  // Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  // Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+  // Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  // Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+  // Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
+  // Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
+  // Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
+  // Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
-  // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
+  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
   // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
+  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
+  // Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
   > DiscreteFunctionSpacesType;
 
 typedef ErrorTuple< DiscreteFunctionSpacesType >::Type ErrorTupleType;
 
 
-
 // algorithm
 // ---------
-
 template< class DiscreteFunctionSpace >
 std::pair< Real< DiscreteFunctionSpace >, Real< DiscreteFunctionSpace > >
 algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
@@ -128,6 +128,17 @@ algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
   Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > uExact;
   const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, gridPart, 3 );
   interpolate( uGridExact, u );
+
+#if 1
+  {
+    static int turn = 0;
+    typedef std::tuple< decltype(u)* > IODataType;
+    IODataType data( &u );
+    Dune::Fem::DataOutput< GridType, IODataType > output( gridPart.grid(), data );
+    output.writeData( turn, "test" );
+    ++turn;
+  }
+#endif
 
   checkLocalInterpolation( space );
 

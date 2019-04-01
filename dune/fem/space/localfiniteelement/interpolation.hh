@@ -10,6 +10,8 @@
 
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/space/basisfunctionset/transformed.hh>
+#include <dune/fem/space/basisfunctionset/vectorial.hh>
+#include <dune/fem/space/combinedspace/interpolation.hh>
 
 namespace Dune
 {
@@ -19,10 +21,8 @@ namespace Dune
 
     namespace Impl
     {
-
       // LocalFunctionWrapper
       // --------------------
-
       template< class LocalFunction, class BasisFunctionSet >
       struct LocalFunctionWrapper
       {
@@ -45,11 +45,8 @@ namespace Dune
       private:
         const LocalFunction &lf_;
       };
-
-
       // LocalFunctionWrapper
       // --------------------
-
       template< class LocalFunction, class Entity, class ShapeFunctionSet, class Transformation >
       struct LocalFunctionWrapper< LocalFunction, TransformedBasisFunctionSet< Entity, ShapeFunctionSet, Transformation > >
       {
@@ -85,13 +82,19 @@ namespace Dune
     // LocalFiniteElementInterpolation
     // -------------------------------
 
-    template< class BasisFunctionSet, class LocalInterpolation >
-    class LocalFiniteElementInterpolation
+    template< class Space, class LocalInterpolation, bool scalarSFS >
+    class LocalFiniteElementInterpolation;
+
+    // a vector valued shape basis function set taken from
+    // dune-localfunction - the vector value 'blow up' is not yet supported
+    // for this case
+    template< class Space, class LocalInterpolation >
+    class LocalFiniteElementInterpolation<Space,LocalInterpolation,false>
     {
-      typedef LocalFiniteElementInterpolation< BasisFunctionSet, LocalInterpolation > ThisType;
+      typedef LocalFiniteElementInterpolation< Space, LocalInterpolation,false > ThisType;
 
     public:
-      typedef BasisFunctionSet BasisFunctionSetType;
+      typedef typename Space::BasisFunctionSetType BasisFunctionSetType;
       typedef LocalInterpolation LocalInterpolationType;
 
     private:
@@ -109,7 +112,7 @@ namespace Dune
     public:
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
-        : basisFunctionSet_( basisFunctionSet ),
+      : basisFunctionSet_( basisFunctionSet ),
         localInterpolation_( localInterpolation )
       {}
 
@@ -123,16 +126,110 @@ namespace Dune
       template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
       void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
       {
-        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
-        localInterpolation().interpolate( wrapper, localContribution.localDofVector() );
+        (*this)(localFunction,localContribution.localDofVector());
       }
 
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
       const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
 
     private:
-      BasisFunctionSet basisFunctionSet_;
+      BasisFunctionSetType basisFunctionSet_;
       LocalInterpolationType localInterpolation_;
+    };
+
+
+    // a scalar valued shape basis function set taken from
+    // dune-localfunction - for this the vector value 'blow up' is supported
+    // as with other spaces
+    template< class Space, class LocalInterpolation >
+    class LocalFiniteElementInterpolation<Space,LocalInterpolation,true>
+    {
+      typedef LocalFiniteElementInterpolation< Space, LocalInterpolation,true > ThisType;
+
+    public:
+      typedef typename Space::BasisFunctionSetType BasisFunctionSetType;
+      typedef LocalInterpolation LocalInterpolationType;
+
+    private:
+      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      static const int dimRange = FunctionSpaceType::dimRange;
+
+      typedef std::size_t size_type;
+
+      typedef VerticalDofAlignment< BasisFunctionSetType, RangeType> DofAlignmentType;
+
+      struct RangeConverter
+      {
+        RangeConverter ( std::size_t range ) : range_( range ) {}
+
+        template< class T >
+        FieldVector< T, 1 > operator() ( const FieldVector< T, dimRange > &in ) const
+        {
+          return in[ range_ ];
+        }
+
+        template< class T, int j >
+        FieldMatrix< T, 1, j > operator() ( const FieldMatrix< T, dimRange, j > &in ) const
+        {
+          return in[ range_ ];
+        }
+
+      protected:
+        std::size_t range_;
+      };
+      template <class DofVector, class DofAlignment>
+      struct SubDofVectorWrapper
+        : public SubDofVector< DofVector, DofAlignment >
+      {
+        typedef SubDofVector< DofVector, DofAlignment > BaseType;
+
+        SubDofVectorWrapper( DofVector& dofs, int coordinate, const DofAlignment &dofAlignment )
+          : BaseType( dofs, coordinate, dofAlignment )
+        {}
+
+        //! do nothing on clear/resize since it's done in apply of this class
+        void clear() {}
+        void resize( const unsigned int) {}
+      };
+
+    public:
+      explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
+                                                 const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
+      : basisFunctionSet_( basisFunctionSet ),
+        localInterpolation_( localInterpolation ),
+        dofAlignment_( basisFunctionSet_ )
+      {}
+
+      template< class LocalFunction, class Dof >
+      void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
+      {
+        typedef std::vector< Dof > LocalDofVector;
+        // clear dofs before something is adedd
+        localDofVector.clear();
+        for( std::size_t i = 0; i < dimRange; ++i )
+        {
+          SubDofVectorWrapper< LocalDofVector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
+          localInterpolation().interpolate(
+              localFunctionConverter( localFunction, RangeConverter( i ) ), subLdv );
+        }
+      }
+
+      template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
+      void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
+      {
+        (*this)(localFunction,localContribution.localDofVector());
+      }
+
+      BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
+      const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
+
+    private:
+      BasisFunctionSetType basisFunctionSet_;
+      LocalInterpolationType localInterpolation_;
+      DofAlignmentType dofAlignment_;
     };
 
   } // namespace Fem

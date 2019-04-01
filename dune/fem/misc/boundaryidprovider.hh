@@ -281,6 +281,27 @@ namespace Dune
       }
     };
 
+    ///////////////////////////////////////////////////////
+
+    template< class Grid >
+    struct BoundaryIdGetter
+    {
+      typedef std::function<int(const typename Grid::template Codim<0>::Geometry::GlobalCoordinate&)> Caller;
+      BoundaryIdGetter(const Caller &caller)
+      : caller_(caller) {}
+      template< class Intersection >
+      int boundaryId ( const Intersection &intersection ) const
+      {
+        if (!intersection.boundary) return 0;
+        const auto x = intersection.geometry().center();
+        int val = caller(x);
+        return (val==0)?BoundaryIdProvider<Grid>::boundaryId(intersection):val;
+      }
+      private:
+      Caller caller_;
+    };
+
+
   } // namespace Fem
 
 } // namespace Dune

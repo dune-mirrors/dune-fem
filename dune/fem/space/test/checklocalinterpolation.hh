@@ -10,10 +10,12 @@
 template< class DiscreteSpace >
 struct LocalBasis
 {
+  typedef DiscreteSpace FunctionSpaceType;
   typedef typename DiscreteSpace::BasisFunctionSetType BasisFunctionSetType;
   typedef typename DiscreteSpace::DomainType DomainType;
   typedef typename DiscreteSpace::RangeType RangeType;
   typedef typename DiscreteSpace::JacobianRangeType JacobianRangeType;
+  typedef typename DiscreteSpace::HessianRangeType HessianRangeType;
   typedef typename DiscreteSpace::RangeFieldType RangeFieldType;
 
   typedef typename BasisFunctionSetType::EntityType EntityType;

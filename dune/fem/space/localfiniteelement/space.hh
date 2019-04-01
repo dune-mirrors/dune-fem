@@ -25,6 +25,7 @@
 #include <dune/fem/space/localfiniteelement/shapefunctionset.hh>
 #include <dune/fem/space/localfiniteelement/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/interpolation.hh>
+#include <dune/fem/space/localfiniteelement/localrestrictprolong.hh>
 
 namespace Dune
 {
@@ -48,8 +49,12 @@ namespace Dune
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static constexpr int codimension = 0;
+      static constexpr bool isScalar = LocalFiniteElementType::Traits::LocalBasisType::Traits::dimRange==1;
 
-      typedef Hybrid::IndexRange< int, 1 > LocalBlockIndices;
+      typedef std::conditional_t<isScalar,
+              Hybrid::IndexRange< int, FunctionSpace::dimRange >,
+              Hybrid::IndexRange< int, 1 >
+              > LocalBlockIndices;
 
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
@@ -60,8 +65,12 @@ namespace Dune
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
-      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetType;
-//      typedef VectorialShapeFunctionSet< ShapeFunctionSetProxy< StoredShapeFunctionSetType >, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetProxyType;
+      // only extend to vector valued in case that the original space is scalar
+      typedef std::conditional_t<isScalar,
+              VectorialShapeFunctionSet< ShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType >,
+              ShapeFunctionSetProxyType
+              > ShapeFunctionSetType;
 
     private:
       template< class LFEM >
@@ -102,9 +111,8 @@ namespace Dune
       typedef DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
         BaseType;
 
-      typedef typename BaseType::Traits Traits;
-
     public:
+      typedef typename BaseType::Traits Traits;
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
       typedef typename BaseType::GridPartType GridPartType;
@@ -166,7 +174,7 @@ namespace Dune
       typedef SingletonList< LFEMapType *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
-      typedef LocalFiniteElementInterpolation< BasisFunctionSetType, LocalInterpolationType > InterpolationType;
+      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, Traits::isScalar > InterpolationType;
 
       using BaseType::order;
 
@@ -181,7 +189,7 @@ namespace Dune
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
-      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key,
+      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key = KeyType(1),
                                          const InterfaceType commInterface = InteriorBorder_All_Interface,
                                          const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection ),
@@ -255,6 +263,13 @@ namespace Dune
       std::unique_ptr< LFEMapType, typename LFEMapProviderType::Deleter > lfeMap_;
       std::unique_ptr< StoredShapeFunctionSetVectorType, typename StoredShapeFunctionSetVectorProviderType::Deleter > storedShapeFunctionSetVector_;
       std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
+    };
+
+    template< class LFEMap, class FunctionSpace, template< class > class Storage, int newRange >
+    struct ToNewDimRangeFunctionSpace<
+      LocalFiniteElementSpace<LFEMap, FunctionSpace, Storage>, newRange>
+    {
+      typedef LocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
     };
 
   } // namespace Fem

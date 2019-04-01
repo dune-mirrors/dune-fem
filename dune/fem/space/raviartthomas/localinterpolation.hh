@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_RAVIARTTHOMAS_LOCALINTERPOLATION_HH
 #define DUNE_FEM_SPACE_RAVIARTTHOMAS_LOCALINTERPOLATION_HH
 
+#error SHOULDN't be needed
+
 // C++ includes
 #include <cassert>
 #include <vector>
