@@ -334,6 +334,11 @@ namespace Dune
           if( info.numDofs == 0 )
             continue;
 
+          // see commit message f86ab6e96a27fdecfa82de43fe9099f01e240e1b
+          const auto & geomTypes = indexSet().geomTypes(info.codim);
+          if (IndexSetType::hasSingleGeometryType && geomTypes[0] != gt[i])
+            continue;
+
           if( codimType_[ info.codim ] == CodimEmpty )
             codimType_[ info.codim ] = CodimFixedSize;
           else if( codimDofs[ info.codim ] != info.numDofs )

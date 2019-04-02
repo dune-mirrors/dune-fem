@@ -12,7 +12,7 @@
 #endif
 
 // polynomial order of base functions
-const int polOrder = POLORDER;
+const int polOrder = 2; // POLORDER;
 
 #include <iostream>
 #include <sstream>
@@ -30,6 +30,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/io/file/dataoutput.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
@@ -172,7 +173,8 @@ typedef CheckGridEnabled< MyGridType >::GridPartType GridPartType;
 typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
-typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+typedef LagrangeSpace< FunctionSpaceType, GridPartType >
+// typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
 //! type of the discrete function space our unkown belongs to
 //typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
@@ -251,7 +253,7 @@ void algorithm ( GridPartType &gridPart,
   const unsigned int polOrder = solution.space().order() + 1;
 
   ExactSolutionType fexact;
-  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
+  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder+1 );
 
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
@@ -297,6 +299,16 @@ void algorithm ( GridPartType &gridPart,
       grape.dataDisplay( solution );
     }
   #endif
+#if 1
+  {
+    static int turn = 0;
+    typedef std::tuple< DiscreteFunctionType* > IODataType;
+    IODataType data( &solution );
+    Dune::Fem::DataOutput< MyGridType, IODataType > output( gridPart.grid(), data );
+    output.writeData( turn, "test" );
+    ++turn;
+  }
+#endif
 
   interpolate( f, solution );
   double newL2error = l2norm.distance( f, solution );
@@ -328,7 +340,7 @@ void algorithm ( GridPartType &gridPart,
   // threshold for EOC difference to predicted value
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.25) );
 
-  if( isLocallyAdaptive )
+  if( 0 && isLocallyAdaptive )
   {
     const double sign = step / std::abs( step );
     if( std::abs( l2eoc - h1eoc - sign ) > eocThreshold )
@@ -380,7 +392,7 @@ try
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType gridPart( grid );
-  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 

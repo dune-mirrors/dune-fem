@@ -104,11 +104,11 @@ typedef std::tuple<
   // Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   // Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
   // Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
+  // Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
+  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >
   // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
+  // Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
   // Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
   > DiscreteFunctionSpacesType;
 
@@ -121,7 +121,7 @@ template< class DiscreteFunctionSpace >
 std::pair< Real< DiscreteFunctionSpace >, Real< DiscreteFunctionSpace > >
 algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
 {
-  DiscreteFunctionSpace space( gridPart );
+  DiscreteFunctionSpace space( gridPart,2 );
   Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpace > u( "solution", space );
 
   // interpolate a function
