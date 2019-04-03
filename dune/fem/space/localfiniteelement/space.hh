@@ -60,7 +60,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
-      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
+      typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
 
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
@@ -226,10 +226,10 @@ namespace Dune
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      bool continuous () const { return false; }
+      bool continuous () const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      bool continuous ( const IntersectionType &intersection ) const { return false; }
+      bool continuous ( const IntersectionType &intersection ) const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order () const { return lfeMap_->order(); }

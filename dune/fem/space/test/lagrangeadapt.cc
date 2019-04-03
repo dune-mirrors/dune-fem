@@ -11,6 +11,10 @@
 #define WANT_GRAPE 0
 #endif
 
+#if WANT_GRAPE
+#define USE_GRAPE 1
+#endif
+
 // polynomial order of base functions
 const int polOrder = 2; // POLORDER;
 
@@ -31,15 +35,6 @@ const int polOrder = 2; // POLORDER;
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/io/file/dataoutput.hh>
-
-#if HAVE_GRAPE
-  #define USE_GRAPE WANT_GRAPE
-#else
-  #define USE_GRAPE 0
-  #if WANT_GRAPE
-    #warning "Grape was not found by configure."
-  #endif
-#endif
 
 #if USE_GRAPE
   #include <dune/grid/io/visual/grapedatadisplay.hh>
