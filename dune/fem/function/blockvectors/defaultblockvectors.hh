@@ -248,6 +248,23 @@ namespace Dune {
 
     typedef Hybrid::IndexRange< int, blockSize > BlockIndices;
 
+  protected:
+    template <class Array>
+    struct ContainerAccess
+    {
+      static FieldType* data( Array& array ) { return array.data(); }
+      static const FieldType* data( const Array& array ) { return array.data(); }
+    };
+
+    template <class K>
+    struct ContainerAccess< Dune::DynamicVector< K > >
+    {
+      typedef Dune::DynamicVector< K >  Array;
+      static FieldType* data( Array& array ) { return array.container().data(); }
+      static const FieldType* data( const Array& array ) { return array.container().data(); }
+    };
+
+  public:
     /** \brief Constructor */
     explicit SimpleBlockVector ( ArrayType& array )
     : array_( array )
@@ -304,8 +321,8 @@ namespace Dune {
     /** \brief Number of dofs in the block vector */
     SizeType numDofs() const { return array().size(); }
 
-    FieldType* data() { return array().data(); }
-    const FieldType* data() const { return array().data(); }
+    FieldType* data() { return ContainerAccess< ArrayType >::data( array() ); }
+    const FieldType* data() const { return ContainerAccess< ArrayType >::data( array() ); }
 
     const ArrayType &array () const { return array_; }
     ArrayType &array () { return array_; }

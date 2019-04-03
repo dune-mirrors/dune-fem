@@ -5,8 +5,9 @@
 #include <string>
 #include <utility>
 
-#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/vectorfunction.hh>
 
 #if HAVE_PETSC
 
@@ -155,6 +156,15 @@ namespace Dune
        *  \note This is a specialization when the right hand side is an ISTLBlockVectorDiscreteFunction */
       template < class Block >
       void assign( const ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType, Block > &g )
+      {
+        // call more efficient assign on PetscVector
+        dofVector().assignVector( g.dofVector() );
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g)
+       *  \note This is a specialization when the right hand side is a VectorDiscreteFunction */
+      template < class Vector >
+      void assign( const VectorDiscreteFunction< DiscreteFunctionSpaceType, Vector > &g )
       {
         // call more efficient assign on PetscVector
         dofVector().assignVector( g.dofVector() );

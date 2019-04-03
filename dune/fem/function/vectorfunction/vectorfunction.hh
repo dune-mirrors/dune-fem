@@ -18,6 +18,10 @@ namespace Dune
     template < class DiscreteFunctionSpace, class Vector >
     class VectorDiscreteFunction;
 
+#if HAVE_PETSC
+    template <class DiscreteFunctionSpace>
+    class PetscDiscreteFunction;
+#endif
 
 
     template< typename DiscreteFunctionSpace, typename Vector >
@@ -81,6 +85,13 @@ namespace Dune
       VectorDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
       ThisType& operator= ( ThisType&& ) = delete;
+
+#if HAVE_PETSC
+      void assign( const PetscDiscreteFunction< DiscreteFunctionSpaceType >& g )
+      {
+        g.dofVector().copyTo( dofVector() );
+      }
+#endif
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
