@@ -68,6 +68,9 @@ namespace Dune
             lfFather[ i ] += weight * lfSon[ i ];
         }
       }
+      template< class LFFather >
+      void restrictFinalize ( LFFather &lfFather ) const
+      {}
 
       //! prolong data to children
       template< class LFFather, class LFSon, class LocalGeometry >
@@ -121,6 +124,9 @@ namespace Dune
       template< class LFFather, class LFSon, class LocalGeometry >
       void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
+      {}
+      template< class LFFather >
+      void restrictFinalize ( LFFather &lfFather ) const
       {}
 
       //! prolong data to children

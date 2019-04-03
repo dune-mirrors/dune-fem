@@ -110,6 +110,11 @@ namespace Dune
         Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
       }
 
+      template< class Entity >
+      void restrictFinalize ( const Entity &father ) const
+      {
+      }
+
       /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &child, bool initialize ) const

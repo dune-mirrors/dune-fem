@@ -166,6 +166,7 @@ namespace Dune
             DUNE_THROW( GridError, "Cannot restrict over more than one level." );
           initialize = false;
         }
+        localRestrictProlong_.restrictFinalize(father);
       }
 
       template< class Function >

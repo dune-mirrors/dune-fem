@@ -203,12 +203,13 @@ namespace Dune
         dofAlignment_( basisFunctionSet_ )
       {}
 
-      template< class LocalFunction, class Dof >
-      void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
+      template< class LocalFunction, class Vector >
+      void operator() ( const LocalFunction &localFunction, Vector &localDofVector ) const
       {
-        typedef std::vector< Dof > LocalDofVector;
+        typedef Vector LocalDofVector;
         // clear dofs before something is adedd
-        localDofVector.clear();
+        // localDofVector.clear(); // does not exist on DynVector so use 'fill' instead
+        std::fill(localDofVector.begin(),localDofVector.end(),0);
         for( std::size_t i = 0; i < dimRange; ++i )
         {
           SubDofVectorWrapper< LocalDofVector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );

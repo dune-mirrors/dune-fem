@@ -78,6 +78,9 @@ namespace Dune
           }
         }
       }
+      template< class LFFather >
+      void restrictFinalize ( LFFather &lfFather ) const
+      {}
 
       template< class LFFather, class LFSon, class LocalGeometry >
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,

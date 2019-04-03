@@ -16,7 +16,7 @@
 #endif
 
 // polynomial order of base functions
-const int polOrder = 2; // POLORDER;
+const int polOrder = 1; // POLORDER;
 
 #include <iostream>
 #include <sstream>
@@ -400,7 +400,7 @@ try
 
   if( Parameter::verbose() )
     std :: cout << std :: endl << "Coarsening:" << std::endl;
-  for( int i = ml - 1; i >= 0; --i )
+  // for( int i = ml - 1; i >= 0; --i )
     algorithm( gridPart, solution, -step, 1, locallyAdaptive );
 
   return 0;

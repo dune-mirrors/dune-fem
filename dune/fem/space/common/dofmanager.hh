@@ -697,6 +697,10 @@ namespace Dune
         }
       }
 
+      template <class EntityType>
+      inline void restrictFinalize( const EntityType &father ) const
+      {}
+
       //! prolong data to children and resize memory if doResize is true
       template <class EntityType>
       inline void prolongLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
