@@ -60,7 +60,8 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
-      typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
+      // typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
+      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
 
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;

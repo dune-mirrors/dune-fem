@@ -335,8 +335,10 @@ namespace Dune
             continue;
 
           // see commit message f86ab6e96a27fdecfa82de43fe9099f01e240e1b
-          const auto & geomTypes = indexSet().geomTypes(info.codim);
-          if (IndexSetType::hasSingleGeometryType && geomTypes[0] != gt[i])
+          // Note: hasSingleGeometryType does not exist on all IndexSets
+          static const bool hasSingleGeometryType = Dune::Capabilities::hasSingleGeometryType< typename GridPartType::GridType > :: v ;
+          const auto & geomTypes = indexSet().types(info.codim);
+          if (hasSingleGeometryType && geomTypes[0] != gt[i])
             continue;
 
           if( codimType_[ info.codim ] == CodimEmpty )
