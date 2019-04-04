@@ -404,14 +404,14 @@ namespace Dune
 
 
 
-    template< class Field, int dim, unsigned int polOrder >
+    template< class Field, int dim, unsigned int maxPolOrder >
     struct LagrangePointSetTraits
     {
       //! field type of coordinates
       typedef Field FieldType;
 
       //! polynomial order of corresponding base functions
-      static const unsigned int polynomialOrder = polOrder;
+      static const unsigned int maxPolynomialOrder = maxPolOrder;
 
       //! dimension of points
       static const int dimension = dim;
@@ -423,26 +423,26 @@ namespace Dune
       template< typename ct, int quaddim >
       struct PointListTraits
       {
-        typedef LagrangePointListImplementation< ct, 0, 0, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, 0, 0, maxPolynomialOrder >
           PointQuadratureType;
 
-        typedef LagrangePointListImplementation< ct, 0, 1, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, 0, 1, maxPolynomialOrder >
           LineQuadratureType;
 
-        typedef LagrangePointListImplementation< ct, 0, dimension, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, 0, dimension, maxPolynomialOrder >
           SimplexQuadratureType;
 
-        typedef LagrangePointListImplementation< ct, (1 << dimension)-1, dimension, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, (1 << dimension)-1, dimension, maxPolynomialOrder >
           CubeQuadratureType;
 
-        typedef LagrangePointListImplementation< ct, (1 << (dimension-1)), dimension, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, (1 << (dimension-1)), dimension, maxPolynomialOrder >
           PrismQuadratureType;
 
-        typedef LagrangePointListImplementation< ct, (1 << (dimension-1))-1, dimension, polynomialOrder >
+        typedef LagrangePointListImplementation< ct, (1 << (dimension-1))-1, dimension, maxPolynomialOrder >
           PyramidQuadratureType;
 
         //! type of integration point list implemementation
-        typedef LagrangePointListInterface< ct, quaddim, polynomialOrder > IntegrationPointListType;
+        typedef LagrangePointListInterface< ct, quaddim, maxPolynomialOrder > IntegrationPointListType;
 
         typedef int QuadratureKeyType ;
       };
@@ -456,7 +456,7 @@ namespace Dune
 
 
 
-    template< class GridPart, unsigned int polOrder >
+    template< class GridPart, unsigned int maxPolOrder >
     class LagrangePointSet;
 
 
@@ -695,7 +695,7 @@ namespace Dune
 
       static const int dimension = BaseType::dimension;
 
-      enum { polynomialOrder = Traits::polynomialOrder };
+      enum { maxPolynomialOrder = Traits::maxPolynomialOrder };
 
       typedef typename BaseType::CoordinateType CoordinateType;
       typedef typename Traits::CoordinateType PointType;
@@ -704,7 +704,7 @@ namespace Dune
       struct Codim
       {
         //! type of iterator over DoF numbers in a subentity
-        typedef SubEntityLagrangePointIterator< GridPartType, codim, polynomialOrder >
+        typedef SubEntityLagrangePointIterator< GridPartType, codim, maxPolynomialOrder >
           SubEntityIteratorType;
       };
 
@@ -714,8 +714,8 @@ namespace Dune
 
     public:
       //! constructor
-      LagrangePointSet ( const GeometryType &geometry, const int order )
-      : BaseType( geometry, order ), lagrangePointList_( this->quadImp().ipList() )
+      LagrangePointSet ( const GeometryType &geometry, const int polynomialOrder )
+      : BaseType( geometry, polynomialOrder ), lagrangePointList_( this->quadImp().ipList() )
       {}
 
       //! copy constructor

@@ -248,8 +248,7 @@ void algorithm ( GridPartType &gridPart,
                  int turn,
                  const bool locallyAdaptive )
 {
-  const unsigned int polOrder
-    = DiscreteFunctionSpaceType :: polynomialOrder + 1;
+  const unsigned int polOrder = solution.space().order() + 1;
 
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );

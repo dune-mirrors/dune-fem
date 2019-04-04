@@ -13,6 +13,8 @@ namespace Dune
 
     namespace Capabilities
     {
+      // LagrangeDiscreteFunctionSpace
+      //------------------------------
 
       template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
       struct hasFixedPolynomialOrder< LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > >
@@ -59,6 +61,54 @@ namespace Dune
 
       template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
       struct viewThreadSafe< LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+
+      // DynamicLagrangeDiscreteFunctionSpace
+      //-------------------------------------
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct hasFixedPolynomialOrder< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      // hasStaticPolynomialOrder we use default
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct isContinuous< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
+      {
+        static const bool v = Dune::Fem::GridPartCapabilities::isConforming< GridPart >::v;
+      };
+
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct isLocalized< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct isAdaptive< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct threadSafe< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
+      {
+        static const bool v = false;
+      };
+
+
+      template< class FunctionSpace, class GridPart, template< class > class Storage >
+      struct viewThreadSafe< DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
       {
         static const bool v = true;
       };

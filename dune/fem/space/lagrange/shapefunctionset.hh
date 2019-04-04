@@ -160,21 +160,22 @@ namespace Dune
      * \tparam  FunctionSpace  function space
      * \tparam  polOrder       polynomial order
      */
-    template< class FunctionSpace, int polOrder >
+    template< class FunctionSpace, int maxPolOrder >
     class LagrangeShapeFunctionSet
     : public SimpleShapeFunctionSet<
-        typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType
+        typename LagrangeShapeFunctionFactory< FunctionSpace, maxPolOrder >::ShapeFunctionType
       >
     {
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
-      typedef LagrangeShapeFunctionFactory< FunctionSpace, polOrder > ShapeFunctionFactoryType;
+      typedef LagrangeShapeFunctionFactory< FunctionSpace, maxPolOrder > ShapeFunctionFactoryType;
       typedef SimpleShapeFunctionSet< typename ShapeFunctionFactoryType::ShapeFunctionType > BaseType;
 
     public:
-      LagrangeShapeFunctionSet ( const Dune::GeometryType &type )
-      : BaseType( ShapeFunctionFactoryType( type ) )
-      {}
+      LagrangeShapeFunctionSet ( const Dune::GeometryType &type, const int order = maxPolOrder )
+      : BaseType( ShapeFunctionFactoryType( type, order ) )
+      {
+      }
     };
 
 
@@ -288,12 +289,12 @@ namespace Dune
     // Implementation of LagrangeShapeFunctionFactory
     // ----------------------------------------------
 
-    template< class FunctionSpace, int polOrder >
-    const int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::dimension;
+    template< class FunctionSpace, int maxPolOrder >
+    const int LagrangeShapeFunctionFactory< FunctionSpace, maxPolOrder >::dimension;
 
 
-    template< class FunctionSpace, int polOrder >
-    inline int LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
+    template< class FunctionSpace, int maxPolOrder >
+    inline int LagrangeShapeFunctionFactory< FunctionSpace, maxPolOrder >
       ::order () const
     {
       return order_;
