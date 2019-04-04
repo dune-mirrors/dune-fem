@@ -99,6 +99,16 @@ namespace Dune
 
       static const int dimDomain = FunctionSpaceType::dimDomain;
 
+      struct Traits
+      {
+        typedef typename FunctionSpaceType::DomainType DomainType;
+        typedef typename FunctionSpaceType::RangeType RangeType;
+        typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+        typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      };
+
       LocalFunctionConverter ( const HostLocalFunction &hostLocalFunction, const Converter &converter = Converter() )
         : BaseType( hostLocalFunction ), converter_( converter )
       {}

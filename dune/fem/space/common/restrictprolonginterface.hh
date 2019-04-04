@@ -271,7 +271,7 @@ namespace Dune
         typedef typename GridPartType::template Codim< Entity::codimension >::EntityType GridPartEntityType;
         const GridPartType &gridPart = discreteFunction_.gridPart();
         const GridPartEntityType &gpFather = gridPart.convert( father );
-        LocalFunctionType lfFather = discreteFunction_.localFunction( father );
+        LocalFunctionType lfFather = discreteFunction_.localFunction( gpFather );
         localRP_.restrictFinalize( lfFather );
       }
 

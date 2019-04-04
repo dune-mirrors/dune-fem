@@ -203,18 +203,19 @@ namespace Dune
         dofAlignment_( basisFunctionSet_ )
       {}
 
-      template< class LocalFunction, class Vector >
+      template< class LocalFunction, class Vector>
       void operator() ( const LocalFunction &localFunction, Vector &localDofVector ) const
       {
-        typedef Vector LocalDofVector;
         // clear dofs before something is adedd
         // localDofVector.clear(); // does not exist on DynVector so use 'fill' instead
         std::fill(localDofVector.begin(),localDofVector.end(),0);
         for( std::size_t i = 0; i < dimRange; ++i )
         {
-          SubDofVectorWrapper< LocalDofVector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
-          localInterpolation().interpolate(
-              localFunctionConverter( localFunction, RangeConverter( i ) ), subLdv );
+          SubDofVectorWrapper< Vector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
+          (*this)(
+              localFunctionConverter( localFunction, RangeConverter(i) ),
+              subLdv, PriorityTag<42>()
+              );
         }
       }
 
@@ -228,6 +229,22 @@ namespace Dune
       const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
 
     private:
+      template< class LocalFunction, class Vector>
+      auto operator() ( const LocalFunction &localFunction, Vector &localDofVector, PriorityTag<1> ) const
+      -> void_t< decltype(
+          std::declval<LocalInterpolationType>().interpolate(
+            localFunction, localDofVector)) >
+      {
+        localInterpolation().interpolate( localFunction, localDofVector );
+      }
+      template< class LocalFunction, class Vector>
+      void operator() ( const LocalFunction &localFunction, Vector &localDofVector, PriorityTag<0> ) const
+      {
+        std::vector<typename Vector::value_type> tmp(basisFunctionSet_.size());
+        localInterpolation().interpolate( localFunction, tmp);
+        for (unsigned int i=0;i<tmp.size();++i)
+          localDofVector[i] = tmp[i];
+      }
       BasisFunctionSetType basisFunctionSet_;
       LocalInterpolationType localInterpolation_;
       DofAlignmentType dofAlignment_;

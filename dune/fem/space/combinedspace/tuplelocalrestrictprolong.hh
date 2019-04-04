@@ -72,7 +72,7 @@ namespace Dune
       template< class LFFather >
       void restrictFinalize ( LFFather &lfFather ) const
       {
-        Fem::ForLoop< RestrictFinalize, 0, setSize >::apply( lfFather, lfSon, localRestrictProlongTuple_ );
+        Fem::ForLoop< RestrictFinalize, 0, setSize >::apply( lfFather, localRestrictProlongTuple_ );
       }
 
       template< class LFFather, class LFSon, class LocalGeometry >

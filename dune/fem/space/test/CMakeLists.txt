@@ -1,5 +1,5 @@
 if( NOT GRIDTYPE )
-  set( GRIDTYPE ALUGRID_CONFORM )
+  set( GRIDTYPE YASPGRID )
 endif()
 
 if( NOT GRIDDIM )
@@ -58,7 +58,6 @@ LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
 dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
 if( ${FEM_TORTURE_TESTSS} )
   # test adaptation of combinedspaces
