@@ -35,7 +35,7 @@ set( EXPENSIVE_TESTS
   localadapter
 )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   foreach(i ${EXPENSIVE_TESTS})
     list(APPEND TESTS ${i})
   endforeach()
@@ -59,7 +59,7 @@ LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
 dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   # test adaptation of combinedspaces
   dune_add_test( NAME adapt_combinedspace_pointbased SOURCES adapt.cc
   COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE;POINTBASED"

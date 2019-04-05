@@ -29,3 +29,9 @@ dune_install(
 )
 
 dune_add_subdirs( dataprojection )
+
+# avoid deprecation warning in header-check.
+exclude_from_headercheck(
+  adaptmanager.hh
+  arrays.hh
+  )

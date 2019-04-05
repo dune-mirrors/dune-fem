@@ -71,9 +71,9 @@ namespace Dune
           template< class GlobalKey >
           void operator() ( int localBlock, const GlobalKey globalKey )
           {
-            int localDof = blockSize*localBlock;
-            SizeType globalDof = blockSize*globalKey;
-            const int localEnd = localDof + blockSize;
+            int localDof = blockSize_*localBlock;
+            SizeType globalDof = blockSize_*globalKey;
+            const int localEnd = localDof + blockSize_;
             while( localDof != localEnd )
               functor_( localDof++, globalDof++ );
           }

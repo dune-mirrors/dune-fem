@@ -3,3 +3,7 @@ dune_install(asciistreams.hh binarystreams.hh sionlibstreams.hh
              tuples.hh virtualstreams.hh xdrstreams.hh)
 
 dune_add_subdirs(test)
+
+exclude_from_headercheck(
+  xdrstreams.hh
+  )

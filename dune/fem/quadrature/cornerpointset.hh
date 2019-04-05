@@ -29,7 +29,7 @@ namespace Dune
     class CornerPointSetTraits
     {
       template< class ct, int dim >
-      struct PointListTraits;
+      class PointListTraits;
 
     public:
       typedef IntegrationPointList< typename GridPart::ctype, GridPart::dimension, PointListTraits >

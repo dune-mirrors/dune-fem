@@ -12,7 +12,7 @@ configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 
 set( DEFAULTFLAGS "-D${GRIDTYPE}" "-DGRIDDIM=${GRIDDIM}" "-DDIMENSION=2" "-DPOLORDER=2" "-DTOPOLOGYTYPE=SimplexTopology" "-DSCALAR=0" )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   dune_add_test( NAME tester SOURCES main.cc
   COMPILE_DEFINITIONS  ${DEFAULTFLAGS}
   LINK_LIBRARIES dunefem )

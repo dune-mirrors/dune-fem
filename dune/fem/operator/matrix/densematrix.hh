@@ -11,7 +11,7 @@
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
-#include <dune/fem/solver/oemsolver.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/storage/objectstack.hh>
 
 namespace Dune

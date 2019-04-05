@@ -140,7 +140,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::basisFunctionSet */
         BasisFunctionSetType basisFunctionSet ( const EntityType &entity, const KeyType &key ) const
         {
-          return BasisFunctionSetType( impl.basisFunctionSet( entity, key ) );
+          return BasisFunctionSetType( impl().basisFunctionSet( entity, key ) );
         }
 
         /** \} */
