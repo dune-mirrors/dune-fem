@@ -10,3 +10,12 @@ dune_add_subdirs(linear rungekutta test)
 
 dune_add_library(solver OBJECT
     rungekutta/butchertable.cc )
+
+# avoid deprecation warning.
+exclude_from_headercheck(
+  istlsolver.hh
+  oemsolver.hh
+  pardg.hh
+  pardginverseoperators.hh
+  petscsolver.hh
+  )

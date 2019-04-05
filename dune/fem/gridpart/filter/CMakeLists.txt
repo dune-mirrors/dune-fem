@@ -5,3 +5,7 @@ dune_install(basicfilterwrapper.hh
              radialfilter.hh
              threadfilter.hh
              voidfilter.hh)
+
+exclude_from_headercheck(
+  threadfilter.hh
+  )

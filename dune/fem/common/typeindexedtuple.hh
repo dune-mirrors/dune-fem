@@ -139,7 +139,7 @@ namespace Dune
 namespace std
 {
   template< size_t i, class Tuple, class Types >
-  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
+  class tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
   {
     typedef typename std::tuple_element< i, Tuple >::type type;
   };

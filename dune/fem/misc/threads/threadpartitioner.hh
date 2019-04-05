@@ -13,7 +13,7 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alugrid.hh>
 
-#warning "Using the ThreadPartitioner"
+//#warning "Using the ThreadPartitioner"
 
 namespace Dune {
 

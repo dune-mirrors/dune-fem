@@ -17,7 +17,7 @@ namespace Dune
   namespace Fem
   {
 
-    static const std::string& checkParameterExistsString()
+    static inline const std::string& checkParameterExistsString()
     {
       static const std::string defaultKeyForExistCheck("__ParameterReader::check-exists__");
       return defaultKeyForExistCheck;

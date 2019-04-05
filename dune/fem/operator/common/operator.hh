@@ -3,10 +3,12 @@
 
 #include <cassert>
 #include <typeindex>
+#include <cassert>
 
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/version.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/fem/operator/common/mapping.hh>
 
 namespace Dune

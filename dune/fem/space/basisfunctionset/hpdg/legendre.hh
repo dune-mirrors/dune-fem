@@ -157,9 +157,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::types */
         typename BaseType::Types types () const
         {
-          std::array< GeometryType, 1 > types;
-          types[ 0 ].makeCube( EntityType::mydimension );
-          return std::move( types );
+          return std::array< GeometryType, 1 >{{ GeometryTypes::cube( EntityType::mydimension ) }};
         }
 
         /** \copydoc Dune::Fem::BasisFunctionSets::maxBlocks */

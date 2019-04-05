@@ -338,7 +338,6 @@ namespace Dune
 
         typedef typename ElementDiscreteSpaceType :: BaseFunctionSetType BaseFunctionSetType;
         typedef typename ElementDiscreteSpaceType :: LagrangePointSetType  LagrangePointSetType;
-        typedef typename ElementDiscreteSpaceType :: Traits::GridPartType GridPartType;
 
         typedef typename ElementDiscreteSpaceType :: JacobianRangeType JacobianRangeType;
         typedef typename ElementDiscreteSpaceType :: DomainType DomainType;
@@ -366,7 +365,6 @@ namespace Dune
         const int bubbleOffset = (type.isSimplex()) ? 0 : baseFunctionOffset( 0 );
 
         // type of jacobian inverse
-        typedef typename Geometry :: ctype ctype;
         enum { cdim  = Geometry :: coorddimension };
         enum { mydim = Geometry :: mydimension    };
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseType;
@@ -462,7 +460,6 @@ namespace Dune
         typedef typename EntityType :: Geometry Geometry ;
         const Geometry& geo = en.geometry();
 
-        typedef typename Geometry :: ctype ctype;
         enum { cdim  = Geometry :: coorddimension };
         enum { mydim = Geometry :: mydimension    };
         typedef typename Geometry::JacobianInverseTransposed JacobianInverseType;
@@ -528,8 +525,7 @@ namespace Dune
         template <class EntityType, class SpaceType>
         static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space)
         {
-          const GeometryType geoType (GeometryType::cube,dim-1);
-          return space.baseFunctionSet( geoType );
+          return space.baseFunctionSet( GeometryTypes::cube(dim-1) );
         }
       };
 
@@ -589,18 +585,12 @@ namespace Dune
         typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType FunctionSpaceType;
         enum { localBlockSize = FunctionSpaceType::localBlockSize };
 
-        typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
         typedef typename FunctionSpaceType::GridType GridType;
         typedef typename FunctionSpaceType::GridPartType GridPartType;
         typedef typename FunctionSpaceType::IteratorType Iterator;
-        typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-        typedef typename GridType :: template Codim<0> :: Entity EntityType;
-        typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
 
         typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
         typedef typename FunctionSpaceType::RangeType RangeType;
-        typedef typename FunctionSpaceType :: DomainType DomainType;
 
         enum { dim = GridType::dimension };
         typedef typename GridType :: ctype coordType;
@@ -618,9 +608,7 @@ namespace Dune
         const int polOrd = 2 * space.order() + 2;
 
         typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ;
-        typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType;
 
-        typedef typename ElementDiscreteSpaceType :: BaseFunctionSetType ElementBaseSetType  ;
         typedef typename ElementGradientSpaceType :: BaseFunctionSetType GradientBaseSetType  ;
 
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;

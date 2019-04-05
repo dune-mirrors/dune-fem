@@ -16,3 +16,7 @@ dune_install( bindguard.hh
               tupleutility.hh
               typeindexedtuple.hh
               utility.hh )
+
+exclude_from_headercheck(
+  referencevector.hh
+)

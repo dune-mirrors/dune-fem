@@ -21,7 +21,7 @@ set( DEFAULTFLAGS "COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 set( TESTS )
 
 # lagrangeinterpolation tests
-if( NOT ${TORTURE_TESTS} )
+if( NOT ${FEM_TORTURE_TESTSS} )
   set( MINORDER 2 )
   set( MAXORDER 2 )
 else()
@@ -47,7 +47,7 @@ dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_adaptive )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
 else()
   set( DFS blockvectorfunction )
@@ -63,7 +63,7 @@ dune_add_test( NAME dgl2projection_vector_int SOURCES dgl2projection.cc
                COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_vector_int )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   # only run this test for YaspGrid
   dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
                  COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
@@ -78,7 +78,7 @@ dune_add_test( NAME dgl2projection_fv SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "USE_FVSPACE;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_fv )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} dgl2projection_filtered )
@@ -118,7 +118,7 @@ dune_add_test( NAME l2projection_istl SOURCES l2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} l2projection_istl )
 
-if( ${TORTURE_TESTS} )
+if( ${FEM_TORTURE_TESTSS} )
   dune_add_test( NAME l2projection_istl_complex SOURCES l2projection.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} l2projection_istl_complex )
