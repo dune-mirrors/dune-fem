@@ -54,6 +54,7 @@ public:
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
   typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+  typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
 
   //! type of grid partition
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
@@ -75,8 +76,12 @@ public:
     const ModelType& impl_;
     int bndId_;
     public:
+    typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+    typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
     typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
     typedef typename DiscreteFunctionSpace::RangeType RangeType;
+    typedef typename DiscreteFunctionSpace::JacobianRangeType JacobianRangeType;
+    typedef typename DiscreteFunctionSpace::HessianRangeType HessianRangeType;
     BoundaryWrapper( const ModelType& impl, int bndId )
     : impl_( impl ), bndId_(bndId) {}
     template <class Point>

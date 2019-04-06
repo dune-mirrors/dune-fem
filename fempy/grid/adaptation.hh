@@ -64,6 +64,11 @@ namespace Dune
         for( const auto &rp : restrictProlongs_ )
           rp.restrictLocal( father, child, initialize );
       }
+      void restrictFinalize ( const ElementType &father ) const
+      {
+        for( const auto &rp : restrictProlongs_ )
+          rp.restrictFinalize( father );
+      }
 
       void prolongLocal ( const ElementType &father, const ElementType &child, bool initialize ) const
       {
