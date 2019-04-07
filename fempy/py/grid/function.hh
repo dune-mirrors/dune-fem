@@ -292,7 +292,10 @@ namespace Dune
               Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fempy/grid/gridpartadapter.hh"}
               );
         if (gfClass.second)
+        {
           FemPy::registerGridFunction< GridFunction >( scope, gfClass.first );
+          gfClass.first.def_property_readonly( "scalar", [] ( GridFunction &self ) { return false; } );
+        }
         typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
         if( !pybind11::already_registered< SpaceType >() )
         {
@@ -368,7 +371,10 @@ namespace Dune
               );
 
         if (gfClass.second)
+        {
           FemPy::registerGridFunction( scope, gfClass.first);
+          gfClass.first.def_property_readonly( "scalar", [] ( GridFunction &self ) { return false; } );
+        }
 
         typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
         if( !pybind11::already_registered< SpaceType >() )
