@@ -93,6 +93,7 @@ def discreteFunction(space, name, expr=None, dofVector=None):
         df.clear()
     elif expr is not None:
         df.interpolate(expr)
+    df.scalar = space.scalar
     return df.as_ufl()
 
     from dune.generator import Constructor

@@ -141,12 +141,12 @@ def errornorm( a, b, normid='L2', **kwargs ):
         pass
     if normid == 'L2':
         error = inner(a - b, a - b)
-        return sqrt( integrate(grid,error,2*order+1)[0] )
+        return sqrt( integrate(grid,error,2*order+1) )
     else:
         raise ValueError('errornorm with identifier',normid,' not known\n')
 
 
-def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
+def Expression(cpp_code=None, name=None, degree=None, mesh=None, dimRange=None, **kwargs):
     if name is None:
         global _counter
         _counter += 1
@@ -158,6 +158,7 @@ def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
     if mesh is None:
         raise ValueError("no mesh provided")
     if type(cpp_code) in [tuple,list]:
+        assert dimRange is None or dimRagne==len(cpp_code)
         dimRange = len(cpp_code)
     else:
         cpp_code = [cpp_code]
@@ -186,7 +187,10 @@ def Expression(cpp_code=None, name=None, degree=None, mesh=None, **kwargs):
         expr[i] = eval(cpp_code[i], {}, uflDict)
         # expr[i] = eval(cpp_code[i], {"__builtins__":None}, uflDict)
     # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
-    func = uflFunction(mesh, name, degree, expr, scalar=dimRange==0)
+    if dimRange == 0:
+        func = uflFunction(mesh, name, degree, expr[0], scalar=dimRange==0)
+    else:
+        func = uflFunction(mesh, name, degree, expr, scalar=dimRange==0)
     # for c in kwargs:
     #     if not c in ["order","cell"]:
     #         if not isinstance(kwargs[c], Coefficient) and\
