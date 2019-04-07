@@ -190,7 +190,7 @@ namespace Dune
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
-      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key = KeyType(1),
+      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key,
                                          const InterfaceType commInterface = InteriorBorder_All_Interface,
                                          const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection ),
@@ -199,6 +199,15 @@ namespace Dune
           blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
       {}
 
+      template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
+      explicit LocalFiniteElementSpace ( GridPart &gridPart,
+                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                         const CommunicationDirection commDirection = ForwardCommunication )
+        : BaseType( gridPart, commInterface, commDirection ),
+          lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType(1) ) ) ),
+          storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
+      {}
       LocalFiniteElementSpace ( const ThisType & ) = delete;
       LocalFiniteElementSpace ( ThisType && ) = delete;
 
