@@ -31,11 +31,13 @@ def registerGridFunctions(gridView):
     return builder.load(moduleName, source, "gridfunctions")
 
 def globalFunction(gridView, name, order, value):
+    # assert False
     module = registerGridFunctions(gridView)
     return module.globalGridFunction(gridView,name,order,value).as_ufl()
 
 
 def localFunction(gridView, name, order, value):
+    # assert False
     module = registerGridFunctions(gridView)
     return module.localGridFunction(gridView,name,order,value).as_ufl()
 
@@ -48,12 +50,13 @@ def levelFunction(gridView,name="levels"):
 
 
 def partitionFunction(gridView,name="rank"):
+    @dune.grid.GridFunction(gridView,name=name)
     class Partition(object):
         def __init__(self,rank):
             self.rank = rank
         def __call__(self,en,x):
             return [self.rank]
-    return localFunction(gridView, name, 0, Partition(gridView.comm.rank))
+    return Partition(gridView.comm.rank) # localFunction(gridView, name, 0, Partition(gridView.comm.rank))
 
 
 def cppFunction(gridView, name, order, code, *args, **kwargs):
