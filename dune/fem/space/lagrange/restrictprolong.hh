@@ -61,7 +61,7 @@ namespace Dune
 
         const auto &refSon = Dune::ReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
 
-        const LagrangePointSetType &pointSet = lagrangePointSet( lfFather.entity() );
+        const LagrangePointSetType &pointSet = lagrangePointSet( lfFather.entity(), lfFather.order() );
 
         const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
         for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -86,7 +86,7 @@ namespace Dune
       {
         static const int dimRange = LFFather::dimRange;
 
-        const LagrangePointSetType &pointSet = lagrangePointSet( lfSon.entity() );
+        const LagrangePointSetType &pointSet = lagrangePointSet( lfSon.entity(), lfSon.order() );
 
         const EntityDofIterator send = pointSet.template endSubEntity< 0 >( 0 );
         for( EntityDofIterator sit = pointSet.template beginSubEntity< 0 >( 0 ); sit != send; ++sit )
@@ -106,17 +106,17 @@ namespace Dune
 
     protected:
       template< class Entity >
-      const LagrangePointSetType &lagrangePointSet ( const Entity &entity ) const
+      const LagrangePointSetType &lagrangePointSet ( const Entity &entity, const int order ) const
       {
-        return lagrangePointSet( entity.type() );
+        return lagrangePointSet( entity.type(), order );
       }
 
-      const LagrangePointSetType &lagrangePointSet ( const GeometryType &type ) const
+      const LagrangePointSetType &lagrangePointSet ( const GeometryType &type, const int order ) const
       {
         typedef typename LagrangePointSetMapType::iterator Iterator;
         Iterator it = lagrangePointSet_.find( type );
         if( it == lagrangePointSet_.end() )
-          it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSetType( type, ord ) ) );
+          it = lagrangePointSet_.insert( it, std::make_pair( type, new LagrangePointSetType( type, order ) ) );
         assert( it->second != 0 );
         return *(it->second);
       }

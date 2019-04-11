@@ -29,7 +29,8 @@ namespace Dune
       : gridPart_( gridPart ),
         pointSet_( pointSet ),
         polOrd_( polOrd )
-      {}
+      {
+      }
 
       bool operator== ( const ThisType &other ) const
       {

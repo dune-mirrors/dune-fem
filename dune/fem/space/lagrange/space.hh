@@ -43,7 +43,7 @@ namespace Dune
     // Forward declaration
     // -------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage = CachingStorage >
     class LagrangeDiscreteFunctionSpace;
 
 
@@ -51,17 +51,23 @@ namespace Dune
     // LagrangeDiscreteFunctionSpaceTraits
     // -----------------------------------
 
-    template< class FunctionSpace, class GridPart, unsigned int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage >
     struct LagrangeDiscreteFunctionSpaceTraits
     {
-      typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+      typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, maxPolOrder, Storage > DiscreteFunctionSpaceType;
+
+      // we take 6 as the maximal polynomial order for the dynamic space
+      static const int maxPolynomialOrder = ( maxPolOrder < 0 ) ? -maxPolOrder : maxPolOrder;
+      static const int minPolynomialOrder = ( maxPolOrder < 0 ) ? 1 : maxPolOrder;
 
       typedef GridPart GridPartType;
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
-      static const int polynomialOrder = polOrder;
+      typedef IndexSetDofMapper< GridPartType,
+                                 std::conditional_t< Dune::Capabilities::isCartesian< typename GridPart::GridType >::v,
+                                                     DefaultLocalDofMapping< GridPart >,
+                                                     LagrangeLocalDofMapping< GridPart > > > BlockMapperType;
 
-      typedef IndexSetDofMapper< GridPartType, std::conditional_t< Dune::Capabilities::isCartesian< typename GridPart::GridType >::v, DefaultLocalDofMapping< GridPart >, LagrangeLocalDofMapping< GridPart > > > BlockMapperType;
       typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       static const int codimension = 0;
@@ -73,14 +79,39 @@ namespace Dune
       typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:
-      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, polynomialOrder > LagrangeShapeFunctionSetType;
+      typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, maxPolynomialOrder > LagrangeShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LagrangeShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
 
       struct ScalarShapeFunctionSetFactory
       {
+      private:
+        static const bool dynamicPolynomialOrder = ( maxPolynomialOrder != minPolynomialOrder );
+        static int& shapeFunctionPolynomialOrder ()
+        {
+          static int pOrd = -1;
+          return pOrd;
+        }
+
+      public:
+        static void setPolynomialOrder( const int polynomialOrder )
+        {
+          if( dynamicPolynomialOrder )
+          {
+            assert( polynomialOrder >= minPolynomialOrder && polynomialOrder <= maxPolynomialOrder );
+            shapeFunctionPolynomialOrder() = polynomialOrder;
+          }
+        }
+
         static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
         {
-          return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type ) );
+          int polynomialOrder = minPolynomialOrder ;
+          if( dynamicPolynomialOrder )
+          {
+            polynomialOrder = shapeFunctionPolynomialOrder();
+            // reset shapeFunctionPolynomialOrder to avoid undefined behaviour
+            shapeFunctionPolynomialOrder() = -1;
+          }
+          return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type, polynomialOrder ) );
         }
 
         static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
@@ -128,18 +159,20 @@ namespace Dune
      *  \brief   Lagrange discrete function space
      */
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage >
     class LagrangeDiscreteFunctionSpace
-    : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, maxPolOrder, Storage > >
     {
-      static_assert( (polOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
 
-      typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, maxPolOrder, Storage > ThisType;
+      typedef DiscreteFunctionSpaceDefault< LagrangeDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, maxPolOrder, Storage > > BaseType;
 
     public:
       typedef typename BaseType::Traits Traits;
-      static const int polynomialOrder = polOrder;
+      static const int maxPolynomialOrder = Traits :: maxPolynomialOrder;
+      static const int minPolynomialOrder = Traits :: minPolynomialOrder;
+
+      static_assert( (maxPolynomialOrder > 0), "LagrangeDiscreteFunctionSpace only defined for polOrder > 0" );
 
       typedef typename BaseType::FunctionSpaceType FunctionSpaceType;
 
@@ -154,15 +187,15 @@ namespace Dune
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
-      typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
-      typedef LagrangeLocalInterpolation< GridPartType, polynomialOrder, BasisFunctionSetType > InterpolationType;
+      typedef LagrangePointSet< GridPartType, maxPolynomialOrder > LagrangePointSetType;
+      typedef LagrangeLocalInterpolation< GridPartType, maxPolynomialOrder, BasisFunctionSetType > InterpolationType;
 
     private:
       typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
       typedef SingletonList< GeometryType, ScalarShapeFunctionSetType, typename Traits::ScalarShapeFunctionSetFactoryType > SingletonProviderType;
       typedef BaseSetLocalKeyStorage< ScalarShapeFunctionSetType > ScalarShapeFunctionSetStorageType;
 
-      typedef CompiledLocalKeyContainer< LagrangePointSetType, polynomialOrder, polynomialOrder > LagrangePointSetContainerType;
+      typedef CompiledLocalKeyContainer< LagrangePointSetType, minPolynomialOrder, maxPolynomialOrder > LagrangePointSetContainerType;
       typedef typename LagrangePointSetContainerType::LocalKeyStorageType LocalKeyStorageType;
 
       typedef LagrangeMapperSingletonKey< GridPartType, LocalKeyStorageType >
@@ -183,23 +216,38 @@ namespace Dune
       using BaseType::order;
 
       explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart,
+                                               const InterfaceType commInterface,
+                                               const CommunicationDirection commDirection )
+      : LagrangeDiscreteFunctionSpace( gridPart, minPolynomialOrder, commInterface, commDirection )
+      {}
+
+      explicit LagrangeDiscreteFunctionSpace ( GridPartType &gridPart,
+                                               const int polOrder = minPolynomialOrder,
                                                const InterfaceType commInterface = defaultInterface,
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
         blockMapper_( nullptr ),
-        lagrangePointSetContainer_( gridPart )
+        lagrangePointSetContainer_( gridPart ),
+        // when min == max polynomial order the dynamic choice is off
+        polynomialOrder_( ( minPolynomialOrder == maxPolynomialOrder ) ? minPolynomialOrder : polOrder )
       {
         const IndexSetType &indexSet = gridPart.indexSet();
 
         AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
         const std::vector< GeometryType > &geometryTypes = allGeometryTypes.geomTypes( 0 );
+
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
+          // set polynomial order in shape function set factory.
+          Traits::ScalarShapeFunctionSetFactoryType::setPolynomialOrder( polynomialOrder_ );
+
           const GeometryType &type = geometryTypes[ i ];
+          // since this space can only work for one polynomial order at the same
+          // time we only need one scalarShapeFunctionSets_ storage
           scalarShapeFunctionSets_.template insert< SingletonProviderType >( type );
         }
 
-        MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder ), polynomialOrder );
+        MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder_ ), polynomialOrder_ );
         blockMapper_ = &BlockMapperProviderType::getObject( key );
         assert( blockMapper_ );
       }
@@ -236,7 +284,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order () const
       {
-        return polOrder;
+        return polynomialOrder_;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
@@ -256,7 +304,7 @@ namespace Dune
        */
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return InterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder ), basisFunctionSet( entity ) );
+        return InterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder_ ), basisFunctionSet( entity ) );
       }
 
       /** \brief return shape function set for given entity
@@ -313,7 +361,7 @@ namespace Dune
       DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
       lagrangePointSet ( const GeometryType &type ) const
       {
-        return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
+        return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder_ );
       }
 
       LagrangeDiscreteFunctionSpace ( const ThisType & ) = delete;
@@ -323,6 +371,7 @@ namespace Dune
       BlockMapperType *blockMapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;
+      const int polynomialOrder_;
     };
 
   } // namespace Fem

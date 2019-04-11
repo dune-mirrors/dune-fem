@@ -16,16 +16,16 @@ namespace Dune
     // LagrangeLocalInterpolation
     // --------------------------
 
-    template< class GridPart, int order, class BasisFunctionSet >
+    template< class GridPart, int maxOrder, class BasisFunctionSet >
     class LagrangeLocalInterpolation
     {
-      typedef LagrangeLocalInterpolation< GridPart, order, BasisFunctionSet > ThisType;
+      typedef LagrangeLocalInterpolation< GridPart, maxOrder, BasisFunctionSet > ThisType;
 
     public:
       /** \brief basis function set type */
       typedef BasisFunctionSet BasisFunctionSetType;
       /** \brief point set type */
-      typedef LagrangePointSet< GridPart, order > LagrangePointSetType;
+      typedef LagrangePointSet< GridPart, maxOrder > LagrangePointSetType;
 
     private:
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
