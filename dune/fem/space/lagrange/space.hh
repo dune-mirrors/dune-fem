@@ -57,7 +57,7 @@ namespace Dune
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, maxPolOrder, Storage > DiscreteFunctionSpaceType;
 
       // we take 6 as the maximal polynomial order for the dynamic space
-      static const int maxPolynomialOrder = ( maxPolOrder < 0 ) ? 6 : maxPolOrder;
+      static const int maxPolynomialOrder = ( maxPolOrder < 0 ) ? -maxPolOrder : maxPolOrder;
       static const int minPolynomialOrder = ( maxPolOrder < 0 ) ? 1 : maxPolOrder;
 
       typedef GridPart GridPartType;
@@ -85,6 +85,7 @@ namespace Dune
       struct ScalarShapeFunctionSetFactory
       {
       private:
+        static const bool dynamicPolynomialOrder = ( maxPolynomialOrder != minPolynomialOrder );
         static int& shapeFunctionPolynomialOrder ()
         {
           static int pOrd = -1;
@@ -94,15 +95,22 @@ namespace Dune
       public:
         static void setPolynomialOrder( const int polynomialOrder )
         {
-          assert( polynomialOrder >= minPolynomialOrder && polynomialOrder <= maxPolynomialOrder );
-          shapeFunctionPolynomialOrder() = polynomialOrder;
+          if( dynamicPolynomialOrder )
+          {
+            assert( polynomialOrder >= minPolynomialOrder && polynomialOrder <= maxPolynomialOrder );
+            shapeFunctionPolynomialOrder() = polynomialOrder;
+          }
         }
 
         static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
         {
-          const int polynomialOrder = shapeFunctionPolynomialOrder();
-          // reset shapeFunctionPolynomialOrder to avoid undefined behaviour
-          shapeFunctionPolynomialOrder() = -1;
+          int polynomialOrder = minPolynomialOrder ;
+          if( dynamicPolynomialOrder )
+          {
+            polynomialOrder = shapeFunctionPolynomialOrder();
+            // reset shapeFunctionPolynomialOrder to avoid undefined behaviour
+            shapeFunctionPolynomialOrder() = -1;
+          }
           return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type, polynomialOrder ) );
         }
 
