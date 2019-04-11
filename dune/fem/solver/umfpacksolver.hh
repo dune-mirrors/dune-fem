@@ -82,64 +82,58 @@ public:
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-  /** \brief Constructor.
-   *  \param[in] redEps relative tolerance for residual (not used here)
-   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
-   *  \param[in] maxIter maximal number of iterations performed (not used here)
-   *  \param[in] verbose verbosity
-   */
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-            const ParameterReader &parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(verbose)
-  {}
+  using BaseType :: verbose ;
 
   /** \brief Constructor.
-   *  \param[in] redEps relative tolerance for residual (not used here)
-   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
-   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   *  \param[in] parameter parameters for the solver
    */
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
-            const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
-  {}
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
-            const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
-  {}
-
   UMFPACKInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) )
-  : BaseType(parameter)
-  , verbose_( BaseType::verbose() )
+    : BaseType(parameter),
+      ccsmat_(),
+      UMF_Symbolic( nullptr ),
+      UMF_Numeric( nullptr )
+  {
+    Caller::defaults(UMF_Control);
+    UMF_Control[UMFPACK_PRL] = 4;
+  }
+
+  [[deprecated]]
+  UMFPACKInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+                         const ParameterReader &parameter = Parameter::container() ) :
+    UMFPACKInverseOperator( SolverParameter(parameter) )
   {}
 
-  /** \brief Constructor.
-   *  \param[in] op Operator to invert
-   *  \param[in] redEps relative tolerance for residual (not used here)
-   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
-   *  \param[in] maxIter maximal number of iterations performed (not used here)
-   *  \param[in] verbose verbosity
-   */
+  [[deprecated]]
+  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
+                         const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKInverseOperator( SolverParameter(parameter) )
+  {}
+
+  [[deprecated]]
+  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
+                         const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKInverseOperator( SolverParameter(parameter) )
+  {}
+
+  [[deprecated]]
   UMFPACKInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-            const ParameterReader &parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(verbose)
+                         const ParameterReader &parameter = Parameter::container() ) :
+    UMFPACKInverseOperator( SolverParameter(parameter) )
   {
     bind(op);
   }
 
-  /** \brief Constructor.
-   *  \param[in] redEps relative tolerance for residual (not used here)
-   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
-   *  \param[in] maxIter maximal number of iterations performed (not used here)
-   */
+  [[deprecated]]
   UMFPACKInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit,
-            const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
+                         const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKInverseOperator( SolverParameter(parameter) )
   {
     bind(op);
   }
 
+  [[deprecated]]
   UMFPACKInverseOperator(const OperatorType& op, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator(parameter.getValue<bool>("fem.solver.verbose",false))
+    UMFPACKInverseOperator( SolverParameter(parameter) )
   {
     bind(op);
   }
@@ -182,8 +176,8 @@ public:
     {
       getCCSMatrix().free();
       ccsmat_.reset();
-      Caller::free_symbolic(&UMF_Symbolic);
-      Caller::free_numeric(&UMF_Numeric);
+      Caller::free_symbolic(&UMF_Symbolic); UMF_Symbolic = nullptr;
+      Caller::free_numeric(&UMF_Numeric);   UMF_Numeric  = nullptr;
     }
   }
 
@@ -200,7 +194,7 @@ public:
     double UMF_Apply_Info[UMFPACK_INFO];
     Caller::solve(UMFPACK_A, getCCSMatrix().getColStart(), getCCSMatrix().getRowIndex(), getCCSMatrix().getValues(),
                   dest, const_cast<DofType*>(arg), UMF_Numeric, UMF_Control, UMF_Apply_Info);
-    if(verbose_)
+    if( Parameter::verbose() && verbose() )
     {
       Caller::report_status(UMF_Control, UMF_Apply_Info[UMFPACK_STATUS]);
       std::cout <<"[UMFPack Solve]" << std::endl;
@@ -273,7 +267,7 @@ public:
   }
 
   UMFPACKInverseOperator(const UMFPACKInverseOperator &other)
-    : BaseType(other), verbose_(other.verbose_),
+    : BaseType(other),
       ccsmat_(),
       UMF_Symbolic(other.UMF_Symbolic),
       UMF_Numeric(other.UMF_Numeric)
@@ -284,20 +278,11 @@ public:
 
 protected:
   using BaseType::assembledOperator_;
-  const bool verbose_;
   mutable std::unique_ptr<CCSMatrixType> ccsmat_;
   mutable void *UMF_Symbolic;
   mutable void *UMF_Numeric;
   mutable double UMF_Control[UMFPACK_CONTROL];
   mutable double UMF_Decomposition_Info[UMFPACK_INFO];
-
-private:
-  explicit UMFPACKInverseOperator ( const bool &verbose ) :
-    verbose_(verbose), ccsmat_(nullptr)
-  {
-    Caller::defaults(UMF_Control);
-    UMF_Control[UMFPACK_PRL] = 4;
-  }
 
   typedef typename Dune::UMFPackMethodChooser<DofType> Caller;
 
@@ -309,7 +294,7 @@ private:
                      reinterpret_cast<double*>(getCCSMatrix().getValues()), &UMF_Symbolic, UMF_Control, UMF_Decomposition_Info);
     Caller::numeric(getCCSMatrix().getColStart(), getCCSMatrix().getRowIndex(), reinterpret_cast<double*>(getCCSMatrix().getValues()),
                     UMF_Symbolic, &UMF_Numeric, UMF_Control, UMF_Decomposition_Info);
-    if(verbose_)
+    if( Parameter::verbose() && verbose() )
     {
       Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
       std::cout << "[UMFPack Decomposition]" << std::endl;

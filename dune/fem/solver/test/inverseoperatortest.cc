@@ -293,7 +293,7 @@ int main(int argc, char** argv)
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
     using InverseOperator   = Dune::Fem::UMFPACKInverseOperator< DiscreteFunction >;
 
-    std::string designation(" === LDLOp + SparseRowLinearOperator === ");
+    std::string designation(" === UMFPACK + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_LDL
