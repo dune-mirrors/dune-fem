@@ -299,12 +299,12 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     dimw = gridView.dimWorld
 
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
-    typeName = "Dune::Fem::DGLagrangeSpace< " +\
+    typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,
-            ctorArgs=[gridView,order])
+            ctorArgs=[gridView])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
@@ -365,25 +365,30 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
 
     includes = gridView._includes + [ "dune/fem/space/lagrange.hh" ]
     dimw = gridView.dimWorld
-    typeName = "Dune::Fem::LagrangeSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
-
-    spc = module(field, includes, typeName, storage=storage,
-            scalar=scalar,
-            ctorArgs=[gridView,order])
-    if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
+    # for order equal or lesser than 6 we can use
+    # DynamicLagrangeDiscreteFunctionSpace to avoid re-compilation
+    if order <= 6:
+        typeName = "Dune::Fem::DynamicLagrangeDiscreteFunctionSpace< " +\
+                   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+                   "Dune::FemPy::GridPart< " + gridView._typeName + " >"
+    else:
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-          "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
-          "Dune::Fem::CodegenStorage" +\
-          " >"
+                   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+                   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order)
+
+    if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
+        typeName += ", Dune::Fem::CodegenStorage >"
         spc = module(field, includes, typeName,
-                    interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
-                    scalar=scalar,
-                    ctorArgs=[gridView,order])
+                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView, order])
+    else:
+        typeName += " >"
+        spc = module(field, includes, typeName, storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView, order])
+
     return spc.as_ufl()
 
 def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
