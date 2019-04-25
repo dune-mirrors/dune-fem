@@ -178,6 +178,10 @@ namespace Dune
 
       void initialize () {}
       void finalize   () {}
+
+      //! restrictFinalize is for some spaces where a local matrix inversion is carried out after restriction.
+      template <class Entity>
+      void restrictFinalize( const Entity& father ) const {}
     };
 
 
