@@ -66,8 +66,9 @@ namespace Dune
       }
       void restrictFinalize ( const ElementType &father ) const
       {
-        for( const auto &rp : restrictProlongs_ )
-          rp.restrictFinalize( father );
+        //! Add as soon as dune-fem branch has been merged
+        // for( const auto &rp : restrictProlongs_ )
+        //   rp.restrictFinalize( father );
       }
 
       void prolongLocal ( const ElementType &father, const ElementType &child, bool initialize ) const

@@ -82,6 +82,7 @@ public:
     typedef typename DiscreteFunctionSpace::RangeType RangeType;
     typedef typename DiscreteFunctionSpace::JacobianRangeType JacobianRangeType;
     typedef typename DiscreteFunctionSpace::HessianRangeType HessianRangeType;
+    static const int dimRange = RangeType::dimension;
     BoundaryWrapper( const ModelType& impl, int bndId )
     : impl_( impl ), bndId_(bndId) {}
     template <class Point>

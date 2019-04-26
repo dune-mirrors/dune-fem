@@ -71,7 +71,7 @@ namespace Dune
         virtual void setFatherChildWeight ( const ctype &weight ) const override { impl().setFatherChildWeight( weight ); }
 
         virtual void restrictLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().restrictLocal( father, child, initialize ); }
-        virtual void restrictFinalize ( const Element &father ) const override { impl().restrictFinalize( father ); }
+        virtual void restrictFinalize ( const Element &father ) const override { } //! Add back in as soon as dune-fem branch merged impl().restrictFinalize( father ); }
         virtual void prolongLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().prolongLocal( father, child, initialize ); }
 
         virtual void addToList ( Fem::CommunicationManagerList &commList ) override { impl().addToList( commList ); }
