@@ -141,6 +141,7 @@ namespace std
   template< size_t i, class Tuple, class Types >
   class tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
   {
+  public:
     typedef typename std::tuple_element< i, Tuple >::type type;
   };
 }
