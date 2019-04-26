@@ -53,6 +53,12 @@ namespace Dune
        *  \note This method has to be implemented by all derived classes.
        */
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const = 0;
+
+      /** \brief finalization of operator
+       *
+       *  \note The default implementation is empty.
+       */
+      virtual void finalize () {}
     };
 
     /** \class LinearOperator
@@ -117,12 +123,10 @@ namespace Dune
       : public virtual LinearOperator<DomainFunction, RangeFunction>
     {
     public:
-      /** \brief finalize linear operator assembly */
-      virtual void finalize () {}
       /** \brief commit intermediate states of linear operator assembly */
       virtual void flushAssembly() {}
 
-      DUNE_VERSION_DEPRECATED_2_7( "finalize" ) void communicate() { finalize(); }
+      DUNE_VERSION_DEPRECATED_2_7( "finalize" ) void communicate() { this->finalize(); }
 
       /** \brief Initiate the assemble of values using the LocalContribution concept
        *  \tparam AssembleOperation the specific operation (Add, Set, ...)
