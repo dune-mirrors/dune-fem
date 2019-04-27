@@ -58,18 +58,17 @@ namespace Dune
       //! \brief shape function set type
       typedef ShapeFunctionSet ShapeFunctionSetType;
 
-    protected:
       typedef typename ShapeFunctionSetType::FunctionSpaceType LocalFunctionSpaceType;
       typedef typename LocalFunctionSpaceType::JacobianRangeType LocalJacobianRangeType;
       typedef typename LocalFunctionSpaceType::HessianRangeType LocalHessianRangeType;
 
+      typedef typename LocalFunctionSpaceType::DomainFieldType DomainFieldType;
       typedef typename LocalFunctionSpaceType::RangeFieldType RangeFieldType;
 
       typedef typename EntityType::Geometry GeometryType;
 
       typedef typename GeometryType::ctype ctype;
 
-    public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
       typedef typename ToNewDimDomainFunctionSpace< LocalFunctionSpaceType, EntityType :: Geometry :: coorddimension >::Type FunctionSpaceType;
