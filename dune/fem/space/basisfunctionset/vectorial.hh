@@ -295,12 +295,13 @@ namespace Dune
 
       typedef DofAlignment< ScalarBasisFunctionSet, Range > DofAlignmentType;
 
-    private:
       typedef typename DofAlignmentType::GlobalDofType GlobalDofType;
       typedef typename DofAlignmentType::LocalDofType LocalDofType;
 
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
+    private:
       struct EvaluateAll;
       struct JacobianAll;
       struct HessianAll;
