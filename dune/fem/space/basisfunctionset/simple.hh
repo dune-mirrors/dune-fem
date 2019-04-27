@@ -47,6 +47,8 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+      typedef typename FunctionSpaceType::RangeFieldType  RangeFieldType;
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
 
       //! \brief type of reference element
       typedef Dune::ReferenceElement< typename EntityType::Geometry > ReferenceElementType;

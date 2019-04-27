@@ -83,6 +83,67 @@ namespace Dune
       const ShapeFunctionSet *shapeFunctionSet_;
     };
 
+    // Same as above but instead of a raw pointer use a shared_ptr so that
+    // deletion of the pointer is not an issue
+    template< class ShapeFunctionSet >
+    class SmartShapeFunctionSetProxy
+    {
+      typedef SmartShapeFunctionSetProxy< ShapeFunctionSet > ThisType;
+
+    public:
+      typedef ShapeFunctionSet ImplementationType;
+
+      typedef typename ImplementationType::FunctionSpaceType FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      const ImplementationType &impl () const
+      {
+        assert( shapeFunctionSet_ );
+        return *shapeFunctionSet_;
+      }
+
+      SmartShapeFunctionSetProxy ()
+      : shapeFunctionSet_( nullptr )
+      {}
+
+      template <class... Args>
+      SmartShapeFunctionSetProxy (const Args&... args )
+      : shapeFunctionSet_( std::make_shared<ImplementationType>(args...) )
+      {}
+      SmartShapeFunctionSetProxy (const std::shared_ptr<ImplementationType> &uptr )
+      : shapeFunctionSet_( uptr )
+      {}
+
+      int order () const { return impl().order(); }
+
+      std::size_t size () const { return impl().size(); }
+
+      template< class Point, class Functor >
+      void evaluateEach ( const Point &x, Functor functor ) const
+      {
+        impl().evaluateEach( x, functor );
+      }
+
+      template< class Point, class Functor >
+      void jacobianEach ( const Point &x, Functor functor ) const
+      {
+        impl().jacobianEach( x, functor );
+      }
+
+      template< class Point, class Functor >
+      void hessianEach ( const Point &x, Functor functor ) const
+      {
+        impl().hessianEach( x, functor );
+      }
+
+    private:
+      std::shared_ptr<ShapeFunctionSet> shapeFunctionSet_;
+    };
+
   } // namespace Fem
 
 } // namespace Dune
