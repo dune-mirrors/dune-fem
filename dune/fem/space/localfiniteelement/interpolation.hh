@@ -137,30 +137,9 @@ namespace Dune
       LocalInterpolationType localInterpolation_;
     };
 
-
-    // a scalar valued shape basis function set taken from
-    // dune-localfunction - for this the vector value 'blow up' is supported
-    // as with other spaces
-    template< class Space, class LocalInterpolation >
-    class LocalFiniteElementInterpolation<Space,LocalInterpolation,true>
+    namespace Impl
     {
-      typedef LocalFiniteElementInterpolation< Space, LocalInterpolation,true > ThisType;
-
-    public:
-      typedef typename Space::BasisFunctionSetType BasisFunctionSetType;
-      typedef LocalInterpolation LocalInterpolationType;
-
-    private:
-      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
-
-      typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-      static const int dimRange = FunctionSpaceType::dimRange;
-
-      typedef std::size_t size_type;
-
-      typedef VerticalDofAlignment< BasisFunctionSetType, RangeType> DofAlignmentType;
-
+      template <int dimRange>
       struct RangeConverter
       {
         RangeConverter ( std::size_t range ) : range_( range ) {}
@@ -195,6 +174,31 @@ namespace Dune
         void resize( const unsigned int) {}
       };
 
+    }
+
+    // a scalar valued shape basis function set taken from
+    // dune-localfunction - for this the vector value 'blow up' is supported
+    // as with other spaces
+    template< class Space, class LocalInterpolation >
+    class LocalFiniteElementInterpolation<Space,LocalInterpolation,true>
+    {
+      typedef LocalFiniteElementInterpolation< Space, LocalInterpolation,true > ThisType;
+
+    public:
+      typedef typename Space::BasisFunctionSetType BasisFunctionSetType;
+      typedef LocalInterpolation LocalInterpolationType;
+
+    private:
+      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      static const int dimRange = FunctionSpaceType::dimRange;
+
+      typedef std::size_t size_type;
+
+      typedef VerticalDofAlignment< BasisFunctionSetType, RangeType> DofAlignmentType;
+
     public:
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
@@ -211,9 +215,9 @@ namespace Dune
         std::fill(localDofVector.begin(),localDofVector.end(),0);
         for( std::size_t i = 0; i < dimRange; ++i )
         {
-          SubDofVectorWrapper< Vector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
+          Impl::SubDofVectorWrapper< Vector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
           (*this)(
-              localFunctionConverter( localFunction, RangeConverter(i) ),
+              localFunctionConverter( localFunction, Impl::RangeConverter<dimRange>(i) ),
               subLdv, PriorityTag<42>()
               );
         }
