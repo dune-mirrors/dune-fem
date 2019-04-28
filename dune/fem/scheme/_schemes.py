@@ -99,6 +99,22 @@ def dg(model, space, penalty=0, solver=None, parameters={},
               First argument is now the ufl form and the second argument is
               the space.""")
         model,space = space,model
+
+    if isinstance(model, (list, tuple)):
+        modelParam = model[1:]
+        model = model[0]
+    if isinstance(model,Equation):
+        if space == None:
+            try:
+                space = model.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no space provided and could not deduce from form provided")
+        from dune.fem.model._models import elliptic
+        if modelParam:
+            model = elliptic(space.grid,model,*modelParam)
+        else:
+            model = elliptic(space.grid,model)
+
     useDirichletBC = "true" if model.hasDirichletBoundary else "false"
     modelParam = None
     if isinstance(model, (list, tuple)):
