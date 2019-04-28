@@ -39,8 +39,12 @@ def cell(dimDomainOrGrid):
 class Space(ufl.FunctionSpace):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False):
         if not dimRange:
-            dimRange = dimDomainOrGridOrSpace.dimRange
-            dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
+            try:
+                dimRange = dimDomainOrGridOrSpace.dimRange
+                dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
+            except AttributeError:
+                dimRange = 1
+                scalar = True
         self.scalar = scalar
         if scalar:
             ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
@@ -57,9 +61,9 @@ class Space(ufl.FunctionSpace):
         if not self.scalar:
             return self
         else:
-            ve = ufl.VectorElement("Lagrange", self.cell, 1, 1)
+            ve = ufl.VectorElement("Lagrange", self._cell, 1, 1)
             domain = ufl.domain.default_domain(ve.cell())
-            return ufl.FuntionSpace(domain, ve)
+            return ufl.FunctionSpace(domain, ve)
 
 class FemSpace(Space):
     def __init__(self, space, scalar=None):
