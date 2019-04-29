@@ -300,8 +300,6 @@ namespace Dune
           typedef typename GF::LocalFunctionType::JacobianRangeType JacobianRangeType;
           typedef typename GF::LocalFunctionType::HessianRangeType HessianRangeType;
 
-          static const int dimRange = RangeType::dimension;
-
           explicit Type ( const GridFunctionType &gridFunction )
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
@@ -369,7 +367,6 @@ namespace Dune
           typedef typename GridFunctionDecayType::JacobianRangeType JacobianRangeType;
           typedef typename GridFunctionDecayType::HessianRangeType HessianRangeType;
           typedef typename GridFunctionDecayType::FunctionSpaceType FunctionSpaceType;
-          static const int dimRange = RangeType::dimension;
 
           template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
           explicit Type ( Arg&& gridFunction )
