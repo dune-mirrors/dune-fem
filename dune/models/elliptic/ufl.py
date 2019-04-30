@@ -18,12 +18,26 @@ from dune.ufl.linear import splitMultiLinearExpr
 
 from dune.common.hashit import hashIt
 
-from dune.source.cplusplus import UnformattedExpression
+from dune.source.cplusplus import UnformattedExpression, Block
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, return_
 
 from .model import EllipticModel
 
+def generateDirichletCode(predefined, tensor, tempVars=True):
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
+
+def generateDirichletDomainCode(predefined, tensor, tempVars=True):
+    # predefined={}
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('int', 'domainId')
+    return [assign(result, results[0])]
 
 def splitUFLForm(form):
     phi = form.arguments()[0]
@@ -226,16 +240,21 @@ def compileUFL(form, *args, **kwargs):
     if dirichletBCs:
         model.hasDirichletBoundary = True
 
+        predefined = {}
+        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+        predefineCoefficients(predefined, model.arg_x)
+
+        maxId = 0
+        codeDomains = []
         bySubDomain = dict()
         neuman = []
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
-
             if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
             if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
-                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+                raise Exception('Space of trial function and dirichlet boundary function must be the same - note that boundary conditions on subspaces are not available, yet')
             if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 
@@ -247,29 +266,50 @@ def compileUFL(form, *args, **kwargs):
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
                 value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
-            bySubDomain[bc.subDomain] = value,neuman
+            if isinstance(bc.subDomain,int):
+                bySubDomain[bc.subDomain] = value,neuman
+                maxId = max(maxId, bc.subDomain)
+            else:
+                domain = ExprTensor(())
+                for key in domain.keys():
+                    domain[key] = Indexed(bc.subDomain, MultiIndex(tuple(FixedIndex(k) for k in key)))
+                codeDomains.append( (value,neuman,domain) )
+        defaultCode = []
+        defaultCode.append(Declaration(Variable('int', 'domainId')))
+        defaultCode.append(Declaration(Variable('auto', 'tmp0'),
+            initializer=UnformattedExpression('auto','intersection.geometry().center()')))
+        for i,v in enumerate(codeDomains):
+            block = Block()
+            defaultCode.append(
+                    generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
+            defaultCode.append('if (domainId)')
+            block = UnformattedBlock()
+            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+1) + ' );')
+            if len(v[1])>0:
+                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            block.append('return true;')
+            defaultCode.append(block)
+        defaultCode.append(return_(False))
 
         bndId = Variable('const int', 'bndId')
-        getBndId = UnformattedExpression('int', 'Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >::boundaryId( ' + model.arg_i.name + ' )')
-
-        switch = SwitchStatement(bndId, default=return_(False))
+        getBndId = UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')
+        switch = SwitchStatement(bndId, default=defaultCode)
         for i,v in bySubDomain.items():
             code = []
             if len(v[1])>0:
                 [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
             code.append(return_(True))
             switch.append(i, code)
-        model.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')),
+        model.isDirichletIntersection = [Declaration(bndId, initializer=getBndId),
                                          UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
                                          switch
                                         ]
 
         switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RRangeType", 0)))
-        predefined = {}
-        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-        predefineCoefficients(predefined, model.arg_x)
         for i, v in bySubDomain.items():
-            switch.append(i, generateCode(predefined, v[0], tempVars=tempVars))
+            switch.append(i, generateDirichletCode(predefined, v[0], tempVars=tempVars))
+        for i,v in enumerate(codeDomains):
+            switch.append(i+maxId+1, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         model.dirichlet = [switch]
 
     coefficients.update(constants)
