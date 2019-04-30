@@ -82,3 +82,13 @@ def petscsolver(storage,solverType=None):
     includes, typeName = solvers(includes,storage,operator)
     parameter = {"newton.linear.method":solverType} if solverType is not None else {}
     return "petsc",includes,typeName, parameter
+
+def amgxsolver(storage,solverType="gmres"):
+    print("AMGX sovler used ")
+    includes = ["dune/fem/solver/amgxsolver.hh"]
+
+    operator = lambda df,_: "Dune::Fem::AMGXInverseOperator< " + df + " >"
+
+    includes, typeName = solvers(includes,storage,operator)
+    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
+    return "amgx",includes,typeName, parameter

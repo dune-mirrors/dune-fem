@@ -54,7 +54,8 @@ registry["solver"] = {
          "suitesparse" : discretefunction.suitesparsesolver,
          "eigen"       : discretefunction.eigensolver,
          "viennacl"    : discretefunction.viennaclsolver,
-         "petsc"       : discretefunction.petscsolver
+         "petsc"       : discretefunction.petscsolver,
+         "amgx"        : discretefunction.amgxsolver
      }
 registry["scheme"] = {
          "h1"         : scheme.h1,
