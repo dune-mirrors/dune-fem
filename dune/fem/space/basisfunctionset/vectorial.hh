@@ -207,7 +207,9 @@ namespace Dune
         return dofs_[ i ];
       }
 
-      const RangeFieldType &operator[] ( std::size_t i ) const
+      // const RFT& leads to problem with returning reference to temporary
+      // with dofs_ = PetscDF::LocalFunction::DofVector
+      RangeFieldType operator[] ( std::size_t i ) const
       {
         return dofs_[ i ];
       }
@@ -247,7 +249,9 @@ namespace Dune
         return dofs_[ dofAlignment_.globalDof( LocalDofType( coordinate_, i ) ) ];
       }
 
-      const RangeFieldType &operator[] ( std::size_t i ) const
+      // const RFT& leads to problem with returning reference to temporary
+      // with dofs_ = PetscDF::LocalFunction::DofVector
+      RangeFieldType operator[] ( std::size_t i ) const
       {
         return dofs_[ dofAlignment_.globalDof( LocalDofType( coordinate_, i ) ) ];
       }
