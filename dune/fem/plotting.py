@@ -7,7 +7,12 @@ from dune.plotting import block, disable
 globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
-        xlim=None, ylim=None, clim=None, cmap=None, colorbar=True, triplot=False):
+        xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical", triplot=False):
+
+    if colorbar == True:
+        colorbar = "vertical"
+    elif colorbar == False:
+        colorbar = None
 
     if (gridLines is not None) and (gridLines != ""):
         polys = grid.polygons()
@@ -47,7 +52,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                     pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
                 except:
                     pyplot.tricontourf(triangulation, data, cmap=cmap, extend="both")
-            if colorbar:
+            if colorbar is not None:
                 # having extend not 'both' does not seem to work (needs fixing)...
                 if clim[0] > minData and clim[1] < maxData:
                     extend = 'both'
@@ -60,13 +65,16 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                 v = linspace(clim[0], clim[1], 10, endpoint=True)
                 norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
                 if not isinstance(colorbar,dict):
-                    colorbar = {}
-                colorbar.setdefault("orientation","vertical")
-                colorbar.setdefault("shrink",1.0)
-                colorbar.setdefault("extend",extend)
-                colorbar.setdefault("norm",norm)
-                colorbar.setdefault("ticks",v)
-                cbar = pyplot.colorbar(**colorbar)
+                    cbar = {}
+                    cbar.setdefault("orientation",colorbar)
+                else:
+                    cbar = colorbar
+                    cbar.setdefault("orientation","vertical")
+                cbar.setdefault("shrink",1.0)
+                cbar.setdefault("extend",extend)
+                cbar.setdefault("norm",norm)
+                cbar.setdefault("ticks",v)
+                cbar = pyplot.colorbar(**cbar)
                 # cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend=extend, norm=norm, ticks=v)
                 cbar.ax.tick_params(labelsize=10)
 
@@ -82,7 +90,7 @@ from dune.ufl import expression2GF
 def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
         xlim=None, ylim=None, clim=None, cmap=None,
-        colorbar=True, grid=None, triplot=False,
+        colorbar="vertical", grid=None, triplot=False,
         block=globalBlock):
     if disable: return
     try:
