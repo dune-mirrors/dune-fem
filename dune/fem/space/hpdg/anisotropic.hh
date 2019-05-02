@@ -90,6 +90,7 @@ namespace Dune
 
       public:
         using GridPartType = typename BaseType::GridPartType;
+        using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
 
         explicit AnisotropicDiscontinuousGalerkinSpace ( GridPartType &gridPart,
@@ -98,7 +99,10 @@ namespace Dune
           : BaseType( gridPart, BasisFunctionSetsType(), defaultKey(), interface, direction )
         {}
 
-        template< class Function >
+        template <class Function,
+                  std::enable_if_t<
+                    std::is_arithmetic<
+                      decltype(Function(std::declval<const EntityType>()))>::value,int> i=0>
         AnisotropicDiscontinuousGalerkinSpace ( GridPartType &gridPart, Function function,
                                                 const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                                 const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
