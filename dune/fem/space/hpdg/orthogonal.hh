@@ -93,6 +93,7 @@ namespace Dune
         static const int polynomialOrder = order ;
 
         using GridPartType = typename BaseType::GridPartType;
+        using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
 
         explicit OrthogonalDiscontinuousGalerkinSpace ( GridPartType &gridPart,
@@ -101,7 +102,10 @@ namespace Dune
           : BaseType( gridPart, BasisFunctionSetsType{}, order, interface, direction )
         {}
 
-        template< class Function >
+        template <class Function,
+                  std::enable_if_t<
+                    std::is_arithmetic<
+                      decltype(Function(std::declval<const EntityType>()))>::value,int> i=0>
         OrthogonalDiscontinuousGalerkinSpace ( GridPartType &gridPart, Function function,
                                                 const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                                 const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
