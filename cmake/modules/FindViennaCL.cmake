@@ -3,10 +3,6 @@
 #
 #  VIENNACL_FOUND        - system has ViennaCL
 #  VIENNACL_INCLUDES     - the ViennaCL include directories
-#
-# Redistribution and use is allowed according to the terms of the BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
-#
 
 cmake_policy(VERSION 3.3)
 
