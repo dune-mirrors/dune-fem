@@ -132,9 +132,11 @@ namespace Dune
       static const unsigned int domainLocalBlockSize = DomainSpaceType::localBlockSize;
       static const unsigned int rangeLocalBlockSize  = RangeSpaceType::localBlockSize;
 
-      static constexpr bool blockedMatrix = domainLocalBlockSize > 1 &&
-        domainLocalBlockSize == rangeLocalBlockSize ;
+      static constexpr bool squareBlocked = domainLocalBlockSize == rangeLocalBlockSize ;
+      static constexpr bool blockedMatrix = domainLocalBlockSize > 1 && squareBlocked;
 
+      // is this right? It should be rangeBS x domainBS - the system is
+      // Ad=r so domain gives columns and r gives range
       typedef FlatFieldMatrix< RangeFieldType, domainLocalBlockSize, rangeLocalBlockSize > MatrixBlockType;
       typedef MatrixBlockType  block_type;
 
@@ -319,7 +321,16 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          if( ! blockedMode_ || isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
+          // there is an issue with the stencil and non zero pattern in the
+          // case of domainSpace != rangeSpace. In this case additional
+          // mallocs are required during matrix assembly which heavily
+          // impacts the preformance. As a quick fix we use a global value
+          // for the number of non zeros per row. That leads to a
+          // significant increase in memory usage but not to much
+          // computational overhead in assembly. The issue with the stencil
+          // is a bug and needs fixing....
+          // if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
+          if( !squareBlocked || isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
           {
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, domainLocalBlockSize * stencil.maxNonZerosEstimate() );
           }
@@ -336,15 +347,19 @@ namespace Dune
               if( rangeSlaveDofs.isSlave( petscIndex ) )
                 continue;
 
-              // Remark: ghost entities should not be inserted into the stencil for dg to
-              // get optimal results but they are needed for istl....
-              d_nnz[ petscIndex ] = o_nnz[ petscIndex ] = 0;
-              for( const auto local : entry.second )
+              for (unsigned int rb = 0; rb<rangeLocalBlockSize/bs; ++rb)
               {
-                if( !domainSlaveDofs.isSlave( domainMappers_.ghostIndex( local ) ) )
-                  ++d_nnz[ petscIndex ];
-                else
-                  ++o_nnz[ petscIndex ];
+                // Remark: ghost entities should not be inserted into the stencil for dg to
+                // get optimal results but they are needed for istl....
+                assert( petscIndex+rb < localRows/bs );
+                d_nnz[ petscIndex+rb ] = o_nnz[ petscIndex+rb ] = 0;
+                for( const auto local : entry.second )
+                {
+                  if( !domainSlaveDofs.isSlave( domainMappers_.ghostIndex( local ) ) )
+                    d_nnz[ petscIndex+rb ] += domainLocalBlockSize/bs;
+                  else
+                    o_nnz[ petscIndex+rb ] += domainLocalBlockSize/bs;
+                }
               }
             }
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, &d_nnz[0], &o_nnz[0] );
