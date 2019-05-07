@@ -1,4 +1,6 @@
-dune_python_find_package(PACKAGE "ufl" REQUIRED VERSION "2016.2")
+# find python package ufl with at least version 2016.2
+# required cannot be used otherwise the version is fixed to 2016.2
+dune_python_find_package(PACKAGE "ufl" VERSION "2016.2")
 
 include(UseModelCompiler)
 
