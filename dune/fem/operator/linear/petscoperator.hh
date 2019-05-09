@@ -319,7 +319,7 @@ namespace Dune
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
+          if( ! blockedMode_ || isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
           {
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, domainLocalBlockSize * stencil.maxNonZerosEstimate() );
           }
