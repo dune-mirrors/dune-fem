@@ -64,6 +64,9 @@ namespace Dune
       {
         values_.reserve( size() );
         jacobians_.reserve( size() );
+        hessians_.resize( DomainType::dimension*(DomainType::dimension+1)/2. );
+        for (unsigned int i=0;i<hessians_.size();++i)
+          hessians_[i].reserve( size() );
       }
 
       int order () const { return localBasis_.order(); }
@@ -89,7 +92,22 @@ namespace Dune
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor f ) const
       {
-        DUNE_THROW( NotImplemented, "Method hessianEach not implemented" );
+        std::array<unsigned int, DomainType::dimension> multiIndex;
+        std::fill(multiIndex.begin(),multiIndex.end(),0);
+        unsigned int k = 0;
+        for (unsigned int i=0;i<DomainType::dimension;++i)
+        {
+          multiIndex[i] = 1;
+          for (unsigned int j=i;j<DomainType::dimension;++j)
+          {
+            multiIndex[j] += 1;
+            localBasis_.partial(multiIndex,coordinate(x),hessians_[k]);
+            multiIndex[j] -= 1;
+            ++k;
+          }
+          multiIndex[i] -= 1;
+        }
+        callFunctor( hessians_, f );
       }
 
     private:
@@ -101,10 +119,33 @@ namespace Dune
         for( Iterator it = v.begin(); it != v.end(); ++it )
           f( i++, *it );
       }
+      template< class T, class Functor >
+      static void callFunctor ( const std::vector< std::vector<T> > &v, Functor f )
+      {
+        HessianRangeType h;
+        for (unsigned int b=0;b<v[0].size();++b)
+        {
+          unsigned int k = 0;
+          for (unsigned int i=0;i<DomainType::dimension;++i)
+          {
+            for (unsigned int j=i;j<DomainType::dimension;++j)
+            {
+              for (unsigned int r=0;r<RangeType::dimension;++r)
+              {
+                h[r][i][j] = v[b][k][r];
+                h[r][j][i] = v[b][k][r];
+              }
+              ++k;
+            }
+          }
+          f( b, h );
+        }
+      }
 
       const LocalBasis& localBasis_;
       mutable std::vector< RangeType > values_;
       mutable std::vector< JacobianRangeType > jacobians_;
+      mutable std::vector< std::vector< RangeType > > hessians_;
     };
 
   } // namespace Fem

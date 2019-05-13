@@ -133,6 +133,7 @@ namespace Dune
             restrictLocal( father, *it, initialize );
             initialize = false;
           }
+          rpOp_.restrictFinalize( father );
         }
       }
 

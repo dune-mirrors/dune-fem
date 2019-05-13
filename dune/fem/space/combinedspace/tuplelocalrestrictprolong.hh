@@ -37,6 +37,7 @@ namespace Dune
 
       // helper structs
       template< int > struct RestrictLocal;
+      template< int > struct RestrictFinalize;
       template< int > struct ProlongLocal;
 
       template< std::size_t  ... i >
@@ -68,7 +69,11 @@ namespace Dune
       {
         Fem::ForLoop< RestrictLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
-
+      template< class LFFather >
+      void restrictFinalize ( LFFather &lfFather ) const
+      {
+        Fem::ForLoop< RestrictFinalize, 0, setSize >::apply( lfFather, localRestrictProlongTuple_ );
+      }
 
       template< class LFFather, class LFSon, class LocalGeometry >
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
@@ -128,6 +133,35 @@ namespace Dune
         LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
 
         std::get< i >( tuple ).prolongLocal( subLFFather, subLFSon, geometryInFather, initialize );
+      }
+    };
+
+
+    // RestrictFinalize
+    // ----------------
+
+    template< class ... DiscreteFunctionSpaces >
+    template< int i >
+    struct TupleLocalRestrictProlong< DiscreteFunctionSpaces ... >::
+    RestrictFinalize
+    {
+      template< class LFFather, class Tuple >
+      static void apply ( LFFather &lfFather,
+          const Tuple &tuple )
+      {
+        typedef SubVector< typename LFFather::LocalDofVectorType, OffsetSubMapper > SubDofVectorTypeFather;
+
+        typedef typename LFFather::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubFatherBasisFunctionSetType;
+
+        SubFatherBasisFunctionSetType subFatherBasisFunctionSet = lfFather.basisFunctionSet().template subBasisFunctionSet< i >();
+
+        std::size_t fatherBasisSetOffset = lfFather.basisFunctionSet().offset(i);
+
+        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), OffsetSubMapper( subFatherBasisFunctionSet.size(),
+                                                                                               fatherBasisSetOffset ) );
+        LocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
+
+        std::get< i >( tuple ).restrictFinalize( subLFFather );
       }
     };
 

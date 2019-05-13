@@ -509,6 +509,7 @@ namespace Dune
               // reset initialize flag
               initialize = false;
             }
+            restop.restrictFinalize(entity);
           }
         }
       }

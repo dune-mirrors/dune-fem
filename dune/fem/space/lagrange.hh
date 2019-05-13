@@ -102,6 +102,14 @@ namespace Dune
               template< class, unsigned int > class PointSet = EquidistantPointSet,
               template< class > class Storage = CachingStorage >
     using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
+#else // #if HAVE_DUNE_LOCALFUNCTIONS
+
+    // LagrangeSpace
+    // -------------
+    template< class FunctionSpace, class GridPart,
+              template< class > class Storage = CachingStorage >
+    using LagrangeSpace = DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage >;
+
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
   } // namespace Fem

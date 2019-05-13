@@ -34,6 +34,8 @@
 #include <dune/fem/space/rannacherturek.hh>
 #include <dune/fem/space/raviartthomas.hh>
 
+#include <dune/fem/io/file/dataoutput.hh>
+
 #include <dune/fem/space/test/checklocalinterpolation.hh>
 
 
@@ -103,8 +105,8 @@ typedef std::tuple<
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
-  // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
-  // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
+  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
+  Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
@@ -113,10 +115,8 @@ typedef std::tuple<
 typedef ErrorTuple< DiscreteFunctionSpacesType >::Type ErrorTupleType;
 
 
-
 // algorithm
 // ---------
-
 template< class DiscreteFunctionSpace >
 std::pair< Real< DiscreteFunctionSpace >, Real< DiscreteFunctionSpace > >
 algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
@@ -128,6 +128,17 @@ algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
   Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > uExact;
   const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, gridPart, 3 );
   interpolate( uGridExact, u );
+
+#if 0
+  {
+    static int turn = 0;
+    typedef std::tuple< decltype(u)* > IODataType;
+    IODataType data( &u );
+    Dune::Fem::DataOutput< GridType, IODataType > output( gridPart.grid(), data );
+    output.writeData( turn, "test" );
+    ++turn;
+  }
+#endif
 
   checkLocalInterpolation( space );
 

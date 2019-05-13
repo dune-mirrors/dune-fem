@@ -1,18 +1,19 @@
-#include <config.h>
+#ifdef YASPGRID
+  #undef YASPGRID
+#endif
 
-#define SHOW_INTERPOLATION 0
-#define SHOW_RESTRICT_PROLONG 1
+#define ALUGRID_CONFORM
+
+#include <config.h>
 
 // to write out the data, set WRITE_DATA to 1
 #define WRITE_DATA 0
 
-// to use grape, set to WANT_GRAPE to 1
-#ifndef WANT_GRAPE
-#define WANT_GRAPE 0
-#endif
+#define USE_LFE 0
+#define USE_PSPACE 0
 
 // polynomial order of base functions
-const int polOrder = POLORDER;
+const int polOrder = 2; // POLORDER;
 
 #include <iostream>
 #include <sstream>
@@ -23,26 +24,15 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
-// #include <dune/fem/space/padaptivespace.hh>
+#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/io/file/dataoutput.hh>
 
-#if HAVE_GRAPE
-  #define USE_GRAPE WANT_GRAPE
-#else
-  #define USE_GRAPE 0
-  #if WANT_GRAPE
-    #warning "Grape was not found by configure."
-  #endif
-#endif
-
-#if USE_GRAPE
-  #include <dune/grid/io/visual/grapedatadisplay.hh>
-#endif
 #include <dune/fem/io/parameter.hh>
 
 #include <dune/fem/test/testgrid.hh>
@@ -135,8 +125,10 @@ public:
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
-      // phi[ 0 ] += x[ i ] * x[ i ];
+    {
       phi[ 0 ] *= sin( M_PI * x[ i ] );
+      phi[ 1 ] += x[ i ] * x[ i ];
+    }
   }
 
   void evaluate ( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -149,8 +141,10 @@ public:
     Dphi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
       for( int j = 0; j < DomainType :: dimension; ++j )
-        // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
+      {
         Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
+        Dphi[ 1 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
+      }
   }
 
   void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
@@ -169,14 +163,19 @@ typedef Dune::GridSelector::GridType MyGridType;
 typedef CheckGridEnabled< MyGridType >::GridPartType GridPartType;
 
 //! type of the function space
-typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
+typedef FunctionSpace< double, double, MyGridType::dimensionworld, 2 > FunctionSpaceType;
 
 //! type of the discrete function space our unkown belongs to
+#if USE_LFE
+typedef LagrangeSpace< FunctionSpaceType, GridPartType >
+  DiscreteFunctionSpaceType;
+#elif USE_PSPACE
+typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+  DiscreteFunctionSpaceType;
+#else
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
   DiscreteFunctionSpaceType;
-//! type of the discrete function space our unkown belongs to
-//typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
-//  DiscreteFunctionSpaceType;
+#endif
 
 //! type of the discrete function we are using
 #if HAVE_PETSC
@@ -251,7 +250,7 @@ void algorithm ( GridPartType &gridPart,
   const unsigned int polOrder = solution.space().order() + 1;
 
   ExactSolutionType fexact;
-  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
+  GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder+1 );
 
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
@@ -291,12 +290,16 @@ void algorithm ( GridPartType &gridPart,
                 << ": " << postH1error << std::endl;
 
   }
-  #if USE_GRAPE && SHOW_RESTRICT_PROLONG
-    if( turn > 0 ) {
-      GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
-      grape.dataDisplay( solution );
-    }
-  #endif
+#if WRITE_DATA
+  {
+    static int turn = 0;
+    typedef std::tuple< DiscreteFunctionType* > IODataType;
+    IODataType data( &solution );
+    Dune::Fem::DataOutput< MyGridType, IODataType > output( gridPart.grid(), data );
+    output.writeData( turn, "test" );
+    ++turn;
+  }
+#endif
 
   interpolate( f, solution );
   double newL2error = l2norm.distance( f, solution );
@@ -307,13 +310,6 @@ void algorithm ( GridPartType &gridPart,
     std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
     std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl;
   }
-
-  #if USE_GRAPE && SHOW_INTERPOLATION
-    if( turn > 0 ) {
-      GrapeDataDisplay< MyGridType > grape( gridPart.grid );
-      grape.dataDisplay( solution );
-    }
-  #endif
 
   double l2eoc = -log( newL2error / preL2error) / M_LN2;
   double h1eoc = -log( newH1error / preH1error) / M_LN2;
@@ -340,12 +336,6 @@ void algorithm ( GridPartType &gridPart,
     if( std::abs( h1eoc - ( sign * ( solution.space().order()-1.0+eocThreshold ) ) ) < 0 )
       DUNE_THROW( InvalidStateException,"Wrong H1-EOC for " << refcrs );
   }
-
-  #if WRITE_DATA
-    GrapeDataIO< MyGridType > dataio;
-    dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
-    dataio.writeData( solution, xdr, "sol", turn );
-  #endif
 
 
   if( Parameter::verbose() )
@@ -380,7 +370,11 @@ try
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType gridPart( grid );
+#if USE_LFE
+  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
+#else
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+#endif
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 

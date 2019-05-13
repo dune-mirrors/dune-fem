@@ -87,6 +87,13 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, son, geometryInFather, initialize ) );
       }
 
+      //! finalize restriction on father
+      template <class Entity>
+      void restrictFinalize(const Entity &father) const
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictFinalize( father ) );
+      }
+
       //! prolong data to children
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
@@ -260,6 +267,18 @@ namespace Dune
 
         localRP_.restrictLocal( lfFather, constLf_, geometryInFather, initialize );
       }
+
+      //! finalize restriction on father
+      template <class Entity>
+      void restrictFinalize(const Entity &father) const
+      {
+        typedef typename GridPartType::template Codim< Entity::codimension >::EntityType GridPartEntityType;
+        const GridPartType &gridPart = discreteFunction_.gridPart();
+        const GridPartEntityType &gpFather = gridPart.convert( father );
+        LocalFunctionType lfFather = discreteFunction_.localFunction( gpFather );
+        localRP_.restrictFinalize( lfFather );
+      }
+
 
       //! prolong data to children
       template< class Entity >
