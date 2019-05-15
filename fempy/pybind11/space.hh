@@ -7,6 +7,8 @@
 
 #include <dune/common/visibility.hh>
 
+#include <dune/fem/space/common/discretefunctionspace.hh>
+
 #include <dune/python/pybind11/pybind11.h>
 
 namespace Dune
