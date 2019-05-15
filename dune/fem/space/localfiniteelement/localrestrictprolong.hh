@@ -2,7 +2,9 @@
 #define DUNE_FEM_LFESPACE_LOCALRESTRICTPROLONG_HH
 
 #include <dune/common/dynmatrix.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/space/localfiniteelement/space.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
 namespace Dune
