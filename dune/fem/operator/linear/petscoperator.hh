@@ -320,6 +320,13 @@ namespace Dune
           {
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
+          /*
+          std::cout << "Matrix dimension with bs=" << bs << "   "
+            << localRows << "x" << localCols << "   "
+            << globalRows << "x" <<  globalCols << "   "
+            << rangeLocalBlockSize/bs << "x" << domainLocalBlockSize/bs << "    "
+            << std::endl;
+          */
 
           // there is an issue with the stencil and non zero pattern in the
           // case of domainSpace != rangeSpace. In this case additional
@@ -329,8 +336,7 @@ namespace Dune
           // significant increase in memory usage but not to much
           // computational overhead in assembly. The issue with the stencil
           // is a bug and needs fixing....
-          // if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
-          if( !squareBlocked || isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
+          if( isSimpleStencil || std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value )
           {
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, domainLocalBlockSize * stencil.maxNonZerosEstimate() );
           }
@@ -349,16 +355,17 @@ namespace Dune
 
               for (unsigned int rb = 0; rb<rangeLocalBlockSize/bs; ++rb)
               {
+                auto row = petscIndex*rangeLocalBlockSize/bs + rb;
                 // Remark: ghost entities should not be inserted into the stencil for dg to
                 // get optimal results but they are needed for istl....
-                assert( petscIndex+rb < localRows/bs );
-                d_nnz[ petscIndex+rb ] = o_nnz[ petscIndex+rb ] = 0;
+                assert( row < localRows/bs );
+                d_nnz[ row ] = o_nnz[ row ] = 0;
                 for( const auto local : entry.second )
                 {
                   if( !domainSlaveDofs.isSlave( domainMappers_.ghostIndex( local ) ) )
-                    d_nnz[ petscIndex+rb ] += domainLocalBlockSize/bs;
+                    d_nnz[ row ] += domainLocalBlockSize/bs;
                   else
-                    o_nnz[ petscIndex+rb ] += domainLocalBlockSize/bs;
+                    o_nnz[ row ] += domainLocalBlockSize/bs;
                 }
               }
             }
