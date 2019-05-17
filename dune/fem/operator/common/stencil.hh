@@ -47,10 +47,10 @@ namespace Dune
       typedef typename RangeBlockMapper::GlobalKeyType  RangeGlobalKeyType;
 
       //! type for storing the stencil of one row
-      typedef std::set<RangeGlobalKeyType>                   LocalStencilType;
+      typedef std::set<DomainGlobalKeyType>                   LocalStencilType;
 
       //! type for storing the full stencil
-      typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
+      typedef std::map<RangeGlobalKeyType,LocalStencilType> GlobalStencilType;
 
     public:
       /** \brief Constructor
@@ -88,7 +88,7 @@ namespace Dune
        *  \param[in]  key   key for matrix row
        *
        */
-      const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
+      const LocalStencilType &localStencil(const RangeGlobalKeyType &key) const
       {
         return globalStencil_[key];
       }
@@ -107,7 +107,7 @@ namespace Dune
       }
 
       int rows () const { return rangeBlockMapper_.size(); }
-      int cols () const { return rangeBlockMapper_.size(); }
+      int cols () const { return domainBlockMapper_.size(); }
 
     private:
       struct RowFillFunctor
@@ -116,9 +116,9 @@ namespace Dune
           : localStencil_( localStencil )
         {}
 
-        void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal ) const
+        void operator() ( const std::size_t, const DomainGlobalKeyType &domainGlobal ) const
         {
-          localStencil_.insert( rangeGlobal );
+          localStencil_.insert( domainGlobal );
         }
 
       private:
