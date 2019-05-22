@@ -107,7 +107,7 @@ namespace Dune
                                 const SolverParameter& parameter = SolverParameter( Parameter::container() ) )
         : BaseType( parameter ),
           absLimit_( absLimit ),
-          method_( method < 0 ? parameter.solverMethod() : method )
+          method_( method < 0 ? parameter.solverMethod({ SolverParameter::gmres, SolverParameter::cg, SolverParameter::bicgstab }) : method )
       {
       }
 
