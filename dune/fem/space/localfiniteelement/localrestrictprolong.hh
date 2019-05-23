@@ -129,7 +129,6 @@ namespace Dune
         void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                              const LocalGeometry &geometryInFather, bool initialize ) const
         {
-          const int numDofs = lfFather.numDofs();
           assert( lfFather.numDofs() == lfSon.numDofs() );
 
           if (initialize)
@@ -147,7 +146,6 @@ namespace Dune
         template <class LFFather>
         void restrictFinalize( LFFather &lfFather ) const
         {
-          const int numDofs = lfFather.numDofs();
           std::vector< EntityType > childEntities(childSeeds_.size());
           std::vector< BasisFunctionSetType > childBasisSets(childSeeds_.size());
           for (unsigned int i=0; i<childSeeds_.size();++i)
