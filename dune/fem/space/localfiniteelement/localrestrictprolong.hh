@@ -189,20 +189,22 @@ namespace Dune
     } // namespce Impl
 
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    struct DefaultLocalRestrictProlong< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
+    class DefaultLocalRestrictProlong< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
     : public Impl::DefaultLocalRestrictProlongLFE
                < LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
     {
+    public:
       typedef Impl::DefaultLocalRestrictProlongLFE
                < LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > > BaseType;
       using BaseType::BaseType;
     };
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    struct DefaultLocalRestrictProlong< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
+    class DefaultLocalRestrictProlong< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
     : public Impl::DefaultLocalRestrictProlongLFE
                < DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
 
     {
+    public:
       typedef Impl::DefaultLocalRestrictProlongLFE
                < DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > > BaseType;
       using BaseType::BaseType;
