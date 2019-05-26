@@ -1,1 +1,2 @@
-dune_add_subdirs(fem)
+add_subdirectory(fempy)
+add_subdirectory(fem)

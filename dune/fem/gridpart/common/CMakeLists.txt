@@ -12,4 +12,9 @@ dune_install(
   nonadaptiveindexset.hh
   persistentindexset.hh
   policies.hh
+  compositegeometry.hh
+  localfunctiongeometry.hh
+  sharedgeometry.hh
+  simplegeometry.hh
+  unimplementedgeometry.hh
 )
