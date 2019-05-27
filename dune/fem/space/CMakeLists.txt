@@ -8,8 +8,7 @@ dune_install(
     padaptivespace.hh
     rannacherturek.hh
     raviartthomas.hh
-    localinterpolation.hh  localkeymap.hh
-    shapefunctions.hh p1bubble.hh)
+    p1bubble.hh)
 
 dune_add_subdirs(
     basisfunctionset
