@@ -204,6 +204,8 @@ class SwitchStatement(Statement):
         self.default.append(default)
 
     def append(self, case, code):
+        if isinstance(case,bool):
+            case = "true" if case else "false"
         block = self.branches.setdefault(case, Block())
         block.append(code)
 

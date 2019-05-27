@@ -42,7 +42,7 @@ def test(model,spaceName,dimD,dimR,storage):
     uD.clear()
     start = time.clock()
     for i in range(testLoop):
-        A = linearOperator(scheme)
+        A = linearOperator(scheme) # , parameters={"petsc.blockedmode":False})
     end = time.clock()
     print( "setup+assembly:",(end-start)/testLoop, flush=True )
     start = time.clock()

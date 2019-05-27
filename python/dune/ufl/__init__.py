@@ -386,7 +386,7 @@ class DirichletBC:
             else:
                 yield el
 
-    def __init__(self, functionSpace, value, subDomain):
+    def __init__(self, functionSpace, value, subDomain=None):
         if functionSpace.scalar:
             self.functionSpace = functionSpace.toVectorSpace()
             value = ufl.as_vector( [value] )
@@ -400,6 +400,7 @@ class DirichletBC:
             self.ufl_value = ufl.as_vector(self.ufl_value)
         else:
             self.ufl_value = value
+        assert self.ufl_value.ufl_shape[0] == functionSpace.dimRange
     def __str__(self):
         return str(self.ufl_value)+str(self.subDomain)
     def replace(self,dictionary):

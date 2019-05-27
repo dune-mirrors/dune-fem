@@ -126,13 +126,12 @@ def plotPointData(solution, figure=None,
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
         xlim=None, ylim=None, clim=None, cmap=None,
-        block=globalBlock, **kwargs):
+        block=globalBlock, grid=None, colorbar=None):
     if disable: return
     try:
         grid = solution.grid
     except AttributeError:
         if isinstance(solution, Expr):
-            grid = kwargs.get("grid",None)
             assert grid, "need to provide a named grid argument to plot a ufl expression directly"
             solution = expression2GF(grid,solution,1)
         else:
@@ -155,12 +154,12 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     # first the grid if required
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
-        _plotPointData(fig,grid,None,level,gridLines,False,xlim,ylim,clim,cmap)
+        _plotPointData(fig,grid,None,level,gridLines,False,xlim,ylim,clim,cmap,colorbar)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
-        _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,False)
+        _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,colorbar)
 
     pyplot.show(block=globalBlock)
     # return fig

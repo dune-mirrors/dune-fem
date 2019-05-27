@@ -186,7 +186,7 @@ def h1(model, domainSpace=None, rangeSpace=None):
 #       linearization (0 now) could also be passed in
 #       The returning operator could have a 'update' method and then we
 #       remove the 'jacobian' from the official interface
-def linear(operator, ubar=None):
+def linear(operator, ubar=None,parameters={}):
     assert hasattr(operator,"jacobian"), "operator does not allow assembly"
     rangeSpace  = operator.rangeSpace
     domainSpace = operator.domainSpace
@@ -206,11 +206,13 @@ def linear(operator, ubar=None):
     import dune.create as create
     typeName = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
 
-    constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace'],
-                              ['return new ' + typeName + '( "tmp", dSpace, rSpace );'],
-                              ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+    constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace',
+                               'const pybind11::dict &parameters'],
+                              ['return new ' + typeName + '( "tmp", dSpace, rSpace, '+
+                                       'Dune::FemPy::pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ));'],
+                              ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
 
-    lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace)
+    lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace,parameters)
     if ubar is None:
         operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
     else:

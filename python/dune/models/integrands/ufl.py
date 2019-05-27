@@ -328,6 +328,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         codeDomains = []
         bySubDomain = dict()
         neuman = []
+        wholeDomain = None
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
@@ -346,7 +347,9 @@ def _compileUFL(integrands, form, *args, tempVars=True):
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
                 value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
-            if isinstance(bc.subDomain,int):
+            if bc.subDomain is None:
+                wholeDomain = value,neuman
+            elif isinstance(bc.subDomain,int):
                 bySubDomain[bc.subDomain] = value,neuman
                 maxId = max(maxId, bc.subDomain)
             else:
@@ -364,9 +367,17 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                     generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
             defaultCode.append('if (domainId)')
             block = UnformattedBlock()
-            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+1) + ' );')
+            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+2) + ' );')
             if len(v[1])>0:
                 [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            block.append('return true;')
+            defaultCode.append(block)
+        if wholeDomain is not None:
+            block = Block()
+            block = UnformattedBlock()
+            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+1) + ' );')
+            if len(wholeDomain[1])>0:
+                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in wholeDomain[1]]
             block.append('return true;')
             defaultCode.append(block)
         defaultCode.append(return_(False))
@@ -386,11 +397,15 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                                          switch
                                         ]
 
-        switch = SwitchStatement(integrands.arg_bndId, default=assign(integrands.arg_r, construct("RRangeType", 0)))
+        if wholeDomain is None:
+            defaultCode = assign(integrands.arg_r, construct("RRangeType", 0))
+        else:
+            defaultCode = generateDirichletCode(predefined, wholeDomain[0], tempVars=tempVars)
+        switch = SwitchStatement(integrands.arg_bndId, default=defaultCode)
         for i, v in bySubDomain.items():
             switch.append(i, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         for i,v in enumerate(codeDomains):
-            switch.append(i+maxId+1, generateDirichletCode(predefined, v[0], tempVars=tempVars))
+            switch.append(i+maxId+2, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         integrands.dirichlet = [switch]
 
     return integrands
