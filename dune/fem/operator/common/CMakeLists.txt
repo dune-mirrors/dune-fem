@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 dune_install(automaticdifferenceoperator.hh differentiableoperator.hh
              localmatrix.hh localmatrixwrapper.hh localoperator.hh
              mapping.hh objpointer.hh operator.hh
