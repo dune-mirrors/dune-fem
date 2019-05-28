@@ -31,6 +31,7 @@ registry["space"] = {
          "finitevolume"  : space.finiteVolume,
          "p1bubble"      : space.p1Bubble,
          "combined"      : space.combined,
+         "enriched"      : space.enriched,
          "product"       : space.product,
          "bdm"           : space.bdm,
          "raviartthomas" : space.raviartThomas,

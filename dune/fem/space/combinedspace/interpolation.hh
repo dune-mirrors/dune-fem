@@ -97,18 +97,37 @@ namespace Dune
 
     // TupleSpaceInterpolation
     // -----------------------
+    // CombineOp describes the way in which the spaces have been combined, i.e.
+    // Product:    V = V_1 x V_2 x ...
+    // Summation:  V = V_1 + V_2 + ...
 
-    template< class ... Spaces >
+    template< class CombineOp , class ... Spaces >
     class TupleSpaceInterpolation
     {
-      typedef TupleSpaceInterpolation< Spaces ... > ThisType;
+      typedef TupleSpaceInterpolation< CombineOp, Spaces ... > ThisType;
       typedef std::tuple< typename Spaces::InterpolationType ... > InterpolationTupleType;
 
       static const int setSize = sizeof ... ( Spaces ) -1;
-      template< int >
-      struct Apply;
 
-      typedef TupleBasisFunctionSet< typename Spaces::BasisFunctionSetType ... > BasisFunctionSetType;
+      template< int >
+      struct ProductApply;
+
+      template< int >
+      struct SummationApply;
+
+      template< int, class CombOp >
+      struct ApplyBase;
+
+      template< int counter >
+      struct ApplyBase< counter, TupleSpaceProduct > : public ProductApply< counter >{};
+
+      template< int counter >
+      struct ApplyBase< counter, TupleSpaceSummation > : public SummationApply< counter >{};
+
+      template < int counter >
+      struct Apply : public ApplyBase< counter, CombineOp > {};
+
+      typedef TupleBasisFunctionSet< CombineOp, typename Spaces::BasisFunctionSetType ... >   BasisFunctionSetType;
 
     public:
 
@@ -139,9 +158,10 @@ namespace Dune
     };
 
 
-    template< class ... Spaces >
+    // specialization of TupleSpaceInterpolation::Apply for SpaceProduct
+    template< class CombineOp, class ... Spaces >
     template< int i >
-    struct TupleSpaceInterpolation< Spaces ... >::Apply
+    struct TupleSpaceInterpolation< CombineOp, Spaces ... >::ProductApply
     {
       static const int rangeOffset = BasisFunctionSetType::RangeIndices::template offset< i >();
       static const int thisDimRange = BasisFunctionSetType::template SubBasisFunctionSet< i >::type::FunctionSpaceType::dimRange;
@@ -180,6 +200,20 @@ namespace Dune
         SubVector< LocalDofVector, OffsetSubMapper >
           subLdv( ldv, OffsetSubMapper( basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) ) );
         std::get< i >( tuple ) ( localFunctionConverter( lv, RangeConverter() ), subLdv );
+      }
+    };
+
+
+    template< class CombineOp, class ... Spaces >
+    template< int i >
+    struct TupleSpaceInterpolation< CombineOp, Spaces ... >::SummationApply
+    {
+      template< class Tuple, class LocalFunction, class LocalDofVector >
+      static void apply ( const Tuple &tuple, const BasisFunctionSetType &basisSet, const LocalFunction &lv, LocalDofVector &ldv )
+      {
+        SubVector< LocalDofVector, OffsetSubMapper >
+          subLdv( ldv, OffsetSubMapper( basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) ) );
+        std::get< i >( tuple ) ( lv,  subLdv );
       }
     };
 

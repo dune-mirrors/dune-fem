@@ -70,7 +70,8 @@ void traverse ( GridPartType &gridPart )
   ScalarBasisFunctionSetType2 scalarBasisSet2( entity, scalarLegendreShapeFunctionSet );
   BasisFunctionSetType3 basisFunctionSet3( scalarBasisSet2 );
 
-  Dune::Fem::TupleBasisFunctionSet< ScalarBasisFunctionSetType1, ScalarBasisFunctionSetType2, BasisFunctionSetType3 >
+  Dune::Fem::TupleBasisFunctionSet< Dune::Fem::TupleSpaceProduct,
+              ScalarBasisFunctionSetType1, ScalarBasisFunctionSetType2, BasisFunctionSetType3 >
   basisSet( scalarBasisSet1, scalarBasisSet2, basisFunctionSet3 );
 
   error = Dune::Fem::checkQuadratureConsistency( basisSet, quadrature, true );

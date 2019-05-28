@@ -76,6 +76,8 @@ if( ${FEM_TORTURE_TESTS} )
 
   dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
+  dune_add_test( SOURCES test-tuplespace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+
 
   dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 endif()

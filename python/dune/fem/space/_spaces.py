@@ -641,6 +641,55 @@ def combined(*spaces, **kwargs):
         pass
     return spc.as_ufl()
 
+def enriched(*spaces, **kwargs):
+    """create an enriched discrete function space from a tuple of discrete function spaces
+
+    Args:
+        spaces: tuple of discrete function spaces
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module, addStorage
+
+    scalar = kwargs.get("scalar",False)
+
+    if not spaces:
+        raise Exception("Cannot create EnrichedDiscreteFunctionSpace from empty tuple of discrete function spaces")
+    spaces = tuple([s.__impl__ for s in spaces])
+    combinedStorage = None
+    combinedField = None
+    for space in spaces:
+        storage, _, _, _, _, _ = space.storage
+        if combinedStorage and (combinedStorage != storage):
+            raise Exception("Cannot create EnrichedDiscreteFunctionSpace with different types of storage")
+        else:
+            combinedStorage = storage
+        if combinedField and (combinedField != space.field):
+            raise Exception("Cannot create EnrichedDiscreteFunctionSpace with different field types")
+        else:
+            combinedField = space.field
+
+    includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
+    for space in spaces:
+        includes += space._includes
+    typeName = "Dune::Fem::EnrichedDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
+
+    constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
+                              ['return new DuneType( spaceTuple);'],
+                              ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
+
+    spc = module(combinedField, includes, typeName, constructor,
+            storage=combinedStorage,
+            scalar=scalar,
+            ctorArgs=[spaces])
+    try:
+        spc.componentNames = kwargs["components"]
+    except KeyError:
+        pass
+    return spc.as_ufl()
+
 def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
 

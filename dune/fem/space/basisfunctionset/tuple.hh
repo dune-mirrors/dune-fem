@@ -25,11 +25,19 @@ namespace Dune
 
     // TupleBasisFunctionSet
     // ---------------------
+    //
+    // TupleDiscreteFunctionSpace combination operation
+    // describes the way in which the spaces have been combined, i.e.
+    // Product:    V = V_1 x V_2 x ...
+    // Summation:  V = V_1 + V_2 + ...
 
-    template< class ... BasisFunctionSets >
+    struct TupleSpaceProduct {};
+    struct TupleSpaceSummation {};
+
+    template< class CombineOp, class ... BasisFunctionSets >
     class TupleBasisFunctionSet
     {
-      typedef TupleBasisFunctionSet< BasisFunctionSets ... > ThisType;
+      typedef TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... > ThisType;
 
       // Functor Helper structs
       template< int > struct ComputeOffset;
@@ -81,6 +89,9 @@ namespace Dune
       //! get type of first function space, to obtain dimDomain and Field Types
       typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::FunctionSpaceType ContainedFunctionSpaceType;
 
+      //! size of domain space
+      static const int dimDomain = ContainedFunctionSpaceType::dimDomain;
+
       //! number of BasisFunctionsSets in the tuple
       static const int setSize = sizeof ... ( BasisFunctionSets );
       static const int setIterationSize = sizeof ... ( BasisFunctionSets )-1;
@@ -115,10 +126,64 @@ namespace Dune
         mutable HessianStorageTupleType hessianStorage_;
       };
 
+
     public:
       //! helper class to compute static rangeoffsets
       typedef Indices< BasisFunctionSets::FunctionSpaceType::dimRange ... > RangeIndices;
 
+    protected:
+      template <int dummy, class CombOp>
+      struct CombinationTraits;
+
+      template <int dummy>
+      struct CombinationTraits< dummy, TupleSpaceProduct >
+      {
+        //! size of range space for product space
+        static constexpr const int dimRange = Std::sum( static_cast< int >( BasisFunctionSets::FunctionSpaceType::dimRange ) ... );
+
+        //! type of analytical combined product function space
+        typedef  FunctionSpace< typename ContainedFunctionSpaceType::DomainFieldType,
+                                typename ContainedFunctionSpaceType::RangeFieldType,
+                                dimDomain, dimRange > FunctionSpaceType;
+
+        template <class ThisRange, class Range>
+        static void apply(const int rangeOffset, const ThisRange& thisRange, Range& values)
+        {
+          // scatter result to correct place in larger result vector
+          std::copy( thisRange.begin(), thisRange.end(), values.begin() + rangeOffset );
+        }
+
+        template< int i >
+        static constexpr int rangeOffset ()
+        {
+          return RangeIndices::template offset< i >();
+        }
+      };
+
+      template <int dummy>
+      struct CombinationTraits< dummy, TupleSpaceSummation >
+      {
+        //! type of analytical is same as contained space since its a sum
+        typedef ContainedFunctionSpaceType  FunctionSpaceType;
+
+        template <class ThisRange, class Range>
+        static void apply(const int rangeOffset, const ThisRange& thisRange, Range& values)
+        {
+          // sum results
+          values += thisRange;
+        }
+
+        template< int j >
+        static constexpr int rangeOffset ()
+        {
+          return 0;
+        }
+      };
+
+      // type of accumulation of result after loop over basis sets
+      typedef CombinationTraits< 0, CombineOp > CombinationType;
+
+    public:
       // export type of i-th subbasisfunction set
       template< int i >
       struct SubBasisFunctionSet
@@ -126,15 +191,11 @@ namespace Dune
         typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type type;
       };
 
-      //! size of domian space
-      static const int dimDomain = ContainedFunctionSpaceType::dimDomain;
+      //! type of analytical combined function space
+      typedef typename CombinationType :: FunctionSpaceType  FunctionSpaceType;
 
-      //! size of range space
-      static constexpr const int dimRange = Std::sum( static_cast< int >( BasisFunctionSets::FunctionSpaceType::dimRange ) ... );
-
-      //! type of analytical combiend function space
-      typedef FunctionSpace< typename ContainedFunctionSpaceType::DomainFieldType,
-                             typename ContainedFunctionSpaceType::RangeFieldType, dimDomain, dimRange > FunctionSpaceType;
+      //! size of domain space
+      static const int dimRange = FunctionSpaceType::dimRange;
 
       //! type of Domain Vector
       typedef typename FunctionSpaceType::DomainType DomainType;
@@ -162,7 +223,7 @@ namespace Dune
       typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::ReferenceElementType ReferenceElementType;
 
       // default constructor, needed by localmatrix
-      TupleBasisFunctionSet () {}
+      TupleBasisFunctionSet () : offset_( {{ 0 }} ) {}
 
       // constructor taking a pack of basisFunctionSets
       TupleBasisFunctionSet ( const BasisFunctionSets & ... basisFunctionSets )
@@ -358,7 +419,7 @@ namespace Dune
       }
 
     protected:
-      // unroll index sequence and take maxmial order
+      // unroll index sequence and take maximal order
       template< std::size_t ... i >
       int order ( std::index_sequence< i ... > ) const
       {
@@ -384,9 +445,9 @@ namespace Dune
     // ComputeOffset
     // -------------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     ComputeOffset
     {
       template< class Tuple >
@@ -400,12 +461,13 @@ namespace Dune
     // EvaluateAll
     // -----------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     EvaluateAll
     {
-      static const int rangeOffset = RangeIndices::template offset< i >();
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, RangeType &values, const OffsetType &offset, const Tuple &tuple )
@@ -415,7 +477,9 @@ namespace Dune
         SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType thisRange;
         std::get< i >( tuple ).evaluateAll( x, subDofVector, thisRange );
-        std::copy( thisRange.begin(), thisRange.end(), values.begin() + rangeOffset );
+
+        // distribute result to values
+        CombinationType::apply( rangeOffset, thisRange, values );
       }
     };
 
@@ -423,12 +487,13 @@ namespace Dune
     // JacobianAll
     // -----------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     JacobianAll
     {
-      static const int rangeOffset = RangeIndices::template offset< i >();
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, JacobianRangeType &values, const OffsetType &offset, const Tuple &tuple )
@@ -438,7 +503,9 @@ namespace Dune
         SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType thisJacobian;
         std::get< i >( tuple ).jacobianAll( x, subDofVector, thisJacobian );
-        std::copy( thisJacobian.begin(), thisJacobian.end(), values.begin() + rangeOffset );
+
+        // distribute result to values
+        CombinationType::apply( rangeOffset, thisJacobian, values );
       }
     };
 
@@ -446,12 +513,13 @@ namespace Dune
     // HessianAll
     // ----------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     HessianAll
     {
-      static const int rangeOffset = RangeIndices::template offset< i >();
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, HessianRangeType &values, const OffsetType &offset, const Tuple &tuple )
@@ -461,7 +529,9 @@ namespace Dune
         SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType thisHessian;
         std::get< i >( tuple ).hessianAll( x, subDofVector, thisHessian );
-        std::copy( thisHessian.begin(), thisHessian.end(), values.begin() + rangeOffset );
+
+        // distribute result to values
+        CombinationType::apply( rangeOffset, thisHessian, values );
       }
     };
 
@@ -469,14 +539,16 @@ namespace Dune
     // EvaluateAllRanges
     // -----------------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     EvaluateAllRanges
     {
       typedef typename std::tuple_element< i, typename Storage::RangeStorageTupleType >::type ThisStorage;
       static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
-      static const int rangeOffset = RangeIndices::template offset< i >();
+
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class RangeArray, class Tuple >
       static void apply ( const Point &x, RangeArray &values, const Storage &s, const OffsetType &offset, const Tuple &tuple )
@@ -500,14 +572,16 @@ namespace Dune
     // JacobianAllRanges
     // -----------------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     JacobianAllRanges
     {
       typedef typename std::tuple_element< i, typename Storage::JacobianStorageTupleType >::type ThisStorage;
       static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
-      static const int rangeOffset = RangeIndices::template offset< i >();
+
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class RangeArray, class Tuple >
       static void apply ( const Point &x, RangeArray &values, const Storage &s, const OffsetType &offset, const Tuple &tuple )
@@ -531,14 +605,16 @@ namespace Dune
     // HessianAllRanges
     // ----------------
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     HessianAllRanges
     {
       typedef typename std::tuple_element< i, typename Storage::HessianStorageTupleType >::type ThisStorage;
       static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
-      static const int rangeOffset = RangeIndices::template offset< i >();
+
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       template< class Point, class RangeArray, class Tuple >
       static void apply ( const Point &x, RangeArray &values, const Storage &s, const OffsetType &offset, const Tuple &tuple )
@@ -562,16 +638,17 @@ namespace Dune
     // Axpy
     // ----
 
-    template< class ... BasisFunctionSets >
+    template< class CombineOp, class ... BasisFunctionSets >
     template< int i >
-    struct TupleBasisFunctionSet< BasisFunctionSets ... >::
+    struct TupleBasisFunctionSet< CombineOp, BasisFunctionSets ... >::
     Axpy
     {
       typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType ThisRangeType;
       typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType ThisJacobianRangeType;
       typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType ThisHessianRangeType;
 
-      static const int rangeOffset = RangeIndices::template offset< i >();
+      // only needed for product spaces
+      static const int rangeOffset = CombinationType :: template rangeOffset< i >();
 
       typedef SubObject< const RangeType, const ThisRangeType, rangeOffset > SubRangeType;
       typedef SubObject< const JacobianRangeType, const ThisJacobianRangeType, rangeOffset > SubJacobianRangeType;
