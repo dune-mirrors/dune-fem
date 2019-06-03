@@ -48,7 +48,7 @@ namespace Dune
           localIndicator.bind(e);
           const auto &center = ReferenceElements::general( e.type() ).position(0,0);
           localIndicator.evaluate(center,value);
-          double eta = value[0];
+          double eta = std::abs(value[0]);
           const int level = e.level();
           if (eta>refineTolerance && level<maxLevel)
             refMarked += grid.mark( Marker::refine, gridEntity);

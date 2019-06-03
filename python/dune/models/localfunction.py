@@ -152,13 +152,13 @@ class UFLFunctionSource(codegen.ModelClass):
         code.append(nameSpace)
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
         localFunctionName = nameSpace.name+'::UFLLocalFunctionType'
-        code.append([TypeAlias('UFLLocalFunction', localFunctionName)])
+        # code.append([TypeAlias('UFLLocalFunction', localFunctionName)])
 
         name = self.name()
         writer = SourceWriter()
         writer.emit(code)
         writer.openPythonModule(name)
-        writer.emit('auto cls = Dune::Python::insertClass<UFLLocalFunction>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        writer.emit('auto cls = Dune::Python::insertClass<'+localFunctionName+'>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         writer.emit('Dune::FemPy::registerUFLLocalFunction( module, cls );')
 
         initArgs = 'pybind11::object gridView, const std::string &name, int order'
@@ -170,13 +170,13 @@ class UFLFunctionSource(codegen.ModelClass):
             keepAlive += ', ' + ', '.join('pybind11::keep_alive< 1, ' + str(i+3) + ' >()' for i in range(len(coefficientNames)))
             initCall += ', ' + ', '.join(coefficientNames)
         writer.emit('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
-                + 'return new UFLLocalFunction ( ' + initCall
+                + 'return new '+localFunctionName+' ( ' + initCall
                 + '); } ), ' + keepAlive + ' );')
 
         for t, n, sn in zip(self.constantTypes, self.constantNames, self.constantShortNames):
-            te = "UFLLocalFunction::" + t
-            writer.emit('cls.def_property( "' + sn + '", [] ( UFLLocalFunction &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( UFLLocalFunction &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
-        writer.emit('cls.def_property_readonly( "virtualized", [] ( UFLLocalFunction& ) -> bool { return '+str(self.virtualize).lower()+';});')
+            te = localFunctionName+"::" + t
+            writer.emit('cls.def_property( "' + sn + '", [] ( '+localFunctionName+' &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( '+localFunctionName+' &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        writer.emit('cls.def_property_readonly( "virtualized", [] ( '+localFunctionName+'& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
         writer.closePythonModule(name)
         source = writer.writer.getvalue()

@@ -59,7 +59,6 @@
 
 #include <dune/fem/schemes/solver.hh>
 #include <dune/fem/schemes/dgelliptic.hh>
-#include <dune/fem/schemes/dgrhs.hh>
 
 template < class Model, int polOrder, SolverType solver >
 class DGFemScheme
@@ -129,17 +128,6 @@ public:
     return solution_;
   }
   const ExactSolutionType& exactSolution() const { return exactSolution_; }
-
-  //! sotup the right hand side
-  void prepare()
-  {
-    // assemble rhs
-    assembleDGRHS ( implicitModel_,
-                    implicitModel_.rightHandSide(gridPart_),
-                    implicitModel_.neumanBoundary(gridPart_),
-                    implicitModel_.dirichletBoundary(gridPart_),
-                    rhs_, penalty_ );
-  }
 
   //! solve the system - bool parameter
   //! false: only assemble if grid has changed

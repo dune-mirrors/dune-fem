@@ -61,7 +61,7 @@ namespace Dune
           localIndicator.bind(e);
           const auto &center = ReferenceElements::general( e.type() ).position(0,0);
           localIndicator.evaluate(center,value);
-          double eta = value[0];
+          double eta = std::abs(value[0]);
           totalError += eta;
           maxError = max( maxError, eta );
         }
@@ -157,6 +157,9 @@ namespace Dune
        *  http://www.math.umd.edu/~rhn/teaching/m714/matlab/lecture-4.pdf
        */
 
+      /** TODO: should be implemented without use of iterators, i.e., using
+       * the dofvector directly
+       **/
       namespace detail
       {
         template <class Grid, class Indicator>
