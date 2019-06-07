@@ -494,6 +494,111 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
     # addStorage(spc, storage)
     return spc.as_ufl()
 
+def enrichedLagrange(gridView, order=1, dimRange=None, field="double", storage=None,
+                     interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
+                     scalar=False, dimrange=None):
+    """create a DG0 + Lagrange space
+
+    Args:
+        gridView: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimRange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module, addStorage, codegen
+
+    dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
+
+    if dimRange is None:
+        dimRange = 1
+        scalar = True
+
+    if dimRange > 1 and scalar:
+        raise KeyError(\
+                "trying to set up a scalar space with dimRange = " +\
+                str(dimRange) + ">1")
+    if dimRange < 1:
+        raise KeyError(\
+            "Parameter error in LagrangeSpace with "+
+            "dimRange=" + str(dimRange) + ": " +\
+            "dimRange has to be greater or equal to 1")
+    if order < 1:
+        raise KeyError(\
+            "Parameter error in LagrangeSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be greater or equal to 1")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = gridView._includes + [ "dune/fem/space/lagrange.hh",
+                                      "dune/fem/space/discontinuousgalerkin.hh",
+                                      "dune/fem/space/combinedspace/tuplespace.hh" ]
+    dimw = gridView.dimWorld
+
+    # DG space has order 0
+    typeNameDG = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
+                 "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+                 "Dune::FemPy::GridPart< " + gridView._typeName + " >, 0 >"
+
+    # Lagrange space has order provided by function parameter
+    typeNameLagrange = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
+               "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+               "Dune::FemPy::GridPart< " + gridView._typeName + ">, " + str(order) + " >"
+
+    typeName = "Dune::Fem::EnrichedDiscreteFunctionSpace< " + typeNameDG + ", " + typeNameLagrange
+
+    if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
+        typeName += ", Dune::Fem::CodegenStorage >"
+        spc = module(field, includes, typeName,
+                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView])
+    else:
+        typeName += " >"
+        spc = module(field, includes, typeName, storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView])
+
+    if False:
+        # typeName = "Dune::Fem::LagrangeSpace< " +\
+        #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+        #   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " +\
+        #   "Dune::EquidistantPointSet > "
+        typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+          "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
+
+        spc = module(field, includes, typeName, storage=storage,
+                scalar=scalar,
+                ctorArgs=[gridView])
+                # ctorArgs=[gridView,order])
+        if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
+            codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
+            typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
+              "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+              "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
+              "Dune::Fem::CodegenStorage" +\
+              " >"
+            # typeName = "Dune::Fem::LagrangeSpace< " +\
+            #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+            #   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " +\
+            #   "Dune::EquidistantPointSet, " +\
+            #   "Dune::Fem::CodegenStorage" +\
+            #   " >"
+            spc = module(field, includes, typeName,
+                        interiorQuadratureOrders=interiorQuadratureOrders,
+                        skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
+                        scalar=scalar,
+                        ctorArgs=[gridView])
+                        # ctorArgs=[gridView,order])
+    return spc.as_ufl()
+
 def finiteVolume(gridView, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     """create a finite volume space
 
