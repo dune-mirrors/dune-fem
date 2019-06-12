@@ -340,20 +340,25 @@ namespace Dune
 
       static void writeInnerLoopEval(std::ostream& out, const int simdW, const int dimRange, const size_t numRows, const size_t numCols )
       {
-        out << "      for(int row = 0; row < " << numRows << " ; ++row )" << std::endl;
+        out << "      // Loop over all quadrature points" << std::endl;
+        out << "      for(int qp = 0; qp < " << numRows << " ; ++qp )" << std::endl;
         out << "      {" << std::endl;
+        /*
         if( simdW == 1 )
         {
-            out << "        const " << doubletype() << " phi0 = rangeStorage[ rowMap[ row ] * " << numCols << " + col ][ 0 ];" << std::endl;
+            out << "        const " << doubletype() << " phi0 = rangeStorage[ quad.cachingPoint( row ) * " << numCols << " + col ][ 0 ];" << std::endl;
         }
         else
         {
           for( int i = 0 ; i< simdW ; ++ i )
             out << "        const " << doubletype() << " phi" << i << " = base" << i << "[ row ];" << std::endl;
         }
+        */
+        for( int i = 0 ; i< simdW ; ++ i )
+          out << "        const " << doubletype() << " phi" << i << " = base" << i << "[ qp ];" << std::endl;
         for(int r = 0; r < dimRange; ++ r )
         {
-          out << "        result" << r << "[ row ] += phi0 * dof0" << r;
+          out << "        result" << r << "[ qp ] += phi0 * dof0" << r;
           for( int i=1; i<simdW; ++i )
             out << " + phi" << i << " * dof" << i << r;
           out << " ;" << std::endl;
@@ -372,7 +377,7 @@ namespace Dune
 
         writePreCompHeader( out, -1 );
 
-        out << "template <class BaseFunctionSet>" << std::endl;
+        out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
         out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
@@ -380,60 +385,43 @@ namespace Dune
         out << "            class RangeFactorType," << std::endl;
         out << "            class LocalDofVectorType>" << std::endl;
         out << "  static void eval( const QuadratureType& quad," << std::endl;
-        out << "                    const RangeVectorType& rangeStorage," << std::endl;
+        out << "                    const RangeVectorType& rangeStorageTransposed," << std::endl;
         out << "                    const LocalDofVectorType& dofs," << std::endl;
         out << "                    RangeFactorType &rangeVector)" << std::endl;
         out << "  {" << std::endl;
         //out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
-        out << "    typedef double field_type;" << std::endl;
+        //out << "    typedef Field field_type;" << std::endl;
         //out << "    typedef typename RangeVectorType :: value_type value_type;" << std::endl;
         //out << "    typedef RangeType value_type;" << std::endl;
 
-        out << "    // only evaluate cachingPoint once" << std::endl;
-        out << "    int rowMap[ " << numRows << " ] ;" << std::endl;
-        out << "    for( int row = 0; row < " << numRows << "; ++ row )" << std::endl;
-        out << "    {" << std::endl;
-        out << "      rowMap[ row ] = quad.cachingPoint( row  );" << std::endl;
-        out << "    }" << std::endl;
-        out << std::endl;
+        out << "    typedef " << doubletype() << " Field;" << std::endl;
+        out << "    static std::vector< Field > memory( " << numRows * dimRange << " );" << std::endl;
 
         // make length simd conform
-        out << "    field_type resultTmp[ " << numRows * dimRange << " ];" << std::endl;
+        out << "    Field* resultTmp = memory.data();" << std::endl;
         out << "    for( int i=0; i < " << numRows * dimRange << "; ++ i ) resultTmp[ i ] = 0;" << std::endl <<std::endl;
 
         for(int r=0; r<dimRange ; ++r )
         {
-          out << "    field_type* result" << r << " = resultTmp + " << r * numRows << " ;" << std::endl;
+          out << "    Field* result" << r << " = resultTmp + " << r * numRows << " ;" << std::endl;
         }
         out << std::endl;
+
+        out << "    const Field* baseData = rangeStorageTransposed.data();" << std::endl;
 
         const size_t simdCols = simdWidth * ( numCols / simdWidth );
         if( simdCols > 0 )
         {
-          for( int i=0; i< simdWidth; ++ i )
-          {
-            out << "    field_type base" << i << "[ " << numRows << " ];" << std::endl;
-          }
           out << "    for( int col = 0, dof = 0 ; col < "<< simdCols <<" ; col += " << simdWidth << ", dof += " << simdWidth * dimRange<< " )"<<std::endl;
           out << "    {" << std::endl;
-          out << "      for( int row = 0 ; row < " << numRows << " ; ++ row )" << std::endl;
-          out << "      {" << std::endl;
-          //out << "        const value_type& rangeStorageRow = rangeStorage[ rowMap[ row ] ];" << std::endl;
-          out << "        int idx = rowMap[ row ] * " << numCols << " + col;" << std::endl;
-          for( int i=0; i< simdWidth; ++ i )
-          {
-            const char* plusplus = (i == simdWidth-1) ? "  " : "++";
-            out << "        base" << i << "[ row ] = rangeStorage[ idx" << plusplus << " ][ 0 ];" << std::endl;
-          }
-          out << "      }" << std::endl;
           out << "      " << funcName << "(" << std::endl;
           out << "                ";
           for( int i = 0; i< simdWidth * dimRange; ++i )
             out << " dofs[ dof + " << i << " ],";
-          out << std::endl << "                 ";
+          out << std::endl;
           for( int i=0; i< simdWidth; ++i )
-            out << "base" << i << ", ";
-          out << std::endl << "                 ";
+            out << "                 baseData + ((col + " << i << ") * " << numRows << ")," << std::endl;
+          out << "                 ";
           for( int r = 0; r < dimRange-1; ++r)
             out << "result" << r << ", ";
           out << "result" << dimRange-1 << " );" << std::endl;
@@ -448,6 +436,8 @@ namespace Dune
           out << "    {" << std::endl;
           for( int r=0; r<dimRange; ++r )
             out << "      const " << doubletype() << " dof0" << r << " = dofs[ dof++ ];" << std::endl;
+          out << "      const Field* base0 = baseData + (col * " << numRows << ");" << std::endl;
+
           writeInnerLoopEval( out, 1, dimRange, numRows, numCols );
           out << "    }" << std::endl;
           out << std::endl;
@@ -471,7 +461,10 @@ namespace Dune
         {
           out << "        ";
           for( int r=0; r<dimRange; ++ r )
-            out << "const " << doubletype() << " dof"<< i << r << ", ";
+          {
+            if( r > 0 ) out << " ";
+            out << "const " << doubletype() << " dof"<< i << r << ",";
+          }
           out << std::endl;
         }
         for( int i=0; i<simdWidth; ++ i )
@@ -533,7 +526,7 @@ namespace Dune
 
         writePreCompHeader( out, -1 );
 
-        out << "template <class BaseFunctionSet>" << std::endl;
+        out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
         out << "struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
 
@@ -554,10 +547,18 @@ namespace Dune
 
         //out << "    typedef RangeType value_type;" << std::endl;
         //out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
+
+        out << "    typedef " << doubletype() << " Field;" << std::endl;
+        out << "    static std::vector< Field > memory( " << numCols * dimRange << " );" << std::endl;
+
+        out << "    " << doubletype() << "* dofResult = memory.data();" << std::endl;
+        out << "    for( int i=0; i < " << numCols * dimRange << "; ++i ) dofResult[ i ] = 0;" << std::endl << std::endl;
+
+        out << "    " << doubletype() << "* dofs0 = dofResult;" << std::endl;
+        for( int r = 1; r < dimRange; ++ r )
+          out << "    " << doubletype() << "* dofs" << r << " = dofResult + " << r * numCols << ";" << std::endl;
         out << std::endl;
 
-        out << "    " << doubletype() << " dofResult[ " << numCols * dimRange << " ];" << std::endl;
-        out << "    for( int i=0; i < " << numCols * dimRange << "; ++i ) dofResult[ i ] = 0;" << std::endl << std::endl;
         const size_t simdRows  = simdWidth * (numRows / simdWidth) ;
 
         if( simdRows > 0 )
@@ -577,7 +578,7 @@ namespace Dune
           out << "                ";
           for( int r = 0; r < dimRange; ++ r )
           {
-            out << " dofResult + " << r * numCols;
+            out << " dofs" << r ;
             if( r == dimRange-1 )
               out << " );" << std::endl;
             else
@@ -587,11 +588,6 @@ namespace Dune
           out << "    }" << std::endl;
           out << std::endl;
         }
-
-        out << "    " << doubletype() << "* dofs0 = dofResult;" << std::endl;
-        for( int r = 1; r < dimRange; ++ r )
-          out << "    " << doubletype() << "* dofs" << r << " = dofResult + " << r * numCols << ";" << std::endl;
-        out << std::endl;
 
         if( numRows > simdRows )
         {
@@ -646,7 +642,7 @@ namespace Dune
         out << "      {" << std::endl;
         if( simdW == 1 )
         {
-          out << "        int idx = rowMap[ row ] * " << numCols << " + col ;" << std::endl;
+          out << "        int idx = quad.cachingPoint( row ) * " << numCols << " + col ;" << std::endl;
           out << "        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
           for( int i = 0 ; i< simdW ; ++ i )
           {
@@ -686,7 +682,7 @@ namespace Dune
 
         writePreCompHeader( out, -1 );
 
-        out << "template <class BaseFunctionSet>" << std::endl;
+        out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
         out << "struct EvaluateJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
@@ -729,24 +725,22 @@ namespace Dune
         out << "                       const JacobianRangeVectorType& jacStorage," << std::endl;
         out << "                       const LocalDofVectorType& dofs," << std::endl;
         out << "                       JacobianRangeFactorType& jacVector," << std::endl;
-        out << "                       const GlobalJacobianRangeType& )" << std::endl;
+        out << "                       const GlobalJacobianRangeType&)" << std::endl;
         out << "  {" << std::endl;
         //out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl;
         //out << "    typedef JacobianRangeType value_type;" << std::endl;
-        out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
+        //out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
         out << "    typedef typename Geometry::JacobianInverseTransposed GeometryJacobianType;" << std::endl;
-        out << "    // only evaluate cachingPoint once" << std::endl;
-        out << "    int rowMap[ " << numRows << " ] ;" << std::endl;
-        out << "    for( int row = 0; row < " << numRows << "; ++ row )" << std::endl;
-        out << "    {" << std::endl;
-        out << "      rowMap[ row ] = quad.cachingPoint( row  );" << std::endl;
-        out << "    }" << std::endl;
-        out << std::endl;
+
+        const size_t nDofs = numRows * dimRange * dim ;
+        const size_t nJacs = numRows * simdWidth * dim;
+        out << "    typedef " << doubletype() << " Field;" << std::endl;
+        out << "    static std::vector< Field > memory( " << nDofs + nJacs << " );" << std::endl;
 
         for( int d = 0; d < dim ; ++ d )
         {
           // make length simd conform
-          out << "    field_type resultTmp" << d << "[ " << numRows * dimRange << " ];" << std::endl;
+          out << "    Field* resultTmp" << d << " = memory.data() + " << d * numRows * dimRange << ";" << std::endl;
         }
         out << "    for( int i=0; i<" << numRows * dimRange << "; ++i ) " << std::endl;
         out << "    {" << std::endl;
@@ -758,7 +752,7 @@ namespace Dune
         {
           for(int r=0; r<dimRange ; ++r )
           {
-            out << "    field_type* result" << r << d <<" = resultTmp" << d << " + " << r * numRows << " ;" << std::endl;
+            out << "    Field* result" << r << d <<" = resultTmp" << d << " + " << r * numRows << " ;" << std::endl;
           }
         }
         out << std::endl;
@@ -771,7 +765,7 @@ namespace Dune
           {
             for( int i=0; i< simdWidth; ++ i )
             {
-              out << "    field_type base" << i << d << "[ " << numRows << " ];" << std::endl;
+              out << "    Field* base" << i << d << " = memory.data() + " << nDofs + ((d * simdWidth) + i) * numRows << ";" << std::endl;
             }
           }
 
@@ -781,7 +775,7 @@ namespace Dune
           out << "    {" << std::endl;
           out << "      for( int row = 0; row < " << numRows << " ; ++ row )" << std::endl;
           out << "      {" << std::endl;
-          out << "        int idx = rowMap[ row ] * " << numCols << " + col ;" << std::endl;
+          out << "        int idx = quad.cachingPoint( row ) * " << numCols << " + col ;" << std::endl;
           out << "        // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
           out << "        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
           for( int i=0; i< simdWidth; ++ i )
@@ -911,7 +905,7 @@ namespace Dune
 
         writePreCompHeader( out, -1 );
 
-        out << "template <class BaseFunctionSet>" << std::endl;
+        out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
         out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
@@ -942,18 +936,22 @@ namespace Dune
         out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
         out << "                    LocalDofVectorType& dofs)" << std::endl;
         out << "  {" << std::endl;
-        out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl << std::endl;
+        //out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl << std::endl;
+
         const size_t dofs = dimRange * numCols ;
-        out << "    field_type result[ " << dofs << " ];" << std::endl;
+        out << "    typedef " << doubletype() << " Field;" << std::endl;
+        out << "    static std::vector< Field > memory( " << dofs + numCols * dim << " );" << std::endl;
+
+        out << "    Field* result = memory.data();" << std::endl;
         out << "    for( int i = 0 ; i < " << dofs << "; ++i ) result[ i ] = 0;" << std::endl << std::endl;
 
         for( int r=0; r<dimRange; ++r )
-          out << "    field_type* result" << r << " = result + " << r * numCols << ";" << std::endl;
+          out << "    Field* result" << r << " = result + " << r * numCols << ";" << std::endl;
         out << std::endl;
 
         for( int d =0; d < dim; ++d )
         {
-          out << "    field_type base"<< d << "[ " << numCols << " ] ;" << std::endl;
+          out << "    Field* base"<< d << " = result + " << dofs + d * numCols << ";" << std::endl;
         }
 
         out << "    for( int row = 0; row < " << numRows << " ; ++ row )" << std::endl;

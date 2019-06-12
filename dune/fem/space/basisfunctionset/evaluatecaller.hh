@@ -92,21 +92,14 @@ namespace Dune
       class EvaluatorStorage
       {
       protected:
-        typedef ThisType* ValueType ;
-        std::vector< ValueType > storage_;
+        std::vector< std::unique_ptr< ThisType > > storage_;
       public:
         EvaluatorStorage() :
-          storage_( maxQuadratures, (ThisType* ) 0 )
+          storage_( maxQuadratures )
         {}
 
-        ~EvaluatorStorage()
-        {
-          for( size_t i = 0; i<storage_.size(); ++i )
-            delete storage_[ i ];
-        }
-
-        ValueType& operator [] ( const int i ) { return storage_[ i ]; }
-        const ValueType& operator [] ( const int i ) const { return storage_[ i ]; }
+        std::unique_ptr< ThisType >& operator [] ( const int i ) { return storage_[ i ]; }
+        const std::unique_ptr< ThisType >& operator [] ( const int i ) const { return storage_[ i ]; }
       };
 
 
@@ -121,6 +114,7 @@ namespace Dune
       virtual ~EvaluateCallerInterface() {}
 
       virtual void* storageAddress () const = 0;
+      virtual size_t storageSize () const = 0;
 
       virtual void axpyRanges( const QuadratureType&,
                                const FactorType& ,
@@ -156,18 +150,24 @@ namespace Dune
 
         // check if object already created
         const size_t quadId = quad.id();
-        if( evaluators[ quadId ] == 0 )
+        if( ! evaluators[ quadId ] )
         {
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
           // create appropriate evaluator
-          evaluators[ quadId ] =
-            EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
-              :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() );
+          evaluators[ quadId ].reset(
+              EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
+                 :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() ) );
+
+          //std::cout << "Created Eval for quadId " << quadId << " with obj " <<
+          //  evaluators[ quadId ].operator ->() << " and size " << evaluators[
+          //  quadId ]->storageSize() << std::endl;
         }
 
-        // make sure the storage is the same
-        assert( ((void *) &dataCache) == evaluators[ quadId ]->storageAddress() );
+        //std::cout << "Get Eval for quadId " << quadId << " with obj " <<
+        //  evaluators[ quadId ].operator ->() << std::endl;
 
+        // make sure the storage is the same
+        assert( dataCache.size() == evaluators[ quadId ]->storageSize() );
         // return reference to evaluator
         return *(evaluators[ quadId ]);
       }
@@ -186,22 +186,42 @@ namespace Dune
       typedef typename Traits :: LocalDofVectorType  LocalDofVectorType ;
       typedef typename Traits :: Geometry            Geometry ;
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
+      typedef typename RangeVectorType :: value_type :: field_type FieldType;
 
       enum { dimRange = BaseFunctionSetType :: dimRange };
       typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
 
       const RangeVectorType& rangeStorage_;
+      std::vector< FieldType > rangeStorageTransposed_;
+      mutable std::vector< std::vector< FieldType > > rangeStorageTwisted_;
 
     public:
       // type of interface class
       typedef BaseType InterfaceType;
 
       EvaluateRealImplementation( const RangeVectorType& rangeStorage )
-        : rangeStorage_( rangeStorage )
-      {}
+        : rangeStorage_( rangeStorage ), rangeStorageTwisted_( 8 )
+      {
+        if( rangeStorage_[ 0 ].size() == 1 )
+        {
+          // rearrange such that we store for one basis functions all
+          // evaluations for all quadrature points, i.e. numBaseFct x quadNop
+          rangeStorageTransposed_.resize( numBaseFct * quadNop );
+          for( int i=0; i<numBaseFct; ++i )
+          {
+            const int idx  = i * quadNop ;
+            for( int j=0; j<quadNop; ++j )
+            {
+              assert( j*numBaseFct + i < int(rangeStorage_.size()) );
+              rangeStorageTransposed_[ idx + j ] = rangeStorage_[ j*numBaseFct + i ][ 0 ];
+            }
+          }
+        }
+      }
 
       virtual void* storageAddress() const { return (void *) &rangeStorage_ ; }
+      virtual size_t storageSize() const { return rangeStorage_.size() ; }
 
       virtual void axpyRanges( const QuadratureType& quad,
                                const FactorType& rangeFactors,
@@ -226,9 +246,38 @@ namespace Dune
                                    const LocalDofVectorType & dofs,
                                    FactorType& rangeFactors) const
       {
-        BaseFunctionSetType :: template EvaluateRanges
-          < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
-          :: eval ( quad, rangeStorage_, dofs, rangeFactors );
+        assert( ! rangeStorageTransposed_.empty() );
+
+        // if we are in the ranges cases then basis can be stored transposed
+        // quadrature points is the outer loop
+        if( quad.twisted() )
+        {
+          auto& rangeStorageTwisted = rangeStorageTwisted_[ quad.twistId() ];
+          if( rangeStorageTwisted.empty() )
+          {
+            // rearrange such that we store for one basis functions all
+            // evaluations for all quadrature points including the twisted mapping
+            rangeStorageTwisted.resize( numBaseFct * quadNop );
+            for( int i=0; i<numBaseFct; ++i )
+            {
+              const int idx  = i * quadNop ;
+              for( int j=0; j<quadNop; ++j )
+              {
+                int twstJ = (quad.cachingPoint( j ) * numBaseFct) + i;
+                rangeStorageTwisted[ idx + j ] = rangeStorage_[ twstJ ];
+              }
+            }
+          }
+          BaseFunctionSetType :: template EvaluateRanges
+            < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
+            :: eval ( quad, rangeStorageTwisted, dofs, rangeFactors );
+        }
+        else
+        {
+          BaseFunctionSetType :: template EvaluateRanges
+            < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
+            :: eval ( quad, rangeStorageTransposed_, dofs, rangeFactors );
+        }
       }
 
       virtual void evaluateJacobians( const QuadratureType& quad,

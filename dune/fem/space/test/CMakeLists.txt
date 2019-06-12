@@ -1,9 +1,9 @@
 if( NOT GRIDTYPE )
-  set( GRIDTYPE YASPGRID )
+  set( GRIDTYPE ALUGRID_CUBE )
 endif()
 
 if( NOT GRIDDIM )
-  set( GRIDDIM 2 )
+  set( GRIDDIM 3 )
 endif()
 
 # copy data to build source to make tests work
@@ -46,6 +46,12 @@ foreach( test ${TESTS} )
   dune_add_test( NAME ${test} SOURCES ${test}.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}"
   LINK_LIBRARIES dunefem )
 endforeach()
+
+# dgcomm tests should run on GRIDDIM=3 meshes
+dune_add_test( NAME l2projection_optim SOURCES l2projection.cc
+COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_BASEFUNCTIONSET_CODEGEN"
+LINK_LIBRARIES dunefem )
+target_include_directories(l2projection_optim PRIVATE "./" "${CMAKE_CURRENT_BINARY_DIR}")
 
 # dgcomm tests should run on GRIDDIM=3 meshes
 dune_add_test( NAME dgcomm SOURCES dgcomm.cc
