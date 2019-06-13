@@ -100,7 +100,7 @@ typedef Dune::Fem::GridFunctionAdapter< ExactSolutionType, GridPartType > GridEx
 
 void algorithm ( MyGridType &grid, int level )
 {
-  const unsigned int polOrder = DiscreteFunctionSpaceType::polynomialOrder;
+  const unsigned int polOrder = DiscreteFunctionSpaceType::maxPolynomialOrder;
   ExactSolutionType fExact;
 
   GridPartType fatherGrid( grid, level );
