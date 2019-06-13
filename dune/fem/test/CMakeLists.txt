@@ -133,11 +133,11 @@ if( ${FEM_TORTURE_TESTS} )
   COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} test-tupleoperator )
 
-  if( HAVE_EIGEN )
-    dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
-    COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
-    set( TESTS ${TESTS} l2projection_eigen )
-  endif()
+  # if( HAVE_EIGEN )
+  #   dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
+  #   COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
+  #   set( TESTS ${TESTS} l2projection_eigen )
+  # endif()
 endif()
 
 dune_add_test( NAME referencesolution SOURCES referencesolution.cc

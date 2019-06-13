@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 
 #if HAVE_DUNE_ISTL
@@ -165,6 +166,11 @@ namespace Dune
       }
 
       void clear () { clear( matrix_ ); }
+      template <class I>
+      void unitRow( const I localRow, const double diag = 1.0 )
+      {
+        DUNE_THROW(NotImplemented,"unitRow not implemented on HierarchicalLinearOperator");
+      }
 
       template< class Stencil >
       void reserve ( const Stencil &stencil )

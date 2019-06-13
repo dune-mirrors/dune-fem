@@ -255,7 +255,7 @@ void algorithm ( GridPartType &gridPart,
                  const bool locallyAdaptive )
 {
   const unsigned int polOrder
-    = DiscreteFunctionSpaceType :: polynomialOrder + 1;
+    = DiscreteFunctionSpaceType :: maxPolynomialOrder + 1;
 
   DiscreteFunctionType &solution = std::get<0>(functionTuple);
 

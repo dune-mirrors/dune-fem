@@ -1,0 +1,18 @@
+from setuptools import setup, find_packages
+
+setup(name="dune.fem",
+    namespace_packages=['dune'],
+    description="Python lib for dune: fem package",
+    version="${DUNE_FEMPY_VERSION}",
+    author="Andreas Dedner and Martin Nolte",
+    packages = find_packages(),
+    zip_safe = 0,
+    package_data = {'': ['*.so']},
+    install_requires=[
+        'UFL == 2017.1.0'
+        ],
+    entry_points={
+        'console_scripts': [
+            'dune-ellipticmodelcompiler = dune.models.elliptic.compiler:main'
+            ]}
+  )

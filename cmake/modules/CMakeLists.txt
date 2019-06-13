@@ -13,5 +13,7 @@ set(modules
   FindSIONlib.cmake
   FindXDR.cmake
   ResolveCompilerPaths.cmake
+  DuneFempyMacros.cmake
+  UseModelCompiler.cmake
 )
 install(FILES ${modules} DESTINATION ${DUNE_INSTALL_MODULEDIR})
