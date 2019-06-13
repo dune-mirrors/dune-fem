@@ -4,10 +4,6 @@
 #  AMGXSOLVER_FOUND        - system has PETSc
 #  AMGXSOLVER_INCLUDES     - the PETSc include directories
 #  AMGXSOLVER_LIBRARIES    - Link these to use PETSc
-#
-# Redistribution and use is allowed according to the terms of the BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
-#
 
 cmake_policy(VERSION 3.3)
 
@@ -34,7 +30,7 @@ if(${CUDA_FOUND} AND ${PETSC_FOUND})
     DOC "Include directory of AMGX")
 
   find_library(AMGX_LIBRARY
-      NAMES "amgx" "amgxsh"
+      NAMES "amgxsh" "amgx"
       PATHS ${AMGX_ROOT}
       PATH_SUFFIXES "lib" "lib" "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
       NO_DEFAULT_PATH)
@@ -56,7 +52,6 @@ if(${CUDA_FOUND} AND ${PETSC_FOUND})
 
   if( AMGX_WRAPPER_LIBRARY )
     set(AMGXSOLVER_INCLUDE_DIRS ${AMGX_WRAPPER_INCLUDE_DIR} ${AMGX_INCLUDE_DIR})
-    #  set(AMGXSOLVER_LIBRARIES ${AMGX_WRAPPER_LIBRARY} ${AMGX_LIBRARY} ${CUDA_LIBRARY_DIRS})
     set(AMGXSOLVER_LIBRARIES ${AMGXSOLVER_LIBRARIES} ${AMGX_WRAPPER_LIBRARY})
     set(AMGXSOLVER_LIBRARIES ${AMGXSOLVER_LIBRARIES} ${AMGX_LIBRARY})
     set(AMGXSOLVER_LIBRARIES ${AMGXSOLVER_LIBRARIES} ${CUDA_LIBRARIES})
