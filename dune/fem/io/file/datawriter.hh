@@ -286,7 +286,7 @@ namespace Dune
             }
             PersistenceManager :: backupStream() << gridBackup;
           }
-          catch ( Dune :: NotImplemented )
+          catch ( const Dune :: NotImplemented& )
           {
 #ifndef NDEBUG
             if( Parameter :: verbose () )
@@ -298,7 +298,7 @@ namespace Dune
               std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
               Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename );
             }
-            catch ( Dune :: NotImplemented )
+            catch ( const Dune :: NotImplemented& )
             {
               std::cerr << "ERROR: GridPersistentObject::backup: not possible!" << std::endl;
             }
@@ -547,7 +547,7 @@ namespace Dune
           // perform restore using grid stream only
           grid = Dune::BackupRestoreFacility< GridType > :: restore( gridStream );
         }
-        catch ( Dune :: NotImplemented )
+        catch ( const Dune :: NotImplemented& )
         {
 #ifndef NDEBUG
           if( Parameter :: verbose () )
@@ -558,7 +558,7 @@ namespace Dune
             std::string filename( PersistenceManager :: uniqueFileName( name ) );
             grid = Dune::BackupRestoreFacility< GridType > :: restore( filename );
           }
-          catch ( Dune :: NotImplemented )
+          catch ( const Dune :: NotImplemented& )
           {
             std::cerr << "ERROR: GridPersistentObject::restore: not possible!" << std::endl;
           }
