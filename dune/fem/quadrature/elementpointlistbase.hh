@@ -128,10 +128,17 @@ namespace Dune
         return quadImp().geometry();
       }
 
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
       size_t cachingPoint( const size_t quadraturePoint ) const
       {
         return quadraturePoint;
       }
+
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
+      inline bool twisted () const { return false; }
+
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
+      inline int twistId () const { return 0; }
 
     protected:
       /** \brief obtain the actual implementation of the quadrature
@@ -276,6 +283,12 @@ namespace Dune
       {
         return quadraturePoint;
       }
+
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
+      inline bool twisted () const { return false; }
+
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
+      inline int twistId () const { return 0; }
 
     protected:
       /** \brief obtain the actual implementation of the quadrature

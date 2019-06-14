@@ -28,6 +28,12 @@ namespace Dune
       }
 
     public:
+      /** \brief returns true if cachingPoint is not the identity mapping */
+      inline bool twisted () const { return false; }
+
+      /** \brief returns the twistId, i.e. [0,...,7] */
+      inline int twistId () const { return 0; }
+
       /** \brief map quadrature points to caching points
        *
        *  For codim-1 entites, the mapping consists of two stages:
@@ -103,6 +109,8 @@ namespace Dune
       using Base::quadImp;
 
     public:
+      using CachingInterface::twisted;
+      using CachingInterface::twistId;
       using Base::localPoint;
       using Base::nop;
 
@@ -208,7 +216,8 @@ namespace Dune
                          const IntersectionType &intersection,
                          const QuadratureKeyType& quadKey, const typename Base :: Side side )
         : Base( getPointList( intersection, quadKey, side ) ),
-          mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), getTwist( gridPart, intersection, side ) ) ),
+          twist_( getTwist( gridPart, intersection, side ) ),
+          mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_) ),
           points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
       {
       }
@@ -227,6 +236,12 @@ namespace Dune
       {
         return points_[ cachingPoint( i ) ];
       }
+
+      /** \copydoc Dune::Fem::CachingInterface::twisted */
+      inline bool twisted() const { return twist_ != 0; }
+
+      /** \copydoc Dune::Fem::CachingInterface::twistId */
+      inline int twistId () const { return twist_ + 4; }
 
       /** \copydoc Dune::Fem::CachingInterface::cachingPoint */
       inline size_t cachingPoint( const size_t quadraturePoint ) const
@@ -287,6 +302,7 @@ namespace Dune
       }
 
     private:
+      const int twist_;
       const MapperType &mapper_;
       const PointVectorType &points_;
     };
