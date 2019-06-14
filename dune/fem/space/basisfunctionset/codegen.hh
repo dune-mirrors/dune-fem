@@ -381,10 +381,12 @@ namespace Dune
         out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
+        out << "            class RangeVectorTypeOld," << std::endl;
         out << "            class RangeVectorType," << std::endl;
         out << "            class RangeFactorType," << std::endl;
         out << "            class LocalDofVectorType>" << std::endl;
         out << "  static void eval( const QuadratureType& quad," << std::endl;
+        out << "                    const RangeVectorTypeOld& rangeStorage," << std::endl;
         out << "                    const RangeVectorType& rangeStorageTransposed," << std::endl;
         out << "                    const LocalDofVectorType& dofs," << std::endl;
         out << "                    RangeFactorType &rangeVector)" << std::endl;
@@ -408,12 +410,30 @@ namespace Dune
         out << std::endl;
 
         out << "    const Field* baseData = rangeStorageTransposed.data();" << std::endl;
-
+        //for( int i=0; i< simdWidth; ++ i )
+        //{
+        //  out << "    Field base" << i << "[ " << numRows << " ];" << std::endl;
+        //}
+        out << std::endl;
         const size_t simdCols = simdWidth * ( numCols / simdWidth );
         if( simdCols > 0 )
         {
           out << "    for( int col = 0, dof = 0 ; col < "<< simdCols <<" ; col += " << simdWidth << ", dof += " << simdWidth * dimRange<< " )"<<std::endl;
           out << "    {" << std::endl;
+
+          //out << "        const value_type& rangeStorageRow = rangeStorage[ rowMap[ row ] ];" << std::endl;
+          //out << "      for( int row = 0 ; row < " << numRows << " ; ++ row )" << std::endl;
+          //out << "      {" << std::endl;
+
+          //out << "        int idx = quad.cachingPoint( row ) * " << numCols << " + col;" << std::endl;
+          //for( int i=0; i< simdWidth; ++ i )
+          //{
+          //  const char* plusplus = (i == simdWidth-1) ? "  " : "++";
+          //  out << "        base" << i << "[ row ] = rangeStorage[ idx" << plusplus << " ][ 0 ];" << std::endl;
+          //}
+          //out << "      }" << std::endl;
+
+
           out << "      " << funcName << "(" << std::endl;
           out << "                ";
           for( int i = 0; i< simdWidth * dimRange; ++i )
@@ -642,6 +662,7 @@ namespace Dune
         out << "      {" << std::endl;
         if( simdW == 1 )
         {
+          /*
           out << "        int idx = quad.cachingPoint( row ) * " << numCols << " + col ;" << std::endl;
           out << "        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
           for( int i = 0 ; i< simdW ; ++ i )
@@ -651,14 +672,33 @@ namespace Dune
             for( int d = 0 ; d < dim; ++ d )
               out << "        const " << doubletype() << " phi" << i << d << " = gradPhi" << i << "[ " << d << " ];" << std::endl;
           }
+          */
+          /*
+          for( int i = 0 ; i< simdW ; ++ i )
+          {
+            const char* plusplus = (i == simdW-1) ? "  " : "++";
+            out << "      gradPhi" << i << " = jacStorage[ idx" << plusplus << " ][ 0 ];" << std::endl;
+            //out << "        gjit.mv( jacStorage[ idx" << plusplus << " ][ 0 ], gradPhi" << i << " );" << std::endl;
+            for( int d = 0 ; d < dim; ++ d )
+              out << "        const " << doubletype() << " phi" << i << d << " = gradPhi" << i << "[ " << d << " ];" << std::endl;
+          }
+          */
+          //  out << "        const "<< doubletype() << "* base" << i << " = jacobians + (" << dim * numRows << " * (col + "<< i << "));" << std::endl;
+          for( int i = 0 ; i< simdW ; ++ i )
+          {
+            //out << "        gjit.mv( jacStorage[ idx" << plusplus << " ][ 0 ], gradPhi" << i << " );" << std::endl;
+            for( int d = 0 ; d < dim; ++ d )
+              out << "        const " << doubletype() << " phi" << i << d << " = base" << i << "[ row * " << dim << " + " << d << " ];" << std::endl;
+          }
           out << std::endl;
         }
         else
         {
+          out << "        const int idx = row * " << dim<< ";" << std::endl;
           for( int d = 0; d < dim ; ++ d )
           {
             for( int i = 0 ; i< simdW ; ++ i )
-              out << "        const " << doubletype() << " phi" << i << d << " = base" << i << d << "[ row ];" << std::endl;
+              out << "        const " << doubletype() << " phi" << i << d << " = base" << i << "[ idx + " << d << " ];" << std::endl;
           }
         }
         for( int d = 0; d < dim ; ++ d )
@@ -699,7 +739,7 @@ namespace Dune
         out << "    abort();" << std::endl;
         out << "  }" << std::endl;
         out << "};" << std::endl << std::endl;
-        out << "template <class BaseFunctionSet, class Geometry>" << std::endl;
+        out << "template <class BaseFunctionSet, class Geometry> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
         out << "struct EvaluateJacobians<BaseFunctionSet, Geometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
@@ -733,9 +773,8 @@ namespace Dune
         out << "    typedef typename Geometry::JacobianInverseTransposed GeometryJacobianType;" << std::endl;
 
         const size_t nDofs = numRows * dimRange * dim ;
-        const size_t nJacs = numRows * simdWidth * dim;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << nDofs + nJacs << " );" << std::endl;
+        out << "    static std::vector< Field > memory( " << nDofs << " );" << std::endl;
 
         for( int d = 0; d < dim ; ++ d )
         {
@@ -759,8 +798,10 @@ namespace Dune
 
         const size_t simdNumCols = simdWidth * ( numCols / simdWidth );
         out << "    typedef typename GlobalJacobianRangeType :: row_type JacobianRangeType;" << std::endl;
+        out << "    const " << doubletype() << "* jacobians = jacStorage.data();" << std::endl;
         if( simdNumCols > 0 )
         {
+          /*
           for( int d = 0; d < dim; ++d )
           {
             for( int i=0; i< simdWidth; ++ i )
@@ -768,22 +809,36 @@ namespace Dune
               out << "    Field* base" << i << d << " = memory.data() + " << nDofs + ((d * simdWidth) + i) * numRows << ";" << std::endl;
             }
           }
+          */
 
-          for( int i=0; i< simdWidth; ++ i )
-          out << "    JacobianRangeType gradPhi" << i << ";" << std::endl;
+          //for( int i=0; i< simdWidth; ++ i )
+          //out << "    JacobianRangeType gradPhi" << i << ";" << std::endl;
+
           out << "    for( int col = 0, dof = 0 ; col < "<< simdNumCols <<" ; col += " << simdWidth << ", dof += " << simdWidth * dimRange<< " )"<<std::endl;
           out << "    {" << std::endl;
+          /*
           out << "      for( int row = 0; row < " << numRows << " ; ++ row )" << std::endl;
           out << "      {" << std::endl;
           out << "        int idx = quad.cachingPoint( row ) * " << numCols << " + col ;" << std::endl;
           out << "        // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
-          out << "        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
+          */
+          //out << "        const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
+          /*
           for( int i=0; i< simdWidth; ++ i )
           {
             const char* plusplus = (i == simdWidth-1) ? "  " : "++";
             out << "        gjit.mv( jacStorage[ idx" << plusplus << " ][ 0 ], gradPhi" << i << " );" << std::endl;
           }
+          */
+          /*
+          for( int i=0; i< simdWidth; ++ i )
+          {
+            const char* plusplus = (i == simdWidth-1) ? "  " : "++";
+            out << "        gradPhi" << i << " = jacStorage[ idx" << plusplus << " ][ 0 ];" << std::endl;
+          }
           out << std::endl;
+          */
+          /*
           for( int d = 0; d < dim; ++ d )
           {
             for( int i=0; i< simdWidth; ++ i )
@@ -792,16 +847,18 @@ namespace Dune
             }
           }
           out << "      }" << std::endl << std::endl;
+          */
+          for( int i=0; i< simdWidth; ++ i )
+          {
+            out << "      const "<< doubletype() << "* base" << i << " = jacobians + (" << dim * numRows << " * (col + "<< i << "));" << std::endl;
+          }
 
           out << "      " << funcName << "(";
           for( int i = 0; i< simdWidth * dimRange; ++i )
             out << " dofs[ dof + " << i << " ],";
           out << std::endl << "                 ";
-          for( int d = 0; d < dim; ++ d )
-          {
-            for( int i=0; i< simdWidth; ++i )
-              out << "base" << i << d << ", ";
-          }
+          for( int i=0; i< simdWidth; ++i )
+            out << "base" << i << ", ";
           out << std::endl << "                 ";
           for( int d = 0; d < dim; ++ d )
           {
@@ -827,6 +884,7 @@ namespace Dune
           out << "    // remainder iteration" << std::endl;
           out << "    for( int col = " << simdNumCols << ", dof = " << simdNumCols * dimRange << " ; col < " << numCols << " ; ++col )" << std::endl;
           out << "    {" << std::endl;
+          out << "      const "<< doubletype() << "* base0" << " = jacobians + (" << dim * numRows << " * col);" << std::endl;
           for( int r=0; r<dimRange; ++r )
             out << "      const " << doubletype() << " dof0" << r << " = dofs[ dof++ ];" << std::endl;
           writeInnerJacEvalLoop( out, 1, dim, dimRange, numRows, numCols );
@@ -835,15 +893,23 @@ namespace Dune
         }
 
         out << "    // store result" << std::endl;
+        out << "    JacobianRangeType tmp;" << std::endl;
         out << "    for(int row = 0; row < " << numRows << " ; ++row )" << std::endl;
         out << "    {" << std::endl;
+        out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
         out << "      GlobalJacobianRangeType& result = jacVector[ row ];" << std::endl;
-        for( int d = 0 ; d < dim; ++ d )
+        for( int r = 0 ; r < dimRange; ++ r )
         {
-          for( int r = 0 ; r < dimRange; ++ r )
+          for( int d = 0 ; d < dim; ++ d )
           {
-            out << "      result[ " << r << " ][ " << d <<" ] = result" << r << d << "[ row ];" << std::endl;
+            out << "      tmp[ " << d << " ] = result" << r << d << "[ row ];" << std::endl;
+            /*
+            {
+              out << "      result[ " << r << " ][ " << d <<" ] = result" << r << d << "[ row ];" << std::endl;
+            }
+            */
           }
+          out << "      gjit.mv( tmp, result[ "<< r << " ] );" << std::endl;
         }
         out << "    }" << std::endl;
         out << "  }" << std::endl << std::endl;
@@ -858,11 +924,8 @@ namespace Dune
             out << " const " << doubletype() << " dof"<< i << r << ",";
           out << std::endl;
         }
-        for( int d=0; d<dim; ++ d )
-        {
-          for( int i=0; i<simdWidth; ++ i )
-            out << "                         const " << doubletype() << "* " << restrictKey() << " base" << i << d << "," << std::endl;
-        }
+        for( int i=0; i<simdWidth; ++ i )
+          out << "                         const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
         for( int d=0; d<dim; ++ d )
         {
           for( int r=0; r<dimRange; ++ r )
@@ -885,7 +948,7 @@ namespace Dune
         out << "      for( int col = 0; col < " << numCols << " ; ++col )" << std::endl;
         out << "      {" << std::endl;
         for( int d =0; d < dim; ++d )
-          out << "        const " << doubletype() << " phi" << d << " = base" << d << "[ col ];" << std::endl;
+          out << "        const " << doubletype() << " phi" << d << " = base[ (col * " << dim << ") + " << d << " ];" << std::endl;
 
         for( int r = 0; r < dimRange; ++r )
         {
@@ -940,7 +1003,7 @@ namespace Dune
 
         const size_t dofs = dimRange * numCols ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << dofs + numCols * dim << " );" << std::endl;
+        out << "    static std::vector< Field > memory( " << dofs << " );" << std::endl;
 
         out << "    Field* result = memory.data();" << std::endl;
         out << "    for( int i = 0 ; i < " << dofs << "; ++i ) result[ i ] = 0;" << std::endl << std::endl;
@@ -949,44 +1012,47 @@ namespace Dune
           out << "    Field* result" << r << " = result + " << r * numCols << ";" << std::endl;
         out << std::endl;
 
-        for( int d =0; d < dim; ++d )
-        {
-          out << "    Field* base"<< d << " = result + " << dofs + d * numCols << ";" << std::endl;
-        }
+        //for( int d =0; d < dim; ++d )
+        //{
+        //  out << "    Field* base"<< d << " = result + " << dofs + d * numCols << ";" << std::endl;
+        //}
 
+        out << "    const Field* base = jacStorage.data();" << std::endl << std::endl;
+        out << "    JacobianRangeType jacFactorTmp;" << std::endl;
         out << "    for( int row = 0; row < " << numRows << " ; ++ row )" << std::endl;
         out << "    {" << std::endl;
         out << "      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianType;" << std::endl;
         out << "      // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
         out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
-        out << "      JacobianRangeType jacFactorTmp;" << std::endl;
         out << "      for( int r = 0; r < " << dimRange << " ; ++r )" << std::endl;
         out << "      {"<<std::endl;
         out << "        gjit.mtv( jacFactors[ row ][ r ], jacFactorTmp[ r ] );" << std::endl;
         out << "      }" << std::endl << std::endl;
 
+        /*
         out << "      for( int col = 0, rowCol = quad.cachingPoint( row ) * " << numCols << "; col < " << numCols << " ; ++ col, ++rowCol )" << std::endl;
         out << "      {" << std::endl;
         for( int d =0; d < dim; ++d )
           out << "        base"<< d << "[ col ] = jacStorage[ rowCol ][ 0 ][ " << d << " ];" << std::endl;
 
         out << "      }" << std::endl;
+        */
 
         out << "      // calculate updates" << std::endl;
         out << "      " << funcName << "(";
-        for( int d =0; d < dim; ++d ) out << "base" << d << ", ";
-        out << std::endl;
+        //for( int d =0; d < dim; ++d ) out << "base" << d << ", ";
+        out << " base + ( quad.localCachingPoint( row ) * " << numCols * dim << " )," << std::endl;
         for( int i =0; i < dim; ++i )
         {
           out << "                               ";
           for( int r = 0; r < dimRange; ++ r )
-            out << "jacFactorTmp[ " << r  << " ][ " << i << " ], ";
+            out << "   jacFactorTmp[ " << r  << " ][ " << i << " ], ";
           out << std::endl;
         }
         out << "                               ";
         for( int r = 0; r < dimRange; ++ r )
         {
-          out << "result" << r;
+          out << "   result" << r;
           if( r == dimRange -1 )
             out << " );" << std::endl ;
           else
@@ -1011,9 +1077,9 @@ namespace Dune
         writePreCompHeader( out, 0 );
 
         out << "  void " << funcName << "(" << std::endl;
-        out << "        const " << doubletype() << "* " << restrictKey() << " base0," << std::endl;
-        for( int i=1; i<dim; ++ i )
-          out << "        const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
+        out << "        const " << doubletype() << "* " << restrictKey() << " base," << std::endl;
+        //for( int i=1; i<dim; ++ i )
+        //  out << "        const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
         for( int i=0; i<dim; ++i )
         {
           out << "        ";

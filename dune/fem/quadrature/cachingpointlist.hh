@@ -49,6 +49,8 @@ namespace Dune
         DUNE_THROW( NotImplemented,
                     "CachingInterface :: cachingPoint must be overloaded!" );
       }
+
+      inline size_t nCachingPoints () const { return 0; }
     };
 
 
@@ -193,10 +195,10 @@ namespace Dune
       typedef CacheProvider< GridPartType, codimension >            CacheProviderType;
       typedef PointProvider< RealType, dimension, codimension>  PointProviderType;
 
-      using Base::localFaceIndex;
       using Base::quadImp;
 
     public:
+      using Base::localFaceIndex;
       using Base::elementGeometry;
       using Base::nop;
 
@@ -238,7 +240,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::CachingInterface::twisted */
-      inline bool twisted() const { return twist_ != 0; }
+      inline bool twisted() const { return true; }
 
       /** \copydoc Dune::Fem::CachingInterface::twistId */
       inline int twistId () const { return twist_ + 4; }

@@ -135,10 +135,24 @@ namespace Dune
       }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
+      size_t localCachingPoint( const size_t quadraturePoint ) const
+      {
+        return quadraturePoint;
+      }
+
+      /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline bool twisted () const { return false; }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline int twistId () const { return 0; }
+
+      int localFaceIndex () const
+      {
+        return 0;
+      }
+
+      inline int nCachingPoints () const { return nop(); }
+      inline int cachingPointStart () const { return 0; }
 
     protected:
       /** \brief obtain the actual implementation of the quadrature
@@ -284,11 +298,24 @@ namespace Dune
         return quadraturePoint;
       }
 
+      size_t localCachingPoint( const size_t quadraturePoint ) const
+      {
+        return quadraturePoint;
+      }
+
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline bool twisted () const { return false; }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline int twistId () const { return 0; }
+
+      inline int nCachingPoints () const { return nop(); }
+      inline int cachingPointStart () const { return 0; }
+
+      int localFaceIndex () const
+      {
+        return localFaceIndex_;
+      }
 
     protected:
       /** \brief obtain the actual implementation of the quadrature
@@ -300,11 +327,6 @@ namespace Dune
       const IntegrationPointListType &quadImp() const
       {
         return quad_;
-      }
-
-      int localFaceIndex () const
-      {
-        return localFaceIndex_;
       }
 
       static GeometryType

@@ -170,9 +170,9 @@ namespace Dune
         typedef typename Entity::Geometry::ctype ctype;
         static const int dim = Entity::dimension;
 
-        const Dune::ReferenceElement< ctype, dim > &enRef
+        const auto enRef
           = Dune::ReferenceElements< ctype, dim >::general( en.type() );
-        const Dune::ReferenceElement< ctype, dim > &nbRef
+        const auto nbRef
           = Dune::ReferenceElements< ctype, dim >::general( nb.type() );
 
         // number of vertices of face
@@ -261,7 +261,7 @@ namespace Dune
       {
         assert( it.outside().type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
-        static const Dune::ReferenceElement< ctype, 3 > &refElem =
+        static const auto refElem =
                 Dune::ReferenceElements< ctype, 3 >::general( it.outside().type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );

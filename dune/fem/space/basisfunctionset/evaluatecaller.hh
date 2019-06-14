@@ -157,14 +157,7 @@ namespace Dune
           evaluators[ quadId ].reset(
               EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
                  :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() ) );
-
-          //std::cout << "Created Eval for quadId " << quadId << " with obj " <<
-          //  evaluators[ quadId ].operator ->() << " and size " << evaluators[
-          //  quadId ]->storageSize() << std::endl;
         }
-
-        //std::cout << "Get Eval for quadId " << quadId << " with obj " <<
-        //  evaluators[ quadId ].operator ->() << std::endl;
 
         // make sure the storage is the same
         assert( dataCache.size() == evaluators[ quadId ]->storageSize() );
@@ -193,31 +186,81 @@ namespace Dune
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
 
       const RangeVectorType& rangeStorage_;
-      std::vector< FieldType > rangeStorageTransposed_;
-      mutable std::vector< std::vector< FieldType > > rangeStorageTwisted_;
+      std::vector< std::vector< FieldType > > rangeStorageTransposed_;
+      std::vector< std::vector< FieldType > > rangeStorageFlat_;
+      mutable std::vector< std::vector< std::vector< FieldType > > > rangeStorageTwisted_;
+
+      void initRangeStorageTransposed( const std::integral_constant< bool, true > )
+      {
+        assert( rangeStorage_[ 0 ].size() == 1 );
+        {
+          const int quadPoints = rangeStorage_.size() / numBaseFct;
+          const int faces = quadPoints / quadNop;
+          rangeStorageTransposed_.resize( faces );
+          for( int f=0; f<faces; ++f )
+          {
+            auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
+            // rearrange such that we store for one basis functions all
+            // evaluations for all quadrature points, i.e. numBaseFct * quadNop
+            rangeStorageTransposed.resize( numBaseFct * quadNop );
+            for( int i=0; i<numBaseFct; ++i )
+            {
+              const int idx  = i * quadNop;
+              for( int j=0; j<quadNop; ++j )
+              {
+                int qp = f * quadNop + j ;
+                assert( j*numBaseFct + i < int(rangeStorage_.size()) );
+                rangeStorageTransposed[ idx + j ] = rangeStorage_[ qp*numBaseFct + i ][ 0 ];
+              }
+            }
+          }
+        }
+      }
+
+      void initRangeStorageTransposed( const std::integral_constant< bool, false > )
+      {
+        const int dim = rangeStorage_[ 0 ][ 0 ].size();
+        {
+          const int quadPoints = rangeStorage_.size() / numBaseFct;
+          const int faces = quadPoints / quadNop;
+          rangeStorageTransposed_.resize( faces );
+          rangeStorageFlat_.resize( faces );
+          for( int f=0; f<faces; ++f )
+          {
+            auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
+            auto& rangeStorageFlat = rangeStorageFlat_[ f ];
+
+            // rearrange such that we store for one basis functions all
+            // evaluations for all quadrature points, i.e. numBaseFct * quadNop
+            rangeStorageTransposed.resize( numBaseFct * quadNop * dim );
+            rangeStorageFlat.resize( numBaseFct * quadNop * dim );
+            for( int i=0; i<numBaseFct; ++i )
+            {
+              const int idx  = i * (quadNop * dim);
+              for( int j=0; j<quadNop; ++j )
+              {
+                int qp = f * quadNop + j ;
+                for( int d=0; d<dim; ++d )
+                {
+                  rangeStorageFlat[ j*numBaseFct*dim + (i * dim) + d ] = rangeStorage_[ qp*numBaseFct + i ][ 0 ][ d ];
+                  rangeStorageTransposed[ idx + (j * dim) + d ] = rangeStorage_[ qp*numBaseFct + i ][ 0 ][ d ];
+                }
+              }
+            }
+          }
+        }
+      }
 
     public:
       // type of interface class
       typedef BaseType InterfaceType;
 
       EvaluateRealImplementation( const RangeVectorType& rangeStorage )
-        : rangeStorage_( rangeStorage ), rangeStorageTwisted_( 8 )
+        : rangeStorage_( rangeStorage ), rangeStorageTwisted_( 8 ) // 8 different twists
       {
-        if( rangeStorage_[ 0 ].size() == 1 )
-        {
-          // rearrange such that we store for one basis functions all
-          // evaluations for all quadrature points, i.e. numBaseFct x quadNop
-          rangeStorageTransposed_.resize( numBaseFct * quadNop );
-          for( int i=0; i<numBaseFct; ++i )
-          {
-            const int idx  = i * quadNop ;
-            for( int j=0; j<quadNop; ++j )
-            {
-              assert( j*numBaseFct + i < int(rangeStorage_.size()) );
-              rangeStorageTransposed_[ idx + j ] = rangeStorage_[ j*numBaseFct + i ][ 0 ];
-            }
-          }
-        }
+        initRangeStorageTransposed( std::integral_constant< bool,
+                                    std::is_same< typename RangeVectorType::value_type,
+                                                  Dune::FieldVector< double, 1 > > :: value > () );
       }
 
       virtual void* storageAddress() const { return (void *) &rangeStorage_ ; }
@@ -239,13 +282,15 @@ namespace Dune
       {
         BaseFunctionSetType :: template AxpyJacobians
           < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: axpy
-          ( quad, geometry, rangeStorage_, jacFactors, dofs );
+          ( quad, geometry, rangeStorageFlat_[ quad.localFaceIndex() ], jacFactors, dofs );
       }
 
       virtual void evaluateRanges( const QuadratureType& quad,
                                    const LocalDofVectorType & dofs,
                                    FactorType& rangeFactors) const
       {
+        // for evaluation the range storage dimension should be 1 and therefore
+        // rangeStorageTransposed should have been filled
         assert( ! rangeStorageTransposed_.empty() );
 
         // if we are in the ranges cases then basis can be stored transposed
@@ -255,28 +300,36 @@ namespace Dune
           auto& rangeStorageTwisted = rangeStorageTwisted_[ quad.twistId() ];
           if( rangeStorageTwisted.empty() )
           {
-            // rearrange such that we store for one basis functions all
-            // evaluations for all quadrature points including the twisted mapping
-            rangeStorageTwisted.resize( numBaseFct * quadNop );
-            for( int i=0; i<numBaseFct; ++i )
+            const int quadPoints = rangeStorage_.size() / numBaseFct;
+            const int faces = quadPoints / quadNop;
+            rangeStorageTwisted.resize( faces );
+            for( int f=0; f<faces; ++f )
             {
-              const int idx  = i * quadNop ;
-              for( int j=0; j<quadNop; ++j )
+              auto& rangeStorageFace = rangeStorageTwisted[ f ];
+              const auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
+
+              // rearrange such that we store for one basis functions all
+              // evaluations for all quadrature points including the twisted mapping
+              rangeStorageFace.resize( rangeStorageTransposed.size() );
+              for( int i=0; i<numBaseFct; ++i )
               {
-                int twstJ = (quad.cachingPoint( j ) * numBaseFct) + i;
-                rangeStorageTwisted[ idx + j ] = rangeStorage_[ twstJ ];
+                const int idx  = i * quadNop;
+                for( int j=0; j<quadNop; ++j )
+                {
+                  rangeStorageFace[ idx + j ] = rangeStorageTransposed[ idx + quad.localCachingPoint( j ) ];
+                }
               }
             }
           }
           BaseFunctionSetType :: template EvaluateRanges
             < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
-            :: eval ( quad, rangeStorageTwisted, dofs, rangeFactors );
+            :: eval ( quad, rangeStorage_, rangeStorageTwisted[ quad.localFaceIndex() ], dofs, rangeFactors );
         }
         else
         {
           BaseFunctionSetType :: template EvaluateRanges
             < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct >
-            :: eval ( quad, rangeStorageTransposed_, dofs, rangeFactors );
+            :: eval ( quad, rangeStorage_, rangeStorageTransposed_[ quad.localFaceIndex() ] , dofs, rangeFactors );
         }
       }
 
@@ -287,7 +340,7 @@ namespace Dune
       {
         BaseFunctionSetType :: template EvaluateJacobians
           < BaseFunctionSetType, Geometry, dimRange, quadNop, numBaseFct > :: eval
-          ( quad, geometry, rangeStorage_, dofs, jacFactors );
+          ( quad, geometry, rangeStorageTransposed_[ quad.localFaceIndex() ], dofs, jacFactors );
       }
 
       static InterfaceType* create( const RangeVectorType& rangeStorage )
