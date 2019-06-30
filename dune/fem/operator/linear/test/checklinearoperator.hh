@@ -214,8 +214,15 @@ namespace Dune
         linOp.flushAssembly();
         if (k>=2) // just for checking 'clearRow' and reassembly so don't check content of matrix
         {
-          linOp.unitRow(0);
-          linOp.finalize();
+          try
+          {
+            linOp.unitRow(0);
+            linOp.finalize();
+          }
+          catch( const Dune::NotImplemented &exception )
+          {
+            std::cout << "operator does not implement unitRow method\n";
+          }
           continue;
         }
 
