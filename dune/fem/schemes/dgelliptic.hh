@@ -599,6 +599,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             JacobianRangeType adphiNb = dphiNb[ i ];
             model().linDiffusiveFlux( u0En, u0EnJac,   faceQuadOutside[ pt ], phiNb[i], adphiNb, dphiNb[ i ] );
           }
+          model().init( entity );
           //! [Assemble skeleton terms: obtain values om quadrature point]
 
           //! [Assemble skeleton terms: compute factors for axpy method]
