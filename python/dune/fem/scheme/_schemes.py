@@ -84,7 +84,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
-def dg(model, space, penalty=0, solver=None, parameters={},
+def dg(model, space=None, penalty=0, solver=None, parameters={},
        penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
@@ -100,6 +100,7 @@ def dg(model, space, penalty=0, solver=None, parameters={},
               the space.""")
         model,space = space,model
 
+    modelParam = []
     if isinstance(model, (list, tuple)):
         modelParam = model[1:]
         model = model[0]

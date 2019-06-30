@@ -13,10 +13,11 @@ from dune.source.fem import declareFunctionSpace
 
 
 class EllipticModel:
-    def __init__(self, dimDomain, dimRange, signature):
+    def __init__(self, dimDomain, dimRange, u, signature):
         assert isInteger(dimRange)
         self.dimDomain = dimDomain
         self.dimRange = dimRange
+        self.trialFunction = u
         self.init = []
         self.vars = None
         self.signature = signature
