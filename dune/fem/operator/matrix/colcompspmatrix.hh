@@ -23,7 +23,7 @@ namespace Dune
    *  @brief Converter for SparseRowMatrix to column-compressed matrix.
    *  Specialization for SparseRowMatrix
    */
-  template <class T, class IndexT,class ValuesVector, class IndicesVector,class RowIndex=int>
+  template <class T, class IndexT,class ValuesVector, class IndicesVector,class RowIndex>
   class ColCompMatrix< Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector>, RowIndex >
   {
     public:

@@ -57,7 +57,7 @@ struct SPQRInverseOperatorTraits
   typedef OperatorType  PreconditionerType;
 
   typedef Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction, Matrix > AssembledOperatorType;
-  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType > CCSMatrixType;
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType,int > CCSMatrixType;
 
   typedef SPQRInverseOperator< DiscreteFunction, symmetric, Matrix >  InverseOperatorType;
   typedef SolverParameter SolverParameterType;
