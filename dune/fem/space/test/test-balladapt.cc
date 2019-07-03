@@ -120,6 +120,7 @@ try
   gridin << "#" << std::endl;
 
   Dune::GridPtr< GridType > grid( gridin );
+  grid->loadBalance();
 
   GridPartType   gridPart( *grid );
   LagrangeSpaceType lagrangeSpace( gridPart );
