@@ -381,12 +381,10 @@ namespace Dune
         out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
-        out << "            class RangeVectorTypeOld," << std::endl;
         out << "            class RangeVectorType," << std::endl;
         out << "            class RangeFactorType," << std::endl;
         out << "            class LocalDofVectorType>" << std::endl;
         out << "  static void eval( const QuadratureType& quad," << std::endl;
-        out << "                    const RangeVectorTypeOld& rangeStorage," << std::endl;
         out << "                    const RangeVectorType& rangeStorageTransposed," << std::endl;
         out << "                    const LocalDofVectorType& dofs," << std::endl;
         out << "                    RangeFactorType &rangeVector)" << std::endl;

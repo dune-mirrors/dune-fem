@@ -8,13 +8,11 @@ template <class BaseFunctionSet, class Geometry, int dimRange, int numRows, int 
 struct EvaluateRanges
 {
   template< class QuadratureType,
-            class RangeVectorTypeOld,
             class RangeVectorType,
             class LocalDofVectorType,
             class RangeFactorType>
   static void eval( const QuadratureType& quad,
-                    const RangeVectorTypeOld& rangeStorage,
-                    const RangeVectorType& rangeStorage1,
+                    const RangeVectorType& rangeStorage,
                     const LocalDofVectorType& dofs,
                     RangeFactorType &rangeFactors )
   {
@@ -28,12 +26,10 @@ template <class BaseFunctionSet, int dimRange, int numRows, int numCols>
 struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, dimRange, numRows, numCols >
 {
   template< class QuadratureType,
-            class RangeVectorTypeOld,
             class RangeVectorType,
             class LocalDofVectorType,
             class RangeFactorType>
   static void eval( const QuadratureType& quad,
-                    const RangeVectorTypeOld& rangeStorageOld,
                     const RangeVectorType& rangeStorage,
                     const LocalDofVectorType& dofs,
                     RangeFactorType &rangeFactors)
