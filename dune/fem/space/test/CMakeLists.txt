@@ -1,25 +1,26 @@
 if( NOT GRIDTYPE )
-  set( GRIDTYPE ALUGRID_CUBE )
+  if( dune-alugrid_FOUND )
+    set( GRIDTYPE ALUGRID_CUBE )
+    set( CONFGRID ALUGRID_CONFORM )
+  else()
+    set( GRIDTYPE YASPGRID )
+    set( CONFGRID YASPGRID )
+  endif()
 endif()
 
 if( NOT GRIDDIM )
   set( GRIDDIM 3 )
 endif()
 
-# copy data to build source to make tests work
-configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
-configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
-configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
-configure_file(2dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid_8.dgf COPYONLY)
-configure_file(3dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid_8.dgf COPYONLY)
-configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
-
 # the default compiler flags
 set( DEFAULTFLAGS "GRIDDIM=${GRIDDIM};${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0" )
+set( CONFORMINGFLAGS "GRIDDIM=${GRIDDIM};${CONFGRID};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0" )
+
+# lagrange adapt needs different compile time flags
+dune_add_test( NAME lagrangeadapt SOURCES lagrangeadapt.cc COMPILE_DEFINITIONS "${CONFORMINGFLAGS}" LINK_LIBRARIES dunefem )
 
 set( TESTS
   adapt
-  lagrangeadapt
   padapt
 )
 
@@ -35,6 +36,14 @@ set( EXPENSIVE_TESTS
   localadapter
 )
 
+# copy data to build source to make tests work
+configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
+configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
+configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+configure_file(2dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid_8.dgf COPYONLY)
+configure_file(3dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid_8.dgf COPYONLY)
+configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+
 if( ${FEM_TORTURE_TESTS} )
   foreach(i ${EXPENSIVE_TESTS})
     list(APPEND TESTS ${i})
@@ -47,11 +56,6 @@ foreach( test ${TESTS} )
   LINK_LIBRARIES dunefem )
 endforeach()
 
-# dgcomm tests should run on GRIDDIM=3 meshes
-dune_add_test( NAME l2projection_optim SOURCES l2projection.cc
-COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_BASEFUNCTIONSET_CODEGEN"
-LINK_LIBRARIES dunefem )
-target_include_directories(l2projection_optim PRIVATE "./" "${CMAKE_CURRENT_BINARY_DIR}")
 
 # dgcomm tests should run on GRIDDIM=3 meshes
 dune_add_test( NAME dgcomm SOURCES dgcomm.cc

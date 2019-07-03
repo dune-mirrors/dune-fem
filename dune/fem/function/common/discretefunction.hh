@@ -79,12 +79,12 @@ namespace Dune
      */
     template< class Impl >
     class DiscreteFunctionInterface
-    : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
+    : public Fem::Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
       public IsDiscreteFunction,
       public HasLocalFunction
     {
       typedef DiscreteFunctionInterface< Impl > ThisType;
-      typedef Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
+      typedef Fem::Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
 
     public:
       //! type of the traits

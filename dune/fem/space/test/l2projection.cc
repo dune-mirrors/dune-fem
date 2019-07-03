@@ -32,8 +32,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/misc/double.hh>
 
-#include <dune/common/vectorclass/vectorclass.h>
-
 // to use grape, set to WANT_GRAPE to 1
 #ifndef WANT_GRAPE
 #define WANT_GRAPE 0
@@ -377,7 +375,6 @@ void customStandardL2Projection( const DiscreteFunctionType& f, DiscreteFunction
     if( it == endit ) break ;
   }
 }
-#endif
 
 void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
 {
@@ -555,6 +552,7 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
     if( it == endit ) break ;
   }
 }
+#endif
 
 void customInterpolate( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
 {
