@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 
-#include <dune/common/std/memory.hh>
 #include <dune/fem/space/combinedspace/combineddofstorage.hh>
 #include <dune/fem/storage/subvector.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
@@ -56,9 +55,9 @@ namespace Dune
         if( ! subDiscreteFunction_[ component ] )
         {
           subVector_[ component ] =
-            Std::make_unique< SubDofVectorType >( discreteFunction_.dofStorage(), SubMapperType( subSpace_.mapper(), component ) );
+            std::make_unique< SubDofVectorType >( discreteFunction_.dofStorage(), SubMapperType( subSpace_.mapper(), component ) );
           subDiscreteFunction_[ component ] =
-            Std::make_unique< SubDiscreteFunctionType >( discreteFunction_.name()+ "_sub", subSpace_, *( subVector_[ component ] ));
+            std::make_unique< SubDiscreteFunctionType >( discreteFunction_.name()+ "_sub", subSpace_, *( subVector_[ component ] ));
         }
         return *( subDiscreteFunction_[ component ] );
       }

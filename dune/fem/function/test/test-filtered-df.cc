@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/std/memory.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
@@ -154,8 +153,8 @@ int main ( int argc, char **argv )
     typedef typename TupleDiscreteFunctionType::DiscreteFunctionSpaceType TupleDiscreteSpaceType;
     TupleDiscreteSpaceType tupleSpace(
       std::make_tuple(
-        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
-        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( rightGridPart ) )
+        std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
+        std::make_unique< FilteredDiscreteFunctionSpaceType >( rightGridPart ) )
       );
     TupleDiscreteFunctionType tupleDF( "tuple", tupleSpace );
     std::cout << "Number of DOFs tupleDF : " << tupleDF.size() << std::endl;
@@ -166,8 +165,8 @@ int main ( int argc, char **argv )
     typedef typename MixedTupleDiscreteFunctionType::DiscreteFunctionSpaceType MixedTupleDiscreteSpaceType;
     MixedTupleDiscreteSpaceType mixedTupleSpace(
       std::make_tuple(
-        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
-        Dune::Std::make_unique< HostDiscreteFunctionSpaceType >( hostGridPart ) )
+        std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
+        std::make_unique< HostDiscreteFunctionSpaceType >( hostGridPart ) )
       );
 
     MixedTupleDiscreteFunctionType mixedTupleDF( "mixed tuple", mixedTupleSpace );

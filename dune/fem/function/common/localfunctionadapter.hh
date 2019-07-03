@@ -8,7 +8,6 @@
 #include <type_traits>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/memory.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 
@@ -391,7 +390,7 @@ namespace Dune
         constexpr bool hasCopyConstructor = Traits::localFunctionHasCopyConstructor;
         if( hasCopyConstructor)
         {
-          argInitializer_ = Std::make_unique< ArgumentInitializer< ArgumentType > >( arg, time );
+          argInitializer_ = std::make_unique< ArgumentInitializer< ArgumentType > >( arg, time );
           for( auto& localFunctionPtr : lfList_ )
             Hybrid::ifElse( hasCopyConstructor, [ & ]( auto&& ){ argInitializer_->initialize( localFunctionPtr ); } );
         }

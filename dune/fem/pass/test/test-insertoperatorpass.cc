@@ -8,7 +8,6 @@
 #include <utility>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/std/memory.hh>
 
 #include <dune/grid/yaspgrid.hh>
 
@@ -95,7 +94,7 @@ createGrid( int count = 1 )
 
   // create and refine grid
   typedef Dune::YaspGrid< dim, Dune::EquidistantOffsetCoordinates< ctype, dim > > GridType;
-  auto grid = Dune::Std::make_unique< GridType >( a, b, cells );
+  auto grid = std::make_unique< GridType >( a, b, cells );
   grid->loadBalance();
   grid->globalRefine( count );
   grid->loadBalance();
