@@ -8,7 +8,7 @@
 #else
 namespace Dune
 {
-  template<class M>
+  template<class M,class RowIndex=int>
   struct ColCompMatrix {};
 } // namespace Dune
 #endif
@@ -23,8 +23,8 @@ namespace Dune
    *  @brief Converter for SparseRowMatrix to column-compressed matrix.
    *  Specialization for SparseRowMatrix
    */
-  template <class T, class IndexT,class ValuesVector, class IndicesVector>
-  class ColCompMatrix< Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector> >
+  template <class T, class IndexT,class ValuesVector, class IndicesVector,class RowIndex>
+  class ColCompMatrix< Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector>, RowIndex >
   {
     public:
     /** @brief The type of the matrix converted. */
@@ -33,6 +33,8 @@ namespace Dune
     typedef Fem::SparseRowMatrix<T,IndexT,ValuesVector,IndicesVector> Matrix;
 
     typedef typename Matrix::size_type size_type;
+
+    typedef RowIndex RowIndexType;
 
     /**
      * @brief Constructor that initializes the data.
@@ -80,13 +82,13 @@ namespace Dune
     }
 
     /** @brief Get the row indices of the non-zero entries of the matrix. */
-    int* getRowIndex() const
+    RowIndexType* getRowIndex() const
     {
       return rowindex_;
     }
 
     /** @brief Get the column start indices. */
-    int* getColStart() const
+    RowIndexType* getColStart() const
     {
       return colstart_;
     }
@@ -108,14 +110,14 @@ namespace Dune
       Nnz_=mat.Nnz_;
       if(M_>0)
       {
-        colstart_=new int[M_+1];
+        colstart_=new RowIndexType[M_+1];
         for(size_type i=0; i<=M_; ++i)
           colstart_[i]=mat.colstart[i];
       }
       if(Nnz_>0)
       {
         values_ = new T[Nnz_];
-        rowindex_ = new int[Nnz_];
+        rowindex_ = new RowIndexType[Nnz_];
         for(size_type i=0; i<Nnz_; ++i)
           values_[i]=mat.values[i];
         for(size_type i=0; i<Nnz_; ++i)
@@ -142,7 +144,7 @@ namespace Dune
       M_=mat.cols();
 
       // count the number of nonzeros per column
-      colstart_= new int[M_+1];
+      colstart_= new RowIndexType[M_+1];
       for(size_type i=0;i!=(M_+1);++i)
         colstart_[i]=0;
 
@@ -171,7 +173,7 @@ namespace Dune
 
       // fill the values and the index arrays
       values_=new T[Nnz_];
-      rowindex_=new int[Nnz_];
+      rowindex_=new RowIndexType[Nnz_];
       for(size_type row = 0; row < N_ ; ++ row)
       {
         const size_type endRow = mat.endRow( row );
@@ -194,8 +196,8 @@ namespace Dune
     size_type M_;
     size_type Nnz_;
     T* values_;
-    int* rowindex_;
-    int* colstart_;
+    RowIndexType* rowindex_;
+    RowIndexType* colstart_;
   };
 
 }

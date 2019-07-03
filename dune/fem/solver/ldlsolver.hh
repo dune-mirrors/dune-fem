@@ -86,7 +86,7 @@ public:
   typedef typename BaseType :: AssembledOperatorType  AssembledOperatorType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType,int> CCSMatrixType;
 
   typedef typename SolverDiscreteFunctionType::DofType DofType;
   typedef typename SolverDiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;

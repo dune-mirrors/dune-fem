@@ -78,7 +78,7 @@ public:
   typedef DiscreteFunction DiscreteFunctionType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType,long int> CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
