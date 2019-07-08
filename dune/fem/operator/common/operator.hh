@@ -243,6 +243,7 @@ namespace Dune
     typedef RFieldType RangeFieldType;
 
     using BaseType::operator();
+    using BaseType::finalize;
 
   protected:
     /** \brief The method apply calls the application operator. The method

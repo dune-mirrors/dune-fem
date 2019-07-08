@@ -171,6 +171,7 @@ namespace Dune
       : public Fem::Operator< DiscreteFunction, DiscreteFunction >
       {
         typedef Fem::Operator< DiscreteFunction, DiscreteFunction > BaseType;
+        typedef CGInverseOperator< DiscreteFunction >               ThisType;
 
       public:
         typedef typename BaseType::DomainFunctionType DomainFunctionType;
@@ -181,6 +182,9 @@ namespace Dune
 
         typedef typename OperatorType::RangeFieldType RangeFieldType;
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+
+        // non-const version
+        using BaseType::finalize;
 
       private:
         typedef ConjugateGradientSolver< OperatorType > SolverType;
@@ -344,7 +348,9 @@ namespace Dune
         {}
 
         inline void finalize() const
-        {}
+        {
+          const_cast< ThisType& > (*this).finalize();
+        }
 
         /** \brief application operator
          *
