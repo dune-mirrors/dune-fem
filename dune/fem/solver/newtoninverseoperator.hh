@@ -122,7 +122,7 @@ namespace Dune
       virtual int maxLinearIterations () const
       {
         if(maxLinearIterations_ < 0)
-          maxLinearIterations_ = parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+          maxLinearIterations_ = linear().maxIterations();
         return maxLinearIterations_;
       }
 
@@ -294,7 +294,8 @@ namespace Dune
       LinearIterationsExceeded = 3,
       LineSearchFailed = 4,
       TooManyIterations = 5,
-      TooManyLinearIterations = 6
+      TooManyLinearIterations = 6,
+      LinearSolverFailed = 7
     };
 
 
@@ -485,6 +486,8 @@ namespace Dune
           return NewtonFailure::TooManyIterations;
         else if( linearIterations_ >= parameter_.maxLinearIterations() )
           return NewtonFailure::TooManyLinearIterations;
+        else if( linearIterations_ < 0)
+          return NewtonFailure::LinearSolverFailed;
         else if( !stepCompleted_ )
           return NewtonFailure::LineSearchFailed;
         else
@@ -596,10 +599,17 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
         jInv_.bind( jOp );
+        if ( parameter_.maxLinearIterations() - linearIterations_ <= 0 )
+          break;
         jInv_.setMaxIterations( parameter_.maxLinearIterations() - linearIterations_ );
 
         dw.clear();
         jInv_( residual, dw );
+        if (jInv_.iterations() < 0) // iterations are negative if solver didn't converge
+        {
+          linearIterations_ = jInv_.iterations();
+          break;
+        }
         linearIterations_ += jInv_.iterations();
         w -= dw;
 
