@@ -120,6 +120,8 @@ try
   gridin << "#" << std::endl;
 
   Dune::GridPtr< GridType > grid( gridin );
+  // if grid is not load balanced then one core has no elements and the test
+  // fails. Needs to be checked.
   grid->loadBalance();
 
   GridPartType   gridPart( *grid );
