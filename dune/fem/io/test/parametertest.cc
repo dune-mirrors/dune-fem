@@ -64,7 +64,7 @@ int main(int argc, char** argv)
       parameter.getValidValue( "diffusion", 1.0, []( const double &val ) { return false; } );
       DUNE_THROW( Dune::Exception, "Invalid Validator application" );
     }
-    catch ( Dune::Fem::ParameterInvalid ) {}
+    catch ( const Dune::Fem::ParameterInvalid& ) {}
 
     // get the macro grid filename, using a lambda to verify 'no white spaces' in the filename
     std::string macrogridname;
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 
     return 0;
   }
-  catch (Dune::Exception &e){
+  catch (const Dune::Exception &e){
     std::cerr << "Dune reported error: " << e << std::endl;
     return 1;
   }
