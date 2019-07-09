@@ -173,9 +173,10 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   solution.clear();
 
   // apply solver
-  InverseOperatorType inverseOperator ( massOperator );
-  inverseOperator.parameter().setAbsoluteTol( 1e-10 );
-  inverseOperator.parameter().setReductionTol( 1e-10 );
+  InverseOperatorType inverseOperator;
+  inverseOperator.bind( massOperator );
+
+  inverseOperator.parameter().setTolerance( 1e-10 );
   inverseOperator.parameter().setMaxIterations( maxIter );
 
   inverseOperator( rhs, solution );
