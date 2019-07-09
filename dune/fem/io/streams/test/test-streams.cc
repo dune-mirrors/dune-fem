@@ -195,7 +195,7 @@ int main ( int argc, char** argv )
     if( failed ) return 1;
 
   }
-  catch( Exception e )
+  catch( const Exception& e )
   {
     std :: cerr << e.what() << std :: endl;
     return 1;
