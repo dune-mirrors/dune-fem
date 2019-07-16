@@ -164,8 +164,7 @@ class MyLinearInverseOperator
   typedef typename BaseType::DomainFunctionType DomainFunctionType;
   typedef typename BaseType::RangeFunctionType RangeFunctionType;
   typedef MyLinearOperator<N> LinearOperatorType;
-  // typedef typename BaseType::SolverParameterType SolverParameterType;
-  typedef Dune::Fem::ParameterReader SolverParameterType;
+  typedef Dune::Fem::SolverParameter SolverParameterType;
 
   MyLinearInverseOperator(const SolverParameterType& parameter = SolverParameterType() ) {}
   void bind ( const LinearOperatorType& jOp ) { jOp_ = &jOp; }
