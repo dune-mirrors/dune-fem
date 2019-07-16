@@ -102,7 +102,8 @@ typedef std::tuple<
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType,
+  GridPartType::dimensionworld == 3 ? 1 : 2 >, // order 2 is only available in 2d
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
