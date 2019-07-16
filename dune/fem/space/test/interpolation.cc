@@ -251,7 +251,7 @@ try
   {
     for( int d=0; d<GridType::dimension; ++d )
     {
-      nonAffineGrid << coords[ vx ][ d ] << " ";
+      nonAffineGrid << coords[ i ][ d ] << " ";
     }
     nonAffineGrid << std::endl;
   }
