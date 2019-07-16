@@ -1,9 +1,3 @@
-#ifdef YASPGRID
-  #undef YASPGRID
-#endif
-
-#define ALUGRID_CONFORM
-
 #include <config.h>
 
 // to write out the data, set WRITE_DATA to 1

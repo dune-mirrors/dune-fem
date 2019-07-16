@@ -355,10 +355,10 @@ namespace Dune
 
               for (unsigned int rb = 0; rb<rangeLocalBlockSize/bs; ++rb)
               {
-                auto row = petscIndex*rangeLocalBlockSize/bs + rb;
+                const size_t row = petscIndex*rangeLocalBlockSize/bs + rb;
                 // Remark: ghost entities should not be inserted into the stencil for dg to
                 // get optimal results but they are needed for istl....
-                assert( row < localRows/bs );
+                assert( row < size_t(localRows/bs) );
                 d_nnz[ row ] = o_nnz[ row ] = 0;
                 for( const auto local : entry.second )
                 {

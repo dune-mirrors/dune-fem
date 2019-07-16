@@ -133,7 +133,6 @@ namespace Dune
       DefaultBasisFunctionSet ()
       : entity_( nullptr )
       {
-        configurePrefetch();
       }
 
       //! \brief constructor
@@ -141,7 +140,6 @@ namespace Dune
       : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
       {
-        configurePrefetch();
       }
 
       void registerEntry() const
@@ -253,34 +251,34 @@ namespace Dune
       template< class QuadratureType, class DofVector, class RangeArray >
       void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const
       {
-        startPrefetch();
-
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
         typedef Fem :: EvaluateCallerInterfaceTraits<
                 QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
         // get base function evaluate caller (calls evaluateRanges)
-        const BaseEvaluationType& baseEval =
-            BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
+        const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
 
-        baseEval.evaluateRanges( quad, dofs, ranges );
-#else
-
-        registerEntry();
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-        Fem::CodegenInfo::instance().addEntry( "evalranges",
-            Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-#endif
-        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
-        const unsigned int nop = quad.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
+        // true if implementation exists
+        if( baseEval )
         {
-          evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+          baseEval->evaluateRanges( quad, dofs, ranges );
         }
-#endif // #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
-
-        stopPrefetch();
+        else
+#endif
+        {
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+          registerEntry();
+          Fem::CodegenInfo::instance().addEntry( "evalranges",
+              Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
+#endif
+          // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+          const unsigned int nop = quad.nop();
+          for( unsigned int qp = 0; qp < nop; ++qp )
+          {
+            evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+          }
+        }
       }
 
       //! \todo please doc me
@@ -304,8 +302,6 @@ namespace Dune
       template< class QuadratureType, class DofVector, class JacobianArray >
       void jacobianAll ( const QuadratureType &quad, const DofVector &dofs, JacobianArray &jacobians ) const
       {
-        startPrefetch();
-
         assert( jacobians.size() > 0 );
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
         typedef Fem :: EvaluateCallerInterfaceTraits< QuadratureType,
@@ -313,27 +309,29 @@ namespace Dune
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
         // get base function evaluate caller (calls axpyRanges)
-        const BaseEvaluationType& baseEval =
-          BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
+        const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
 
-        // call appropriate axpyJacobian method
-        baseEval.evaluateJacobians( quad, geometry(), dofs, jacobians );
-#else
-        registerEntry();
-
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-        Fem::CodegenInfo::instance().addEntry( "evaljacobians",
-              Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-#endif
-        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
-        const unsigned int nop = quad.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
+        // true if implementation exists
+        if( baseEval )
         {
-          jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
+          // call appropriate axpyJacobian method
+          baseEval->evaluateJacobians( quad, geometry(), dofs, jacobians );
         }
-#endif  // #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
-
-        stopPrefetch();
+        else
+#endif
+        {
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+          registerEntry();
+          Fem::CodegenInfo::instance().addEntry( "evaljacobians",
+                Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
+#endif
+          // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+          const unsigned int nop = quad.nop();
+          for( unsigned int qp = 0; qp < nop; ++qp )
+          {
+            jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
+          }
+        }
       }
 
       //! \todo please doc me
@@ -403,68 +401,70 @@ namespace Dune
       template< class QuadratureType, class RangeArray, class DofVector >
       void axpyImpl ( const QuadratureType &quad, const RangeArray &rangeFactors, DofVector &dofs, const RangeType& ) const
       {
-        startPrefetch();
-
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
         typedef Fem :: EvaluateCallerInterfaceTraits<
             QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
         // get base function evaluate caller (calls axpyRanges)
-        const BaseEvaluationType& baseEval =
-          BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
+        const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
 
-        // call appropriate axpyRanges method
-        baseEval.axpyRanges( quad, rangeFactors, dofs );
-#else
-
-        registerEntry();
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-        Fem::CodegenInfo::instance().addEntry( "axpyranges",
-              Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-#endif
-        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
-        const unsigned int nop = quad.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
+        // true if implementation exists
+        if( baseEval )
         {
-          axpy( quad[ qp ], rangeFactors[ qp ], dofs );
+          // call appropriate axpyRanges method
+          baseEval->axpyRanges( quad, rangeFactors, dofs );
         }
-#endif  // #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
-        stopPrefetch();
+        else
+#endif
+        {
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+          registerEntry();
+          Fem::CodegenInfo::instance().addEntry( "axpyranges",
+                Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
+#endif
+          // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+          const unsigned int nop = quad.nop();
+          for( unsigned int qp = 0; qp < nop; ++qp )
+          {
+            axpy( quad[ qp ], rangeFactors[ qp ], dofs );
+          }
+        }
       }
 
       //! \brief evaluate all basis function and multiply with given values and add to dofs
       template< class QuadratureType, class JacobianArray, class DofVector >
       void axpyImpl ( const QuadratureType &quad, const JacobianArray &jacobianFactors, DofVector &dofs, const JacobianRangeType& ) const
       {
-        startPrefetch();
-
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
         typedef Fem :: EvaluateCallerInterfaceTraits< QuadratureType,
                 JacobianArray, DofVector, Geometry >  Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
         // get base function evaluate caller (calls axpyRanges)
-        const BaseEvaluationType& baseEval =
-          BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
+        const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
 
-        // call appropriate axpyRanges method
-        baseEval.axpyJacobians( quad, geometry(), jacobianFactors, dofs );
-#else
-
-        registerEntry();
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-        Fem::CodegenInfo::instance().addEntry( "axpyjacobians",
-                Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-#endif
-        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
-        const unsigned int nop = quad.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
+        // true if implementation exists
+        if( baseEval )
         {
-          axpy( quad[ qp ], jacobianFactors[ qp ], dofs );
+          // call appropriate axpyRanges method
+          baseEval->axpyJacobians( quad, geometry(), jacobianFactors, dofs );
         }
-#endif  // #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
-        stopPrefetch();
+        else
+#endif
+        {
+#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
+          registerEntry();
+          Fem::CodegenInfo::instance().addEntry( "axpyjacobians",
+                  Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
+#endif
+          // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
+          const unsigned int nop = quad.nop();
+          for( unsigned int qp = 0; qp < nop; ++qp )
+          {
+            axpy( quad[ qp ], jacobianFactors[ qp ], dofs );
+          }
+        }
       }
 
       GeometryType geometry () const { return entity().geometry(); }
@@ -479,34 +479,6 @@ namespace Dune
       const JacobianRangeVectorType& jacobianCache( const QuadratureType& quad ) const
       {
         return shapeFunctionSet().scalarShapeFunctionSet().impl().jacobianCache( quad );
-      }
-
-      void configurePrefetch() const
-      {
-#if HAVE_BGQ_L1PREFETCH
-        static bool initialized = false ;
-        if( ! initialized )
-        {
-          const size_t LIST_SIZE = 10*1024*1024 ;
-          L1P_PatternConfigure( LIST_SIZE );
-        }
-#endif
-      }
-
-      void startPrefetch () const
-      {
-#if HAVE_BGQ_L1PREFETCH
-        static int newPattern = 1 ;
-        L1P_PatternStart( newPattern );
-        newPattern = 0;
-#endif
-      }
-
-      void stopPrefetch () const
-      {
-#if HAVE_BGQ_L1PREFETCH
-        L1P_PatternStop();
-#endif
       }
 
     private:

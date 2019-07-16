@@ -177,7 +177,6 @@ namespace Dune
         return dummy_;
       }
 
-    protected:
       using Base::localFaceIndex;
 
     protected:

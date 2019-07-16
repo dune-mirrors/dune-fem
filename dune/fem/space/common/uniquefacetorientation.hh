@@ -47,7 +47,7 @@ namespace Dune
           parallelMapper_.update();
 
         unsigned int orientations = 0;
-        const auto &indexSet = gridPart().indexSet();
+        //const auto &indexSet = gridPart().indexSet();
         for( auto intersection : intersections( gridPart(), entity ) )
         {
           //if( intersection.neighbor() && (indexSet.index( entity ) < indexSet.index( intersection.outside() )) )

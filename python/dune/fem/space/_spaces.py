@@ -34,7 +34,7 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
         Space: the constructed Space
     """
 
-    from dune.fem.space import module, addStorage, codegen
+    from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
@@ -70,17 +70,18 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
             scalar=scalar,
             ctorArgs=[gridView])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
         spc = module(field, includes, typeName,
-                    interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
-                    scalar=scalar,
-                    ctorArgs=[gridView])
+                     codegenSpace=spc,
+                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     skeletonQuadratureOrders=skeletonQuadratureOrders,
+                     storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -271,7 +272,7 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         Space: the constructed Space
     """
 
-    from dune.fem.space import module, addStorage, codegen
+    from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
@@ -312,18 +313,18 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     #         ctorArgs=[gridView,order])
              ctorArgs=[gridView])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
         spc = module(field, includes, typeName,
-                    interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,
-                    storage=storage,
-                    scalar=scalar,
-                    ctorArgs=[gridView])
+                     codegenSpace=spc,
+                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     skeletonQuadratureOrders=skeletonQuadratureOrders,
+                     storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -344,7 +345,7 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         Space: the constructed Space
     """
 
-    from dune.fem.space import module, addStorage, codegen
+    from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
@@ -382,16 +383,18 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                    "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
                    "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order)
 
+    spcTypeName = typeName
+    spcTypeName += ">"
+    spc = module(field, includes, spcTypeName, storage=storage,
+                 scalar=scalar,
+                 ctorArgs=[gridView, order])
+
+    # if quadrature orders have been specified recreate space module
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         typeName += ", Dune::Fem::CodegenStorage >"
         spc = module(field, includes, typeName,
-                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     codegenSpace=spc, interiorQuadratureOrders=interiorQuadratureOrders,
                      skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
-                     scalar=scalar,
-                     ctorArgs=[gridView, order])
-    else:
-        typeName += " >"
-        spc = module(field, includes, typeName, storage=storage,
                      scalar=scalar,
                      ctorArgs=[gridView, order])
 
@@ -409,7 +412,6 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                 ctorArgs=[gridView])
                 # ctorArgs=[gridView,order])
         if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-            codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
             typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
               "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
               "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
@@ -422,11 +424,13 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             #   "Dune::Fem::CodegenStorage" +\
             #   " >"
             spc = module(field, includes, typeName,
-                        interiorQuadratureOrders=interiorQuadratureOrders,
-                        skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
-                        scalar=scalar,
-                        ctorArgs=[gridView])
-                        # ctorArgs=[gridView,order])
+                         codegenSpace=spc,
+                         interiorQuadratureOrders=interiorQuadratureOrders,
+                         skeletonQuadratureOrders=skeletonQuadratureOrders,
+                         storage=storage,
+                         scalar=scalar,
+                         ctorArgs=[gridView])
+                         # ctorArgs=[gridView,order])
     return spc.as_ufl()
 
 def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
@@ -445,7 +449,7 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
         Space: the constructed Space
     """
 
-    from dune.fem.space import module, addStorage, codegen
+    from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
@@ -480,17 +484,18 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
             scalar=scalar,
             ctorArgs=[gridView])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-        codegen(spc,interiorQuadratureOrders,skeletonQuadratureOrders)
         typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " +\
           "Dune::Fem::CodegenStorage" +\
           " >"
         spc = module(field, includes, typeName,
-                    interiorQuadratureOrders=interiorQuadratureOrders,
-                    skeletonQuadratureOrders=skeletonQuadratureOrders,storage=storage,
-                    scalar=scalar,
-                    ctorArgs=[gridView])
+                     codegenSpace=spc,
+                     interiorQuadratureOrders=interiorQuadratureOrders,
+                     skeletonQuadratureOrders=skeletonQuadratureOrders,
+                     storage=storage,
+                     scalar=scalar,
+                     ctorArgs=[gridView])
     # addStorage(spc, storage)
     return spc.as_ufl()
 

@@ -142,8 +142,10 @@ namespace Dune
         cls.def( "_generateQuadratureCode", []( Space &self,
                  const std::vector<unsigned int> &interiorOrders,
                  const std::vector<unsigned int> &skeletonOrders,
-                 const std::string &path) {
-            Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path);
+                 const std::string &path,
+                 const std::string &filename)
+            {
+              Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
       }
 

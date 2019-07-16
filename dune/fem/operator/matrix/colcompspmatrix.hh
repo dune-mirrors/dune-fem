@@ -3,15 +3,17 @@
 #ifndef DUNE_COLCOMPSPMATRIX_HH
 #define DUNE_COLCOMPSPMATRIX_HH
 
+/*
 #if HAVE_DUNE_ISTL
 #include <dune/istl/colcompmatrix.hh>
 #else
+*/
 namespace Dune
 {
   template<class M,class RowIndex=int>
   struct ColCompMatrix {};
 } // namespace Dune
-#endif
+//#endif
 
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
