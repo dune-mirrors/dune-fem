@@ -398,39 +398,6 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                      scalar=scalar,
                      ctorArgs=[gridView, order])
 
-    if False:
-        # typeName = "Dune::Fem::LagrangeSpace< " +\
-        #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-        #   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " +\
-        #   "Dune::EquidistantPointSet > "
-        typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-          "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
-
-        spc = module(field, includes, typeName, storage=storage,
-                scalar=scalar,
-                ctorArgs=[gridView])
-                # ctorArgs=[gridView,order])
-        if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
-            typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
-              "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-              "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
-              "Dune::Fem::CodegenStorage" +\
-              " >"
-            # typeName = "Dune::Fem::LagrangeSpace< " +\
-            #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-            #   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " +\
-            #   "Dune::EquidistantPointSet, " +\
-            #   "Dune::Fem::CodegenStorage" +\
-            #   " >"
-            spc = module(field, includes, typeName,
-                         codegenSpace=spc,
-                         interiorQuadratureOrders=interiorQuadratureOrders,
-                         skeletonQuadratureOrders=skeletonQuadratureOrders,
-                         storage=storage,
-                         scalar=scalar,
-                         ctorArgs=[gridView])
-                         # ctorArgs=[gridView,order])
     return spc.as_ufl()
 
 def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
