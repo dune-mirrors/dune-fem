@@ -48,7 +48,6 @@
 #include <dune/fem/solver/eigen.hh>
 #endif // HAVE_EIGEN
 
-/*
 #if HAVE_SUITESPARSE_UMFPACK
 #include <dune/fem/solver/umfpacksolver.hh>
 #endif // HAVE_SUITESPARSE_UMFPACK
@@ -60,7 +59,6 @@
 #if HAVE_SUITESPARSE_SPQR
 #include <dune/fem/solver/spqrsolver.hh>
 #endif // HAVE_SUITESPARSE_SPQR
-*/
 
 #include <dune/fem/solver/amgxsolver.hh>
 
@@ -287,7 +285,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
 
-#if 0
 #if HAVE_SUITESPARSE_UMFPACK
   // CGInverseOperator + SparseRowLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -326,7 +323,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUITESPARSE_SPQR
-#endif
 
 #if HAVE_DUNE_ISTL
   // ISTLInverseOperator + ISTLLinearOperator
