@@ -9,8 +9,6 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
-// include overloaded default basis function set
-#include <dune/fem/space/basisfunctionset/default_codegen.hh>
 #include <dune/fem/space/basisfunctionset/codegen.hh>
 
 #include <dune/fem/space/basisfunctionset/default.hh>

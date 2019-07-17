@@ -6,19 +6,14 @@
 #endif
 
 #ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
+#ifndef USE_BASEFUNCTIONSET_CODEGEN
 #define USE_BASEFUNCTIONSET_CODEGEN
+#endif
 #endif
 
 // define header guard for DefaultBasisFunctionSet to avoid errors because both
 // classes have the same name
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
-
-#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
-#ifndef USE_BASEFUNCTIONSET_CODEGEN
-#warning "Using Optimized Code"
-#define USE_BASEFUNCTIONSET_CODEGEN
-#endif
-#endif
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define USE_BASEFUNCTIONSET_OPTIMIZED
@@ -126,6 +121,7 @@ namespace Dune
       enum { dimDomain = FunctionSpaceType::dimDomain };
       enum { dimRange  = FunctionSpaceType::dimRange  };
 #ifdef USE_BASEFUNCTIONSET_OPTIMIZED
+#warning "Optimized code is used"
 #include "evaluatecaller_spec.hh"
 #endif
 
