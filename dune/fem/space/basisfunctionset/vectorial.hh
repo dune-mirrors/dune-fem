@@ -454,7 +454,7 @@ namespace Dune
         std::vector< typename HessianAll::Scalar > scalars( size );
         HessianAll::apply( scalarBasisFunctionSet(), x, scalars );
 
-        const int xSize = x.size();
+        const int xSize = DomainType::dimension;
         for( int r = 0; r < dimRange; ++r )
         {
           for( std::size_t i = 0; i < size; ++i )

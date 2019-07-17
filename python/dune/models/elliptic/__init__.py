@@ -15,7 +15,6 @@ from dune.source.cplusplus import SourceWriter
 
 from dune.ufl import GridFunction
 
-from .model import EllipticModel
 from .ufl import compileUFL
 
 

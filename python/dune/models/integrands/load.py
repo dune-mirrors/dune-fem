@@ -87,10 +87,14 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    def __init__(self, integrands, gridType, gridIncludes, form, *args,
+    def __init__(self, integrands, gridType, gridIncludes, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
         self.gridType = gridType
         self.gridIncludes = gridIncludes
+        if modelIncludes is not None:
+            self.modelIncludes = modelIncludes
+        else:
+            self.modelIncludes = ["dune/fempy/py/integrands.hh"]
         self.integrands = integrands
         self.tempVars = tempVars
         self.virtualize = virtualize
@@ -106,9 +110,9 @@ class Source(object):
     def name(self):
         from dune.common.hashit import hashIt
         if self.virtualize:
-            return 'integrands_' + self.signature() + '_' + hashIt(self.gridType)
+            return self.integrands.baseName + '_' + self.signature() + '_' + hashIt(self.gridType)
         else:
-            return 'integrands_nv' + self.signature() + '_' + hashIt(self.gridType)
+            return self.integrands.baseName + '_nv_' + self.signature() + '_' + hashIt(self.gridType)
 
     def valueTuples(self):
         if isinstance(self.form, Form):
@@ -140,11 +144,12 @@ class Source(object):
                 for c in integrands._coefficients:
                     for i in c._includes:
                         code.append(Include(i))
-        code.append(Include("dune/fempy/py/integrands.hh"))
+        for i in self.modelIncludes:
+            code.append(Include(i))
 
         nameSpace = NameSpace('Integrands_' + self.signature())
         # add integrands class
-        nameSpace.append(integrands.code())
+        nameSpace.append(integrands.code(self.name(),integrands.targs))
         code.append(nameSpace)
 
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
@@ -153,7 +158,7 @@ class Source(object):
         code.append(TypeAlias('Integrands', integrandsName))
 
         writer = SourceWriter()
-        writer.emit(code);
+        writer.emit(code)
 
         name = self.name()
         writer.openPythonModule(name)
@@ -183,7 +188,9 @@ class Source(object):
 
 # Load the actual module - the code generation from the ufl form is done
 # when the 'Source' class is converted to a string i.e. in Source.__str__
-def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
+def load(grid, form, *args, renumbering=None, tempVars=True,
+        virtualize=True, modelPatch=None,
+        includes=None):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
 
@@ -232,11 +239,15 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
         derivatives_phi = derivatives[0]
         derivatives_u = derivatives[1]
 
-        integrands = Integrands((d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
+        integrands = Integrands(u,
+                                (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                                 uflExpr,virtualize)
 
+    if modelPatch is not None:
+        modelPatch(integrands)
+
     # set up the source class
-    source = Source(integrands, grid._typeName, grid._includes, form, *args,
+    source = Source(integrands, grid._typeName, grid._includes, includes, form, *args,
              tempVars=tempVars,virtualize=virtualize)
 
     # ufl coefficient and constants only have numbers which depend on the

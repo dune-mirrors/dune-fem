@@ -31,6 +31,11 @@ def integrands(view, form, *args, **kwargs):
 
     tempVars   = kwargs.pop('tempVars', True)
     virtualize = kwargs.pop('virtualize',True)
-    Integrands = integrands.load(view, form, *args, tempVars=tempVars,virtualize=virtualize)
+    modelPatch = kwargs.pop('modelPatch',None)
+    includes   = kwargs.pop('includes',None)
+
+    Integrands = integrands.load(view, form, *args,
+                     tempVars=tempVars,virtualize=virtualize,
+                     modelPatch=modelPatch,includes=includes)
 
     return Integrands(*args, **kwargs)

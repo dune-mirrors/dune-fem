@@ -102,10 +102,9 @@ public:
   FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : space_( space ),
     // the elliptic operator (implicit)
-    implicitOperator_( space, space, model, parameter ),
+    implicitOperator_( space, space, std::move(model), parameter ),
     // create linear operator (domainSpace,rangeSpace)
-    parameter_( parameter ),
-    invOp_( parameter_ )
+    invOp_( parameter )
   {}
 
   const DifferentiableOperatorType &fullOperator() const { return implicitOperator_; }
@@ -207,10 +206,6 @@ public:
   {
     return implicitOperator_.model();
   }
-  ModelType &model()
-  {
-    return implicitOperator_.model();
-  }
 protected:
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
@@ -222,7 +217,6 @@ protected:
   void setModelConstraints( ... ) const { }
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
-  const Dune::Fem::ParameterReader parameter_;
   mutable InverseOperatorType invOp_;
 };
 

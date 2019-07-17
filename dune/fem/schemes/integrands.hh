@@ -308,7 +308,7 @@ namespace Dune
         return linearizedSkeleton( integrands(), xIn, uIn, xOut, uOut );
       }
 
-    private:
+    protected:
       decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
       decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
 
@@ -476,10 +476,16 @@ namespace Dune
         : VirtualizedIntegrands( FullIntegrands< std::decay_t< Integrands > >( std::move( integrands ) ) )
       {}
 
-      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
+      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr )
+      {}
+
       VirtualizedIntegrands ( This && ) = default;
 
-      VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
+      VirtualizedIntegrands &operator= ( const This &other )
+      {
+        impl_.reset( other ? other.impl().clone() : nullptr );
+      }
+
       VirtualizedIntegrands &operator= ( This && ) = default;
 
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
@@ -577,6 +583,7 @@ namespace Dune
       {
         return impl().dirichlet(bndId,x,value);
       }
+
     private:
       const Interface &impl () const { assert( impl_ ); return *impl_; }
       Interface &impl () { assert( impl_ ); return *impl_; }

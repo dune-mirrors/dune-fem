@@ -1002,8 +1002,7 @@ namespace Dune
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, ParameterReader parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
-          parameter_( std::move( parameter ) ),
-          invOp_(parameter_)
+          invOp_(std::move(parameter))
       {}
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
@@ -1087,7 +1086,6 @@ namespace Dune
       void setModelConstraints( ... ) const { }
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
-      ParameterReader parameter_;
       mutable NewtonOperatorType invOp_;
     };
 

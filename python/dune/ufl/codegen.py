@@ -484,7 +484,7 @@ class ModelClass():
         return UnformattedExpression('auto', 'intersection_.geometry()')
 
 
-    def code(self,name=None):
+    def code(self, name=None, targs=None):
         # self.name = "Integrands"
         # self.targs = ['class GridPart']
         # self.gridPartType = TypeAlias("GridPartType", "GridPart")
@@ -497,6 +497,8 @@ class ModelClass():
 
         if name is not None:
             self.name = name
+        if targs is not None:
+            self.targs = targs
         code = Struct(self.className,
                       targs=(self.targs + ['class ' + n for n in self.coefficientTypes]),
                       bases=self.bases)

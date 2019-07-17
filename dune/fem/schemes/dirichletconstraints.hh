@@ -100,8 +100,9 @@ public:
       // mark DoFs on the Dirichlet boundary
       hasDirichletDofs_( false ),
       sequence_( -1 )
-  {
-  }
+  {}
+
+  const ModelType& model() const {return model_;}
 
   /*! treatment of Dirichlet-const DoFs for given discrete function
    *
@@ -501,7 +502,7 @@ protected:
     return hasDirichletBoundary;
   }
 
-  ModelType &model_;
+  ModelType& model_;
   const DiscreteFunctionSpaceType& space_;
   mutable std::vector< DirichletBlock > dirichletBlocks_;
   mutable bool hasDirichletDofs_ ;
