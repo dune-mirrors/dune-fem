@@ -47,7 +47,7 @@ namespace Dune
           if (marked==1) continue;
 
           localIndicator.bind(e);
-          const auto &center = referenceElemennt( e ).position(0,0);
+          const auto &center = Dune::referenceElement< typename Grid::ctype, Grid::dimension>( e.type() ).position(0,0);
           localIndicator.evaluate(center,value);
           double eta = std::abs(value[0]);
           const int level = e.level();

@@ -48,7 +48,7 @@ namespace Dune
         if (!e.isLeaf()) continue;
         const auto &gridEntity = Dune::Fem::gridEntity(e);
         localIndicator.bind(e);
-        const auto &center = referenceElement( e ).position(0,0);
+        const auto& center = Dune::referenceElement< typename Grid::ctype, Grid::dimension>( e.type() ).position(0,0);
         localIndicator.evaluate(center,value);
         double eta = value[0];
         if( eta > theta*maxError )
