@@ -170,10 +170,8 @@ namespace Dune
         typedef typename Entity::Geometry::ctype ctype;
         static const int dim = Entity::dimension;
 
-        const auto enRef
-          = Dune::ReferenceElements< ctype, dim >::general( en.type() );
-        const auto nbRef
-          = Dune::ReferenceElements< ctype, dim >::general( nb.type() );
+        const auto& enRef = Dune::referenceElement< ctype, dim >( en.type() );
+        const auto& nbRef = Dune::referenceElement< ctype, dim >( nb.type() );
 
         // number of vertices of face
         const int numVertices = enRef.size( inEn, 1, dim );
@@ -261,8 +259,7 @@ namespace Dune
       {
         assert( it.outside().type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
-        static const auto refElem =
-                Dune::ReferenceElements< ctype, 3 >::general( it.outside().type() );
+        static const auto refElem = Dune::referenceElement< ctype, 3 >( it.outside().type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
@@ -282,8 +279,7 @@ namespace Dune
       {
         assert( it.outside().type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
-        static const Dune::ReferenceElement< ctype, 3 > &refElem =
-                Dune::ReferenceElements< ctype, 3 >::general( it.outside().type() );
+        static const auto refElem = Dune::referenceElement< ctype, 3 >( it.outside().type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
