@@ -76,7 +76,7 @@ namespace Dune
         /** \brief return maximum number of blocks used */
         std::size_t maxBlocks () const
         {
-          CHECK_INTERFACE_IMPLEMENTATION( return impl().maxBlocks() );
+          CHECK_INTERFACE_IMPLEMENTATION( impl().maxBlocks() );
           return impl().maxBlocks();
         }
 
@@ -90,7 +90,7 @@ namespace Dune
         /** \brief return number of blocks used */
         std::size_t blocks ( GeometryType type, const KeyType &key ) const
         {
-          CHECK_INTERFACE_IMPLEMENTATION( impl.blocks( type, key ) );
+          CHECK_INTERFACE_IMPLEMENTATION( impl().blocks( type, key ) );
           return impl().blocks( type, key );
         }
 
@@ -129,7 +129,7 @@ namespace Dune
         /** \brief return maximum polynomial order */
         int order () const
         {
-          CHECK_INTERFACE_IMPLEMENTATION( return impl().order() );
+          CHECK_INTERFACE_IMPLEMENTATION( impl().order() );
           return impl().order();
         }
 
