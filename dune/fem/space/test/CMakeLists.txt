@@ -66,10 +66,8 @@ COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT
 LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
-# raviart-thomas interpolation does not work for 3d, this is a bug.
-dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem
-  # COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-COMPILE_DEFINITIONS "GRIDDIM=2;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0" )
+dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+
 
 if( ${FEM_TORTURE_TESTS} )
   # test adaptation of combinedspaces

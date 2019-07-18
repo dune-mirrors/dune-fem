@@ -116,7 +116,7 @@ namespace Dune
       struct RaviartThomasLocalFiniteElement< Dune::Impl::CubeTopology< 3 >::type::id, D, R, 3, 0 >
         : public RT0Cube3DLocalFiniteElement< D, R >
       {
-        static constexpr std::size_t numOrientations = 16;
+        static constexpr std::size_t numOrientations = 64;
         using RT0Cube3DLocalFiniteElement< D, R >::RT0Cube3DLocalFiniteElement;
       };
 
@@ -125,7 +125,7 @@ namespace Dune
       struct RaviartThomasLocalFiniteElement< Dune::Impl::CubeTopology< 3 >::type::id, D, R, 3, 1 >
         : public RT1Cube3DLocalFiniteElement< D, R >
       {
-        static constexpr std::size_t numOrientations = 16;
+        static constexpr std::size_t numOrientations = 64;
         using RT1Cube3DLocalFiniteElement< D, R >::RT1Cube3DLocalFiniteElement;
       };
 

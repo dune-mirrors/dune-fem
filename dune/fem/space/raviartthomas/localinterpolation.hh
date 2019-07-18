@@ -218,7 +218,7 @@ namespace Dune
           basis[  8 ] = std::make_pair( 32, RangeType{       0.0,       0.0,      x[1] } );
           basis[  9 ] = std::make_pair( 33, RangeType{ x[1]*x[2],       0.0,       0.0 } );
           basis[ 10 ] = std::make_pair( 34, RangeType{       0.0, x[0]*x[2],       0.0 } );
-          basis[ 11 ] = std::make_pair( 35, RangeType{       0.0,       0.0, x[1]*x[2] } );
+          basis[ 11 ] = std::make_pair( 35, RangeType{       0.0,       0.0, x[0]*x[1] } );
         }
 
         constexpr auto size ( int codim ) const -> std::size_t { assert( codim < 2 ); return (codim == 0) ? 12 : 4; }
