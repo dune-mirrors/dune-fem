@@ -78,7 +78,8 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      TupleShapeFunctionSet () {}
+      TupleShapeFunctionSet () : offset_( {{ 0 }} ) {
+      }
 
       TupleShapeFunctionSet ( GeometryType type )
         : shapeFunctionSetTuple_( makeGeometryTypeTuple( type, std::index_sequence_for< ShapeFunctionSets ... >() ) )
