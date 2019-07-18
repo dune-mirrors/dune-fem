@@ -102,6 +102,12 @@ namespace Dune
         }
       }
 
+      template <class LFFather>
+      void restrictFinalize ( LFFather &lfFather ) const
+      {
+        DUNE_THROW(Dune::NotImplemented,"PowerLocalRestrictProlong::restrictFinalize is missing!");
+      }
+
       bool needCommunication () const
       {
         return localRestrictProlong_.needCommunication();

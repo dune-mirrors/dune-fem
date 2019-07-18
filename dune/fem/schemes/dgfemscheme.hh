@@ -57,7 +57,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/dataoutput.hh>
 
-#include <dune/fem/schemes/solver.hh>
 #include <dune/fem/schemes/dgelliptic.hh>
 
 template < class Model, int polOrder, SolverType solver >

@@ -16,7 +16,7 @@ namespace Dune
     // --------------------
 
     template< class ErrorFunctional >
-    class LocalFunctonalError
+    class LocalFunctionalError
     {
       typedef LocalFunctionalError< ErrorFunctional > ThisType;
 
@@ -37,11 +37,11 @@ namespace Dune
       typedef ConstLocalFunction< ErrorFunctionalType > LocalErrorFunctionalType;
 
     private:
-      struct LocalOne;
+      struct LocalOne
       {
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-        typedef DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+        typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
         static const int dimDomain = FunctionSpaceType::dimDomain;
         static const int dimRange = FunctionSpaceType::dimRange;
@@ -75,7 +75,7 @@ namespace Dune
       };
 
     public:
-      explicit LocalErrorFunctional ( const ErrorFunctionalType &errorFunctional )
+      explicit LocalFunctionalError ( const ErrorFunctionalType &errorFunctional )
         : localErrorFunctional_( errorFunctional )
       {
         localIndicator_.reserve( space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize );

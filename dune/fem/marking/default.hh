@@ -3,7 +3,8 @@
 
 #include <memory>
 #include <dune/geometry/referenceelements.hh>
-#include <dune/fempy/py/grid/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/function/localfunction/const.hh>
 
 namespace Dune
 {
@@ -46,7 +47,7 @@ namespace Dune
           if (marked==1) continue;
 
           localIndicator.bind(e);
-          const auto &center = ReferenceElements::general( e.type() ).position(0,0);
+          const auto &center = Dune::referenceElement< typename Grid::ctype, Grid::dimension>( e.type() ).position(0,0);
           localIndicator.evaluate(center,value);
           double eta = std::abs(value[0]);
           const int level = e.level();

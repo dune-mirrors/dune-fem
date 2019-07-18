@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <dune/common/dynmatrixev.hh>
-#include <dune/common/std/memory.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/misc/functor.hh>
@@ -107,7 +106,7 @@ namespace Dune
         const char jobvr = 'n';
 
         // working memory
-        std::unique_ptr< double[] > work = Std::make_unique< double[] >( 5*N );
+        std::unique_ptr< double[] > work = std::make_unique< double[] >( 5*N );
 
         // return value information
         long int info = 0;

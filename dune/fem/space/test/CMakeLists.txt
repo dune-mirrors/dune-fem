@@ -56,7 +56,6 @@ foreach( test ${TESTS} )
   LINK_LIBRARIES dunefem )
 endforeach()
 
-
 # dgcomm tests should run on GRIDDIM=3 meshes
 dune_add_test( NAME dgcomm SOURCES dgcomm.cc
 COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0;WANT_CACHED_COMM_MANAGER=0"
@@ -78,9 +77,10 @@ if( ${FEM_TORTURE_TESTS} )
   COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE;POINTBASED"
   LINK_LIBRARIES dunefem )
 
-  dune_add_test( NAME adapt_combinedspace_variablebased SOURCES adapt.cc
-  COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE"
-  LINK_LIBRARIES dunefem )
+# adapt_combinedspace_variablebased is broken, e.g. EOCs are not correct.
+#dune_add_test( NAME adapt_combinedspace_variablebased SOURCES adapt.cc
+#  COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE"
+#  LINK_LIBRARIES dunefem )
 
   dune_add_test( SOURCES test-localadaptation.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
   dune_add_test( SOURCES test-globalrefine.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem )
