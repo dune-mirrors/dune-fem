@@ -352,7 +352,7 @@ namespace Dune
       }
 
       //! return number of subBasisFunctionSets
-      static const int numSubBasisFunctionSets ()
+      static int numSubBasisFunctionSets ()
       {
         return setSize;
       }

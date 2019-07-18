@@ -871,10 +871,6 @@ namespace Dune
           out << "    }"<< std::endl;
           out << std::endl;
         }
-        else
-        {
-          out << "    JacobianRangeType gradPhi0;" << std::endl;
-        }
 
         // remainder iteration
         if( numCols > simdNumCols )

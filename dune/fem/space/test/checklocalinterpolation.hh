@@ -63,7 +63,7 @@ struct LocalBasis
     evaluateQuadrature( quad, vec, vec[ 0 ] );
   }
 
-  const int order () const { return bSet_.order(); }
+  int order () const { return bSet_.order(); }
   const EntityType &entity () const { return bSet_.entity(); }
 
 private:

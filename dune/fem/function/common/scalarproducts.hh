@@ -138,13 +138,13 @@ namespace Dune
     public:
       //! dot product for ISTL solvers
       virtual field_type dot (const BlockVectorType& x,
-                              const BlockVectorType& y)
+                              const BlockVectorType& y) const
       {
         return dotProduct( x, y );
       }
 
       //! norm for ISTL solvers
-      virtual real_type norm( const BlockVectorType& x )
+      virtual real_type norm( const BlockVectorType& x ) const
       {
         return std::abs( std::sqrt( dotProduct( x, x ) ) );
       }

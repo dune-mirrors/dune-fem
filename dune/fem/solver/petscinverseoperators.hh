@@ -458,6 +458,7 @@ namespace Dune
               break;
             }
             ::Dune::Petsc::PCSetType( pc, PCML );
+            break;
           case SolverParameter::icc:
             {
 #ifdef PETSC_HAVE_ICC

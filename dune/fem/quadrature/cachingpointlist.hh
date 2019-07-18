@@ -260,7 +260,7 @@ namespace Dune
 
         assert( mapper_[ i ] >= 0 );
         int faceIndex = localFaceIndex();
-        int point = mapper_[ i ] - faceIndex * mapper_.size();
+        unsigned int point = mapper_[ i ] - faceIndex * mapper_.size();
         assert( point < nop() );
 
         return point;
