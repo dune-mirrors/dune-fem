@@ -23,7 +23,8 @@ namespace Dune
       {}
 
       UninitializedObjectStack ( const UninitializedObjectStack &other )
-        : objectSize_( other.objectSize_ )
+        : std::stack< void * >(),
+          objectSize_( other.objectSize_ )
       {}
 
       UninitializedObjectStack &operator= ( const UninitializedObjectStack &other )

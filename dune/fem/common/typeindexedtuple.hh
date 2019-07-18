@@ -100,7 +100,7 @@ namespace Dune
 
     //! \brief return true if type T is contained in the tuple
     template< class T >
-    const bool active( const T& ) const { return Contains< T >::value; }
+    bool active( const T& ) const { return Contains< T >::value; }
 
     //! \brief cast to Tuple
     operator Tuple & () { return tuple_; }

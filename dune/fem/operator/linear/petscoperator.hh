@@ -915,9 +915,8 @@ namespace Dune
       const Mat& petscMatrix () const { return petscLinearOperator_.petscMatrix_; }
 
     public:
-      const int rows()    const { return rowIndices_.size(); }
-      const int columns() const { return colIndices_.size(); }
-
+      int rows()    const { return rowIndices_.size(); }
+      int columns() const { return colIndices_.size(); }
 
     private:
       DofIndexType globalRowIndex( const int localRow ) const

@@ -303,11 +303,7 @@ namespace Dune
       double value_;
 
     public:
-      operator double ()
-      {
-        return value_;
-      }
-      operator const double () const
+      operator double () const
       {
         return value_;
       }
