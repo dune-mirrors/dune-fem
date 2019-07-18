@@ -30,7 +30,7 @@ if False: # dune.fem type grid functions don't yet have vectorization support
 
 if True:
     #algo = algorithm.load('l2norm2', 'test_quad.hh', yaspView, rules, error)
-    algo = algorithm.load('l2norm2FemQuad', 'test_quad.hh', yaspView, rules, error)
+    algo = algorithm.load('l2norm2FemQuad', 'test_quad.hpp', yaspView, rules, error)
     start = time.time()
     l2norm2 = algo(yaspView,rules,error)
     print("C++:",math.sqrt(l2norm2),flush=True)
