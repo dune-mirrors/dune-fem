@@ -72,7 +72,8 @@ namespace Dune
 
       //! Copy constructor
       DynamicReferenceVector ( const ThisType &other )
-      : data_( other.data_ )
+      : BaseType(), // DenseVector stores no data anyway
+        data_( other.data_ )
       {}
 
       //! Move constructor
