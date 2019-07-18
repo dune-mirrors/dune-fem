@@ -241,7 +241,7 @@ int main ( int argc, char **argv )
 
   auto indices = std::make_index_sequence< std::tuple_size< DiscreteFunctionSpacesType >::value >();
 
-  std::array< ErrorTupleType, 4 > errors;
+  std::array< ErrorTupleType, (GridType::dimension == 3) ? 3 : 4 > errors;
   for( ErrorTupleType &e : errors )
   {
     Dune::Hybrid::forEach( indices, [ &gridPart, &e ] ( auto &&idx ) {
