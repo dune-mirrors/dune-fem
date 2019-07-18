@@ -8,6 +8,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/function/common/rangegenerators.hh>
+#include <dune/fem/function/common/discretefunction.hh>
 
 #include <dune/fem/marking/default.hh>
 

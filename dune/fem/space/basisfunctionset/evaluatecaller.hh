@@ -3,9 +3,12 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fmatrix.hh>
+
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
