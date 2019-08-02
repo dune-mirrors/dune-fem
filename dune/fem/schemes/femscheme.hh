@@ -99,7 +99,7 @@ public:
   static const int dimRange = FunctionSpaceType::dimRange;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  FemScheme ( const DiscreteFunctionSpaceType &space, ModelType model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : space_( space ),
     // the elliptic operator (implicit)
     implicitOperator_( space, space, std::move(model), parameter ),

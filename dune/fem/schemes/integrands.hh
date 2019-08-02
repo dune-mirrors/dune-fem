@@ -353,6 +353,12 @@ namespace Dune
         typedef Dune::FieldVector<FT,r> type;
         static const int value = r;
       };
+      template <class FT,int r,int c>
+      struct GetDimRange<Dune::Fem::ExplicitFieldVector<Dune::FieldMatrix<FT,c,c>,r>>
+      {
+        typedef Dune::FieldVector<FT,r> type;
+        static const int value = r;
+      };
     }
 
     template< class GridPart, class DomainValue, class RangeValue = DomainValue >
