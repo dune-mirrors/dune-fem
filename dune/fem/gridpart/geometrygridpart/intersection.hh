@@ -7,6 +7,7 @@
 #include <dune/fem/misc/compatibility.hh>
 
 #include <dune/geometry/affinegeometry.hh>
+#include <dune/fem/misc/boundaryidprovider.hh>
 
 namespace Dune
 {
@@ -55,6 +56,10 @@ namespace Dune
 
       Entity inside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().inside() ); }
       Entity outside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().outside() ); }
+
+      int boundaryId () const {
+        return Dune::Fem::BoundaryIdProvider< typename HostGridPartType::GridType > :: boundaryId( hostIntersection() );
+      }
 
       bool boundary () const { return hostIntersection().boundary(); }
 
