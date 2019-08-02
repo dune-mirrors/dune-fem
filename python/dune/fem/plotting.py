@@ -1,13 +1,15 @@
 import matplotlib
 from matplotlib import pyplot
-from numpy import amin, amax, linspace, linalg
+from numpy import amin, amax, linspace, linalg, log
 from matplotlib.collections import PolyCollection
+from matplotlib.colors import LogNorm
 
 from dune.plotting import block, disable
 globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
-        xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical", triplot=False):
+        xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
+        triplot=False, logscale=False):
 
     if colorbar == True:
         colorbar = "vertical"
@@ -40,18 +42,27 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                 data = linalg.norm(data,axis=1)
             else:
                 data = data[:,0]
+            if logscale:
+                data = abs(data)
+                logNorm = {"norm":LogNorm()}
+            else:
+                logNorm = {}
             minData = amin(data)
             maxData = amax(data)
             if clim == None:
                 clim = [minData, maxData]
             levels = linspace(clim[0], clim[1], 256, endpoint=True)
             if triplot == True:
-                pyplot.triplot(triangulation, antialiased=True, linewidth=0.2, color='black')
+                pyplot.triplot(triangulation, antialiased=True,
+                        linewidth=0.2, color='black',
+                        )
             else:
                 try:
-                    pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
+                    pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels,
+                            **logNorm,extend="both")
                 except:
-                    pyplot.tricontourf(triangulation, data, cmap=cmap, extend="both")
+                    pyplot.tricontourf(triangulation, data, cmap=cmap,
+                            **logNorm,extend="both")
             if colorbar is not None:
                 # having extend not 'both' does not seem to work (needs fixing)...
                 if clim[0] > minData and clim[1] < maxData:
@@ -91,7 +102,8 @@ def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar="vertical", grid=None, triplot=False,
-        block=globalBlock):
+        block=globalBlock,
+        logscale=False):
     if disable: return
     try:
         grid = solution.grid
@@ -118,7 +130,8 @@ def plotPointData(solution, figure=None,
             pass
         newFig = False
     _plotPointData(figure, grid, solution, level, gridLines,
-                    vectors, xlim, ylim, clim, cmap, colorbar, triplot)
+                    vectors, xlim, ylim, clim, cmap, colorbar, triplot,
+                    logscale)
 
     if newFig and block:
         pyplot.show(block=block)
