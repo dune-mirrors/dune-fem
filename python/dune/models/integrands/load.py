@@ -266,6 +266,8 @@ def load(grid, form, *args, renumbering=None, tempVars=True, virtualize=True):
         def __init__(self, *args, **kwargs):
             self.base = module.Integrands
             init(self,integrands,*args,**kwargs)
+            for c in integrands.constantList:
+                c.registerModel(self)
 
     setattr(Model, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
     if renumbering is not None:

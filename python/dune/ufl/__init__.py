@@ -208,7 +208,10 @@ class Constant(ufl.Coefficient):
         assert type(self._value) == type(v)
         self._value = v
         for m in self.models:
-            m.setConstant(self,v)
+            if hasattr(m,self.name):
+                setattr(m,self.name,v)
+            else:
+                m.setConstant(self,v)
             # m(v)
     def registerModel(self,model):
         self.models += [model]
