@@ -29,7 +29,8 @@ const Quadrature2d& Quadrature2d::quadrature(int minimum_degree)
   case 0:
   case 1: return quad2d_1; break;
   case 2: return quad2d_2; break;
-  case 3: return quad2d_3; break;
+  // for order=3 we user the order=4 quad
+  case 3: //return quad2d_3; break;
   case 4: return quad2d_4; break;
   case 5: return quad2d_5; break;
   case 6: return quad2d_6; break;
@@ -120,6 +121,8 @@ static const double quad2d_2_x[][3] =
 const Quadrature2d quad2d_2(3, 2, quad2d_2_x);
 
 
+// NOTE: this quadrature has negative weights
+// which leads to nasty bugs when using higher order Lagrange elements
 static const double quad2d_3_x[][3] =
   {{1.0/3.0, 1.0/3.0,   -9.0/32.0},
    {1.0/5.0, 1.0/5.0,   25.0/96.0},

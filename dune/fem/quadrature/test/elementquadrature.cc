@@ -39,6 +39,15 @@ void checkQuadraturePoints ( Dune::GeometryType type, int order )
     if( !refElement.checkInside( Dune::Fem::coordinate( quadrature[ qp ] ) ) )
       DUNE_THROW( Dune::RangeError, "Quadrature Point " << Dune::Fem::coordinate( quadrature[ qp ] ) << " not within reference element." );
   }
+
+  double sum = 0 ;
+  for( std::size_t qp = 0; qp < quadrature.nop(); ++qp )
+  {
+    sum += quadrature.weight( qp );
+  }
+  if( std::abs( sum - refElement.volume() ) > 1e-8 )
+      DUNE_THROW( Dune::RangeError, "Weights don't sum up to 1");
+
 }
 
 
