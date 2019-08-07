@@ -82,42 +82,6 @@ namespace Dune
       typedef LagrangeShapeFunctionSet< ShapeFunctionSpaceType, maxPolynomialOrder > LagrangeShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LagrangeShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
 
-      struct ScalarShapeFunctionSetFactory
-      {
-      private:
-        static const bool dynamicPolynomialOrder = ( maxPolynomialOrder != minPolynomialOrder );
-        static int& shapeFunctionPolynomialOrder ()
-        {
-          static int pOrd = -1;
-          return pOrd;
-        }
-
-      public:
-        static void setPolynomialOrder( const int polynomialOrder )
-        {
-          if( dynamicPolynomialOrder )
-          {
-            assert( polynomialOrder >= minPolynomialOrder && polynomialOrder <= maxPolynomialOrder );
-            shapeFunctionPolynomialOrder() = polynomialOrder;
-          }
-        }
-
-        static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
-        {
-          int polynomialOrder = minPolynomialOrder ;
-          if( dynamicPolynomialOrder )
-          {
-            polynomialOrder = shapeFunctionPolynomialOrder();
-            // reset shapeFunctionPolynomialOrder to avoid undefined behaviour
-            shapeFunctionPolynomialOrder() = -1;
-          }
-          return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type, polynomialOrder ) );
-        }
-
-        static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
-      };
-      typedef ScalarShapeFunctionSetFactory ScalarShapeFunctionSetFactoryType;
-
       typedef ShapeFunctionSetProxy< ScalarShapeFunctionSetType > ScalarShapeFunctionSetProxyType;
       typedef VectorialShapeFunctionSet< ScalarShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
 
@@ -192,7 +156,6 @@ namespace Dune
 
     private:
       typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
-      typedef SingletonList< GeometryType, ScalarShapeFunctionSetType, typename Traits::ScalarShapeFunctionSetFactoryType > SingletonProviderType;
       typedef BaseSetLocalKeyStorage< ScalarShapeFunctionSetType > ScalarShapeFunctionSetStorageType;
 
       typedef CompiledLocalKeyContainer< LagrangePointSetType, minPolynomialOrder, maxPolynomialOrder > LagrangePointSetContainerType;
@@ -207,6 +170,35 @@ namespace Dune
       // static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
       static const InterfaceType defaultInterface = GridPart::indexSetInterfaceType;
       static const CommunicationDirection defaultDirection = ForwardCommunication;
+
+
+      template < int pOrd >
+      struct Initialize
+      {
+        struct ScalarShapeFunctionSetFactory
+        {
+        public:
+          static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
+          {
+            typedef typename Traits :: LagrangeShapeFunctionSetType  LagrangeShapeFunctionSetType;
+            return new ScalarShapeFunctionSetType( type, LagrangeShapeFunctionSetType( type, pOrd ) );
+          }
+
+          static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
+        };
+
+        static void apply ( ScalarShapeFunctionSetStorageType& scalarShapeFunctionSets,
+                            const int polynomialOrder,
+                            const GeometryType &type )
+        {
+          if( polynomialOrder == pOrd )
+          {
+            typedef SingletonList< const GeometryType, ScalarShapeFunctionSetType, ScalarShapeFunctionSetFactory > SingletonProviderType;
+            scalarShapeFunctionSets.template insert< SingletonProviderType >( type );
+          }
+        }
+      };
+
 
     public:
       ///////////////////////
@@ -236,15 +228,11 @@ namespace Dune
         AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
         const std::vector< GeometryType > &geometryTypes = allGeometryTypes.geomTypes( 0 );
 
+        // create shape function sets
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
-          // set polynomial order in shape function set factory.
-          Traits::ScalarShapeFunctionSetFactoryType::setPolynomialOrder( polynomialOrder_ );
-
-          const GeometryType &type = geometryTypes[ i ];
-          // since this space can only work for one polynomial order at the same
-          // time we only need one scalarShapeFunctionSets_ storage
-          scalarShapeFunctionSets_.template insert< SingletonProviderType >( type );
+          Fem::ForLoop< Initialize, minPolynomialOrder, maxPolynomialOrder >::
+            apply( scalarShapeFunctionSets_, polynomialOrder_, geometryTypes[ i ] );
         }
 
         MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder_ ), polynomialOrder_ );
