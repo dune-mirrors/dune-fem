@@ -64,10 +64,12 @@ public:
   // types for boundary treatment
   // ----------------------------
   static const int localBlockSize = DiscreteFunctionSpaceType :: localBlockSize ;
-  static_assert( localBlockSize == DiscreteFunctionSpaceType::FunctionSpaceType::dimRange,
-      "local block size of the space must be identical to the dimension of the range of the function space.");
-  typedef FieldVector<int, localBlockSize> DirichletBlock;
-  typedef FieldVector<int, localBlockSize> ModelDirichletBlock;
+  //static_assert( localBlockSize == DiscreteFunctionSpaceType::FunctionSpaceType::dimRange,
+   //   "local block size of the space must be identical to the dimension of the range of the function space.");
+  //typedef FieldVector<int, localBlockSize> DirichletBlock;
+  //typedef FieldVector<int, localBlockSize> ModelDirichletBlock;
+  typedef typename ModelType :: DirichletComponentType  DirichletBlock;
+  typedef DirichletBlock  ModelDirichletBlock;
   // static_assert( dimD >= localBlockSize,
   //     "local block size of the space must be less or equahl to the dimension of the range of the model.");
 
