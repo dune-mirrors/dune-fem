@@ -171,9 +171,42 @@ namespace Dune
             } );
         }
 
+        template< class Entity >
+        void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numEntityDofs( entity ) );
+          AssignFunctor< std::vector< GlobalKeyType > > functor( indices );
+          mapEachEntityDof( entity, functor );
+        }
+
+        void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          AssignFunctor< std::vector< GlobalKeyType > > functor( indices );
+          mapEach( element, functor );
+        }
+
+
         void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
         {
-          DUNE_THROW( NotImplemented, "Method onSubEntity(...) not yet implemented for TupleMapper" );
+          indices.resize( numDofs( element ) );
+          std::fill( indices.begin(), indices.end(), false );
+
+          OffsetType localOffset;
+          localOffset[ 0 ] = 0;
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              tmpIndices_.clear();
+              std::get< i >( mapperTuple_ ).onSubEntity( element, i, c, tmpIndices_ );
+              const int subSize = tmpIndices_.size();
+              for( int k=0; k<subSize; ++k )
+              {
+                indices[ localOffset[ i ] + k ] = tmpIndices_[ k ];
+              }
+              localOffset[ i + 1 ] = localOffset[ i ] + subSize ;
+              assert( subSize == std::get< i >( mapperTuple_ ).numDofs( element ) );
+            } );
         }
 
         int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
@@ -266,11 +299,14 @@ namespace Dune
           // compute new offsets
           Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i ){ globalOffset_[ i + 1 ] = globalOffset_[ i ] + std::get< i >( mapperTuple_ ).size(); } );
+
+          tmpIndices_.reserve( maxNumDofs() );
         }
 
         GridPartType &gridPart_;
         std::tuple< Mapper ... > mapperTuple_;
         OffsetType globalOffset_;
+        mutable std::vector< bool > tmpIndices_;
       };
 
 
