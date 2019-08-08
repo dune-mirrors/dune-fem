@@ -187,7 +187,7 @@ namespace Dune
         }
 
 
-        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        void onSubEntity ( const ElementType &element, int subEntity, int codim, std::vector< bool > &indices ) const
         {
           indices.resize( numDofs( element ) );
           std::fill( indices.begin(), indices.end(), false );
@@ -198,7 +198,7 @@ namespace Dune
             [ & ]( auto i )
             {
               tmpIndices_.clear();
-              std::get< i >( mapperTuple_ ).onSubEntity( element, i, c, tmpIndices_ );
+              std::get< i >( mapperTuple_ ).onSubEntity( element, subEntity, codim, tmpIndices_ );
               const int subSize = tmpIndices_.size();
               for( int k=0; k<subSize; ++k )
               {

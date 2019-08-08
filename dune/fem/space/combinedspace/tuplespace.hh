@@ -109,6 +109,8 @@ namespace Dune
 
       typedef TupleSpaceInterpolation< DiscreteFunctionSpaces ... > InterpolationType;
 
+      static const int localBlockSize = SubDiscreteFunctionSpace< 0 >::Type::localBlockSize ;
+
       // review to make it work for all kind of combinations
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
@@ -198,6 +200,8 @@ namespace Dune
 
       typedef typename Traits::InterpolationType InterpolationType;
       typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
+
+      static const int localBlockSize = Traits :: localBlockSize;
 
       /** \brief constructor
        *

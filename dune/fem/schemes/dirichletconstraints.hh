@@ -486,7 +486,8 @@ protected:
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
           space_.blockMapper().onSubEntity(entity,face,1,globalBlockDofsFilter);
-          for( unsigned int i=0;i<globalBlockDofs.size();++i)
+          const int glbDofSize = globalBlockDofs.size();
+          for( int i=0;i<glbDofSize;++i)
           {
             if ( !globalBlockDofsFilter[i] ) continue;
             // mark global DoF number

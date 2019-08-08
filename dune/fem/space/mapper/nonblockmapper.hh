@@ -110,12 +110,13 @@ namespace Dune
         void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
         {
           const SizeType numDofs = blockMapper_.numDofs( element );
-          blockMapper_.onSubEntity( element, i, c, indices );
+          blockMapper_.onSubEntity( element, i, c, tmpIndices_ );
           indices.resize( blockSize * numDofs );
-          for( SizeType i = numDofs; i > 0; )
+
+          for( SizeType i=0; i<numDofs; ++i )
           {
             for( int j = 0; j < blockSize; ++j )
-              indices[ i*blockSize + j ] = indices[ i ];
+              indices[ i*blockSize + j ] = tmpIndices_[ i ];
           }
         }
 
@@ -175,6 +176,7 @@ namespace Dune
 
       private:
         BlockMapperType &blockMapper_;
+        mutable std::vector< bool > tmpIndices_;
       };
 
 
