@@ -576,7 +576,7 @@ namespace Dune
         if( codimAvailable( codim ) )
         {
           if( (codim != 0) && ! codimUsed_[ codim ] )
-            setupCodimSet< codim >(std::integral_constant<bool,true>());
+            setupCodimSet< codim >(std::integral_constant<bool,Dune::Capabilities::hasEntity < GridType, codim > :: v>());
 
           return codimLeafSet( codim ).index( gridEntity( entity ) );
         }
