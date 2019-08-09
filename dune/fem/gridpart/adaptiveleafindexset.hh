@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <memory>
 #include <type_traits>
 
 #include <dune/fem/common/forloop.hh>
@@ -174,7 +175,7 @@ namespace Dune
           if( ! indexSet.codimAvailable( codim ) ) return ;
 
           // if codimension is not used return
-          if( !indexSet.codimUsed_[ codim ] ) return;
+          if( !indexSet.codimUsed( codim ) ) return;
 
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
@@ -196,7 +197,7 @@ namespace Dune
           if( ! indexSet.codimAvailable( codim ) ) return ;
 
           // if codimension is not used return
-          if( !indexSet.codimUsed_[ codim ] ) return;
+          if( !indexSet.codimUsed( codim ) ) return;
 
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
@@ -230,7 +231,7 @@ namespace Dune
           // if codimension is not available return
           if( ! indexSet.codimAvailable( codim ) ) return ;
 
-          if( cd == codim )
+          if( cd == codim && ! indexSet.codimUsed( cd ) )
             indexSet.template setupCodimSet< codim >(std::integral_constant<bool,true>());
         }
       };
@@ -240,7 +241,7 @@ namespace Dune
       {
         static void apply ( const int cd, const ThisType &indexSet )
         {
-          if( cd == codim )
+          if( cd == codim && ! indexSet.codimUsed( cd ) )
             indexSet.template setupCodimSet< codim >(std::integral_constant<bool,false>());
         }
       };
@@ -297,15 +298,14 @@ namespace Dune
       //! default partition iterator type
       static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
-      // reference to grid part (for iterator access)
+      // grid part (for iterator access, no index set)
       const GridPartType& gridPart_;
-      // storage of grid part in case it was created
-      std::unique_ptr< GridPartType > gridPartPtr_;
+
+      // pointer storage in case index set is created by passing a grid
+      std::unique_ptr< const GridPartType > gridPartPtr_;
 
       // Codimension leaf index sets
-      mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
-      // flag for codim is in use or not
-      mutable bool codimUsed_ [ maxNumCodimension ];
+      mutable std::unique_ptr< CodimIndexSetType > codimLeafSet_[ numCodimensions ];
 
       // vector holding geometry types
       std::vector< std::vector< GeometryType > > geomTypes_;
@@ -323,7 +323,13 @@ namespace Dune
       // return true if codim is supported
       bool codimAvailable( const int codim ) const
       {
-        return codim < numCodimensions && codim >= 0 ;
+        return (codim < numCodimensions && codim >= 0);
+      }
+
+      // return true if indices for this codim exist
+      bool codimUsed( const int codim ) const
+      {
+        return codimAvailable( codim ) && codimLeafSet_[ codim ] ;
       }
 
       CodimIndexSetType& codimLeafSet( const int codim ) const
@@ -343,39 +349,34 @@ namespace Dune
         }
       }
 
-      //! Constructor, taking ownership of grid part
-      AdaptiveIndexSetBase (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : AdaptiveIndexSetBase( *gridPartPtr )
+      //! Constructor
+      AdaptiveIndexSetBase ( const GridType* grid )
+        : AdaptiveIndexSetBase( *(new GridPartType( const_cast< GridType& > (*grid), typename GridPartType::NoIndexSetType() )) )
       {
-        // store grid part object for later deleting it
-        gridPartPtr_.reset( gridPartPtr.release() );
+        // store pointer to avoid memory leaks
+        gridPartPtr_.reset( &gridPart_ );
       }
 
       //! Constructor
-      AdaptiveIndexSetBase (const GridPartType & gridPart)
+      AdaptiveIndexSetBase ( const GridPartType& gridPart )
         : BaseType( gridPart.grid() )
         , gridPart_( gridPart )
         , sequence_( dofManager_.sequence() )
         , compressed_(true) // at start the set is compressed
       {
         // codim 0 is used by default
-        codimUsed_[ 0 ] = true;
-
-        // all higher codims are not used by default
-        for(int codim = 1; codim < maxNumCodimension; ++codim ) codimUsed_[ codim ] = false ;
+        codimLeafSet_[ 0 ].reset( new CodimIndexSetType( grid_, 0 ) );
 
         // set the codim of each Codim Set.
         for(int codim = 0; codim < numCodimensions; ++codim )
         {
           if( codim == intersectionCodimension )
-            codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, 1 );
-          else
-            codimLeafSet_[ codim ] = new CodimIndexSetType( grid_, codim );
+            codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, 1 ) );
         }
 
         /// get geometry types (not working for hybrid grids, like to whole set itself)
         {
-          // get level-0 view, this is alrady used in GridPtr (DFG parser)
+          // get level-0 view, this is already used in GridPtr (DFG parser)
           typedef typename GridType :: LevelGridView MacroViewType;
           MacroViewType macroView = grid_.levelGridView( 0 );
           const typename MacroViewType :: IndexSet& indexSet = macroView.indexSet();
@@ -393,17 +394,6 @@ namespace Dune
 
         // build index set
         setupIndexSet();
-      }
-
-      //! Destructor
-      virtual ~AdaptiveIndexSetBase ()
-      {
-        // delete all the codim sets
-        for(int codim = 0; codim < numCodimensions; ++codim )
-        {
-          delete codimLeafSet_[ codim ];
-          codimLeafSet_[ codim ] = 0;
-        }
       }
 
       //! return type of index set, for GrapeDataIO
@@ -434,7 +424,7 @@ namespace Dune
         // use size of codim index set if possible
         if( codimAvailable( codim ) && onlySingleGeometryType )
         {
-          if( codimUsed_[ codim ] )
+          if( codimUsed( codim ) )
             return type == geomTypes( codim )[ 0 ] ? codimLeafSet( codim ).size() : 0;
         }
 
@@ -483,7 +473,7 @@ namespace Dune
         enum { codim = EntityType::codimension };
         if( codimAvailable( codim ) )
         {
-          assert( codimUsed_[codim] );
+          assert( codimUsed( codim ) );
           return codimLeafSet( codim ).exists( gridEntity( en ) );
         }
         else
@@ -575,8 +565,8 @@ namespace Dune
       {
         if( codimAvailable( codim ) )
         {
-          if( (codim != 0) && ! codimUsed_[ codim ] )
-            setupCodimSet< codim >(std::integral_constant<bool,true>());
+          if( (codim != 0) && ! codimUsed( codim ) )
+            setupCodimSet< codim >(std::integral_constant<bool,Dune::Capabilities::hasEntity < GridType, codim > :: v>());
 
           return codimLeafSet( codim ).index( gridEntity( entity ) );
         }
@@ -633,7 +623,7 @@ namespace Dune
         if( !codimAvailable( codim ) )
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
 
-        if( (codim != 0) && ! codimUsed_[ codim ] )
+        if( (codim != 0) && ! codimUsed( codim ) )
         {
           Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         }
@@ -661,9 +651,8 @@ namespace Dune
       //! return number of holes of the sets indices
       int numberOfHoles ( const int codim ) const
       {
-        if( codimAvailable( codim ) && codimUsed_[codim] )
+        if( codimAvailable( codim ) && codimUsed( codim ) )
         {
-          assert( codimUsed_[codim] );
           return codimLeafSet( codim ).numberOfHoles();
         }
         else
@@ -683,7 +672,7 @@ namespace Dune
       {
         if( codimAvailable( codim ) )
         {
-          assert( codimUsed_[codim] );
+          assert( codimUsed( codim ) );
           return codimLeafSet( codim ).oldIndex( hole );
         }
         else
@@ -706,7 +695,7 @@ namespace Dune
       {
         if( codimAvailable( codim ) )
         {
-          assert( codimUsed_[codim] );
+          assert( codimUsed( codim ) );
           return codimLeafSet( codim ).newIndex( hole );
         }
         else
@@ -816,7 +805,7 @@ namespace Dune
       {
         for( int codim = 1; codim < numCodimensions; ++codim )
         {
-          if( codimUsed_[ codim ] )
+          if( codimUsed( codim ) )
             codimLeafSet( codim ).resize();
         }
       }
@@ -830,7 +819,10 @@ namespace Dune
     {
       // reset list of holes in any case
       for( int codim = 0; codim < numCodimensions; ++codim )
-        codimLeafSet( codim ).clearHoles();
+      {
+        if( codimUsed( codim ) )
+          codimLeafSet( codim ).clearHoles();
+      }
 
       if( compressed_ )
       {
@@ -843,7 +835,8 @@ namespace Dune
       // prepare index sets for setup
       for( int codim = 0; codim < numCodimensions; ++codim )
       {
-        codimLeafSet( codim ).prepareCompress();
+        if( codimUsed( codim ) )
+          codimLeafSet( codim ).prepareCompress();
       }
 
       // mark all indices still needed
@@ -853,7 +846,7 @@ namespace Dune
       bool haveToCopy = codimLeafSet( 0 ).compress();
       for( int codim = 1; codim < numCodimensions; ++codim )
       {
-        if( codimUsed_[ codim ] )
+        if( codimUsed( codim ) )
           haveToCopy |= codimLeafSet( codim ).compress();
       }
 
@@ -993,7 +986,7 @@ namespace Dune
       // mark all indices as unused
       for( int codim = 0; codim < numCodimensions; ++codim )
       {
-        if( codimUsed_[ codim ] )
+        if( codimUsed( codim ) )
           codimLeafSet( codim ).resetUsed();
       }
 
@@ -1017,7 +1010,7 @@ namespace Dune
         // mark all indices as unused
         for( int codim = 0; codim < numCodimensions; ++codim )
         {
-          if( codimUsed_[ codim ] )
+          if( codimUsed( codim ) )
           {
             // clear all information
             codimLeafSet( codim ).clear();
@@ -1059,7 +1052,7 @@ namespace Dune
       // mark all indices as unused
       for( int codim = 0; codim < numCodimensions; ++codim )
       {
-        if( codimUsed_[ codim ] )
+        if( codimUsed( codim ) )
           codimLeafSet( codim ).resetUsed();
       }
 
@@ -1083,6 +1076,9 @@ namespace Dune
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
 
+      if( ! codimLeafSet_[ codim ] )
+        codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, codim ) );
+
       // resize if necessary
       codimLeafSet( codim ).resize();
 
@@ -1093,9 +1089,6 @@ namespace Dune
       const Iterator end = gridPart_.template end< codim, pitype >();
       for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
         codimLeafSet( codim ).insert( gridEntity( *it ) );
-
-      // mark codimension as used
-      codimUsed_[ codim ] = true;
     }
 
     template< class TraitsImp >
@@ -1105,6 +1098,9 @@ namespace Dune
     {
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
+
+      if( ! codimLeafSet_[ codim ] )
+        codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, codim ) );
 
       // resize if necessary
       codimLeafSet( codim ).resize();
@@ -1124,9 +1120,6 @@ namespace Dune
             codimLeafSet( codim ).insertSubEntity( gridElement, i );
         }
       }
-
-      // mark codimension as used
-      codimUsed_[ codim ] = true;
     }
 
 
@@ -1138,7 +1131,7 @@ namespace Dune
       if( intersectionCodimension < 0 ) return ;
 
       // do nothing if insections are already available
-      if( codimUsed_[ intersectionCodimension ] ) return ;
+      if( codimUsed( intersectionCodimension ) ) return ;
 
       // resize if necessary
       codimLeafSet( intersectionCodimension ).resize();
@@ -1153,9 +1146,6 @@ namespace Dune
         // insert all intersections of this entity
         insertIntersections( gridEntity( *it ) );
       }
-
-      // mark codimension as used
-      codimUsed_[ intersectionCodimension ] = true;
     }
 
     template< class TraitsImp >
@@ -1184,6 +1174,9 @@ namespace Dune
     inline typename AdaptiveIndexSetBase< TraitsImp >::IndexType
     AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const std::integral_constant<bool,false>& ) const
     {
+      if( ! codimLeafSet_[ codim ] )
+        return 0;
+
       // make sure codimension is enabled
       assert( codimAvailable( codim ) );
 
@@ -1216,9 +1209,6 @@ namespace Dune
         }
       }
 
-      // mark codimension as used
-      codimUsed_[ codim ] = true;
-
       return count;
     }
 
@@ -1237,12 +1227,12 @@ namespace Dune
 
       // write whether codim is used
       for( int i = 0; i < numCodimensions; ++i )
-        out << codimUsed_[ i ];
+        out << codimUsed( i );
 
       // write all sets
       for( int i = 0; i < numCodimensions; ++i )
       {
-        if( codimUsed_[ i ] )
+        if( codimUsed( i ) )
           codimLeafSet( i ).write( out );
       }
 
@@ -1279,15 +1269,24 @@ namespace Dune
       in >> numCodim;
 
       // make sure everything is correct
-      assert( numCodim == numCodimensions );
+      // assert( numCodim == numCodimensions );
+      if( numCodim != numCodimensions )
+        DUNE_THROW(InvalidStateException,"AdaptiveIndexSetBase::read: got wrong number of codimensions" << numCodim << " instead of " << numCodimensions);
 
       // read codim used
       for( int i = 0; i < numCodimensions; ++i )
-        in >> codimUsed_[ i ];
+      {
+        bool codimInUse = false ;
+        in >> codimInUse;
+        if( codimInUse && ! codimLeafSet_[ i ] )
+        {
+          codimLeafSet_[ i ].reset( new CodimIndexSetType( grid_, (i == intersectionCodimension ) ? 1 : i  ) );
+        }
+      }
 
       for( int i = 0; i < numCodimensions; ++i )
       {
-        if( codimUsed_[ i ] )
+        if( codimUsed( i ) )
           codimLeafSet( i ).read( in );
       }
 
@@ -1338,15 +1337,17 @@ namespace Dune
       typedef AdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
+      typedef typename BaseType :: GridType GridType;
       typedef typename BaseType :: GridPartType GridPartType;
+
       //! Constructor
-      AdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
+      AdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
-      //! Constructor, taking ownership of grid part pointer
-      AdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : BaseType( std::move( gridPartPtr ) )
+      //! Constructor
+      AdaptiveLeafIndexSet (const GridPartType& gridPart)
+        : BaseType(gridPart)
       {}
 
       //! return name of index set
@@ -1409,15 +1410,16 @@ namespace Dune
       typedef IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
+      typedef typename BaseType :: GridType     GridType;
       typedef typename BaseType :: GridPartType GridPartType;
       //! Constructor
-      IntersectionAdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
+      IntersectionAdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
-      //! Constructor, taking ownership of grid part pointer
-      IntersectionAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr )
-        : BaseType( std::move( gridPartPtr ) )
+      //! Constructor
+      IntersectionAdaptiveLeafIndexSet (const GridPartType& gridPart)
+        : BaseType(gridPart)
       {}
 
       //! return name of index set
@@ -1479,15 +1481,15 @@ namespace Dune
       typedef DGAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
+      typedef typename BaseType :: GridType     GridType;
       typedef typename BaseType :: GridPartType GridPartType;
       //! Constructor
-      DGAdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
+      DGAdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
-      //! Constructor, taking ownership of grid part pointer
-      DGAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : BaseType( std::move( gridPartPtr ) )
+      DGAdaptiveLeafIndexSet (const GridPartType& gridPart)
+        : BaseType(gridPart)
       {}
 
       //! return name of index set

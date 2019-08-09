@@ -6,15 +6,16 @@
 #endif
 
 // only perform this test for the 3d version of ALUGrid
-#if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE
-#if GRIDDIM == 3
+#if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE || defined UGGRID
+//#if GRIDDIM == 3
 #define RUN_PROGRAM
-#endif
+//#endif
 #endif
 
-#if defined ALUGRID_CONFORM
+//#if defined ALUGRID_CONFORM
 #define CONFORMING_SPACE
-#endif
+#undef USECOMBINEDSPACE
+//#endif
 
 #include <config.h>
 
@@ -122,6 +123,12 @@ struct Scheme
     return solution_;
   }
 
+  template <class GF>
+  void initialize( const GF& gridFunction )
+  {
+    Dune::Fem::interpolate( gridFunction, solution_ );
+  }
+
   //! mark elements for adaptation
   bool mark ( double time ) const
   {
@@ -185,7 +192,7 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 {
   void evaluate( const typename FunctionSpace::DomainType &x, typename FunctionSpace::RangeType &y ) const
   {
-    y[ 0 ] = 0.0;
+    y[ 0 ] = x[ 0 ] * (1-x[0]);
   }
 };
 
@@ -210,6 +217,8 @@ double algorithm ( HGridType &grid, const int step )
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridExactSolutionType;
   GridExactSolutionType gridExactSolution("exact solution", f, gridPart, 5 );
 
+  scheme.initialize( gridExactSolution );
+
   // output
   typedef std::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   typedef Dune::Fem::DataOutput< HGridType, IOTupleType > DataOutputType;
@@ -229,7 +238,7 @@ double algorithm ( HGridType &grid, const int step )
       scheme.adapt();
 
       max++;
-      if( max > 5 )
+      if( max > 3 )
         break;
     }
 

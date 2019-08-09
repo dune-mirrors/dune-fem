@@ -305,7 +305,26 @@ namespace Dune
       IndexType subIndex ( const EntityType& entity,
                            const int subNumber ) const
       {
-        assert( 0 == EntityType :: codimension );
+        return subIndex( entity, subNumber,
+                         std::integral_constant<bool, EntityType::codimension == 0 > () );
+      }
+
+      //! return leaf index for given entity
+      template <class EntityType>
+      IndexType subIndex ( const EntityType& entity,
+                           const int subNumber,
+                           const std::integral_constant<bool,false> codim0 ) const
+      {
+        DUNE_THROW(NotImplemented,"CodimIndexSet::subIndex: not implemented for entities with codim > 0" );
+        return IndexType( -1 );
+      }
+
+      //! return leaf index for given entity
+      template <class EntityType>
+      IndexType subIndex ( const EntityType& entity,
+                           const int subNumber,
+                           const std::integral_constant<bool,true> codim0 ) const
+      {
         assert( checkValidIndex( leafIndex_( entity, subNumber ) ) );
         return leafIndex_( entity, subNumber );
       }
