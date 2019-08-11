@@ -7,9 +7,9 @@
 
 // only perform this test for the 3d version of ALUGrid
 #if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE || defined UGGRID
-#if GRIDDIM == 3
+//#if GRIDDIM == 3
 #define RUN_PROGRAM
-#endif
+//#endif
 #endif
 
 #if defined ALUGRID_CONFORM
@@ -195,6 +195,8 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
+  auto gv = grid.leafGridView();
+
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
   GridPartType gridPart(grid);
