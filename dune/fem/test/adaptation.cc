@@ -6,7 +6,7 @@
 #endif
 
 // only perform this test for the 3d version of ALUGrid
-#if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE
+#if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE || defined UGGRID
 #if GRIDDIM == 3
 #define RUN_PROGRAM
 #endif
@@ -229,7 +229,7 @@ double algorithm ( HGridType &grid, const int step )
       scheme.adapt();
 
       max++;
-      if( max > 5 )
+      if( max > 3 )
         break;
     }
 
