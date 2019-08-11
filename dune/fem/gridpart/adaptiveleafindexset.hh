@@ -297,10 +297,8 @@ namespace Dune
       //! default partition iterator type
       static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
-      // reference to grid part (for iterator access)
-      const GridPartType& gridPart_;
-      // storage of grid part in case it was created
-      std::unique_ptr< GridPartType > gridPartPtr_;
+      // grid part (for iterator access, no index set)
+      const GridPartType gridPart_;
 
       // Codimension leaf index sets
       mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
@@ -343,18 +341,10 @@ namespace Dune
         }
       }
 
-      //! Constructor, taking ownership of grid part
-      AdaptiveIndexSetBase (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : AdaptiveIndexSetBase( *gridPartPtr )
-      {
-        // store grid part object for later deleting it
-        gridPartPtr_.reset( gridPartPtr.release() );
-      }
-
       //! Constructor
-      AdaptiveIndexSetBase (const GridPartType & gridPart)
-        : BaseType( gridPart.grid() )
-        , gridPart_( gridPart )
+      AdaptiveIndexSetBase ( const GridType* grid )
+        : BaseType( *grid )
+        , gridPart_( const_cast< GridType& > (*grid), typename GridPartType::NoIndexSetType() )
         , sequence_( dofManager_.sequence() )
         , compressed_(true) // at start the set is compressed
       {
@@ -1338,15 +1328,10 @@ namespace Dune
       typedef AdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
-      typedef typename BaseType :: GridPartType GridPartType;
+      typedef typename BaseType :: GridType GridType;
       //! Constructor
-      AdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
-      {}
-
-      //! Constructor, taking ownership of grid part pointer
-      AdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : BaseType( std::move( gridPartPtr ) )
+      AdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
       //! return name of index set
@@ -1409,15 +1394,10 @@ namespace Dune
       typedef IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
-      typedef typename BaseType :: GridPartType GridPartType;
+      typedef typename BaseType :: GridType GridType;
       //! Constructor
-      IntersectionAdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
-      {}
-
-      //! Constructor, taking ownership of grid part pointer
-      IntersectionAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr )
-        : BaseType( std::move( gridPartPtr ) )
+      IntersectionAdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
       //! return name of index set
@@ -1479,15 +1459,10 @@ namespace Dune
       typedef DGAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
 
     public:
-      typedef typename BaseType :: GridPartType GridPartType;
+      typedef typename BaseType :: GridType GridType;
       //! Constructor
-      DGAdaptiveLeafIndexSet (const GridPartType & gridPart)
-        : BaseType(gridPart)
-      {}
-
-      //! Constructor, taking ownership of grid part pointer
-      DGAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : BaseType( std::move( gridPartPtr ) )
+      DGAdaptiveLeafIndexSet (const GridType* grid)
+        : BaseType(grid)
       {}
 
       //! return name of index set
