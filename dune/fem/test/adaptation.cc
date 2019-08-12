@@ -12,9 +12,10 @@
 //#endif
 #endif
 
-#if defined ALUGRID_CONFORM
+//#if defined ALUGRID_CONFORM
 #define CONFORMING_SPACE
-#endif
+#undef USECOMBINEDSPACE
+//#endif
 
 #include <config.h>
 
@@ -122,6 +123,12 @@ struct Scheme
     return solution_;
   }
 
+  template <class GF>
+  void initialize( const GF& gridFunction )
+  {
+    Dune::Fem::interpolate( gridFunction, solution_ );
+  }
+
   //! mark elements for adaptation
   bool mark ( double time ) const
   {
@@ -185,7 +192,7 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 {
   void evaluate( const typename FunctionSpace::DomainType &x, typename FunctionSpace::RangeType &y ) const
   {
-    y[ 0 ] = 0.0;
+    y[ 0 ] = x[ 0 ] * (1-x[0]);
   }
 };
 
@@ -195,8 +202,6 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
-  auto gv = grid.leafGridView();
-
   // we want to solve the problem on the leaf elements of the grid
   typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
   GridPartType gridPart(grid);
@@ -211,6 +216,8 @@ double algorithm ( HGridType &grid, const int step )
   FunctionType f;
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridExactSolutionType;
   GridExactSolutionType gridExactSolution("exact solution", f, gridPart, 5 );
+
+  scheme.initialize( gridExactSolution );
 
   // output
   typedef std::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
