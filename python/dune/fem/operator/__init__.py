@@ -216,5 +216,5 @@ def linear(operator, ubar=None,parameters={}):
     if ubar is None:
         operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
     else:
-        operator.jacobian(ubar, lin)
+        operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
     return lin

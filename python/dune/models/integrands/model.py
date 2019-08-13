@@ -61,6 +61,7 @@ class Integrands(codegen.ModelClass):
         self.arg_x = Variable("const Point &", "x")
 
         self.baseName = 'integrands'
+        self.baseSignature = []
 
     def signature(self):
         return self.form.signature()
