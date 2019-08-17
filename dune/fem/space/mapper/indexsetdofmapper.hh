@@ -332,14 +332,19 @@ namespace Dune
         {
           const SubEntityInfo &info = subEntityInfo_[ i ];
           if( info.numDofs == 0 )
+          {
             continue;
+          }
 
           // see commit message f86ab6e96a27fdecfa82de43fe9099f01e240e1b
           // Note: hasSingleGeometryType does not exist on all IndexSets
           static const bool hasSingleGeometryType = Dune::Capabilities::hasSingleGeometryType< typename GridPartType::GridType > :: v ;
           const auto & geomTypes = indexSet().types(info.codim);
+
           if (hasSingleGeometryType && geomTypes[0] != gt[i])
+          {
             continue;
+          }
 
           if( codimType_[ info.codim ] == CodimEmpty )
             codimType_[ info.codim ] = CodimFixedSize;
@@ -350,10 +355,11 @@ namespace Dune
           blockMap_.push_back( gt[ i ] );
         }
 
-        update();
-
         // submit request for codimensions to index set
         requestCodimensions ();
+
+        // update offsets
+        update();
       }
 
 
@@ -447,12 +453,12 @@ namespace Dune
       inline void DofMapper< GridPart, LocalDofMapping >::update ()
       {
         size_ = 0;
-        for( typename BlockMapType::const_iterator it = blockMap_.begin(); it != blockMap_.end(); ++it )
+        for( const auto& geomType : blockMap_ )
         {
-          SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( *it ) ];
+          SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( geomType ) ];
           info.oldOffset = info.offset;
           info.offset = size_;
-          size_ += SizeType( info.numDofs ) * SizeType( indexSet().size( *it ) );
+          size_ += SizeType( info.numDofs ) * SizeType( indexSet().size( geomType ) );
         }
       }
 
