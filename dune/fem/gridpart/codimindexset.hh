@@ -430,7 +430,10 @@ namespace Dune
         for( Iterator it = leafIndex_.begin(); it != end; ++it )
         {
           const IndexType &leafIdx = *it;
-          out << "idx: " << leafIdx << "  stat: " << indexState_[ leafIdx ] << std::endl;
+          if( leafIdx < indexState_.size() )
+          {
+            out << "idx: " << leafIdx << "  stat: " << indexState_[ leafIdx ] << std::endl;
+          }
         }
       }
 
