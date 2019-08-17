@@ -7,15 +7,14 @@
 
 // only perform this test for the 3d version of ALUGrid
 #if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE || defined UGGRID
-//#if GRIDDIM == 3
 #define RUN_PROGRAM
-//#endif
 #endif
 
-//#if defined ALUGRID_CONFORM
+#if defined ALUGRID_CONFORM || defined UGGRID
 #define CONFORMING_SPACE
 #undef USECOMBINEDSPACE
-//#endif
+//#define USECOMBINEDSPACE
+#endif
 
 #include <config.h>
 
@@ -31,6 +30,7 @@
 #include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/padaptivespace.hh>
 
 #ifdef HAVE_DUNE_ISTL
@@ -79,6 +79,7 @@ struct Scheme
   typedef FunctionSpace FunctionSpaceType;
 #ifdef CONFORMING_SPACE
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
+  //typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #else
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
