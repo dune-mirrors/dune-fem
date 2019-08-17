@@ -169,7 +169,7 @@ namespace Dune
       template< int codim >
       struct InsertSubEntities
       {
-        static void apply ( ThisType &indexSet, const GridElementType &element )
+        static void apply ( const ThisType &indexSet, const GridElementType &element )
         {
           // if codimension is not available return
           if( ! indexSet.codimAvailable( codim ) ) return ;
@@ -334,8 +334,7 @@ namespace Dune
 
       CodimIndexSetType& codimLeafSet( const int codim ) const
       {
-        assert( codimLeafSet_[ codim ] );
-        // assert( codimAvailable( codim ) );
+        assert( codimUsed( codim ) );
         return *codimLeafSet_[ codim ];
       }
 
@@ -345,7 +344,8 @@ namespace Dune
         // enable requested codimensions and rebuild index set
         for( const auto& codim : codimensions )
         {
-          Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+          // start loop from 1 since codim 0 is always created
+          Fem::ForLoop< CallSetUpCodimSet, 1, dimension >::apply( codim, *this );
         }
       }
 
@@ -625,7 +625,7 @@ namespace Dune
 
         if( (codim != 0) && ! codimUsed( codim ) )
         {
-          Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+          Fem::ForLoop< CallSetUpCodimSet, 1, dimension >::apply( codim, *this );
         }
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
@@ -644,7 +644,16 @@ namespace Dune
       int numberOfHoles ( GeometryType type ) const
       {
         const int codim = dimension - type.dim();
+        // this index set works only with single geometry types adaptively
         assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
+
+        // if mapper is asking for types that are
+        // not in the index set then 0 should be returned
+        if( geomTypes( codim )[ 0 ] != type )
+        {
+          return 0;
+        }
+
         return numberOfHoles( codim );
       }
 
@@ -948,7 +957,7 @@ namespace Dune
       bool isNew = wasNew ;
       typedef typename GridType::HierarchicIterator HierarchicIterator;
 
-      // for leaf entites, just insert the index
+      // for leaf entities, just insert the index
       if( entity.isLeaf() )
       {
         insertIndex( entity );
@@ -1076,8 +1085,11 @@ namespace Dune
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
 
+      // create codimLeafSet if not existing
       if( ! codimLeafSet_[ codim ] )
+      {
         codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, codim ) );
+      }
 
       // resize if necessary
       codimLeafSet( codim ).resize();
@@ -1099,8 +1111,11 @@ namespace Dune
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
 
+      // create codimLeafSet if not existing
       if( ! codimLeafSet_[ codim ] )
+      {
         codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, codim ) );
+      }
 
       // resize if necessary
       codimLeafSet( codim ).resize();
@@ -1113,12 +1128,7 @@ namespace Dune
       {
         const ElementType& element = *it ;
         const GridElementType &gridElement = gridEntity( element );
-        const int subEntities = gridElement.subEntities( codim );
-        for (int i = 0; i < subEntities; ++i )
-        {
-          if (! codimLeafSet( codim ).exists( gridElement, i) )
-            codimLeafSet( codim ).insertSubEntity( gridElement, i );
-        }
+        InsertSubEntities< codim >::apply( *this, gridElement );
       }
     }
 
@@ -1364,7 +1374,7 @@ namespace Dune
         if( this->grid_.comm().size() == 1 )
         {
           for( int codim = Traits::startingCodimension; codim < Traits::numCodimensions; ++codim )
-            assert( this->size( codim ) == this->grid_.size( codim ) );
+            assert( this->codimUsed( codim ) ? this->size( codim ) == this->grid_.size( codim ) : true );
         }
 #endif // #ifndef NDEBUG
 
