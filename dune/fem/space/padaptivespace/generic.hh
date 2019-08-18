@@ -106,11 +106,13 @@ namespace Dune
        *  \param[in]  commDirection  communication direction to use
        */
       GenericDiscreteFunctionSpace ( GridPartType &gridPart,
+                                     const int order,
                                      const InterfaceType commInterface,
                                      const CommunicationDirection commDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        scalarShapeFunctionSets_( polynomialOrder+1 ),
-        compiledLocalKeys_( polynomialOrder+1 ),
+        order_( order ),
+        scalarShapeFunctionSets_( order_+1 ),
+        compiledLocalKeys_( order_+1 ),
         blockMapper_( initialize() )
       {
         assert( Capabilities::isAdaptiveDofMapper< BlockMapperType>::v );
@@ -120,8 +122,9 @@ namespace Dune
       // copy constructor needed for p-adaptation
       GenericDiscreteFunctionSpace ( const GenericDiscreteFunctionSpace &other )
       : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
-        scalarShapeFunctionSets_( polynomialOrder+1 ),
-        compiledLocalKeys_( polynomialOrder+1 ),
+        order_( other.order_ ),
+        scalarShapeFunctionSets_( order_+1 ),
+        compiledLocalKeys_( order_+1 ),
         blockMapper_( initialize( &other.blockMapper() ) )
       {}
 
@@ -144,7 +147,7 @@ namespace Dune
       inline bool continuous () const { return Traits::continuousSpace; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      inline int order () const { return polynomialOrder; }
+      inline int order () const { return order_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       inline int order (const typename BaseType::EntityType &entity) const
@@ -326,23 +329,26 @@ namespace Dune
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
           Fem::ForLoop< Initialize, 1, polynomialOrder >::
-            apply( scalarShapeFunctionSets_, compiledLocalKeys_, geometryTypes[ i ] );
+            apply( order_, scalarShapeFunctionSets_, compiledLocalKeys_, geometryTypes[ i ] );
         }
 
         if( otherMapper )
         {
           // make a copy of the other block mapper
-          return new BlockMapperType( *otherMapper, compiledLocalKeys_ );
+          return new BlockMapperType( *otherMapper, order_, compiledLocalKeys_ );
         }
         else
         {
           // create new block mapper, this mapper is unique for each space since
           // the polynomial degrees might be different for each element
-          return new BlockMapperType( gridPart(), compiledLocalKeys_ );
+          return new BlockMapperType( gridPart(), order_, compiledLocalKeys_ );
         }
       }
 
     protected:
+      // dynamically set maximal polynomial order
+      const int order_;
+
       // storage for base function sets
       std::vector< ScalarShapeFunctionSetStorageType > scalarShapeFunctionSets_;
       // storage for compiled local keys
@@ -373,10 +379,14 @@ namespace Dune
         }
       };
 
-      static void apply ( std::vector< ScalarShapeFunctionSetStorageType > &scalarShapeFunctionSets,
+      static void apply ( const int maxOrder,
+                          std::vector< ScalarShapeFunctionSetStorageType > &scalarShapeFunctionSets,
                           std::vector< LocalKeyStorageType > &compiledLocalKeys,
                           const GeometryType &type )
       {
+        // avoid creating shape function sets for polynomial orders that are not used
+        if( pOrd > maxOrder ) return ;
+
         typedef typename ScalarShapeFunctionSetFactory< pOrd >::Type ScalarShapeFunctionSetFactoryType;
         typedef SingletonList< const GeometryType, ScalarShapeFunctionSetType, ScalarShapeFunctionSetFactoryType > SingletonProviderType;
         scalarShapeFunctionSets[ pOrd ].template insert< SingletonProviderType >( type );

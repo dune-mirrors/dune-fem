@@ -309,13 +309,16 @@ namespace Dune
 
       typedef EntityDofStorage EntityDofStorageType;
 
-      struct PolynomOrderStorage
+      struct PolynomialOrderStorage
       {
+      private:
+        // PolynomialOrderStorage() : k_( minOrder ), active_( -std::abs(k_) ) {}
         signed char k_; // stores current polynomial order
         signed char active_ ; // stores active/non-active and suggested pol order
 
-        PolynomOrderStorage() : k_( maxOrder ), active_( -std::abs(k_) ) {}
-        PolynomOrderStorage( const int k ) : k_( k ), active_( -std::abs(k_) ) {}
+      public:
+        // PolynomialOrderStorage() : k_( minOrder ), active_( -std::abs(k_) ) {}
+        PolynomialOrderStorage( const int k ) : k_( k ), active_( -std::abs(k_) ) {}
         int order () const { return k_; }
         void suggest ( const int k )
         {
@@ -342,11 +345,11 @@ namespace Dune
         void update() { set( suggested() ); }
       };
 
-      typedef PolynomOrderStorage  PolynomOrderStorageType;
+      typedef PolynomialOrderStorage  PolynomialOrderStorageType;
 
       typedef PersistentContainer< GridType, EntityDofStorageType > DofContainerType ;
 
-      typedef PersistentContainer< GridType, PolynomOrderStorageType > PolyOrderContainerType ;
+      typedef PersistentContainer< GridType, PolynomialOrderStorageType > PolyOrderContainerType ;
     protected:
       template <int codim, bool dg>
       struct NumDofs
@@ -455,11 +458,13 @@ namespace Dune
     public:
       //! constructor
       GenericAdaptiveDofMapper ( const GridPartType &gridPart,
+                                 const int order,
                                  CompiledLocalKeyVectorType &compiledLocalKeyVector )
       : gridPart_( gridPart ),
         dm_( DofManagerType :: instance(gridPart.grid()) ),
         compiledLocalKeys_( compiledLocalKeyVector ),
-        entityPolynomOrder_( gridPart.grid(), 0 ),
+        order_( ( order >= minOrder && order <= maxOrder ) ? order : maxOrder ),
+        entityPolynomOrder_( gridPart.grid(), 0, PolynomialOrderStorageType( order_ ) ),
         dofContainer_( dimension+1, nullptr ),
         numberOfHoles_( 0 ),
         oldIndex_(),
@@ -483,10 +488,12 @@ namespace Dune
 
       //! sort of copy constructor
       GenericAdaptiveDofMapper ( const GenericAdaptiveDofMapper& other,
+                                 const int order,
                                  CompiledLocalKeyVectorType &compiledLocalKeyVector )
       : gridPart_( other.gridPart_ ),
         dm_( other.dm_ ),
         compiledLocalKeys_( compiledLocalKeyVector ),
+        order_( ( order >= minOrder && order <= maxOrder ) ? order : maxOrder ),
         entityPolynomOrder_( other.entityPolynomOrder_ ),
         dofContainer_( dimension+1, nullptr ),
         numberOfHoles_( other.numberOfHoles_ ),
@@ -514,7 +521,8 @@ namespace Dune
 
       void suggestPolynomOrder( const ElementType& entity, const int polOrd )
       {
-        if( polOrd < 1 || polOrd > polynomialOrder )
+        // minOrder is static but order_ is dynamically set
+        if( polOrd < minOrder || polOrd > order_ )
           return ;
 
         entityPolynomOrder_[ entity ].suggest( polOrd );
@@ -738,7 +746,7 @@ namespace Dune
       // Adaptation Methods (as for Index Sets)
       void resizeContainers()
       {
-        entityPolynomOrder_.resize();
+        entityPolynomOrder_.resize( PolynomialOrderStorageType( order_ ) );
         entityPolynomOrder_.shrinkToFit();
         for( int codim = 0; codim <= highestDimension; ++codim )
         {
@@ -756,7 +764,7 @@ namespace Dune
       // return number of local dofs that were not visited yet
       unsigned int insertEntityDofs( const ElementType &entity )
       {
-        PolynomOrderStorageType& polyStorage = entityPolynomOrder_[ entity ];
+        PolynomialOrderStorageType& polyStorage = entityPolynomOrder_[ entity ];
         if( ! polyStorage.active() )
         {
           unsigned int notAlreadyCounted = 0;
@@ -898,7 +906,7 @@ namespace Dune
           const Iterator endit = entityPolynomOrder_.end();
           for( Iterator it = entityPolynomOrder_.begin(); it != endit; ++it )
           {
-            PolynomOrderStorageType& p = *it;
+            PolynomialOrderStorageType& p = *it;
             int pOrd;
             p.deactivate( pOrd );
           }
@@ -1040,6 +1048,9 @@ namespace Dune
       DofManagerType& dm_;
 
       CompiledLocalKeyVectorType &compiledLocalKeys_;
+
+      // default polynomial order to be set to newly inserted elements
+      const int order_;
 
       PolyOrderContainerType entityPolynomOrder_;
 
