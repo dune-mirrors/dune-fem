@@ -212,6 +212,7 @@ namespace Dune
      *
      *  \tparam  FunctionSpace        (scalar) function space
      *  \tparam  hierarchicalOrdering (bool) if true shape functions are ordered according to their polynomial order
+     *  \tparam  polynomials          (bool) if false the full standard tensor *  product is used otherwise only monomials with order <= max order *  are used
      */
     template< class FunctionSpace, bool hierarchicalOrdering = false >
     class LegendreShapeFunctionSet
@@ -237,8 +238,16 @@ namespace Dune
       {
         bool operator() ( const ShapeFunctionType &lhs, const ShapeFunctionType &rhs ) noexcept
         {
-          if( lhs.order() != rhs.order() )
-            return lhs.order() < rhs.order();
+          int lorder = lhs.order();
+          int rorder = rhs.order();
+          if (polynomials)
+          { // use the accumulated multiindex instead of the maximum multiindex value
+            lorder = std::accumulate(lhs.orders().begin(), lhs.orders().end(), 0);
+            rorder = std::accumulate(rhs.orders().begin(), rhs.orders().end(), 0);
+          }
+
+          if( lorder != rorder )
+            return lorder < rorder;
           else
           {
             const auto &a = lhs.orders();

@@ -102,8 +102,6 @@ public:
       sequence_( -1 )
   {}
 
-  const ModelType& model() const {return model_;}
-
   /*! treatment of Dirichlet-const DoFs for given discrete function
    *
    *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
@@ -502,7 +500,7 @@ protected:
     return hasDirichletBoundary;
   }
 
-  ModelType& model_;
+  ModelType &model_;
   const DiscreteFunctionSpaceType& space_;
   mutable std::vector< DirichletBlock > dirichletBlocks_;
   mutable bool hasDirichletDofs_ ;

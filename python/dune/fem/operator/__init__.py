@@ -187,6 +187,7 @@ def h1(model, domainSpace=None, rangeSpace=None):
 #       The returning operator could have a 'update' method and then we
 #       remove the 'jacobian' from the official interface
 def linear(operator, ubar=None,parameters={}):
+    from dune.fem.function import discreteFunction
     assert hasattr(operator,"jacobian"), "operator does not allow assembly"
     rangeSpace  = operator.rangeSpace
     domainSpace = operator.domainSpace
@@ -214,7 +215,8 @@ def linear(operator, ubar=None,parameters={}):
 
     lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace,parameters)
     if ubar is None:
-        operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
+        # operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
+        operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
     else:
         operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
     return lin
