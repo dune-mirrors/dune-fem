@@ -703,7 +703,7 @@ def product(*spaces, **kwargs):
                         None,None,None] )
     return spc.as_ufl()
 
-def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
+def bdm(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
@@ -735,7 +735,7 @@ def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def raviartThomas(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
+def raviartThomas(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )

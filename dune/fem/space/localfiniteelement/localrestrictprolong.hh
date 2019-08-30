@@ -40,6 +40,8 @@ namespace Dune
           lfFather_.evaluate( localGeo_.global(x), y);
         }
 
+        const EntityType& entity () const { return lfFather_.entity(); }
+
       private:
         const LocalGeometryType &localGeo_;
         const LocalFunctionType &lfFather_;
@@ -165,12 +167,20 @@ namespace Dune
         {
           const int numDofs = lfFather.numDofs();
           assert( lfFather.numDofs() == lfSon.numDofs() );
-          DynamicVector<double> sonDofs( numDofs );
-          space_.interpolation(lfSon.entity())
-            ( Impl::FatherWrapper<LocalGeometry,LFFather>(geometryInFather,lfFather),
-              sonDofs );
-          for (int i=0;i<numDofs;++i)
-            lfSon[i] = sonDofs[i];
+
+          const auto& interpol = space_.interpolation(lfSon.entity());
+
+          typedef Impl::FatherWrapper<LocalGeometry,LFFather> FatherWrapperType;
+          FatherWrapperType fatherWraper(geometryInFather,lfFather);
+
+          // interpolate methods in dune-localfunctions expect std::vector< T >
+          sonDofs_.resize( numDofs );
+
+          interpol( fatherWraper, sonDofs_ );
+
+          // copy back
+          for (int i=0; i<numDofs; ++i)
+            lfSon[ i ] = sonDofs_[ i ];
         }
 
         //! do discrete functions need a communication after restriction / prolongation?
@@ -185,6 +195,8 @@ namespace Dune
         const DiscreteFunctionSpaceType &space_;
         mutable std::vector< EntitySeedType > childSeeds_;
         mutable std::vector< std::vector<double> > childDofs_;
+
+        mutable std::vector< double > sonDofs_;
       };
     } // namespce Impl
 
