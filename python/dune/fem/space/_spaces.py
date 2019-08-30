@@ -18,6 +18,15 @@ def checkDeprecated_dimrange( dimRange, dimrange ):
     else:
         return None
 
+# maxOrder parameter in space creation is deprecated!
+def checkDeprecated_maxOrder( order, maxOrder ):
+    import warnings
+    if maxOrder is not None:
+        warnings.warn('DiscreteFunctionSpace: parameter maxOrder for spaces is deprecated, use order instead!\n')
+        return maxOrder
+    else:
+        return order
+
 def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
           interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
           scalar=False, dimrange=None):
@@ -400,9 +409,9 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
 
     return spc.as_ufl()
 
-def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None,
+def lagrangehp(gridView, order=1, dimRange=None, field="double", storage=None,
                interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-               scalar=False, dimrange=None):
+               scalar=False, maxOrder=None, dimrange=None):
     """create a Lagrange space
 
     Args:
@@ -418,6 +427,7 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
 
     from dune.fem.space import module, addStorage
 
+    order    = checkDeprecated_maxOrder( order=order, maxOrder=maxOrder )
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
     if dimRange is None:
@@ -433,13 +443,17 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
             "Parameter error in LagrangeSpace with "+
             "dimRange=" + str(dimRange) + ": " +\
             "dimRange has to be greater or equal to 1")
-    if maxOrder < 1:
+    if order < 1:
         raise KeyError(\
             "Parameter error in LagrangeHP with "+
-            "maxOrder=" + str(maxOrder) + ": " +\
+            "order=" + str(order) + ": " +\
             "maximum order has to be greater or equal to 1")
     if field == "complex":
         field = "std::complex<double>"
+
+    # set maxOrder of space to 6 even though used maxOrder given by order
+    # may be smaller, this way compilation time can be reduced
+    maxOrder = 6 if order <= 6 else order
 
     includes = gridView._includes + [ "dune/fem/space/padaptivespace/lagrange.hh" ]
     dimw = gridView.dimWorld
@@ -449,7 +463,7 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,
-            ctorArgs=[gridView])
+            ctorArgs=[gridView,order])
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
@@ -462,7 +476,7 @@ def lagrangehp(gridView, maxOrder=1, dimRange=None, field="double", storage=None
                      skeletonQuadratureOrders=skeletonQuadratureOrders,
                      storage=storage,
                      scalar=scalar,
-                     ctorArgs=[gridView])
+                     ctorArgs=[gridView,order])
     # addStorage(spc, storage)
     return spc.as_ufl()
 
@@ -689,7 +703,7 @@ def product(*spaces, **kwargs):
                         None,None,None] )
     return spc.as_ufl()
 
-def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
+def bdm(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
@@ -721,7 +735,7 @@ def bdm(gridView, order=1, field="double", storage=None, scalar=False, dimrange=
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def raviartThomas(gridView, order=1, field="double", storage=None, scalar=False, dimrange=None):
+def raviartThomas(gridView, order=1, dimRange=None, field="double", storage=None, scalar=False, dimrange=None):
     from dune.fem.space import module, addStorage
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )

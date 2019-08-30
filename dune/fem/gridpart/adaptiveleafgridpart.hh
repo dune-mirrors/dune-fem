@@ -94,26 +94,10 @@ namespace Dune
       //! type of intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
+      typedef std::integral_constant< bool, false > NoIndexSetType;
     protected:
-      struct Key
-      {
-        GridType& grid_;
-        Key(GridType& grid) : grid_( grid ) {}
-
-        bool operator ==( const Key& other ) const
-        {
-          // compare grid pointers
-          return (&grid_) == (& other.grid_ );
-        }
-
-        operator std::unique_ptr< GridPartType > () const
-        {
-          return std::unique_ptr< GridPartType > (new GridPartType(grid_, this) );
-        }
-      };
-      typedef Key KeyType;
-
-      typedef SingletonList < KeyType, IndexSetType > IndexSetProviderType;
+      // key type for singleton list is grid pointer
+      typedef SingletonList < const GridType*, IndexSetType > IndexSetProviderType;
 
       // type of entity with codimension zero
       typedef typename Codim< 0 > :: EntityType ElementType;
@@ -131,22 +115,22 @@ namespace Dune
       explicit AdaptiveGridPartBase ( GridType &grid )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( &IndexSetProviderType::getObject( KeyType( grid ) ) )
+        indexSet_( &IndexSetProviderType::getObject( &grid ) )
       {}
 
       //! Copy Constructor
       AdaptiveGridPartBase ( const ThisType &other )
       : BaseType( other ),
         leafGridView_( other.leafGridView_ ),
-        indexSet_( &IndexSetProviderType::getObject( KeyType( other.grid_ ) ) )
+        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
       {}
 
     protected:
       //! Constructor constructing object held by index set (for iterator access)
-      AdaptiveGridPartBase ( GridType& grid, const KeyType* )
+      AdaptiveGridPartBase ( GridType& grid, const NoIndexSetType& noIndexSet )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( nullptr )
+        indexSet_( nullptr ) // not created because noIndexSet was passed
       {}
 
     public:
@@ -324,8 +308,8 @@ namespace Dune
       : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > BaseType;
-      typedef typename BaseType :: KeyType  KeyType;
     public:
+      typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
       typedef typename BaseType :: GridType GridType;
       //! Constructor
       explicit AdaptiveLeafGridPart ( GridType &grid )
@@ -333,8 +317,8 @@ namespace Dune
       {
       }
 
-      //! copy constructor (for construction from KeyType, no public use)
-      AdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
+      //! copy constructor (for construction from IndexSet, no public use)
+      AdaptiveLeafGridPart ( GridType& grid, const NoIndexSetType& dummy )
       : BaseType( grid, dummy )
       {
       }
@@ -387,8 +371,8 @@ namespace Dune
     : public AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > >
     {
       typedef AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > > BaseType;
-      typedef typename BaseType :: KeyType  KeyType;
     public:
+      typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
       typedef typename BaseType :: GridType GridType;
       //! Constructor
       explicit IntersectionAdaptiveLeafGridPart( GridType &grid )
@@ -396,9 +380,9 @@ namespace Dune
       {
       }
 
-      //! copy constructor (for construction from KeyType, no public use)
-      IntersectionAdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
-      : BaseType( grid, dummy )
+      //! copy constructor (for construction from IndexSet, no public use)
+      IntersectionAdaptiveLeafGridPart ( GridType& grid, const NoIndexSetType& noIndexSet )
+      : BaseType( grid, noIndexSet )
       {
       }
 

@@ -150,13 +150,27 @@ namespace Dune
       /** \brief constructor
        *
        *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  order          dynamically set maximal polynomial order between 1 and maxPolOrder
+       *  \param[in]  commInterface  communication interface to use (optional)
+       *  \param[in]  commDirection  communication direction to use (optional)
+       */
+      explicit PAdaptiveLagrangeSpace ( GridPartType &gridPart,
+                                        const int order,
+                                        const InterfaceType commInterface = defaultInterface,
+                                        const CommunicationDirection commDirection = defaultDirection )
+      : BaseType( gridPart, order, commInterface, commDirection )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in]  gridPart       grid part for the Lagrange space
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */
       explicit PAdaptiveLagrangeSpace ( GridPartType &gridPart,
                                         const InterfaceType commInterface = defaultInterface,
                                         const CommunicationDirection commDirection = defaultDirection )
-      : BaseType( gridPart, commInterface, commDirection )
+      : BaseType( gridPart, maxPolOrder, commInterface, commDirection )
       {}
 
       // copy constructor needed for p-adaption

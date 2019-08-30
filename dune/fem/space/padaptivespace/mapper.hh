@@ -82,14 +82,16 @@ namespace Dune
 
       //! constructor
       PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
+                                const int order,
                                 CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( gridPart, compiledLocalKeys )
+        : BaseType( gridPart, order, compiledLocalKeys )
       {}
 
       //! sort of copy constructor
       PAdaptiveLagrangeMapper ( const ThisType& other,
+                                const int order,
                                 CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( other, compiledLocalKeys )
+        : BaseType( other, order, compiledLocalKeys )
       {}
     };
 
@@ -134,14 +136,16 @@ namespace Dune
 
       //! constructor
       PAdaptiveDGMapper ( const GridPartType &gridPart,
+                          const int order,
                           CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( gridPart, compiledLocalKeys )
+        : BaseType( gridPart, order, compiledLocalKeys )
       {}
 
       //! sort of copy constructor
       PAdaptiveDGMapper ( const ThisType& other,
+                          const int order,
                           CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( other, compiledLocalKeys )
+        : BaseType( other, order, compiledLocalKeys )
       {}
     };
 

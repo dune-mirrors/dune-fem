@@ -149,13 +149,18 @@ namespace Dune
       //! do load balance
       bool loadBalance ()
       {
+        bool changed = false;
+
+        // if only one core don't do anything
+        if( grid_.comm().size() <= 1 )
+          return changed;
+
         // make sure this is only called in single thread mode
         assert( Fem :: ThreadManager :: singleThreadMode() );
 
         // get stopwatch
         Dune::Timer timer ;
 
-        bool changed = false;
 
         try {
           // call grids load balance, only implemented in ALUGrid right now
