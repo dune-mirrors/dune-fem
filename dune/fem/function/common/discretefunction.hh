@@ -79,12 +79,12 @@ namespace Dune
      */
     template< class Impl >
     class DiscreteFunctionInterface
-    : public Fem::Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
+    : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
       public IsDiscreteFunction,
       public HasLocalFunction
     {
       typedef DiscreteFunctionInterface< Impl > ThisType;
-      typedef Fem::Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
+      typedef Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
 
     public:
       //! type of the traits
@@ -295,6 +295,17 @@ namespace Dune
       void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
       {
         asImp().getLocalDofs( entity, localDofs );
+      }
+
+      /** \brief fill local Dofs to dof vector associated with the entity
+       *
+       *  \param[in]   entity    Entity to focus view of discrete function
+       *  \param[out]  localDofs the local dofs vector to be set
+       */
+      template< class Functor >
+      void getLocalDofsFunctor ( const EntityType &entity, Functor& functor ) const
+      {
+        asImp().getLocalDofs( entity, functor );
       }
 
       /** \brief obtain an uninitialized local function (read-write)
@@ -922,7 +933,14 @@ namespace Dune
       void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
         LeftAdd< const LocalDofs > assignFunctor( localDofs );
-        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+        addLocalDofsFunctor( entity, assignFunctor );
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::setLocalDofs */
+      template< class Functor >
+      void addLocalDofsFunctor( const EntityType &entity, const Functor &addFunctor )
+      {
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), addFunctor ) );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::setLocalDofs */
@@ -930,6 +948,14 @@ namespace Dune
       void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
         LeftAssign< const LocalDofs > assignFunctor( localDofs );
+        //space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+        setLocalDofsFunctor( entity, assignFunctor );
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::setLocalDofs */
+      template< class Functor >
+      void setLocalDofsFunctor( const EntityType &entity, const Functor &assignFunctor )
+      {
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
@@ -938,6 +964,13 @@ namespace Dune
       void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
       {
         AssignFunctor< Vector > assignFunctor( localDofs );
+        getLocalDofsFunctor( entity, assignFunctor );
+        //space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+      }
+
+      template< class Functor >
+      void getLocalDofsFunctor ( const EntityType &entity, Functor& assignFunctor ) const
+      {
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 

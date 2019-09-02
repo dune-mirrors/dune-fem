@@ -32,6 +32,10 @@ static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/misc/double.hh>
 
+#if HAVE_DUNE_VECTORCLASS
+#include <dune/vectorclass/upstream/vectorclass.h>
+#endif
+
 // to use grape, set to WANT_GRAPE to 1
 #ifndef WANT_GRAPE
 #define WANT_GRAPE 0
@@ -146,7 +150,7 @@ struct GetDofs
   static void apply( const DF& f, const EntityVec& entities, Array& array )
   {
     AssignSimdFunctor< Array, i > af( array );
-    //f.getLocalDofsFunctor( entities[ i ], af );
+    f.getLocalDofsFunctor( entities[ i ], af );
   }
 };
 
@@ -172,8 +176,8 @@ struct SetDofs
   template <class DF, class EntityVec, class Array>
   static void apply( DF& f, const EntityVec& entities, const Array& array )
   {
-    // LeftAddSimdFunctor< Array, i > laf( array );
-    //f.setLocalDofsFunctor( entities[ i ], laf );
+    LeftAddSimdFunctor< Array, i > laf( array );
+    f.setLocalDofsFunctor( entities[ i ], laf );
   }
 };
 
@@ -375,7 +379,9 @@ void customStandardL2Projection( const DiscreteFunctionType& f, DiscreteFunction
     if( it == endit ) break ;
   }
 }
+#endif
 
+#if HAVE_DUNE_VECTORCLASS
 void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
 {
   dest.clear();
@@ -576,7 +582,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    ExactSolution f;
    // create exact solution for error evaluation
    typedef GridFunctionAdapter< ExactSolution, GridPartType >  GridFunctionType;
-   GridFunctionType exactSolution( "exact solution", f, solution.gridPart(), solution.space().order() );
+   GridFunctionType exactSolution( "exact solution", f, solution.gridPart(), 2 );
 
    // L2 error class
    Dune :: Fem :: L2Norm< GridPartType > l2norm( solution.gridPart() );
@@ -621,12 +627,12 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    std::cout << "Fake simd 1 interpolation: " << timer.elapsed() << std::endl;
    */
 
-   /*
+#if HAVE_DUNE_VECTORCLASS
    timer.reset();
    // do l2 projection for one df to another
    customL2Projection( solution, copy );
    std::cout << "Simd interpolation: " << timer.elapsed() << std::endl;
-   */
+#endif
 
    //interpolate( solution, copy );
 
@@ -696,9 +702,7 @@ int main (int argc, char **argv)
 
   for(int i=0; i<ml; i+=step)
   {
-    std::cout << "Global refine" << std::endl;
     GlobalRefine::apply(grid,step);
-    std::cout << "Algorithm" << std::endl;
     error[i] = algorithm ( grid , solution , i==ml-1);
     if (i>0)
     {
