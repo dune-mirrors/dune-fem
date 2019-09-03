@@ -33,8 +33,9 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/misc/double.hh>
 
 #if HAVE_DUNE_VECTORCLASS
-#include <dune/vectorclass/upstream/vectorclass.h>
+#include <dune/vectorclass/vectorclass.hh>
 #endif
+#include <dune/common/simd/vc.hh>
 
 // to use grape, set to WANT_GRAPE to 1
 #ifndef WANT_GRAPE
@@ -154,7 +155,6 @@ struct GetDofs
   }
 };
 
-template <int lanes>
 struct GetDofsSimd
 {
 
@@ -165,6 +165,7 @@ struct GetDofsSimd
     const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
         DF::DiscreteFunctionSpaceType::localBlockSize;
     static std::vector< double > dummy( nDofs, 0.0 );
+    constexpr size_t lanes = Simd::lanes<typename Array::value_type>();
 
     const double* dofVecs[ lanes ];
     for( int i=0; i<lanes; ++i )
@@ -182,10 +183,12 @@ struct GetDofsSimd
     for( int i=0; i<nDofs; ++i )
     {
       double dof[ lanes ];
-      for( int j=0; j<lanes; ++j )
-        dof[ j ] = dofVecs[ j ][ i ];
+      for( int j=0; j<lanes; ++j ){
+        Simd::lane(j, array[ i ]) = dofVecs[ j ][ i ];
+        //dof[ j ] = dofVecs[ j ][ i ];
+      }
 
-      array[ i ].load( dof );
+      //array[ i ].load( dof );
     }
   }
 };
@@ -217,8 +220,6 @@ struct SetDofs
   }
 };
 
-
-template <int lanes>
 struct SetDofsSimd
 {
 
@@ -229,7 +230,7 @@ struct SetDofsSimd
     const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
         DF::DiscreteFunctionSpaceType::localBlockSize;
     static std::vector< double > dummy( nDofs, 0.0 );
-
+    constexpr size_t lanes = Simd::lanes<typename Array::value_type>();
     double* dofVecs[ lanes ];
     for( int i=0; i<lanes; ++i )
     {
@@ -245,15 +246,13 @@ struct SetDofsSimd
 
     for( int i=0; i<nDofs; ++i )
     {
-      double dof[ lanes ];
-      array[ i ].store( dof );
       for( int j=0; j<lanes; ++j )
-        dofVecs[ j ][ i ] = dof[ j ];
+        dofVecs[ j ][ i ] = Simd::lane(j, array[ i ]);
     }
   }
 };
 
-#if HAVE_DUNE_VECTORCLASS
+template<class SimdVecType>
 void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
 {
   dest.clear();
@@ -264,7 +263,6 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
   typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
   typedef typename GridPartType :: template Codim< 0 > :: EntityType  EntityType;
 
-  static const int simd = 4;
 
   typedef Dune::Fem::ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
   typedef Dune::Fem::AddLocalContribution< DiscreteFunctionType > AddLocalContributionType;
@@ -278,8 +276,7 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
 
   const int order = dest.space().order() * 2;
 
-  typedef Vec4d                      SimdVecType;
-  //typedef std::array< double, simd > SimdVecType;
+  static const int lanes= Simd::lanes<SimdVecType>();
 
   typedef Dune::FieldVector< SimdVecType, RangeType :: dimension > VecRangeType;
 
@@ -287,8 +284,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
   std::vector< RangeType > val;
   std::vector< SimdVecType > weights;
 
-  std::array< EntityType, simd > entities;
-  std::array< const EntityType*, simd > entityPtr;
+  std::array< EntityType, lanes > entities;
+  std::array< const EntityType*, lanes > entityPtr;
 
   std::vector< std::vector< VecRangeType > > basisFcts;
   std::vector< SimdVecType > dofs;
@@ -300,9 +297,9 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
   for( auto it = dest.space().begin(); it != endit; )
   {
     int usedSimd = 0;
-    for( int i=0; i<simd; ++i ) entityPtr[ i ] = nullptr;
+    for( int i=0; i<lanes; ++i ) entityPtr[ i ] = nullptr;
 
-    for( int i = 0; (i<simd) && (it != endit); ++i, ++it, ++usedSimd )
+    for( int i = 0; (i<lanes) && (it != endit); ++i, ++it, ++usedSimd )
     {
       entities[ i ] = *it;
       entityPtr[ i ] = &entities[ i ];
@@ -317,7 +314,7 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
 
       const auto geometry = entities[ i ].geometry();
       for( int qp = 0; qp < nop; ++ qp )
-        weights[ qp ].insert( i, quad.weight( qp ) );
+        Simd::lane(i, weights[ qp ]) = quad.weight( qp );
 
       if( basisFcts.empty() )
       {
@@ -343,8 +340,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
           {
             for( int d=0; d<RangeType::dimension; ++d )
             {
-              for( int i = 0; i<simd; ++i )
-                baseFct[ b ][ d ].insert( i, phi[ b ][ d ] );
+              for( int i = 0; i<lanes; ++i )
+                Simd::lane(i, baseFct[ b ][ d ]) = phi[ b ][ d ];
                 //baseFct[ b ][ d ][ i ] = phi[ b ][ d ];
             }
           }
@@ -357,8 +354,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
     const int baseSize = basisFcts[ 0 ].size();
     Quadrature quad( entities[ 0 ], order );
 
-    //Dune::Fem::ForLoop< GetDofs, 0, simd-1 >::apply( f, entities, lfSimd );
-    GetDofsSimd< 4 >::apply( f, entityPtr, lfSimd );
+    //Dune::Fem::ForLoop< GetDofs, 0, lanes-1 >::apply( f, entities, lfSimd );
+    GetDofsSimd::apply( f, entityPtr, lfSimd );
 
     //lf.evaluateQuadrature( quad, val );
     const int singleBase = baseSize / RangeType :: dimension;
@@ -372,8 +369,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
         for( int d=0; d<RangeType::dimension; ++d, ++dof  )
         {
           // TODO: use mul_add
-          //values[ qp ][ d ] += lfSimd[ dof ] * baseFct[ dof ][ d ];
-          values[ qp ][ d ] = mul_add( lfSimd[ dof ], baseFct[ dof ][ d ], values[ qp ][ d ]);
+          values[ qp ][ d ] += lfSimd[ dof ] * baseFct[ dof ][ d ];
+          //values[ qp ][ d ] = mul_add( lfSimd[ dof ], baseFct[ dof ][ d ], values[ qp ][ d ]);
         }
         //values[ qp ].axpy( lfSimd[ b ], baseFct[ b ] );
         //+=
@@ -413,15 +410,15 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
         {
           for( int d=0; d<RangeType::dimension; ++d, ++dof )
           {
-            //dofs[ dof ] += val[ d ] * baseFct[ dof ][ d ];
-            dofs[ dof ] = mul_add( val[ d ], baseFct[ dof ][ d ], dofs[ dof ]);
+            dofs[ dof ] += val[ d ] * baseFct[ dof ][ d ];
+            //dofs[ dof ] = mul_add( val[ d ], baseFct[ dof ][ d ], dofs[ dof ]);
           }
         }
       }
     }
 
-    //Dune::Fem::ForLoop< SetDofs, 0, simd-1 >::apply( dest, entities, dofs );
-    SetDofsSimd< simd >::apply( dest, entityPtr, dofs );
+    //Dune::Fem::ForLoop< SetDofs, 0, lanes-1 >::apply( dest, entities, dofs );
+    SetDofsSimd::apply( dest, entityPtr, dofs );
     /*
     for( int i = 0; i<usedSimd; ++ i )
     {
@@ -442,7 +439,6 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
     if( it == endit ) break ;
   }
 }
-#endif
 
 void customInterpolate( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
 {
@@ -513,11 +509,24 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    std::cout << "Fake simd 1 interpolation: " << timer.elapsed() << std::endl;
    */
 
+   timer.reset();
+   customL2Projection<double>( solution, copy );
+   std::cout << "Simd interpolation (double): " << timer.elapsed() << std::endl;
+
+   timer.reset();
+   customL2Projection<Dune::LoopSIMD<double, 4>>( solution, copy );
+   std::cout << "Simd interpolation (LoopSIMD<double, 4>): " << timer.elapsed() << std::endl;
+
+#if HAVE_VC
+   timer.reset();
+   customL2Projection<Vc::SimdArray<double, 4>>( solution, copy );
+   std::cout << "Simd interpolation (Vc::SimdArray<double, 4>): " << timer.elapsed() << std::endl;
+#endif
+
 #if HAVE_DUNE_VECTORCLASS
    timer.reset();
-   // do l2 projection for one df to another
-   customL2Projection( solution, copy );
-   std::cout << "Simd interpolation: " << timer.elapsed() << std::endl;
+   customL2Projection<Vec4d>( solution, copy );
+   std::cout << "Simd interpolation (Vec4d): " << timer.elapsed() << std::endl;
 #endif
 
    //interpolate( solution, copy );
