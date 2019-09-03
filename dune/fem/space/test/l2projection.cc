@@ -154,6 +154,42 @@ struct GetDofs
   }
 };
 
+template <int lanes>
+struct GetDofsSimd
+{
+
+  template <class DF, class EntityVec, class Array>
+  static void apply( const DF& f, const EntityVec& entityPtr, Array& array )
+  {
+    const auto& idxSet = f.space().gridPart().indexSet();
+    const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
+        DF::DiscreteFunctionSpaceType::localBlockSize;
+    static std::vector< double > dummy( nDofs, 0.0 );
+
+    const double* dofVecs[ lanes ];
+    for( int i=0; i<lanes; ++i )
+    {
+      if( entityPtr[ i ] )
+      {
+        dofVecs[ i ] = f.leakPointer() + (idxSet.index( *(entityPtr[ i ])) * nDofs);
+      }
+      else
+      {
+        dofVecs[ i ] = dummy.data();
+      }
+    }
+
+    for( int i=0; i<nDofs; ++i )
+    {
+      double dof[ lanes ];
+      for( int j=0; j<lanes; ++j )
+        dof[ j ] = dofVecs[ j ][ i ];
+
+      array[ i ].load( dof );
+    }
+  }
+};
+
 template <class Array, int slot>
 struct LeftAddSimdFunctor
 {
@@ -181,205 +217,41 @@ struct SetDofs
   }
 };
 
-#if 0
-template <int simd>
-void customStandardL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
+
+template <int lanes>
+struct SetDofsSimd
 {
-  dest.clear();
 
-  typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionSpaceType :: RangeType   RangeType;
-  typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef typename GridPartType :: template Codim< 0 > :: EntityType  EntityType;
-
-  typedef Dune::Fem::ConstLocalFunction< DiscreteFunctionType > LocalFunctionType;
-  typedef Dune::Fem::AddLocalContribution< DiscreteFunctionType > AddLocalContributionType;
-
-  LocalFunctionType lf( f );
-  AddLocalContributionType ulocal( dest );
-
-  std::vector< typename DiscreteFunctionType::DofType > tempDof;
-
-  typedef CachingQuadrature< GridPartType, 0 > Quadrature;
-
-  const int order = dest.space().order() * 2;
-
-  //typedef Vec4d                      SimdVecType;
-  typedef std::array< double, simd > SimdVecType;
-
-  typedef Dune::FieldVector< SimdVecType, RangeType :: dimension > VecRangeType;
-
-  std::array< std::vector< RangeType >, simd > values;
-  std::vector< RangeType > val;
-  std::vector< VecRangeType > weights;
-
-  std::array< EntityType, simd > entities;
-
-  std::vector< std::vector< RangeType > > basisFcts;
-  std::vector< double > dofs;
-
-  std::vector< double > lfSimd;
-
-
-  const auto endit = dest.space().end();
-  for( auto it = dest.space().begin(); it != endit; )
+  template <class DF, class EntityVec, class Array>
+  static void apply( DF& f, const EntityVec& entityPtr, Array& array )
   {
-    int usedSimd = 0;
+    const auto& idxSet = f.space().gridPart().indexSet();
+    const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
+        DF::DiscreteFunctionSpaceType::localBlockSize;
+    static std::vector< double > dummy( nDofs, 0.0 );
 
-    for( int i = 0; (i<simd) && (it != endit); ++i, ++it, ++usedSimd )
+    double* dofVecs[ lanes ];
+    for( int i=0; i<lanes; ++i )
     {
-      entities[ i ] = *it;
-      Quadrature quad( entities[ i ], order );
-      const int nop = quad.nop() ;
-      values[ i ].resize( nop );
-      if( i == 0 )
+      if( entityPtr[ i ] )
       {
-        weights.resize( nop );
-        val.resize( nop );
+        dofVecs[ i ] = f.leakPointer() + (idxSet.index( *(entityPtr[ i ])) * nDofs);
       }
-
-      const auto geometry = entities[ i ].geometry();
-      for( int qp = 0; qp < nop; ++ qp )
-        for( int d=0; d<RangeType::dimension; ++d )
-          weights[ qp ][ d ][ i ] = quad.weight( qp );
-
-      if( basisFcts.empty() )
+      else
       {
-        lf.bind( entities[ 0 ] );
-        Quadrature quad( entities[ 0 ], order );
-        const int qnop = quad.nop();
-
-        const int nBaseFcts = lf.basisFunctionSet().size();
-
-        basisFcts.resize( qnop );
-        std::vector< RangeType > phi( nBaseFcts );
-
-        dofs.resize( simd * nBaseFcts );
-
-        for( int qp=0; qp<qnop; ++qp )
-        {
-          lf.basisFunctionSet().evaluateAll( quad[ qp ], phi );
-          auto& baseFct = basisFcts[ qp ];
-          baseFct.resize( nBaseFcts );
-
-          for( int b=0; b<nBaseFcts; ++b )
-          {
-            for( int d=0; d<RangeType::dimension; ++d )
-            {
-              //baseFct[ b ][ d ].insert( i, phi[ b ][ d ] );
-              baseFct[ b ][ d ] = phi[ b ][ d ];
-            }
-          }
-        }
-        lf.unbind();
-      }
-
-    }
-
-    const int baseSize = basisFcts[ 0 ].size();
-    Quadrature quad( entities[ 0 ], order );
-
-    lfSimd.resize( baseSize * simd );
-    // evaluate localfunctions of f
-    for( int i = 0; i<usedSimd; ++i )
-    {
-      double* lfVal = lfSimd.data() + i*baseSize;
-      f.getLocalDofs( entities[ i ], lfVal );
-    }
-
-    double* lf0 = lfSimd.data();
-    double* lf1 = lf0 + baseSize;
-    double* lf2 = lf1 + baseSize;
-    double* lf3 = lf2 + baseSize;
-
-    for( size_t qp = 0; qp < quad.nop(); ++qp )
-    {
-      auto& baseFct = basisFcts[ qp ];
-      for( int i=0; i<simd; ++i )
-        values[ i ][ qp ] = 0;
-
-      for( int b=0; b<baseSize; ++b )
-      {
-        for( int d=0; d<RangeType::dimension; ++d )
-        {
-          values[ 0 ][ qp ][ d ] += lf0[ b ] * baseFct[ b ][ d ];
-          values[ 1 ][ qp ][ d ] += lf1[ b ] * baseFct[ b ][ d ];
-          values[ 2 ][ qp ][ d ] += lf2[ b ] * baseFct[ b ][ d ];
-          values[ 3 ][ qp ][ d ] += lf3[ b ] * baseFct[ b ][ d ];
-        }
-      }
-      //for( int d=0; d<RangeType::dimension; ++d )
-      //  values[ qp ][ d ].insert( i, val[ qp ][ d ] );
-        //values[ qp ][ d ][ i ] = val[ qp ][ d ];
-    }
-
-    // values * weights
-    const int quadNop = values.size();
-    for( int qp = 0; qp < quadNop; ++qp )
-      for( int d=0; d<RangeType::dimension; ++d )
-        for( int i=0; i<usedSimd; ++i )
-          values[ i ][ qp ][ d ] *= weights[ qp ][ d ][ i ];
-
-
-    // axpy operation
-    {
-      const int quadNop  = values.size();
-      const int baseSize = basisFcts[ 0 ].size();
-
-      for( int b=0; b<simd * baseSize; ++b )
-      {
-        dofs[ b ] = 0.0;
-      }
-
-      double* dof0 = dofs.data();
-      double* dof1 = dof0 + baseSize;
-      double* dof2 = dof1 + baseSize;
-      double* dof3 = dof2 + baseSize;
-
-      for( int qp = 0; qp< quadNop; ++qp )
-      {
-        auto& baseFct = basisFcts[ qp ];
-        const auto& val0 = values[ 0 ][ qp ];
-        const auto& val1 = values[ 1 ][ qp ];
-        const auto& val2 = values[ 2 ][ qp ];
-        const auto& val3 = values[ 3 ][ qp ];
-
-        for( int b=0; b<baseSize; ++b )
-        {
-          for( int d=0; d<RangeType::dimension; ++d )
-          {
-            //dofs[ b ][ d ] += values[ qp ][ d ] * baseFct[ b ][ d ];
-            //for( int i=0; i<usedSimd; ++i )
-            dof0[ b ] += val0[ d ] * baseFct[ b ][ d ];
-            dof1[ b ] += val1[ d ] * baseFct[ b ][ d ];
-            dof2[ b ] += val2[ d ] * baseFct[ b ][ d ];
-            dof3[ b ] += val3[ d ] * baseFct[ b ][ d ];
-            //  dofs[ b ][ d ][ i ] += val[ d ][ i ] * baseFct[ b ][ d ];
-          }
-        }
+        dofVecs[ i ] = dummy.data();
       }
     }
 
-    for( int i = 0; i<usedSimd; ++ i )
+    for( int i=0; i<nDofs; ++i )
     {
-      ulocal.bind( entities[ i ] );
-      int dof = 0;
-      double* dofVec = dofs.data() + i*baseSize;
-      for( int b = 0; b < baseSize; ++b )
-      {
-        for( int d=0; d<RangeType::dimension; ++d, ++dof )
-        {
-          ulocal[ dof ] = dofVec[ b ];
-        }
-      }
-      ulocal.unbind();
+      double dof[ lanes ];
+      array[ i ].store( dof );
+      for( int j=0; j<lanes; ++j )
+        dofVecs[ j ][ i ] = dof[ j ];
     }
-
-    if( it == endit ) break ;
   }
-}
-#endif
+};
 
 #if HAVE_DUNE_VECTORCLASS
 void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& dest )
@@ -416,6 +288,7 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
   std::vector< SimdVecType > weights;
 
   std::array< EntityType, simd > entities;
+  std::array< const EntityType*, simd > entityPtr;
 
   std::vector< std::vector< VecRangeType > > basisFcts;
   std::vector< SimdVecType > dofs;
@@ -427,10 +300,12 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
   for( auto it = dest.space().begin(); it != endit; )
   {
     int usedSimd = 0;
+    for( int i=0; i<simd; ++i ) entityPtr[ i ] = nullptr;
 
     for( int i = 0; (i<simd) && (it != endit); ++i, ++it, ++usedSimd )
     {
       entities[ i ] = *it;
+      entityPtr[ i ] = &entities[ i ];
       Quadrature quad( entities[ i ], order );
       const int nop = quad.nop() ;
       if( i == 0 )
@@ -482,7 +357,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
     const int baseSize = basisFcts[ 0 ].size();
     Quadrature quad( entities[ 0 ], order );
 
-    Dune::Fem::ForLoop< GetDofs, 0, simd-1 >::apply( f, entities, lfSimd );
+    //Dune::Fem::ForLoop< GetDofs, 0, simd-1 >::apply( f, entities, lfSimd );
+    GetDofsSimd< 4 >::apply( f, entityPtr, lfSimd );
 
     //lf.evaluateQuadrature( quad, val );
     const int singleBase = baseSize / RangeType :: dimension;
@@ -494,7 +370,11 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
       for( int b=0; b<singleBase; ++b )
       {
         for( int d=0; d<RangeType::dimension; ++d, ++dof  )
-          values[ qp ][ d ] += lfSimd[ dof ] *  baseFct[ dof ][ d ];
+        {
+          // TODO: use mul_add
+          //values[ qp ][ d ] += lfSimd[ dof ] * baseFct[ dof ][ d ];
+          values[ qp ][ d ] = mul_add( lfSimd[ dof ], baseFct[ dof ][ d ], values[ qp ][ d ]);
+        }
         //values[ qp ].axpy( lfSimd[ b ], baseFct[ b ] );
         //+=
         //for( int d=0; d<RangeType::dimension; ++d )
@@ -532,12 +412,16 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
         for( int b=0; b<singleBase; ++b )
         {
           for( int d=0; d<RangeType::dimension; ++d, ++dof )
-            dofs[ dof ] += val[ d ] * baseFct[ dof ][ d ];
+          {
+            //dofs[ dof ] += val[ d ] * baseFct[ dof ][ d ];
+            dofs[ dof ] = mul_add( val[ d ], baseFct[ dof ][ d ], dofs[ dof ]);
+          }
         }
       }
     }
 
-    Dune::Fem::ForLoop< SetDofs, 0, simd-1 >::apply( dest, entities, dofs );
+    //Dune::Fem::ForLoop< SetDofs, 0, simd-1 >::apply( dest, entities, dofs );
+    SetDofsSimd< simd >::apply( dest, entityPtr, dofs );
     /*
     for( int i = 0; i<usedSimd; ++ i )
     {
@@ -598,6 +482,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
 
    std::cout << "Standard Interpolation: " << timer.elapsed() << std::endl;
 
+   /*
    copy.clear();
 
    timer.reset();
@@ -605,6 +490,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    customInterpolate(solution, copy);
 
    std::cout << "Custom  Interpolation: " << timer.elapsed() << std::endl;
+   */
 
    /*
    timer.reset();
