@@ -334,10 +334,12 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
             JacobianRangeType aduIn,aduOut;
             model().init( outside );
             model().diffusiveFlux( quadOutside[ pt ], vuOut, duOut, aduOut );
+            auto pFactor = model().penalty( quadOutside[ pt ], vuOut );
             model().init( entity );
             model().diffusiveFlux( quadInside[ pt ], vuIn, duIn, aduIn );
             JacobianRangeType affine;
             model().diffusiveFlux( quadInside[ pt ], RangeType(0), JacobianRangeType(0), affine);
+            pFactor += model().penalty( quadInside[ pt ], vuIn );
             //! [Compute skeleton terms: obtain required values on the intersection]
 
             //! [Compute skeleton terms: compute factors for axpy method]
@@ -345,7 +347,8 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
             JacobianRangeType advalue;
             // penalty term : beta [u] [phi] = beta (u+ - u-)(phi+ - phi-)=beta (u+ - u-)phi+
             value = jump;
-            value *= beta;
+            for (unsigned int r=0;r<dimRange;++r)
+              value[r] *= beta * pFactor[r]/2.;
             // {A grad u}.[phi] = {A grad u}.phi+ n_+ = 0.5*(grad u+ + grad u-).n_+ phi+
             aduIn += aduOut;
             aduIn *= -0.5;
@@ -397,8 +400,10 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
             jump -= bndValue;
 
             // penalty term : beta [u] [phi] = beta (u+ - u-)(phi+ - phi-)=beta (u+ - u-)phi+
+            auto pFactor = model().penalty( quadInside[ pt ], vuIn );
             value = jump;
-            value *= beta * intersectionGeometry.integrationElement( x );
+            for (unsigned int r=0;r<dimRange;++r)
+              value[r] *= beta * pFactor[r] * intersectionGeometry.integrationElement( x );
 
             //  [ u ] * { grad phi_en } = -normal(u+ - u-) * 0.5 grad phi_en
             // here we need a diadic product of u x n
@@ -593,12 +598,14 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             JacobianRangeType adphiEn = dphi[ i ];
             model().linDiffusiveFlux( u0En, u0EnJac,   faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
           }
+          auto pFactor = model().penalty( faceQuadInside[ pt ], u0En );
           model().init( neighbor );
           for( unsigned int i = 0; i < numBaseFunctions; ++i )
           {
             JacobianRangeType adphiNb = dphiNb[ i ];
             model().linDiffusiveFlux( u0En, u0EnJac,   faceQuadOutside[ pt ], phiNb[i], adphiNb, dphiNb[ i ] );
           }
+          pFactor += model().penalty( faceQuadOutside[ pt ], u0En );
           model().init( entity );
           //! [Assemble skeleton terms: obtain values om quadrature point]
 
@@ -615,9 +622,11 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             dphiNb[localCol].usmv( -0.5, normal, valueNb );
 
             //  [ u ] * [ phi_en ] = u^- * phi_en^-
-            valueEn.axpy( beta, phi[ localCol ] );
-
-            valueNb.axpy(-beta, phiNb[ localCol ] );
+            for (unsigned int r=0;r<dimRange;++r)
+            {
+              valueEn[r] += beta*pFactor[r]/2.*phi[localCol][r];
+              valueNb[r] -= beta*pFactor[r]/2.*phiNb[localCol][r];
+            }
             // here we need a diadic product of u x n
             for ( int r=0; r< dimRange; ++r )
               for ( int d=0; d< dimDomain; ++d )
@@ -683,6 +692,8 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             model().linDiffusiveFlux( u0En, u0EnJac, faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
           }
 
+          auto pFactor = model().penalty( faceQuadInside[ pt ], u0En );
+
           for( unsigned int localCol = 0; localCol < numBaseFunctions; ++localCol )
           {
             RangeType valueEn(0);
@@ -692,7 +703,8 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             dphi[localCol].usmv( -1.0, normal, valueEn );
 
             //  [ u ] * [ phi_en ] = u^- * phi_en^-
-            valueEn.axpy( beta, phi[ localCol ] );
+            for (unsigned int r=0;r<dimRange;++r)
+              valueEn[r] += beta*pFactor[r]*phi[ localCol ][r];
 
             // here we need a diadic product of u x n
             for ( int r=0; r< dimRange; ++r )

@@ -999,7 +999,7 @@ namespace Dune
         int linearIterations, nonlinearIterations;
       };
 
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands &integrands, ParameterReader parameter = Parameter::container() )
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, ParameterReader parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),

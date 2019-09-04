@@ -56,6 +56,9 @@ class EllipticModel:
         self.dirichlet = [assign(self.arg_r, construct("RRangeType", 0))]
         self.symmetric = False
 
+        self.baseName = "elliptic"
+        self.modelWrapper = "DiffusionModelWrapper< Model >"
+
     def addCoefficient(self, dimRange, name=None, field="double"):
         idx = len(self._coefficients)
         self._coefficients.append({'dimRange': dimRange, 'name': name, 'field': field})
@@ -179,8 +182,9 @@ class EllipticModel:
 
         code.append(Method('bool', 'hasNeumanBoundary', const=True, code=return_(self.hasNeumanBoundary)))
 
+        code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
         code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
-        code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'Dune::FieldVector< int, dimR > &dirichletComponent'], code=self.isDirichletIntersection, const=True))
+        code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'], code=self.isDirichletIntersection, const=True))
         code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))
 
         if self.hasConstants:

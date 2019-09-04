@@ -375,6 +375,7 @@ namespace Dune
                   "hypre",      // = -1,   // Hypre preconditioning
                   "ml",         // = -2,   // ML preconditioner (from Trilinos)
                   "lu",         // = -3,   // LU factorization
+                  "pcgamg",     // = -4    // Petsc internal AMG
                  });
         }
 
@@ -506,6 +507,10 @@ namespace Dune
               ::Dune::Petsc::PCSetUp( pc );
               break;
             }
+          case -4: // PetscPrec::pcgamg:
+            ::Dune::Petsc::PCSetType( pc, PCGAMG );
+            break;
+
           default:
             DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid preconditioner choosen." );
         }

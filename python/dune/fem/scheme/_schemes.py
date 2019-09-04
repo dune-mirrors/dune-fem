@@ -84,6 +84,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
+from dune.fem.scheme.dgmodel import transform
 def dg(model, space=None, penalty=0, solver=None, parameters={},
        penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
@@ -112,10 +113,13 @@ def dg(model, space=None, penalty=0, solver=None, parameters={},
                 raise ValueError("no space provided and could not deduce from form provided")
         from dune.fem.model._models import elliptic
         if modelParam:
-            model = elliptic(space.grid,model,*modelParam)
+            model = elliptic(space.grid,model,*modelParam,
+                      modelPatch=transform(space,penalty))
         else:
-            model = elliptic(space.grid,model)
+            model = elliptic(space.grid,model,
+                      modelPatch=transform(space,penalty))
 
+    spaceType = space._typeName
     useDirichletBC = "true" if model.hasDirichletBoundary else "false"
     modelParam = None
     if isinstance(model, (list, tuple)):
@@ -128,14 +132,20 @@ def dg(model, space=None, penalty=0, solver=None, parameters={},
         else:
             model = elliptic(space.grid,model)
     if penaltyClass is None:
-        spaceType = space._typeName
         penaltyClass = "DefaultPenalty<"+spaceType+">"
     includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model,penaltyClass]) + ">"
     parameters["penalty"] = parameters.get("penalty",penalty)
 
-    return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
+    includes += ["dune/fem/schemes/diffusionmodel.hh"]
+    modelType = "DGDiffusionModel< " +\
+          "typename " + spaceType + "::GridPartType, " +\
+          spaceType + "::dimRange, " +\
+          spaceType + "::dimRange, " +\
+          "typename " + spaceType + "::RangeFieldType >"
+
+    return femschemeModule(space,model,includes,solver,operator,parameters=parameters, modelType=modelType)
 
 def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     includes = ["dune/fem/schemes/galerkin.hh"]
