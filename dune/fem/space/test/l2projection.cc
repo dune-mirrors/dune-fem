@@ -182,7 +182,7 @@ struct GetDofsSimd
 
     for( int i=0; i<nDofs; ++i )
     {
-      double dof[ lanes ];
+      //double dof[ lanes ];
       for( int j=0; j<lanes; ++j ){
         Simd::lane(j, array[ i ]) = dofVecs[ j ][ i ];
         //dof[ j ] = dofVecs[ j ][ i ];
@@ -276,7 +276,7 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
 
   const int order = dest.space().order() * 2;
 
-  static const int lanes= Simd::lanes<SimdVecType>();
+  constexpr int lanes= Simd::lanes<SimdVecType>();
 
   typedef Dune::FieldVector< SimdVecType, RangeType :: dimension > VecRangeType;
 
@@ -312,9 +312,9 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
         val.resize( nop );
       }
 
-      const auto geometry = entities[ i ].geometry();
-      for( int qp = 0; qp < nop; ++ qp )
-        Simd::lane(i, weights[ qp ]) = quad.weight( qp );
+      //const auto geometry = entities[ i ].geometry();
+        for( int qp = 0; qp < nop; ++ qp )
+          Simd::lane(i, weights[ qp ]) = quad.weight( qp );
 
       if( basisFcts.empty() )
       {
@@ -477,6 +477,13 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    interpolate(solution, copy);
 
    std::cout << "Standard Interpolation: " << timer.elapsed() << std::endl;
+   // calculation L2 error
+   // pol ord for calculation the error should be higher than
+   // pol for evaluation the basefunctions
+   double error = l2norm.distance( exactSolution, solution );
+   std::cout << "L2 Error: " << error << "\n";
+   double error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error(copy): " << error2 << "\n\n";
 
    /*
    copy.clear();
@@ -512,32 +519,36 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    timer.reset();
    customL2Projection<double>( solution, copy );
    std::cout << "Simd interpolation (double): " << timer.elapsed() << std::endl;
+   // calculation L2 error
+   // pol ord for calculation the error should be higher than
+   // pol for evaluation the basefunctions
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
 
    timer.reset();
    customL2Projection<Dune::LoopSIMD<double, 4>>( solution, copy );
    std::cout << "Simd interpolation (LoopSIMD<double, 4>): " << timer.elapsed() << std::endl;
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
+
 
 #if HAVE_VC
    timer.reset();
    customL2Projection<Vc::SimdArray<double, 4>>( solution, copy );
    std::cout << "Simd interpolation (Vc::SimdArray<double, 4>): " << timer.elapsed() << std::endl;
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
 #endif
 
 #if HAVE_DUNE_VECTORCLASS
    timer.reset();
    customL2Projection<Vec4d>( solution, copy );
    std::cout << "Simd interpolation (Vec4d): " << timer.elapsed() << std::endl;
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
 #endif
 
    //interpolate( solution, copy );
-
-   // calculation L2 error
-   // pol ord for calculation the error should be higher than
-   // pol for evaluation the basefunctions
-   double error = l2norm.distance( exactSolution, solution );
-   std::cout << "\nL2 Error: " << error << "\n\n";
-   double error2 = l2norm.distance( exactSolution, copy );
-   std::cout << "\nL2 Error(copy): " << error2 << "\n\n";
 
 #if USE_GRAPE
    // if Grape was found, then display last solution
