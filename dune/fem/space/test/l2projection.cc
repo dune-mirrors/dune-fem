@@ -278,9 +278,10 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
 
   constexpr int lanes= Simd::lanes<SimdVecType>();
 
-  typedef Dune::FieldVector< SimdVecType, RangeType :: dimension > VecRangeType;
+  typedef Dune::FieldVector< Simd::Scalar<SimdVecType>, RangeType :: dimension > VecRangeType;
+  typedef Dune::FieldVector< SimdVecType, RangeType :: dimension > SimdVecRangeType;
 
-  std::vector< VecRangeType > values;
+  std::vector< SimdVecRangeType > values;
   std::vector< RangeType > val;
   std::vector< SimdVecType > weights;
 
@@ -292,6 +293,32 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
 
   typedef std::vector< SimdVecType > SimdArrayType;
   SimdArrayType lfSimd;
+
+  Quadrature quad( *dest.space().begin(), order );
+  const int nop = quad.nop() ;
+  lf.bind( *dest.space().begin() );
+  const int nBaseFcts = lf.basisFunctionSet().size();
+  basisFcts.resize( nop );
+  std::vector< RangeType > phi( nBaseFcts );
+  dofs.resize( nBaseFcts );
+  lfSimd.resize( nBaseFcts );
+  for( int qp=0; qp<nop; ++qp )
+    {
+      lf.basisFunctionSet().evaluateAll( quad[ qp ], phi );
+      auto& baseFct = basisFcts[ qp ];
+      baseFct.resize( nBaseFcts );
+
+      for( int b=0; b<nBaseFcts; ++b )
+        {
+          for( int d=0; d<RangeType::dimension; ++d )
+            {
+              for( int i = 0; i<lanes; ++i )
+                baseFct[ b ][ d ] = phi[ b ][ d ];
+              //baseFct[ b ][ d ][ i ] = phi[ b ][ d ];
+            }
+        }
+    }
+  lf.unbind();
 
   const auto endit = dest.space().end();
   for( auto it = dest.space().begin(); it != endit; )
@@ -313,41 +340,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
       }
 
       //const auto geometry = entities[ i ].geometry();
-        for( int qp = 0; qp < nop; ++ qp )
-          Simd::lane(i, weights[ qp ]) = quad.weight( qp );
-
-      if( basisFcts.empty() )
-      {
-        lf.bind( entities[ 0 ] );
-        Quadrature quad( entities[ 0 ], order );
-        const int qnop = quad.nop();
-
-        const int nBaseFcts = lf.basisFunctionSet().size();
-
-        basisFcts.resize( qnop );
-        std::vector< RangeType > phi( nBaseFcts );
-
-        dofs.resize( nBaseFcts );
-        lfSimd.resize( nBaseFcts );
-
-        for( int qp=0; qp<qnop; ++qp )
-        {
-          lf.basisFunctionSet().evaluateAll( quad[ qp ], phi );
-          auto& baseFct = basisFcts[ qp ];
-          baseFct.resize( nBaseFcts );
-
-          for( int b=0; b<nBaseFcts; ++b )
-          {
-            for( int d=0; d<RangeType::dimension; ++d )
-            {
-              for( int i = 0; i<lanes; ++i )
-                Simd::lane(i, baseFct[ b ][ d ]) = phi[ b ][ d ];
-                //baseFct[ b ][ d ][ i ] = phi[ b ][ d ];
-            }
-          }
-        }
-        lf.unbind();
-      }
+      for( int qp = 0; qp < nop; ++ qp )
+        Simd::lane(i, weights[ qp ]) = quad.weight( qp );
 
     }
 

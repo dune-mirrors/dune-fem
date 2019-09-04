@@ -2,7 +2,7 @@
 #ifndef DUNE_ORTHONORMALBASE_3D_HH
 #define DUNE_ORTHONORMALBASE_3D_HH
 
-#define PMAX3D 4
+#define PMAX3D 6
 
 #include <stdlib.h>
 #include <stdio.h>
