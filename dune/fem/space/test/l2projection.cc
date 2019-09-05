@@ -137,7 +137,7 @@ struct AssignSimdFunctor
   template< class Value >
   void operator() ( const std::size_t local, const Value &value ) const
   {
-    array_[ local ].insert( slot, value );
+    Simd::lane(slot, array_[ local ]) = value;
   }
 private:
   Array &array_;
@@ -165,7 +165,7 @@ struct GetDofsSimd
     const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
         DF::DiscreteFunctionSpaceType::localBlockSize;
     static std::vector< double > dummy( nDofs, 0.0 );
-    constexpr size_t lanes = Simd::lanes<typename Array::value_type>();
+    constexpr int lanes = Simd::lanes<typename Array::value_type>();
 
     const double* dofVecs[ lanes ];
     for( int i=0; i<lanes; ++i )
@@ -182,13 +182,9 @@ struct GetDofsSimd
 
     for( int i=0; i<nDofs; ++i )
     {
-      //double dof[ lanes ];
       for( int j=0; j<lanes; ++j ){
         Simd::lane(j, array[ i ]) = dofVecs[ j ][ i ];
-        //dof[ j ] = dofVecs[ j ][ i ];
       }
-
-      //array[ i ].load( dof );
     }
   }
 };
@@ -203,7 +199,7 @@ struct LeftAddSimdFunctor
   template< class Value >
   void operator() ( const std::size_t local, Value&& value ) const
   {
-    value += array_[ local ][ slot ];
+    value += Simd::lane(slot, array_[ local ]);
   }
 private:
   const Array &array_;
@@ -230,7 +226,7 @@ struct SetDofsSimd
     const int nDofs = f.space().blockMapper().numDofs( *(entityPtr[ 0 ]) ) *
         DF::DiscreteFunctionSpaceType::localBlockSize;
     static std::vector< double > dummy( nDofs, 0.0 );
-    constexpr size_t lanes = Simd::lanes<typename Array::value_type>();
+    constexpr int lanes = Simd::lanes<typename Array::value_type>();
     double* dofVecs[ lanes ];
     for( int i=0; i<lanes; ++i )
     {
@@ -348,8 +344,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
     const int baseSize = basisFcts[ 0 ].size();
     Quadrature quad( entities[ 0 ], order );
 
-    //Dune::Fem::ForLoop< GetDofs, 0, lanes-1 >::apply( f, entities, lfSimd );
-    GetDofsSimd::apply( f, entityPtr, lfSimd );
+    Dune::Fem::ForLoop< GetDofs, 0, lanes-1 >::apply( f, entities, lfSimd );
+    //GetDofsSimd::apply( f, entityPtr, lfSimd );
 
     //lf.evaluateQuadrature( quad, val );
     const int singleBase = baseSize / RangeType :: dimension;
@@ -411,24 +407,8 @@ void customL2Projection( const DiscreteFunctionType& f, DiscreteFunctionType& de
       }
     }
 
-    //Dune::Fem::ForLoop< SetDofs, 0, lanes-1 >::apply( dest, entities, dofs );
-    SetDofsSimd::apply( dest, entityPtr, dofs );
-    /*
-    for( int i = 0; i<usedSimd; ++ i )
-    {
-      // dest.setLocalDofs(
-      ulocal.bind( entities[ i ] );
-      int dof = 0;
-      for( int b = 0; b < baseSize; ++b )
-      {
-        for( int d=0; d<RangeType::dimension; ++d, ++dof )
-        {
-          ulocal[ dof ] = dofs[ b ][ d ][ i ];
-        }
-      }
-      ulocal.unbind();
-    }
-    */
+    Dune::Fem::ForLoop< SetDofs, 0, lanes-1 >::apply( dest, entities, dofs );
+    //SetDofsSimd::apply( dest, entityPtr, dofs );
 
     if( it == endit ) break ;
   }
@@ -511,6 +491,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    */
 
    timer.reset();
+   /*
    customL2Projection<double>( solution, copy );
    std::cout << "Simd interpolation (double): " << timer.elapsed() << std::endl;
    // calculation L2 error
@@ -518,16 +499,25 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    // pol for evaluation the basefunctions
    error2 = l2norm.distance( exactSolution, copy );
    std::cout << "L2 Error: " << error2 << "\n\n";
+   */
 
+   /*
    timer.reset();
    customL2Projection<Dune::LoopSIMD<double, 4>>( solution, copy );
    std::cout << "Simd interpolation (LoopSIMD<double, 4>): " << timer.elapsed() << std::endl;
    error2 = l2norm.distance( exactSolution, copy );
    std::cout << "L2 Error: " << error2 << "\n\n";
+   */
 
 
 #if HAVE_VC
    timer.reset();
+   customL2Projection<Vc::SimdArray<double, 8>>( solution, copy );
+   std::cout << "Simd interpolation (Vc::SimdArray<double, 8>): " << timer.elapsed() << std::endl;
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
+   timer.reset();
+
    customL2Projection<Vc::SimdArray<double, 4>>( solution, copy );
    std::cout << "Simd interpolation (Vc::SimdArray<double, 4>): " << timer.elapsed() << std::endl;
    error2 = l2norm.distance( exactSolution, copy );
