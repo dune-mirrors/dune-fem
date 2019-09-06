@@ -512,12 +512,18 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
 
 #if HAVE_VC
    timer.reset();
+   customL2Projection<Vc::SimdArray<double, 12>>( solution, copy );
+   std::cout << "Simd interpolation (Vc::SimdArray<double, 12>): " << timer.elapsed() << std::endl;
+   error2 = l2norm.distance( exactSolution, copy );
+   std::cout << "L2 Error: " << error2 << "\n\n";
+
+   timer.reset();
    customL2Projection<Vc::SimdArray<double, 8>>( solution, copy );
    std::cout << "Simd interpolation (Vc::SimdArray<double, 8>): " << timer.elapsed() << std::endl;
    error2 = l2norm.distance( exactSolution, copy );
    std::cout << "L2 Error: " << error2 << "\n\n";
-   timer.reset();
 
+   timer.reset();
    customL2Projection<Vc::SimdArray<double, 4>>( solution, copy );
    std::cout << "Simd interpolation (Vc::SimdArray<double, 4>): " << timer.elapsed() << std::endl;
    error2 = l2norm.distance( exactSolution, copy );
