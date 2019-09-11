@@ -188,7 +188,7 @@ namespace Dune
       template <class Operator>
       void bind ( const Operator &op )
       {
-        if( useDiagonalPreconder_ && !precondObj_ && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, Operator > :: value )
+        if( useDiagonalPreconder_ && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, Operator > :: value )
         {
           // create diagonal preconditioner
           precondObj_.reset( new DiagonalPreconditioner< DomainFunctionType, Operator >( op ) );
