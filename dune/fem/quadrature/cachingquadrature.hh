@@ -220,6 +220,12 @@ namespace Dune
       }
     };
 
+    template<class GridPart, class Entity>
+    static inline auto cachingQuadrature(const GridPart& gridPart, const Entity& entity, unsigned quadOrder)
+    {
+      using Quadrature = Dune::Fem::CachingQuadrature<GridPart, 0>;
+      return Quadrature(entity, quadOrder);
+    }
   } //namespace Fem
 
 } //namespace Dune

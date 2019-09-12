@@ -500,6 +500,12 @@ namespace Dune
     template< class GridFunction >
     using ConstLocalFunction = typename Impl::ConstLocalFunction< GridFunction >::Type;
 
+    template<class F>
+    constexpr auto constLocalFunction(F&& f)
+    {
+      return Dune::Fem::ConstLocalFunction<std::decay_t<F> >(std::forward<F>(f));
+    }
+
   } // namespace Fem
 
 } // namespace Dune
