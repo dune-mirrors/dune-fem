@@ -83,6 +83,17 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
         maxLevel = -1
     return indicator.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
+def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
+                  minLevel=0, maxLevel=None):
+    try:
+        if not indicator.grid.canAdapt:
+            raise AttributeError("indicator function must be over grid view that supports adaptation")
+    except:
+        raise AttributeError("indicator function must be over grid view that supports adaptation")
+    if maxLevel==None:
+        maxLevel = -1
+    return indicator.grid.markNeighbors(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+
 def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
     try:
         if not indicator.space.grid.canAdapt:
