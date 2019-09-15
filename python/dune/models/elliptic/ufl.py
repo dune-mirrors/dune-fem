@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoordinate
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
+from ufl import replace, TestFunction, TrialFunction
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
@@ -127,6 +128,32 @@ def compileUFL(form, *args, **kwargs):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires form with at least two arguments.")
+
+    phi_, u_ = form.arguments()
+
+    if phi_.ufl_function_space().scalar:
+        phi = TestFunction(phi_.ufl_function_space().toVectorSpace())
+        form = replace(form,{phi_:phi[0]})
+    else:
+        phi = phi_
+    if u_.ufl_function_space().scalar:
+        u = TrialFunction(u_.ufl_function_space().toVectorSpace())
+        form = replace(form,{u_:u[0]})
+    else:
+        u = u_
+    _, coeff_ = extract_arguments_and_coefficients(form)
+    coeff_ = set(coeff_)
+
+    # added for dirichlet treatment same as elliptic model
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    # remove the dirichletBCs
+    arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
+    for dBC in dirichletBCs:
+        _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
+        coeff_ |= set(coeff__)
+    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+
+    form = replace(form,coeff)
 
     phi = form.arguments()[0]
     dimRange = phi.ufl_shape[0]

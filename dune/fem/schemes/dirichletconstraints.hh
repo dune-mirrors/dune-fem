@@ -447,7 +447,7 @@ protected:
 
   // detect all DoFs on the Dirichlet boundary of the given entity
   template< class EntityType >
-  bool searchEntityDirichletDofs( const EntityType &entity, const ModelType& model ) const
+  bool searchEntityDirichletDofs( const EntityType &entity, ModelType& model ) const
   {
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 

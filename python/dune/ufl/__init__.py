@@ -61,9 +61,7 @@ class Space(ufl.FunctionSpace):
         if not self.scalar:
             return self
         else:
-            ve = ufl.VectorElement("Lagrange", self._cell, 1, 1)
-            domain = ufl.domain.default_domain(ve.cell())
-            return ufl.FunctionSpace(domain, ve)
+            return Space(self._cell,1)
 
 class FemSpace(Space):
     def __init__(self, space, scalar=None):
