@@ -321,7 +321,7 @@ namespace Dune
       {
         return integrands_.get().hasDirichletBoundary();
       }
-      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent )
+      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const
       {
         return integrands_.get().isDirichletIntersection(inter,dirichletComponent);
       }
@@ -419,7 +419,7 @@ namespace Dune
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const = 0;
 
         virtual bool hasDirichletBoundary () const = 0;
-        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) = 0;
+        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
         virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const = 0;
       };
 
@@ -452,7 +452,7 @@ namespace Dune
         virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
 
         virtual bool hasDirichletBoundary () const override { return impl().hasDirichletBoundary(); }
-        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) override { return impl().isDirichletIntersection(inter,dirichletComponent); }
+        virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const override { return impl().isDirichletIntersection(inter,dirichletComponent); }
         virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const override { impl().dirichlet(bndId,x,value); }
 
       private:
@@ -569,7 +569,7 @@ namespace Dune
       {
         return impl().hasDirichletBoundary();
       }
-      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent )
+      bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent )  const
       {
         return impl().isDirichletIntersection(inter,dirichletComponent);
       }

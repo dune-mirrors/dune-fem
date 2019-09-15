@@ -101,7 +101,7 @@ def load(grid, model, *args, **kwargs):
         modelPatch = None
 
     signature = model.signature + "_" + hashIt(grid._typeName)
-    name = 'ellipticmodel_' + signature
+    name = model.baseName + '_' + signature
 
     writer = SourceWriter()
 
@@ -138,7 +138,7 @@ def load(grid, model, *args, **kwargs):
     coefficients = ["Dune::FemPy::VirtualizedGridFunction< GridPart, " + r + " >" for r in rangeTypes]
     code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join(["GridPart"] + coefficients) + " >")]
 
-    code += [TypeAlias("ModelWrapper", "DiffusionModelWrapper< Model >")]
+    code += [TypeAlias("ModelWrapper", model.modelWrapper)]
 
     code += [TypeAlias("ModelBase", "typename ModelWrapper::Base")]
 

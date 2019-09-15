@@ -130,7 +130,8 @@ struct EllipticOperator
   {
     return rSpace_;
   }
-  ModelType &model () const { return model_; }
+  const ModelType &model () const { return model_; }
+  ModelType &model () { return model_; }
 
   void setQuadratureOrders(unsigned int interior, unsigned int surface)
   {

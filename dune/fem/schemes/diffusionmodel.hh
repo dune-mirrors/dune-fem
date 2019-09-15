@@ -168,9 +168,10 @@ public:
 
   VirtualDiffusionModelMethods(LocalDomainType)
 
+  typedef Dune::FieldVector<int, dimRange> DirichletComponentType;
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const = 0;
+  virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
 };
 
 template < class ModelImpl >
@@ -230,6 +231,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().name();
   }
+  typedef Dune::FieldVector<int, dimR> DirichletComponentType;
   virtual bool hasDirichletBoundary () const
   {
     return impl().hasDirichletBoundary();
@@ -238,7 +240,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimR> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
@@ -258,6 +260,215 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   ModelImpl impl_;
 };
 
+#define VirtualPenaltyMethods(POINT) \
+  virtual RRangeType penalty ( const POINT &x,\
+                const DRangeType &value ) const = 0;\
+  virtual RRangeType linPenalty ( const POINT &x,\
+                   const DRangeType &value ) const = 0;
+#define WrapperPenaltyMethods(POINT) \
+  virtual RRangeType penalty ( const POINT &x,\
+                const DRangeType &value ) const \
+  { return impl().penalty(x, value); } \
+  virtual RRangeType linPenalty ( const POINT &x,\
+                   const DRangeType &value ) const \
+  { return impl().linPenalty( x, value); }
+
+template< class GridPart, int dimDomain, int dimRange=dimDomain, class RangeField = double >
+struct DGDiffusionModel
+{
+  typedef GridPart GridPartType;
+  static const int dimD = dimDomain;
+  static const int dimR = dimRange;
+  typedef DGDiffusionModel<GridPartType, dimD, dimR, RangeField> ModelType;
+  typedef RangeField RangeFieldType;
+
+  typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
+              GridPart::dimensionworld, dimD > DFunctionSpaceType;
+  typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
+              GridPart::dimensionworld, dimR > RFunctionSpaceType;
+  typedef typename DFunctionSpaceType::DomainType DomainType;
+  typedef typename DFunctionSpaceType::RangeType DRangeType;
+  typedef typename DFunctionSpaceType::JacobianRangeType DJacobianRangeType;
+  typedef typename DFunctionSpaceType::HessianRangeType DHessianRangeType;
+  typedef typename DFunctionSpaceType::DomainFieldType DDomainFieldType;
+  typedef typename RFunctionSpaceType::RangeType RRangeType;
+  typedef typename RFunctionSpaceType::JacobianRangeType RJacobianRangeType;
+  typedef typename RFunctionSpaceType::HessianRangeType RHessianRangeType;
+  typedef typename RFunctionSpaceType::DomainFieldType rDomainFieldType;
+
+  typedef typename GridPartType::template Codim<0>::EntityType EntityType;
+  typedef typename GridPartType::IntersectionType IntersectionType;
+  typedef typename EntityType::Geometry::LocalCoordinate LocalDomainType;
+
+  // quadrature points from dune-fempy quadratures
+  template <class F,int d>
+  using Traits = Dune::FemPy::FempyQuadratureTraits<F,d>;
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0, Traits >::
+                   QuadraturePointWrapperType Point;
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 1, Traits >::
+                   QuadraturePointWrapperType IntersectionPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 0, Traits >::
+                   QuadraturePointWrapperType ElementPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1, Traits >::
+                   QuadraturePointWrapperType ElementIntersectionPoint;
+
+  // quadrature points from dune-fem quadratures
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 0 >::
+                   QuadraturePointWrapperType OriginalPoint;
+  typedef typename Dune::Fem::CachingQuadrature< GridPartType, 1 >::
+                   QuadraturePointWrapperType OriginalIntersectionPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 0 >::
+                   QuadraturePointWrapperType OriginalElementPoint;
+  typedef typename Dune::Fem::ElementQuadrature< GridPartType, 1 >::
+                   QuadraturePointWrapperType OriginalElementIntersectionPoint;
+
+  /*
+  static const bool isLinear;
+  static const bool isSymmetric;
+  */
+
+public:
+  DGDiffusionModel( )
+  { }
+  virtual ~DGDiffusionModel() {}
+
+  virtual std::string name() const = 0;
+
+  virtual bool init( const EntityType &entity) const = 0;
+
+  // virtual methods for fempy quadratures
+  VirtualDiffusionModelMethods(Point)
+  VirtualDiffusionModelMethods(ElementPoint)
+  VirtualDiffusionModelMethods(IntersectionPoint)
+  VirtualDiffusionModelMethods(ElementIntersectionPoint)
+
+  // virtual methods for fem quadratures
+  VirtualDiffusionModelMethods(OriginalPoint)
+  VirtualDiffusionModelMethods(OriginalElementPoint)
+  VirtualDiffusionModelMethods(OriginalIntersectionPoint)
+  VirtualDiffusionModelMethods(OriginalElementIntersectionPoint)
+
+  VirtualDiffusionModelMethods(LocalDomainType)
+
+  typedef Dune::FieldVector<int, dimRange> DirichletComponentType;
+  virtual bool hasDirichletBoundary () const = 0;
+  virtual bool hasNeumanBoundary () const = 0;
+  virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
+
+  VirtualPenaltyMethods(Point)
+  VirtualPenaltyMethods(ElementPoint)
+  VirtualPenaltyMethods(IntersectionPoint)
+  VirtualPenaltyMethods(ElementIntersectionPoint)
+
+  // virtual methods for fem quadratures
+  VirtualPenaltyMethods(OriginalPoint)
+  VirtualPenaltyMethods(OriginalElementPoint)
+  VirtualPenaltyMethods(OriginalIntersectionPoint)
+  VirtualPenaltyMethods(OriginalElementIntersectionPoint)
+
+  VirtualPenaltyMethods(LocalDomainType)
+
+};
+
+template < class ModelImpl >
+struct DGDiffusionModelWrapper : public DGDiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimD, ModelImpl::dimR,
+                                        typename ModelImpl::RRangeFieldType>
+{
+  typedef ModelImpl Impl;
+  typedef typename ModelImpl::GridPartType GridPartType;
+  static const int dimD  = ModelImpl::dimD;
+  static const int dimR  = ModelImpl::dimR;
+  typedef DGDiffusionModel<GridPartType, dimD, dimR, typename ModelImpl::RRangeFieldType> Base;
+
+  typedef typename Base::Point Point;
+  typedef typename Base::IntersectionPoint IntersectionPoint;
+  typedef typename Base::ElementPoint ElementPoint;
+  typedef typename Base::ElementIntersectionPoint ElementIntersectionPoint;
+  typedef typename Base::OriginalPoint OriginalPoint;
+  typedef typename Base::OriginalIntersectionPoint OriginalIntersectionPoint;
+  typedef typename Base::OriginalElementPoint      OriginalElementPoint;
+  typedef typename Base::OriginalElementIntersectionPoint OriginalElementIntersectionPoint;
+  typedef typename Base::LocalDomainType LocalDomainType;
+  typedef typename Base::DomainType DomainType;
+  typedef typename Base::DRangeType DRangeType;
+  typedef typename Base::DJacobianRangeType DJacobianRangeType;
+  typedef typename Base::DHessianRangeType DHessianRangeType;
+  typedef typename Base::RRangeType RRangeType;
+  typedef typename Base::RJacobianRangeType RJacobianRangeType;
+  typedef typename Base::RHessianRangeType RHessianRangeType;
+  typedef typename Base::EntityType EntityType;
+  typedef typename Base::IntersectionType IntersectionType;
+
+  template< class... Args, std::enable_if_t< std::is_constructible< ModelImpl, Args &&... >::value, int > = 0 >
+  explicit DGDiffusionModelWrapper ( Args &&... args )
+    : impl_( std::forward< Args >( args )... )
+  {}
+
+  ~DGDiffusionModelWrapper()
+  {
+  }
+
+  // virtual methods for fempy quadratures
+  WrapperDiffusionModelMethods(Point);
+  WrapperDiffusionModelMethods(ElementPoint);
+  WrapperDiffusionModelMethods(IntersectionPoint);
+  WrapperDiffusionModelMethods(ElementIntersectionPoint);
+
+  // virtual methods for fem quadratures
+  WrapperDiffusionModelMethods(OriginalPoint);
+  WrapperDiffusionModelMethods(OriginalElementPoint);
+  WrapperDiffusionModelMethods(OriginalIntersectionPoint);
+  WrapperDiffusionModelMethods(OriginalElementIntersectionPoint);
+
+  WrapperDiffusionModelMethods(LocalDomainType);
+
+  WrapperPenaltyMethods(Point)
+  WrapperPenaltyMethods(ElementPoint)
+  WrapperPenaltyMethods(IntersectionPoint)
+  WrapperPenaltyMethods(ElementIntersectionPoint)
+
+  // virtual methods for fem quadratures
+  WrapperPenaltyMethods(OriginalPoint);
+  WrapperPenaltyMethods(OriginalElementPoint);
+  WrapperPenaltyMethods(OriginalIntersectionPoint);
+  WrapperPenaltyMethods(OriginalElementIntersectionPoint);
+
+  WrapperPenaltyMethods(LocalDomainType);
+  // other virtual functions
+  virtual std::string name() const
+  {
+    return impl().name();
+  }
+  typedef Dune::FieldVector<int, dimR> DirichletComponentType;
+  virtual bool hasDirichletBoundary () const
+  {
+    return impl().hasDirichletBoundary();
+  }
+  virtual bool hasNeumanBoundary () const
+  {
+    return impl().hasNeumanBoundary();
+  }
+  virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const
+  {
+    return impl().isDirichletIntersection(inter, dirichletComponent);
+  }
+  virtual bool init( const EntityType &entity) const
+  {
+    return impl().init(entity);
+  }
+  const ModelImpl &impl() const
+  {
+    return impl_;
+  }
+  ModelImpl &impl()
+  {
+    return impl_;
+  }
+  private:
+  ModelImpl impl_;
+};
+
+#if 0 // doesn't seem to be used anymore - needs checking
 template < class ModelTraits >
 struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimD, ModelTraits::dimR, typename ModelTraits::RRangeFieldType>
 {
@@ -326,6 +537,6 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   private:
   ModelImpl &impl_;
 };
-
+#endif
 
 #endif // #ifndef ELLIPTC_MODEL_HH

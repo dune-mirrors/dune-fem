@@ -103,7 +103,7 @@ public:
   {
   }
 
-  /*! treatment of Dirichlet-DoFs for given discrete function
+  /*! treatment of Dirichlet-const DoFs for given discrete function
    *
    *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
    *
@@ -448,7 +448,7 @@ protected:
 
   // detect all DoFs on the Dirichlet boundary of the given entity
   template< class EntityType >
-  bool searchEntityDirichletDofs( const EntityType &entity, ModelType& model ) const
+  bool searchEntityDirichletDofs( const EntityType &entity, const ModelType& model ) const
   {
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
@@ -501,8 +501,7 @@ protected:
     return hasDirichletBoundary;
   }
 
-  //! pointer to slave dofs
-  ModelType& model_;
+  ModelType &model_;
   const DiscreteFunctionSpaceType& space_;
   mutable std::vector< DirichletBlock > dirichletBlocks_;
   mutable bool hasDirichletDofs_ ;

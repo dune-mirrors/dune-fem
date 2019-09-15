@@ -36,7 +36,7 @@ struct DirichletWrapperOperator
   typedef Constraints ConstraintsType;
 
   template <class... Args>
-  DirichletWrapperOperator ( Args&&... args )
+  DirichletWrapperOperator ( Args&... args )
     : op_( std::forward<Args&>(args)... ) , constraints_( op_.model(), op_.rangeSpace() )
   {}
 
