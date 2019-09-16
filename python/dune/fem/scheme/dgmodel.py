@@ -12,6 +12,8 @@ def codeDG(self):
     u = self.trialFunction
     ubar = Coefficient(u.ufl_function_space())
     penalty = self.penalty
+    if penalty is None:
+        penalty = 1
     if isinstance(penalty,Expr):
         if penalty.ufl_shape == ():
             penalty = as_vector([penalty])

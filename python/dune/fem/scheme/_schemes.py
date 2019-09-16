@@ -85,7 +85,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
     return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
 from dune.fem.scheme.dgmodel import transform
-def dg(model, space=None, penalty=0, solver=None, parameters={},
+def dg(model, space=None, penalty=1, solver=None, parameters={},
        penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
