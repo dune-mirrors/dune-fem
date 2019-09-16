@@ -100,8 +100,7 @@ public:
       // mark DoFs on the Dirichlet boundary
       hasDirichletDofs_( false ),
       sequence_( -1 )
-  {
-  }
+  {}
 
   /*! treatment of Dirichlet-const DoFs for given discrete function
    *
@@ -448,7 +447,7 @@ protected:
 
   // detect all DoFs on the Dirichlet boundary of the given entity
   template< class EntityType >
-  bool searchEntityDirichletDofs( const EntityType &entity, const ModelType& model ) const
+  bool searchEntityDirichletDofs( const EntityType &entity, ModelType& model ) const
   {
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
 

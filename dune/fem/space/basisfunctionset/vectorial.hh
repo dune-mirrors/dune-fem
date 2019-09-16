@@ -421,6 +421,14 @@ namespace Dune
         evaluateAll< HessianAll >( x, hessians );
       }
 
+      template< class Quadrature, class DofVector, class HessianArray >
+      void hessianAll ( const Quadrature &quad, const DofVector &dofs, HessianArray &hessians ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          hessianAll( quad[ qp ], dofs, hessians[ qp ] );
+      }
+
       const EntityType &entity () const { return scalarBasisFunctionSet().entity(); }
 
       DofAlignmentType dofAlignment () const { return dofAlignment_ ; }
@@ -454,7 +462,7 @@ namespace Dune
         std::vector< typename HessianAll::Scalar > scalars( size );
         HessianAll::apply( scalarBasisFunctionSet(), x, scalars );
 
-        const int xSize = x.size();
+        const int xSize = DomainType::dimension;
         for( int r = 0; r < dimRange; ++r )
         {
           for( std::size_t i = 0; i < size; ++i )

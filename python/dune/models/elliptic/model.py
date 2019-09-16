@@ -109,7 +109,9 @@ class EllipticModel:
     def hasConstants(self):
         return bool(self._constants)
 
-    def code(self, name='Model', targs=[]):
+    def code(self, name=None, targs=[]):
+        if name is None:
+            name = 'Model'
         constants_ = Variable('std::tuple< ' + ', '.join('std::shared_ptr< ' + c  + ' >' for c in self._constants) + ' >', 'constants_')
         # coefficients_ = Variable('std::tuple< ' + ', '.join(c['name'] if c['name'] is not None else 'Coefficient' + str(i) for i, c in enumerate(self._coefficients)) + ' >', 'coefficients_')
         coefficients_ = Variable('std::tuple< ' + ', '.join(\

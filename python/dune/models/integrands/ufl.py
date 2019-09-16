@@ -68,12 +68,12 @@ def generateDirichletCode(predefined, tensor, tempVars=True):
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 def generateDirichletDomainCode(predefined, tensor, tempVars=True):
-    predefined={}
+    # predefined={}
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
     preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
     result = Variable('int', 'domainId')
-    return [assign(result, results[0])]
+    return [preamble,assign(result, results[0])]
 
 def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True):
     """generate code for a bilinear form
@@ -321,7 +321,8 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         integrands.hasDirichletBoundary = True
 
         predefined = {}
-        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
+        # predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
+        predefined[x] = UnformattedExpression('auto', 'intersection.geometry().center( )')
         integrands.predefineCoefficients(predefined, False)
 
         maxId = 0
@@ -359,8 +360,8 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                 codeDomains.append( (value,neuman,domain) )
         defaultCode = []
         defaultCode.append(Declaration(Variable('int', 'domainId')))
-        defaultCode.append(Declaration(Variable('auto', 'y'),
-            initializer=UnformattedExpression('auto','intersection.geometry().center()')))
+        # defaultCode.append(Declaration(Variable('auto', 'x'),
+        #     initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
             defaultCode.append(
@@ -397,6 +398,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                                          switch
                                         ]
 
+        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
         if wholeDomain is None:
             defaultCode = assign(integrands.arg_r, construct("RRangeType", 0))
         else:

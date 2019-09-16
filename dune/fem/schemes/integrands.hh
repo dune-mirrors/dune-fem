@@ -308,7 +308,7 @@ namespace Dune
         return linearizedSkeleton( integrands(), xIn, uIn, xOut, uOut );
       }
 
-    private:
+    protected:
       decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
       decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
 
@@ -349,6 +349,12 @@ namespace Dune
       };
       template <class FT,int r,int c>
       struct GetDimRange<Dune::FieldMatrix<FT,r,c>>
+      {
+        typedef Dune::FieldVector<FT,r> type;
+        static const int value = r;
+      };
+      template <class FT,int r,int c>
+      struct GetDimRange<Dune::Fem::ExplicitFieldVector<Dune::FieldMatrix<FT,c,c>,r>>
       {
         typedef Dune::FieldVector<FT,r> type;
         static const int value = r;
@@ -476,10 +482,16 @@ namespace Dune
         : VirtualizedIntegrands( FullIntegrands< std::decay_t< Integrands > >( std::move( integrands ) ) )
       {}
 
-      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
+      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr )
+      {}
+
       VirtualizedIntegrands ( This && ) = default;
 
-      VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
+      VirtualizedIntegrands &operator= ( const This &other )
+      {
+        impl_.reset( other ? other.impl().clone() : nullptr );
+      }
+
       VirtualizedIntegrands &operator= ( This && ) = default;
 
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
@@ -577,6 +589,7 @@ namespace Dune
       {
         return impl().dirichlet(bndId,x,value);
       }
+
     private:
       const Interface &impl () const { assert( impl_ ); return *impl_; }
       Interface &impl () { assert( impl_ ); return *impl_; }

@@ -262,6 +262,13 @@ namespace Dune
       }
     };
 
+    template<class GridPart, class Entity>
+    static inline auto elementQuadrature(const GridPart& gridPart, const Entity& entity, unsigned quadOrder)
+    {
+      using Quadrature = Dune::Fem::ElementQuadrature<GridPart, 0>;
+      return Quadrature(entity, quadOrder);
+    }
+
   } // namespace Fem
 
 } // namespace Dune

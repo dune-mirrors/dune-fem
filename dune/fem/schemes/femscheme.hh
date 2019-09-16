@@ -104,8 +104,7 @@ public:
     // the elliptic operator (implicit)
     implicitOperator_( space, space, model, parameter ),
     // create linear operator (domainSpace,rangeSpace)
-    parameter_( parameter ),
-    invOp_( parameter_ )
+    invOp_( parameter )
   {}
 
   const DifferentiableOperatorType &fullOperator() const { return implicitOperator_; }
@@ -222,7 +221,6 @@ protected:
   void setModelConstraints( ... ) const { }
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
-  const Dune::Fem::ParameterReader parameter_;
   mutable InverseOperatorType invOp_;
 };
 
