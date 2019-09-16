@@ -153,7 +153,10 @@ namespace Dune
         template< class T, int j >
         FieldMatrix< T, 1, j > operator() ( const FieldMatrix< T, dimRange, j > &in ) const
         {
-          return in[ range_ ];
+          // return in[ range_ ]; // implicit conversion fails
+          FieldMatrix<T,1,j> ret;
+          ret[0] = in[range_];
+          return ret;
         }
 
       protected:
