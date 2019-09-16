@@ -5,7 +5,6 @@
 #include <dune/fempy/py/grid/gridpart.hh>
 
 #include <dune/fem/marking/default.hh>
-#include <dune/fem/marking/neighbors.hh>
 #include <dune/fem/marking/doerfler.hh>
 
 namespace Dune
