@@ -87,7 +87,15 @@ namespace Dune
     public:
       inline ~FlOpCounter ()
       {
+        reset();
+      }
+
+      unsigned long reset()
+      {
         FlOpSummary< FloatImp > :: instance( FloatImp::typeName() ).add( count_, thread_ );
+        unsigned long count = count_;
+        count_ = 0;
+        return count;
       }
 
       inline ThisType &operator++ ()
@@ -130,6 +138,8 @@ namespace Dune
       }
 
     public:
+      unsigned long reset () { return 0; }
+
       inline ThisType &operator++ ()
       {
         return *this;
@@ -368,6 +378,11 @@ namespace Dune
       static std :: string typeName ()
       {
         return "Double";
+      }
+
+      static unsigned long reset()
+      {
+        return FlOpCounterType :: instance().reset();
       }
 
     protected:

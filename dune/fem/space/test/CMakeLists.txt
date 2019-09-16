@@ -1,9 +1,9 @@
 if( NOT GRIDTYPE )
-  set( GRIDTYPE ALUGRID_CUBE )
+  set( GRIDTYPE SPGRID )
 endif()
 
 if( NOT GRIDDIM )
-  set( GRIDDIM 2 )
+  set( GRIDDIM 3 )
 endif()
 
 # copy data to build source to make tests work
@@ -15,7 +15,7 @@ configure_file(3dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid_8.dgf COPYONLY)
 configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 
 # the default compiler flags
-set( DEFAULTFLAGS "GRIDDIM=${GRIDDIM};${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0" )
+set( DEFAULTFLAGS "MAX_VECTOR_SIZE=512;GRIDDIM=${GRIDDIM};${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRAPE=0" )
 
 set( TESTS
   adapt
@@ -52,6 +52,11 @@ dune_add_test( NAME l2projection_optim SOURCES l2projection.cc
 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_BASEFUNCTIONSET_CODEGEN"
 LINK_LIBRARIES dunefem )
 target_include_directories(l2projection_optim PRIVATE "./" "${CMAKE_CURRENT_BINARY_DIR}")
+
+# dgcomm tests should run on GRIDDIM=3 meshes
+dune_add_test( NAME l2projection_flops SOURCES l2projection.cc
+  COMPILE_DEFINITIONS "${DEFAULTFLAGS};COUNT_FLOPS"
+LINK_LIBRARIES dunefem )
 
 # dgcomm tests should run on GRIDDIM=3 meshes
 dune_add_test( NAME dgcomm SOURCES dgcomm.cc
