@@ -5,6 +5,7 @@ add_subdirectory(grid)
 set(HEADERS
   discretefunction.hh
   gridview.hh
+  integrandsbase.hh
   integrands.hh
   operator.hh
   scheme.hh
