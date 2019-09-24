@@ -28,7 +28,7 @@ def solve(equation,solutionGF):
         return info
 
 # or all in one?
-def evaluate(expression, grid=None, space=None, target=None, coordinate=None)
+def evaluate(expression, grid=None, space=None, target=None, coordinate=None):
     if isinstance(expression, ufl.Expr):
         assert coordinate
         return expression(coordinate)
@@ -46,3 +46,16 @@ def evaluate(expression, grid=None, space=None, target=None, coordinate=None)
     elif isinstance(expression, ufl.Equation):
         assert target
         pass # return solver info
+
+def lineSample(gridFunction,x0,x1,N):
+    from dune.generator import algorithm, path
+    from dune.common import FieldVector
+    import numpy
+    x0, x1 = FieldVector(x0), FieldVector(x1)
+    p,v = algorithm.run('sample', path(__file__)+'sample.hh', gridFunction, x0, x1, N)
+    x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
+    length = (x1-x0).two_norm
+    for i in range(len(x)):
+        x[i] = (p[i]-x0).two_norm / length
+        y[i] = v[i][0]
+    return x,y
