@@ -1,3 +1,5 @@
+#ifndef FEMPY_UTILITY_HH
+#define FEMPY_UTILITY_HH
 #include <vector>
 #include <utility>
 #include <dune/fem/misc/linesegmentsampler.hh>
@@ -13,3 +15,4 @@ sample(const GF &gf, DT &start, DT &end, int n)
   sampler.samplePoints(coords);
   return std::make_pair(coords,values);
 }
+#endif // FEMPY_UTILITY_HH
