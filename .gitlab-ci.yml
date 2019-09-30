@@ -76,10 +76,10 @@ debian-10-gcc-8-noassert-17:
 #   - triggers
 #   - schedules
 
-ubuntu-18.04-clang-6-17:
-  <<: *base-petsc
-  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
+      #ubuntu-18.04-clang-6-17:
+      #  <<: *base-petsc
+      #  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
+      #  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
 
 ####################### REQUIRE_PETSc=disable versions ########################
 #
