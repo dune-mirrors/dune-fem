@@ -33,6 +33,7 @@ def codeDG(self):
     code.append(AccessModifier("public"))
     x = SpatialCoordinate(self.space.cell())
     predefined = {}
+    self.predefineCoefficients(predefined,x)
     spatial = Variable('const auto', 'y')
     predefined.update( {x: UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( x ) )') })
     generateMethod(code, penalty,
@@ -51,15 +52,15 @@ def codeDG(self):
 
 def transform(space,penalty):
     def transform_(model):
-        if model.baseName == "dgmodel":
+        if model.baseName == "modelDG":
             return
         model._code = model.code
         model.code  = lambda *args,**kwargs: codeDG(*args,**kwargs)
         model.space = space
         model.penalty = penalty
-        model.baseName = "dgmodel"
+        model.baseName = "modelDG"
         model.modelWrapper = "DGDiffusionModelWrapper< Model >"
-        model.baseSignature = []
-        if penalty is not None:
-            model.baseSignature += [penalty]
-    return transform_
+        # model.baseSignature = []
+        # if penalty is not None:
+        #     model.baseSignature += [penalty]
+    return [transform_,[penalty]]

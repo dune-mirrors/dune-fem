@@ -121,7 +121,7 @@ def modelSignature(form,*args):
         sig = hashIt( dirichletBCs )
     return sig
 
-def compileUFL(form, *args, **kwargs):
+def compileUFL(form, patch, *args, **kwargs):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
     if not isinstance(form, Form):
@@ -151,6 +151,10 @@ def compileUFL(form, *args, **kwargs):
     for dBC in dirichletBCs:
         _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
         coeff_ |= set(coeff__)
+    for a in patch:
+        _, coeff__ = extract_arguments_and_coefficients(a)
+        coeff_ |= set(coeff__)
+
     coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
 
     form = replace(form,coeff)
@@ -189,7 +193,7 @@ def compileUFL(form, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*args))
+    model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,patch,*args))
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
@@ -206,6 +210,9 @@ def compileUFL(form, *args, **kwargs):
     uflCoefficients = set(form.coefficients())
     for bc in dirichletBCs:
         _, c = extract_arguments_and_coefficients(bc.ufl_value)
+        uflCoefficients |= set(c)
+    for a in patch:
+        _, c = extract_arguments_and_coefficients(a)
         uflCoefficients |= set(c)
 
     constants = dict()
@@ -232,18 +239,14 @@ def compileUFL(form, *args, **kwargs):
             except AttributeError:
                 coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name)
 
-    tempVars = kwargs.get("tempVars", True)
+    model.coefficients = coefficients
+    model.constants = constants
 
-    def predefineCoefficients(predefined, x):
-        for coefficient, idx in coefficients.items():
-            for derivative in model.coefficient(idx, x):
-                predefined[coefficient] = derivative
-                coefficient = Grad(coefficient)
-        predefined.update({c: model.constant(i) for c, i in constants.items()})
+    tempVars = kwargs.get("tempVars", True)
 
     predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    predefineCoefficients(predefined, model.arg_x)
+    model.predefineCoefficients(predefined,x)
     model.source = generateCode(predefined, source, tempVars=tempVars)
     model.diffusiveFlux = generateCode(predefined, diffusiveFlux, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar, d2ubar: model.arg_d2ubar})
@@ -254,14 +257,14 @@ def compileUFL(form, *args, **kwargs):
 
     predefined = {u: model.arg_u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    predefineCoefficients(predefined, model.arg_x)
+    model.predefineCoefficients(predefined,x)
     model.alpha = generateCode(predefined, boundarySource, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar})
     model.linAlpha = generateCode(predefined, linBoundarySource, tempVars=tempVars)
 
     predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    predefineCoefficients(predefined, model.arg_x)
+    model.predefineCoefficients(predefined,x)
     model.fluxDivergence = generateCode(predefined, fluxDivergence, tempVars=tempVars)
 
     if dirichletBCs:
@@ -269,7 +272,7 @@ def compileUFL(form, *args, **kwargs):
 
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-        predefineCoefficients(predefined, model.arg_x)
+        model.predefineCoefficients(predefined,x)
 
         maxId = 0
         codeDomains = []
@@ -339,5 +342,4 @@ def compileUFL(form, *args, **kwargs):
             switch.append(i+maxId+1, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         model.dirichlet = [switch]
 
-    coefficients.update(constants)
-    return model, coefficients
+    return model

@@ -11,6 +11,7 @@ from dune.source.cplusplus import assign, construct, dereference, lambda_, nullp
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
 
+from ufl.differentiation import Grad
 
 class EllipticModel:
     def __init__(self, dimDomain, dimRange, u, signature):
@@ -58,6 +59,13 @@ class EllipticModel:
 
         self.baseName = "elliptic"
         self.modelWrapper = "DiffusionModelWrapper< Model >"
+
+    def predefineCoefficients(self,predefined,x):
+        for coefficient, idx in self.coefficients.items():
+            for derivative in self.coefficient(idx, x):
+                predefined[coefficient] = derivative
+                coefficient = Grad(coefficient)
+        predefined.update({c: self.constant(i) for c, i in self.constants.items()})
 
     def addCoefficient(self, dimRange, name=None, field="double"):
         idx = len(self._coefficients)

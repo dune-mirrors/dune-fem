@@ -1,6 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 from ufl import Form, Coefficient, TrialFunction, TestFunction, replace
+from ufl.core.expr import Expr
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 
@@ -191,8 +192,12 @@ class Source(object):
 # Load the actual module - the code generation from the ufl form is done
 # when the 'Source' class is converted to a string i.e. in Source.__str__
 def load(grid, form, *args, renumbering=None, tempVars=True,
-        virtualize=True, modelPatch=None,
+        virtualize=True, modelPatch=[None,None],
         includes=None):
+
+    if not isinstance(modelPatch,list) and not isinstance(modelPatch,tuple):
+        modelPatch = [modelPatch,None]
+
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
 
@@ -236,6 +241,9 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
             arg.append(dBC.replace(coeff))
             uflExpr += [dBC.ufl_value] # arg[-1].ufl_value]
 
+        if modelPatch[1] is not None:
+            uflExpr += modelPatch[1]
+
         derivatives = gatherDerivatives(form, [phi, u])
 
         derivatives_phi = derivatives[0]
@@ -245,8 +253,8 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
                                 (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                                 uflExpr,virtualize)
 
-    if modelPatch is not None:
-        modelPatch(integrands)
+    if modelPatch[0] is not None:
+        modelPatch[0](integrands)
 
     # set up the source class
     source = Source(integrands, grid._typeName, grid._includes, includes, form, *args,

@@ -67,17 +67,21 @@ def initModel(model, *args, **kwargs):
                 args[i] = c.gf
 
     if any(arg is None for arg in args):
-        print(coefficientNames)
         missing = [name for name, i in coefficientNames.items() if args[i] is None]
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
     model._init(*args)
 
 
-def load(grid, model, *args, **kwargs):
+def load(grid, model, *args, modelPatch=[None,None], **kwargs):
+    if not isinstance(modelPatch,list) and not isinstance(modelPatch,tuple):
+        modelPatch = [modelPatch,None]
+
     from dune.generator import builder
     if isinstance(model, (Equation, Form)):
-        model, renumbering = compileUFL(model, *args, **kwargs)
+        model = compileUFL(model, modelPatch[1], *args, **kwargs)
+        renumbering = model.coefficients.copy()
+        renumbering.update(model.constants)
     else:
         renumbering = kwargs.get("renumbering")
 
@@ -93,9 +97,8 @@ def load(grid, model, *args, **kwargs):
             setattr(module.Model, '__init__', initModel)
         return module
 
-    if 'modelPatch' in kwargs:
-        modelPatch = kwargs.pop('modelPatch')
-        modelPatch(model)
+    if modelPatch[0] is not None:
+        modelPatch[0](model)
     else:
         modelPatch = None
 
