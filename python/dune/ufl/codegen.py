@@ -261,6 +261,9 @@ class CodeGenerator(MultiFunction):
         return cplusplus.makeExpression(0)
 
     def _getNumber(self, expr):
+        print("----\n",expr,"\n----\n")
+        print("----\n",expr.name,"\n----\n")
+        print("----\n",self.coefficients,"\n----\n")
         try:
             name = getattr(expr, "name")
         except AttributeError:

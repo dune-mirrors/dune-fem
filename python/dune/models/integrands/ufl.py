@@ -364,17 +364,16 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         #     initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
-            defaultCode.append(
-                    generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
-            defaultCode.append('if (domainId)')
-            block = UnformattedBlock()
-            block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+2) + ' );')
+            block.append(generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
+            block.append('if (domainId)')
+            ifBlock = UnformattedBlock()
+            ifBlock.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+2) + ' );')
             if len(v[1])>0:
-                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
-            block.append('return true;')
+                [ifBlock.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            ifBlock.append('return true;')
+            block.append(ifBlock)
             defaultCode.append(block)
         if wholeDomain is not None:
-            block = Block()
             block = UnformattedBlock()
             block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+1) + ' );')
             if len(wholeDomain[1])>0:

@@ -415,6 +415,10 @@ class SourceWriter:
                 self.emit('}', indent)
             else:
                 raise Exception('Unknown statement type.')
+        elif isinstance(src, Block):
+             self.emit('{', indent)
+             self.emit(src.content, indent+2, context)
+             self.emit('}', indent)
         elif isinstance(src, UnformattedBlock):
             if not isinstance(context, (Constructor, Function, Method)):
                 raise Exception('UnformattedBlocks can only occur in constructors, functions and methods')
