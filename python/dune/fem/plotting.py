@@ -8,6 +8,7 @@ from dune.plotting import block, disable
 globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
+        contours=None, contourWidth=2,
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
         triplot=False, logscale=False):
 
@@ -88,6 +89,8 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                 cbar = pyplot.colorbar(**cbar)
                 # cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend=extend, norm=norm, ticks=v)
                 cbar.ax.tick_params(labelsize=10)
+            if contours is not None:
+                pyplot.tricontour(triangulation, data, levels=contours, colors="black", linewidths=contourWidth)
 
     fig.gca().set_aspect('equal')
     fig.gca().autoscale()
@@ -100,6 +103,7 @@ from ufl.core.expr import Expr
 from dune.ufl import expression2GF
 def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
+        contours=None, contourWidth=2,
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar="vertical", grid=None, triplot=False,
         block=globalBlock,
@@ -130,7 +134,8 @@ def plotPointData(solution, figure=None,
             pass
         newFig = False
     _plotPointData(figure, grid, solution, level, gridLines,
-                    vectors, xlim, ylim, clim, cmap, colorbar, triplot,
+                    vectors, contours, contourWidth,
+                    xlim, ylim, clim, cmap, colorbar, triplot,
                     logscale)
 
     if newFig and block:
@@ -138,6 +143,7 @@ def plotPointData(solution, figure=None,
     # return figure
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
+        contours=None, contourWidth=2,
         xlim=None, ylim=None, clim=None, cmap=None,
         block=globalBlock, grid=None, colorbar=None):
     if disable: return
@@ -167,12 +173,16 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     # first the grid if required
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
-        _plotPointData(fig,grid,None,level,gridLines,False,xlim,ylim,clim,cmap,colorbar)
+        _plotPointData(fig,grid,None,level,gridLines,False,
+                contours, contourWidth,
+                xlim,ylim,clim,cmap,colorbar)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
-        _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,colorbar)
+        _plotPointData(fig,grid,solution[p],level,"",False,
+                contours, contourWidth,
+                xlim,ylim,clim,cmap,colorbar)
 
     pyplot.show(block=globalBlock)
     # return fig
