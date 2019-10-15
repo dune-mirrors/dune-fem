@@ -166,13 +166,13 @@ namespace Dune
       KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter ),
         precondObj_(),
+        useDiagonalPreconder_(false),
         verbose_( parameter.verbose() ),
         method_( method < 0 ?
             parameter.solverMethod({ SolverParameter::gmres,
                                      SolverParameter::cg,
                                      SolverParameter::bicgstab })
-            : method ),
-        useDiagonalPreconder_(false)
+            : method )
       {
         assert( parameter_->errorMeasure() == 0 );
         if( ! precondObj_ )
