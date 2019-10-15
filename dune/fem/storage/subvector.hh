@@ -91,8 +91,6 @@ namespace Dune
 
       OffsetSubMapper( const ThisType& ) = default;
       OffsetSubMapper( ThisType&& ) = default;
-      ThisType& operator=( const ThisType& ) = default;
-      ThisType& operator=( ThisType&& ) = default;
 
       unsigned int size() const
       {
@@ -131,8 +129,6 @@ namespace Dune
 
       StaticOffsetSubMapper( const ThisType& ) = default;
       StaticOffsetSubMapper( ThisType&& ) = default;
-      ThisType& operator=( const ThisType& ) = default;
-      ThisType& operator=( ThisType&& ) = default;
 
       static constexpr unsigned int size()
       {
