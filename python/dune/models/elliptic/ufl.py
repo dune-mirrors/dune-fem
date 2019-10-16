@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoordinate
+from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
@@ -115,10 +116,14 @@ def toFileName(value):
 
 def modelSignature(form,*args):
     dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
+    expr = [str(arg) for arg in args if isinstance(arg, Expr)]
     sig = form.signature()
     if len(dirichletBCs) > 0:
         dirichletBCs.append(sig)
         sig = hashIt( dirichletBCs )
+    if len(expr) > 0:
+        expr.append(sig)
+        sig = hashIt( expr )
     return sig
 
 def compileUFL(form, patch, *args, **kwargs):
@@ -151,9 +156,10 @@ def compileUFL(form, patch, *args, **kwargs):
     for dBC in dirichletBCs:
         _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
         coeff_ |= set(coeff__)
-    for a in patch:
-        _, coeff__ = extract_arguments_and_coefficients(a)
-        coeff_ |= set(coeff__)
+    if patch is not None:
+        for a in patch:
+            _, coeff__ = extract_arguments_and_coefficients(a)
+            coeff_ |= set(coeff__)
 
     coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
 
@@ -211,9 +217,10 @@ def compileUFL(form, patch, *args, **kwargs):
     for bc in dirichletBCs:
         _, c = extract_arguments_and_coefficients(bc.ufl_value)
         uflCoefficients |= set(c)
-    for a in patch:
-        _, c = extract_arguments_and_coefficients(a)
-        uflCoefficients |= set(c)
+    if patch is not None:
+        for a in patch:
+            _, c = extract_arguments_and_coefficients(a)
+            uflCoefficients |= set(c)
 
     constants = dict()
     coefficients = dict()
