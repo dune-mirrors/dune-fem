@@ -8,7 +8,7 @@ from dune.plotting import block, disable
 globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
-        contours=None, contourWidth=2, contourColor="black",
+        onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
         triplot=False, logscale=False):
 
@@ -34,7 +34,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
         except:
             vectors = None
 
-        if not vectors == None:
+        if not vectors is None:
             pyplot.quiver(triangulation.x, triangulation.y, data[:,x1], data[:,x2],
                       units='xy', scale=10., zorder=3, color='blue',
                       width=0.007, headwidth=3., headlength=4.)
@@ -43,6 +43,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                 data = linalg.norm(data,axis=1)
             else:
                 data = data[:,0]
+        if not onlyContours:
             if logscale:
                 data = abs(data)
                 logNorm = {"norm":LogNorm()}
@@ -89,9 +90,9 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                 cbar = pyplot.colorbar(**cbar)
                 # cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend=extend, norm=norm, ticks=v)
                 cbar.ax.tick_params(labelsize=10)
-            if contours is not None:
-                pyplot.tricontour(triangulation, data, levels=contours,
-                        colors=contourColor, linewidths=contourWidth)
+        if contours is not None:
+            pyplot.tricontour(triangulation, data, levels=contours,
+                    colors=contourColor, linewidths=contourWidth)
 
     fig.gca().set_aspect('equal')
     fig.gca().autoscale()
@@ -104,7 +105,7 @@ from ufl.core.expr import Expr
 from dune.ufl import expression2GF
 def plotPointData(solution, figure=None,
         level=0, gridLines="black", vectors=False,
-        contours=None, contourWidth=2, contourColor="black",
+        onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar="vertical", grid=None, triplot=False,
         block=globalBlock,
@@ -135,7 +136,7 @@ def plotPointData(solution, figure=None,
             pass
         newFig = False
     _plotPointData(figure, grid, solution, level, gridLines,
-                    vectors, contours, contourWidth, contourColor,
+                    vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
                     logscale)
 
@@ -144,7 +145,7 @@ def plotPointData(solution, figure=None,
     # return figure
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
-        contours=None, contourWidth=2, contourColor="black",
+        onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
         block=globalBlock, grid=None, colorbar=None):
     if disable: return
@@ -175,14 +176,14 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
         _plotPointData(fig,grid,None,level,gridLines,False,
-                contours, contourWidth, contourColor,
+                onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
         _plotPointData(fig,grid,solution[p],level,"",False,
-                contours, contourWidth, contourColor,
+                onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
     pyplot.show(block=globalBlock)

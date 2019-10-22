@@ -268,6 +268,9 @@ class GridIndexed(Indexed):
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
         return result
+    def plot(self,*args,**kwargs):
+        from dune.fem.plotting import plotPointData
+        plotPointData(self.__impl__,*args,**kwargs)
 
 
 
