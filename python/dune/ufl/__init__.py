@@ -191,6 +191,11 @@ class Constant(ufl.Coefficient):
         return self.ufl_element().cell()
 
     def values(self):
+        if isNumber(self._value):
+            return numpy.array([self._value])
+        else:
+            return self._value
+    def __float__(self):
         return self._value
     @property
     def value(self):
@@ -216,6 +221,23 @@ class Constant(ufl.Coefficient):
         # self.models += [
         #   lambda x: getattr(model.__class__,prop).__set__(model,x)
         # ]
+    # def __eq__(self, other):
+    #     return self._value == other._value
+    # def __ne__(self, other):
+    #     return not self == other
+    # def __radd__(self, other):
+    #     return self.__add__(other)
+    # def __add__(self, other):
+    #     return self._value += other._value
+    # def __sub__(self, other):
+    #     return self + (-other)
+    # def __rsub__(self, other):
+    #     return other + (-self)
+    # def __rmul__(self, scalar):
+    #     return self.__mul__(scalar)
+    # def __mul__(self, scalar):
+    #     for i in range(len(self._value)):
+    #        self._value[i] *= scalar
 
 @deprecated("replace NamedConstant with Constant - the first argument can "\
             "now also be the initial value, e.g.,a float or list/tuple of floats")
