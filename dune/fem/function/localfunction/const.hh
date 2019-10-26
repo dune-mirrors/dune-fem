@@ -506,6 +506,12 @@ namespace Dune
       return Dune::Fem::ConstLocalFunction<std::decay_t<F> >(std::forward<F>(f));
     }
 
+    template<class F, class Entity>
+    constexpr auto constLocalFunction(F&& f, const Entity &entity)
+    {
+      return Dune::Fem::ConstLocalFunction<std::decay_t<F> >(entity,std::forward<F>(f));
+    }
+
   } // namespace Fem
 
 } // namespace Dune
