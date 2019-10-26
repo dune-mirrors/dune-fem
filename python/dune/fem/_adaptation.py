@@ -102,7 +102,18 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
     return indicator.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
 def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
-                  minLevel=0, maxLevel=None):
+                  minLevel=0, maxLevel=None, gridView=None):
+    if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
+        indicator = ufl.as_vector(indicator)
+    if ufl and isinstance(indicator, ufl.core.expr.Expr):#
+        if gridView is None:
+            _, coeff_ = extract_arguments_and_coefficients(indicator)
+            gridView = [c.grid for c in coeff_ if hasattr(c,"grid")]
+            # gridView += [c.space.grid for c in coeff_ if hasattr(c,"space")]
+            if len(gridView) == 0:
+                raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
+            gridView = gridView[0]
+        indicator = expression2GF(gridView,indicator,0)
     try:
         if not indicator.grid.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")

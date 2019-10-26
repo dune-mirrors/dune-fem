@@ -59,3 +59,11 @@ def lineSample(gridFunction,x0,x1,N):
         x[i] = (p[i]-x0).two_norm / length
         y[i] = v[i][0]
     return x,y
+def pointSample(gridFunction,x0):
+    from dune.generator import algorithm, path
+    from dune.common import FieldVector
+    import numpy
+    x0 = FieldVector(x0)
+    v = algorithm.run('sample', path(__file__)+'sample.hh',
+                      gridFunction, x0)
+    return v[0]
