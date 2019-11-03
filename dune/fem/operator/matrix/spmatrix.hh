@@ -187,14 +187,14 @@ namespace Dune
       //! used in SparseRowMatrixObject::reserve
       size_type numNonZeros() const
       {
-        return rows_[ dim_[0] ];
+        return dim_[0] > 0 ? rows_[ dim_[0] ] : 0;
       }
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
       size_type numNonZeros(size_type row) const
       {
-        assert( row >= 0 && row< rows() );
+        assert( row >= 0 && row < dim_[0] );
         return endRow( row ) - startRow( row );
       }
 
@@ -225,7 +225,7 @@ namespace Dune
       template <class SizeT, class NumericT >
       void fillCSRStorage( std::vector< std::map<SizeT, NumericT> >& matrix ) const
       {
-        matrix.resize( rows() );
+        matrix.resize( dim_[0] );
 
         size_type thisCol = 0;
         for(size_type row = 0; row<dim_[ 0 ]; ++row )
@@ -246,7 +246,7 @@ namespace Dune
 
       void compress ()
       {
-        if( ! compressed_ )
+        if( ! compressed_ && (dim_[0] != 0) && (dim_[1] != 0))
         {
           // determine first row nonZeros
           size_type newpos = 0 ;
