@@ -498,12 +498,44 @@ namespace Dune
 
 
     template< class GridFunction >
-    using ConstLocalFunction = typename Impl::ConstLocalFunction< GridFunction >::Type;
+      using ConstLocalFunction = typename Impl::ConstLocalFunction< GridFunction >::Type;
+    /**@internal Default FalseType.*/
+    template<class T, class SFINAE = void>
+      struct IsConstLocalFunction
+      : std::false_type
+      {};
 
-    template<class F>
+    /**@internal Forward to decay_t.*/
+    template<class T>
+      struct IsConstLocalFunction<T, std::enable_if_t<!std::is_same<T, std::decay_t<T> >{}> >
+      : IsConstLocalFunction<std::decay_t<T> >
+      {};
+
+    /**TrueType if a T can be wrapped into a Fem::ConstLocalFunction.*/
+    template<class T>
+      struct IsConstLocalFunction<
+      T,
+      std::enable_if_t<(std::is_same<T, std::decay_t<T> >{}
+          && std::is_same<T, Fem::ConstLocalFunction<typename T::GridFunctionType> >{}
+          )> >
+        : std::true_type
+        {};
+
+
+    /**Wrap an F into a Fem::ConstLocalFunction if directly allowed
+     * by Fem::ConstLocalFunction.
+     */
+    template<class F, std::enable_if_t<!IsConstLocalFunction<F>::value, int> = 0>
     constexpr auto constLocalFunction(F&& f)
     {
-      return Dune::Fem::ConstLocalFunction<std::decay_t<F> >(std::forward<F>(f));
+      return Fem::ConstLocalFunction<std::decay_t<F> >(std::forward<F>(f));
+    }
+
+    /**@internal Forward a Fem::ConstLocalFunction as is.*/
+    template<class F, std::enable_if_t<IsConstLocalFunction<F>::value, int> = 0>
+    constexpr decltype(auto) constLocalFunction(F&& f)
+    {
+      return std::forward<F>(f);
     }
 
     template<class F, class Entity>
