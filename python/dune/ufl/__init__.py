@@ -428,7 +428,7 @@ class DirichletBC:
             self.ufl_value = value
         assert self.ufl_value.ufl_shape[0] == functionSpace.dimRange
     def __str__(self):
-        return str(self.ufl_value)+str(self.subDomain)
+        return str(self.value)+str(self.subDomain)
     def replace(self,dictionary):
         return DirichletBC(self.functionSpace,
                   ufl.replace(self.ufl_value,dictionary),
