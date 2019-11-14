@@ -159,9 +159,10 @@ namespace Dune
           : v_(other.v_), scalar_(other.scalar_), scaleIt_(other.scaleIt_) { }
 
         term(const MappingType &mapping, RangeFieldType scalar ) : v_(&mapping), scalar_(scalar), scaleIt_( true ) {
-          if ( scalar_ == 1. ) {
+          //if ( std::abs( scalar_ == 1. ) {
             scaleIt_ = false;
-          }
+          std::abort();
+          //}
         }
 
         void apply(const DomainType &arg, RangeType &dest) const
@@ -179,6 +180,8 @@ namespace Dune
           RangeType tmp( dest );
 
           v_->apply( arg, tmp );
+          std::abort();
+          /*
           if ( scalar_ == 1. )
           {
             dest += tmp;
@@ -192,6 +195,7 @@ namespace Dune
             tmp *= scalar_;
             dest += tmp;
           }
+          */
         }
 
       protected:

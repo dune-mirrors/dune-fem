@@ -137,7 +137,7 @@ namespace Dune
 
     public:
       //! dot product for ISTL solvers
-      virtual field_type dot (const BlockVectorType& x,
+      virtual real_type dot (const BlockVectorType& x,
                               const BlockVectorType& y) const
       {
         return dotProduct( x, y );

@@ -16,6 +16,12 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dune/common/simd/simd.hh>
+
+#if HAVE_DUNE_VECTORCLASS
+#include <dune/vectorclass/vectorclass.hh>
+#endif
+
 //- Dune istl includes
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -655,7 +661,23 @@ namespace Dune
       enum { littleCols = DomainSpaceType :: localBlockSize };
       enum { littleRows = RangeSpaceType  :: localBlockSize };
 
-      typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
+      template <int d, class Scalar>
+      struct ExtractScalar
+      {
+        typedef Scalar Type;
+      };
+#if HAVE_DUNE_VECTORCLASS
+      /*
+      template <int d>
+      struct ExtractScalar<d, Vec4d >
+      {
+        typedef double Type;
+      };
+      */
+#endif
+
+      typedef FieldMatrix< typename ExtractScalar<0, typename DomainSpaceType :: RangeFieldType> :: Type,
+                           littleRows, littleCols> LittleBlockType;
       typedef LittleBlockType  block_type;
       typedef LittleBlockType  MatrixBlockType;
 

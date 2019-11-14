@@ -60,6 +60,10 @@
 #include <dune/fem/solver/spqrsolver.hh>
 #endif // HAVE_SUITESPARSE_SPQR
 
+#if HAVE_DUNE_VECTORCLASS
+#include <dune/vectorclass/vectorclass.hh>
+#endif
+
 #include <dune/fem/solver/amgxsolver.hh>
 
 // local includes
@@ -104,6 +108,7 @@ struct Algorithm
   using LinearOperatorType  = LinearOperator;
 
   using DiscreteFunctionType   = typename InverseOperatorType::DomainFunctionType;
+  using DiscreteFunctionSpaceType = typename  DiscreteFunctionType::DiscreteFunctionSpaceType;
   using MassOperatorType       = MassOperator< DiscreteFunctionType, LinearOperatorType >;
   using AffineMassOperatorType = AffineMassOperator< DiscreteFunctionType, LinearOperatorType >;
 
@@ -117,7 +122,7 @@ struct Algorithm
     const double eps = 5e-6;
 
     GridPartType gridPart( grid );
-    DiscreteSpaceType space( gridPart );
+    DiscreteFunctionSpaceType space( gridPart );
 
     DiscreteFunctionType u( "u", space );
     DiscreteFunctionType rhs( "rhs", space );
@@ -380,6 +385,21 @@ int main(int argc, char** argv)
     std::string designation(" === ISTLInverseOperator< ISTLRestartedGMRes > + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
+
+#if HAVE_DUNE_VECTORCLASS
+  // ISTLInverseOperator< ISTLRestartedGMRes > + SparseRowLinearOperator
+  {
+    using SpaceType         = Dune::Fem::FunctionSpace< FieldType, Vec4d, dim, 1 >;
+    using DiscreteSpaceType = Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder >;
+
+    using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType>;
+    using LinearOperator    = Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLRestartedGMRes >;
+
+    std::string designation(" === ISTLInverseOperator< ISTLRestartedGMRes > + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+#endif
 
 #if 0 // the inverse linear operator ignores all verbosity setting
   // ISTL::InverseOperator< LinearOperator > + ISTLLinearOperator
