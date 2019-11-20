@@ -66,4 +66,4 @@ def pointSample(gridFunction,x0):
     x0 = FieldVector(x0)
     v = algorithm.run('sample', path(__file__)+'sample.hh',
                       gridFunction, x0)
-    return v[0]
+    return v
