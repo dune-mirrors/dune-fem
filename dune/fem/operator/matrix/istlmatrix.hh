@@ -851,6 +851,12 @@ namespace Dune
         }
       }
 
+      //! default reserve method setting implicit build mode
+      void reserve()
+      {
+        reserve( Stencil<DomainSpaceType,RangeSpaceType>(domainSpace_, rangeSpace_), true );
+      }
+
       //! reserve memory for assemble based on the provided stencil
       template <class Set>
       void reserve (const std::vector< Set >& sparsityPattern )
