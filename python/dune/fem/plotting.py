@@ -144,7 +144,7 @@ def plotPointData(solution, figure=None,
         pyplot.show(block=block)
     # return figure
 
-def plotComponents(solution, level=0, show=None, gridLines="black",
+def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
         block=globalBlock, grid=None, colorbar=None):
@@ -165,7 +165,11 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     if not show:
         show = range(solution.dimRange)
 
-    fig = pyplot.figure()
+    if figure is None:
+        figure = pyplot.figure()
+        newFig = True
+    else:
+        newFig = False
     if (gridLines is not None) and (gridLines != ""):
         offset = 1
     else:
@@ -175,18 +179,19 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
     # first the grid if required
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
-        _plotPointData(fig,grid,None,level,gridLines,False,
+        _plotPointData(figure,grid,None,level,gridLines,False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
-        _plotPointData(fig,grid,solution[p],level,"",False,
+        _plotPointData(figure,grid,solution[p],level,"",False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
-    pyplot.show(block=globalBlock)
+    if newFig and block:
+        pyplot.show(block=block)
     # return fig
 
 def mayaviPointData(grid, solution, level=0, component=0, block=globalBlock):
