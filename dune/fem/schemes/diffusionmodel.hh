@@ -288,7 +288,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   // it maybe be set using this method
   virtual double time() const
   {
-    detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
+    return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
   }
 
   typedef Dune::FieldVector<int, dimR> DirichletComponentType;
@@ -520,7 +520,7 @@ struct DGDiffusionModelWrapper : public DGDiffusionModel<typename ModelImpl::Gri
   // it maybe be set using this method
   virtual double time() const
   {
-    detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
+    return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
   }
 
   typedef Dune::FieldVector<int, dimR> DirichletComponentType;
