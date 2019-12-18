@@ -133,16 +133,23 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     else:
         nameSpace.append(model.code())
     code.append(nameSpace)
+
     writer.emit(code)
 
-    code = []
-
     gridPartType = "typename Dune::FemPy::GridPart< " + grid._typeName + " >"
-    code += [TypeAlias("GridPart", gridPartType)]
     rangeTypes = ["Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >" for c in model._coefficients]
-    coefficients = ["Dune::FemPy::VirtualizedGridFunction< GridPart, " + r + " >" for r in rangeTypes]
-    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >")]
+    coefficients = ["Dune::FemPy::VirtualizedGridFunction<"+gridPartType+", " + r + " >" for r in rangeTypes]
+    modelType = nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >"
+    if not virtualize:
+        wrapperType = modelType
+    else:
+        wrapperType = model.modelWrapper.replace(" Model ",modelType)
+    if model.hasConstants:
+        model.exportSetConstant(writer, modelClass=modelType, wrapperClass=wrapperType)
 
+    code = []
+    code += [TypeAlias("GridPart", gridPartType)]
+    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >")]
     if virtualize:
         modelType = model.modelWrapper
         code += [TypeAlias("ModelWrapper", model.modelWrapper)]
@@ -151,10 +158,8 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         modelType = nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >"
         code += [TypeAlias("ModelWrapper", "Model")]
 
-    if model.hasConstants:
-        model.exportSetConstant(writer)
-
     writer.openPythonModule(name)
+
     writer.emit(code)
     if virtualize:
         writer.emit('// export abstract base class')
