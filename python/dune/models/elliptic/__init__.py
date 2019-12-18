@@ -73,7 +73,7 @@ def initModel(model, *args, **kwargs):
     model._init(*args)
 
 
-def load(grid, model, *args, modelPatch=[None,None], **kwargs):
+def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     if not isinstance(modelPatch,list) and not isinstance(modelPatch,tuple):
         modelPatch = [modelPatch,None]
 
@@ -102,7 +102,7 @@ def load(grid, model, *args, modelPatch=[None,None], **kwargs):
     else:
         modelPatch = None
 
-    signature = model.signature + "_" + hashIt(grid._typeName)
+    signature = "" if virtualize else "nv" + model.signature + "_" + hashIt(grid._typeName)
     name = model.baseName + '_' + signature
 
     writer = SourceWriter()
@@ -133,29 +133,44 @@ def load(grid, model, *args, modelPatch=[None,None], **kwargs):
     else:
         nameSpace.append(model.code())
     code.append(nameSpace)
+    writer.emit(code)
 
-    code += [TypeAlias("GridPart", "typename Dune::FemPy::GridPart< " + grid._typeName + " >")]
+    code = []
 
+    gridPartType = "typename Dune::FemPy::GridPart< " + grid._typeName + " >"
+    code += [TypeAlias("GridPart", gridPartType)]
     rangeTypes = ["Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >" for c in model._coefficients]
     coefficients = ["Dune::FemPy::VirtualizedGridFunction< GridPart, " + r + " >" for r in rangeTypes]
-    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join(["GridPart"] + coefficients) + " >")]
+    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >")]
 
-    code += [TypeAlias("ModelWrapper", model.modelWrapper)]
-
-    code += [TypeAlias("ModelBase", "typename ModelWrapper::Base")]
-
-    writer.emit(code)
+    if virtualize:
+        modelType = model.modelWrapper
+        code += [TypeAlias("ModelWrapper", model.modelWrapper)]
+        code += [TypeAlias("ModelBase", "typename ModelWrapper::Base")]
+    else:
+        modelType = nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >"
+        code += [TypeAlias("ModelWrapper", "Model")]
 
     if model.hasConstants:
         model.exportSetConstant(writer)
 
     writer.openPythonModule(name)
-    writer.emit('// export abstract base class')
-    writer.emit('if( !pybind11::already_registered< ModelBase >() )')
-    writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
-    writer.emit('')
-    writer.emit('// actual wrapper class for model derived from abstract base')
-    writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
+    writer.emit(code)
+    if virtualize:
+        writer.emit('// export abstract base class')
+        writer.emit('if( !pybind11::already_registered< ModelBase >() )')
+        writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
+        writer.emit('')
+        writer.emit('// actual wrapper class for model derived from abstract base')
+        # writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
+        writer.emit('auto cls = Dune::Python::insertClass<ModelWrapper,ModelBase>(module,"Model",'+\
+                        'Dune::Python::GenerateTypeName("'+modelType+'"),'+\
+                        'Dune::Python::IncludeFiles({})).first;')
+    else:
+        # writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model" );')
+        writer.emit('auto cls = Dune::Python::insertClass<ModelWrapper>(module,"Model",'+\
+                        'Dune::Python::GenerateTypeName("'+modelType+'"),'+\
+                        'Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
     writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
     hasDirichletBC = 'true' if model.hasDirichletBoundary else 'false'
     writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( ModelWrapper& ) -> bool { return '+hasDirichletBC+';});')
