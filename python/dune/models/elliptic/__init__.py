@@ -102,7 +102,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     else:
         modelPatch = None
 
-    signature = "" if virtualize else "nv" + model.signature + "_" + hashIt(grid._typeName)
+    signature = ("" if virtualize else "nv") + model.signature + "_" + hashIt(grid._typeName)
     name = model.baseName + '_' + signature
 
     writer = SourceWriter()
