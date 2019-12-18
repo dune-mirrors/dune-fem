@@ -242,14 +242,14 @@ class EllipticModel:
         sourceWriter.emit('    std::size_t k = renumberConstants( coeff );')
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-        sourceWriter.emit('    dispatch[ k ]( model.impl(), value );')
+        sourceWriter.emit('    dispatch[ k ]( model, value );')
         sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
 
-    def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
+    def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper',nameSpace=''):
         if self.hasConstants:
-            sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
+            sourceWriter.emit('cls.def( "setConstant",'+nameSpace+'::defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
         coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
         sourceWriter.emit('')
         # TODO

@@ -125,17 +125,15 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         virtualModel = 'dune/fem/schemes/diffusionmodel.hh'
     writer.emit('#include <' + virtualModel + '>')
 
-    code = []
-
     nameSpace = NameSpace("ModelImpl_" + signature)
     if modelPatch:
         nameSpace.append(model.code(model))
     else:
         nameSpace.append(model.code())
-    code.append(nameSpace)
 
-    writer.emit(code)
+    writer.emit(nameSpace)
 
+    writer.openNameSpace("ModelImpl_" + signature)
     gridPartType = "typename Dune::FemPy::GridPart< " + grid._typeName + " >"
     rangeTypes = ["Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >" for c in model._coefficients]
     coefficients = ["Dune::FemPy::VirtualizedGridFunction<"+gridPartType+", " + r + " >" for r in rangeTypes]
@@ -147,6 +145,8 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     if model.hasConstants:
         model.exportSetConstant(writer, modelClass=modelType, wrapperClass=wrapperType)
 
+    writer.closeNameSpace("ModelImpl_" + signature)
+    writer.openPythonModule(name)
     code = []
     code += [TypeAlias("GridPart", gridPartType)]
     code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >")]
@@ -157,14 +157,11 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     else:
         modelType = nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >"
         code += [TypeAlias("ModelWrapper", "Model")]
-
-    writer.openPythonModule(name)
-
     writer.emit(code)
+
     if virtualize:
         writer.emit('// export abstract base class')
         writer.emit('if( !pybind11::already_registered< ModelBase >() )')
-        writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
         writer.emit('')
         writer.emit('// actual wrapper class for model derived from abstract base')
         # writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
@@ -182,12 +179,12 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     writer.emit('')
     for n, number in model._constantNames.items():
         writer.emit('cls.def_property( "' + n + '", ' +
-          '[] ( ModelWrapper &self ) { return self.impl().template constant<' + str(number) + '>(); }, ' +
-          '[] ( ModelWrapper &self, typename ModelWrapper::Impl::ConstantType<' + str(number) + '>& value) { self.impl().template constant<' + str(number) + '>() = value; }' +
+          '[] ( ModelWrapper &self ) { return self.template constant<' + str(number) + '>(); }, ' +
+          '[] ( ModelWrapper &self, typename ModelWrapper::ConstantType<' + str(number) + '>& value) { self.template constant<' + str(number) + '>() = value; }' +
           ');')
     writer.emit('')
 
-    model.export(writer, 'Model', 'ModelWrapper')
+    model.export(writer, 'Model', 'ModelWrapper',nameSpace="ModelImpl_"+signature)
     writer.closePythonModule(name)
 
     source = writer.writer.getvalue()
