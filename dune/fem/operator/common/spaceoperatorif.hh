@@ -100,8 +100,7 @@ namespace Dune
     template< class DiscreteFunction,
               class JacobianOperator = Fem::AutomaticDifferenceOperator< DiscreteFunction >  >
     class SpaceOperatorInterface
-    : public JacobianOperator,
-      public PARDGSpaceOperatorInterface< DiscreteFunction >
+    : public JacobianOperator
     {
       typedef SpaceOperatorInterface< DiscreteFunction, JacobianOperator > ThisType;
       typedef Fem::Operator< DiscreteFunction > BaseType;
@@ -111,101 +110,64 @@ namespace Dune
       typedef DiscreteFunction DestinationType;
 
       //! type of discrete function space
-      typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
+      typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      //! convenience typedef for space type
+      typedef DiscreteFunctionSpaceType SpaceType;
 
-    protected:
-      template < class Op, class DF, class Field >
-      struct CallDoubleOperator
-      {
-        static inline void apply( const Op& op, const double* u, double* f )
-        {
-          std::cerr << "ERROR: SpaceOperatorInterface::operator()( const double*, double* ) only works for RangeFieldType double" << std::endl;
-          abort();
-        }
-
-        static inline void limit( const Op& op, const double* u, double* f )
-        {
-          std::cerr << "ERROR: SpaceOperatorInterface::limit( const double*, double* ) only works for RangeFieldType double" << std::endl;
-          abort();
-        }
-      };
-
-      // this only works if the DestinationType is AdaptiveDiscreteFunction and the
-      // DofType is double
-      template < class Op >
-      struct CallDoubleOperator< Op, AdaptiveDiscreteFunction< SpaceType >, double >
-      {
-        static inline void apply( const Op& op, const double* u, double* f )
-        {
-          typedef AdaptiveDiscreteFunction< SpaceType > Destination ;
-          // get space instance
-          const SpaceType &spc = op.space();
-
-          // convert arguments to discrete function
-          const Destination arg( "SpaceOperatorIF::ARG", spc, u );
-          Destination dest( "SpaceOperatorIF::DEST", spc, f );
-
-          // call operator apply
-          op( arg, dest );
-        }
-
-        static inline void limit( const Op& op, const double* u, double* f )
-        {
-          typedef AdaptiveDiscreteFunction< SpaceType > Destination ;
-          // get space instance
-          const SpaceType &spc = op.space();
-
-          // convert arguments to discrete function
-          const Destination arg( "SpaceOperatorIF::limitARG", spc, u );
-          Destination dest( "SpaceOperatorIF::limitDEST", spc, f );
-
-          // call operator apply
-          op.limit( arg, dest );
-        }
-      };
-    public:
       //! destructor
       virtual ~SpaceOperatorInterface() {}
 
       using BaseType::operator ();
 
       //! return reference to space (needed by ode solvers)
-      virtual const SpaceType &space() const = 0;
+      virtual const DiscreteFunctionSpaceType& space() const = 0;
 
-      /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::size() const */
+      /** \brief return size of discrete function space, i.e. number of unknowns */
       virtual int size () const { return space().size(); }
 
-      //- \copydoc Dune::Fem::PARDGSpaceOperatorInterface::operator()(const double*,double*) const
-      /** \brief application operator to apply right hand side
-          \param u  argument, u
-          \param f  destination, f(u)
+      /** \brief call operator once to calculate initial time step size
+          \param U0  initial data to compute initial time step size
        */
-      virtual void operator() ( const double *u, double *f ) const;
+      virtual void initializeTimeStepSize ( const DestinationType& U0 ) const;
 
-      /** \brief limiter application operator
-          \param u  argument, u
-          \param f  destination, Limiter(u)
+      /** \brief return true if limit method is implemented
+
+          \return true if limit is implemented
        */
-      virtual void limit ( const double *u, double *f ) const;
-
-      /** \brief return true if explicit limiter is available */
       virtual bool hasLimiter () const { return false ; }
+
+      /** \brief set time for operators
+          \param time current time of evaluation
+      */
+      virtual void setTime ( const double time ) {}
+
+      /** \brief estimate maximum time step
+       *
+       *  For an explicit time discretization, the time step has to be limited.
+       *  An estimate for the maximum time step of an explicit Euler scheme is
+       *  returned by this function.
+       *  Maximum time steps for higher order Runge Kutta schemes can be derived
+       *  from this value.
+       *  */
+      virtual double timeStepEstimate () const
+      {
+        return std::numeric_limits< double >::max();
+      }
 
       /** \brief limiter application operator
           \param arg   argument, u
           \param dest  destination, Limiter(u)
+
+          \note: Default implementation is to copy arg into dest.
        */
       virtual void limit (const DestinationType& arg, DestinationType& dest) const
       {
-        // default operation is the identiy
+        // default operation is the identity
         dest.assign( arg );
       }
 
-      /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) const */
-      virtual void initializeTimeStepSize ( const DestinationType &U0 ) const;
-
       //! return reference to pass's local memory
-      virtual const DestinationType* destination() const { return 0; }
+      virtual const DestinationType* destination() const { return nullptr; }
     };
 
     //! only for keeping the pointer
@@ -353,24 +315,6 @@ namespace Dune
 
     // Implementation of SpaceOperatorInterface
     // ----------------------------------------
-
-    template< class DiscreteFunction, class JacobianOperator >
-    inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
-      ::operator() ( const double *u, double *f ) const
-    {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction, JacobianOperator >,
-                          DiscreteFunction,
-                          typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
-    }
-
-    template< class DiscreteFunction, class JacobianOperator >
-    inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
-      ::limit ( const double *u, double *f ) const
-    {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction, JacobianOperator >,
-                          DiscreteFunction,
-                          typename DiscreteFunction :: RangeFieldType >::limit( *this, u, f );
-    }
 
     template< class DiscreteFunction, class JacobianOperator >
     inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
