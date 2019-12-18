@@ -182,8 +182,8 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     writer.emit('')
     for n, number in model._constantNames.items():
         writer.emit('cls.def_property( "' + n + '", ' +
-          '[] ( ModelWrapper &self ) { return self.impl().template constant<' + str(number) + '>(); }, ' +
-          '[] ( ModelWrapper &self, typename ModelWrapper::Impl::ConstantType<' + str(number) + '>& value) { self.impl().template constant<' + str(number) + '>() = value; }' +
+          '[] ( ModelWrapper &self ) { return self.template constant<' + str(number) + '>(); }, ' +
+          '[] ( ModelWrapper &self, typename ModelWrapper::ConstantType<' + str(number) + '>& value) { self.template constant<' + str(number) + '>() = value; }' +
           ');')
     writer.emit('')
 
