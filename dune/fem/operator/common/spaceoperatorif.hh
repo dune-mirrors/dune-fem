@@ -96,26 +96,35 @@ namespace Dune
        */
       virtual void limit (const DestinationType& arg, DestinationType& dest) const
       {
-        // if this method is called then hasLimiter should return false
+        // if this method is not overloaded then hasLimiter should return false
         assert( ! hasLimiter () );
-        // default operation is the identity
+        // default operation is copy arg to dest
         dest.assign( arg );
       }
 
       /** \brief limiter application operator
-          \param[inout] dest argument and destination to apply Limiter(u), needs
-          internal copying
+          \param[inout] U argument and destination to apply Limiter(u), needs internal copying
 
-          \note: Default implementation is to do nothing
+          \note: Default implementation is to do nothing (hasLimiter == false)
        */
-      virtual void limit ( DestinationType& dest ) const
+      virtual void applyLimiter ( DestinationType& U ) const
       {
-        // if this method is called then hasLimiter should return false
-        assert( ! hasLimiter () );
+        if( hasLimiter() )
+        {
+          if( ! uTmp_ )
+            uTmp_.reset( new DestinationType( "SpaceOpIF::uTmp_", space() ) );
+
+          assert( uTmp_ );
+          uTmp_->assign( U );
+          limit( *uTmp_, U );
+        }
       }
 
       //! return reference to pass's local memory
       virtual const DestinationType* destination() const { return nullptr; }
+
+    protected:
+      mutable std::unique_ptr< DestinationType > uTmp_;
     };
 
     //! only for keeping the pointer
