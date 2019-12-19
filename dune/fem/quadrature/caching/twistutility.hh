@@ -79,30 +79,9 @@ namespace Dune
         \note This class needs to be explicitly specialized for each grid!
     */
     template< class Grid >
-    struct TwistUtility;
-    //{
-    //  static_assert( false, "TwistUtility not specialized, please specialize TwistUtility!");
-    //};
-
-    // Specialization for YaspGrid
-    // ------------------------------
-
-    template< int dimw, class CoordCont >
-    struct TwistUtility< YaspGrid< dimw, CoordCont > >
-      : public TwistFreeTwistUtility< YaspGrid< dimw, CoordCont > >
-    {
-    };
-
-
-    // Specialization for OneDGrid
-    // ------------------------------
-
-    template <>
-    struct TwistUtility< OneDGrid >
-      : public TwistFreeTwistUtility< OneDGrid >
-    {
-    };
-
+    struct TwistUtility
+     : public TwistFreeTwistUtility< Grid >
+    {};
 
     // Specialization for AlbertaGrid
     // ------------------------------
