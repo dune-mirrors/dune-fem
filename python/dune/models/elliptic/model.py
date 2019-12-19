@@ -247,9 +247,9 @@ class EllipticModel:
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
 
-    def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
+    def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper',nameSpace=''):
         if self.hasConstants:
-            sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
+            sourceWriter.emit('cls.def( "setConstant",'+nameSpace+'::defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
         coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
         sourceWriter.emit('')
         # TODO
