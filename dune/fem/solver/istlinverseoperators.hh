@@ -294,7 +294,7 @@ namespace Dune
       //deprecated constructors
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit, const ParameterReader & parameter )
-        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
+        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
 
       [[deprecated]]
       ISTLInverseOperator ( double redEps, double absLimit,
