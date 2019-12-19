@@ -17,72 +17,6 @@ namespace Dune
 
   namespace Fem
   {
-
-    /** @ingroup OperatorCommon
-      \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers
-      of the type \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
-
-      \interfaceclass
-    */
-    template <class DestinationImp>
-    class PARDGSpaceOperatorInterface
-    {
-    protected:
-      // only allow derived class to call this constructor
-      PARDGSpaceOperatorInterface () {}
-
-    public:
-      //! type of argument and destination
-      typedef DestinationImp DestinationType;
-
-      //! destructor
-      virtual ~PARDGSpaceOperatorInterface () {}
-
-      /** \brief return size of discrete function space, i.e. number of unknowns */
-      virtual int size () const = 0 ;
-
-      /** \brief call operator once to calculate initial time step size
-          \param U0  initial data to compute initial time step size
-       */
-      virtual void initializeTimeStepSize ( const DestinationType& U0 ) const = 0;
-
-      /** \brief application operator to apply right hand side
-          \param u  argument, u
-          \param f  destination, f(u)
-       */
-      virtual void operator() ( const double *u, double *f ) const = 0;
-
-      /** \brief apply limiter to u and store result in f
-          \param u  argument, u
-          \param f  destination, f(u)
-       */
-      virtual void limit ( const double *u, double *f ) const { }
-
-      /** \brief return true if limit method is implemented
-
-          \return true if limit is implemented
-       */
-      virtual bool hasLimiter () const { return false ; }
-
-      /** \brief set time for operators
-          \param time current time of evaluation
-      */
-      virtual void setTime ( const double time ) {}
-
-      /** \brief estimate maximum time step
-       *
-       *  For an explicit time discretization, the time step has to be limited.
-       *  An estimate for the maximum time step of an explicit Euler scheme is
-       *  returned by this function.
-       *  Maximum time steps for higher order Runge Kutta schemes can be derived
-       *  from this value.
-       *  */
-      virtual double timeStepEstimate () const
-      {
-        return std::numeric_limits< double >::max();
-      }
-    };
-
     /** \class   SpaceOperatorInterface
       * \ingroup OperatorCommon
       *  \brief  interface for time evolution operators
@@ -162,8 +96,22 @@ namespace Dune
        */
       virtual void limit (const DestinationType& arg, DestinationType& dest) const
       {
+        // if this method is called then hasLimiter should return false
+        assert( ! hasLimiter () );
         // default operation is the identity
         dest.assign( arg );
+      }
+
+      /** \brief limiter application operator
+          \param[inout] dest argument and destination to apply Limiter(u), needs
+          internal copying
+
+          \note: Default implementation is to do nothing
+       */
+      virtual void limit ( DestinationType& dest ) const
+      {
+        // if this method is called then hasLimiter should return false
+        assert( ! hasLimiter () );
       }
 
       //! return reference to pass's local memory
