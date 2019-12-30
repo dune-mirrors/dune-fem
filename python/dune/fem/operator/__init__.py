@@ -17,7 +17,9 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args, baseClasses=[], preamble=None):
+def load(includes, typeName, *args, baseClasses=None, preamble=None):
+    if baseClasses is None:
+        baseClasses = []
     from dune.fem.space import addBackend
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()

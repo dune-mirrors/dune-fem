@@ -99,49 +99,6 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     df.scalar = space.scalar
     return df.as_ufl()
 
-    from dune.generator import Constructor
-    storage, dfIncludes, dfTypeName, _, _,backend = space.storage
-
-    if storage == "petsc":
-        spaceType = space._typeName
-        try:
-            import petsc4py
-            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-                    ['if (import_petsc4py() != 0) {',
-                     '  throw std::runtime_error("Error during import of petsc4py");',
-                     '}',
-                     'Vec petscVec = PyPetscVec_Get(vec.ptr());',
-                     'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
-                     '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
-                     'pybind11::cpp_function remove_petscStorage( [ dofStorage, vec, petscVec] ( pybind11::handle weakref ) {',
-                     '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
-                     '  delete dofStorage;',
-                     '  weakref.dec_ref();',
-                     '} );',
-                     'pybind11::weakref weakref( vec, remove_petscStorage );',
-                     'weakref.release();',
-                     'return new DuneType( name, space, *dofStorage );'],
-                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
-        except:
-            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-                    ['std::cerr <<"Can not use constructor with dof vector argument because `petsc4py` was not found!\\n";',
-                     'throw std::runtime_error("Can not use constructor with dof vector argument because `petsc4py` was not found!");',
-                     'return new DuneType(name,space);'],
-                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
-        DF = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend, ctor)
-        if vec is None:
-            df = DF.DiscreteFunction(space,name)
-        else:
-            df = DF.DiscreteFunction(name,space,vec)
-            return df.as_ufl()
-    else:
-        df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
-    if expr is None:
-        df.clear()
-    else:
-        df.interpolate(expr)
-    return df.as_ufl()
-
 def tupleDiscreteFunction(*spaces, **kwargs):
     # from dune.fem.discretefunction import module, addAttr
     name = kwargs.get("name", "")
