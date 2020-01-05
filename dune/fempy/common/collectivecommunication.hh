@@ -4,8 +4,8 @@
 #include <array>
 #include <vector>
 
-#include <dune/common/parallel/collectivecommunication.hh>
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 
 namespace Dune
 {

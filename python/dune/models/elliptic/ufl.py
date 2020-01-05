@@ -253,7 +253,7 @@ def compileUFL(form, patch, *args, **kwargs):
 
     predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.predefineCoefficients(predefined,x)
+    model.predefineCoefficients(predefined,'x')
     model.source = generateCode(predefined, source, tempVars=tempVars)
     model.diffusiveFlux = generateCode(predefined, diffusiveFlux, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar, d2ubar: model.arg_d2ubar})
@@ -264,14 +264,14 @@ def compileUFL(form, patch, *args, **kwargs):
 
     predefined = {u: model.arg_u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.predefineCoefficients(predefined,x)
+    model.predefineCoefficients(predefined,'x')
     model.alpha = generateCode(predefined, boundarySource, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar})
     model.linAlpha = generateCode(predefined, linBoundarySource, tempVars=tempVars)
 
     predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.predefineCoefficients(predefined,x)
+    model.predefineCoefficients(predefined,'x')
     model.fluxDivergence = generateCode(predefined, fluxDivergence, tempVars=tempVars)
 
     if dirichletBCs:
@@ -279,7 +279,7 @@ def compileUFL(form, patch, *args, **kwargs):
 
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-        model.predefineCoefficients(predefined,x)
+        model.predefineCoefficients(predefined,'x')
 
         maxId = 0
         codeDomains = []

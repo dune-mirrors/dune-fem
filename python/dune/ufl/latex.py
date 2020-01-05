@@ -109,11 +109,14 @@ def form2latex(form):
     result = ""
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
-            result += "\\int_\\Omega" + expr2latex(integral.integrand()) + "\,dx"
+            result += "\\int_{\\Omega}" + expr2latex(integral.integrand()) + "\,dx"
         elif integral.integral_type() == 'exterior_facet':
             result += "\\int_{\\partial\\Omega}" + expr2latex + "\,dx"
     return result
 
 
 def equation2latex(equation):
-    return form2latex(equation.lhs) + "=" + form2latex(equation.rhs)
+    try:
+        return form2latex(equation.lhs) + "=" + form2latex(equation.rhs)
+    except AttributeError:
+        return form2latex(equation) + "= 0"

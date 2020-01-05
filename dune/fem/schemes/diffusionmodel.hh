@@ -154,6 +154,14 @@ public:
 
   virtual bool init( const EntityType &entity) const = 0;
 
+  // if the ModelImpl provides a time method (constant) then
+  // it maybe be set using this method
+  virtual void setTime( const double t ) const = 0;
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe retrieved by this method
+  virtual double time() const = 0;
+
   // virtual methods for fempy quadratures
   VirtualDiffusionModelMethods(Point)
   VirtualDiffusionModelMethods(ElementPoint)
@@ -173,6 +181,42 @@ public:
   virtual bool hasNeumanBoundary () const = 0;
   virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
 };
+
+namespace detail {
+
+  template <class M>
+  class CheckTimeMethod
+  {
+      template <class T>
+      static std::true_type testSignature(double& (T::*)());
+
+      template <class T>
+      static decltype(testSignature(&T::time)) test(std::nullptr_t);
+
+      template <class T>
+      static std::false_type test(...);
+
+      using type = decltype(test<M>(nullptr));
+  public:
+      static const bool value = type::value;
+  };
+
+
+  template <class Model, bool>
+  struct CallSetTime
+  {
+    static void setTime( Model&, const double ) {}
+    static double time( const Model& ) { return -1.0; }
+  };
+
+  template <class Model>
+  struct CallSetTime< Model, true >
+  {
+    static void setTime( Model& model, const double t ) { model.time() = t; }
+    static double time ( const Model& model ) { return model.time(); }
+  };
+} // end namespace detail
+
 
 template < class ModelImpl >
 struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimD, ModelImpl::dimR,
@@ -231,6 +275,22 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().name();
   }
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe be set using this method
+  virtual void setTime( const double t ) const
+  {
+    detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >
+      ::setTime( const_cast< ModelImpl& > (impl()), t );
+  }
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe be set using this method
+  virtual double time() const
+  {
+    return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
+  }
+
   typedef Dune::FieldVector<int, dimR> DirichletComponentType;
   virtual bool hasDirichletBoundary () const
   {
@@ -336,6 +396,14 @@ public:
 
   virtual bool init( const EntityType &entity) const = 0;
 
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe be set using this method
+  virtual void setTime( const double t ) const = 0;
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe retrieved by this method
+  virtual double time() const = 0;
+
   // virtual methods for fempy quadratures
   VirtualDiffusionModelMethods(Point)
   VirtualDiffusionModelMethods(ElementPoint)
@@ -439,6 +507,22 @@ struct DGDiffusionModelWrapper : public DGDiffusionModel<typename ModelImpl::Gri
   {
     return impl().name();
   }
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe be set using this method
+  virtual void setTime( const double t ) const
+  {
+    detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >
+      ::setTime( const_cast< ModelImpl& > (impl()), t );
+  }
+
+  // if the ModelImpl provides a 'double& time()' method then
+  // it maybe be set using this method
+  virtual double time() const
+  {
+    return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
+  }
+
   typedef Dune::FieldVector<int, dimR> DirichletComponentType;
   virtual bool hasDirichletBoundary () const
   {
