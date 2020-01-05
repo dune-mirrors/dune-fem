@@ -89,7 +89,10 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         with open(model, 'r') as modelFile:
              data = modelFile.read()
         name = data.split('PYBIND11_MODULE( ')[1].split(',')[0]
-        module = builder.load(name, data, "ellipticModel")
+        endPos = name.find('_')
+        modelName = name[0:endPos]
+        module = builder.load(name, data, modelName)
+        # module = builder.load(name, data, "ellipticModel")
         renumbering = {}
         if renumbering is not None:
             setattr(module.Model, '_renumbering', renumbering)
@@ -194,7 +197,10 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         with open(kwargs["header"], 'w') as modelFile:
             modelFile.write(source)
 
-    module = builder.load(name, source, "ellipticModel")
+    endPos = name.find('_')
+    modelName = name[0:endPos]
+    module = builder.load(name, source, modelName)
+    # module = builder.load(name, source, "ellipticModel")
     if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)
         setattr(module.Model, '_coefficientNames', {c['name']: i for i, c in enumerate(model._coefficients)})
