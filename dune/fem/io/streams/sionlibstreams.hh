@@ -6,8 +6,8 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 
-#include <dune/common/parallel/collectivecommunication.hh>
-#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/communication.hh>
+#include <dune/common/parallel/mpicommunication.hh>
 
 #if HAVE_SIONLIB
 
