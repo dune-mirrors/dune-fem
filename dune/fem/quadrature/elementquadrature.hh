@@ -79,10 +79,11 @@ namespace Dune
     : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > >
     {
       typedef ElementQuadrature< GridPartImp, 0, QuadratureTraits > ThisType;
+
+    public:
       typedef ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > IntegrationTraits;
       typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
 
-    public:
       //! type of the grid partition
       typedef GridPartImp GridPartType;
 
@@ -109,6 +110,8 @@ namespace Dune
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+      typedef typename BaseType :: IntegrationPointListType  IntegrationPointListType;
+
     protected:
       using BaseType::quadImp;
 
@@ -133,6 +136,16 @@ namespace Dune
        */
       ElementQuadrature( const GeometryType &type, const QuadratureKeyType& quadKey )
       : BaseType( type, quadKey )
+      {}
+
+      /*! \brief constructor
+       *
+       *  \param[in]  type    geometry type, on whose reference element the quadrature
+       *                      lives
+       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
+       */
+      ElementQuadrature( const IntegrationPointListType& ipList )
+      : BaseType( ipList )
       {}
 
       /** \brief copy constructor

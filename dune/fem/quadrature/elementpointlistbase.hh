@@ -54,6 +54,15 @@ namespace Dune
       : quad_( geometry, quadKey )
       {}
 
+      /** \brief constructor
+       *
+       *  \param[in]  geometry  geometry type, the quadrature lives on
+       *  \param[in]  order     desired minimal order of the quadrature
+       */
+      ElementPointListBase ( const IntegrationPointListType& ipList )
+      : quad_( ipList )
+      {}
+
       /** \copydoc Dune::Fem::IntegrationPointList::nop */
       size_t nop () const
       {
@@ -166,7 +175,7 @@ namespace Dune
         return quad_;
       }
 
-    private:
+    protected:
       IntegrationPointListType quad_;
     };
 

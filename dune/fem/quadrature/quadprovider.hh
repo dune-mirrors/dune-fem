@@ -251,7 +251,6 @@ namespace Dune
                                                             const QuadratureKeyType& quadKey )
       {
         assert( geometry.isCube() || geometry.isSimplex() );
-        //return QuadCreator< 0 > :: template provideQuad< PointQuadratureType > ( geometry, order );
         static PointQuadratureType quad( geometry,
                                          quadKey,
                                          IdProvider ::instance().newId());
@@ -367,7 +366,7 @@ namespace Dune
           return QuadCreator< 1 > ::
             template provideQuad< CubeQuadratureType >    ( geometry, quadKey ) ;
         }
-        else
+        else // type == None
         {
           // dummy return for polygonal grid cells, i.e. geometry type none
           return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey, 0 );

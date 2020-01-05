@@ -165,311 +165,6 @@ namespace Dune
 
 
 
-    /*  \class LineQuadrature
-     *  \ingroup Quadrature
-     *  \brief quadrature class for lines
-     *
-     *  LineQuadrature implements the geometry-specific part of the quadrature
-     *  and initialises the vector quadrature points and weights.
-     *
-     *  \note This class is redundant as CubeQuadrature can be used instead
-     */
-    template< class FieldImp >
-    class LineQuadrature
-    : public QuadratureImp< FieldImp, 1 >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-    private:
-      typedef LineQuadrature< FieldType > ThisType;
-      typedef QuadratureImp< FieldType, 1 > BaseType;
-
-    public:
-      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    protected:
-      int order_;
-
-      static const unsigned int topologyId = Dune::Impl::CubeTopology< 1 >::type::id ;
-
-    public:
-      /** \brief constructor filling the list of points and weights
-       *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
-       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
-       */
-      LineQuadrature( const GeometryType &geometry, int order, size_t id );
-
-      /** \copydoc Dune::Fem::QuadratureImp::geometry */
-      virtual GeometryType geometryType () const
-      {
-        return GeometryType( topologyId, 1 );
-      }
-
-      /** copydoc Dune::Fem::QuadratureImp::order */
-      virtual int order() const
-      {
-        return order_;
-      }
-
-      /** \brief  maximal order of available quadratures */
-      static size_t maxOrder ()
-      {
-        return GaussPts::highestOrder;
-      }
-    };
-
-
-
-    /*  \class TriangleQuadrature
-     *  \ingroup Quadrature
-     *  \brief quadrature class for triangles
-     *
-     *  TriangleQuadrature implements the geometry-specific part of the quadrature
-     *  and initialises the vector quadrature points and weights.
-     *
-     *  \note The UG quadrature rules are used here.
-     *
-     *  \note This class is redundant as SimplexQuadrature can be used instead.
-     */
-    template< class FieldImp >
-    class TriangleQuadrature
-    : public QuadratureImp< FieldImp, 2 >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-    private:
-      typedef TriangleQuadrature< FieldType > ThisType;
-      typedef QuadratureImp< FieldType, 2 > BaseType;
-
-    public:
-      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    private:
-      int order_;
-
-      static const unsigned int topologyId = Dune::Impl::SimplexTopology< 2 >::type::id ;
-
-    public:
-      /** \brief constructor filling the list of points and weights
-       *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
-       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
-       */
-      TriangleQuadrature ( const GeometryType &geometry, int order, size_t id );
-
-      /** \copydoc Dune::Fem::QuadratureImp::geometry */
-      virtual GeometryType geometryType () const
-      {
-        return GeometryType( topologyId, 2 );
-      }
-
-      /** \copydoc Dune::Fem::QuadratureImp::order */
-      virtual int order () const
-      {
-        return order_;
-      }
-
-      /** \brief maximal order of available quadratures */
-      static size_t maxOrder ()
-      {
-        return SimplexMaxOrder::maxOrder2;
-      }
-    };
-
-
-
-    /*  \class QuadrilateralQuadrature
-     *  \ingroup Quadrature
-     *  \brief quadrature class for quadrilaterals
-     *
-     *  QuadrilateralQuadrature implements the geometry-specific part of the
-     *  quadrature and initialises the vector quadrature points and weights.
-     *
-     *  \note The quadrature uses tensorial products of the 1d gauss points
-     *        as quadrature points.
-     *
-     *  \note This class is redundant as CubeQuadrature can be used instead.
-     */
-    template< class FieldImp >
-    class QuadrilateralQuadrature
-    : public QuadratureImp< FieldImp, 2 >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-    private:
-      typedef QuadrilateralQuadrature< FieldType > ThisType;
-      typedef QuadratureImp< FieldType, 2 > BaseType;
-
-    public:
-      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    private:
-      int order_;
-
-      static const unsigned int topologyId = Dune::Impl::CubeTopology< 2 >::type::id ;
-
-    public:
-      /** \brief constructor filling the list of points and weights
-       *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
-       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
-       */
-      QuadrilateralQuadrature( const GeometryType &geometry, int order, size_t id );
-
-      /** \copydoc Dune::Fem::QuadratureImp::geometry */
-      virtual GeometryType geometryType () const
-      {
-        return GeometryType( topologyId, 2 );
-      }
-
-      /** \copydoc Dune::Fem::QuadratureImp::order */
-      virtual int order () const
-      {
-        return order_;
-      }
-
-      /** \brief maximal order of available quadratures */
-      static size_t maxOrder ()
-      {
-        return GaussPts :: highestOrder;
-      }
-    };
-
-
-
-    /*  \class TetraQuadrature
-     *  \ingroup Quadrature
-     *  \brief quadrature class for tetrahedra
-     *
-     *  TetraQuadrature implements the geometry-specific part of the quadrature
-     *  and initialises the vector quadrature points and weights.
-     *
-     *  \note The UG quadrature rules are used here.
-     *
-     *  \note This class is redundant as SimplexQuadrature can be used instead.
-     */
-    template< class FieldImp >
-    class TetraQuadrature
-    : public QuadratureImp< FieldImp, 3 >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-    private:
-      typedef TetraQuadrature< FieldType > ThisType;
-      typedef QuadratureImp< FieldType, 3 > BaseType;
-
-    public:
-      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    private:
-      int order_;
-
-      static const unsigned int topologyId = Dune::Impl::SimplexTopology< 3 >::type::id ;
-
-    public:
-      /** \brief constructor filling the list of points and weights
-       *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
-       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
-       */
-      TetraQuadrature( const GeometryType &geometry, int order, size_t id );
-
-      /** \copydoc Dune::Fem::QuadratureImp::geometry */
-      virtual GeometryType geometryType () const
-      {
-        return GeometryType( topologyId, 3 );
-      }
-
-      /** \copydoc Dune::Fem::QuadratureImp::order */
-      virtual int order () const
-      {
-        return order_;
-      }
-
-      /** \brief maximal order of available quadratures */
-      static size_t maxOrder ()
-      {
-        return SimplexMaxOrder::maxOrder3;
-      }
-    };
-
-
-
-    /*  \class HexaQuadrature
-     *  \ingroup Quadrature
-     *  \brief quadrature class for hexahedra
-     *
-     *  HexaQuadrature implements the geometry-specific part of the quadrature
-     *  and initialises the vector quadrature points and weights.
-     *
-     *  \note The quadrature uses tensorial products of the 1d gauss points
-     *        as quadrature points.
-     *
-     *  \note This class is redundant as CubeQuadrature can be used instead.
-     */
-    template< class FieldImp >
-    class HexaQuadrature
-    : public QuadratureImp< FieldImp, 3 >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-    private:
-      typedef HexaQuadrature< FieldType > ThisType;
-      typedef QuadratureImp< FieldType, 3 > BaseType;
-
-    public:
-      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
-      typedef typename BaseType :: CoordinateType CoordinateType;
-
-    private:
-      int order_;
-
-      static const unsigned int topologyId = Dune::Impl::CubeTopology< 3 >::type::id ;
-
-    public:
-      /** \brief constructor filling the list of points and weights
-       *
-       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-       *  \param[in]  order     desired order (provided by the user)
-       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
-       */
-      HexaQuadrature( const GeometryType &geometry, int order, size_t id );
-
-      /** \copydoc Dune::Fem::QuadratureImp::geometry */
-      virtual GeometryType geometryType () const
-      {
-        return GeometryType( topologyId, 3 );
-      }
-
-      /** \copydoc Dune::Fem::QuadratureImp::order */
-      virtual int order () const
-      {
-        return order_;
-      }
-
-      /** \brief maximal order of available quadratures */
-      static size_t maxOrder()
-      {
-        return GaussPts::highestOrder;
-      }
-    };
-
-
-
     /*  \class PrismQuadrature
      *  \ingroup Quadrature
      *  \brief quadrature class for prisms
@@ -587,6 +282,72 @@ namespace Dune
         return PyramidPoints :: highest_order;
       }
     };
+
+
+    /*  \class PolygonQuadrature
+     *  \ingroup Quadrature
+     *  \brief quadrature class for polygons
+     *
+     */
+    template< class FieldImp, int dim >
+    class PolyhedronQuadrature
+    : public QuadratureImp< FieldImp, dim >
+    {
+    public:
+      typedef FieldImp FieldType;
+
+    private:
+      typedef PolyhedronQuadrature< FieldType, dim > ThisType;
+      typedef QuadratureImp< FieldType, dim > BaseType;
+
+    public:
+      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
+      typedef typename BaseType :: CoordinateType CoordinateType;
+
+    private:
+      GeometryType geometryType_;
+      int order_;
+
+      static const unsigned int topologyId = -1;
+
+    public:
+      /** \brief constructor filling the list of points and weights
+       *
+       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  order     desired order (provided by the user)
+       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+       */
+      PolyhedronQuadrature( const GeometryType &geometry, int order, size_t id );
+
+      /** \copydoc Dune::Fem::QuadratureImp::geometry */
+      virtual GeometryType geometryType () const
+      {
+        return geometryType_;
+      }
+
+      /** \copydoc Dune::Fem::QuadratureImp::order */
+      virtual int order () const
+      {
+        return order_;
+      }
+
+      /** \brief maximal order of available quadratures */
+      static size_t maxOrder ()
+      {
+        return SimplexMaxOrder::maxOrder( dim );
+      }
+
+      void setQuadraturePoints( const int order,
+                                std::vector< CoordinateType >&& points,
+                                std::vector< FieldType >&& weights )
+      {
+        this->points_.swap( points );
+        this->weights_.swap( weights );
+        order_ = order;
+      }
+    };
+
+
 
   } // end namespace Fem
 

@@ -1,4 +1,5 @@
-dune_install(cachingpointlist.hh cachingquadrature.hh cornerpointset.hh
+dune_install(agglomerationquadrature.hh
+             cachingpointlist.hh cachingquadrature.hh cornerpointset.hh
              defaultquadratures.hh dunequadratures.hh elementpointlist.hh
              elementpointlistbase.hh elementquadrature.hh femquadratures.hh
              femquadratures_inline.hh gausspoints.hh gausspoints_implementation.hh

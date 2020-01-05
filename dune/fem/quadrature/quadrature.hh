@@ -94,8 +94,6 @@ namespace Dune
     return x.position();
   }
 
-
-
   /**
    * \class   QuadraturePointIterator
    * \ingroup Quadrature
@@ -190,7 +188,7 @@ namespace Dune
     enum { codimension = 0 };
 
   protected:
-    const IntegrationPointListType &ipList_;
+    const IntegrationPointListType *ipList_ = nullptr ;
 
   public:
     /** \brief create a quadrature for a given geometry type and order
@@ -205,7 +203,7 @@ namespace Dune
      */
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const QuadratureKeyType& quadKey )
-    : ipList_( QuadratureProviderType :: getQuadrature( geometryType, quadKey ) )
+    : ipList_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ) )
     {
     }
 
@@ -224,7 +222,7 @@ namespace Dune
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const GeometryType &elementGeometry,
                                   const QuadratureKeyType& quadKey )
-    : ipList_( QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ) )
+    : ipList_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ) )
     {
     }
 
@@ -238,7 +236,7 @@ namespace Dune
      *  \param[in]  ipList  implementation of the integration point list
      */
     inline IntegrationPointList ( const IntegrationPointListType &ipList )
-    : ipList_( ipList )
+    : ipList_( &ipList )
     {
     }
 
@@ -263,7 +261,8 @@ namespace Dune
      */
     const IntegrationPointListType &ipList () const
     {
-      return ipList_;
+      assert( ipList_ );
+      return *ipList_;
     }
 
     /** \brief obtain the number of integration points
@@ -272,7 +271,7 @@ namespace Dune
      */
     int nop () const
     {
-      return ipList_.nop();
+      return ipList().nop();
     }
 
     /** \brief obtain coordinates of i-th integration point
@@ -288,7 +287,7 @@ namespace Dune
      */
     const CoordinateType &point ( size_t i ) const
     {
-      return ipList_.point( i );
+      return ipList().point( i );
     }
 
     /** \brief obtain the identifier of the integration point list
@@ -304,7 +303,7 @@ namespace Dune
      */
     size_t id () const
     {
-      return ipList_.id();
+      return ipList().id();
     }
 
     /** \brief obtain order of the integration point list
@@ -322,7 +321,7 @@ namespace Dune
      */
     int order () const
     {
-      return ipList_.order();
+      return ipList().order();
     }
 
     /** \brief obtain GeometryType for this integration point list
@@ -339,7 +338,7 @@ namespace Dune
      */
     GeometryType geometryType () const
     {
-      return ipList_.geometryType();
+      return ipList().geometryType();
     }
   };
 
