@@ -33,7 +33,8 @@ private:
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef typename Dune::Fem::AgglomerationQuadrature<GridPartType, 0> VolumeQuadratureType;
+  typedef Dune::Fem::AgglomerationQuadrature<GridPartType, 0> VolumeQuadratureType;
+  typedef Dune::Fem::ElementQuadrature<GridPartType, 0>       ElementQuadratureType;
 
   typedef CachingLumpingQuadrature< GridPartType, 0> LumpingQuadratureType;
 
@@ -51,12 +52,12 @@ public:
   void runTest()
   {
     testElementQuadratures();
-    if( skipFaces_ )
-    {
-      std::cout << "Skipping faces due to fem.skipfaces "<<std::endl;
-      return ;
-    }
-    testFaceQuadratures();
+  }
+
+  template <class Coordinate>
+  double function( const Coordinate& x ) const
+  {
+    return x * x;
   }
 
   void testElementQuadratures()
@@ -66,47 +67,56 @@ public:
     {
       const EntityType & entity = *it;
       const Geometry& geo = entity.geometry();
+      const double volume = geo.volume();
 
-      VolumeQuadratureType quad( entity, order_ );
 
-      double sum = 0 ;
-      const int quadNop = quad.nop();
-      for( int qp=0; qp<quadNop; ++qp )
-        sum += quad.weight( qp );
-
-      for( int qp=0; qp<quadNop; ++qp )
+      // test integration of 1 over element which should yield the volume.
+      double integral = 0 ;
       {
-        std::cout << "P[ " << qp << "] = "<< quad.point( qp ) << std::endl;
-      }
-      if( std::abs( sum - 1.0 ) > 1e-8 )
-      {
-         std::cout << " Error: weights sum = " << sum << " != 1" << std::endl;
-         return ;
-      }
-
-      /*
-      for (int qp = 0; qp < quadNop; ++qp)
-      {
-        Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalElem, globalCache;
-        globalCache  = geo.global( cacheQuad.point( qp ) );
-        globalElem   = geo.global( elemQuad.point( qp ) );
-        if( (globalCache-globalElem).two_norm() > eps_)
+        // false here forces the weights and points to be computed
+        VolumeQuadratureType quad( entity, order_, false );
+        const int quadNop = quad.nop();
+        // integrate function over element
+        for( int qp=0; qp<quadNop; ++qp )
         {
-          std::cout << " Error: x(cache) = " << globalCache << " != "
-                    << globalElem << " = x(elem) " << std::endl;
-          break;
+          integral += quad.weight( qp ) * geo.integrationElement( quad.point( qp ) );
+        }
+
+        if( std::abs( integral - volume ) > 1e-8 )
+        {
+          DUNE_THROW(InvalidStateException,"Integral of 1 of element does not yield the volume. Int = " << integral << " vol = " << volume );
+        }
+
+        // test integration of function over element and compare with normal
+        // quadrature
+        integral = 0;
+        // integrate function over element
+        for( int qp=0; qp<quadNop; ++qp )
+        {
+          double val = function( geo.global( quad.point( qp ) ) );
+          integral += val * quad.weight( qp ) * geo.integrationElement( quad.point( qp ) );
         }
       }
-      */
+
+      double checkInt = 0;
+      {
+        // this only works with regular elements
+        assert( ! entity.type().isNone() );
+        ElementQuadratureType elemQuad( entity, order_ );
+        const int qNop = elemQuad.nop();
+        // integrate function over element
+        for( int qp=0; qp<qNop; ++qp )
+        {
+          double val = function( geo.global( elemQuad.point( qp ) ) );
+          checkInt += val * elemQuad.weight( qp ) * geo.integrationElement( elemQuad.point( qp ) );
+        }
+      }
+
+      if( std::abs( integral - checkInt ) > 1e-8 )
+      {
+        DUNE_THROW(InvalidStateException,"Integral does not equal check! Int = " << integral << " check = " << checkInt );
+      }
     }
-  }
-
-  void testFaceQuadratures()
-  {
-  }
-
-  void testLumpingQuadrature()
-  {
   }
 
 };
@@ -134,7 +144,7 @@ int main(int argc, char ** argv)
     //grid.globalRefine( maxlevel );
     //Dune::gridinfo(grid);
 
-    int quadOrder = 1;//Parameter::getValue<int>("fem.quadorder");
+    int quadOrder = 2;//Parameter::getValue<int>("fem.quadorder");
 
     if ( Parameter::getValue<bool>("fem.skipfaces", false ) )
       quadOrder = -quadOrder ;
