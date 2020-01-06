@@ -113,7 +113,7 @@ namespace Dune
       template <int dim>
       struct InsertGeometryTypes
       {
-        static void apply( std::vector< std::vector< GeometryType > >& geomTypes )
+        static void apply( std::vector< std::set< GeometryType > >& geomTypes )
         {
           static const int codim = GridType :: dimension - dim ;
           typedef Dune::ReferenceElements< typename GridType :: ctype, dim > ReferenceElementContainer ;
@@ -121,7 +121,7 @@ namespace Dune
           for( Iterator it = ReferenceElementContainer::begin(),
                        end = ReferenceElementContainer::end(); it != end; ++it )
           {
-            geomTypes[ codim ].push_back( it->type() );
+            geomTypes[ codim ].insert( it->type() );
           }
         }
       };
@@ -132,8 +132,30 @@ namespace Dune
       {
         if( multipleGeomTypes() )
         {
+          std::vector< std::set< GeometryType > > geomTypes( ncodim );
+
           // store all possible geom types
-          Fem::ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
+          Fem::ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes );
+
+          auto types = indexSet.types( 0 );
+          for( const auto type : types )
+          {
+            geomTypes[ 0 ].insert( type );
+          }
+
+          for( int cd=0; cd < ncodim; ++cd )
+          {
+            geomTypes_[ cd ].reserve( geomTypes[ cd ].size() );
+            for( const auto& type : geomTypes[ cd ] )
+            {
+              geomTypes_[ cd ].push_back( type );
+            }
+          }
+
+          for( const auto& geomType : geomTypes_[ 0 ])
+          {
+            std::cout << geomType << std::endl;
+          }
         }
         else
         {

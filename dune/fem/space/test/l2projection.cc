@@ -676,6 +676,8 @@ int main (int argc, char **argv)
   int ml = 2;
   if( argc > 1 )
     ml = atoi( argv[1] );
+
+  /*
   if( ml == -1 )
   {
     MyGridType &grid = Dune::Fem::TestGrid::grid();
@@ -683,10 +685,12 @@ int main (int argc, char **argv)
     generateCode( part );
     return 0;
   }
+  */
 
   std::vector< double> error(ml);
 
-  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  MyGridType &gridP = Dune::Fem::TestGrid::grid();
+  MyGridType grid( gridP.dualGrid() );
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType part ( grid );

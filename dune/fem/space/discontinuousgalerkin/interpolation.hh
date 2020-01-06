@@ -7,6 +7,8 @@
 #include <dune/grid/common/capabilities.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/agglomerationquadrature.hh>
+
 #include <dune/fem/operator/projection/local/l2projection.hh>
 #include <dune/fem/operator/projection/local/riesz.hh>
 
@@ -93,14 +95,35 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void apply ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
-        // set all dofs to zero
-        localDofVector.clear();
-
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
 
-        // create quadrature with appropriate order
-        Quadrature quadrature( entity, localFunction.order() + basisFunctionSet().order() );
+        if( entity.type().isNone() )
+        {
+          std::cout << "Agglo interpol" << std::endl;
+          typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
+          AggloQuadratureType quadrature( entity, localFunction.order() + basisFunctionSet().order() );
+          computeL2Projection( entity, quadrature, localFunction, localDofVector );
+        }
+        else
+        {
+          std::cout << "Default interpol" << std::endl;
+          // create quadrature with appropriate order
+          Quadrature quadrature( entity, localFunction.order() + basisFunctionSet().order() );
+          computeL2Projection( entity, quadrature, localFunction, localDofVector );
+        }
+      }
+
+      /** \} */
+
+    protected:
+      template <class QuadImpl, class LocalFunction, class LocalDofVector >
+      void computeL2Projection( const EntityType& entity,
+                                const QuadImpl& quadrature,
+                                const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
+      {
+        // set all dofs to zero
+        localDofVector.clear();
 
         const int nop = quadrature.nop();
         // adjust size of values
@@ -118,9 +141,6 @@ namespace Dune
         basisFunctionSet().axpy( quadrature, values_, localDofVector );
       }
 
-      /** \} */
-
-    protected:
       BasisFunctionSetType basisFunctionSet_;
       mutable std::vector< RangeType > values_;
     };

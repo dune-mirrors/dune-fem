@@ -5,6 +5,7 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/agglomerationquadrature.hh>
 
 /**
   @file
@@ -68,8 +69,35 @@ namespace Dune
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
 
-        QuadratureType quadrature( entity, localFunction.order() + order_);
+        bool isAffine = isAlwaysAffine ;
+        if( entity.type().isNone() )
+        {
+          std::cout << "Agglo interpol" << std::endl;
+          typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
+          AggloQuadratureType quadrature( entity, localFunction.order() + order_);
+          isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+        }
+        else
+        {
+          std::cout << "Standard interpol" << std::endl;
+          QuadratureType quadrature( entity, localFunction.order() + order_);
+          isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+        }
 
+        if( ! isAffine )
+        {
+          // apply inverse of mass matrix
+          massMatrix().applyInverse( entity, dofs );
+        }
+      }
+
+    private:
+      template<class QuadImpl, class LocalFunction, class LocalDofVector >
+      bool computeInterpolation( const EntityType& entity,
+                                 const QuadImpl& quadrature,
+                                 const LocalFunction &localFunction,
+                                 LocalDofVector &dofs ) const
+      {
         const int nop = quadrature.nop();
         // adjust size of values
         values_.resize( nop );
@@ -101,14 +129,9 @@ namespace Dune
         // add values to local function
         dofs.axpyQuadrature( quadrature, values_ );
 
-        if( ! isAffine )
-        {
-          // apply inverse of mass matrix
-          massMatrix().applyInverse( entity, dofs );
-        }
+        return isAffine;
       }
 
-    private:
       const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
 
       const int order_;
