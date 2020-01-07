@@ -69,26 +69,32 @@ namespace Dune
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
 
-        bool isAffine = isAlwaysAffine ;
         if( entity.type().isNone() )
         {
-          std::cout << "Agglo interpol" << std::endl;
           typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
           AggloQuadratureType quadrature( entity, localFunction.order() + order_);
-          isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          if( ! isAffine )
+          {
+            typedef LocalMassMatrix< DiscreteFunctionSpaceType, AggloQuadratureType > AggloMassMatrix;
+            AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
+
+            // apply inverse of mass matrix
+            massMat.applyInverse( entity, dofs );
+          }
         }
         else
         {
           std::cout << "Standard interpol" << std::endl;
           QuadratureType quadrature( entity, localFunction.order() + order_);
-          isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          if( ! isAffine )
+          {
+            // apply inverse of mass matrix
+            massMatrix().applyInverse( entity, dofs );
+          }
         }
 
-        if( ! isAffine )
-        {
-          // apply inverse of mass matrix
-          massMatrix().applyInverse( entity, dofs );
-        }
       }
 
     private:

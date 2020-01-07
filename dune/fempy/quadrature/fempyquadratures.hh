@@ -72,6 +72,7 @@ namespace Dune
       typedef typename CubeQuadratureType :: QuadratureKeyType      QuadratureKeyType;
     };
 
+
     template <class Field, int dim>
     class QuadraturePointsRegistry
     {
@@ -81,16 +82,9 @@ namespace Dune
       typedef Dune::QuadraturePoint< Field, dim > QuadraturePointType;
       typedef typename QuadraturePointType :: Vector  CoordinateType;
 
-      struct QuadratureKey : public std::pair< int, int >
-      {
-        QuadratureKey( int a, int b = -1 )
-          : std::pair< int, int >( a, b )
-        {
-        }
-      };
-
     public:
-      typedef QuadratureKey  QuadratureKeyType ;
+      // defined in fem/quadrature/quadprovider.hh
+      typedef Dune::Fem::FemQuadratureKey  QuadratureKeyType ;
 
     protected:
       std::map< QuadratureKeyType, QuadratureRuleType > rules_;
@@ -150,7 +144,6 @@ namespace Dune
       }
     };
 
-
     /** \class FempyQuadratureRulesFactory
      *  \ingroup Quadrature
      *  \brief quadrature implementation based on the standard DUNE quadratures
@@ -174,9 +167,8 @@ namespace Dune
     protected:
       using BaseType :: addQuadraturePoint;
 
-      typedef Dune::QuadratureRule< FieldType, dimension > DuneQuadratureRuleType;
-      typedef QuadraturePointsRegistry< FieldType, dimension >
-        QuadratureRuleRegistryType;
+      typedef Dune::QuadratureRule< FieldType, dimension >      DuneQuadratureRuleType;
+      typedef QuadraturePointsRegistry< FieldType, dimension >  QuadratureRuleRegistryType;
 
     public:
       typedef typename BaseType :: CoordinateType CoordinateType;
@@ -188,7 +180,6 @@ namespace Dune
       //enum { highest_order_cube    = CubeQuadratureRule<ct,dim>::highest_order };
       //enum { highest_order_simplex = SimplexQuadratureRule<ct,dim>::highest_order };
 
-      enum { highest_order = 100 };
       //(highest_order_cube < highest_order_simplex) ?
       //            highest_order_cube : highest_order_simplex };
 
@@ -217,7 +208,7 @@ namespace Dune
             QuadratureRuleRegistryType::quadratureRule( key );
 
           // obtain quadrature order
-          order_ = key.first;
+          order_ = key.first();
 
           typedef typename DuneQuadratureRuleType :: iterator IteratorType;
           const IteratorType endit = rule.end();
@@ -226,9 +217,9 @@ namespace Dune
         }
         else
         {
-          // when not quadrature for a key is registered
+          // when no quadrature for a key is registered
           // use default dune-fem quadratures
-          DefaultQuadrature quad( geometry, key.first, id );
+          DefaultQuadrature quad( geometry, key.first(), id );
 
           // obtain quadrature order
           order_ = quad.order();
@@ -259,7 +250,7 @@ namespace Dune
        */
       static unsigned int maxOrder ()
       {
-        return highest_order;
+        return QuadratureKeyType :: highest_order;
       }
     };
 

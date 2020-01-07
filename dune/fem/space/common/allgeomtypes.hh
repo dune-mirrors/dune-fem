@@ -143,18 +143,13 @@ namespace Dune
             geomTypes[ 0 ].insert( type );
           }
 
-          for( int cd=0; cd < ncodim; ++cd )
+          for( unsigned int cd=0; cd < ncodim; ++cd )
           {
             geomTypes_[ cd ].reserve( geomTypes[ cd ].size() );
             for( const auto& type : geomTypes[ cd ] )
             {
               geomTypes_[ cd ].push_back( type );
             }
-          }
-
-          for( const auto& geomType : geomTypes_[ 0 ])
-          {
-            std::cout << geomType << std::endl;
           }
         }
         else

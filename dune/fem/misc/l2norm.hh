@@ -2,6 +2,7 @@
 #define DUNE_FEM_L2NORM_HH
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/agglomerationquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
 #include <dune/fem/misc/domainintegral.hh>
@@ -36,6 +37,7 @@ namespace Dune
     protected:
       typedef typename BaseType::EntityType EntityType;
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
+      //typedef AgglomerationQuadrature< GridPartType, 0 > QuadratureType;
       typedef Integrator< QuadratureType > IntegratorType;
 
       const unsigned int order_;

@@ -199,7 +199,7 @@ def compileUFL(form, patch, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,patch,*args))
+    model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 

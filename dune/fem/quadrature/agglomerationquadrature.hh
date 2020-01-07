@@ -128,6 +128,8 @@ namespace Dune
             }
 
             // compute simplex volume / ref volume (which removes the 0.5)
+            // abs is taken because determinant may be negative since we did not
+            // care about the orientation
             double vol =  std::abs(A.determinant()) / elemGeo.volume();
 
             CoordinateType point;

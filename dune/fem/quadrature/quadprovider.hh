@@ -16,6 +16,55 @@ namespace Dune
   namespace Fem
   {
 
+    /*! \class FemQuadratureKey
+     *  \ingroup Quadrature
+     *  \brief A simple quadrature key class for use FemPy
+     *
+     */
+    class FemQuadratureKey
+    {
+      int id_;
+
+      // something like maxOrder
+      static const int maxFirst  = 25 ;
+      // something like different quadratures of the same order
+      static const int maxSecond = 10 ;
+    public:
+      //! empty constructor
+      FemQuadratureKey() : id_( -1 ) {}
+
+      //! copy constructor
+      FemQuadratureKey( const FemQuadratureKey& key ) = default;
+
+      // this may need to be adjusted in case more than 100 quadratures
+      // need to be stored
+      static const int highest_order = maxFirst * maxSecond ;
+
+      //! constructor taking to ids, like std::pair
+      FemQuadratureKey( const int first, const int second )
+        : id_( second * maxFirst + first )
+      {
+        assert( first  < maxFirst );
+        assert( second < maxSecond );
+      }
+
+      //! constructor taking only order (fallback for standard Fem quadratures)
+      FemQuadratureKey( const int first )
+        : id_( first )
+      {
+        assert( first  < maxFirst );
+      }
+
+      //! cast into fast int identifier based storage of quadratures
+      operator int () const { return id_; }
+
+      //! return first component
+      int first () const  { return id_ % highest_order ; }
+      //! return second component
+      int second () const { return id_ / highest_order ; }
+    };
+
+
     /*! \class QuadCreator
      *  \ingroup Quadrature
      *  \brief the actual quadrature storage
@@ -110,6 +159,13 @@ namespace Dune
         }
       }; // end class QuadratureStorage
 
+      //! class holding vector with pointer to quadrature objects
+      template< class QuadImp >
+      class QuadratureStorage< QuadImp, FemQuadratureKey >
+        : public QuadratureStorage< QuadImp, int >
+      {
+      };
+
     public:
       /*! \brief provide quadrature
        *
@@ -158,8 +214,6 @@ namespace Dune
         return storage.getQuadrature( geometry, defaultOrder );
       }
     };
-
-
 
     /*! \class QuadratureProvider
      *  \ingroup Quadrature

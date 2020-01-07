@@ -108,7 +108,7 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
       typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
@@ -120,6 +120,7 @@ namespace Dune
       InterpolationType interpolation ( const EntityType &entity ) const
       {
         return InterpolationType( basisFunctionSet( entity ) );
+        //return InterpolationType( *this );
       }
 
     private:

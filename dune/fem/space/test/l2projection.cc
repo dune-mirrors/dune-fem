@@ -30,6 +30,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/function/common/localcontribution.hh>
 
+#include <dune/fem/io/file/vtkio.hh>
 #include <dune/fem/misc/double.hh>
 
 // to use grape, set to WANT_GRAPE to 1
@@ -89,7 +90,7 @@ typedef FunctionSpace < MyGridType::ctype, double, dimw, 4 > FuncSpace;
 //! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
 //typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, polOrd, CachingStorage> DiscreteFunctionSpaceType;
-typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, polOrd, CachingStorage> DiscreteFunctionSpaceType;
+typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, polOrd > DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
@@ -638,6 +639,12 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    double error2 = l2norm.distance( exactSolution, copy );
    std::cout << "\nL2 Error(copy): " << error2 << "\n\n";
 
+   Dune::Fem::VTKIO< GridPartType > output( solution.gridPart(), Dune::VTK::nonconforming );
+   {
+     output.addCellData( solution );
+     output.write( "l2projection" );
+   }
+
 #if USE_GRAPE
    // if Grape was found, then display last solution
    if( display )
@@ -673,7 +680,7 @@ int main (int argc, char **argv)
   try
   {
 
-  int ml = 2;
+  int ml = 1;
   if( argc > 1 )
     ml = atoi( argv[1] );
 
@@ -691,6 +698,7 @@ int main (int argc, char **argv)
 
   MyGridType &gridP = Dune::Fem::TestGrid::grid();
   MyGridType grid( gridP.dualGrid() );
+  //MyGridType& grid = gridP;
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType part ( grid );

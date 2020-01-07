@@ -100,14 +100,12 @@ namespace Dune
 
         if( entity.type().isNone() )
         {
-          std::cout << "Agglo interpol" << std::endl;
           typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
           AggloQuadratureType quadrature( entity, localFunction.order() + basisFunctionSet().order() );
           computeL2Projection( entity, quadrature, localFunction, localDofVector );
         }
         else
         {
-          std::cout << "Default interpol" << std::endl;
           // create quadrature with appropriate order
           Quadrature quadrature( entity, localFunction.order() + basisFunctionSet().order() );
           computeL2Projection( entity, quadrature, localFunction, localDofVector );
