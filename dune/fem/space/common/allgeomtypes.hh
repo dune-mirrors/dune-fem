@@ -3,7 +3,7 @@
 
 //- system includes
 #include <vector>
-#include <map>
+#include <set>
 
 //- Dune includes
 #include <dune/fem/common/forloop.hh>

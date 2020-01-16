@@ -423,7 +423,7 @@ namespace Dune
         else // type == None
         {
           // dummy return for polygonal grid cells, i.e. geometry type none
-          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey, 0 );
+          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, 0 );
         }
       }
 

@@ -697,8 +697,8 @@ int main (int argc, char **argv)
   std::vector< double> error(ml);
 
   MyGridType &gridP = Dune::Fem::TestGrid::grid();
-  MyGridType grid( gridP.dualGrid() );
-  //MyGridType& grid = gridP;
+  //MyGridType grid( gridP.dualGrid() );
+  MyGridType& grid = gridP;
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType part ( grid );
