@@ -100,8 +100,8 @@ namespace Dune
 
         if( entity.type().isNone() )
         {
-          typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
-          AggloQuadratureType quadrature( entity, localFunction.order() + basisFunctionSet().order() );
+          typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
+          ElementQuadratureType quadrature( entity, localFunction.order() + basisFunctionSet().order() );
           computeL2Projection( entity, quadrature, localFunction, localDofVector );
         }
         else

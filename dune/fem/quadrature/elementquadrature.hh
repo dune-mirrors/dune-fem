@@ -10,6 +10,10 @@ namespace Dune
   namespace Fem
   {
 
+    template< typename GridPartImp, class IntegrationPointList >
+    class AgglomerationQuadrature;
+
+
     /*! \class ElementQuadrature
      *  \ingroup Quadrature
      *  \brief quadrature on the codim-0 reference element
@@ -115,6 +119,21 @@ namespace Dune
     protected:
       using BaseType::quadImp;
 
+      IntegrationPointListType createQuadrature(  const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType )
+      {
+        const GeometryType geomType = entity.type();
+        if( checkGeomType && ! geomType.isNone() )
+        {
+          // return default element quadratures for given geometry type
+          return IntegrationPointListType( geomType, quadKey );
+        }
+        else // compute weights and points based on sub-triangulation
+        {
+          typedef AgglomerationQuadrature< GridPartType, IntegrationPointListType > AgglomerationQuadratureType;
+          return AgglomerationQuadratureType::computeQuadrature( entity, quadKey );
+        }
+      }
+
     public:
       using BaseType::nop;
 
@@ -124,8 +143,8 @@ namespace Dune
        *                      lives
        *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
        */
-      ElementQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
-      : BaseType( entity.type(), quadKey )
+      ElementQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType = true )
+      : BaseType( createQuadrature( entity, quadKey, checkGeomType ) )
       {}
 
       /*! \brief constructor
@@ -136,17 +155,11 @@ namespace Dune
        */
       ElementQuadrature( const GeometryType &type, const QuadratureKeyType& quadKey )
       : BaseType( type, quadKey )
-      {}
-
-      /*! \brief constructor
-       *
-       *  \param[in]  type    geometry type, on whose reference element the quadrature
-       *                      lives
-       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
-       */
-      ElementQuadrature( const IntegrationPointListType& ipList )
-      : BaseType( ipList )
-      {}
+      {
+        // when type is none then entity has to be passed in order to create
+        // the sub triangulation etc.
+        assert( ! type.isNone() );
+      }
 
       /** \brief copy constructor
        *

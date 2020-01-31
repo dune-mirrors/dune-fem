@@ -33,8 +33,7 @@ private:
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef Dune::Fem::AgglomerationQuadrature<GridPartType, 0> VolumeQuadratureType;
-  typedef Dune::Fem::ElementQuadrature<GridPartType, 0>       ElementQuadratureType;
+  typedef Dune::Fem::ElementQuadrature<GridPartType, 0>    ElementQuadratureType;
 
   typedef CachingLumpingQuadrature< GridPartType, 0> LumpingQuadratureType;
 
@@ -74,7 +73,7 @@ public:
       double integral = 0 ;
       {
         // false here forces the weights and points to be computed
-        VolumeQuadratureType quad( entity, order_, false );
+        ElementQuadratureType quad( entity, order_, false );
         const int quadNop = quad.nop();
         // integrate function over element
         for( int qp=0; qp<quadNop; ++qp )

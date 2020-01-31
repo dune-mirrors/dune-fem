@@ -71,12 +71,12 @@ namespace Dune
 
         if( entity.type().isNone() )
         {
-          typedef AgglomerationQuadrature< GridPartType, EntityType::codimension > AggloQuadratureType;
+          typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
           AggloQuadratureType quadrature( entity, localFunction.order() + order_);
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
-            typedef LocalMassMatrix< DiscreteFunctionSpaceType, AggloQuadratureType > AggloMassMatrix;
+            typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
             AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
 
             // apply inverse of mass matrix
