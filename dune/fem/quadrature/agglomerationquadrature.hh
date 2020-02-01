@@ -3,6 +3,8 @@
 
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
+#include <dune/fem/misc/threads/threadsafevalue.hh>
+
 #include "quadrature.hh"
 #include "elementquadrature.hh"
 
@@ -13,10 +15,10 @@ namespace Dune
   {
 
 
-    /** \brief AgglomerationQuadrature is a simple quadrature for polyhedral
+    /** \brief Agglomeration is a simple quadrature for polyhedral
      * cells based on sub triangulation  */
     template< typename GridPartImp, class IntegrationPointList >
-    class AgglomerationQuadrature
+    class Agglomeration
     {
     public:
       //! type of the grid partition
@@ -40,9 +42,67 @@ namespace Dune
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+    protected:
+      typedef PolyhedronQuadrature< RealType, dimension > PolyhedronQuadratureType;
+      typedef typename IntegrationPointListType :: IntegrationPointListType    IntegrationPointListImpl;
+
+      typedef std::stack< std::unique_ptr< PolyhedronQuadratureType > >  PolyhedronQuadratureStorageType;
+
+      // PolyhedronQuadrature storage
+      static PolyhedronQuadratureStorageType& quadStorage()
+      {
+        static ThreadSafeValue< PolyhedronQuadratureStorageType > storage;
+        return *storage;
+      }
+
+      // get object from stack or create new
+      static PolyhedronQuadratureType* getObject( const GeometryType& type )
+      {
+        PolyhedronQuadratureStorageType& storage = quadStorage();
+        if( storage.empty() )
+        {
+          return new PolyhedronQuadratureType( type, 0, IdProvider ::instance().newId() );
+        }
+        else
+        {
+          PolyhedronQuadratureType* quad = storage.top().release();
+          assert( quad );
+          storage.pop();
+          return quad;
+        }
+      }
+
+      // push object to stack or delete
+      static void pushObject( const PolyhedronQuadratureType* quad )
+      {
+        PolyhedronQuadratureType* polyQuad = const_cast< PolyhedronQuadratureType* > (quad);
+        PolyhedronQuadratureStorageType& storage = quadStorage();
+        if( storage.size() < 20 )
+        {
+          storage.emplace( polyQuad );
+        }
+        else
+        {
+          delete polyQuad;
+        }
+      }
+
+      // deleter object returning pointer to stack object
+      struct Deleter
+      {
+        void operator ()(const IntegrationPointListImpl* quad)
+        {
+          const PolyhedronQuadratureType* polyQuad = static_cast< const PolyhedronQuadratureType* > ( quad );
+          pushObject( polyQuad );
+        }
+      };
+
     public:
+      //! returns quadrature points for polyhedral cells
       static IntegrationPointListType computeQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
       {
+        // this only works for 2d so far
+        assert( dimension == 2 );
         typedef ElementQuadrature< GridPartImp, 0 > QuadratureType;
         Dune::GeometryType simplexType = Dune::GeometryTypes::simplex( dimension );
 
@@ -74,11 +134,9 @@ namespace Dune
         const int quadNop = quad.nop();
         int order = quad.order();
 
-        std::vector< CoordinateType > points;
-        std::vector< RealType > weights;
+        PolyhedronQuadratureType& quadImp = *(getObject( entity.type() ));
 
-        points.reserve( subEntities * quadNop );
-        weights.reserve( subEntities * quadNop );
+        quadImp.reset( order, subEntities * quadNop );
 
         Dune::FieldMatrix<double,dimension,dimension> A( 0 ) ;
         const auto& center = entity.geometry().center();
@@ -112,13 +170,13 @@ namespace Dune
             // scale weights with number of sub-triangles
             double weight = quad.weight( qp ) * vol;
 
-            points.push_back( point );
-            weights.push_back( weight );
+            quadImp.addQuadraturePoint( point, weight );
           }
         }
-        static PolyhedronQuadrature< RealType, dimension > quadImp(entity.type(), 0, IdProvider ::instance().newId() );
-        quadImp.setQuadraturePoints( order, std::move(points), std::move( weights ) );
-        return IntegrationPointListType( quadImp );
+        // return a shared pointer with the correct deleter
+        // removing the pointer to the stack
+        std::shared_ptr< const IntegrationPointListImpl > quadPtr( &quadImp, Deleter() );
+        return IntegrationPointListType( quadPtr );
       }
     };
 

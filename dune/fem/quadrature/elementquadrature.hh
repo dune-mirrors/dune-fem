@@ -11,7 +11,7 @@ namespace Dune
   {
 
     template< typename GridPartImp, class IntegrationPointList >
-    class AgglomerationQuadrature;
+    class Agglomeration;
 
 
     /*! \class ElementQuadrature
@@ -129,8 +129,8 @@ namespace Dune
         }
         else // compute weights and points based on sub-triangulation
         {
-          typedef AgglomerationQuadrature< GridPartType, IntegrationPointListType > AgglomerationQuadratureType;
-          return AgglomerationQuadratureType::computeQuadrature( entity, quadKey );
+          typedef Agglomeration< GridPartType, IntegrationPointListType > AgglomerationType;
+          return AgglomerationType::computeQuadrature( entity, quadKey );
         }
       }
 

@@ -72,6 +72,11 @@ public:
       // test integration of 1 over element which should yield the volume.
       double integral = 0 ;
       {
+        // test memory management of agglomeration
+        {
+          ElementQuadratureType quad1( entity, order_, false );
+          ElementQuadratureType quad2( entity, order_, false );
+        }
         // false here forces the weights and points to be computed
         ElementQuadratureType quad( entity, order_, false );
         const int quadNop = quad.nop();

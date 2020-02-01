@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iterator>
+#include <memory>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
@@ -184,11 +185,20 @@ namespace Dune
 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
+    typedef std::shared_ptr< const IntegrationPointListType >  IntegrationPointListStorageType;
+
     //! to be revised, look at caching quad
     enum { codimension = 0 };
 
   protected:
-    const IntegrationPointListType *ipList_ = nullptr ;
+    // when the integration point list is obtained from the
+    // QuadratureProvider then it should not be deleted
+    struct NoDelete
+    {
+      void operator()( const IntegrationPointListType* ) {}
+    };
+
+    IntegrationPointListStorageType ipListPtr_;
 
   public:
     /** \brief create a quadrature for a given geometry type and order
@@ -203,7 +213,7 @@ namespace Dune
      */
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const QuadratureKeyType& quadKey )
-    : ipList_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ) )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ), NoDelete() )
     {
     }
 
@@ -222,7 +232,7 @@ namespace Dune
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const GeometryType &elementGeometry,
                                   const QuadratureKeyType& quadKey )
-    : ipList_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ) )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ), NoDelete() )
     {
     }
 
@@ -235,8 +245,8 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    inline IntegrationPointList ( const IntegrationPointListType &ipList )
-    : ipList_( &ipList )
+    inline IntegrationPointList ( const IntegrationPointListStorageType& ipList )
+    : ipListPtr_( ipList )
     {
     }
 
@@ -245,7 +255,7 @@ namespace Dune
      *  \param[in]  org  integration point list to be copied
      */
     inline IntegrationPointList ( const IntegrationPointList &org )
-    : ipList_( org.ipList_ )
+    : ipListPtr_( org.ipListPtr_ )
     {
     }
 
@@ -261,8 +271,8 @@ namespace Dune
      */
     const IntegrationPointListType &ipList () const
     {
-      assert( ipList_ );
-      return *ipList_;
+      assert( ipListPtr_ );
+      return *ipListPtr_;
     }
 
     /** \brief obtain the number of integration points
@@ -383,6 +393,8 @@ namespace Dune
   public:
     using BaseType :: ipList;
 
+    typedef typename BaseType::IntegrationPointListStorageType  IntegrationPointListStorageType;
+
     //! type of the implementation (this must actually be a quadrature implementation)
     typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
 
@@ -442,7 +454,7 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    inline explicit Quadrature( const IntegrationPointListType& ipList )
+    inline explicit Quadrature( const IntegrationPointListStorageType& ipList )
     : BaseType( ipList )
     {
     }

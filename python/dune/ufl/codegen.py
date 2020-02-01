@@ -277,6 +277,9 @@ class CodeGenerator(MultiFunction):
             return cexpr
         if tempVars is None:
             tempVars = self.tempVars
+        # set to False to disable tempVars
+        # TODO: better dynamic switch
+        # tempVars = False
         if tempVars:
             cppType = None
             if isinstance(cexpr, cplusplus.Expression):

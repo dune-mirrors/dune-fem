@@ -304,11 +304,17 @@ namespace Dune
       /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
       typedef typename BaseType :: CoordinateType CoordinateType;
 
+      using BaseType::addQuadraturePoint;
+
     private:
       GeometryType geometryType_;
       int order_;
 
       static const unsigned int topologyId = -1;
+
+    protected:
+      using BaseType :: points_;
+      using BaseType :: weights_;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -337,13 +343,13 @@ namespace Dune
         return SimplexMaxOrder::maxOrder( dim );
       }
 
-      void setQuadraturePoints( const int order,
-                                std::vector< CoordinateType >&& points,
-                                std::vector< FieldType >&& weights )
+      void reset( const int order, const int nop )
       {
-        this->points_.swap( points );
-        this->weights_.swap( weights );
         order_ = order;
+        points_.clear();
+        points_.reserve( nop );
+        weights_.clear();
+        weights_.reserve( nop );
       }
     };
 

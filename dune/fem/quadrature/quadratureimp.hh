@@ -50,7 +50,7 @@ namespace Dune
 
     protected:
       // vector holding the coordinates for each point
-      std::vector< CoordinateType > points_;
+      mutable std::vector< CoordinateType > points_;
 
       // identifier of the integration point list
       const size_t id_;
@@ -193,7 +193,7 @@ namespace Dune
 
     protected:
       // vector holding weights of each integration point
-      std::vector< FieldType > weights_;
+      mutable std::vector< FieldType > weights_;
 
       /** \brief Constructor
        *
@@ -237,9 +237,6 @@ namespace Dune
       {
         return weights_[ i ];
       }
-
-      /** \brief Overwrites quadrature point list, default is empty. */
-      virtual void setQuadraturePoints( const int order, std::vector< CoordinateType >&& points, std::vector< FieldType >&& weights ) {}
 
     private:
       // Disallow use of addIntegrationPoint for quadratures

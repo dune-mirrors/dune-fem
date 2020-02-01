@@ -10,11 +10,11 @@
 #endif // #if HAVE_DUNE_SPGRID
 
 #if HAVE_OPM_GRID
-#include <opm/grid/polyhedralgrid.hh>
+#include <opm/grid/polyhedralgrid/declaration.hh>
 #endif // #if HAVE_OPM_GRID
 
 #if HAVE_DUNE_POLYGONGRID
-#include <dune/polygongrid/grid.hh>
+#include <dune/polygongrid/declaration.hh>
 #endif // #if HAVE_DUNE_POLYGONGRID
 
 #include <dune/fem/misc/griddeclaration.hh>
