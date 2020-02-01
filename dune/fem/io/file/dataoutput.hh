@@ -186,10 +186,7 @@ namespace Dune
       typedef DataOutput< GridImp, DataImp > ThisType;
 
     protected:
-      template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
-      struct GridPartGetter;
-
-    template< class Grid, class OutputTuple, int N >
+    template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
     struct GridPartGetter
     {
       typedef typename TypeTraits< typename std::tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
