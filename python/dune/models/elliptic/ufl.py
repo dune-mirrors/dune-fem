@@ -158,8 +158,11 @@ def compileUFL(form, patch, *args, **kwargs):
         coeff_ |= set(coeff__)
     if patch is not None:
         for a in patch:
-            _, coeff__ = extract_arguments_and_coefficients(a)
-            coeff_ |= set(coeff__)
+            try:
+                _, coeff__ = extract_arguments_and_coefficients(a)
+                coeff_ |= set(coeff__)
+            except:
+                pass # a might be a float/int and not a ufl expression
 
     coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
 

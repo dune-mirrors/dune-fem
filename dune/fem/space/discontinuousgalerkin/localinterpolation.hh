@@ -72,7 +72,7 @@ namespace Dune
         if( entity.type().isNone() )
         {
           typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
-          AggloQuadratureType quadrature( entity, localFunction.order() + order_);
+          ElementQuadratureType quadrature( entity, localFunction.order() + order_);
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {

@@ -206,7 +206,15 @@ namespace Dune
 
         cls.def( pybind11::init( [] ( const Space &space, std::string name, pybind11::buffer dof ) {
             VectorType *vec = new VectorType( std::move( dof ) );
-            return new DF( std::move( name ), space, *vec );
+            DF* df = new DF( std::move( name ), space, *vec );
+            // create Python guard object, removing the dof storage once the df disappears
+            pybind11::cpp_function remove_dofStorage( [ vec ] ( pybind11::handle weakref ) {
+                delete vec;
+                weakref.dec_ref();
+              } );
+            pybind11::weakref weakref( df, remove_dofStorage );
+            weakref.release();
+            return df;
           } ), "space"_a, "name"_a, "dof"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 4 >() );
       }
 

@@ -169,18 +169,29 @@ def galerkin(integrands, space=None, solver=None, parameters={},
         integrandsParam = integrands[1:]
         integrands = integrands[0]
     if isinstance(integrands,Equation):
-        if space == None:
+        if space is None:
             try:
                 space = integrands.lhs.arguments()[0].ufl_function_space()
             except AttributeError:
                 raise ValueError("no space provided and could not deduce from form provided")
+        else:
+            try:
+                eqSpace = integrands.lhs.arguments()[0].ufl_function_space()
+                if not eqSpace.dimRange == space.dimRange:
+                    raise ValueError("""range of space used for arguments in equation
+                    and the range of space passed to the scheme have to match -
+                    space argument to scheme can be 'None'""")
+            except AttributeError:
+                pass
         from dune.fem.model._models import integrands as makeIntegrands
         if integrandsParam:
             integrands = makeIntegrands(space.grid,integrands,*integrandsParam)
         else:
             integrands = makeIntegrands(space.grid,integrands)
+    else:
+        raise ValueError("integrands parameter is not a ufl Equation")
     if not hasattr(space,"interpolate"):
-        pass # raise ValueError("wrong space given")
+        raise ValueError("wrong space given")
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
