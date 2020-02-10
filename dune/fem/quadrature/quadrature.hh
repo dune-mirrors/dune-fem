@@ -245,8 +245,22 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    inline IntegrationPointList ( const IntegrationPointListStorageType& ipList )
-    : ipListPtr_( ipList )
+    inline IntegrationPointList ( const IntegrationPointListType& ipList )
+    : ipListPtr_( &ipList, NoDelete() )
+    {
+    }
+
+    /** \brief create an integration point list from an implementation
+     *
+     *  This constructor creates an integration point list from a given
+     *  implementation.
+     *
+     *  \note This constructor is provided mainly for agglomeration quadratures
+     *
+     *  \param[in]  ipListPtr  implementation of the integration point list
+     */
+    inline IntegrationPointList ( const IntegrationPointListStorageType& ipListPtr )
+    : ipListPtr_( ipListPtr )
     {
     }
 
@@ -454,8 +468,22 @@ namespace Dune
      *
      *  \param[in]  ipList  implementation of the integration point list
      */
-    inline explicit Quadrature( const IntegrationPointListStorageType& ipList )
+    inline explicit Quadrature( const IntegrationPointListType& ipList )
     : BaseType( ipList )
+    {
+    }
+
+    /** \brief create an integration point list from an implementation
+     *
+     *  This constructor creates an integration point list from a given
+     *  implementation.
+     *
+     *  \note This constructor is provided mainly for agglomeration quadratures.
+     *
+     *  \param[in]  ipListPtr  shared_ptr of implementation of the integration point list
+     */
+    inline explicit Quadrature( const IntegrationPointListStorageType& ipListPtr )
+    : BaseType( ipListPtr )
     {
     }
 

@@ -27,7 +27,7 @@ def checkDeprecated_maxOrder( order, maxOrder ):
     else:
         return order
 
-def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
+def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, caching=True,
           interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
           scalar=False, dimrange=None):
     """create a discontinous galerkin space with elementwise orthonormal basis functions
@@ -38,6 +38,7 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
         dimRange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
+        caching: true if basis functions are cached for each quadrature
 
     Returns:
         Space: the constructed Space
@@ -69,11 +70,15 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None,
     if field == "complex":
         field = "std::complex<double>"
 
+    cachingOrSimpleStorage = ""
+    if not caching:
+        # if caching is disable add SimpleStorage to template list
+        cachingOrSimpleStorage = ", Dune::Fem::SimpleStorage"
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + cachingOrSimpleStorage + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar,

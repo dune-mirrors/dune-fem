@@ -299,4 +299,6 @@ namespace Dune
 
 } // namespace Dune
 
+#include "agglomerationquadrature.hh"
+
 #endif // #ifndef DUNE_FEM_ELEMENTQUADRATURE_HH
