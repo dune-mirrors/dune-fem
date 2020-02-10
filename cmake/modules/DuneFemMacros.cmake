@@ -106,9 +106,6 @@ if(EXISTS "${PETSC_CMAKE_MODULES}")
   endif()
 endif()
 
-# check for XDR (deprecated)
-find_package(XDR)
-
 ####### abbreviations
 include(FemShort)
 
