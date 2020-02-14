@@ -1,8 +1,8 @@
 #ifndef DUNE_FEM_AGGLOMERATIONQUADRATURE_HH
 #define DUNE_FEM_AGGLOMERATIONQUADRATURE_HH
 
+#include <stack>
 #include <dune/geometry/axisalignedcubegeometry.hh>
-
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #include "quadrature.hh"

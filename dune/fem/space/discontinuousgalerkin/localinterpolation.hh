@@ -51,7 +51,8 @@ namespace Dune
 
     public:
       DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int order = -1 )
-      : order_( space.order() ),
+      : space_( space ),
+        order_( space.order() ),
         massMatrix_( space, (order < 0 ? 2*space.order() : order) ),
         values_()
       {}
@@ -80,18 +81,19 @@ namespace Dune
             AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
 
             // apply inverse of mass matrix
-            massMat.applyInverse( entity, dofs );
+            auto basisFunctionSet = space_.basisFunctionSet(entity);
+            massMat.applyInverse( entity, basisFunctionSet, dofs );
           }
         }
         else
         {
-          std::cout << "Standard interpol" << std::endl;
           QuadratureType quadrature( entity, localFunction.order() + order_);
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
             // apply inverse of mass matrix
-            massMatrix().applyInverse( entity, dofs );
+            auto basisFunctionSet = space_.basisFunctionSet(entity);
+            massMatrix_.applyInverse( entity, basisFunctionSet, dofs );
           }
         }
 
@@ -133,13 +135,15 @@ namespace Dune
         }
 
         // add values to local function
-        dofs.axpyQuadrature( quadrature, values_ );
+        // dofs.axpyQuadrature( quadrature, values_ );
+        space_.basisFunctionSet(entity).axpy( quadrature, values_, dofs );
 
         return isAffine;
       }
 
       const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
 
+      const DiscreteFunctionSpaceType &space_;
       const int order_;
       LocalMassMatrixType massMatrix_;
       mutable std::vector< RangeType > values_;

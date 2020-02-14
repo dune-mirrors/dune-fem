@@ -70,6 +70,11 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, cachin
     if field == "complex":
         field = "std::complex<double>"
 
+    try:
+        if not gridView.hierarchicalGrid.cachingStorage():
+            caching = False
+    except:
+        pass
     cachingOrSimpleStorage = ""
     if not caching:
         # if caching is disable add SimpleStorage to template list
