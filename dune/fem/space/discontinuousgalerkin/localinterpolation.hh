@@ -25,7 +25,9 @@ namespace Dune
     /**
      * Local interpolation for Discontinuous Galerkin spaces.
      */
-    template< class DiscreteFunctionSpace, template< class, int > class Quadrature = CachingQuadrature >
+    template< class DiscreteFunctionSpace,
+      class Quadrature = CachingQuadrature<typename DiscreteFunctionSpace::GridPartType,
+                                           DiscreteFunctionSpace::EntityType::codimension> >
     class DiscontinuousGalerkinLocalInterpolation
     {
       typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace, Quadrature > ThisType;
@@ -45,7 +47,7 @@ namespace Dune
       typedef typename RangeType::value_type RangeFieldType;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef Quadrature< GridPartType, EntityType::codimension > QuadratureType;
+      typedef Quadrature QuadratureType;
 
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 

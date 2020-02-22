@@ -105,7 +105,8 @@ class UFLFunctionSource(codegen.ModelClass):
 
     def _signature(self):
         from dune.common.hashit import hashIt
-        return hashIt(self.codeString)
+        coeffTypes = ','.join(self.coefficientCppTypes)
+        return hashIt(self.codeString + coeffTypes)
     def signature(self):
         return self._signature()
         return uflSignature(None, *self.coefficientCppTypes, *self._constantNames, self.expr)

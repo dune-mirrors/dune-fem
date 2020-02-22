@@ -348,6 +348,7 @@ class ModelClass():
         self.init = None
         self.vars = None
 
+        uflExpr = [e for e in uflExpr if e is not None]
         coefficients = set()
         for expr in uflExpr:
             try:
@@ -406,9 +407,13 @@ class ModelClass():
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
         if self._coefficients:
             if virtualize:
-                self.coefficientCppTypes = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in self._coefficients]
+                self.coefficientCppTypes = \
+                    ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + fieldVectorType(c) + ' >' \
+                        if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
+                        else c._typeName \
+                    for c in self.coefficientList]
             else:
-                self.coefficientCppTypes = [c._typeName for c in self._coefficients]
+                self.coefficientCppTypes = [c._typeName for c in self.coefficientList]
         else:
             self.coefficientCppTypes = []
 
@@ -679,7 +684,7 @@ class ModelClass():
         return code
 
 def generateMethodBody(cppType, expr, returnResult, default, predefined):
-    if expr is not None:
+    if expr is not None and not expr == [None]:
         try:
             dimR = expr.ufl_shape[0]
         except:
@@ -763,4 +768,5 @@ def uflSignature(form,*args):
 
     if form is not None:
         hashList.append(form.signature())
+    hashList = [h.split(" at ")[0] for h in hashList]
     return hashIt( sorted(hashList) )

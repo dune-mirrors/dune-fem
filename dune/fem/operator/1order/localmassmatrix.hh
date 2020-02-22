@@ -421,13 +421,13 @@ namespace Dune
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
       //! using the massFactor method of the caller
-      template< class MassCaller, class LocalFunction >
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverseDefault ( MassCaller &caller, const EntityType &entity,
-                                 const Geometry &geo, LocalFunction &lf ) const
+                                 const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         // get local inverted mass matrix
         MatrixType &invMassMatrix
-          = getLocalInverseMassMatrixDefault ( caller, entity, geo, lf.basisFunctionSet() );
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, basisFunctionSet );
 
         // copy local function to right hand side
         const int numDofs = lf.size();
@@ -489,15 +489,15 @@ namespace Dune
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
       //! using the massFactor method of the caller
-      template< class MassCaller, class LocalFunction >
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
-                                 const Geometry &geo, LocalFunction &lf ) const
+                                 const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         const int numDofs = lf.size();
 
         // get local inverted mass matrix
         MatrixType &invMassMatrix =
-          getLocalInverseMassMatrix( entity, geo, lf.basisFunctionSet(), numDofs );
+          getLocalInverseMassMatrix( entity, geo, basisFunctionSet, numDofs );
 
         const double massVolInv = getAffineMassFactor( geo );
 

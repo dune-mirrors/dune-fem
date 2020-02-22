@@ -285,7 +285,11 @@ class GridIndexed(Indexed):
         all_indices, _, _ = create_slice_indices(component, shape, gc.ufl_free_indices)
         mi = MultiIndex(all_indices)
         Indexed.__init__(self,gc,mi)
-        self.__impl__ = gc.gf[i]
+        if gc.gf.scalar:
+            assert i==0
+            self.__impl__ = gc.gf
+        else:
+            self.__impl__ = gc.gf[i]
         self.gf = gc
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
@@ -392,7 +396,7 @@ class GridFunction(ufl.Coefficient):
         if x is None:
             return ufl.Coefficient.__call__(self,e)
         else:
-            return self.gf.localFunction(e).evaluate(x)
+            return self.gf.localFunction(e)(x) # .evaluate(x)
 
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \

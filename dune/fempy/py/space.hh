@@ -12,7 +12,6 @@
 
 #include <dune/fempy/pybind11/pybind11.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
-#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {

@@ -51,7 +51,6 @@ namespace Dune
       template< class Vector >
       struct Reduce;
 
-      typedef Dune::ReferenceElement< DomainFieldType, dimGrid > ReferenceElement;
       typedef Dune::ReferenceElements< DomainFieldType, dimGrid > ReferenceElements;
 
     public:
@@ -153,7 +152,7 @@ namespace Dune
         DomainFieldType lower = std::numeric_limits< DomainFieldType >::min();
         DomainFieldType upper = std::numeric_limits< DomainFieldType >::max();
 
-        const ReferenceElement &refElement = ReferenceElements::general( geometry.type() );
+        auto &refElement = ReferenceElements::general( geometry.type() );
         const int numFaces = refElement.size( 1 );
         for( int face = 0; face < numFaces; ++face )
         {

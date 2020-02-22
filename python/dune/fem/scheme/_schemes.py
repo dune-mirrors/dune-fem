@@ -188,8 +188,8 @@ def galerkin(integrands, space=None, solver=None, parameters={},
             integrands = makeIntegrands(space.grid,integrands,*integrandsParam)
         else:
             integrands = makeIntegrands(space.grid,integrands)
-    else:
-        raise ValueError("integrands parameter is not a ufl Equation")
+    elif not integrands._typeName.startswith("Integrands"):
+        raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
     if not hasattr(space,"interpolate"):
         raise ValueError("wrong space given")
     from . import module

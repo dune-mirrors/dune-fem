@@ -86,7 +86,7 @@ namespace Dune
     inline void registerUFLLocalFunction ( pybind11::handle scope,
         pybind11::class_<UFLLocalFunction,options...> cls)
     {
-      registerGridFunction( scope, cls );
+      FemPy::registerGridFunction( scope, cls ); // could be confused with Dune::Python version
       detail::registerUFLLocalFunction( scope, cls );
     }
 

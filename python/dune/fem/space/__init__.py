@@ -58,7 +58,6 @@ def dfInterpolate(self, f):
     if ufl and (isinstance(f, list) or isinstance(f, tuple)):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
-
     dimExpr = 0
     if ufl and isinstance(f, GridFunction):
         func = f.gf
@@ -81,11 +80,11 @@ def dfInterpolate(self, f):
                 dimExpr = len(func)
         if func is None:
             if gl == 1:   # global function
-                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
+                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f).gf
             elif gl == 2: # local function
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, f).gf
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x)).gf
             dimExpr = func.dimRange
 
     if dimExpr == 0:
@@ -172,6 +171,7 @@ def addAttr(module, self, field, scalar):
             lambda *args,**kwargs: project(self,*args,**kwargs))
     setattr(self, "function",
             lambda *args,**kwargs: function.discreteFunction(self,*args,**kwargs))
+    DF.scalar = property(lambda self: self.space.scalar)
 
 def addStorage(obj, storage):
     if not storage:

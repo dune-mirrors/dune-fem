@@ -9,7 +9,7 @@ if( NOT GRIDTYPE )
 endif()
 
 if( NOT GRIDDIM )
-  set( GRIDDIM 2 )
+  set( GRIDDIM 3 )
 endif()
 
 # the default compiler flags

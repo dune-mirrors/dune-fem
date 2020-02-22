@@ -392,8 +392,7 @@ namespace Dune
         {
           const Entity& entity = *it ;
           typedef typename GridType :: ctype coordType;
-          const Dune::ReferenceElement< coordType, dimension > &refElem
-             = Dune::ReferenceElements< coordType, dimension >::general( entity.type() );
+          const auto &refElem = Dune::ReferenceElements< coordType, dimension >::general( entity.type() );
 
           const IntersectionIteratorType endnit = gridPart_.iend( entity );
           for( IntersectionIteratorType nit = gridPart_.ibegin( entity );
