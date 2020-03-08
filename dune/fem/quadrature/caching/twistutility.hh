@@ -168,17 +168,17 @@ namespace Dune
       //! \brief return twist for inner face
       static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
       {
-        assert( dim == 2 ? (grid.getRealIntersection( intersection ).twistInInside() == 0 ||
-                            grid.getRealIntersection( intersection ).twistInInside() == 1 ) : true );
-        return grid.getRealIntersection( intersection ).twistInInside();
+        assert( dim == 2 ? (intersection.impl().twistInInside() == 0 ||
+                            intersection.impl().twistInInside() == 1 ) : true );
+        return intersection.impl().twistInInside();
       }
 
       //! \brief return twist for outer face
       static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
       {
-        assert( dim == 2 ? (grid.getRealIntersection( intersection ).twistInOutside() == 0 ||
-                            grid.getRealIntersection( intersection ).twistInOutside() == 1 ) : true );
-        return grid.getRealIntersection( intersection ).twistInOutside();
+        assert( dim == 2 ? (intersection.impl().twistInOutside() == 0 ||
+                            intersection.impl().twistInOutside() == 1 ) : true );
+        return intersection.impl().twistInOutside();
       }
 
       /** \brief return element geometry type of inside or outside entity
