@@ -4,12 +4,17 @@ import re
 
 from dune.common.compatibility import isInteger
 
+from ufl import replace
+from ufl.log import UFLException
+from ufl.core.expr import Expr
+
 from dune.source.builtin import get, make_shared
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_, this
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
+from dune.ufl.codegen import generateMethod
 
 from ufl.differentiation import Grad
 
@@ -333,3 +338,11 @@ class EllipticModel:
         const = kwargs.pop("constants", {})
         function.append(UnformattedBlock(self.codeCoefficient(code, coef, const)))
         setattr(self, key, function)
+
+    def generateMethod(self, code, expr, *args, **kwargs):
+        if isinstance(expr, Expr):
+            try:
+                expr = replace(expr, self._replaceCoeff)
+            except UFLException:
+                pass
+        return generateMethod(code,expr,*args,**kwargs)

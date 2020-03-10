@@ -364,7 +364,10 @@ class GridFunction(ufl.Coefficient):
         def tocontainer(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
+                ret = func(*args, **kwargs)
+                if item == "localFunction":
+                    setattr(ret,"scalar",self.scalar)
+                return ret
             return wrapper
         result = getattr(self.__impl__, item)
         if not isinstance(result, GridFunction) and callable(result):
@@ -396,7 +399,7 @@ class GridFunction(ufl.Coefficient):
         if x is None:
             return ufl.Coefficient.__call__(self,e)
         else:
-            return self.gf.localFunction(e)(x) # .evaluate(x)
+            return self.localFunction(e)(x)
 
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \

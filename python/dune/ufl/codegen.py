@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import re
 
+from ufl import replace
 from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
@@ -33,7 +34,7 @@ from dune.source.cplusplus import SourceWriter, ListWriter, StringWriter
 
 from ufl import SpatialCoordinate,TestFunction,TrialFunction,Coefficient,\
         as_vector, as_matrix,dx,ds,grad,inner,zero,FacetNormal,dot
-from ufl.algorithms.analysis import extract_arguments_and_coefficients as coeff
+# from ufl.algorithms.analysis import extract_arguments_and_coefficients as coeff
 from ufl.differentiation import Grad
 
 def translateIndex(index):
@@ -693,9 +694,14 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined):
             else:
                 expr = as_vector([expr])
             dimR = expr.ufl_shape[0]
+
+        _, coeff = extract_arguments_and_coefficients(expr)
+        coeff = {c : c.toVectorCoefficient()[0] for c in coeff if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+        expr = replace(expr, coeff)
+
         t = ExprTensor(expr.ufl_shape) # , exprTensorApply(lambda u: u, expr.ufl_shape, expr))
         expression = [expr[i] for i in t.keys()]
-        u = coeff(expr)[0]
+        u = extract_arguments_and_coefficients(expr)[0]
         if u != []:
             u = u[0]
             du = Grad(u)

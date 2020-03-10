@@ -165,8 +165,11 @@ def compileUFL(form, patch, *args, **kwargs):
                 pass # a might be a float/int and not a ufl expression
 
     coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
-
     form = replace(form,coeff)
+    for bc in dirichletBCs:
+        bc.ufl_value = replace(bc.ufl_value, coeff)
+    if patch is not None:
+        patch = [replace(a,coeff) for a in patch]
 
     phi = form.arguments()[0]
     dimRange = phi.ufl_shape[0]
@@ -203,6 +206,7 @@ def compileUFL(form, patch, *args, **kwargs):
     # linSource = linSources[0] + linSources[1]
 
     model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+    model._replaceCoeff = coeff
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
@@ -227,6 +231,7 @@ def compileUFL(form, patch, *args, **kwargs):
 
     constants = dict()
     coefficients = dict()
+
     for coefficient in uflCoefficients:
         try:
             name = getattr(coefficient, "name")
@@ -244,10 +249,18 @@ def compileUFL(form, patch, *args, **kwargs):
             else:
                 Exception('Currently, only scalars and vectors are supported as constants')
         else:
+            shape = coefficient.ufl_shape[0]
             try:
-                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name, coefficient.ufl_function_space().field)
+                coefficients[coefficient] = model.addCoefficient(
+                        shape,
+                        coefficient._typeName,
+                        name=name,
+                        field=coefficient.ufl_function_space().field)
             except AttributeError:
-                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], name)
+                coefficients[coefficient] = model.addCoefficient(
+                        shape,
+                        coefficient._typeName,
+                        name=name)
 
     model.coefficients = coefficients
     model.constants = constants

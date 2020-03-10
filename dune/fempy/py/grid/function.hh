@@ -59,7 +59,8 @@ namespace Dune
       cls.def( "__call__", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
           typename LocalFunction::RangeType value;
           lf.evaluate( x, value );
-          return value;
+          bool scalar = pybind11::cast(lf).attr("scalar").template cast<bool>();
+          return scalar? pybind11::cast(value[0]) : pybind11::cast(value);
         } );
       Dune::Python::registerLocalView< Element >( cls );
     }
@@ -126,14 +127,19 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        // typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename Dune::Fem::ConstLocalFunction<GridFunction> LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
         typedef typename GridFunction::GridPartType GridPartType;
         typedef typename GridPartType::GridViewType GridView;
 
+        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
+        auto spcCls = Python::insertClass<SpaceType,std::shared_ptr<SpaceType>>(cls, "Space",
+            Python::GenerateTypeName("TODO-SPACE"));
+        if (spcCls.second)
+          detail::registerFunctionSpace( cls, spcCls.first );
+
         auto lfClass = Python::insertClass<LocalFunction>(cls, "LocalFunction",
-            Python::GenerateTypeName("TODO-LGF"));
+            Python::GenerateTypeName("TODO-LGF"), pybind11::dynamic_attr());
             // Python::GenerateTypeName(cls,"LocalFunctionType")).first;
         assert( lfClass.second );
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
@@ -223,15 +229,6 @@ namespace Dune
         auto vgfClass = Python::insertClass<GridFunction>(scope,"VirtualizedGridFunction"+std::to_string(Value::dimension),
             Python::GenerateTypeName("VirtualizedGridFunction",adapt,MetaType<Value>()),
             Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"});
-
-        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
-        if( !pybind11::already_registered< SpaceType >() )
-        {
-          auto spcCls = Python::insertClass<SpaceType,std::shared_ptr<SpaceType>>(vgfClass.first, "Space",
-              Python::GenerateTypeName("TODO-SPACE"));
-          if (spcCls.second)
-            detail::registerFunctionSpace( vgfClass.first, spcCls.first );
-        }
 
         if( vgfClass.second )
           detail::registerGridFunction( scope, vgfClass.first );
