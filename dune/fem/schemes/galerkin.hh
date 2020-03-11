@@ -1056,34 +1056,38 @@ namespace Dune
       const GridPartType &gridPart () const { return space().gridPart(); }
       ModelType &model() const { return fullOperator().model(); }
 
-      std::enable_if_t<addDirichletBC,void>
-      setConstraints( DomainFunctionType &u ) const
+      void setConstraints( DomainFunctionType &u ) const
       {
-        fullOperator().setConstraints( u );
+        if constexpr (addDirichletBC)
+          fullOperator().setConstraints( u );
       }
-      std::enable_if_t<addDirichletBC,void>
-      setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
+      void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
       {
-        fullOperator().setConstraints( value, u );
+        if constexpr (addDirichletBC)
+          fullOperator().setConstraints( value, u );
       }
-      std::enable_if_t<addDirichletBC,void>
-      setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
       {
-        fullOperator().setConstraints( u, v );
+        if constexpr (addDirichletBC)
+          fullOperator().setConstraints( u, v );
       }
-      std::enable_if_t<addDirichletBC,void>
-      subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
       {
-        fullOperator().subConstraints( u, v );
+        if constexpr (addDirichletBC)
+          fullOperator().subConstraints( u, v );
       }
 
     protected:
-      std::enable_if_t<addDirichletBC,void>
-      setZeroConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u ); }
-      void setZeroConstraints( ... ) const { }
-      std::enable_if_t<addDirichletBC,void>
-      setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
-      void setModelConstraints( ... ) const { }
+      void setZeroConstraints( DiscreteFunctionType &u ) const
+      {
+        if constexpr (addDirichletBC)
+          fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u );
+      }
+      void setModelConstraints( DiscreteFunctionType &u ) const
+      {
+        if constexpr (addDirichletBC)
+          fullOperator().setConstraints( u );
+      }
       const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
       mutable NewtonOperatorType invOp_;
