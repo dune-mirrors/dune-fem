@@ -28,7 +28,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       typedef FunctionSpace< double, int, GridPartType::dimensionworld, 1 >  FunctionSpaceType;
-      typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 > SpaceType;
+      typedef FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0, SimpleStorage > SpaceType;
 
       typedef ParallelDofMapper< GridPartType, typename SpaceType::BlockMapperType > ParallelMapperType;
       typedef typename ParallelMapperType :: GlobalKeyType  GlobalKeyType;
@@ -44,15 +44,14 @@ namespace Dune
       unsigned int operator() ( const EntityType &entity ) const
       {
         if( sequence_ != space_.sequence() )
+        {
           parallelMapper_.update();
+          sequence_ = space_.sequence();
+        }
 
         unsigned int orientations = 0;
-        //const auto &indexSet = gridPart().indexSet();
         for( auto intersection : intersections( gridPart(), entity ) )
         {
-          //if( intersection.neighbor() && (indexSet.index( entity ) < indexSet.index( intersection.outside() )) )
-          //  orientations |= (1 << intersection.indexInInside());
-
           if( intersection.neighbor() && (globallyUniqueIndex( entity ) < globallyUniqueIndex( intersection.outside() )) )
             orientations |= (1 << intersection.indexInInside());
         }

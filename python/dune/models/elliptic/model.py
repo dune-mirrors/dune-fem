@@ -4,12 +4,17 @@ import re
 
 from dune.common.compatibility import isInteger
 
+from ufl import replace
+from ufl.log import UFLException
+from ufl.core.expr import Expr
+
 from dune.source.builtin import get, make_shared
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_, this
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
+from dune.ufl.codegen import generateMethod
 
 from ufl.differentiation import Grad
 
@@ -67,9 +72,9 @@ class EllipticModel:
                 coefficient = Grad(coefficient)
         predefined.update({c: self.constant(i) for c, i in self.constants.items()})
 
-    def addCoefficient(self, dimRange, name=None, field="double"):
+    def addCoefficient(self, dimRange, typeName, name=None, field="double"):
         idx = len(self._coefficients)
-        self._coefficients.append({'dimRange': dimRange, 'name': name, 'field': field})
+        self._coefficients.append({'typeName':typeName, 'dimRange': dimRange, 'name': name, 'field': field})
         return idx
 
     def addConstant(self, cppType, name=None, parameter=None):
@@ -117,7 +122,9 @@ class EllipticModel:
     def hasConstants(self):
         return bool(self._constants)
 
-    def code(self, name=None, targs=[]):
+    def code(self, name=None, targs=None):
+        if targs is None:
+            targs = []
         if name is None:
             name = 'Model'
         constants_ = Variable('std::tuple< ' + ', '.join('std::shared_ptr< ' + c  + ' >' for c in self._constants) + ' >', 'constants_')
@@ -250,7 +257,10 @@ class EllipticModel:
     def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper',nameSpace=''):
         if self.hasConstants:
             sourceWriter.emit('cls.def( "setConstant",'+nameSpace+'::defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
-        coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
+        coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >')
+                        if not c['typeName'].startswith("Dune::Python::SimpleGridFunction") \
+                        else c['typeName'] \
+                for c in self._coefficients]
         sourceWriter.emit('')
         # TODO
         sourceWriter.emit('cls.def( pybind11::init( [] ( ' + ', '.join( [] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
@@ -278,7 +288,7 @@ class EllipticModel:
         """
         for name, value in coefficients.items():
             if not any(name == c['name'] for c in self._coefficients):
-                self.addCoefficient(value.dimRange, name)
+                self.addCoefficient(value.dimRange,value._typeName, name)
         for name, dimRange in constants.items():
             if name not in self._constantNames:
                 self.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >', name)
@@ -328,3 +338,11 @@ class EllipticModel:
         const = kwargs.pop("constants", {})
         function.append(UnformattedBlock(self.codeCoefficient(code, coef, const)))
         setattr(self, key, function)
+
+    def generateMethod(self, code, expr, *args, **kwargs):
+        if isinstance(expr, Expr):
+            try:
+                expr = replace(expr, self._replaceCoeff)
+            except UFLException:
+                pass
+        return generateMethod(code,expr,*args,**kwargs)

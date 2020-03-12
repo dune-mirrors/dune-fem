@@ -57,8 +57,9 @@ namespace Dune
     template< typename FieldType >
     struct DefaultQuadratureTraits< FieldType, 2 >
     {
-      typedef CubeQuadrature< FieldType, 2 > CubeQuadratureType;
-      typedef SimplexQuadrature< FieldType, 2 > SimplexQuadratureType;
+      typedef CubeQuadrature< FieldType, 2 >       CubeQuadratureType;
+      typedef SimplexQuadrature< FieldType, 2 >    SimplexQuadratureType;
+      typedef PolyhedronQuadrature< FieldType, 2 > PolyhedronQuadratureType;
       typedef QuadratureImp< FieldType, 2 > IntegrationPointListType;
 
       typedef int QuadratureKeyType ;
@@ -70,11 +71,13 @@ namespace Dune
     template< typename FieldType >
     struct DefaultQuadratureTraits< FieldType , 3 >
     {
-      typedef CubeQuadrature< FieldType, 3 > CubeQuadratureType;
+      typedef CubeQuadrature< FieldType, 3 >    CubeQuadratureType;
       typedef SimplexQuadrature< FieldType, 3 > SimplexQuadratureType;
 
-      typedef PrismQuadrature< FieldType > PrismQuadratureType;
+      typedef PrismQuadrature< FieldType >   PrismQuadratureType;
       typedef PyramidQuadrature< FieldType > PyramidQuadratureType;
+
+      typedef PolyhedronQuadrature< FieldType, 3 > PolyhedronQuadratureType;
 
       typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
 

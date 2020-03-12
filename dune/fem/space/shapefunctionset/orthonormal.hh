@@ -150,6 +150,10 @@ namespace Dune
           jacobian_( nullptr ),
           hessian_( nullptr )
       {
+        // for type none simply create cube basis function set.
+        if( type.isNone() )
+          type = Dune::GeometryTypes::cube(type.dim());
+
         Dune::Impl::IfTopology< Initialize, dimension >
           ::apply( type.id(), evaluate_, jacobian_ );
         assert( evaluate_ );

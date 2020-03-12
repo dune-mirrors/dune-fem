@@ -95,58 +95,6 @@ class BaseModel:
         code.append(self.vars)
         return code
 
-    def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
-        sourceWriter.emit('')
-        sourceWriter.emit(TypeAlias('Coefficients', 'std::tuple< ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedGridFunction< GridPartType, Dune::FieldVector< ' +\
-                SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                str(coefficient['dimRange']) + ' > >') \
-                for coefficient in self.coefficients if not coefficient["constant"]]) + ' >'))
-
-        sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
-        sourceWriter.emit('std::string id = obj.str();')
-        for coef in self.coefficients:
-            number = str(coef['number'])
-            name = coef['name']
-            sourceWriter.emit('if (id == "' + name + '") return ' + number + ';')
-        sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
-        sourceWriter.closeFunction()
-
-        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
-        sourceWriter.emit('model.template constant< i >() = l.template cast< typename ' + modelClass + '::ConstantsType<i> >();')
-        sourceWriter.closeFunction()
-
-        sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::list ) >'))
-        sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
-        sourceWriter.emit('')
-        sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::list l ) {')
-        sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
-        sourceWriter.emit('    if( k >= dispatch.size() )')
-        sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-        sourceWriter.emit('    dispatch[ k ]( model.impl(), l );')
-        sourceWriter.emit('    return k;')
-        sourceWriter.emit('  };')
-        sourceWriter.closeFunction()
-
-        setCoefficient = Function('void', 'setCoefficient', targs=['std::size_t i'], args=[ modelClass + ' &model', 'pybind11::handle o'])
-        setCoefficient.append('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
-        sourceWriter.emit(setCoefficient)
-
-        defSetCoefficient = Function('auto', 'defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        defSetCoefficient.append(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::handle ) >'),
-                                 Declaration(Variable('std::array< Dispatch, sizeof...( i ) >', 'dispatch'), '{{ Dispatch( setCoefficient< i > )... }}'),
-                                 '',
-                                 'return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle o ) {',
-                                 '    std::size_t k = renumberConstants(coeff);',
-                                 'if( k >= dispatch.size() )',
-                                 '      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );',
-                                 '    dispatch[ k ]( model.impl(), o );',
-                                 '    return k;'
-                                 '  };')
-
-        sourceWriter.emit(defSetCoefficient)
-
     def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper', constrArgs=(), constrKeepAlive=None):
         if self.coefficients:
             # sourceWriter.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')

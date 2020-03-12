@@ -10,8 +10,11 @@
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/python/function/simplegridfunction.hh>
+#include <dune/python/grid/function.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 
 namespace Dune
 {
@@ -29,9 +32,9 @@ namespace Dune
 
     public:
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
-
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
-      typedef std::decay_t< std::result_of_t< LocalEvaluator( EntityType, LocalCoordinateType ) > > Value;
+      typedef std::decay_t< std::result_of_t< LocalEvaluator( EntityType, LocalCoordinateType ) > > Value_;
+      typedef std::conditional_t<std::is_same_v<Value_,double>, Dune::FieldVector<double,1>, Value_ > Value;
 
       typedef Fem::FunctionSpace< typename GridPart::ctype, typename FieldTraits< Value >::field_type, GridPart::dimensionworld, Value::dimension > FunctionSpaceType;
 
@@ -327,6 +330,42 @@ namespace Dune
       return SimpleGlobalGridFunction< GridPart, Evaluator >( gridPart, std::move( evaluator ), order );
     }
 
+    template <class GridPart, class GridFunction,
+              std::enable_if_t<std::is_class_v<typename GridFunction::LocalEvaluator>,int> v=0>
+    auto getGridFunction( const GridPart &gridPart, const GridFunction &gridFunction, int order, PriorityTag<1>)
+    {
+      return simpleGridFunction(gridPart,gridFunction.localEvaluator(),order);
+    }
+    template <class GridPart, class GridFunction>
+    auto getGridFunction( const GridPart &gridPart, const GridFunction &gridFunction, int order, PriorityTag<0>)
+    {
+      return gridFunction;
+    }
+    template <class GridPart, class RangeType, class Functor>
+    void addVirtualizedFunctions(Functor functor)
+    {
+      typedef typename GridPart::template Codim<0>::EntityType Entity;
+      typedef typename Entity::Geometry::LocalCoordinate Coordinate;
+      static const int dimRange = RangeType::dimension;
+      typedef std::tuple<
+        VirtualizedGridFunction< GridPart, RangeType >*,
+        Dune::Python::SimpleGridFunction< typename GridPart::GridViewType,
+          Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, dimRange, pybind11::function >>*,
+        Dune::Python::SimpleGridFunction< typename GridPart::GridViewType,
+          Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, dimRange,
+          std::function<Dune::FieldVector<double,dimRange>(const Entity&,const Coordinate&)> >>*
+        > VirtualFcts;
+      Hybrid::forEach(VirtualFcts{0,0,0},functor);
+      typedef std::tuple<
+        Dune::Python::SimpleGridFunction< typename GridPart::GridViewType,
+          Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, 0, pybind11::function >>*,
+        Dune::Python::SimpleGridFunction< typename GridPart::GridViewType,
+          Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, 0,
+          std::function<double(const Entity&,const Coordinate&)> >>*
+        > VirtualFctsDbl;
+      if constexpr (dimRange == 1)
+        Hybrid::forEach(VirtualFctsDbl{0,0},functor);
+    }
   } // namespace FemPy
 
 } // namespace Dune

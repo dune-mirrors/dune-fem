@@ -5,6 +5,8 @@
 
 #include <dune/fem/quadrature/quadrature.hh>
 
+#include <dune/fem/gridpart/common/capabilities.hh>
+
 namespace Dune
 {
 
@@ -52,6 +54,15 @@ namespace Dune
        */
       ElementPointListBase ( const GeometryType &geometry, const QuadratureKeyType& quadKey )
       : quad_( geometry, quadKey )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in]  geometry  geometry type, the quadrature lives on
+       *  \param[in]  order     desired minimal order of the quadrature
+       */
+      ElementPointListBase ( const IntegrationPointListType& ipList )
+      : quad_( ipList )
       {}
 
       /** \copydoc Dune::Fem::IntegrationPointList::nop */
@@ -166,7 +177,7 @@ namespace Dune
         return quad_;
       }
 
-    private:
+    protected:
       IntegrationPointListType quad_;
     };
 
@@ -332,8 +343,51 @@ namespace Dune
       static GeometryType
       getFaceGeometry ( const GeometryType &elementGeo, const int face )
       {
-        typedef Dune::ReferenceElements< RealType, dimension > RefElements;
-        return RefElements::general( elementGeo ).type( face, codimension );
+        // for cube and simplex geom types the dim-1 geom type
+        // is also cube or simplex
+
+        typedef Dune::Impl::CubeTopology< dimension > CubeTopologyType;
+        static const bool isCube =
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::v &&
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == CubeTopologyType::type::id ;
+
+        typedef Dune::Impl::SimplexTopology< dimension > SimplexTopologyType;
+        static const bool isSimplex =
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::v &&
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == SimplexTopologyType::type::id ;
+
+        if( isCube || isSimplex )
+        {
+          assert( elementGeo.dim() == dimension );
+          if( isCube )
+          {
+            return Dune::GeometryTypes::cube( dimension-1 );
+          }
+          else
+          {
+            assert( isSimplex );
+            return Dune::GeometryTypes::simplex( dimension-1 );
+          }
+        }
+        else if( elementGeo.isNone() )
+        {
+          // if cell geometry is none and dim is 2 then the
+          // face is a normal edge which is of type cube
+          if( elementGeo.dim() == 2 )
+          {
+            return Dune::GeometryTypes::cube( 1 );
+          }
+          else
+          {
+            return Dune::GeometryTypes::none( elementGeo.dim()-1 );
+          }
+        }
+        else // use reference element to determine type
+        {
+          assert( ! elementGeo.isNone() );
+          typedef Dune::ReferenceElements< RealType, dimension > RefElements;
+          return RefElements::general( elementGeo ).type( face, codimension );
+        }
       }
 
     private:

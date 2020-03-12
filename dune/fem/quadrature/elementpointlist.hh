@@ -70,6 +70,8 @@ namespace Dune
       //! type of iterator
       typedef QuadraturePointIterator< This > IteratorType;
 
+      typedef typename Base :: IntegrationPointListType  IntegrationPointListType;
+
     public:
       using Base::localPoint;
       using Base::nop;
@@ -81,6 +83,10 @@ namespace Dune
        */
       ElementIntegrationPointList( const GeometryType &geometry, const QuadratureKeyType& quadKey )
       : Base( geometry, quadKey )
+      {}
+
+      ElementIntegrationPointList( const IntegrationPointListType& ipList )
+      : Base( ipList )
       {}
 
       const QuadraturePointWrapperType operator[] ( const size_t i ) const

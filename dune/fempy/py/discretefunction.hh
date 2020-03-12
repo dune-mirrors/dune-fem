@@ -5,6 +5,7 @@
 #include <dune/fempy/pybind11/pybind11.hh>
 
 #include <dune/common/typeutilities.hh>
+#include <dune/common/hybridutilities.hh>
 
 
 #if HAVE_DUNE_ISTL
@@ -20,8 +21,8 @@
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
-#include <dune/fem/common/localcontribution.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
+#include <dune/fem/common/localcontribution.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>
@@ -206,7 +207,15 @@ namespace Dune
 
         cls.def( pybind11::init( [] ( const Space &space, std::string name, pybind11::buffer dof ) {
             VectorType *vec = new VectorType( std::move( dof ) );
-            return new DF( std::move( name ), space, *vec );
+            DF* df = new DF( std::move( name ), space, *vec );
+            // create Python guard object, removing the dof storage once the df disappears
+            pybind11::cpp_function remove_dofStorage( [ vec ] ( pybind11::handle weakref ) {
+                delete vec;
+                weakref.dec_ref();
+              } );
+            pybind11::weakref weakref( df, remove_dofStorage );
+            weakref.release();
+            return df;
           } ), "space"_a, "name"_a, "dof"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 4 >() );
       }
 
@@ -297,7 +306,9 @@ namespace Dune
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
         typedef typename GridPart::template Codim<0>::EntityType Entity;
+        typedef typename DF::DomainType Coordinate;
         typedef typename DF::RangeType Value;
+        const static int dimRange = Value::dimension;
 
         using pybind11::operator""_a;
 
@@ -341,16 +352,42 @@ namespace Dune
         cls.def( "__isub__", [] ( DF &self, const DF &other ) { return self -= other; }, "other"_a );
         cls.def( "__imul__", [] ( DF &self, double a ) { return self *= a; }, "a"_a );
 
-        typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
-        cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
-            Fem::interpolate( gridFunction, self );
-          }, "gridFunction"_a );
         cls.def( "_interpolate", [] ( DF &self, typename Space::RangeType value ) {
             const auto gf = simpleGridFunction( self.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 );
             Fem::interpolate( gf, self );
           }, "value"_a );
-        registerProjection<GridFunction>(cls);
+        auto interpol = [&cls](auto *gf) {
+          typedef decltype(*gf) GridFunction;
+          cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
+              Fem::interpolate( getGridFunction(self.gridPart(),gridFunction,self.order(),PriorityTag<42>()),
+                                  self );
+            }, "gridFunction"_a );
+          registerProjection<GridFunction>(cls);
+        };
+        addVirtualizedFunctions<GridPart,Value>(interpol);
 
+        if constexpr (dimRange == 1)
+        {
+          {
+            typedef Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, 0, pybind11::function > LocalEvaluator;
+            typedef Dune::Python::SimpleGridFunction< typename GridPart::GridViewType, LocalEvaluator > GridFunction;
+            cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
+                Fem::interpolate( simpleGridFunction(self.gridPart(),gridFunction.localEvaluator(),self.order()),
+                                  self );
+              }, "gridFunction"_a );
+            registerProjection<GridFunction>(cls);
+          }
+          {
+            typedef std::function<double(const Entity&,const Coordinate&)> stdfct;
+            typedef Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, 0, stdfct > LocalEvaluator;
+            typedef Dune::Python::SimpleGridFunction< typename GridPart::GridViewType, LocalEvaluator > GridFunction;
+            cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
+                Fem::interpolate( simpleGridFunction(self.gridPart(),gridFunction.localEvaluator(),self.order()),
+                                  self );
+              }, "gridFunction"_a );
+            registerProjection<GridFunction>(cls);
+          }
+        }
 
         addDofVector(cls);
         registerSubDiscreteFunction( cls );

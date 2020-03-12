@@ -10,6 +10,10 @@ namespace Dune
   namespace Fem
   {
 
+    template< typename GridPartImp, class IntegrationPointList >
+    class Agglomeration;
+
+
     /*! \class ElementQuadrature
      *  \ingroup Quadrature
      *  \brief quadrature on the codim-0 reference element
@@ -79,10 +83,11 @@ namespace Dune
     : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > >
     {
       typedef ElementQuadrature< GridPartImp, 0, QuadratureTraits > ThisType;
+
+    public:
       typedef ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > IntegrationTraits;
       typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
 
-    public:
       //! type of the grid partition
       typedef GridPartImp GridPartType;
 
@@ -109,8 +114,25 @@ namespace Dune
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+      typedef typename BaseType :: IntegrationPointListType  IntegrationPointListType;
+
     protected:
       using BaseType::quadImp;
+
+      IntegrationPointListType createQuadrature(  const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType )
+      {
+        const GeometryType geomType = entity.type();
+        if( checkGeomType && ! geomType.isNone() )
+        {
+          // return default element quadratures for given geometry type
+          return IntegrationPointListType( geomType, quadKey );
+        }
+        else // compute weights and points based on sub-triangulation
+        {
+          typedef Agglomeration< GridPartType, IntegrationPointListType > AgglomerationType;
+          return AgglomerationType::computeQuadrature( entity, quadKey );
+        }
+      }
 
     public:
       using BaseType::nop;
@@ -121,8 +143,8 @@ namespace Dune
        *                      lives
        *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
        */
-      ElementQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
-      : BaseType( entity.type(), quadKey )
+      ElementQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType = true )
+      : BaseType( createQuadrature( entity, quadKey, checkGeomType ) )
       {}
 
       /*! \brief constructor
@@ -133,7 +155,11 @@ namespace Dune
        */
       ElementQuadrature( const GeometryType &type, const QuadratureKeyType& quadKey )
       : BaseType( type, quadKey )
-      {}
+      {
+        // when type is none then entity has to be passed in order to create
+        // the sub triangulation etc.
+        assert( ! type.isNone() );
+      }
 
       /** \brief copy constructor
        *
@@ -272,5 +298,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#include "agglomerationquadrature.hh"
 
 #endif // #ifndef DUNE_FEM_ELEMENTQUADRATURE_HH

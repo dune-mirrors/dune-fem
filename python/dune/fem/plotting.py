@@ -5,6 +5,7 @@ from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
 
 from dune.plotting import block, disable
+from ufl import as_vector
 globalBlock = block
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
@@ -38,6 +39,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
             pyplot.quiver(triangulation.x, triangulation.y, data[:,x1], data[:,x2],
                       units='xy', scale=10., zorder=3, color='blue',
                       width=0.007, headwidth=3., headlength=4.)
+            return
         else:
             if solution.dimRange > 1:
                 data = linalg.norm(data,axis=1)
@@ -114,6 +116,8 @@ def plotPointData(solution, figure=None,
     try:
         grid = solution.grid
     except AttributeError:
+        if isinstance(solution, list) or isinstance(solution,tuple):
+            solution = as_vector(solution)
         if isinstance(solution, Expr) and grid is not None:
             assert grid, "need to provide a named grid argument to plot a ufl expression directly"
             solution = expression2GF(grid, solution, 1)

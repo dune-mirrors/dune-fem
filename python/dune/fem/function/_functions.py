@@ -4,65 +4,49 @@ import sys, os
 import logging
 logger = logging.getLogger(__name__)
 
+import dune.ufl
 import dune.grid
 import dune.fem.space
 import dune.models.localfunction
+from dune.generator import builder
 
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
-def registerGridFunctions(gridView):
-    from dune.generator import builder
-    typeName = gridView._typeName
-    moduleName = "femgridfunctions_" + hashIt(typeName)
-
-    includes = ["dune/fempy/py/grid/gridpart.hh", "dune/fempy/py/grid/function.hh"] + gridView._includes
-
-    source = "#include <config.h>\n\n"
-    source += "".join(["#include <" + i + ">\n" for i in includes])
-    source += "\n"
-    source += "PYBIND11_MODULE( " + moduleName + ", module )\n"
-    source += "{\n"
-    source += "  typedef Dune::FemPy::GridPart< " + gridView._typeName + "> GridPart;\n"
-    source += '  module.def( "globalGridFunction", Dune::FemPy::defGlobalGridFunction< GridPart >( module, "GlobalGridFunction", std::make_integer_sequence< int, 11 >() ));\n'
-    source += '  module.def( "localGridFunction", Dune::FemPy::defLocalGridFunction< GridPart > ( module, "LocalGridFunction",  std::make_integer_sequence< int, 11 >() ));\n'
-    source += "}\n"
-
-    return builder.load(moduleName, source, "gridfunctions")
-
 def globalFunction(gridView, name, order, value):
-    # assert False
-    module = registerGridFunctions(gridView)
-    return module.globalGridFunction(gridView,name,order,value).as_ufl()
-
-
+    gf = gridView.function(value,name=name,order=order)
+    return dune.ufl.GridFunction(gf)
 def localFunction(gridView, name, order, value):
-    # assert False
-    module = registerGridFunctions(gridView)
-    return module.localGridFunction(gridView,name,order,value).as_ufl()
+    gf = gridView.function(value,name=name,order=order)
+    return dune.ufl.GridFunction(gf)
+# decorators similar to dune.python but with ufl support
+def gridFunction(view,name,order):
+    def gridFunction_decorator(func):
+        gf = dune.grid.gridFunction(view,name=name,order=order)(func)
+        return dune.ufl.GridFunction(gf)
+    return gridFunction_decorator
+# this is not going to work - needs fixing
+# def GridFunction(view, name=None):
+#     def GridFunction_decorator(cls):
+#         return dune.ufl.GridFunction(dune.grid.GridFunction(view,name,order)(cls))
+#     return GridFunction_decorator
 
 
 def levelFunction(gridView,name="levels"):
-    @dune.grid.gridFunction(gridView,name=name)
+    @gridFunction(gridView,name=name,order=0)
     def levelFunction(e,x):
         return [e.level]
     return levelFunction
 
 
 def partitionFunction(gridView,name="rank"):
-    @dune.grid.GridFunction(gridView,name=name)
+    @dune.grid.GridFunction(gridView,name=name,order=0)
     class Partition(object):
         def __init__(self,rank):
             self.rank = rank
         def __call__(self,en,x):
             return [self.rank]
-    return Partition(gridView.comm.rank) # localFunction(gridView, name, 0, Partition(gridView.comm.rank))
-
-
-def cppFunction(gridView, name, order, code, *args, **kwargs):
-    raise NotImplementedError("cpp function is not working at the moment")
-    return dune.models.localfunction.generatedFunction(gridView, name, order, code, *args, **kwargs)
-
+    return Partition(gridView.comm.rank)
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args, **kwargs):
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
@@ -70,10 +54,18 @@ def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args
             virtualize=virtualize, *args, **kwargs)
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
+    from dune.fem.plotting import plotPointData
+    setattr(Func, "plot", plotPointData)
     func = Func(gridView,name,order,*args,**kwargs)
     if not hasattr(func,"scalar"):
         func.scalar = scalar
     return func.as_ufl() if func is not None else None
+
+def cppFunction(gridView, name, order, fctName, includes):
+    def _cppFunction(*args):
+        gf = gridView.function(fctName,includes,*args,order=order,name=name)
+        return dune.ufl.GridFunction( gf )
+    return _cppFunction
 
 def discreteFunction(space, name, expr=None, dofVector=None):
     """create a discrete function
@@ -96,50 +88,7 @@ def discreteFunction(space, name, expr=None, dofVector=None):
         df.clear()
     elif expr is not None:
         df.interpolate(expr)
-    df.scalar = space.scalar
-    return df.as_ufl()
-
-    from dune.generator import Constructor
-    storage, dfIncludes, dfTypeName, _, _,backend = space.storage
-
-    if storage == "petsc":
-        spaceType = space._typeName
-        try:
-            import petsc4py
-            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-                    ['if (import_petsc4py() != 0) {',
-                     '  throw std::runtime_error("Error during import of petsc4py");',
-                     '}',
-                     'Vec petscVec = PyPetscVec_Get(vec.ptr());',
-                     'typename DuneType::DofVectorType *dofStorage = new typename DuneType::DofVectorType(space,petscVec);',
-                     '// std::cout << "setup_petscStorage " << dofStorage << " " << petscVec << std::endl;',
-                     'pybind11::cpp_function remove_petscStorage( [ dofStorage, vec, petscVec] ( pybind11::handle weakref ) {',
-                     '  // std::cout << "remove_petscStorage " << vec.ref_count() << " " << dofStorage << " " << petscVec << std::endl;',
-                     '  delete dofStorage;',
-                     '  weakref.dec_ref();',
-                     '} );',
-                     'pybind11::weakref weakref( vec, remove_petscStorage );',
-                     'weakref.release();',
-                     'return new DuneType( name, space, *dofStorage );'],
-                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
-        except:
-            ctor = Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle vec'],
-                    ['std::cerr <<"Can not use constructor with dof vector argument because `petsc4py` was not found!\\n";',
-                     'throw std::runtime_error("Can not use constructor with dof vector argument because `petsc4py` was not found!");',
-                     'return new DuneType(name,space);'],
-                    ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
-        DF = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend, ctor)
-        if vec is None:
-            df = DF.DiscreteFunction(space,name)
-        else:
-            df = DF.DiscreteFunction(name,space,vec)
-            return df.as_ufl()
-    else:
-        df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
-    if expr is None:
-        df.clear()
-    else:
-        df.interpolate(expr)
+    # df.scalar = space.scalar
     return df.as_ufl()
 
 def tupleDiscreteFunction(*spaces, **kwargs):

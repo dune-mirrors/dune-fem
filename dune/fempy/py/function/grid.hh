@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PY_FUNCTION_GRID_HH
 #define DUNE_FEMPY_PY_FUNCTION_GRID_HH
 
+// this class is only used in dune/fempy/py/discretefunction.hh - should be moved
+
 #include <string>
 #include <utility>
 

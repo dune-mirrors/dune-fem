@@ -13,6 +13,7 @@
 
 #include <dune/python/common/typeregistry.hh>
 #include <dune/python/grid/vtk.hh>
+#include <dune/python/grid/localview.hh>
 
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/gridfunctionview.hh>
@@ -34,7 +35,8 @@ namespace Dune
     template< class LocalFunction, class... options >
     inline static void registerLocalFunction ( pybind11::handle scope, pybind11::class_< LocalFunction, options... > cls)
     {
-      typedef typename LocalFunction::EntityType::Geometry::LocalCoordinate LocalCoordinate;
+      typedef typename LocalFunction::EntityType Element;
+      typedef typename Element::Geometry::LocalCoordinate LocalCoordinate;
       Dune::Python::registerFieldVector<double,LocalFunction::RangeType::dimension>(scope);
       Dune::Python::registerFieldMatrix<double, LocalFunction::RangeType::dimension, LocalFunction::EntityType::Geometry::coorddimension>( scope );
       cls.def_property_readonly( "dimRange", [] ( LocalFunction & ) -> int { return LocalFunction::RangeType::dimension; } );
@@ -54,6 +56,13 @@ namespace Dune
           lf.hessian( x, hessian );
           return hessian;
         } );
+      cls.def( "__call__", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
+          typename LocalFunction::RangeType value;
+          lf.evaluate( x, value );
+          bool scalar = pybind11::cast(lf).attr("scalar").template cast<bool>();
+          return scalar? pybind11::cast(value[0]) : pybind11::cast(value);
+        } );
+      Dune::Python::registerLocalView< Element >( cls );
     }
 
 
@@ -118,14 +127,19 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        // typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename Dune::Fem::ConstLocalFunction<GridFunction> LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
         typedef typename GridFunction::GridPartType GridPartType;
         typedef typename GridPartType::GridViewType GridView;
 
+        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
+        auto spcCls = Python::insertClass<SpaceType,std::shared_ptr<SpaceType>>(cls, "Space",
+            Python::GenerateTypeName("TODO-SPACE"));
+        if (spcCls.second)
+          detail::registerFunctionSpace( cls, spcCls.first );
+
         auto lfClass = Python::insertClass<LocalFunction>(cls, "LocalFunction",
-            Python::GenerateTypeName("TODO-LGF"));
+            Python::GenerateTypeName("TODO-LGF"), pybind11::dynamic_attr());
             // Python::GenerateTypeName(cls,"LocalFunctionType")).first;
         assert( lfClass.second );
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
@@ -143,6 +157,11 @@ namespace Dune
 
         registerGridFunctionName( cls );
 
+        cls.def( "localFunction", [] ( const GridFunction &self ) { // -> LocalFunction {
+            auto ret = std::make_unique<LocalFunction>(self);
+            return ret;
+          }, pybind11::keep_alive< 0, 1 >(),
+             pybind11::return_value_policy::take_ownership );
         cls.def( "localFunction", [] ( const GridFunction &self, const Entity &entity ) { // -> LocalFunction {
             auto ret = std::make_unique<LocalFunction>(self);
             ret->bind(entity);
@@ -211,15 +230,6 @@ namespace Dune
             Python::GenerateTypeName("VirtualizedGridFunction",adapt,MetaType<Value>()),
             Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"});
 
-        typedef typename GridFunction::DiscreteFunctionSpaceType SpaceType;
-        if( !pybind11::already_registered< SpaceType >() )
-        {
-          auto spcCls = Python::insertClass<SpaceType,std::shared_ptr<SpaceType>>(vgfClass.first, "Space",
-              Python::GenerateTypeName("TODO-SPACE"));
-          if (spcCls.second)
-            detail::registerFunctionSpace( vgfClass.first, spcCls.first );
-        }
-
         if( vgfClass.second )
           detail::registerGridFunction( scope, vgfClass.first );
 
@@ -232,6 +242,16 @@ namespace Dune
 
     // registerGridFunction
     // --------------------
+
+    template< class GridFunction >
+    inline static void registerGridFunction ( pybind11::handle scope )
+    {
+      typedef typename GridFunction::GridView GridView;
+      typedef typename GridFunction::Value Value;
+      detail::clsVirtualizedGridFunction< GridView, Value >( scope ).
+             def( pybind11::init< GridFunction >() );
+      pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridView, Value > >();
+    }
 
     template< class GridFunction, class... options >
     inline static void registerGridFunction ( pybind11::handle scope, pybind11::class_< GridFunction, options... > cls )
@@ -321,8 +341,7 @@ namespace Dune
 
     } // namespace detail
 
-
-
+#if 0 // should not be needed since replaced by dune-python version
     // defGlobalGridFunction
     // ---------------------
 
@@ -348,7 +367,9 @@ namespace Dune
         };
     }
 
-
+#endif
+// the following is used for df.__getitem__(i) - could perhaps be
+// implemented using the dune-python SimpleGridFunction
 
     namespace detail
     {
@@ -390,7 +411,7 @@ namespace Dune
 
 
 
-      // pyGlobalGridFunction
+      // pyLocalGridFunction
       // --------------------
 
       template< class GridPart, int dimRange >
@@ -401,7 +422,7 @@ namespace Dune
 
     } // namespace detail
 
-
+#if 0
 
     // defLocalGridFunction
     // --------------------
@@ -433,7 +454,7 @@ namespace Dune
           return dispatch[ static_cast< std::size_t >( dimR ) ]( gp, std::move( name ), order, std::move( evaluate ), std::move( gv ) );
         };
     }
-
+#endif // old global/local grid function - now using dune-python
   } // namespace FemPy
 
 } // namespace Dune

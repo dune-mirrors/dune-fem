@@ -5,6 +5,7 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/agglomerationquadrature.hh>
 
 /**
   @file
@@ -24,7 +25,9 @@ namespace Dune
     /**
      * Local interpolation for Discontinuous Galerkin spaces.
      */
-    template< class DiscreteFunctionSpace, template< class, int > class Quadrature = CachingQuadrature >
+    template< class DiscreteFunctionSpace,
+      class Quadrature = CachingQuadrature<typename DiscreteFunctionSpace::GridPartType,
+                                           DiscreteFunctionSpace::EntityType::codimension> >
     class DiscontinuousGalerkinLocalInterpolation
     {
       typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace, Quadrature > ThisType;
@@ -44,13 +47,14 @@ namespace Dune
       typedef typename RangeType::value_type RangeFieldType;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef Quadrature< GridPartType, EntityType::codimension > QuadratureType;
+      typedef Quadrature QuadratureType;
 
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 
     public:
       DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int order = -1 )
-      : order_( space.order() ),
+      : space_( space ),
+        order_( space.order() ),
         massMatrix_( space, (order < 0 ? 2*space.order() : order) ),
         values_()
       {}
@@ -68,8 +72,42 @@ namespace Dune
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
 
-        QuadratureType quadrature( entity, localFunction.order() + order_);
+        if( entity.type().isNone() )
+        {
+          typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
+          ElementQuadratureType quadrature( entity, localFunction.order() + order_);
+          bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          if( ! isAffine )
+          {
+            typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
+            AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
 
+            // apply inverse of mass matrix
+            auto basisFunctionSet = space_.basisFunctionSet(entity);
+            massMat.applyInverse( entity, basisFunctionSet, dofs );
+          }
+        }
+        else
+        {
+          QuadratureType quadrature( entity, localFunction.order() + order_);
+          bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
+          if( ! isAffine )
+          {
+            // apply inverse of mass matrix
+            auto basisFunctionSet = space_.basisFunctionSet(entity);
+            massMatrix_.applyInverse( entity, basisFunctionSet, dofs );
+          }
+        }
+
+      }
+
+    private:
+      template<class QuadImpl, class LocalFunction, class LocalDofVector >
+      bool computeInterpolation( const EntityType& entity,
+                                 const QuadImpl& quadrature,
+                                 const LocalFunction &localFunction,
+                                 LocalDofVector &dofs ) const
+      {
         const int nop = quadrature.nop();
         // adjust size of values
         values_.resize( nop );
@@ -99,18 +137,15 @@ namespace Dune
         }
 
         // add values to local function
-        dofs.axpyQuadrature( quadrature, values_ );
+        // dofs.axpyQuadrature( quadrature, values_ );
+        space_.basisFunctionSet(entity).axpy( quadrature, values_, dofs );
 
-        if( ! isAffine )
-        {
-          // apply inverse of mass matrix
-          massMatrix().applyInverse( entity, dofs );
-        }
+        return isAffine;
       }
 
-    private:
       const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
 
+      const DiscreteFunctionSpaceType &space_;
       const int order_;
       LocalMassMatrixType massMatrix_;
       mutable std::vector< RangeType > values_;

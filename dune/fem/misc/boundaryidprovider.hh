@@ -9,6 +9,14 @@
 #include <dune/grid/spgrid/declaration.hh>
 #endif // #if HAVE_DUNE_SPGRID
 
+#if HAVE_OPM_GRID
+#include <opm/grid/polyhedralgrid/declaration.hh>
+#endif // #if HAVE_OPM_GRID
+
+#if HAVE_DUNE_POLYGONGRID
+#include <dune/polygongrid/declaration.hh>
+#endif // #if HAVE_DUNE_POLYGONGRID
+
 #include <dune/fem/misc/griddeclaration.hh>
 
 namespace Dune
@@ -247,6 +255,40 @@ namespace Dune
     };
 #endif // #if HAVE_DUNE_SPGRID
 
+
+    // BoundaryIdProvider for PolygonGrid
+    // ----------------------------------
+
+#if HAVE_DUNE_POLYGONGRID
+    template< class ct >
+    struct BoundaryIdProvider< PolygonGrid< ct > >
+    {
+      typedef PolygonGrid< ct > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return (intersection.boundary() ? (intersection.impl().boundaryId()) : 0);
+      }
+    };
+#endif // #if HAVE_OPM_GRID
+
+    // BoundaryIdProvider for PolyhedralGrid
+    // -------------------------------------
+
+#if HAVE_OPM_GRID
+    template< int dim, int dimworld, class ct >
+    struct BoundaryIdProvider< PolyhedralGrid< dim, dimworld, ct > >
+    {
+      typedef PolyhedralGrid< dim, dimworld, ct > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return (intersection.boundary() ? (intersection.impl().boundaryId()) : 0);
+      }
+    };
+#endif // #if HAVE_OPM_GRID
 
 
     // BoundaryIdProvider for UGGrid

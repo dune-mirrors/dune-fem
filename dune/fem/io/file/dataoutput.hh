@@ -111,7 +111,7 @@ namespace Dune
       {
         static const std::string formatTable[]
           = { "vtk-cell", "vtk-vertex", "sub-vtk-cell", "binary" , "gnuplot" , "none" };
-        int format = parameter().getEnum( keyPrefix_ + "outputformat", formatTable, 1 );
+        int format = parameter().getEnum( keyPrefix_ + "outputformat", formatTable, 0 );
         return format;
       }
 

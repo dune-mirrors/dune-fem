@@ -74,7 +74,8 @@ namespace Dune
 
       GeometryType type () const { return localFunction().entity().type(); }
 
-      void init ( const Entity &entity ) { localFunction_.init( entity ); }
+      void bind ( const Entity &entity ) { localFunction_.bind( entity ); }
+      void init ( const Entity &entity ) { bind( entity ); }
 
       const LocalFunction &localFunction () const { return localFunction_; }
 

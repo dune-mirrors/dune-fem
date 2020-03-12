@@ -61,36 +61,36 @@ namespace Dune
 
 
         template< class Integrands >
-        static std::true_type interior ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
+        std::true_type interior ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
-        static std::false_type interior ( ... );
+        std::false_type interior ( ... );
 
         template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasInterior() ), bool >::value, int > = 0 >
-        static std::true_type hasInterior ( const Integrands & );
+        std::true_type hasInterior ( const Integrands & );
 
-        static std::false_type hasInterior ( ... );
+        std::false_type hasInterior ( ... );
 
 
         template< class Integrands >
-        static std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
+        std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
-        static std::false_type boundary ( ... );
+        std::false_type boundary ( ... );
 
         template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasBoundary() ), bool >::value, int > = 0 >
-        static std::true_type hasBoundary ( const Integrands & );
+        std::true_type hasBoundary ( const Integrands & );
 
-        static std::false_type hasBoundary ( ... );
+        std::false_type hasBoundary ( ... );
 
 
         template< class Integrands >
-        static std::true_type skeleton ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >(), std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
+        std::true_type skeleton ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >(), std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
-        static std::false_type skeleton ( ... );
+        std::false_type skeleton ( ... );
 
         template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasSkeleton() ), bool >::value, int > = 0 >
-        static std::true_type hasSkeleton ( const Integrands & );
+        std::true_type hasSkeleton ( const Integrands & );
 
-        static std::false_type hasSkeleton ( ... );
+        std::false_type hasSkeleton ( ... );
 
         template< class Integrands >
         using Get = std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >;

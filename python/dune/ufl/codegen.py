@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import re
 
+from ufl import replace
 from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
@@ -33,7 +34,7 @@ from dune.source.cplusplus import SourceWriter, ListWriter, StringWriter
 
 from ufl import SpatialCoordinate,TestFunction,TrialFunction,Coefficient,\
         as_vector, as_matrix,dx,ds,grad,inner,zero,FacetNormal,dot
-from ufl.algorithms.analysis import extract_arguments_and_coefficients as coeff
+# from ufl.algorithms.analysis import extract_arguments_and_coefficients as coeff
 from ufl.differentiation import Grad
 
 def translateIndex(index):
@@ -277,6 +278,9 @@ class CodeGenerator(MultiFunction):
             return cexpr
         if tempVars is None:
             tempVars = self.tempVars
+        # set to False to disable tempVars
+        # TODO: better dynamic switch
+        # tempVars = False
         if tempVars:
             cppType = None
             if isinstance(cexpr, cplusplus.Expression):
@@ -345,6 +349,7 @@ class ModelClass():
         self.init = None
         self.vars = None
 
+        uflExpr = [e for e in uflExpr if e is not None]
         coefficients = set()
         for expr in uflExpr:
             try:
@@ -403,9 +408,13 @@ class ModelClass():
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
         if self._coefficients:
             if virtualize:
-                self.coefficientCppTypes = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in self._coefficients]
+                self.coefficientCppTypes = \
+                    ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + fieldVectorType(c) + ' >' \
+                        if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
+                        else c._typeName \
+                    for c in self.coefficientList]
             else:
-                self.coefficientCppTypes = [c._typeName for c in self._coefficients]
+                self.coefficientCppTypes = [c._typeName for c in self.coefficientList]
         else:
             self.coefficientCppTypes = []
 
@@ -676,7 +685,7 @@ class ModelClass():
         return code
 
 def generateMethodBody(cppType, expr, returnResult, default, predefined):
-    if expr is not None:
+    if expr is not None and not expr == [None]:
         try:
             dimR = expr.ufl_shape[0]
         except:
@@ -685,9 +694,14 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined):
             else:
                 expr = as_vector([expr])
             dimR = expr.ufl_shape[0]
+
+        _, coeff = extract_arguments_and_coefficients(expr)
+        coeff = {c : c.toVectorCoefficient()[0] for c in coeff if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+        expr = replace(expr, coeff)
+
         t = ExprTensor(expr.ufl_shape) # , exprTensorApply(lambda u: u, expr.ufl_shape, expr))
         expression = [expr[i] for i in t.keys()]
-        u = coeff(expr)[0]
+        u = extract_arguments_and_coefficients(expr)[0]
         if u != []:
             u = u[0]
             du = Grad(u)
@@ -760,4 +774,5 @@ def uflSignature(form,*args):
 
     if form is not None:
         hashList.append(form.signature())
+    hashList = [h.split(" at ")[0] for h in hashList]
     return hashIt( sorted(hashList) )

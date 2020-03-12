@@ -235,14 +235,14 @@ namespace Dune
 
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller
-      template< class MassCaller, class LocalFunction >
-      void applyInverse ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
+      void applyInverse ( MassCaller &caller, const EntityType &entity, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
         if( affine() || geo.affine() )
-          applyInverseLocally( caller, entity, geo, lf );
+          applyInverseLocally( caller, entity, geo, basisFunctionSet, lf );
         else
-          applyInverseDefault( caller, entity, geo, lf );
+          applyInverseDefault( caller, entity, geo, basisFunctionSet, lf );
       }
 
       //! apply local dg mass matrix to local function lf without mass factor
@@ -250,8 +250,15 @@ namespace Dune
       void applyInverse ( const EntityType &entity, LocalFunction &lf ) const
       {
         NoMassDummyCaller caller;
-        applyInverse( caller, entity, lf );
+        applyInverse( caller, entity, lf.basisFunctionSet(), lf );
       }
+      template< class BasisFunctionSet, class LocalFunction >
+      void applyInverse ( const EntityType &entity, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
+      {
+        NoMassDummyCaller caller;
+        applyInverse( caller, entity, basisFunctionSet, lf );
+      }
+
 
       //! apply local dg mass matrix to local function lf without mass factor
       template< class LocalFunction >
@@ -292,8 +299,9 @@ namespace Dune
       ///////////////////////////////////////////////////////////
       //  applyInverse for DG spaces
       ///////////////////////////////////////////////////////////
-      template< class MassCaller, class LocalFunction >
-      void applyInverseDgOrthoNormalBasis ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
+      void applyInverseDgOrthoNormalBasis ( MassCaller &caller, const EntityType &entity,
+                                            const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
         assert( dgNumDofs == lf.size() );
@@ -318,7 +326,7 @@ namespace Dune
           for( int l = 0; l < dgNumDofs; ++l )
             dgRhs_[ l ] = lf[ l ];
 
-          buildMatrix( caller, entity, geo, lf.basisFunctionSet(), dgNumDofs, dgMatrix_ );
+          buildMatrix( caller, entity, geo, basisFunctionSet, dgNumDofs, dgMatrix_ );
           dgMatrix_.solve( dgX_, dgRhs_ );
 
           // copy back to local function
@@ -413,13 +421,13 @@ namespace Dune
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
       //! using the massFactor method of the caller
-      template< class MassCaller, class LocalFunction >
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverseDefault ( MassCaller &caller, const EntityType &entity,
-                                 const Geometry &geo, LocalFunction &lf ) const
+                                 const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         // get local inverted mass matrix
         MatrixType &invMassMatrix
-          = getLocalInverseMassMatrixDefault ( caller, entity, geo, lf.basisFunctionSet() );
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, basisFunctionSet );
 
         // copy local function to right hand side
         const int numDofs = lf.size();
@@ -481,15 +489,15 @@ namespace Dune
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
       //! using the massFactor method of the caller
-      template< class MassCaller, class LocalFunction >
+      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
-                                 const Geometry &geo, LocalFunction &lf ) const
+                                 const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         const int numDofs = lf.size();
 
         // get local inverted mass matrix
         MatrixType &invMassMatrix =
-          getLocalInverseMassMatrix( entity, geo, lf.basisFunctionSet(), numDofs );
+          getLocalInverseMassMatrix( entity, geo, basisFunctionSet, numDofs );
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -743,12 +751,20 @@ namespace Dune
 
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller
+      template <class MassCallerType, class BasisFunction, class LocalFunctionType>
+      void applyInverse(MassCallerType& caller,
+                        const EntityType& en,
+                        const BasisFunction &basisFunction,
+                        LocalFunctionType& lf) const
+      {
+        BaseType :: applyInverseDgOrthoNormalBasis( caller, en, basisFunction, lf );
+      }
       template <class MassCallerType, class LocalFunctionType>
       void applyInverse(MassCallerType& caller,
                         const EntityType& en,
                         LocalFunctionType& lf) const
       {
-        BaseType :: applyInverseDgOrthoNormalBasis( caller, en, lf );
+        BaseType :: applyInverseDgOrthoNormalBasis( caller, en, lf.basisFunctionSet(), lf );
       }
 
       //! apply local dg mass matrix to local function lf without mass factor
@@ -760,11 +776,20 @@ namespace Dune
         applyInverse(caller, en, lf );
       }
 
+      template <class BasisFunction, class LocalFunctionType>
+      void applyInverse(const EntityType& en,
+                        const BasisFunction &basisFunction,
+                        LocalFunctionType& lf) const
+      {
+        typename BaseType :: NoMassDummyCaller caller;
+        applyInverse(caller, en, basisFunction, lf );
+      }
+
       //! apply local dg mass matrix to local function lf without mass factor
       template< class LocalFunction >
       void applyInverse ( LocalFunction &lf ) const
       {
-        applyInverse( lf.entity(), lf );
+        applyInverse( lf.entity(), lf.basisFunctionSet(), lf );
       }
 
       template< class LocalMatrix >

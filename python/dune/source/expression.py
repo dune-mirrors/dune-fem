@@ -146,7 +146,10 @@ class LambdaExpression(Expression):
     def __init__(self, args=None, capture=None, code=None):
         Expression.__init__(self, None)
         self.args = None if args is None else tuple(args)
-        self.capture = capture
+        if capture is None:
+            self.capture = None
+        else:
+            self.capture = sorted(capture, key=lambda x: x.name)
         if code is None:
             self.code = None
         elif isinstance(code, Block):

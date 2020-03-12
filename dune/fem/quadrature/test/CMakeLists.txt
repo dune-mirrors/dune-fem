@@ -9,7 +9,7 @@ if( NOT GRIDDIM )
 endif()
 
 
-# copy data to build source to make tests work         
+# copy data to build source to make tests work
 set( TESTFILES 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf  3dcubesimp.dgf parameter )
 foreach( file ${TESTFILES} )
   configure_file(${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY)
@@ -22,4 +22,8 @@ LINK_LIBRARIES dunefem )
 
 dune_add_test( NAME elementquadrature SOURCES elementquadrature.cc
 COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
+
+dune_add_test( NAME agglomerationquadrature SOURCES agglomerationquadrature.cc
+COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=2"
 LINK_LIBRARIES dunefem )

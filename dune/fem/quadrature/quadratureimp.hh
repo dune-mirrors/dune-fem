@@ -48,14 +48,13 @@ namespace Dune
       //! dimension of quadrature
       static const int dimension = dim ;
 
-    private:
+    protected:
       // vector holding the coordinates for each point
-      std::vector< CoordinateType > points_;
+      mutable std::vector< CoordinateType > points_;
 
       // identifier of the integration point list
       const size_t id_;
 
-    protected:
       /** \brief Constructor
        *
        *  The constructor simply creates an empty point list and stores the
@@ -156,6 +155,12 @@ namespace Dune
       {
         points_.push_back( point );
       }
+
+      /** \brief Overwrites integration point list  */
+      void setIntegrationPoints( std::vector< CoordinateType >&& points )
+      {
+        points_.swap( points );
+      }
     };
 
 
@@ -186,11 +191,10 @@ namespace Dune
       //! type of local coordinates
       typedef typename BaseType :: CoordinateType CoordinateType;
 
-    private:
-      // vector holding weights of each integration point
-      std::vector< FieldType > weights_;
-
     protected:
+      // vector holding weights of each integration point
+      mutable std::vector< FieldType > weights_;
+
       /** \brief Constructor
        *
        *  The constructor simply creates an empty quadrature and stores the

@@ -89,7 +89,10 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         with open(model, 'r') as modelFile:
              data = modelFile.read()
         name = data.split('PYBIND11_MODULE( ')[1].split(',')[0]
-        module = builder.load(name, data, "ellipticModel")
+        endPos = name.find('_')
+        modelName = name[0:endPos]
+        module = builder.load(name, data, modelName)
+        # module = builder.load(name, data, "ellipticModel")
         renumbering = {}
         if renumbering is not None:
             setattr(module.Model, '_renumbering', renumbering)
@@ -135,8 +138,13 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     writer.openNameSpace("ModelImpl_" + signature)
     gridPartType = "typename Dune::FemPy::GridPart< " + grid._typeName + " >"
-    rangeTypes = ["Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >" for c in model._coefficients]
-    coefficients = ["Dune::FemPy::VirtualizedGridFunction<"+gridPartType+", " + r + " >" for r in rangeTypes]
+    rangeTypes = ["Dune::FieldVector< " +
+            SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >"\
+            for c in model._coefficients]
+    coefficients = ["Dune::FemPy::VirtualizedGridFunction<"+gridPartType+", " + r + " >"
+                    if not c['typeName'].startswith("Dune::Python::SimpleGridFunction") \
+                    else c['typeName'] \
+            for r,c in zip(rangeTypes,model._coefficients)]
     modelType = nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >"
     if not virtualize:
         wrapperType = modelType
@@ -161,7 +169,9 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     if virtualize:
         writer.emit('// export abstract base class')
+        writer.emit('// export abstract base class')
         writer.emit('if( !pybind11::already_registered< ModelBase >() )')
+        writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
         writer.emit('')
         writer.emit('// actual wrapper class for model derived from abstract base')
         # writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
@@ -194,7 +204,10 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         with open(kwargs["header"], 'w') as modelFile:
             modelFile.write(source)
 
-    module = builder.load(name, source, "ellipticModel")
+    endPos = name.find('_')
+    modelName = name[0:endPos]
+    module = builder.load(name, source, modelName)
+    # module = builder.load(name, source, "ellipticModel")
     if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)
         setattr(module.Model, '_coefficientNames', {c['name']: i for i, c in enumerate(model._coefficients)})

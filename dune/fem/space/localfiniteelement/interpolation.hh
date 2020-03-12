@@ -60,19 +60,21 @@ namespace Dune
         typedef typename LocalFunction::DomainType DomainType;
         typedef typename LocalFunction::RangeType RangeType;
 
-        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset ) : lf_( lf ), bset_( bset ) {}
+        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset )
+          : lf_( lf ), geometry_( lf_.entity().geometry() ), bset_( bset ) {}
 
         template< class Arg >
         void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
         {
           typename Traits::RangeType help;
           lf_.evaluate( x, help );
-          typename Transformation::InverseTransformationType transf( lf_.entity().geometry(), x );
+          typename Transformation::InverseTransformationType transf( geometry_, x );
           y = transf.apply( help );
         }
 
       private:
         const LocalFunction &lf_;
+        const typename Entity::Geometry geometry_;
         const BasisFunctionSetType &bset_;
       };
 

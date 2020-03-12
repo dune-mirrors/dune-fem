@@ -75,7 +75,7 @@ namespace Dune
         typedef GridFunction GridFunctionType;
         typedef typename GridFunctionType::GridPartType HostGridPartType;
 
-        typedef SharedGeometry< LocalFunctionGeometry< typename GridFunction::LocalFunctionType > > ElementGeometryImpl;
+        typedef SharedGeometry< LocalFunctionGeometry< ConstLocalFunction<GridFunction> > > ElementGeometryImpl;
 
         template< int codim >
         struct Codim

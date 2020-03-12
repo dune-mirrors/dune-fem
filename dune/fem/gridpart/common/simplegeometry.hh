@@ -104,7 +104,7 @@ namespace Dune
       return volume;
     }
 
-    const ReferenceElement< ctype, mydimension > &referenceElement () const { return ReferenceElements< ctype, mydimension >::general( type() ); }
+    auto referenceElement () const { return Dune::referenceElement<double>( type(), Dune::Dim<mydimension>() ); }
   };
 
 } // namespace Dune

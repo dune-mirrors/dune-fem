@@ -357,7 +357,7 @@ namespace Dune
        }
        \endcode
 
-       In order to allow the user to incfluence the calculation of the next time
+       In order to allow the user to influence the calculation of the next time
        step from the estimate, the time provider also maintains an additional
        factor (which is constant during the entire simulation).
        Therefore the actual time step used, is calculated as follows:
