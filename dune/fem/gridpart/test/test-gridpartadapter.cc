@@ -10,7 +10,7 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/gridpart/idgridpart.hh>
+#include <dune/fem/gridpart/common/gridpartadapter.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
 #include "failure.hh"
@@ -37,10 +37,9 @@ try
 
   // create grid part
   typedef Dune::GridSelector::GridType GridType;
-  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
-  HostGridPartType hostGridPart( grid );
-  typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
-  GridPartType gridPart( hostGridPart );
+  typedef Dune::Fem::GridPartAdapter< typename GridType::LeafGridView >  GridPartType;
+
+  GridPartType gridPart( grid.leafGridView() );
 
   // run tests
   std::cout << "Testing entities" << std::endl;

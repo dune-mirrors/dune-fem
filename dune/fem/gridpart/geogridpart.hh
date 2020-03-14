@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_HH
 
-#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for GeoGridPart. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
-#else
-
 #include <cassert>
 
 #include <dune/grid/common/gridview.hh>
@@ -361,5 +357,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_HH
