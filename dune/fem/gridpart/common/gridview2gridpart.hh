@@ -109,6 +109,7 @@ namespace Dune
 
     public:
       using BaseType::grid;
+      using BaseType::boundaryId;
 
       /** \name Construction
        *  \{
@@ -182,16 +183,6 @@ namespace Dune
       IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const
       {
         return gridView_.iend( entity );
-      }
-
-      /** \copydoc Dune::Fem::GridPartInterface::boundaryId */
-      int boundaryId ( const typename BaseType::IntersectionType &intersection ) const
-      {
-#if DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-        return intersection.boundaryId();
-#else
-        DUNE_THROW( NotImplemented, "Method boundaryId() not implemented" );
-#endif
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::comm */

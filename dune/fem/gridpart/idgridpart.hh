@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_HH
 
-#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for IdGridPart. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
-#else
-
 #include <dune/grid/common/gridview.hh>
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
@@ -329,5 +325,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #endif // #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_HH

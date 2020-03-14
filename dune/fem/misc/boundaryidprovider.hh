@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_MISC_BOUNDARYIDPROVIDER_HH
 #define DUNE_FEM_MISC_BOUNDARYIDPROVIDER_HH
 
-#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for BoundaryIdProvider. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
-#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid/declaration.hh>
 #endif // #if HAVE_DUNE_SPGRID
