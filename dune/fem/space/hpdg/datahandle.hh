@@ -81,7 +81,7 @@ namespace Dune
 
         bool contains ( int dim, int codim ) const { return (codim == 0); }
 
-        bool fixedsize ( int dim, int codim ) const { return true; }
+        bool fixedSize ( int dim, int codim ) const { return true; }
 
         template< class Entity >
         std::size_t size ( const Entity &entity ) const

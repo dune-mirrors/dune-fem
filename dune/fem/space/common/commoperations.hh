@@ -72,11 +72,11 @@ namespace Dune
         return value;
       }
 
-      bool fixedsize (int dim, int codim) const
+      bool fixedSize (int dim, int codim) const
       {
         bool value( true );
         Hybrid::forEach( Std::make_index_sequence< tupleSize >{},
-          [ & ]( auto i ){ value = ( value && std::get< i >( data_ ).fixedsize( dim, codim ) ); } );
+          [ & ]( auto i ){ value = ( value && std::get< i >( data_ ).fixedSize( dim, codim ) ); } );
         return value;
       }
 

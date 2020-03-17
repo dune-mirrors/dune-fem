@@ -123,7 +123,7 @@ namespace Dune
       {}
 
       bool contains ( dim_t dim, dim_t codim ) const { return contains_[ codim ]; }
-      bool fixedsize ( dim_t dim, dim_t codim ) const { return true; }
+      bool fixedSize ( dim_t dim, dim_t codim ) const { return true; }
 
       template< class Entity >
       std::size_t size ( const Entity &entity ) const
@@ -173,7 +173,7 @@ namespace Dune
       {}
 
       bool contains ( dim_t dim, dim_t codim ) const { return contains_[ codim ]; }
-      bool fixedsize ( dim_t dim, dim_t codim ) const { return true; }
+      bool fixedSize ( dim_t dim, dim_t codim ) const { return true; }
 
       template< class Entity >
       std::size_t size ( const Entity &entity ) const
