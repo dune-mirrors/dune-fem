@@ -105,7 +105,7 @@ namespace Dune
         return blockMapper_.contains( codim );
       }
 
-      bool fixedsize ( int dim, int codim) const
+      bool fixedSize ( int dim, int codim) const
       {
         return blockMapper_.fixedDataSize( codim );
       }
