@@ -549,7 +549,7 @@ public:
     return mapper_.contains( codim );
   }
 
-  bool fixedsize ( int dim, int codim ) const
+  bool fixedSize ( int dim, int codim ) const
   {
     return false;
   }

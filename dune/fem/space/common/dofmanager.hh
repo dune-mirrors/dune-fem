@@ -1107,7 +1107,7 @@ namespace Dune
       }
 
       //! fixed size is false
-      bool fixedsize( const int dim, const int codim ) const
+      bool fixedSize( const int dim, const int codim ) const
       {
         return false;
       }

@@ -54,9 +54,9 @@ namespace Dune
       return wrappedHandle_.contains( dim, codim );
     }
 
-    bool fixedsize ( int dim, int codim ) const
+    bool fixedSize ( int dim, int codim ) const
     {
-      return wrappedHandle_.fixedsize( dim, codim );
+      return wrappedHandle_.fixedSize( dim, codim );
     }
 
     template< class HostEntity >
