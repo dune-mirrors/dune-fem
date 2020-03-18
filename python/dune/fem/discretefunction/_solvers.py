@@ -75,7 +75,7 @@ def viennaclsolver(storage,solverType="gmres"):
     return "viennacl",includes,typeName, {}
 
 def petscsolver(storage,solverType=None):
-    includes = ["dune/fem/solver/petscsolver.hh"]
+    includes = ["dune/fem/solver/petscinverseoperators.hh"]
 
     operator = lambda df,_: "Dune::Fem::PetscInverseOperator< " + df + " >"
 

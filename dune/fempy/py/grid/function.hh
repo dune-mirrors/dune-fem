@@ -259,11 +259,14 @@ namespace Dune
       typedef typename GridFunction::GridPartType GridPart;
       typedef typename GridFunction::RangeType Value;
 
+      // testing with uflFunction overal 36s:  18s base time before getting here
+      // 13s for first line, 4s second line
       detail::registerGridFunction( scope, cls );
       detail::clsVirtualizedGridFunction< GridPart, Value >( scope ).def( pybind11::init< GridFunction >() );
       pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridPart, Value > >();
     }
 
+#if 0 // not used anymore
     // registerVirtualizedGridFunction
     // -------------------------------
 
@@ -272,7 +275,7 @@ namespace Dune
     {
       std::ignore = std::make_tuple( detail::clsVirtualizedGridFunction< GridPart, FieldVector< double, dimRange > >( scope )... );
     };
-
+#endif
 
 
     namespace detail

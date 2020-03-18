@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/visibility.hh>
 #include <dune/common/ftraits.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
@@ -102,7 +103,7 @@ namespace Dune
       };
 
       template< class Impl >
-      struct Implementation final
+      struct DUNE_PRIVATE Implementation final
         : public Interface
       {
         Implementation ( Impl impl ) :

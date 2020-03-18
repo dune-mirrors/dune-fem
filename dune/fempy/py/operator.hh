@@ -270,10 +270,10 @@ namespace Dune
       {
         registerBasicOperator(cls);
 
+#if 0 // linear operators are always assembled
         typedef typename Operator::DomainFunctionType DomainFunction;
         typedef typename Operator::RangeFunctionType RangeFunction;
 
-#if 0 // linear operators are always assembled
         // check whether Operator is of type
         // AssembledOperator and thus offers a method matrix.
         static constexpr std::size_t priority =

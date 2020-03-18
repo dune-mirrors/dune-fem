@@ -169,7 +169,6 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     if virtualize:
         writer.emit('// export abstract base class')
-        writer.emit('// export abstract base class')
         writer.emit('if( !pybind11::already_registered< ModelBase >() )')
         writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
         writer.emit('')

@@ -29,8 +29,6 @@ namespace Dune
             int minLevel = 0, int maxLevel = -1,
             const bool markNeighbors = false )
       {
-        typedef Dune::ReferenceElements< typename Grid::ctype, Grid::dimension > ReferenceElements;
-
         Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
         typename Indicator::RangeType value;
 
