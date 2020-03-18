@@ -91,7 +91,11 @@ class Integrands(codegen.ModelClass):
             # code.append(Declaration(idGetter))
             code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
             code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
-            code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'], code=self.isDirichletIntersection, const=True))
+            code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'],
+                code=self.isDirichletIntersection\
+                          if self.isDirichletIntersection is not None else\
+                     [return_(False)],
+                const=True))
             code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))
 
     def includes(self):

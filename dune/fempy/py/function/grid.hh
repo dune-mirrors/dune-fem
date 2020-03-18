@@ -109,11 +109,13 @@ namespace Dune
           lf_(impl)
       {}
 
-     // TODO warning: ‘pybind11::object::object(pybind11::handle, bool)’ is deprecated: Use reinterpret_borrow<object>() or reinterpret_steal<object>() [-Wdeprecated-declarations]
       PyGridFunction ( const GridFunction &impl )
         : Base(impl.gridPart(), impl.name(), impl.order()),
           impl_( &impl ),
-          pyObj_( pybind11::detail::get_object_handle( impl_, pybind11::detail::get_type_info( typeid( GridFunction ) ) ), true ),
+          // pyObj_( pybind11::detail::get_object_handle( impl_, pybind11::detail::get_type_info( typeid( GridFunction ) ) ), true ),
+          pyObj_( pybind11::reinterpret_borrow<pybind11::object>(
+                  pybind11::detail::get_object_handle( impl_, pybind11::detail::get_type_info( typeid( GridFunction ) ) )
+                ) ),
           lf_(impl)
       {}
 

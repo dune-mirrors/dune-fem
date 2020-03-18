@@ -124,12 +124,12 @@ namespace Dune
           // typedef typename LocalFunctionType::HessianRangeType HessianRangeType;
 
           explicit Type ( const GridFunctionType &gridFunction )
-              : localFunction_( localFunction(gridFunction) ),
-                gridFunction_( gridFunction )
+              : gridFunction_( gridFunction ),
+                localFunction_( localFunction(gridFunction) )
             {}
             explicit Type ( const EntityType &entity, const GridFunctionType &gridFunction )
-              : localFunction_( localFunction(gridFunction) ),
-                gridFunction_( gridFunction )
+              : gridFunction_( gridFunction ),
+                localFunction_( localFunction(gridFunction) )
             { bind(entity); }
 
             //! evaluate local function

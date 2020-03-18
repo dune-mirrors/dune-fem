@@ -6,7 +6,7 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 

@@ -95,6 +95,7 @@ namespace Dune
       template< class Space, class... options >
       void registerFunctionSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
       {
+#if 0 // rework this to only export required range
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if( !std::is_same< RangeFieldType, double >::value )
         {
@@ -107,6 +108,7 @@ namespace Dune
           Dune::Python::registerDynamicVector<RangeFieldType>(module);
           Dune::Python::registerDynamicMatrix<RangeFieldType>(module);
         }
+#endif
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
         cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );

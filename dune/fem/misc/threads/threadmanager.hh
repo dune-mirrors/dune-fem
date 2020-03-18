@@ -241,15 +241,20 @@ namespace Dune
 #endif
 
 #ifdef _OPENMP
+// in debug mode show which threading model is used
+#ifndef NDEBUG
 #warning "ThreadManager: using OpenMP"
+#endif
     using ThreadManager = OpenMPThreadManager;
 #elif defined(USE_PTHREADS)
+// in debug mode show which threading model is used
+#ifndef NDEBUG
 #warning "ThreadManager: using pthreads"
+#endif
     using ThreadManager = PThreadsManager;
 #else
     using ThreadManager = EmptyThreadManager;
 #endif
-
 
   } // namespace Fem
 
