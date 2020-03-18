@@ -245,6 +245,14 @@ namespace Dune
           applyInverseDefault( caller, entity, geo, basisFunctionSet, lf );
       }
 
+      //! apply local dg mass matrix to local function lf
+      //! using the massFactor method of the caller
+      template< class MassCaller, class LocalFunction >
+      void applyInverse ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
+      {
+        applyInverse( caller, entity, lf.basisFunctionSet(), lf );
+      }
+
       //! apply local dg mass matrix to local function lf without mass factor
       template< class LocalFunction >
       void applyInverse ( const EntityType &entity, LocalFunction &lf ) const
