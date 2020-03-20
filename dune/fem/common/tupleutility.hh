@@ -2,9 +2,9 @@
 #define DUNE_FEM_COMMON_TUPLEUTILITY_HH
 
 #include <tuple>
+#include <utility>
 
 #include <dune/common/tupleutility.hh>
-#include <dune/common/std/utility.hh>
 
 namespace
 {
@@ -117,9 +117,9 @@ namespace Dune
 
   template< typename T, typename... Args >
   inline auto tuple_pop_back ( const std::tuple< T, Args... > &tup ) ->
-    decltype ( tuple_pop_back_impl ( tup , Std::make_index_sequence< sizeof...( Args ) > ( ) ) )
+    decltype ( tuple_pop_back_impl ( tup , std::make_index_sequence< sizeof...( Args ) > ( ) ) )
   {
-    return tuple_pop_back_impl ( tup , Std::make_index_sequence< sizeof... ( Args ) > ( ) );
+    return tuple_pop_back_impl ( tup , std::make_index_sequence< sizeof... ( Args ) > ( ) );
   }
 
 
@@ -136,9 +136,9 @@ namespace Dune
 
   template< typename T, typename... Args >
   inline auto tuple_pop_front ( const std::tuple< T, Args... > &tup ) ->
-    decltype ( tuple_pop_front_impl ( tup , Std::make_index_sequence< sizeof...( Args ) > ( ) ) )
+    decltype ( tuple_pop_front_impl ( tup , std::make_index_sequence< sizeof...( Args ) > ( ) ) )
   {
-    return tuple_pop_front_impl ( tup , Std::make_index_sequence< sizeof... ( Args )  > ( ) );
+    return tuple_pop_front_impl ( tup , std::make_index_sequence< sizeof... ( Args )  > ( ) );
   }
 
 

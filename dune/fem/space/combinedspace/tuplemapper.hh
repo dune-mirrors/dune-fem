@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -148,7 +147,7 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset_[ i ] );
@@ -162,7 +161,7 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset_[ i ] );
@@ -264,7 +263,7 @@ namespace Dune
         {
           globalOffset_[ 0 ] = 0;
           // compute new offsets
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i ){ globalOffset_[ i + 1 ] = globalOffset_[ i ] + std::get< i >( mapperTuple_ ).size(); } );
         }
 
@@ -329,7 +328,7 @@ namespace Dune
         {
           SizeType nHoles = 0;
           int comp = -1;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
@@ -348,7 +347,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType oIndex = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
@@ -368,7 +367,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType nIndex = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
@@ -388,7 +387,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType oOffset = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
@@ -408,7 +407,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType offset = 0;
-          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )

@@ -35,25 +35,25 @@ namespace Dune
         static constexpr int size () { return std::tuple_element< j, RangeSizeTuple >::type::value; }
 
         template< int ... j >
-        static constexpr Std::integer_sequence< int, size< j >() ... > sizes ( Std::integer_sequence< int, j ... > )
+        static constexpr std::integer_sequence< int, size< j >() ... > sizes ( std::integer_sequence< int, j ... > )
         {
-          return Std::integer_sequence< int, size< j >() ... >();
+          return std::integer_sequence< int, size< j >() ... >();
         }
 
         template< int i >
         static constexpr int offset ()
         {
-          return sum( sizes( Std::make_integer_sequence< int, i >() ) );
+          return sum( sizes( std::make_integer_sequence< int, i >() ) );
         }
 
       private:
         template< int ... j >
-        static constexpr int sum ( Std::integer_sequence< int, j ... > )
+        static constexpr int sum ( std::integer_sequence< int, j ... > )
         {
           return Std::sum( j ... );
         }
 
-        static constexpr int sum ( Std::integer_sequence< int > ) { return 0; }
+        static constexpr int sum ( std::integer_sequence< int > ) { return 0; }
       };
 
       typedef std::array< std::size_t, sizeof ... ( ShapeFunctionSets ) +1 > Offset;

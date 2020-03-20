@@ -6,14 +6,11 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
-
-// dune-common includes
-#include <dune/common/std/optional.hh>
-
 #include <type_traits>
 #include <utility>
 
 // dune-geometry includes
+#include <dune/common/std/optional.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 

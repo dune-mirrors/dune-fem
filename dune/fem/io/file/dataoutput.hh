@@ -16,7 +16,6 @@
 #endif
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 #include <dune/common/typeutilities.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -570,7 +569,7 @@ namespace Dune
       template< typename ...  T >
       void forEach ( const std::tuple< T ... >& data )
       {
-        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+        Hybrid::forEach( std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
                           auto df( std::get< i >( data ) );
                           if( df )
@@ -621,7 +620,7 @@ namespace Dune
       template< typename ...  T >
       void forEach ( const std::tuple< T ... >& data )
       {
-        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+        Hybrid::forEach( std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
                           auto df( std::get< i >( data ) );
                           if( df )
@@ -678,7 +677,7 @@ namespace Dune
       template< typename ... T >
       void forEach ( const std::tuple< T ... >& data )
       {
-        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+        Hybrid::forEach( std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
                           auto df( std::get< i >( data ));
                           if( df )

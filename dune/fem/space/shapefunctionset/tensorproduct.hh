@@ -5,12 +5,12 @@
 #include <array>
 #include <cstddef>
 #include <tuple>
+#include <utility>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/fem/common/forloop.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/fem/common/coordinate.hh>
 
@@ -256,7 +256,7 @@ namespace Dune
     inline int TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::order () const
     {
       int value( 0 );
-      Hybrid::forEach( Std::make_index_sequence< std::tuple_size< ShapeFunctionSetTupleType >::value >{},
+      Hybrid::forEach( std::make_index_sequence< std::tuple_size< ShapeFunctionSetTupleType >::value >{},
         [ & ]( auto i ){ value = std::max( value, std::get< i >( shapeFunctionSetTuple_ ).order() ); } );
       return value;
     }

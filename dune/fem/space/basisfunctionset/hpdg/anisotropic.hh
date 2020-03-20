@@ -12,7 +12,6 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/power.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -64,19 +63,19 @@ namespace Dune
         }
 
         template< class MultiIndex, int... i >
-        static auto get ( const MultiIndex &multiIndex, Dune::Std::integer_sequence< int,  i... > )
+        static auto get ( const MultiIndex &multiIndex, std::integer_sequence< int,  i... > )
           -> decltype( std::make_tuple( get< i, MultiIndex >( multiIndex )... ) )
         {
           return std::make_tuple( get< i, MultiIndex >( multiIndex )... );
         }
 
       public:
-        using Type = decltype( get( std::declval< Dune::FieldVector< int, FunctionSpace::dimDomain > >(), Dune::Std::make_integer_sequence< int, FunctionSpace::dimDomain >() ) );
+        using Type = decltype( get( std::declval< Dune::FieldVector< int, FunctionSpace::dimDomain > >(), std::make_integer_sequence< int, FunctionSpace::dimDomain >() ) );
 
         template< class MultiIndex >
         static Type get ( const MultiIndex &multiIndex )
         {
-          return get( multiIndex, Dune::Std::make_integer_sequence< int, FunctionSpace::dimDomain >() );
+          return get( multiIndex, std::make_integer_sequence< int, FunctionSpace::dimDomain >() );
         }
       };
 

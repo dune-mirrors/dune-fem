@@ -3,7 +3,6 @@
 
 #include <utility>
 
-#include <dune/common/std/utility.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/tuplediscretefunction/discretefunction.hh>

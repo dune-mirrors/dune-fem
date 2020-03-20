@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <iostream>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
@@ -233,14 +233,14 @@ public:
     // copy DOF's arg into a consecutive vector
     std::vector<DofType> vecArg(arg.size());
     auto vecArgIt(vecArg.begin());
-    Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},
+    Hybrid::forEach(std::make_index_sequence<sizeof...(DFs)>{},
       [&](auto i){vecArgIt=std::copy(std::get<i>(arg).dbegin(),std::get<i>(arg).dend(),vecArgIt);});
     std::vector<DofType> vecDest(dest.size());
     // apply operator
     apply(vecArg.data(),vecDest.data());
     // copy back solution into dest
     auto vecDestIt(vecDest.begin());
-    Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},[&](auto i){for(auto& dof:dofs(std::get<i>(dest))) dof=(*(vecDestIt++));});
+    Hybrid::forEach(std::make_index_sequence<sizeof...(DFs)>{},[&](auto i){for(auto& dof:dofs(std::get<i>(dest))) dof=(*(vecDestIt++));});
     return 1;
   }
 
