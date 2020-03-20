@@ -5,7 +5,6 @@
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 
 namespace Dune
 {
@@ -20,7 +19,7 @@ namespace Dune
     template<typename... Args>
     static void apply(Args&&... args)
     {
-      Dune::Hybrid::forEach(Std::make_index_sequence<last+1-first>{},
+      Dune::Hybrid::forEach(std::make_index_sequence<last+1-first>{},
         [&](auto i){Operation<i+first>::apply(args...);});
     }
   };

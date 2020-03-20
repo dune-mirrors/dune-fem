@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dune
@@ -67,7 +66,7 @@ namespace Dune
       bool contains (int dim, int codim) const
       {
         bool value( false );
-        Hybrid::forEach( Std::make_index_sequence< tupleSize >{},
+        Hybrid::forEach( std::make_index_sequence< tupleSize >{},
           [ & ]( auto i ){ value = ( value || std::get< i >( data_ ).contains( dim, codim ) ); } );
         return value;
       }
@@ -75,7 +74,7 @@ namespace Dune
       bool fixedSize (int dim, int codim) const
       {
         bool value( true );
-        Hybrid::forEach( Std::make_index_sequence< tupleSize >{},
+        Hybrid::forEach( std::make_index_sequence< tupleSize >{},
           [ & ]( auto i ){ value = ( value && std::get< i >( data_ ).fixedSize( dim, codim ) ); } );
         return value;
       }
@@ -85,7 +84,7 @@ namespace Dune
       template<class MessageBufferImp, class EntityType>
       void gather (MessageBufferImp& buff, const EntityType& en) const
       {
-        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).gather( buff, en ); } );
+        Hybrid::forEach( std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).gather( buff, en ); } );
       }
 
       //! \brief loop over all internal data handlers and call scatter for
@@ -93,7 +92,7 @@ namespace Dune
       template<class MessageBufferImp, class EntityType>
       void scatter (MessageBufferImp& buff, const EntityType& en, std::size_t n)
       {
-        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).scatter( buff, en, n ); } );
+        Hybrid::forEach( std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).scatter( buff, en, n ); } );
       }
 
       //! \brief loop over all internal data handlers and return sum of data
@@ -102,7 +101,7 @@ namespace Dune
       std::size_t size (const EntityType& en) const
       {
         std::size_t value( 0 );
-        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ value += std::get< i >( data_ ).size( en ); } );
+        Hybrid::forEach( std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ value += std::get< i >( data_ ).size( en ); } );
         return value;
       }
 

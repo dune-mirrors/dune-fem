@@ -5,10 +5,10 @@
 #include <array>
 #include <tuple>
 #include <vector>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
@@ -58,7 +58,7 @@ namespace Dune
 
       void setFatherChildWeight ( const DomainFieldType &weight )
       {
-        Hybrid::forEach( Std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
+        Hybrid::forEach( std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
           [ & ]( auto i ){ std::get< i >( localRestrictProlongTuple_ ).setFatherChildWeight( weight ); } );
       }
 

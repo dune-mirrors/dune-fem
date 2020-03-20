@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <array>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include <dune/fem/common/forloop.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -49,25 +49,25 @@ namespace Dune
         static constexpr int size () { return std::tuple_element< j, std::tuple< std::integral_constant< int, i > ... > >::type::value; }
 
         template< int ... j >
-        static constexpr Std::integer_sequence< int, size< j >() ... > sizes ( Std::integer_sequence< int, j ... > )
+        static constexpr std::integer_sequence< int, size< j >() ... > sizes ( std::integer_sequence< int, j ... > )
         {
-          return Std::integer_sequence< int, size< j >() ... >();
+          return std::integer_sequence< int, size< j >() ... >();
         }
 
         template< int j >
         static constexpr int offset ()
         {
-          return mysum( sizes( Std::make_integer_sequence< int, j >() ) );
+          return mysum( sizes( std::make_integer_sequence< int, j >() ) );
         }
 
       private:
         template< int ... j >
-        static constexpr int mysum ( Std::integer_sequence< int, j ... > )
+        static constexpr int mysum ( std::integer_sequence< int, j ... > )
         {
           return Std::sum( j ... );
         }
 
-        static constexpr int mysum ( Std::integer_sequence< int > )
+        static constexpr int mysum ( std::integer_sequence< int > )
         {
           return 0;
         }

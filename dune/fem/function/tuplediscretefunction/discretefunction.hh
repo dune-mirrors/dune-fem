@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>

@@ -1,7 +1,6 @@
 #include <config.h>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -48,7 +47,7 @@ int main( int argc, char **argv )
   std::cout << "Number of shape functions: " << numShapeFunctions;
   std::cout << std::endl << std::endl;
 
-  Hybrid::forEach( Std::make_index_sequence< DIMENSION+1 >{},
+  Hybrid::forEach( std::make_index_sequence< DIMENSION+1 >{},
     [ & ]( auto i ){ std::cout << "MaxDofs< " << i << " >: " << LagrangePointType::template Codim< i >::maxDofs() << std::endl; } );
   std::cout << std::endl;
 

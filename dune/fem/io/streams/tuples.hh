@@ -2,9 +2,9 @@
 #define DUNE_FEM_IO_STREAMS_TUPLES_HH
 
 #include <tuple>
+#include <utility>
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/common/std/utility.hh>
 #include <dune/fem/io/streams/streams.hh>
 
 
@@ -39,7 +39,7 @@ namespace Dune
       operator>> ( InStreamInterface< StreamTraits > &in, std::tuple< Args... > &tuple )
     {
 
-      Hybrid::forEach ( Std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ in >> std::get< i >( tuple ); } );
+      Hybrid::forEach ( std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ in >> std::get< i >( tuple ); } );
       return in;
     }
 
@@ -59,7 +59,7 @@ namespace Dune
     inline OutStreamInterface< StreamTraits > &
       operator<< ( OutStreamInterface< StreamTraits > &out, const std::tuple< Args... > &tuple )
     {
-      Hybrid::forEach ( Std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ out << std::get< i >( tuple ); } );
+      Hybrid::forEach ( std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ out << std::get< i >( tuple ); } );
       return out;
     }
 
