@@ -75,7 +75,7 @@ typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorTyp
 #elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-typedef Dune::Fem::ISTLCGOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
+typedef Dune::Fem::ISTLInverseOperator< DiscreteFunctionType, Dune::Fem::SolverParameter::cg > InverseOperatorType;
 #elif HAVE_EIGEN && defined USE_EIGEN
 typedef Dune::Fem::EigenVector< double > DofVectorType;
 typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteSpaceType, DofVectorType > > DiscreteFunctionType;
