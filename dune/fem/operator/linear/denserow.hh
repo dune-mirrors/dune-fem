@@ -38,6 +38,10 @@ namespace Dune
 
       virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const override { apply( arg, dest ); }
 
+      [[deprecated]]
+      const BaseType &systemMatrix () const { return *this; }
+      [[deprecated]]
+      BaseType &systemMatrix () { return *this; }
     };
 
   } // namespace Fem

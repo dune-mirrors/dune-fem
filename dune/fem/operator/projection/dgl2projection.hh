@@ -77,6 +77,25 @@ namespace Dune
       };
 
     public:
+      /** \brief project function onto discrete discontinuous galerkin space
+       *
+       * \param f  function that is going to be projected
+       * \param discFunc discrete function storing the result
+       * \param quadOrd order of quadrature used (defaults to 2 * space.order())
+       * \param communicate  restore integrity of data (defaults to true)
+       */
+      template <class FunctionImp, class DiscreteFunctionImp>
+      DUNE_VERSION_DEPRECATED_3_0( "interpolate" )
+      static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc,
+                          const int quadOrd = -1, const bool communicate = true )
+      {
+        ProjectChooser<0, std::is_convertible<FunctionImp, HasLocalFunction>::value > :: project(f,discFunc,quadOrd);
+
+        // do communication in parallel cases
+        if( communicate )
+          discFunc.communicate();
+      }
+
       //! project function to discrete space
       template <class FunctionImp, class DiscreteFunctionImp>
       static void apply(const FunctionImp& f, DiscreteFunctionImp& discFunc )

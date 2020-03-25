@@ -43,6 +43,17 @@ namespace Dune
         apply( arg, dest );
       }
 
+      [[deprecated]]
+      const BaseType &systemMatrix() const
+      {
+        return *this;
+      }
+
+      [[deprecated]]
+      BaseType &systemMatrix()
+      {
+        return *this;
+      }
     };
   } // namespace Fem
 

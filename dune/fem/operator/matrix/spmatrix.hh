@@ -290,6 +290,12 @@ namespace Dune
         return rows_[ row+1 ];
       }
 
+      [[deprecated]]
+      std::tuple< ValuesVector&, IndicesVector&, IndicesVector& > data()
+      {
+        return exportCRS();
+      }
+
       std::tuple< ValuesVector&, IndicesVector&, IndicesVector& > exportCRS()
       {
         // only return internal data in compressed status

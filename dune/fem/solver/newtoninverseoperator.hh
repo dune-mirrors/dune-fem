@@ -162,6 +162,116 @@ namespace Dune
         Parameter::append( keyPrefix_ + "lineSearch", lineSearchMethods[int(method)], true );
       }
 
+      //deprecated methods
+      // split into removal of Parameter at the end
+      // and forward to the linear parameters
+      [[deprecated("Replaced by tolerance()")]]
+      virtual double toleranceParameter () const
+      {
+        return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+      }
+
+#if 0
+    private: // remove following as soon as deprecated methods are removed
+      double linAbsTolParameter ( const double &tolerance, std::true_type )  const
+      {
+        if(parameter_.exists(keyPrefix_ + "linabstol"))
+          return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
+        return linear().absoluteTol();
+      }
+      double linAbsTolParameter ( const double &tolerance, std::false_type )  const
+      {
+        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
+      }
+      double linReductionParameter ( const double &tolerance, std::true_type ) const
+      {
+        if(parameter_.exists(keyPrefix_ + "linreduction"))
+          return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
+        return linear().reductionTol();
+      }
+      double linReductionParameter ( const double &tolerance, std::false_type ) const
+      {
+        return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
+      }
+      int maxLinearIterationsParameter (std::true_type) const
+      {
+        if(parameter_.exists(keyPrefix_ + "maxlineariterations"))
+          return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return linear().maxIterations();
+      }
+      int maxLinearIterationsParameter (std::false_type) const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+      }
+      bool newtonVerbose (std::true_type) const
+      {
+        const bool v = baseParam_? baseParam_->verbose() : false;
+        return parameter_.getValue< bool >(keyPrefix_ +  "verbose", v );
+      }
+      bool newtonVerbose (std::false_type) const
+      {
+        return parameter_.getValue< bool >(keyPrefix_ +  "verbose", false );
+      }
+      bool linearSolverVerbose (std::true_type) const
+      {
+        const bool v = baseParam_? baseParam_->verbose() : false;
+        return parameter_.getValue< bool >( keyPrefix_ + "linear.verbose", v );
+      }
+      bool linearSolverVerbose (std::false_type) const
+      {
+        return parameter_.getValue< bool >( keyPrefix_ + "linear.verbose", false );
+      }
+
+    public:
+      [[deprecated("please use the linear solver parameters instead")]]
+      virtual double linAbsTolParameter ( const double &tolerance )  const
+      {
+        return linAbsTolParameter(tolerance,
+          std::integral_constant<bool, !std::is_same<SolverParam,ParameterReader>::value>());
+      }
+
+      [[deprecated("please use the linear solver parameters instead")]]
+      virtual double linReductionParameter ( const double &tolerance ) const
+      {
+        return linReductionParameter(tolerance,
+          std::integral_constant<bool, !std::is_same<SolverParam,ParameterReader>::value>());
+      }
+
+      [[deprecated("Replaced by maxLinearIterations")]]
+      virtual int maxLinearIterationsParameter () const
+      {
+        return maxLinearIterationsParameter(
+          std::integral_constant<bool, !std::is_same<SolverParam,ParameterReader>::value>());
+      }
+
+      [[deprecated("Replaced by verbose ()")]]
+      virtual bool newtonVerbose () const
+      {
+        return newtonVerbose(
+          std::integral_constant<bool, !std::is_same<SolverParam,ParameterReader>::value>());
+      }
+
+      [[deprecated("please use the linear solver parameters instead")]]
+      virtual bool linearSolverVerbose () const
+      {
+        return linearSolverVerbose(
+          std::integral_constant<bool, !std::is_same<SolverParam,ParameterReader>::value>());
+      }
+
+
+      [[deprecated("Replaced by maxIterations ()")]]
+      virtual int maxIterationsParameter () const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+      }
+
+      [[deprecated]]
+      virtual int maxLineSearchIterationsParameter () const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
+      }
+#endif
+
     private:
       mutable double tolerance_ = -1;
       mutable int verbose_ = -1;
@@ -237,6 +347,17 @@ namespace Dune
        *        <b>fem.solver.newton.tolerance</b>
        */
 
+      [[ deprecated ]]
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const ParameterType &parameter )
+        : NewtonInverseOperator( std::move( jInv ), parameter.tolerance(), parameter )
+      {}
+
+      [[ deprecated ]]
+      explicit NewtonInverseOperator ( LinearInverseOperatorType jInv,
+                                       const ParameterReader &parameter ) // = Parameter::container() )
+        : NewtonInverseOperator( std::move( jInv ), ParameterType( parameter ) )
+      {}
+
       /** constructor
        *
        *  \param[in]  jInv        linear inverse operator (will be move constructed)
@@ -254,6 +375,12 @@ namespace Dune
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } )
+      {}
+
+      [[ deprecated ]]
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon,
+                              const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( std::move( jInv ), epsilon, ParameterType( parameter ) )
       {}
 
 
@@ -297,6 +424,43 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
+
+      [[ deprecated ]]
+      NewtonInverseOperator ( const OperatorType &op, const ParameterType &parameter )
+        : NewtonInverseOperator( parameter )
+      {
+        bind( op );
+      }
+
+      [[ deprecated ]]
+      explicit NewtonInverseOperator ( const OperatorType &op,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( parameter )
+      {
+        bind( op );
+      }
+
+      /** constructor
+       *
+       *  \param[in]  op       operator to invert
+       *  \param[in]  epsilon  tolerance for norm of residual
+       */
+
+      [[ deprecated ]]
+      NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
+                              const ParameterType &parameter )
+        : NewtonInverseOperator( epsilon, parameter )
+      {
+        bind( op );
+      }
+
+      [[ deprecated ]]
+      NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
+                              const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( epsilon, parameter )
+      {
+        bind( op );
+      }
 
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 
