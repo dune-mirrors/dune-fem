@@ -156,15 +156,6 @@ namespace Dune
 
 
 
-    // ISTLParallelMatrixAdapter
-    // -------------------------
-
-    template< class Matrix, class BasisFunctionSets >
-    struct ISTLParallelMatrixAdapter< Matrix, hpDG::DefaultDiscontinuousGalerkinSpace< BasisFunctionSets > >
-    {
-      using Type = DGParallelMatrixAdapter< Matrix >;
-    };
-
 #endif // #ifndef DOXYGEN
 
   } // namespace Fem

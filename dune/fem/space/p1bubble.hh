@@ -470,13 +470,6 @@ namespace Dune
       {}
     };
 
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, BubbleElementSpace< FunctionSpace,GridPart,Storage> >
-    {
-      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
-    };
-
   } // namespace Fem
 
 } // namespace Dune
