@@ -109,6 +109,9 @@ namespace Dune
           };
       }
 
+    protected:
+      MatrixType &matrix () { return matrix_; }
+
     public:
       HierarchicalLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
         : domainSpace_( domainSpace ), rangeSpace_( rangeSpace )
@@ -126,8 +129,7 @@ namespace Dune
       const DomainSpaceType &domainSpace () const { return domainSpace_; }
       const RangeSpaceType &rangeSpace () const { return domainSpace_; }
 
-      const MatrixType &matrix () const { return matrix_; }
-      MatrixType &matrix () { return matrix_; }
+      MatrixType &exportMatrix () const { return matrix_; }
 
       template< class LocalMatrix >
       void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMatrix )
@@ -298,7 +300,7 @@ namespace Dune
 
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
-      MatrixType matrix_;
+      mutable MatrixType matrix_;
     };
 
   } // namespace Fem
