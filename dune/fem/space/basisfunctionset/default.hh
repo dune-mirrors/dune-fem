@@ -10,7 +10,6 @@
 #include <utility>
 
 // dune-geometry includes
-#include <dune/common/std/optional.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
@@ -360,7 +359,7 @@ namespace Dune
     private:
       const EntityType *entity_ = nullptr;
       ShapeFunctionSetType shapeFunctionSet_;
-      Std::optional< GeometryType > geometry_;
+      std::optional< GeometryType > geometry_;
     };
 
   } // namespace Fem
