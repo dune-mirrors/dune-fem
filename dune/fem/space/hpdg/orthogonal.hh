@@ -156,17 +156,6 @@ namespace Dune
     };
 
 
-#if HAVE_DUNE_ISTL
-    // ISTLParallelMatrixAdapter
-    // -------------------------
-
-    template< class Matrix, class FunctionSpace, class GridPart, int order, bool caching >
-    struct ISTLParallelMatrixAdapter< Matrix, hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
-    {
-      using Type = DGParallelMatrixAdapter< Matrix >;
-    };
-#endif // HAVE_DUNE_ISTL
-
 #endif // #ifndef DOXYGEN
 
 
