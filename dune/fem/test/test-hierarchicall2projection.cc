@@ -106,8 +106,10 @@ int main ( int argc, char **argv )
   typedef std::decay_t< decltype( u.dofVector().array() ) > X;
   X &x = u.dofVector().array();
   X &b = rhs.dofVector().array();
-  Dune::MatrixAdapter< std::decay_t< decltype( massOp.matrix() ) >, X, X > A( massOp.matrix() );
-  Dune::SeqJac< std::decay_t< decltype( massOp.matrix() ) >, X, X, 2 > P( massOp.matrix(), 1, 1 );
+
+  typedef std::decay_t< decltype( massOp.exportMatrix() ) > MatrixType;
+  Dune::MatrixAdapter< MatrixType, X, X > A( massOp.exportMatrix() );
+  Dune::SeqJac< MatrixType, X, X, 2 > P( massOp.exportMatrix(), 1, 1 );
 
   Dune::CGSolver< X > solver( A, P, 1e-10, 1000, 0 );
   Dune::InverseOperatorResult result;
