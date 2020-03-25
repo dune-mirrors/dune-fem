@@ -339,24 +339,6 @@ namespace Dune
         return asImp().blocks();
       }
 
-      /** \brief obtain pointer to block of discrete function with block number index
-       *
-       *  \returns a DoFBlockPtrType pointing to block index
-       */
-      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) ConstDofBlockPtrType block ( unsigned int index ) const
-      {
-        return asImp().block( index );
-      }
-
-      /** \brief obtain pointer to block of discrete function with block number index (read-only)
-       *
-       *  \returns a DoFBlockPtrType pointing to block index (read-only)
-       */
-      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) DofBlockPtrType block ( unsigned int index )
-      {
-        return asImp().block( index );
-      }
-
       /** \brief obtain an iterator pointing to the first DoF (read-only)
        *
        *  \returns a DoF iterator pointing to first DoF (degre of freedom)

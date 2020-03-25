@@ -140,17 +140,6 @@ namespace Dune
     };
 
 
-#if HAVE_DUNE_ISTL
-    // ISTLParallelMatrixAdapter
-    // -------------------------
-
-    template< class Matrix, class Traits >
-    struct ISTLParallelMatrixAdapter< Matrix, hpDG::DiscontinuousGalerkinSpace< Traits > >
-    {
-      using Type = DGParallelMatrixAdapter< Matrix >;
-    };
-#endif // HAVE_DUNE_ISTL
-
 #endif //#ifndef DOXYGEN
 
   } // namespace Fem

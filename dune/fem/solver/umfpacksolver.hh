@@ -97,47 +97,6 @@ public:
     UMF_Control[UMFPACK_PRL] = 4;
   }
 
-  [[deprecated]]
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-                         const ParameterReader &parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {}
-
-  [[deprecated]]
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
-                         const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {}
-
-  [[deprecated]]
-  UMFPACKInverseOperator(const double& redEps, const double& absLimit,
-                         const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {}
-
-  [[deprecated]]
-  UMFPACKInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
-                         const ParameterReader &parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {
-    bind(op);
-  }
-
-  [[deprecated]]
-  UMFPACKInverseOperator(const OperatorType& op, const double& redEps, const double& absLimit,
-                         const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {
-    bind(op);
-  }
-
-  [[deprecated]]
-  UMFPACKInverseOperator(const OperatorType& op, const ParameterReader& parameter = Parameter::container() ) :
-    UMFPACKInverseOperator( SolverParameter(parameter) )
-  {
-    bind(op);
-  }
-
   // \brief Destructor.
   ~UMFPACKInverseOperator()
   {
@@ -309,10 +268,6 @@ protected:
     }
   }
 };
-
-// deprecated old type
-template<class DF, class Op, bool symmetric=false>
-using UMFPACKOp = UMFPACKInverseOperator< DF, typename Op::MatrixType >;
 
 }
 }

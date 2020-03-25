@@ -351,10 +351,6 @@ private:
   }
 };
 
-// deprecated old type
-template<class DF, class Op, bool symmetric=false>
-using SPQROp = SPQRInverseOperator< DF, symmetric, typename Op::MatrixType >;
-
 
 } // end namespace Fem
 } // end namespace Dune
