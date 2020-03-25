@@ -66,8 +66,6 @@ namespace Dune
       return quadrature_;
     }
 
-    DUNE_VERSION_DEPRECATED_3_0( "index" ) unsigned int point () const { return index(); }
-
     unsigned int index () const { return index_; }
     const CoordinateType &position () const { return quadrature().point( index() ); }
     const RealType &weight () const { return quadrature().weight( index() ); }

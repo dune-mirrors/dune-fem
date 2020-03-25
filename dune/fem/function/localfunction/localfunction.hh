@@ -348,20 +348,6 @@ namespace Dune
 
       SizeType size () const { return localDofVector().size(); }
 
-      /** \brief obtain the number of local DoFs in the scalar case
-       *
-       *  Obtain the number of local DoFs of the scalar case
-       *  of this local function. The value is
-       *  identical to the number of basis functons on the entity.
-       *
-       *  \returns number of local DoFs, scalar case
-       */
-      int numScalarDofs () const DUNE_DEPRECATED_MSG( "Replace by numDofs() / dimRange" )
-      {
-        assert( numDofs() % dimRange == 0 );
-        return numDofs() / dimRange;
-      }
-
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
                  add the result to the local coefficients  */
       template< class QuadratureType, class ... Vectors >
