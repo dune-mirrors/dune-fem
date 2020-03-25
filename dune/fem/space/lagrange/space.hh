@@ -319,6 +319,39 @@ namespace Dune
         return ShapeFunctionSetType( &scalarShapeFunctionSets_[ type ] );
       }
 
+      /** \brief provide access to the Lagrange point set for an entity
+       *
+       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+       *        is unique to the LagrangeDiscreteFunctionSpace.
+       *
+       *  \param[in]  entity  entity the Lagrange point set is requested for
+       *
+       *  \returns LagrangePointSet
+       */
+      template< class EntityType >
+      const LagrangePointSetType &
+      DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
+      lagrangePointSet ( const EntityType &entity ) const
+      {
+        return lagrangePointSet( entity.type() );
+      }
+
+      /** \brief provide access to the Lagrange point set for a geometry type
+       *
+       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
+       *        is unique to the LagrangeDiscreteFunctionSpace.
+       *
+       *  \param[in]  type  type of geometry the Lagrange point set is requested for
+       *
+       *  \returns LagrangePointSetType
+       */
+      const LagrangePointSetType &
+      DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
+      lagrangePointSet ( const GeometryType &type ) const
+      {
+        return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder_ );
+      }
+
       LagrangeDiscreteFunctionSpace ( const ThisType & ) = delete;
       ThisType &operator= ( const ThisType & ) = delete;
 

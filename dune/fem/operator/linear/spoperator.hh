@@ -47,6 +47,17 @@ namespace Dune
 
       virtual void finalize () { BaseType::compress(); }
 
+      [[deprecated]]
+      const BaseType &systemMatrix() const
+      {
+        return *this;
+      }
+
+      [[deprecated]]
+      BaseType &systemMatrix()
+      {
+        return *this;
+      }
     };
 
   } // namespace Fem

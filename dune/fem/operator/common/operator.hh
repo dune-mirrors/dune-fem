@@ -126,6 +126,8 @@ namespace Dune
       /** \brief commit intermediate states of linear operator assembly */
       virtual void flushAssembly() {}
 
+      DUNE_VERSION_DEPRECATED_2_7( "finalize" ) void communicate() { this->finalize(); }
+
       /** \brief Initiate the assemble of values using the LocalContribution concept
        *  \tparam AssembleOperation the specific operation (Add, Set, ...)
        */
