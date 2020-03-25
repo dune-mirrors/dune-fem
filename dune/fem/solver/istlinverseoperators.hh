@@ -291,93 +291,6 @@ namespace Dune
       typedef typename SolverAdapterType::ReductionType ReductionType;
     public:
 
-      //deprecated constructors
-      [[deprecated]]
-      ISTLInverseOperator ( double redEps, double absLimit, const ParameterReader & parameter )
-        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< int >::max(), SolverParameter(parameter).verbose(), SolverParameter(parameter) ) {}
-
-      [[deprecated]]
-      ISTLInverseOperator ( double redEps, double absLimit,
-                            const SolverParameter & parameter = SolverParameter() )
-        : ISTLInverseOperator( redEps, absLimit, parameter.maxIterations(), parameter.verbose(), parameter ) {}
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType &op, double redEps, double absLimit,
-                            const ParameterReader & parameter = Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, parameter )
-      {
-        bind( op );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType& op,
-                            double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter = Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
-      {
-        bind( op );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            double redEps, double absLimit,
-                            const ParameterReader & parameter =Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, parameter )
-      {
-        bind( op, preconditioner );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter = Parameter::container() )
-        : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
-      {
-        bind( op, preconditioner );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,
-                            const ParameterReader & parameter )
-        : ISTLInverseOperator( redEps, absLimit, maxIterations, false, SolverParameter(parameter) ) {}
-
-      [[deprecated]]
-      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const SolverParameter & parameter = SolverParameter() )
-        : ISTLInverseOperator( parameter )
-      {
-        parameter_->setReductionTol( redEps );
-        parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxIterations( maxIterations );
-        parameter_->setVerbose( verbose );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType &op,
-                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const SolverParameter & parameter = SolverParameter() )
-        : ISTLInverseOperator ( parameter )
-      {
-        parameter_->setReductionTol( redEps );
-        parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxIterations( maxIterations );
-        parameter_->setVerbose( verbose );
-        bind( op );
-      }
-
-      [[deprecated]]
-      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
-                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const SolverParameter & parameter = SolverParameter() )
-        : ISTLInverseOperator( parameter )
-      {
-        bind( op, preconditioner );
-        parameter_->setReductionTol( redEps );
-        parameter_->setAbsoluteTol( absLimit );
-        parameter_->setMaxIterations( maxIterations );
-        parameter_->setVerbose( verbose );
-     }
-
       //non-deprecated constructors
       ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
@@ -465,36 +378,6 @@ namespace Dune
 
       mutable SolverAdapterType solverAdapter_;
     };
-
-
-    //////////////////////////////////////////////////////////////////////
-    //  deprecated old types
-    //////////////////////////////////////////////////////////////////////
-
-    static const int ISTLLoopSolver     = SolverParameter :: loop ;
-    static const int ISTLGradientSolver = SolverParameter :: gradient ;
-    static const int ISTLCGSolver       = SolverParameter :: cg ;
-    static const int ISTLBiCGSTABSolver = SolverParameter :: bicgstab ;
-    static const int ISTLMINRESSolver   = SolverParameter :: minres ;
-    static const int ISTLRestartedGMRes = SolverParameter :: gmres ;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLLoopOp = ISTLInverseOperator< DF, SolverParameter::loop >;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLMINResOp = ISTLInverseOperator< DF, SolverParameter::minres >;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLBICGSTABOp = ISTLInverseOperator< DF, SolverParameter::bicgstab >;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLGMResOp = ISTLInverseOperator< DF, SolverParameter::gmres >;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLCGOp = ISTLInverseOperator< DF, SolverParameter::cg >;
-
-    template <class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    using ISTLSuperLU = ISTLInverseOperator< DF, SolverParameter::superlu >;
 
   } // namespace Fem
 

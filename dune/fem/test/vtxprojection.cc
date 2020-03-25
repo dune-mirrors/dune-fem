@@ -7,7 +7,7 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
-#include <dune/fem/operator/projection/l2projection.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/common/interpolate.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
