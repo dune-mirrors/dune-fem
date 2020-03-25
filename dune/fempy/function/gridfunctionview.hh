@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-  namespace FemPy
+  namespace Fem
   {
 
     // GridFunctionView
@@ -99,87 +99,14 @@ namespace Dune
       return GridFunctionView< GF >( gf );
     }
 
-  } // namespace FemPy
-
-
-  namespace Fem
-  {
-
-    using FemPy::localFunction;
-
-    namespace Impl
-    {
-      template< class GV, class Evaluate >
-      struct ConstLocalFunction< Dune::Python::SimpleGridFunction<GV,Evaluate> >
-      {
-        struct Type
-        {
-          typedef Dune::Python::SimpleGridFunction<GV,Evaluate> GridFunctionType;
-          typedef decltype(localFunction(std::declval<const GridFunctionType&>())) LocalFunctionType;
-          typedef typename LocalFunctionType::Element EntityType;
-
-          typedef typename LocalFunctionType::LocalCoordinate DomainType;
-          typedef typename LocalFunctionType::Value RangeType;
-          // typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
-          // typedef typename LocalFunctionType::HessianRangeType HessianRangeType;
-
-          explicit Type ( const GridFunctionType &gridFunction )
-              : gridFunction_( gridFunction ),
-                localFunction_( localFunction(gridFunction) )
-            {}
-            explicit Type ( const EntityType &entity, const GridFunctionType &gridFunction )
-              : gridFunction_( gridFunction ),
-                localFunction_( localFunction(gridFunction) )
-            { bind(entity); }
-
-            //! evaluate local function
-            template< class Point >
-            RangeType operator() ( const Point &p ) const
-            {
-              return localFunction_( Fem::coordinate(p) );
-            }
-            template< class Point >
-            RangeType evaluate ( const Point &p ) const
-            {
-              return localFunction_( Fem::coordinate(p) );
-            }
-            //! evaluate local function
-            template< class Point >
-            void evaluate ( const Point &p, RangeType &val ) const
-            {
-              val = localFunction_( Fem::coordinate(p) );
-            }
-            template< class Point, class JacobianRangeType >
-            void jacobian ( const Point &p, JacobianRangeType &val ) const
-            {
-              DUNE_THROW(NotImplemented,"SimpleLocalFunction does not provide a jocobian!");
-            }
-            template< class Point, class HessianRangeType >
-            void hessian ( const Point &p, HessianRangeType &val ) const
-            {
-              DUNE_THROW(NotImplemented,"SimpleLocalFunction does not provide a hessian!");
-            }
-
-            void bind ( const EntityType &entity ) { localFunction_.bind( entity ); }
-            void unbind () {}
-
-            const GridFunctionType &gridFunction () const { return gridFunction_; }
-
-          private:
-            const GridFunctionType &gridFunction_;
-            LocalFunctionType localFunction_;
-        };
-      };
-    } // namespace Impl
-
   } // namespace Fem
 
+#if 0
   namespace Python
   {
-
-    using FemPy::localFunction;
-
+    using Fem::localFunction;
   } // namespace Fem
+#endif
 
 } // namespace Dune
 
