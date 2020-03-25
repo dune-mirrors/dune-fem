@@ -144,7 +144,7 @@ class Source(object):
             if self.virtualize:
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
                 code.append(Include('dune/fempy/function/simplegridfunction.hh'))
-                code.append(Include('dune/fempy/function/gridfunctionview.hh'))
+                code.append(Include('dune/fem/misc/gridfunctionview.hh'))
             else:
                 for c in integrands._coefficients:
                     for i in c._includes:
