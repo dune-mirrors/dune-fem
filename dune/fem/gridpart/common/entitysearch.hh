@@ -58,7 +58,7 @@ namespace Dune
           if( (mydimension < dimensionworld) && ((geo.global( z ) - x).two_norm() > 1e-8 ) )
             continue;
 
-          if( referenceElement( geo.type() ).checkInside( z ) )
+          if( referenceElement<ctype,mydimension>( geo.type() ).checkInside( z ) )
             return entity;
         }
         DUNE_THROW( GridError, "Coordinate " << x << " is outside the grid." );
