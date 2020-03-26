@@ -317,7 +317,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::SPQROp< DiscreteFunction, LinearOperator >;
+    using InverseOperator   = Dune::Fem::SPQRInverseOperator< DiscreteFunction >;
 
     std::string designation(" === SPQROp + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
@@ -345,7 +345,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLCGSolver >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::SolverParameter::cg >;
 
     std::string designation(" === ISTLInverseOperator< ISTLCGSolver > + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
@@ -355,7 +355,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLBiCGSTABSolver >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::SolverParameter::bicgstab >;
 
     std::string designation(" === ISTLInverseOperator< ISTLBiCGSTABSolver > + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
@@ -365,7 +365,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLMINRESSolver >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::SolverParameter::minres >;
 
     std::string designation(" === ISTLInverseOperator< ISTLMINRESSolver > + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::ISTLRestartedGMRes >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::SolverParameter::gmres >;
 
     std::string designation(" === ISTLInverseOperator< ISTLRestartedGMRes > + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
@@ -399,7 +399,7 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::ISTLSuperLU< DiscreteFunction, LinearOperator >;
+    using InverseOperator   = Dune::Fem::ISTLInverseOperator< DiscreteFunction, Dune::Fem::SolverParameter::superlu >;
 
     std::string designation(" === ISTLInverseOperator< ISTLSuperLU > + ISTLLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );

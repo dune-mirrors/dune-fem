@@ -7,7 +7,6 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
-#include <dune/fem/operator/projection/l2projection.hh>
 #include <dune/fem/space/common/interpolate.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
@@ -94,8 +93,7 @@ int main(int argc, char ** argv)
 
     // perform the L2Projection
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-    Fem::L2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2;
-    dgl2( exactSolution, solution );
+    interpolate( exactSolution, solution );
 
     LagrangeFunctionType contSolution("contSolution",lagspace);
     VtxProjection< DiscreteFunctionType,LagrangeFunctionType > projection;

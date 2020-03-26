@@ -128,27 +128,6 @@ namespace Dune
         tolerance_ = eps;
       }
 
-
-      [[ deprecated ]]
-      virtual double absoluteTol ( )  const { return absoluteTol__(); }
-
-      [[ deprecated ]]
-      virtual void setAbsoluteTol ( const double eps )
-      {
-        assert( eps >= 0.0 );
-        absoluteTol_ = eps;
-      }
-
-      [[ deprecated ]]
-      virtual double reductionTol (  ) const { return reductionTol__(); }
-
-      [[ deprecated ]]
-      virtual void setReductionTol ( const double eps )
-      {
-        assert( eps >= 0.0 );
-        reductionTol_ = eps;
-      }
-
       virtual int maxIterations () const
       {
         if( maxIterations_ < 0 )
@@ -197,22 +176,6 @@ namespace Dune
           return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
       }
 
-      [[ deprecated ]]
-      virtual int krylovMethod() const
-      {
-        const std::string solverMethodTable[] = { "cg", "bicgstab", "gmres", "minres", "gradient", "loop"  };
-        int methodType = gmres;
-        if( parameter_.exists( keyPrefix_ + "krylomethod" ) )
-          methodType = parameter_.getEnum( keyPrefix_ + "krylovmethod", solverMethodTable, gmres );
-        else
-        {
-          methodType = parameter_.getEnum( "krylovmethod", solverMethodTable, gmres );
-          std::cout << "WARNING: using old parameter name 'krylovmethod' "
-                    << "please switch to '" << keyPrefix_ << "method'\n";
-        }
-        return methodType;
-      }
-
       virtual int gmresRestart() const
       {
         int defaultRestart = 20;
@@ -237,14 +200,6 @@ namespace Dune
           return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
       }
 
-      [[ deprecated ]]
-      virtual int preconditionMethod () const
-      {
-        static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl" };
-        return parameter_.getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
-      }
-
       virtual double relaxation () const
       {
         return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
@@ -258,25 +213,6 @@ namespace Dune
       virtual int preconditionerLevel () const
       {
         return parameter_.getValue< int >( keyPrefix_ + "preconditioning.level", 0 );
-      }
-
-      //deprecated methods
-      [[deprecated]]
-      virtual double linAbsTolParameter ()  const
-      {
-        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", 1e-8 );
-      }
-
-      [[deprecated]]
-      virtual double linReductionParameter () const
-      {
-        return parameter_.getValue< double >( keyPrefix_ + "linreduction", 1e-2 );
-      }
-
-      [[deprecated]]
-      virtual int maxLinearIterationsParameter () const
-      {
-        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
      private:
