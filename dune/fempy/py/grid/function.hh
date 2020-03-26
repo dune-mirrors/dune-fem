@@ -16,7 +16,7 @@
 #include <dune/python/grid/localview.hh>
 
 #include <dune/fempy/function/simplegridfunction.hh>
-#include <dune/fempy/function/gridfunctionview.hh>
+#include <dune/fem/misc/gridfunctionview.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/numpy.hh>
 #include <dune/fempy/py/space.hh>

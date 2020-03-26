@@ -151,7 +151,7 @@ namespace Dune
       {
         typedef typename Geometry::Implementation Impl;
         Impl impl( gridFunction() );
-        impl.impl().init( hostEntity() );
+        impl.impl().bind( hostEntity() );
         return Geometry( impl );
       }
 
