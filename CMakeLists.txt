@@ -30,11 +30,8 @@ include(DuneMPI)
 #add sub_directories
 dune_add_subdirs(dune lib doc cmake/modules)
 
-# add python bindings if dune-python available
-if(dune-python_FOUND)
-  add_subdirectory(python)
-  dune_python_install_package(PATH "python")
-endif()
+add_subdirectory("python")
+dune_python_install_package(PATH "python")
 
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
