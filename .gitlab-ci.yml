@@ -4,10 +4,12 @@ variables:
   TORTURE_TESTS: "off"
 
 before_script:
-#  - rm -rf /duneci/modules/dune-alugrid
-#  - DUNECI_BRANCH_AUTO=0 duneci-install-module -b bugfix/creategrid-unique-ptr-return https://gitlab.dune-project.org/claus-justus.heine/dune-alugrid.git
-#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
-#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
+  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 .base: &base
   stage: test
