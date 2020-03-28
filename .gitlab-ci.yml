@@ -4,11 +4,15 @@ variables:
   TORTURE_TESTS: "off"
 
 before_script:
+  - rm -rf /duneci/modules/dune-common
+  - rm -rf /duneci/modules/dune-geometry
+  - rm -rf /duneci/modules/dune-grid
+  - rm -rf /duneci/modules/dune-istl
+  - rm -rf /duneci/modules/dune-alugrid
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-  - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
   - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 .base: &base
