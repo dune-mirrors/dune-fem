@@ -46,27 +46,15 @@ before_script:
 # the nightly build will also set the environment variable
 # TORTURE_TESTS=on
 
-debian-10-gcc-7-17:
-  <<: *base-petsc
-  image: dune-fem-ci:git-debian-10
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
-  variables:
-    DUNECI_TOOLCHAIN: gcc-7-17
-
 ubuntu-18.04-clang-6-17:
   <<: *base-petsc
   image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
-  variables:
-    DUNECI_TOOLCHAIN: clang-6-17
 
 debian-10-gcc-8-17:
   <<: *base-petsc
   image: dune-fem-ci:git-debian-10-gcc-8-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
-  only:
-    - triggers
-    - schedules
 
 debian-10-gcc-8-noassert-17:
   <<: *base-petsc
