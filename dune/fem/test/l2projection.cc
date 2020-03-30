@@ -85,7 +85,7 @@ typedef Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType > InverseOperato
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
-typedef Dune::Fem::UMFPACKOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
+typedef Dune::Fem::UMFPACKInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #else
 typedef Dune::Fem::KrylovInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #endif
