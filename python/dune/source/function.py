@@ -2,7 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import copy
 
-from ..common.compatibility import isString
+from ..common.utility import isString
 
 from .common import Block
 

@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from dune.common.compatibility import isString
+from dune.common.utility import isString
 
 class Block:
     def __init__(self):
