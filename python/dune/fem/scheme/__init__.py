@@ -3,7 +3,6 @@
 
 from __future__ import print_function
 import importlib
-import subprocess
 import hashlib
 import os.path
 import re
