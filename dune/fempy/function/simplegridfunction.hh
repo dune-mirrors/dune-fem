@@ -10,7 +10,7 @@
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
 
-#include <dune/python/function/simplegridfunction.hh>
+#include <dune/python/grid/simplegridfunction.hh>
 #include <dune/python/grid/function.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>

@@ -3,7 +3,6 @@ from __future__ import print_function
 import importlib
 import hashlib
 import os
-import subprocess
 import sys
 import timeit
 import types

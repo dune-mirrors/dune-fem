@@ -2,7 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 from types import GeneratorType
 
-from ..common.compatibility import isInteger
+from ..common.utility import isInteger
 
 from .common import Block, Statement
 from .operator import BinaryOperator, BracketOperator, PrefixUnaryOperator, PostfixUnaryOperator

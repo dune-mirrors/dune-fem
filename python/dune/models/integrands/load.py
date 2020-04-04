@@ -5,7 +5,7 @@ from ufl.core.expr import Expr
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 
-from dune.common.compatibility import isString
+from dune.common.utility import isString
 
 from dune.source.cplusplus import Include, NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
@@ -132,7 +132,7 @@ class Source(object):
         else:
             integrands = self.integrands
 
-        code = [Include('config.h')]
+        code  = [Include('config.h')]
         code += [Include(i) for i in self.gridIncludes]
 
         code += integrands.includes()
@@ -163,6 +163,8 @@ class Source(object):
         code.append(TypeAlias('Integrands', integrandsName))
 
         writer = SourceWriter()
+        writer.emit("#ifndef GuardIntegrands_" + self.signature())
+        writer.emit("#define GuardIntegrands_" + self.signature())
         writer.emit(code)
 
         name = self.name()
@@ -185,6 +187,7 @@ class Source(object):
         writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return '+hasDirichletBC+';});')
 
         writer.closePythonModule(name)
+        writer.emit("#endif // GuardIntegrands_" + self.signature())
 
         source = writer.writer.getvalue()
         writer.close()

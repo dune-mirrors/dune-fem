@@ -4,10 +4,16 @@ variables:
   TORTURE_TESTS: "off"
 
 before_script:
-#  - rm -rf /duneci/modules/dune-alugrid
-#  - DUNECI_BRANCH_AUTO=0 duneci-install-module -b bugfix/creategrid-unique-ptr-return https://gitlab.dune-project.org/claus-justus.heine/dune-alugrid.git
-#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
-#  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-spgrid.git
+  - rm -rf /duneci/modules/dune-common
+  - rm -rf /duneci/modules/dune-geometry
+  - rm -rf /duneci/modules/dune-grid
+  - rm -rf /duneci/modules/dune-istl
+  - rm -rf /duneci/modules/dune-alugrid
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
+  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 .base: &base
   stage: test
@@ -40,11 +46,6 @@ before_script:
 # the nightly build will also set the environment variable
 # TORTURE_TESTS=on
 
-debian-10-gcc-7-14:
-  <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-7-14
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
-
 ubuntu-18.04-clang-6-17:
   <<: *base-petsc
   image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
@@ -54,9 +55,6 @@ debian-10-gcc-8-17:
   <<: *base-petsc
   image: dune-fem-ci:git-debian-10-gcc-8-17
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
-  only:
-    - triggers
-    - schedules
 
 debian-10-gcc-8-noassert-17:
   <<: *base-petsc
@@ -86,10 +84,10 @@ debian-10-gcc-8-noassert-17:
 # We only test Debian 10 as we basically only want to test whether the
 # build-system successfully has disabled the PETSc bindings.
 
-debian-10-gcc-7-14-nopetsc:
+debian-10-gcc-8-17-nopetsc:
   <<: *base-nopetsc
-  image: dune-fem-ci:git-debian-10-gcc-7-14
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
+  image: dune-fem-ci:git-debian-10-gcc-8-17
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
 
 debian-10-gcc-8-17-petsc:
   <<: *base-nopetsc

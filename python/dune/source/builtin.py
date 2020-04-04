@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ..common.compatibility import isString
+from ..common.utility import isString
 
 from .expression import Variable
 

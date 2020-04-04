@@ -1,7 +1,6 @@
 #ifndef DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 #define DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 
-#include <dune/python/function/simplegridfunction.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/const.hh>
 

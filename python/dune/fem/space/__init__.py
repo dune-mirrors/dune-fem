@@ -1,13 +1,10 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-__metaclass__ = type
-
 import hashlib
 import inspect
 import sys
 import os
 
 import dune.common.module
-from dune.common.compatibility import isString
+from dune.common.utility import isString
 from dune.generator.generator import SimpleGenerator
 from dune.fem import function
 

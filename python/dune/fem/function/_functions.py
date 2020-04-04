@@ -61,11 +61,11 @@ def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args
         func.scalar = scalar
     return func.as_ufl() if func is not None else None
 
-def cppFunction(gridView, name, order, fctName, includes):
-    def _cppFunction(*args):
-        gf = gridView.function(fctName,includes,*args,order=order,name=name)
-        return dune.ufl.GridFunction( gf )
-    return _cppFunction
+def cppFunction(gridView, name, order, fctName, includes,
+                *args,**kwargs):
+    args = args + tuple(kwargs.get("args",()))
+    gf = gridView.function(fctName,includes,*args,order=order,name=name)
+    return dune.ufl.GridFunction( gf )
 
 def discreteFunction(space, name, expr=None, dofVector=None):
     """create a discrete function

@@ -7,7 +7,7 @@ import types
 from ufl import Coefficient, Form
 from ufl.equation import Equation
 
-from dune.common.compatibility import isString
+from dune.common.utility import isString
 from dune.common.hashit import hashIt
 
 from dune.source.cplusplus import NameSpace, TypeAlias
@@ -110,6 +110,9 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     writer = SourceWriter()
 
+    writer.emit("#ifndef GuardModelImpl_" + signature)
+    writer.emit("#define GuardModelImpl_" + signature)
+
     writer.emit('#include <config.h>')
     writer.emit(["#include <" + i + ">" for i in grid._includes])
     writer.emit('')
@@ -195,6 +198,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     model.export(writer, 'Model', 'ModelWrapper',nameSpace="ModelImpl_"+signature)
     writer.closePythonModule(name)
+    writer.emit("#endif // GuardModelImpl_" + signature)
 
     source = writer.writer.getvalue()
     writer.close()

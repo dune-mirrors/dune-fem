@@ -3,4 +3,4 @@ Version: 2.8-git
 Maintainer: dune-fem@lists.dune-project.org
 Whitespace-Hook: Yes
 Depends: dune-grid (>= 2.8)
-Suggests: dune-alugrid (>= 2.8) dune-istl (>= 2.8) dune-localfunctions (>= 2.8) dune-spgrid (>= 2.8) dune-python (>= 2.8) dune-polygongrid
+Suggests: dune-alugrid (>= 2.8) dune-istl (>= 2.8) dune-localfunctions (>= 2.8) dune-spgrid (>= 2.8) dune-polygongrid

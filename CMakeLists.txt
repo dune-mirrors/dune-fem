@@ -30,9 +30,9 @@ include(DuneMPI)
 #add sub_directories
 dune_add_subdirs(dune lib doc cmake/modules)
 
-# add python bindings if dune-python available
-if(dune-python_FOUND)
-  add_subdirectory(python)
+# if Python bindings are enabled, include necessary sub directories.
+if( DUNE_ENABLE_PYTHONBINDINGS )
+  add_subdirectory("python")
   dune_python_install_package(PATH "python")
 endif()
 
