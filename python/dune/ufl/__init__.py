@@ -397,7 +397,10 @@ class GridFunction(ufl.Coefficient):
 
     def __call__(self,e,x=None):
         if x is None:
-            return ufl.Coefficient.__call__(self,e)
+            try:
+                return self.__impl__(e)
+            except:
+                return ufl.Coefficient.__call__(self,e)
         else:
             return self.localFunction(e)(x)
 
