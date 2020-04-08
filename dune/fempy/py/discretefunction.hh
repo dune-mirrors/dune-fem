@@ -188,7 +188,14 @@ namespace Dune
       template< class DF >
       inline static void registerRestrictProlong ( pybind11::module module )
       {
-        registerRestrictProlong< DF >( module, PriorityTag< 42 >() );
+        try
+        {
+          registerRestrictProlong< DF >( module, PriorityTag< 42 >() );
+        }
+        catch (std::invalid_argument)
+        {
+          std::cerr << "Warning: Restrict and Prolongation disabled - possibly no HierarchicGrid registered for this GridView\n";
+        }
       }
 
 
@@ -306,7 +313,6 @@ namespace Dune
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
         typedef typename GridPart::template Codim<0>::EntityType Entity;
-        typedef typename DF::DomainType Coordinate;
         typedef typename DF::RangeType Value;
         const static int dimRange = Value::dimension;
 
