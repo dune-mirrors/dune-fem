@@ -378,7 +378,8 @@ namespace Dune
             registerProjection<GridFunction>(cls);
           }
           {
-            typedef std::function<double(const Entity&,const Coordinate&)> stdfct;
+            typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
+            typedef std::function<double(const Entity&,const LocalCoordinate&)> stdfct;
             typedef Dune::Python::detail::PyGridFunctionEvaluator< typename GridPart::GridViewType, 0, stdfct > LocalEvaluator;
             typedef Dune::Python::SimpleGridFunction< typename GridPart::GridViewType, LocalEvaluator > GridFunction;
             cls.def( "_interpolate", [] ( DF &self, const GridFunction &gridFunction ) {
