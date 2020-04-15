@@ -184,6 +184,9 @@ def Expression(cpp_code=None, name=None, degree=None, mesh=None, dimRange=None, 
                 uflDict[c] = kwargs[c]
     expr = [None,]*max(dimRange,1)
     for i in range(max(dimRange,1)):
+        # in ufl M_PI is just pi. This needs to be replaced here
+        if cpp_code[i].find('M_PI'):
+            cpp_code[i] = cpp_code[i].replace('M_PI', 'pi' )
         expr[i] = eval(cpp_code[i], {}, uflDict)
         # expr[i] = eval(cpp_code[i], {"__builtins__":None}, uflDict)
     # fails with 'x' undefined? expr = [ eval(code) for code in cpp_code ]
