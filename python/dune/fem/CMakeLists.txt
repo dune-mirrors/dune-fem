@@ -6,9 +6,6 @@ add_subdirectory(scheme)
 add_subdirectory(space)
 add_subdirectory(utility)
 
-add_library(_fem SHARED _fem.cc)
-set_target_properties(_fem PROPERTIES PREFIX "")
-target_link_libraries(_fem dunefem )
 add_python_targets(fem
   __init__
   _adaptation
@@ -16,3 +13,6 @@ add_python_targets(fem
   plotting
   view
 )
+
+dune_add_pybind11_module(NAME _fem)
+set_property(TARGET _fem PROPERTY LINK_LIBRARIES dunefem APPEND)
