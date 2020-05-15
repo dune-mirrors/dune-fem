@@ -69,7 +69,7 @@ namespace Dune
         cls.def_property_readonly( "components", [] ( pybind11::object self ) -> pybind11::tuple {
             Space &space = pybind11::cast< Space & >( self );
             pybind11::tuple components( Space::Sequence::size() );
-            Hybrid::forEach( typename Space::Sequence(), [ self, &space, &components ] ( auto &&i ) {
+            Hybrid::forEach( typename Space::Sequence(), [ self, &space, &components ] ( auto i ) {
                 assert( pybind11::already_registered< typename Space::template SubDiscreteFunctionSpace< i.value >::Type > );
                 pybind11::object subSpace = pybind11::cast( &space.template subDiscreteFunctionSpace< i.value >(), pybind11::return_value_policy::reference_internal, self );
                 if( subSpace )
