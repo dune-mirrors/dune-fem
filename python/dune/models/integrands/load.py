@@ -5,7 +5,7 @@ from ufl.core.expr import Expr
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 
-from dune.common.utility import isString
+from dune.utility import isString
 
 from dune.source.cplusplus import Include, NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
@@ -111,7 +111,7 @@ class Source(object):
                 )
 
     def name(self):
-        from dune.common.hashit import hashIt
+        from dune.utility import hashIt
         if self.virtualize:
             return self.integrands.baseName + '_' + self.signature() + '_' + hashIt(self.gridType)
         else:
@@ -136,8 +136,8 @@ class Source(object):
         code += [Include(i) for i in self.gridIncludes]
 
         code += integrands.includes()
-        code.append(Include("dune/python/pybind11/pybind11.h"))
-        code.append(Include("dune/python/pybind11/extensions.h"))
+        code.append(Include("pybind11/pybind11.h"))
+        code.append(Include("dune/python/extensions.h"))
         code.append(Include("dune/fempy/py/grid/gridpart.hh"))
 
         if integrands._coefficients:

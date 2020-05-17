@@ -14,7 +14,7 @@ from ufl.coefficient import Coefficient
 from ufl.differentiation import Grad
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.common.hashit import hashIt
+from dune.utility import hashIt
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 import dune.source.cplusplus as cplusplus
 from dune.source.cplusplus import ConditionalExpression, Declaration, Using, Variable

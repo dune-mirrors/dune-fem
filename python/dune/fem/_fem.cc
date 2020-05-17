@@ -7,8 +7,8 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 
-#include <dune/python/pybind11/extensions.h>
-#include <dune/python/pybind11/pybind11.h>
+#include <dune/python/extensions.h>
+#include <pybind11/pybind11.h>
 
 PYBIND11_MODULE( _fem, module )
 {

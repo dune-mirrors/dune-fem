@@ -6,13 +6,14 @@ add_subdirectory(scheme)
 add_subdirectory(space)
 add_subdirectory(utility)
 
-add_library(_fem SHARED _fem.cc)
-set_target_properties(_fem PROPERTIES PREFIX "")
-target_link_libraries(_fem dunefem )
+
 add_python_targets(fem
   __init__
+  _fem
   _adaptation
   _spaceadaptation
   plotting
   view
 )
+
+dune_symlink_to_source_files(FILES _fem.cc)

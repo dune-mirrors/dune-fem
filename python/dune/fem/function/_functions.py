@@ -11,7 +11,7 @@ import dune.models.localfunction
 from dune.generator import builder
 
 import dune.common.checkconfiguration as checkconfiguration
-from dune.common.hashit import hashIt
+from dune.utility import hashIt
 
 def globalFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)

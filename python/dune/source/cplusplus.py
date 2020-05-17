@@ -2,7 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import io, sys
 
-from ..common.utility import isString
+from ..utility import isString
 
 from .builtin import *
 from .common import *

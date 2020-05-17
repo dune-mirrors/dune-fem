@@ -7,7 +7,7 @@ import sys
 import timeit
 import types
 
-from dune.common.hashit import hashIt
+from dune.utility import hashIt
 from dune.generator import builder
 
 from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_
@@ -103,7 +103,7 @@ class UFLFunctionSource(codegen.ModelClass):
                 pass
 
     def _signature(self):
-        from dune.common.hashit import hashIt
+        from dune.utility import hashIt
         coeffTypes = ','.join(self.coefficientCppTypes)
         return hashIt(self.codeString + coeffTypes)
     def signature(self):
@@ -111,7 +111,7 @@ class UFLFunctionSource(codegen.ModelClass):
         return uflSignature(None, *self.coefficientCppTypes, *self._constantNames, self.expr)
 
     def name(self):
-        from dune.common.hashit import hashIt
+        from dune.utility import hashIt
         if self.virtualize:
             return 'localfunction_' + self._signature() + '_' + hashIt(self.gridType)
         else:
@@ -129,8 +129,8 @@ class UFLFunctionSource(codegen.ModelClass):
         code += [Include(i) for i in self.includeFiles]
 
         code += self.includes()
-        code.append(Include("dune/python/pybind11/pybind11.h"))
-        code.append(Include("dune/python/pybind11/extensions.h"))
+        code.append(Include("pybind11/pybind11.h"))
+        code.append(Include("dune/python/extensions.h"))
         code.append(Include("dune/fempy/py/grid/gridpart.hh"))
         code.append(Include('dune/common/exceptions.hh'))
 

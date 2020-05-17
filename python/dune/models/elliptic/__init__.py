@@ -7,8 +7,8 @@ import types
 from ufl import Coefficient, Form
 from ufl.equation import Equation
 
-from dune.common.utility import isString
-from dune.common.hashit import hashIt
+from dune.utility import isString
+from dune.utility import hashIt
 
 from dune.source.cplusplus import NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
@@ -118,8 +118,8 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     writer.emit('')
     writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
     writer.emit('')
-    writer.emit('#include <dune/python/pybind11/pybind11.h>')
-    writer.emit('#include <dune/python/pybind11/extensions.h>')
+    writer.emit('#include <pybind11/pybind11.h>')
+    writer.emit('#include <dune/python/extensions.h>')
     writer.emit('')
     writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
     if model.hasCoefficients:

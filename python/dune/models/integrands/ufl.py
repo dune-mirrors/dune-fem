@@ -23,7 +23,7 @@ from dune.source.cplusplus import construct, lambda_, makeExpression, maxEdgeLen
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
-from dune.common.hashit import hashIt
+from dune.utility import hashIt
 
 from dune.ufl import codegen, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives

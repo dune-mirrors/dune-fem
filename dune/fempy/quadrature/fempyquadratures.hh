@@ -5,8 +5,8 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include <dune/python/pybind11/pybind11.h>
-#include <dune/python/pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/defaultquadratures.hh>

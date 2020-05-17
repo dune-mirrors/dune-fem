@@ -18,7 +18,7 @@ from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
-from dune.common.hashit import hashIt
+from dune.utility import hashIt
 
 from dune.source.cplusplus import UnformattedExpression, Block
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable

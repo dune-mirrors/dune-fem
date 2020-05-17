@@ -2,7 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 import re
 
-from dune.common.utility import isInteger
+from dune.utility import isInteger
 
 from ufl import replace
 from ufl.log import UFLException
