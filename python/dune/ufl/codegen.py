@@ -342,6 +342,7 @@ class ModelClass():
             self.bindable = False
             self.bases = []
             self.includeFiles = []
+        self.includeFiles += ['dune/fem/common/intersectionside.hh']
         self.gridPartType = TypeAlias("GridPartType", "GridPart")
         self.ctor_args = []
         self.ctor_init = []
@@ -522,6 +523,8 @@ class ModelClass():
 
         code.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
 
+        code.append(TypeAlias("Side","Dune::Fem::IntersectionSide"))
+
         for type, alias in zip(self._constants, self.constantTypes):
             code.append(TypeAlias(alias, type))
         constants = ["std::shared_ptr< " + c + " >" for c in self.constantTypes]
@@ -545,11 +548,11 @@ class ModelClass():
         code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, CoefficientTupleType >', targs=['std::size_t i']))
         code.append(TypeAlias('ConstantType', 'typename std::tuple_element_t< i, ConstantTupleType >::element_type', targs=['std::size_t i']))
 
-        if self.skeleton is not None:
-            code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
-            inside = '[ static_cast< std::size_t >( Side::in ) ]'
-        else:
-            inside = ''
+        # if self.skeleton is not None:
+        #     code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
+        #     inside = '[ static_cast< std::size_t >( Side::in ) ]'
+        # else:
+        #     inside = ''
 
         if not self.bindable:
             if self.skeleton is None:
@@ -603,9 +606,13 @@ class ModelClass():
         code.append(constructor)
 
         entity = Variable('const EntityType &', 'entity')
+        intersection = Variable('const IntersectionType &', 'intersection')
         if self.bindable:
             initEntity = Method('void', 'bind', args=[entity])
             initEntity.append(self.bindableBase+'::bind(entity);')
+            initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
+            initIntersection.append(self.bindableBase+'::bind(intersection,side);')
+            code.append(initIntersection)
         else:
             initEntity = Method('bool', 'init', args=[entity])
             initEntity.append(assign(insideEntity, entity))
@@ -621,7 +628,6 @@ class ModelClass():
         code.append(initEntity)
 
         if not self.bindable:
-            intersection = Variable('const IntersectionType &', 'intersection')
             initIntersection = Method('bool', 'init', args=[intersection])
             initIntersection.append(assign(intersection_, intersection))
             if self.skeleton is None:
@@ -629,12 +635,14 @@ class ModelClass():
             else:
                 initIntersection.append(assign(insideEntity, UnformattedExpression('EntityType', 'intersection.inside()')))
                 for i, c in enumerate(self._coefficients):
-                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
+                    # initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
+                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( intersection_, Side::in  )', uses=[coefficients_]))
                 initIntersection.append('if( intersection.neighbor() )')
                 initIntersection.append('{')
                 initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
                 for i, c in enumerate(self._coefficients):
-                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity_[ static_cast< std::size_t >( Side::out ) ] )', uses=[coefficients_]))
+                    # initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity_[ static_cast< std::size_t >( Side::out ) ] )', uses=[coefficients_]))
+                    initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( intersection_, Side::out )', uses=[coefficients_]))
                 initIntersection.append('}')
                 initIntersection.append(return_(True))
             code.append(initIntersection)

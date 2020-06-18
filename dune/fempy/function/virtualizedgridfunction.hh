@@ -17,6 +17,7 @@
 #include <dune/fempy/quadrature/cachingpoint.hh>
 #include <dune/fempy/quadrature/elementpoint.hh>
 #include <dune/fempy/quadrature/fempyquadratures.hh>
+#include <dune/fem/common/intersectionside.hh>
 
 namespace Dune
 {
@@ -36,6 +37,7 @@ namespace Dune
 
     public:
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
+      typedef typename GridPart::IntersectionType IntersectionType;
 
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
       typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
@@ -100,6 +102,7 @@ namespace Dune
         virtual void hessianQuadrature ( const FaceFemQuadratureType& quad, HessianRangeValueVectorType& values ) const = 0 ;
 
         virtual void bind(const EntityType &entity) = 0;
+        virtual void bind(const IntersectionType &intersection, Fem::IntersectionSide side) = 0;
       };
 
       template< class Impl >
@@ -133,6 +136,8 @@ namespace Dune
         virtual void hessianQuadrature ( const FaceFemQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
 
         virtual void bind(const EntityType &entity) override { impl_.bind(entity); }
+        void bind(const IntersectionType &intersection, Fem::IntersectionSide side) override
+        { impl_.bind(intersection, side); }
       private:
         const auto &impl () const { using std::cref; return cref( impl_ ).get(); }
         auto &impl () { using std::ref; return ref( impl_ ).get(); }
@@ -171,6 +176,11 @@ namespace Dune
       {
         Base::bind(entity);
         impl_->bind(entity);
+      }
+      void bind(const IntersectionType &intersection, Fem::IntersectionSide side)
+      {
+        Base::bind(intersection, side);
+        impl_->bind(intersection, side);
       }
 
       template< class Point >

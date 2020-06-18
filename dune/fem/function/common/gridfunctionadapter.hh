@@ -55,6 +55,7 @@ namespace Dune
       typedef GridPartImp GridPartType;
       typedef typename GridPartType :: GridType GridType;
       typedef typename GridPartType :: template Codim<0> :: EntityType EntityType;
+      typedef typename GridPartType :: IntersectionType IntersectionType;
       //! type of iterator
       typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
       //! type of IndexSet
@@ -115,6 +116,7 @@ namespace Dune
 
       //! type of codim 0 entity
       typedef typename Traits :: EntityType  EntityType;
+      typedef typename Traits :: IntersectionType IntersectionType;
 
     private:
       class LocalFunction;
@@ -231,6 +233,7 @@ namespace Dune
 
       //! entity type
       typedef typename Traits::EntityType EntityType;
+      typedef typename Traits::IntersectionType IntersectionType;
       //! local coordinate type
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
       //! local dimension

@@ -9,6 +9,7 @@
 
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/common/intersectionside.hh>
 
 namespace Dune
 {
@@ -129,6 +130,7 @@ namespace Dune
 
       typedef typename BaseType::DofType DofType;
       typedef typename BaseType::EntityType EntityType;
+      typedef typename GridPartType::IntersectionType IntersectionType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
       typedef typename BaseType::DomainType DomainType;
@@ -261,6 +263,11 @@ namespace Dune
 
       void bind ( const EntityType &entity ) { init( entity ); }
       void unbind () {}
+      void bind(const IntersectionType &intersection, IntersectionSide side)
+      {
+        bind( side==IntersectionSide::in?
+              intersection.inside(): intersection.outside() );
+      }
 
       const DiscreteFunctionType &discreteFunction() const { return *discreteFunction_; }
       const GridFunctionType &gridFunction() const { return discreteFunction(); }
@@ -344,6 +351,12 @@ namespace Dune
 
           void bind ( const EntityType &entity ) { init( entity ); }
           void unbind () {}
+          template <class IntersectionType>
+          void bind(const IntersectionType &intersection, IntersectionSide side)
+          {
+            bind( side==IntersectionSide::in?
+                  intersection.inside(): intersection.outside() );
+          }
 
           const GridFunctionType &gridFunction () const { return gridFunction_; }
 
@@ -436,6 +449,12 @@ namespace Dune
 
           void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
           void unbind () { gridFunction_.unbind(); }
+          template <class IntersectionType>
+          void bind(const IntersectionType &intersection, IntersectionSide side)
+          {
+            bind( side==IntersectionSide::in?
+                  intersection.inside(): intersection.outside() );
+          }
 
           const EntityType& entity() const
           {

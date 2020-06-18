@@ -5,6 +5,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/quadrature/quadrature.hh> // shouldn't be here (but otherwise the coordinate method doesn't work)
+#include <dune/fem/common/intersectionside.hh>
 
 namespace Dune
 {
@@ -17,6 +18,7 @@ namespace Dune
     {
       typedef GridPart GridPartType;
       typedef typename GridPart::template Codim<0>::EntityType EntityType;
+      typedef typename GridPart::IntersectionType IntersectionType;
       typedef typename EntityType::Geometry::GlobalCoordinate DomainType;
       typedef Dune::Fem::GridFunctionSpace<GridPartType, Range> FunctionSpaceType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
@@ -27,6 +29,11 @@ namespace Dune
       : gridPart_(gridPart) {}
       void bind(const EntityType &entity) { entity_ = entity; }
       void unbind() {}
+      void bind(const IntersectionType &intersection, IntersectionSide side)
+      {
+        bind( side==IntersectionSide::in?
+              intersection.inside(): intersection.outside() );
+      }
       bool continuous() const { return true; }
       template <class Point>
       DomainType global(const Point &x) const
