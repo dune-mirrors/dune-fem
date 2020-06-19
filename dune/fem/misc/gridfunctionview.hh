@@ -3,6 +3,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/common/intersectionside.hh>
 
 namespace Dune
 {
@@ -35,6 +36,9 @@ namespace Dune
 
       void bind ( const Entity &entity ) { localFunction_.bind( entity ); }
       void unbind () {}
+      template <class IntersectionType>
+      void bind(const IntersectionType &intersection, IntersectionSide side)
+      { localFunction_.bind(intersection, side); }
 
     private:
       Dune::Fem::ConstLocalFunction<GF> localFunction_;
@@ -78,6 +82,10 @@ namespace Dune
         basisFunctionSet_ = BasisFunctionSet();
         localDofVector_.resize( 0u );
       }
+
+      template <class IntersectionType>
+      void bind(const IntersectionType &intersection, IntersectionSide side)
+      { defaultIntersectionBind(gf_, intersection, side); }
 
     private:
       const DiscreteFunctionSpace &space () const { return gf_.space(); }

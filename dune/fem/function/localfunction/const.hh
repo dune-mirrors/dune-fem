@@ -451,10 +451,7 @@ namespace Dune
           void unbind () { gridFunction_.unbind(); }
           template <class IntersectionType>
           void bind(const IntersectionType &intersection, IntersectionSide side)
-          {
-            bind( side==IntersectionSide::in?
-                  intersection.inside(): intersection.outside() );
-          }
+          { defaultIntersectionBind(gridFunction_,intersection, side); }
 
           const EntityType& entity() const
           {
