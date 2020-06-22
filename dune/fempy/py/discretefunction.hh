@@ -257,7 +257,7 @@ namespace Dune
         cls.def_property_readonly( "components", [] ( pybind11::object self ) -> pybind11::tuple {
             GridFunction &gridFunction = pybind11::cast< GridFunction & >( self );
             pybind11::tuple components( GridFunction::Sequence::size() );
-            Hybrid::forEach( typename GridFunction::Sequence(), [ self, &gridFunction, &components ] ( auto &&i ) {
+            Hybrid::forEach( typename GridFunction::Sequence(), [ self, &gridFunction, &components ] ( auto i ) {
                 assert( pybind11::already_registered< typename GridFunction::template SubDiscreteFunction< i.value >::Type > );
                 pybind11::object subFunction = pybind11::cast( &gridFunction.template subDiscreteFunction< i.value >(), pybind11::return_value_policy::reference_internal, self );
                 if( subFunction )
