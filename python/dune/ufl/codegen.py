@@ -329,7 +329,7 @@ def fieldVectorType(shape, field = None, useScalar = False):
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
 class ModelClass():
-    def __init__(self, name, uflExpr, virtualize, dimRange=None):
+    def __init__(self, name, uflExpr, virtualize, dimRange=None, predefined=None):
         self.className = name
         self.targs = ['class GridPart']
         if dimRange is not None:
@@ -358,6 +358,22 @@ class ModelClass():
             except:
                 _, cc = extract_arguments_and_coefficients(expr)
                 coefficients |= set(cc)
+        extracedAll = False
+        while not extracedAll:
+            extracedAll = True
+            for c in coefficients:
+                try:
+                    predef = c.predefined
+                except AttributeError:
+                    continue
+                for expr in predef.values():
+                    _, cc = extract_arguments_and_coefficients(expr)
+                    cc = set(cc)
+                    if not cc.issubset(coefficients):
+                       coefficients |= cc
+                       extracedAll = False
+                if not extracedAll:
+                    break
 
         self.constantList = [c for c in coefficients if c.is_cellwise_constant()]
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
@@ -419,6 +435,21 @@ class ModelClass():
         else:
             self.coefficientCppTypes = []
 
+        # need to replace possible grid functions in values of predefined
+        # import pdb; pdb.set_trace()
+        self.predefined = {} if predefined is None else predefined
+        for idx, coefficient in enumerate(self.coefficientList):
+            try:
+                self.predefined.update( coefficient.predefined )
+            except AttributeError:
+                pass
+        for idx, coefficient in enumerate(self.coefficientList):
+            for derivative in self.coefficient(idx, 'x', side=None):
+                for k,v in self.predefined.items():
+                    if coefficient == v:
+                        self.predefined[k] = derivative
+                coefficient = Grad(coefficient)
+
     @property
     def constantTypes(self):
         return ["Con" + n[0] + n[1:] for n in self._constantNames]
@@ -472,6 +503,7 @@ class ModelClass():
         else:
             self._predefineCoefficients(predefined, 'xIn', 'Side::in')
             self._predefineCoefficients(predefined, 'xOut', 'Side::out')
+        predefined.update(self.predefined)
 
     def spatialCoordinate(self, x):
         return UnformattedExpression('GlobalCoordinateType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
@@ -737,7 +769,9 @@ def generateMethod(struct,expr, cppType, name,
         defaultReturn='0',
         targs=None, args=None, static=False, const=False, volatile=False,
         evalSwitch=True,
-        predefined={}):
+        predefined=None):
+    if predefined is None:
+        predefined = {}
     if not returnResult:
         args = args + [cppType + ' &result']
         returnType = 'void'

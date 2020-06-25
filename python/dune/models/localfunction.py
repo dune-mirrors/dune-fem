@@ -31,11 +31,14 @@ from dune.ufl import codegen
 class UFLFunctionSource(codegen.ModelClass):
     def __init__(self, gridType, gridIncludes, expr,
             name,order,
-            tempVars=True, virtualize=True):
+            tempVars=True, virtualize=True,
+            predefined=None):
         if len(expr.ufl_shape) == 0:
             expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
-        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],virtualize,dimRange=dimRange)
+        predefined = {} if predefined is None else predefined
+        codegen.ModelClass.__init__(self,"UFLLocalFunction", [expr],
+          virtualize,dimRange=dimRange, predefined=predefined)
         self.evalCode = []
         self.jacCode = []
         self.hessCode = []
@@ -57,8 +60,8 @@ class UFLFunctionSource(codegen.ModelClass):
         return ret
 
     def methods(self,code):
-        x = ufl.SpatialCoordinate(ufl.triangle) # NOTE: to do get right dimension
         predefined = {}
+        x = ufl.SpatialCoordinate(ufl.triangle) # NOTE: to do get right dimension
         predefined[x] = self.spatialCoordinate('x')
         self.predefineCoefficients(predefined, False)
         codegen.generateMethod(code, self.expr,
@@ -249,7 +252,8 @@ def setConstant(lf, index, value):
         pass
     lf._setConstant(index, value)
 
-def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True, **kwargs):
+def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True,
+                predefined=None, **kwargs):
     scalar = False
     if type(expr) == list or type(expr) == tuple:
         expr = ufl.as_vector(expr)
@@ -263,7 +267,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     except:
         return None
     _, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+    coeff   = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
     expr = replace(expr,coeff)
 
     if len(expr.ufl_shape) > 1:
@@ -272,9 +276,10 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     # set up the source class
     source = UFLFunctionSource(grid._typeName, grid._includes, expr,
             name,order,
-            tempVars=tempVars,virtualize=virtualize)
+            tempVars=tempVars,virtualize=virtualize,
+            predefined=predefined)
 
-    _, coefficients = ufl.algorithms.analysis.extract_arguments_and_coefficients(source.expr)
+    coefficients = source.coefficientList
     numCoefficients = len(coefficients)
     if renumbering is None:
         renumbering = dict()

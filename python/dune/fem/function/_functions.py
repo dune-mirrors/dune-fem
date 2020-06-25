@@ -48,10 +48,12 @@ def partitionFunction(gridView,name="rank"):
             return [self.rank]
     return Partition(gridView.comm.rank)
 
-def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, *args, **kwargs):
+def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
+                predefined=None, *args, **kwargs):
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
             ufl, renumbering=None,
-            virtualize=virtualize, *args, **kwargs)
+            virtualize=virtualize,
+            predefined=predefined, *args, **kwargs)
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
     from dune.fem.plotting import plotPointData
