@@ -85,10 +85,10 @@ class UFLFunctionSource(codegen.ModelClass):
                     args=['const Point &x'],
                     targs=['class Point'], const=True,
                     predefined=predefined)
-            except TooHighDerivative:
+            except Exception as e:
                 code.append( Method('void', 'jacobian', targs=['class Point'],
                     args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
-                    code=['DUNE_THROW(Dune::NotImplemented,"jacobian method could not be generated for local function");',
+                    code=['DUNE_THROW(Dune::NotImplemented,"jacobian method could not be generated for local function ('+repr(e)+').");',
                           'result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))
                 pass
             try:
@@ -98,10 +98,10 @@ class UFLFunctionSource(codegen.ModelClass):
                     args=['const Point &x'],
                     targs=['class Point'], const=True,
                     predefined=predefined)
-            except TooHighDerivative:
+            except Exception as e:
                 code.append( Method('void', 'hessian', targs=['class Point'],
                     args=['const Point &x','typename FunctionSpaceType::HessianRangeType &result'],
-                    code=['DUNE_THROW(Dune::NotImplemented,"hessian method could not be generated for local function");',
+                    code=['DUNE_THROW(Dune::NotImplemented,"hessian method could not be generated for local function ('+repr(e)+')");',
                           'result=typename FunctionSpaceType::HessianRangeType(0);'], const=True))
                 pass
 
