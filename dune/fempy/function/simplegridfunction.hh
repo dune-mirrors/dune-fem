@@ -428,7 +428,7 @@ namespace Dune
             void unbind () {}
             template <class IntersectionType>
             void bind(const IntersectionType &intersection, IntersectionSide side)
-            { defaultIntersectionBind(gridFunction(), intersection, side); }
+            { defaultIntersectionBind(localFunction_, intersection, side); }
 
             const GridFunctionType &gridFunction () const { return gridFunction_; }
 
