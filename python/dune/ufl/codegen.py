@@ -328,6 +328,18 @@ def fieldVectorType(shape, field = None, useScalar = False):
     else:
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
+def gridPartType(gf):
+    try:
+        gv = gf.space.grid._typeName
+    except:
+        gv = gf.grid._typeName
+    gvType = gv.split("::GridViewType")
+    if len(gvType) == 2: # is a dune fem grid part
+        return gvType[0]
+    else:
+        return 'Dune::FemPy::GridPart<'+gvType[0]+'>'
+
+
 class ModelClass():
     def __init__(self, name, uflExpr, virtualize, dimRange=None, predefined=None):
         self.className = name
@@ -426,7 +438,8 @@ class ModelClass():
         if self._coefficients:
             if virtualize:
                 self.coefficientCppTypes = \
-                    ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + fieldVectorType(c) + ' >' \
+                    ['Dune::FemPy::VirtualizedGridFunction< ' +\
+                     gridPartType(c) + ', ' + fieldVectorType(c) + ' >' \
                         if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
                         else c._typeName \
                     for c in self.coefficientList]
