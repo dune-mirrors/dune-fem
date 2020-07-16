@@ -15,6 +15,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
+#include <dune/fem/common/intersectionside.hh>
 
 namespace Dune
 {
@@ -425,6 +426,9 @@ namespace Dune
 
             void bind ( const EntityType &entity ) { localFunction_.bind( entity ); }
             void unbind () {}
+            template <class IntersectionType>
+            void bind(const IntersectionType &intersection, IntersectionSide side)
+            { defaultIntersectionBind(localFunction_, intersection, side); }
 
             const GridFunctionType &gridFunction () const { return gridFunction_; }
 

@@ -4,6 +4,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/common/intersectionside.hh>
 
 
 namespace Dune
@@ -120,6 +121,12 @@ namespace Dune
 
       void bind ( const EntityType &entity ) { init( entity ); }
       void unbind () {}
+      template <class IntersectionType>
+      void bind(const IntersectionType &intersection, IntersectionSide side)
+      {
+        bind( side==IntersectionSide::in?
+              intersection.inside(): intersection.outside() );
+      }
 
       const DiscreteFunctionSpaceType &space() const
       {

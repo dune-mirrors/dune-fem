@@ -328,8 +328,20 @@ def fieldVectorType(shape, field = None, useScalar = False):
     else:
         return 'Dune::FieldVector< ' + field + ', ' + str(dimRange) + ' >'
 
+def gridPartType(gf):
+    try:
+        gv = gf.space.grid._typeName
+    except:
+        gv = gf.grid._typeName
+    gvType = gv.split("::GridViewType")
+    if len(gvType) == 2: # is a dune fem grid part
+        return gvType[0]
+    else:
+        return 'Dune::FemPy::GridPart<'+gvType[0]+'>'
+
+
 class ModelClass():
-    def __init__(self, name, uflExpr, virtualize, dimRange=None):
+    def __init__(self, name, uflExpr, virtualize, dimRange=None, predefined=None):
         self.className = name
         self.targs = ['class GridPart']
         if dimRange is not None:
@@ -342,6 +354,7 @@ class ModelClass():
             self.bindable = False
             self.bases = []
             self.includeFiles = []
+        self.includeFiles += ['dune/fem/common/intersectionside.hh']
         self.gridPartType = TypeAlias("GridPartType", "GridPart")
         self.ctor_args = []
         self.ctor_init = []
@@ -357,6 +370,22 @@ class ModelClass():
             except:
                 _, cc = extract_arguments_and_coefficients(expr)
                 coefficients |= set(cc)
+        extracedAll = False
+        while not extracedAll:
+            extracedAll = True
+            for c in coefficients:
+                try:
+                    predef = c.predefined
+                except AttributeError:
+                    continue
+                for expr in predef.values():
+                    _, cc = extract_arguments_and_coefficients(expr)
+                    cc = set(cc)
+                    if not cc.issubset(coefficients):
+                       coefficients |= cc
+                       extracedAll = False
+                if not extracedAll:
+                    break
 
         self.constantList = [c for c in coefficients if c.is_cellwise_constant()]
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
@@ -409,7 +438,8 @@ class ModelClass():
         if self._coefficients:
             if virtualize:
                 self.coefficientCppTypes = \
-                    ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + fieldVectorType(c) + ' >' \
+                    ['Dune::FemPy::VirtualizedGridFunction< ' +\
+                     gridPartType(c) + ', ' + fieldVectorType(c) + ' >' \
                         if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
                         else c._typeName \
                     for c in self.coefficientList]
@@ -417,6 +447,21 @@ class ModelClass():
                 self.coefficientCppTypes = [c._typeName for c in self.coefficientList]
         else:
             self.coefficientCppTypes = []
+
+        # need to replace possible grid functions in values of predefined
+        # import pdb; pdb.set_trace()
+        self.predefined = {} if predefined is None else predefined
+        for idx, coefficient in enumerate(self.coefficientList):
+            try:
+                self.predefined.update( coefficient.predefined )
+            except AttributeError:
+                pass
+        for idx, coefficient in enumerate(self.coefficientList):
+            for derivative in self.coefficient(idx, 'x', side=None):
+                for k,v in self.predefined.items():
+                    if coefficient == v:
+                        self.predefined[k] = derivative
+                coefficient = Grad(coefficient)
 
     @property
     def constantTypes(self):
@@ -471,6 +516,7 @@ class ModelClass():
         else:
             self._predefineCoefficients(predefined, 'xIn', 'Side::in')
             self._predefineCoefficients(predefined, 'xOut', 'Side::out')
+        predefined.update(self.predefined)
 
     def spatialCoordinate(self, x):
         return UnformattedExpression('GlobalCoordinateType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
@@ -522,6 +568,8 @@ class ModelClass():
 
         code.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
 
+        code.append(TypeAlias("Side","Dune::Fem::IntersectionSide"))
+
         for type, alias in zip(self._constants, self.constantTypes):
             code.append(TypeAlias(alias, type))
         constants = ["std::shared_ptr< " + c + " >" for c in self.constantTypes]
@@ -545,11 +593,11 @@ class ModelClass():
         code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, CoefficientTupleType >', targs=['std::size_t i']))
         code.append(TypeAlias('ConstantType', 'typename std::tuple_element_t< i, ConstantTupleType >::element_type', targs=['std::size_t i']))
 
-        if self.skeleton is not None:
-            code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
-            inside = '[ static_cast< std::size_t >( Side::in ) ]'
-        else:
-            inside = ''
+        # if self.skeleton is not None:
+        #     code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
+        #     inside = '[ static_cast< std::size_t >( Side::in ) ]'
+        # else:
+        #     inside = ''
 
         if not self.bindable:
             if self.skeleton is None:
@@ -603,9 +651,13 @@ class ModelClass():
         code.append(constructor)
 
         entity = Variable('const EntityType &', 'entity')
+        intersection = Variable('const IntersectionType &', 'intersection')
         if self.bindable:
             initEntity = Method('void', 'bind', args=[entity])
             initEntity.append(self.bindableBase+'::bind(entity);')
+            initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
+            initIntersection.append(self.bindableBase+'::bind(intersection,side);')
+            code.append(initIntersection)
         else:
             initEntity = Method('bool', 'init', args=[entity])
             initEntity.append(assign(insideEntity, entity))
@@ -621,7 +673,6 @@ class ModelClass():
         code.append(initEntity)
 
         if not self.bindable:
-            intersection = Variable('const IntersectionType &', 'intersection')
             initIntersection = Method('bool', 'init', args=[intersection])
             initIntersection.append(assign(intersection_, intersection))
             if self.skeleton is None:
@@ -629,12 +680,14 @@ class ModelClass():
             else:
                 initIntersection.append(assign(insideEntity, UnformattedExpression('EntityType', 'intersection.inside()')))
                 for i, c in enumerate(self._coefficients):
-                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
+                    # initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
+                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( intersection_, Side::in  )', uses=[coefficients_]))
                 initIntersection.append('if( intersection.neighbor() )')
                 initIntersection.append('{')
                 initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
                 for i, c in enumerate(self._coefficients):
-                    initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity_[ static_cast< std::size_t >( Side::out ) ] )', uses=[coefficients_]))
+                    # initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity_[ static_cast< std::size_t >( Side::out ) ] )', uses=[coefficients_]))
+                    initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( intersection_, Side::out )', uses=[coefficients_]))
                 initIntersection.append('}')
                 initIntersection.append(return_(True))
             code.append(initIntersection)
@@ -729,7 +782,9 @@ def generateMethod(struct,expr, cppType, name,
         defaultReturn='0',
         targs=None, args=None, static=False, const=False, volatile=False,
         evalSwitch=True,
-        predefined={}):
+        predefined=None):
+    if predefined is None:
+        predefined = {}
     if not returnResult:
         args = args + [cppType + ' &result']
         returnType = 'void'
