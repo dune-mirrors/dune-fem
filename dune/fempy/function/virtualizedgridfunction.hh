@@ -122,18 +122,18 @@ namespace Dune
         virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
         virtual void hessian ( const CachingPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
         virtual void hessian ( const ElementPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
-        virtual void evaluateQuadrature( const ElementQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
-        virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
-        virtual void evaluateQuadrature( const ElementFemQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
-        virtual void evaluateQuadrature( const FaceFemQuadratureType& quad, RangeValueVectorType& values ) const { impl().evaluateQuadrature( quad, values ); }
-        virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
-        virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
-        virtual void jacobianQuadrature( const ElementFemQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
-        virtual void jacobianQuadrature( const FaceFemQuadratureType& quad, JacobianRangeValueVectorType& values ) const { impl().jacobianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const ElementFemQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
-        virtual void hessianQuadrature ( const FaceFemQuadratureType& quad, HessianRangeValueVectorType& values ) const { impl().hessianQuadrature( quad, values ); }
+        virtual void evaluateQuadrature( const ElementQuadratureType& quad, RangeValueVectorType& values ) const override { impl().evaluateQuadrature( quad, values ); }
+        virtual void evaluateQuadrature( const FaceQuadratureType& quad, RangeValueVectorType& values ) const override { impl().evaluateQuadrature( quad, values ); }
+        virtual void evaluateQuadrature( const ElementFemQuadratureType& quad, RangeValueVectorType& values ) const override { impl().evaluateQuadrature( quad, values ); }
+        virtual void evaluateQuadrature( const FaceFemQuadratureType& quad, RangeValueVectorType& values ) const override { impl().evaluateQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const ElementQuadratureType& quad, JacobianRangeValueVectorType& values ) const override { impl().jacobianQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const FaceQuadratureType& quad, JacobianRangeValueVectorType& values ) const override { impl().jacobianQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const ElementFemQuadratureType& quad, JacobianRangeValueVectorType& values ) const override { impl().jacobianQuadrature( quad, values ); }
+        virtual void jacobianQuadrature( const FaceFemQuadratureType& quad, JacobianRangeValueVectorType& values ) const override { impl().jacobianQuadrature( quad, values ); }
+        virtual void hessianQuadrature ( const ElementQuadratureType& quad, HessianRangeValueVectorType& values ) const override { impl().hessianQuadrature( quad, values ); }
+        virtual void hessianQuadrature ( const FaceQuadratureType& quad, HessianRangeValueVectorType& values ) const override { impl().hessianQuadrature( quad, values ); }
+        virtual void hessianQuadrature ( const ElementFemQuadratureType& quad, HessianRangeValueVectorType& values ) const override { impl().hessianQuadrature( quad, values ); }
+        virtual void hessianQuadrature ( const FaceFemQuadratureType& quad, HessianRangeValueVectorType& values ) const override { impl().hessianQuadrature( quad, values ); }
 
         virtual void bind(const EntityType &entity) override { impl_.bind(entity); }
         void bind(const IntersectionType &intersection, Fem::IntersectionSide side) override
