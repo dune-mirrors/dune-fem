@@ -205,7 +205,10 @@ def compileUFL(form, patch, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
-    model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+    if patch is not None:
+        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+    else:
+        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
     model._replaceCoeff = coeff
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
