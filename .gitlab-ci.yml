@@ -18,8 +18,8 @@ before_script:
 .base: &base
   stage: test
   when: always
-  tags:
-    - "stuttgart"
+  #  tags:
+  #  - "stuttgart"
 
 # FEM_REQUIRE_PETSC=force is intended to trigger an error during cmake
 # configuration if PETSc is not found
