@@ -11,10 +11,10 @@ variables:
 
 before_script:
   - . /duneci/bin/duneci-init-job
-  - python3 -m venv /duneci/modules/dune-pip
-  - source /duneci/modules/dune-pip/bin/activate
-  - pip install --upgrade pip
-  - pip install ufl numpy matplotlib mpi4py portalocker
+    #- python3 -m venv /duneci/modules/dune-pip
+    #- source /duneci/modules/dune-pip/bin/activate
+    #- pip install --upgrade pip
+    #- pip install ufl numpy matplotlib mpi4py portalocker
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
@@ -25,7 +25,7 @@ before_script:
 debian-11-gcc-9-17:
   image: duneci/debian:11
   script:
-    - source /duneci/modules/dune-pip/bin/activate
+    #- source /duneci/modules/dune-pip/bin/activate
       # issue with setup-dunepy: dune-fem-dg not yet build so dependency in dune-fem-dg fails
       # - python /duneci/modules/dune-python/bin/setup-dunepy.py --opts=$CI_PROJECT_DIR/scripts/opts/ci-gcc.opts install
     - duneci-standard-test
