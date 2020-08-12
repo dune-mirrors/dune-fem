@@ -46,23 +46,38 @@ before_script:
 # the nightly build will also set the environment variable
 # TORTURE_TESTS=on
 
-ubuntu-18.04-clang-6-17:
-  <<: *base-petsc
-  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
+#ubuntu-18.04-clang-6-17:
+#  <<: *base-petsc
+#  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
+#  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc7.opts
 
-debian-10-gcc-8-17:
-  <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-8-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+debian-11-gcc-9-17:
+  image: duneci/debian:11
+  script:
+    # - source /duneci/modules/dune-pip/bin/activate
+      # issue with setup-dunepy: dune-fem-dg not yet build so dependency in dune-fem-dg fails
+      # - python /duneci/modules/dune-python/bin/setup-dunepy.py --opts=$CI_PROJECT_DIR/scripts/opts/ci-gcc.opts install
+    - duneci-standard-test
+  variables:
+    DUNECI_TOOLCHAIN:  gcc-9-17
+    # DUNE_LOG_FORMAT:   '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    # DUNE_LOG_LEVEL:    DEBUG
+    # MAKEFLAGS:         "--verbose --output-sync=target --print-directory"
 
-debian-10-gcc-8-noassert-17:
-  <<: *base-petsc
-  image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
-  only:
-    - triggers
-    - schedules
+
+    #debian-10-gcc-8-17:
+    #<<: *base-petsc
+  #image: dune-fem-ci:git-debian-10-gcc-8-17
+
+    #script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+
+    #debian-10-gcc-8-noassert-17:
+    #<<: *base-petsc
+    #image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
+    #script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+    #only:
+    #- triggers
+    #- schedules
 
 # This fails, have to further investigate what this libcpp really means.
 # is no longer maintained by Heidelberg
@@ -84,36 +99,36 @@ debian-10-gcc-8-noassert-17:
 # We only test Debian 10 as we basically only want to test whether the
 # build-system successfully has disabled the PETSc bindings.
 
-debian-10-gcc-8-17-nopetsc:
-  <<: *base-nopetsc
-  image: dune-fem-ci:git-debian-10-gcc-8-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+    #debian-10-gcc-8-17-nopetsc:
+    #<<: *base-nopetsc
+    #image: dune-fem-ci:git-debian-10-gcc-8-17
+    #script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
 
-debian-10-gcc-8-17-petsc:
-  <<: *base-nopetsc
-  image: dune-fem-ci:git-debian-10-gcc-8-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
-  only:
-    - triggers
-    - schedules
+    #debian-10-gcc-8-17-petsc:
+    #<<: *base-nopetsc
+    #image: dune-fem-ci:git-debian-10-gcc-8-17
+    #script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+    #only:
+    #- triggers
+    #- schedules
 
-debian-10-gcc-8-noassert-17-nopetsc:
-  <<: *base-nopetsc
-  image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
-  only:
-    - triggers
-    - schedules
+    #debian-10-gcc-8-noassert-17-nopetsc:
+    #<<: *base-nopetsc
+    #image: dune-fem-ci:git-debian-10-gcc-8-noassert-17
+    #script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+    #only:
+    #- triggers
+    #- schedules
 
-headercheck:
-  <<: *base-petsc
-  stage: test
-  image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
-  script:
-    - cd /builds/dune-fem
-    - dunecontrol --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-headercheck.opts --only=dune-fem configure
-    - cd dune-fem/build-cmake
-    - make headercheck
-  when: always
-  only:
-    - schedules
+    #headercheck:
+    #<<: *base-petsc
+    #stage: test
+    #image: dune-fem-ci:git-ubuntu-18.04-clang-6-17
+    #script:
+    #- cd /builds/dune-fem
+    #- dunecontrol --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-headercheck.opts --only=dune-fem configure
+    #- cd dune-fem/build-cmake
+    #- make headercheck
+    #when: always
+    #only:
+    #- schedules
