@@ -77,11 +77,6 @@ int main ( int argc, char **argv )
   return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
 }
 
-// use deprecated interface check unit ALUGrid returns entities instead of entity pointers
-#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
-#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
-#endif
-
 #include <dune/grid/test/checkindexset.hh>
 template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart )
