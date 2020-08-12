@@ -59,7 +59,7 @@ debian-11-gcc-10-17:
       # - python /duneci/modules/dune-python/bin/setup-dunepy.py --opts=$CI_PROJECT_DIR/scripts/opts/ci-gcc.opts install
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN:  gcc-10-17
+    DUNECI_TOOLCHAIN:  gcc-9-17
     # DUNE_LOG_FORMAT:   '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     # DUNE_LOG_LEVEL:    DEBUG
     # MAKEFLAGS:         "--verbose --output-sync=target --print-directory"
