@@ -2,6 +2,7 @@
 #define DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/localfunction/bindable.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/common/intersectionside.hh>
 
@@ -19,13 +20,17 @@ namespace Dune
 
     template< class GF >
     struct GridFunctionView< GF, false >
+    : public BindableGridFunction<typename GF::GridPartType, typename GF::RangeType>
     {
+      using Base = BindableGridFunction<typename GF::GridPartType, typename GF::RangeType>;
       typedef typename GF::EntityType Entity;
       typedef typename GF::RangeType Value;
 
       typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
 
-      GridFunctionView ( const GF &gf ) : localFunction_( gf ) {}
+      GridFunctionView ( const GF &gf )
+      : Base(gf.gridPart())
+      , localFunction_( gf ) {}
 
       Value operator() ( const LocalCoordinate &x ) const
       {
@@ -46,7 +51,9 @@ namespace Dune
 
     template< class GF >
     struct GridFunctionView< GF, true >
+    : public BindableGridFunctionWithSpace<typename GF::GridPartType, typename GF::RangeType>
     {
+      using Base = BindableGridFunctionWithSpace<typename GF::GridPartType, typename GF::RangeType>;
       typedef typename GF::EntityType Entity;
       typedef typename GF::RangeType Value;
 
@@ -58,7 +65,8 @@ namespace Dune
 
     public:
       GridFunctionView ( const GF &gf )
-        : gf_( gf )
+        : Base(gf.gridPart(), gf.name(), gf.order())
+        , gf_( gf )
       {
         localDofVector_.reserve( DiscreteFunctionSpace::localBlockSize * space().blockMapper().maxNumDofs() );
       }

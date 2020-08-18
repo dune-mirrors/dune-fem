@@ -16,6 +16,15 @@ try:
 except:
     pass
 
+def _uflToExpr(grid,order,f):
+    if not ufl: return f
+    if isinstance(f, list) or isinstance(f, tuple):
+        if isinstance(f[0], ufl.core.expr.Expr):
+            f = ufl.as_vector(f)
+    if isinstance(f, ufl.core.expr.Expr):
+        return expression2GF(grid,f,order).as_ufl()
+    else:
+        return f
 
 def interpolate(space, expr, name=None, **kwargs):
     """interpolate a function into a discrete function space
@@ -28,6 +37,7 @@ def interpolate(space, expr, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+    expr = _uflToExpr(space.grid,space.order,expr)
     if name is None:
         name = expr.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
@@ -44,6 +54,7 @@ def project(space, func, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+    expr = _uflToExpr(space.grid,space.order,func)
     if name is None:
         name = func.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
@@ -52,14 +63,14 @@ def project(space, func, name=None, **kwargs):
     return df
 
 def dfInterpolate(self, f):
-    if ufl and (isinstance(f, list) or isinstance(f, tuple)):
+    if isinstance(f, list) or isinstance(f, tuple):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
     dimExpr = 0
-    if ufl and isinstance(f, GridFunction):
+    if isinstance(f, GridFunction):
         func = f.gf
         dimExpr = func.dimRange
-    elif ufl and isinstance(f, ufl.core.expr.Expr):
+    elif isinstance(f, ufl.core.expr.Expr):
         func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
         if func.ufl_shape == ():
             dimExpr = 1
@@ -94,26 +105,45 @@ def dfInterpolate(self, f):
     return self._interpolate(func)
 
 def dfProject(self, f):
-    if ufl and (isinstance(f, list) or isinstance(f, tuple)):
+    if isinstance(f, list) or isinstance(f, tuple):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
-    if ufl and isinstance(f, GridFunction):
+    dimExpr = 0
+    if isinstance(f, GridFunction):
         func = f.gf
-    elif ufl and isinstance(f, ufl.core.expr.Expr):
+        dimExpr = func.dimRange
+    elif isinstance(f, ufl.core.expr.Expr):
         func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+        if func.ufl_shape == ():
+            dimExpr = 1
+        else:
+            dimExpr = func.ufl_shape[0]
     else:
         try:
             gl = len(inspect.getargspec(f)[0])
             func = None
         except TypeError:
             func = f
+            if isinstance(func,int) or isinstance(func,float):
+                dimExpr = 1
+            else:
+                dimExpr = len(func)
         if func is None:
             if gl == 1:   # global function
-                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
+                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f).gf
             elif gl == 2: # local function
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, f).gf
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x)).gf
+            dimExpr = func.dimRange
+
+    if dimExpr == 0:
+        raise AttributeError("can not determine if expression shape"\
+                " fits the space's range dimension")
+    elif dimExpr != self.space.dimRange:
+        raise AttributeError("trying to interpolate an expression"\
+            " of size "+str(dimExpr)+" into a space with range dimension = "\
+            + str(self.space.dimRange))
     return self._project(func)
 
 def localContribution(self, assembly):

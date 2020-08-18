@@ -283,13 +283,17 @@ namespace Dune
       inline static auto registerProjection ( pybind11::class_< DiscreteFunction, options... > cls, PriorityTag< 1 > )
       -> std::enable_if_t<std::is_void< decltype(
            Fem::VtxProjectionImpl::project(
-             std::declval<const GridFunction&>(),
+             std::declval<const
+                 typename GetGridFunction<
+                    typename DiscreteFunction::GridPartType,GridFunction>::value& >(),
              std::declval<DiscreteFunction&>()
            )) >::value>
       {
         using pybind11::operator""_a;
         cls.def( "_project", [] ( DiscreteFunction &self, const GridFunction &gridFunction ) {
-            Fem::VtxProjectionImpl::project( gridFunction, self );
+            Fem::VtxProjectionImpl::project(
+              getGridFunction(self.gridPart(),gridFunction,self.order(),PriorityTag<42>()),
+              self);
           }, "gridFunction"_a );
       }
 
