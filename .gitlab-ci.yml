@@ -23,7 +23,7 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 debian-11-gcc-9-17:
-  image: duneci/debian:11
+  image: registry.dune-project.org/docker/ci/debian:11
   script:
     #- source /duneci/modules/dune-pip/bin/activate
       # issue with setup-dunepy: dune-fem-dg not yet build so dependency in dune-fem-dg fails
