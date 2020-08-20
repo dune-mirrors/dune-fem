@@ -37,12 +37,10 @@ void checkPeriodic( Grid& grid )
       // check periodic boundary
       if( intersection.neighbor() && intersection.boundary() )
       {
-        //typedef Dune::Fem::ElementQuadrature< GridPartType, 1 > FaceQuadratureType;
-
         typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
 
         // use IntersectionQuadrature to create appropriate face quadratures
-        typedef Dune::Fem::IntersectionQuadrature< FaceQuadratureType, false > IntersectionQuadratureType;
+        typedef Dune::Fem::IntersectionQuadrature< FaceQuadratureType, true > IntersectionQuadratureType;
         typedef typename IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
 
         // create intersection quadrature (no neighbor check here)
