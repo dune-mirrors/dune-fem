@@ -466,9 +466,13 @@ class CoordWrapper:
         self.local = x
         self.glb = e.geometry.toGlobal(x)
     def __getitem__(self,i): return self.glb[i]
-def expression2GF(grid,expression,order,name="expr"):
-    from dune.fem.function import localFunction, uflFunction
-    return uflFunction(grid, name, order, expression)
+
+def expression2GF(grid,expression,order,name=None):
+    try:
+        return expression.gf
+    except:
+        from dune.fem.function import localFunction, uflFunction
+        return uflFunction(grid, "expr" if name is None else name, order, expression)
 
 # register markdown formatter for integrands, forms and equations to IPython
 
