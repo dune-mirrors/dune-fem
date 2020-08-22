@@ -186,7 +186,7 @@ class UFLFunctionSource(codegen.ModelClass):
         writer.close()
 
         source = "#ifndef GUARD_"+self.signature()+\
-                 "\n#define GURAD_"+self.signature()+"\n"+\
+                 "\n#define GUARD_"+self.signature()+"\n"+\
                  source+\
                  "\n#endif\n"
 
