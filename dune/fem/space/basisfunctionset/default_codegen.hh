@@ -1,9 +1,9 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_CODEGEN_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_CODEGEN_HH
 
-#ifdef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
-#error "<dune/fem/space/basisfunctionset/default.hh> included before codegen version"
-#endif
+//#ifdef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
+//#error "<dune/fem/space/basisfunctionset/default.hh> included before codegen version"
+//#endif
 
 #ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
 #ifndef USE_BASEFUNCTIONSET_CODEGEN
@@ -13,7 +13,7 @@
 
 // define header guard for DefaultBasisFunctionSet to avoid errors because both
 // classes have the same name
-#define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
+//#define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #define USE_BASEFUNCTIONSET_OPTIMIZED

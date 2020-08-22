@@ -289,7 +289,6 @@ def module(field, includes, typeName, *args,
         moduleName = fileBase + "_" +\
             "i" + "".join(str(i) for i in interiorQuadratureOrders) + "_" +\
             "s" + "".join(str(i) for i in skeletonQuadratureOrders)
-        includes = ["dune/fem/space/basisfunctionset/default_codegen.hh"] + includes
     else:
         moduleName = fileBase
     moduleName = moduleName + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest() \

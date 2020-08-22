@@ -1,6 +1,14 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
+#ifdef USE_BASEFUNCTIONSET_CODEGEN
+// codegen was enabled use overloaded version
+// of basis function set for codegen purposes
+#define USE_BASEFUNCTIONSET_OPTIMIZED
+#include <dune/fem/space/basisfunctionset/default_codegen.hh>
+#else // #ifdef USE_BASEFUNCTIONSET_CODEGEN
+
+// default basis function set version without codegen option
 
 // C++ includes
 #include <cassert>
@@ -366,4 +374,5 @@ namespace Dune
 
 } // namespace Dune
 
+#endif // #ifdef USE_BASEFUNCTIONSET_CODEGEN
 #endif // #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
