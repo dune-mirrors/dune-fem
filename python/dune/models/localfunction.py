@@ -184,10 +184,16 @@ class UFLFunctionSource(codegen.ModelClass):
         writer.closePythonModule(name)
         source = writer.writer.getvalue()
         writer.close()
+
+        source = "#ifndef GUARD_"+self.signature()+\
+                 "\n#define GURAD_"+self.signature()+"\n"+\
+                 source+\
+                 "\n#endif\n"
+
         return source
     def toString(self):
         writer = SourceWriter()
-        writer.emit(self.code());
+        writer.emit(self.code())
         source = writer.writer.getvalue()
         writer.close()
         return source
