@@ -139,6 +139,12 @@ namespace Dune
       };
 
       template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      struct isHierarchic< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
       struct isLocalized< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = false; // there is no method 'shapeFunctionSet( const EntityType & )'

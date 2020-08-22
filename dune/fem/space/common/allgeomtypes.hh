@@ -52,7 +52,7 @@ namespace Dune
 
     protected:
       //! constructor creating empty geometry information
-      GeometryInformation () : isNoneLocalCenter_( 0 )
+      GeometryInformation () : isNoneLocalCenter_( 0.5 )
       {}
 
     public:
