@@ -185,6 +185,7 @@ namespace Dune
           item.first = true;
         }
 
+        assert( evaluators[ quadId ].second );
         // make sure the storage is the same
         //assert( dataCache.size() == evaluators[ quadId ]->storageSize() );
         // return pointer to evaluator, if null then a fallback to default impl happens
@@ -211,10 +212,16 @@ namespace Dune
       typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
 
-      const RangeVectorType& rangeStorage_;
+      // A copy is made of the storage here, otherwise strange memory corruptions happen
+      // TODO: needs further investigation
+      RangeVectorType rangeStorage_; // basis function evaluations
+
       std::vector< std::vector< FieldType > > rangeStorageTransposed_;
       std::vector< std::vector< FieldType > > rangeStorageFlat_;
       mutable std::vector< std::vector< std::vector< FieldType > > > rangeStorageTwisted_;
+      //DynamicArray< DynamicArray< FieldType > > rangeStorageTransposed_;
+      //DynamicArray< DynamicArray< FieldType > > rangeStorageFlat_;
+      //mutable DynamicArray< DynamicArray< DynamicArray< FieldType > > > rangeStorageTwisted_;
 
       template <class K>
       int getDim( const DenseVector< K >& vec) const
@@ -240,6 +247,7 @@ namespace Dune
           for( int f=0; f<faces; ++f )
           {
             auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
+
             // rearrange such that we store for one basis functions all
             // evaluations for all quadrature points, i.e. numBaseFct * quadNop
             rangeStorageTransposed.resize( numBaseFct * quadNop );
@@ -250,7 +258,8 @@ namespace Dune
               {
                 int qp = f * quadNop + j ;
                 assert( j*numBaseFct + i < int(rangeStorage_.size()) );
-                rangeStorageTransposed[ idx + j ] = rangeStorage_[ qp*numBaseFct + i ][ 0 ];
+                // copy and transpose
+                rangeStorageTransposed[ idx + j ]     = rangeStorage_[ qp*numBaseFct + i ][ 0 ];
               }
             }
           }
@@ -293,6 +302,7 @@ namespace Dune
       }
 
       template <class Quadrature>
+      //const DynamicArray< FieldType >&
       const std::vector< FieldType >&
       getTwistedStorage( const Quadrature& quad ) const
       {
