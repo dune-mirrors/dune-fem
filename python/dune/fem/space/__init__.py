@@ -307,6 +307,7 @@ def module(field, includes, typeName, *args,
                             bufferProtocol=[False,True],
                             options=[["std::shared_ptr<DuneType>"],[]],
                             defines=defines)
+
     spc = module.Space(*ctorArgs)
     addAttr(module, spc, field, scalar)
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
@@ -321,4 +322,6 @@ def _codegen(space,interiorQuadratureOrders, skeletonQuadratureOrders, fileName=
     dune_py_dir   = dune.common.module.get_dune_py_dir()
     generated_dir = dune_py_dir # os.path.join(dune_py_dir, 'python', 'dune', 'generated')
     codegenPath = generated_dir
-    space._generateQuadratureCode(interiorQuadratureOrders,skeletonQuadratureOrders,codegenPath,fileName)
+    fullFileName = os.path.join(codegenPath, fileName)
+    if not os.path.exists(fullFileName):
+        space._generateQuadratureCode(interiorQuadratureOrders,skeletonQuadratureOrders,codegenPath,fileName)
