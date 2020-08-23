@@ -117,6 +117,8 @@ namespace Dune
 
       typedef std::vector< ScalarRangeType >          RangeVectorType;
       typedef std::vector< ScalarJacobianRangeType >  JacobianRangeVectorType;
+      //typedef DynamicArray< ScalarRangeType >          RangeVectorType;
+      //typedef DynamicArray< ScalarJacobianRangeType >  JacobianRangeVectorType;
 
       enum { dimDomain = FunctionSpaceType::dimDomain };
       enum { dimRange  = FunctionSpaceType::dimRange  };
@@ -252,15 +254,19 @@ namespace Dune
                 QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        // get base function evaluate caller (calls evaluateRanges)
-        const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
-
-        // true if implementation exists
-        if( baseEval )
+        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
-          baseEval->evaluateRanges( quad, dofs, ranges );
+          // get base function evaluate caller (calls evaluateRanges)
+          const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
+
+          // true if implementation exists
+          if( baseEval )
+          {
+            baseEval->evaluateRanges( quad, dofs, ranges );
+            return ;
+          }
         }
-        else
+
 #endif
         {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
@@ -304,16 +310,20 @@ namespace Dune
                 JacobianArray, DofVector, Geometry >  Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        // get base function evaluate caller (calls axpyRanges)
-        const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
-
-        // true if implementation exists
-        if( baseEval )
+        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
-          // call appropriate axpyJacobian method
-          baseEval->evaluateJacobians( quad, geometry(), dofs, jacobians );
+          // get base function evaluate caller (calls axpyRanges)
+          const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
+
+          // true if implementation exists
+          if( baseEval )
+          {
+            // call appropriate axpyJacobian method
+            baseEval->evaluateJacobians( quad, geometry(), dofs, jacobians );
+            return ;
+          }
         }
-        else
+
 #endif
         {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
@@ -402,16 +412,19 @@ namespace Dune
             QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        // get base function evaluate caller (calls axpyRanges)
-        const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
-
-        // true if implementation exists
-        if( baseEval )
+        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
-          // call appropriate axpyRanges method
-          baseEval->axpyRanges( quad, rangeFactors, dofs );
+          // get base function evaluate caller (calls axpyRanges)
+          const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
+
+          // true if implementation exists
+          if( baseEval )
+          {
+            // call appropriate axpyRanges method
+            baseEval->axpyRanges( quad, rangeFactors, dofs );
+            return ;
+          }
         }
-        else
 #endif
         {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
@@ -437,16 +450,20 @@ namespace Dune
                 JacobianArray, DofVector, Geometry >  Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        // get base function evaluate caller (calls axpyRanges)
-        const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
-
-        // true if implementation exists
-        if( baseEval )
+        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
-          // call appropriate axpyRanges method
-          baseEval->axpyJacobians( quad, geometry(), jacobianFactors, dofs );
+          // get base function evaluate caller (calls axpyRanges)
+          const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
+
+          // true if implementation exists
+          if( baseEval )
+          {
+            // call appropriate axpyRanges method
+            baseEval->axpyJacobians( quad, geometry(), jacobianFactors, dofs );
+            return ;
+          }
         }
-        else
+
 #endif
         {
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
