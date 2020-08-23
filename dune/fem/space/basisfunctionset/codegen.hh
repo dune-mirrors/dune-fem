@@ -587,13 +587,16 @@ namespace Dune
             out << "      const " << doubletype() << "* rangeFactor" << i << " = &rangeFactors[ row + " << i << " ][ 0 ];" << std::endl;
           out << "      " << funcName << "(";
           for( int i = 0; i < simdWidth; ++i )
-            out << " &rangeStorage[ quad.cachingPoint( row + " << i << " ) * " << numCols << " ][ 0 ],";
-          out << std::endl;
-          out << "                 rangeFactor0, ";
+          {
+            if( i>0 )
+              out << "                              ";
+            out << " &rangeStorage[ quad.cachingPoint( row + " << i << " ) * " << numCols << " ][ 0 ]," << std::endl;
+          }
+          out << "                               rangeFactor0, ";
           for( int i=1; i<simdWidth; ++ i )
             out << "rangeFactor" << i << ",";
           out << std::endl;
-          out << "                ";
+          out << "                              ";
           for( int r = 0; r < dimRange; ++ r )
           {
             out << " dofs" << r ;
