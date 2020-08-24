@@ -395,10 +395,12 @@ namespace Dune
         //out << "    typedef RangeType value_type;" << std::endl;
 
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numRows * dimRange << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numRows * dimRange << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << numRows * dimRange << " );" << std::endl;
 
         // make length simd conform
-        out << "    Field* resultTmp = (*memory).data();" << std::endl;
+        //out << "    Field* resultTmp = (*memory).data();" << std::endl;
+        out << "    Field* resultTmp = memory.data();" << std::endl;
         out << "    for( int i=0; i < " << numRows * dimRange << "; ++ i ) resultTmp[ i ] = 0;" << std::endl <<std::endl;
 
         for(int r=0; r<dimRange ; ++r )
@@ -567,10 +569,11 @@ namespace Dune
         //out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
 
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        //out << "    static std::vector< Field > memory( " << numCols * dimRange << " );" << std::endl;
-        out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numCols * dimRange << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << numCols * dimRange << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numCols * dimRange << " );" << std::endl;
 
-        out << "    " << doubletype() << "* dofResult = (*memory).data();" << std::endl;
+        //out << "    " << doubletype() << "* dofResult = (*memory).data();" << std::endl;
+        out << "    " << doubletype() << "* dofResult = memory.data();" << std::endl;
         out << "    for( int i=0; i < " << numCols * dimRange << "; ++i ) dofResult[ i ] = 0;" << std::endl << std::endl;
 
         out << "    " << doubletype() << "* dofs0 = dofResult;" << std::endl;
@@ -776,13 +779,14 @@ namespace Dune
 
         const size_t nDofs = numRows * dimRange * dim ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        //out << "    static std::vector< Field > memory( " << nDofs << " );" << std::endl;
-        out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << nDofs << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << nDofs << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << nDofs << " );" << std::endl;
 
         for( int d = 0; d < dim ; ++ d )
         {
           // make length simd conform
-          out << "    Field* resultTmp" << d << " = (*memory).data() + " << d * numRows * dimRange << ";" << std::endl;
+          //out << "    Field* resultTmp" << d << " = (*memory).data() + " << d * numRows * dimRange << ";" << std::endl;
+          out << "    Field* resultTmp" << d << " = memory.data() + " << d * numRows * dimRange << ";" << std::endl;
         }
         out << "    for( int i=0; i<" << numRows * dimRange << "; ++i ) " << std::endl;
         out << "    {" << std::endl;
@@ -1002,10 +1006,11 @@ namespace Dune
 
         const size_t dofs = dimRange * numCols ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        //out << "    static std::vector< Field > memory( " << dofs << " );" << std::endl;
-        out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << dofs << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << dofs << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << dofs << " );" << std::endl;
 
-        out << "    Field* result = (*memory).data();" << std::endl;
+        //out << "    Field* result = (*memory).data();" << std::endl;
+        out << "    Field* result = memory.data();" << std::endl;
         out << "    for( int i = 0 ; i < " << dofs << "; ++i ) result[ i ] = 0;" << std::endl << std::endl;
 
         for( int r=0; r<dimRange; ++r )
