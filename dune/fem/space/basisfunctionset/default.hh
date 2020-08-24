@@ -1,12 +1,10 @@
 #ifndef DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 #define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
 
-#ifdef USE_BASEFUNCTIONSET_CODEGEN
-// codegen was enabled use overloaded version
-// of basis function set for codegen purposes
-#define USE_BASEFUNCTIONSET_OPTIMIZED
+
+#if defined(USE_BASEFUNCTIONSET_CODEGEN) || defined(BASEFUNCTIONSET_CODEGEN_GENERATE)
 #include <dune/fem/space/basisfunctionset/default_codegen.hh>
-#else // #ifdef USE_BASEFUNCTIONSET_CODEGEN
+#else // #if defined(USE_BASEFUNCTIONSET_CODEGEN) || defined(BASEFUNCTIONSET_CODEGEN_GENERATE)
 
 // default basis function set version without codegen option
 

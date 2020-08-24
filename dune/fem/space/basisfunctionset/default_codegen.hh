@@ -5,12 +5,6 @@
 //#error "<dune/fem/space/basisfunctionset/default.hh> included before codegen version"
 //#endif
 
-#ifndef BASEFUNCTIONSET_CODEGEN_GENERATE
-#ifndef USE_BASEFUNCTIONSET_CODEGEN
-#define USE_BASEFUNCTIONSET_CODEGEN
-#endif
-#endif
-
 // define header guard for DefaultBasisFunctionSet to avoid errors because both
 // classes have the same name
 //#define DUNE_FEM_BASISFUNCTIONSET_DEFAULT_HH
@@ -41,6 +35,8 @@
 #include <dune/fem/quadrature/cachingpointlist.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
+
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
 #include "codegen.hh"
