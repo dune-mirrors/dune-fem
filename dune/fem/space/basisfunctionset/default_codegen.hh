@@ -36,7 +36,6 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 
-#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
 #include "codegen.hh"
