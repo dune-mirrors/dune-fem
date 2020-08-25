@@ -149,7 +149,7 @@ namespace Dune
     AdaptationMethod ( const GridType &grid, const ParameterReader &parameter = Parameter::container() )
       : adaptationMethod_(generic)
     {
-      const bool output = ( Parameter :: verbose() );
+      const bool output = ( Parameter :: verbose() && ThreadManager::isMaster() );
       int am = 1;
       const std::string methodNames [] = { "none", "generic", "callback" };
       am = parameter.getEnum("fem.adaptation.method", methodNames, am);
