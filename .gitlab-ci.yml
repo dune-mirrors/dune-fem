@@ -44,7 +44,7 @@ ubuntu:20.04-clang-10-20:
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
-    #- duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
+    - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
     - make headercheck
   variables:
