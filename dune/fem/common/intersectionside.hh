@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_COMMON_INTERSECTIONSIDE_HH
 #define DUNE_FEM_COMMON_INTERSECTIONSIDE_HH
 
+#include <dune/common/typelist.hh>
+
 namespace Dune
 {
   namespace Fem
