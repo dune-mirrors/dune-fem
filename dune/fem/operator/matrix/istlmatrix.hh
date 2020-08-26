@@ -88,12 +88,6 @@ namespace Dune
         //! implement row_type with compressed vector
         typedef typename BaseType :: row_type row_type;
 
-        //! increment block level counter
-        enum {
-          //! The number of blocklevels the matrix contains.
-          blocklevel = BaseType :: blocklevel
-        };
-
         /** \brief Iterator for the entries of each row */
         typedef typename BaseType :: ColIterator ColIterator;
 
