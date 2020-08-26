@@ -2,7 +2,7 @@ DGF
 Interval
 0 0   #p0
 1 1   #p1
-8 8   #nx ny nz
+16 16   #nx ny nz
 #
 
 GridParameter
