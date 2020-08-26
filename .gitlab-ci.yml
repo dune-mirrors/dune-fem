@@ -10,11 +10,7 @@ variables:
   PYTHONPATH:         "/duneci/modules/dune-common/build-cmake/python:/duneci/modules/dune-geometry/build-cmake/python:/duneci/modules/dune-grid/build-cmake/python:/duneci/modules/dune-istl/build-cmake/python:/duneci/modules/dune-alugrid/build-cmake/python:/duneci/modules/dune-fem/build-cmake/python:$CI_PROJECT_DIR/build-cmake/python"
 
 before_script:
-  - . /duneci/bin/duneci-init-job
-    #- python3 -m venv /duneci/modules/dune-pip
-    #- source /duneci/modules/dune-pip/bin/activate
-    #- pip install --upgrade pip
-    #- pip install ufl numpy matplotlib mpi4py portalocker
+  - source /duneci/bin/duneci-init-job
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
@@ -25,13 +21,22 @@ before_script:
 debian-11-gcc-9-17:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
-    #- source /duneci/modules/dune-pip/bin/activate
-      # issue with setup-dunepy: dune-fem-dg not yet build so dependency in dune-fem-dg fails
-      # - python /duneci/modules/dune-python/bin/setup-dunepy.py --opts=$CI_PROJECT_DIR/scripts/opts/ci-gcc.opts install
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN:  gcc-9-17
-    # DUNE_LOG_FORMAT:   '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    # DUNE_LOG_LEVEL:    DEBUG
-    # MAKEFLAGS:         "--verbose --output-sync=target --print-directory"
+    DUNECI_TOOLCHAIN: gcc-9-17
 
+ubuntu:20.04-clang-10-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:20.04
+  script:
+    - duneci-standard-test
+  variables:
+    DUNECI_TOOLCHAIN: clang-10-20
+
+debian:11--gcc-9-17:headercheck:
+  image: registry.dune-project.org/docker/ci/debian:11
+  script:
+    - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
+    - cd /duneci/modules/dune-fem/build-cmake
+    - make headercheck
+  variables:
+    DUNECI_TOOLCHAIN: gcc-9-17
