@@ -24,6 +24,15 @@ debian-11-gcc-9-17:
     - duneci-standard-test
   variables:
     DUNECI_TOOLCHAIN: gcc-9-17
+  tags: [duneci]
+
+debian-11-gcc-9-17-no-petsc:
+  image: registry.dune-project.org/docker/ci/debian:11
+  script:
+    - duneci-standard-test
+  variables:
+    DUNE_CMAKE_FLAGS: "$DUNE_CMAKE_FLAGS -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE"
+    DUNECI_TOOLCHAIN: gcc-9-17
 
 ubuntu:20.04-clang-10-20:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
@@ -35,8 +44,9 @@ ubuntu:20.04-clang-10-20:
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
-    - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
+    #- duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
     - make headercheck
   variables:
     DUNECI_TOOLCHAIN: gcc-9-17
+  tags: [duneci]
