@@ -3,7 +3,7 @@ variables:
   DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
 
   DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
-  DUNE_CONTROL_PATH:  /duneci/modules:$CI_PROJECT_DIR
+  #DUNE_CONTROL_PATH:  /duneci/modules:$CI_PROJECT_DIR
   DUNE_PY_DIR:        /duneci/modules/dune-py
   # adding this actually leads to the test failure seen in the core modules
   # don't know why this is required here but not for core modules - magic?
@@ -34,6 +34,7 @@ debian-11-gcc-9-17-no-petsc:
   variables:
     DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     DUNECI_TOOLCHAIN: gcc-9-17
+  tags: [duneci]
 
 ubuntu:20.04-clang-10-20:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
@@ -41,12 +42,14 @@ ubuntu:20.04-clang-10-20:
     - duneci-standard-test
   variables:
     DUNECI_TOOLCHAIN: clang-10-20
+  tags: [duneci]
 
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
     - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
+    #- cd /builds/dune-fem/dune-fem/build-cmake
     - make headercheck
   variables:
     DUNECI_TOOLCHAIN: gcc-9-17
