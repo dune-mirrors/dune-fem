@@ -170,7 +170,7 @@ try
 
   // construct unit cube
   typedef typename Dune::GridSelector::GridType GridType;
-  std::istringstream dgf( dgfUnitCube( GridType::dimensionworld, 8 ) );
+  std::istringstream dgf( dgfUnitCube( GridType::dimensionworld, 16 ) );
   Dune::GridPtr< GridType > grid( dgf );
 
   // create leaf grid part
