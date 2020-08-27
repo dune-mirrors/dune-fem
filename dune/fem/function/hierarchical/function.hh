@@ -57,7 +57,7 @@ namespace Dune
       template< class Dof, class... SR >
       struct HierarchicalDofContainerChooser< Dof, Hybrid::CompositeIndexRange< SR... > >
       {
-        static_assert(false, "not implemented, needs dune-istl");
+        typedef MutableBlockVector< DynamicArray< Dof >, Hybrid::CompositeIndexRange< SR... >::size() > Type;
       };
 #endif // #if HAVE_DUNE_ISTL
 
