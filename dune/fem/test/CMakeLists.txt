@@ -140,7 +140,7 @@ if( ${FEM_TORTURE_TESTS} )
   # endif()
 endif()
 
-dune_add_test( NAME test-periodic SOURCES test-periodic.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+dune_add_test( NAME test-periodic SOURCES test-periodic.cc CMAKE_GUARD dune-alugrid_FOUND COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} test-periodic )
 
 dune_add_test( NAME referencesolution SOURCES referencesolution.cc
