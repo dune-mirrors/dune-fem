@@ -40,6 +40,7 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 typedef TestFunctionSpace FunctionSpaceType;
 
 #if not DEFAULTPOLORDER || not HAVE_DUNE_LOCALFUNCTIONS
+#warning "Using dune-fem's LagrangeDiscreteFunctionSpace for lagrangeinterpolation"
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER >
    DiscreteFunctionSpaceType;
 #else
