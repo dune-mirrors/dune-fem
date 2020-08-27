@@ -88,6 +88,7 @@ int main(int argc, char ** argv)
     GridPartType gridPart( grid );
 
 #if not DEFAULTPOLORDER || not HAVE_DUNE_LOCALFUNCTIONS
+    const int polOrder = POLORDER;
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 #else
     const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
@@ -102,10 +103,12 @@ int main(int argc, char ** argv)
     // let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
 
-    BinaryFileOutStream bout( "solution-xdr.tmp" );
+    std::string casename( "lagrangeinterpolation_p" + std::to_string(polOrder) + "_" );
+
+    BinaryFileOutStream bout( casename + "solution-xdr.tmp" );
     writeOut( virtualize( bout ), solution );
 
-    BinaryFileInStream bin( "solution-xdr.tmp" );
+    BinaryFileInStream bin( casename + "solution-xdr.tmp" );
     readBack( virtualize( bin ), readback );
     if( readback != solution )
     {
@@ -113,10 +116,10 @@ int main(int argc, char ** argv)
       return 1;
     }
 
-    ASCIIOutStream aout( "solution-ascii.tmp" );
+    ASCIIOutStream aout( casename + "solution-ascii.tmp" );
     writeOut( virtualize( aout ), solution );
 
-    ASCIIInStream ain( "solution-ascii.tmp" );
+    ASCIIInStream ain( casename + "solution-ascii.tmp" );
     readBack( virtualize( ain ), readback );
     if( readback != solution )
     {
@@ -127,7 +130,7 @@ int main(int argc, char ** argv)
     // output to vtk file
     VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addVertexData(solution);
-    vtkWriter.pwrite("vtxprojection",
+    vtkWriter.pwrite(casename+"vtxprojection",
                       Parameter::commonOutputPath().c_str(),"",
                       Dune::VTK::ascii);
     return 0;

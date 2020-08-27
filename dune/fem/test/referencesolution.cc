@@ -86,13 +86,13 @@ try
   typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
   GridPartType gridPart( grid );
   typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, 1 > FunctionSpaceType;
+  const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
 #if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
-  const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
   DiscreteFunctionSpaceType space( gridPart, polOrder );
 #else
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 > DiscreteFunctionSpaceType;
-  DiscreteFunctionSpaceType space( gridPart );
+  typedef Dune::Fem::DynamicLagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+  DiscreteFunctionSpaceType space( gridPart, polOrder );
 #endif
 
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > FunctionType;

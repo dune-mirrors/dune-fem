@@ -34,12 +34,14 @@ LINK_LIBRARIES dunefem )
 
 dune_add_test(
   SOURCES test-hierarchicalfunction.cc
+  CMAKE_GUARD dune-istl_FOUND
   COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
   LINK_LIBRARIES dunefem
 )
 
 dune_add_test(
   SOURCES test-hierarchicalfunction-comm.cc
+  CMAKE_GUARD dune-istl_FOUND
   COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
   LINK_LIBRARIES dunefem
   MPI_RANKS 2 3 4

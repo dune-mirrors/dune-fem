@@ -60,7 +60,7 @@ void traverse ( GridPartType &gridPart )
   ScalarLegendreShapeFunctionSetType scalarLegendreShapeFunctionSet( polorder );
   ScalarOrthonormalShapeFunctionSetType scalarOrthonormalShapeFunctionSet( entity.type(), polorder );
 
-  double eps = 1e-7;
+  double eps = 1e-6;
 
   ErrorType error( 0 );
   // default basis function set

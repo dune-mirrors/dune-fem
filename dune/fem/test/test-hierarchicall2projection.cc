@@ -75,7 +75,7 @@ int main ( int argc, char **argv )
 
   // construct unit cube
   typedef typename Dune::GridSelector::GridType GridType;
-  std::istringstream dgf( dgfUnitCube( GridType::dimensionworld, 4 ) );
+  std::istringstream dgf( dgfUnitCube( GridType::dimensionworld, 16 ) );
   Dune::GridPtr< GridType > grid( dgf );
 
   // create leaf grid part

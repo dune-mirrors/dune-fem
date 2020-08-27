@@ -68,7 +68,6 @@ int main ( int argc, char **argv )
   if( gridPart.begin< 0 >() == gridPart.end< 0 >() )
     return 1;
 
-
   generateCode< GridPartType, 1 >( gridPart );
   generateCode< GridPartType, 2 >( gridPart );
   generateCode< GridPartType, 3 >( gridPart );
