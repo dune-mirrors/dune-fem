@@ -9,6 +9,7 @@
 #endif // #if HAVE_DUNE_ISTL
 
 #include <dune/fem/common/hybrid.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/hierarchical/dofvector.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
@@ -45,6 +46,18 @@ namespace Dune
       struct HierarchicalDofContainerChooser< Dof, Hybrid::CompositeIndexRange< SR... > >
       {
         typedef MultiTypeBlockVector< typename HierarchicalDofContainerChooser< Dof, SR >::Type... > Type;
+      };
+#else
+      template< class Dof, int sz >
+      struct HierarchicalDofContainerChooser< Dof, Hybrid::IndexRange< int, sz > >
+      {
+        typedef MutableBlockVector< DynamicArray< Dof >, sz > Type;
+      };
+
+      template< class Dof, class... SR >
+      struct HierarchicalDofContainerChooser< Dof, Hybrid::CompositeIndexRange< SR... > >
+      {
+        static_assert(false, "not implemented, needs dune-istl");
       };
 #endif // #if HAVE_DUNE_ISTL
 
