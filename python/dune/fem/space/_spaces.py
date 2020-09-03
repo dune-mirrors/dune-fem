@@ -277,7 +277,8 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double", storage=None,
 
 def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
-            scalar=False, dimrange=None):
+            scalar=False, dimrange=None,
+            pointType="equidistant"):
     """create a discontinous galerkin space with elementwise lagrange basis function
 
     Args:
@@ -319,18 +320,23 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     dimw = gridView.dimWorld
 
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
-    # typeName = "Dune::Fem::DGLagrangeSpace< " +\
-    #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-    #   "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
-    typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
-      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
-
+    if pointType.lower() == "lobatto":
+        typeName = "Dune::Fem::DGLagrangeSpace< " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+          "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
+        ctorArgs=[gridView,order]
+    elif pointType.lower() == "equidistant":
+        typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
+          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+          "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
+        ctorArgs=[gridView]
+    else:
+        raise KeyError(
+            "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +
+            pointType + "not known.")
 
     spc = module(field, includes, typeName, storage=storage,
-            scalar=scalar,
-    #         ctorArgs=[gridView,order])
-             ctorArgs=[gridView])
+            scalar=scalar, ctorArgs=ctorArgs)
     if interiorQuadratureOrders is not None or skeletonQuadratureOrders is not None:
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\

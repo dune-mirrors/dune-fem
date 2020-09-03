@@ -33,7 +33,6 @@ namespace Dune
 
     // DiscontinuousLocalFiniteElementSpaceTraits
     // ------------------------------------------
-
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
     struct DiscontinuousLocalFiniteElementSpaceTraits
     {
@@ -47,20 +46,29 @@ namespace Dune
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static constexpr int codimension = 0;
+      static constexpr bool isScalar = LocalFiniteElementType::Traits::LocalBasisType::Traits::dimRange==1;
 
-      typedef Hybrid::IndexRange< int, 1 > LocalBlockIndices;
+      typedef std::conditional_t<isScalar,
+              Hybrid::IndexRange< int, FunctionSpace::dimRange >,
+              Hybrid::IndexRange< int, 1 >
+              > LocalBlockIndices;
 
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
+      // typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
       typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
 
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
-      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetType;
-//      typedef VectorialShapeFunctionSet< ShapeFunctionSetProxy< StoredShapeFunctionSetType >, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetProxyType;
+      // only extend to vector valued in case that the original space is scalar
+      typedef std::conditional_t<isScalar,
+              VectorialShapeFunctionSet< ShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType >,
+              ShapeFunctionSetProxyType
+              > ShapeFunctionSetType;
 
     private:
       template< class LFEM >

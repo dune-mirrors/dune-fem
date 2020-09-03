@@ -39,7 +39,8 @@ namespace Dune
 
       static const int dimLocal = GridPart::dimension;
 
-      typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double > LocalFiniteElementType;
+      typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double,
+              GMPField<64>, GMPField<256> > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
@@ -65,7 +66,7 @@ namespace Dune
           { index, lfe.localBasis(), lfe.localInterpolation() };
       }
 
-      bool hasCoefficients ( const GeometryType &type ) const { return true; }
+      bool hasCoefficients ( const GeometryType &type ) const { return PointSet<void,0>::supports(type,order()); }
 
       const LocalCoefficientsType& localCoefficients ( const GeometryType &type ) const
       {
@@ -103,7 +104,6 @@ namespace Dune
               template< class > class Storage = CachingStorage >
     using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
 #else // #if HAVE_DUNE_LOCALFUNCTIONS
-
     // LagrangeSpace
     // -------------
     template< class FunctionSpace, class GridPart,

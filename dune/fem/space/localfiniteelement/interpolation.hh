@@ -195,10 +195,12 @@ namespace Dune
 
     private:
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
+      // typedef typename Space::FunctionSpaceType FunctionSpaceType;
 
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       static const int dimRange = FunctionSpaceType::dimRange;
+      static const int dimR = Space::FunctionSpaceType::dimRange;
 
       typedef std::size_t size_type;
 
@@ -218,11 +220,11 @@ namespace Dune
         // clear dofs before something is adedd
         // localDofVector.clear(); // does not exist on DynVector so use 'fill' instead
         std::fill(localDofVector.begin(),localDofVector.end(),0);
-        for( std::size_t i = 0; i < dimRange; ++i )
+        for( std::size_t i = 0; i < dimR; ++i )
         {
           Impl::SubDofVectorWrapper< Vector, DofAlignmentType > subLdv( localDofVector, i, dofAlignment_ );
           (*this)(
-              localFunctionConverter( localFunction, Impl::RangeConverter<dimRange>(i) ),
+              localFunctionConverter( localFunction, Impl::RangeConverter<dimR>(i) ),
               subLdv, PriorityTag<42>()
               );
         }
