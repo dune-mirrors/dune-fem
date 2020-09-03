@@ -268,6 +268,21 @@ namespace Dune
       std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
     };
 
+    template< class LFEMap, class FunctionSpace, template< class > class Storage, int newRange >
+    struct ToNewDimRangeFunctionSpace<
+      DiscontinuousLocalFiniteElementSpace<LFEMap, FunctionSpace, Storage>, newRange>
+    {
+      typedef DiscontinuousLocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
+    };
+    template <class LFEMap, class FunctionSpace,
+              template <class> class Storage,
+              class NewFunctionSpace>
+    struct DifferentDiscreteFunctionSpace<
+        DiscontinuousLocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>
+    {
+      typedef DiscontinuousLocalFiniteElementSpace<LFEMap, NewFunctionSpace, Storage > Type;
+    };
+
   } // namespace Fem
 
 } // namespace Dune

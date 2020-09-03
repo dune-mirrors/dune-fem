@@ -287,7 +287,14 @@ namespace Dune
     {
       typedef LocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
     };
-
+    template <class LFEMap, class FunctionSpace,
+              template <class> class Storage,
+              class NewFunctionSpace>
+    struct DifferentDiscreteFunctionSpace<
+        LocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>
+    {
+      typedef LocalFiniteElementSpace<LFEMap, NewFunctionSpace, Storage > Type;
+    };
   } // namespace Fem
 
 } // namespace Dune
