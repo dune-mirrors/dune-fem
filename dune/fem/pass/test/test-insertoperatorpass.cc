@@ -99,7 +99,7 @@ createGrid( int count = 1 )
   grid->globalRefine( count );
   grid->loadBalance();
 
-  return std::move( grid );
+  return grid;
 }
 
 

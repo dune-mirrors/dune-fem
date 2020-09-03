@@ -22,6 +22,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 #include <dune/grid/common/partitionset.hh>
 
+#if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -622,5 +623,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif // #if HAVE_ISTL
 
 #endif // #ifndef DUNE_ASH_SOLVER_ISTL_HH

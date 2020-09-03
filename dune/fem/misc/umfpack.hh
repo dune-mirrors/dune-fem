@@ -29,37 +29,37 @@ namespace Dune
     template< class... A >
     static void defaults ( A ... args )
     {
-      umfpack_di_defaults( args ... );
+      umfpack_dl_defaults( args ... );
     }
     template< class ... A >
     static void free_numeric ( A ... args )
     {
-      umfpack_di_free_numeric( args ... );
+      umfpack_dl_free_numeric( args ... );
     }
     template< class ... A >
     static void free_symbolic ( A ... args )
     {
-      umfpack_di_free_symbolic( args ... );
+      umfpack_dl_free_symbolic( args ... );
     }
     template< class ... A >
     static int load_numeric ( A ... args )
     {
-      return umfpack_di_load_numeric( args ... );
+      return umfpack_dl_load_numeric( args ... );
     }
     template< class ... A >
     static void numeric ( A ... args )
     {
-      umfpack_di_numeric( args ... );
+      umfpack_dl_numeric( args ... );
     }
     template< class ... A >
     static void report_info ( A ... args )
     {
-      umfpack_di_report_info( args ... );
+      umfpack_dl_report_info( args ... );
     }
     template< class ... A >
     static void report_status ( A ... args )
     {
-      umfpack_di_report_status( args ... );
+      umfpack_dl_report_status( args ... );
     }
     template< class ... A >
     static int save_numeric ( A ... args )
@@ -69,12 +69,12 @@ namespace Dune
     template< class ... A >
     static void solve ( A ... args )
     {
-      umfpack_di_solve( args ... );
+      umfpack_dl_solve( args ... );
     }
     template< class ... A >
     static void symbolic ( A ... args )
     {
-      umfpack_di_symbolic( args ... );
+      umfpack_dl_symbolic( args ... );
     }
   };
 
