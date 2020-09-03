@@ -320,20 +320,28 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     dimw = gridView.dimWorld
 
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
-    if pointType.lower() == "lobatto":
-        typeName = "Dune::Fem::DGLagrangeSpace< " +\
-          "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-          "Dune::FemPy::GridPart< " + gridView._typeName + " > >"
-        ctorArgs=[gridView,order]
-    elif pointType.lower() == "equidistant":
+    if pointType is None:
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
           "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " >"
         ctorArgs=[gridView]
     else:
-        raise KeyError(
-            "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +
-            pointType + "not known.")
+        includes += ["dune/fem/space/localfiniteelement/quadratureinterpolation.hh"]
+        if pointType.lower() == "equidistant":
+            pointSet = ''
+        elif pointType.lower() == "lobatto":
+            pointSet = ', Dune::LobattoPointSet'
+        elif pointType.lower() == "gauss":
+            pointSet = ', Dune::GaussPointSet'
+        else:
+            raise KeyError(
+                "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +
+                pointType + "not known.")
+        typeName = "Dune::Fem::DGLagrangeSpace< " +\
+           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+           "Dune::FemPy::GridPart< " + gridView._typeName + " >"+\
+           pointSet + " >"
+        ctorArgs=[gridView,order]
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, ctorArgs=ctorArgs)
