@@ -278,7 +278,7 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double", storage=None,
 def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
             scalar=False, dimrange=None,
-            pointType="equidistant"):
+            pointType=None):
     """create a discontinous galerkin space with elementwise lagrange basis function
 
     Args:
