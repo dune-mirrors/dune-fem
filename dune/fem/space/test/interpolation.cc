@@ -27,7 +27,7 @@
 #include <dune/fem/space/fourier.hh>
 #include <dune/fem/space/lagrange.hh>
 
-#include <dune/fem/space/localfiniteelement/lobattopoints.hh>
+#include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
 
 #include "../../test/exactsolution.hh"
 
@@ -215,6 +215,30 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
         fourierSpace( gridPart, polOrder+1 );
 
+  // Test:
+  {
+    auto quadrature = lobattoDGSpace.quadrature(Dune::GeometryTypes::cube(3));
+    double weight = 0;
+    // std::cout << "---- Lobatto ------\n";
+    for (auto &p : quadrature)
+    {
+      // std::cout << p.point() << " , " << p.weight() << " , " << p.localKey() << std::endl;
+      weight += p.weight();
+    }
+    assert(std::abs(weight-1.)<1e-15);
+  }
+  {
+    auto quadrature = gaussDGSpace.quadrature(Dune::GeometryTypes::cube(3));
+    double weight = 0;
+    // std::cout << "---- Gauss ------\n";
+    for (auto &p : quadrature)
+    {
+      // std::cout << p.point() << " , " << p.weight() << " , " << p.localKey() << std::endl;
+      weight += p.weight();
+    }
+    assert(std::abs(weight-1.)<1e-15);
+    std::cout << "--------------------\n";
+  }
   // perform eoc loop
   eocLoop( *grid, steps,
            discontinuousGalerkinSpace, lagrangeDGSpaceB, lobattoDGSpace, gaussDGSpace,

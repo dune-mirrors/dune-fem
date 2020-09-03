@@ -261,6 +261,12 @@ namespace Dune
         return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
+      typedef typename LFEMapType::LocalCoefficientsType QuadratureType;
+      const QuadratureType& quadrature ( const GeometryType &type ) const
+      {
+        return (*lfeMap_).localCoefficients(type);
+      }
+
     private:
       ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe, const GeometryType &type ) const
       {

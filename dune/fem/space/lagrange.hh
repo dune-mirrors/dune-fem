@@ -66,7 +66,7 @@ namespace Dune
           { index, lfe.localBasis(), lfe.localInterpolation() };
       }
 
-      bool hasCoefficients ( const GeometryType &type ) const { return PointSet<void,0>::supports(type,order()); }
+      bool hasCoefficients ( const GeometryType &type ) const { return PointSet<double,0>::supports(type,order()); }
 
       const LocalCoefficientsType& localCoefficients ( const GeometryType &type ) const
       {
