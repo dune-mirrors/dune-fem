@@ -237,7 +237,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
       weight += p.weight();
     }
     assert(std::abs(weight-1.)<1e-15);
-    std::cout << "--------------------\n";
+    // std::cout << "--------------------\n";
   }
   // perform eoc loop
   eocLoop( *grid, steps,
