@@ -10,7 +10,6 @@
 #include <dune/fem/quadrature/elementquadrature.hh>
 
 #include <dune/fem/quadrature/dunequadratures.hh>
-#include <dune/fem/quadrature/lagrangepoints.hh>
 #include <dune/fem/quadrature/lumpingquadrature.hh>
 
 #include "checkleafcodim1.hh"
@@ -38,13 +37,11 @@ struct QuadratureChooser<GridPartType,codim,true,int>
 template<class GridPartType, int codim, class QuadratureTraits >
 struct QuadratureChooser<GridPartType,codim,false, QuadratureTraits>
 {
-  //typedef ElementQuadrature< GridPartType, codim, Dune::Fem::GaussLobattoLagrangePointTraits > Quadrature;
   typedef ElementQuadrature< GridPartType, codim, Dune::Fem::DuneQuadratureTraits > Quadrature;
 };
 template<class GridPartType, int codim, class QuadratureTraits >
 struct QuadratureChooser<GridPartType,codim,true, QuadratureTraits>
 {
-  //typedef CachingQuadrature< GridPartType, codim, Dune::Fem::GaussLobattoLagrangePointTraits > Quadrature;
   typedef CachingQuadrature< GridPartType, codim, Dune::Fem::DuneQuadratureTraits > Quadrature;
 };
 
@@ -90,12 +87,6 @@ public:
 
   void testElementQuadratures()
   {
-    std::cout << "VolumeQuadrature::lagrangePointId " <<
-      VolumeQuadratureType::lagrangePointId << std::endl;
-
-    std::cout << "ElementQuadrature::lagrangePointId " <<
-      ElementQuadratureType::lagrangePointId << std::endl;
-
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it)
     {
@@ -313,11 +304,6 @@ int main(int argc, char ** argv)
         std::cout << "Testing DUNE CachingQuadratures: " << std::endl;
         TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
         testCaching.runTest();
-      }
-      {
-        std::cout << "Testing DUNE CachingLumpiongQuadrature: " << std::endl;
-        TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
-        testCaching.testLumpingQuadrature();
       }
       {
         std::cout << "Testing DUNE CachingLumpiongQuadrature: " << std::endl;
