@@ -161,7 +161,7 @@ namespace Dune
       };
   } // end namespace detail
 
-
+#if HAVE_DUNE_LOCALFUNCTIONS
   //////////////////////////////////////////////////////////////////
   //
   //  GaussLobatto point set (same quadrature as in dune-geometry
@@ -179,6 +179,7 @@ namespace Dune
   //////////////////////////////////////////////////////////////////
   template <class  FieldType, int dim >
   using GaussLegendreQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLegendrePointSet< FieldType, dim > >;
+#endif
 
   } // namespace Fem
 
