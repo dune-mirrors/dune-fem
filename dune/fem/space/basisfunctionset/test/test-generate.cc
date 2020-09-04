@@ -38,6 +38,13 @@ void generateCode ( GridPartType &gridPart )
     DiscreteFunctionSpaceType space( gridPart );
     Dune::Fem::generateCode( space, elemQuadOrds, faceQuadOrds, path );
   }
+#if HAVE_DUNE_LOCALFUNCTIONS
+  {
+    typedef Dune::Fem::LagrangeSpace< ScalarFunctionSpaceType, GridPartType, Dune::GaussLobattoPointSet > DiscreteFunctionSpaceType;
+    DiscreteFunctionSpaceType space( gridPart, polorder );
+    Dune::Fem::generateCode( space, elemQuadOrds, faceQuadOrds, path );
+  }
+#endif
   {
     typedef Dune::Fem::DiscontinuousGalerkinSpace< ScalarFunctionSpaceType, GridPartType, polorder > DiscreteFunctionSpaceType;
     DiscreteFunctionSpaceType space( gridPart );
