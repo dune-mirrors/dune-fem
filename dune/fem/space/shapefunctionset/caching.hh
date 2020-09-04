@@ -6,6 +6,8 @@
 #include <vector>
 #include <type_traits>
 
+#include <dune/geometry/quadraturerules.hh>
+
 // dune-fem includes
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/misc/functor.hh>
@@ -54,7 +56,7 @@ namespace Dune
 
     public:
       // point set id if available (otherwise -1)
-      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType, -1 >::value;
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType >::value;
 
       explicit CachingShapeFunctionSet ( const GeometryType &type,
                                          const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
@@ -285,11 +287,13 @@ namespace Dune
       // for Lagrange-type basis evaluated on interpolation points
       // this is the Kronecker delta, there we only need
       // to evaluate the shapefunction with number 'pt'
-      if( Quadrature::pointSetId == pointSetId )
+      static const int quadPointSetId = detail::SelectPointSetId< Quadrature, -Dune::QuadratureType::size >::value;
+
+      if( quadPointSetId == pointSetId )
       {
         // negative values mean invalid point sets
         // we should not get here in this case
-        assert( Quadrature::pointSetId >= 0 );
+        assert( quadPointSetId >= 0 );
         assert( pointSetId >= 0 );
 
         assert( quadrature.nop() == numShapeFunctions );

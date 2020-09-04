@@ -48,7 +48,7 @@ namespace Dune
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
 
       // -1 is default value if PointSet has no member pointSetId
-      static const int pointSetId = detail::SelectPointSetId< PointSet<double, dimLocal>, -1 >::value;
+      static const int pointSetId = detail::SelectPointSetId< PointSet<double, dimLocal> >::value;
 
       LagrangeFiniteElementMap ( const GridPart &gridPart, unsigned int order )
         : gridPart_( gridPart ), order_( order ), localFeVector_( size() )

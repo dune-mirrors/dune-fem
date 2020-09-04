@@ -161,8 +161,8 @@ namespace Dune
 
     namespace detail {
 
-      //! selects Obj::pointSetId if available, otherwise defaultValue
-      template <class Obj, int defaultValue >
+      //! selects Obj::pointSetId if available, otherwise defaultValue (default is -1)
+      template <class Obj, int defaultValue = -1 >
       struct SelectPointSetId
       {
       private:
