@@ -52,6 +52,7 @@ void traverse ( GridPartType &gridPart )
   QuadratureType quadrature( entity, polorder );
   typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::Fem::GaussLobattoQuadratureTraits > GLQuadratureType;
   GLQuadratureType glQuad( entity, polorder );
+  GLQuadratureType gl2Quad( entity, polorder+1 );
 
   // needs a geometry type to construct
   typedef Dune::Fem::CachingShapeFunctionSet < Dune::Fem::LagrangeShapeFunctionSet< ScalarFunctionSpaceType, polorder > > ScalarLagrangeShapeFunctionSetType;
@@ -101,6 +102,15 @@ void traverse ( GridPartType &gridPart )
 
   {
     error = Dune::Fem::checkQuadratureConsistency( basisSet0, glQuad, false );
+    if( error.infinity_norm() > eps )
+    {
+      std::cerr<<"set1: Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy, hessian axpy, v+j axpy): "<< error <<std::endl;
+      DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LagrangeShapeFunctionSet > test failed." );
+    }
+  }
+
+  {
+    error = Dune::Fem::checkQuadratureConsistency( basisSet0, gl2Quad, false );
     if( error.infinity_norm() > eps )
     {
       std::cerr<<"set1: Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy, hessian axpy, v+j axpy): "<< error <<std::endl;

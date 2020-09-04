@@ -296,10 +296,8 @@ namespace Dune
         assert( quadPointSetId >= 0 );
         assert( pointSetId >= 0 );
 
-        assert( quadrature.nop() == numShapeFunctions );
         //std::cout << "SFS::lagrangePointId = " << pointSetId << std::endl;
         // point should be 1
-        //functor( pt, cache[ cpt*numShapeFunctions + pt ] );
         assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
         functor( pt, RangeType(1) );
       }
