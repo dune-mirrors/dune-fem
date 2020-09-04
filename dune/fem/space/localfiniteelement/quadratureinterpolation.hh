@@ -8,12 +8,14 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/forloop.hh>
+
+#if HAVE_DUNE_LOCALFUNCTIONS
 #include <dune/localfunctions/utility/field.hh>
 #include <dune/localfunctions/lagrange/lagrangecoefficients.hh>
 #include <dune/localfunctions/lagrange/emptypoints.hh>
 #include <dune/localfunctions/lagrange/equidistantpoints.hh>
 
-#include <dune/fem/common/forloop.hh>
 
 namespace Dune
 {
@@ -243,4 +245,7 @@ namespace Dune
     }
   };
 }  // namespace DUNE
+
+#endif // HAVE_DUNE_LOCALFUNCTIONS
+
 #endif // DUNE_LOBATTOBASIS_HH
