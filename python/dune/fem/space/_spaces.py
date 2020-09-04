@@ -341,19 +341,27 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         if pointType.lower() == "equidistant":
             pointSet = 'Dune::EquidistantPointSet'
         elif pointType.lower() == "lobatto":
-            pointSet = ', Dune::LobattoPointSet'
+            pointSet = 'Dune::LobattoPointSet'
         elif pointType.lower() == "gauss":
-            pointSet = ', Dune::GaussPointSet'
+            pointSet = 'Dune::GaussPointSet'
         else:
             raise KeyError(
                 "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +
                 pointType + "not known.")
-        typeName = "Dune::Fem::DGLagrangeSpace< " +\
-           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-           "Dune::FemPy::GridPart< " + gridView._typeName + " >"+\
-           pointSet +\
-           ", Dune::Fem::CachingStorage >"
-        ctorArgs=[gridView,order]
+        if False: # none fixed order version
+            typeName = "Dune::Fem::DGLagrangeSpace< " +\
+              "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+              "Dune::FemPy::GridPart< " + gridView._typeName + " >, "+\
+                  pointSet +\
+              ", Dune::Fem::CachingStorage >"
+            ctorArgs=[gridView,order]
+        else: # fixed order version
+            typeName = "Dune::Fem::FixedOrderDGLagrangeSpace< " +\
+              "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
+              "Dune::FemPy::GridPart< " + gridView._typeName + " >,"+\
+              str(order) + ", " + pointSet +\
+              ", Dune::Fem::CachingStorage >"
+            ctorArgs=[gridView]
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, ctorArgs=ctorArgs)

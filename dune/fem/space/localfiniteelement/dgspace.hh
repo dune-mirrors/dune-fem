@@ -33,7 +33,8 @@ namespace Dune
 
     // DiscontinuousLocalFiniteElementSpaceTraits
     // ------------------------------------------
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, template< class > class Storage,
+              unsigned int scalarBlockSize >
     struct DiscontinuousLocalFiniteElementSpaceTraits
     {
       typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
@@ -49,7 +50,7 @@ namespace Dune
       static constexpr bool isScalar = LocalFiniteElementType::Traits::LocalBasisType::Traits::dimRange==1;
 
       typedef std::conditional_t<isScalar,
-              Hybrid::IndexRange< int, FunctionSpace::dimRange >,
+              Hybrid::IndexRange< int, FunctionSpace::dimRange*scalarBlockSize >,
               Hybrid::IndexRange< int, 1 >
               > LocalBlockIndices;
 
@@ -101,12 +102,37 @@ namespace Dune
      *
      *  \todo please doc me
      **/
+    template <class LFEMap,class Enabler>
+    struct FixedPolyOrder_;
+
+    template <class LFEMap>
+    struct FixedPolyOrder_<LFEMap,std::false_type>
+    {
+      static const unsigned int scalarBlockSize = 1;
+    };
+    template <class LFEMap>
+    struct FixedPolyOrder_<LFEMap,std::true_type>
+    {
+      static const unsigned int scalarBlockSize = LFEMap::numBasisFunctions;
+      static const unsigned int polynomialOrder = LFEMap::polynomialOrder;
+    };
+    template <class LFEMap>
+    using FixedPolyOrder = FixedPolyOrder_<LFEMap,
+          std::enable_if_t<std::is_integral_v<decltype(LFEMap::numBasisFunctions)>,
+                           std::true_type> >;
+
+
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
     class DiscontinuousLocalFiniteElementSpace
-      : public DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
+      : public DiscreteFunctionSpaceDefault<
+          DiscontinuousLocalFiniteElementSpaceTraits< LFEMap,
+               FunctionSpace, Storage, FixedPolyOrder<LFEMap>::scalarBlockSize > >,
+        public FixedPolyOrder<LFEMap>
     {
       typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > > BaseType;
+      typedef DiscreteFunctionSpaceDefault<
+        DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace,
+        Storage, FixedPolyOrder<LFEMap>::scalarBlockSize > > BaseType;
 
       typedef typename BaseType::Traits Traits;
 
