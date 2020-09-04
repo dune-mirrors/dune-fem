@@ -289,23 +289,25 @@ namespace Dune
       // to evaluate the shapefunction with number 'pt'
       static const int quadPointSetId = SelectQuadraturePointSetId< Quadrature >::value;
 
-      if( quadPointSetId == pointSetId && quadrature.nop() == numShapeFunctions )
+      if constexpr ( quadPointSetId == pointSetId )
       {
-        // negative values mean invalid point sets
-        // we should not get here in this case
-        assert( quadPointSetId >= 0 );
-        assert( pointSetId >= 0 );
+        if( quadrature.nop() == numShapeFunctions )
+        {
+          // negative values mean invalid point sets
+          // we should not get here in this case
+          assert( quadPointSetId >= 0 );
+          assert( pointSetId >= 0 );
 
-        //std::cout << "SFS::lagrangePointId = " << pointSetId << std::endl;
-        // point should be 1
-        assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
-        functor( pt, RangeType(1) );
+          //std::cout << "SFS::lagrangePointId = " << pointSetId << std::endl;
+          // point should be 1
+          assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
+          functor( pt, RangeType(1) );
+          return;
+        }
       }
-      else
-      {
-        for( unsigned int i = 0; i < numShapeFunctions; ++i )
-          functor( i, cache[ cpt*numShapeFunctions + i ] );
-      }
+
+      for( unsigned int i = 0; i < numShapeFunctions; ++i )
+        functor( i, cache[ cpt*numShapeFunctions + i ] );
     }
 
 
