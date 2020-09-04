@@ -341,9 +341,9 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         if pointType.lower() == "equidistant":
             pointSet = 'Dune::EquidistantPointSet'
         elif pointType.lower() == "lobatto":
-            pointSet = 'Dune::LobattoPointSet'
+            pointSet = 'Dune::GaussLobattoPointSet'
         elif pointType.lower() == "gauss":
-            pointSet = 'Dune::GaussPointSet'
+            pointSet = 'Dune::GaussLegendrePointSet'
         else:
             raise KeyError(
                 "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +
