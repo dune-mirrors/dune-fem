@@ -29,8 +29,8 @@ void generateCode ( GridPartType &gridPart )
 
   typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype, double, dimDomain, 1 > ScalarFunctionSpaceType;
 
-  std::vector< int > elemQuadOrds = {{ 1, 2, 3, 4 }};
-  std::vector< int > faceQuadOrds = {{ 1, 2, 3, 4, 5 }};
+  std::vector< int > elemQuadOrds = {{ 3, 4, 5 }};
+  std::vector< int > faceQuadOrds = {{ 3, 4 }};
   const std::string path = ".";
 
   {
@@ -75,7 +75,6 @@ int main ( int argc, char **argv )
   if( gridPart.begin< 0 >() == gridPart.end< 0 >() )
     return 1;
 
-  generateCode< GridPartType, 1 >( gridPart );
   generateCode< GridPartType, 2 >( gridPart );
   generateCode< GridPartType, 3 >( gridPart );
   generateCode< GridPartType, 4 >( gridPart );

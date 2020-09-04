@@ -86,7 +86,7 @@ void traverse ( GridPartType &gridPart )
 
   ErrorType error( 0 );
 
-#if HAVE_DUNE_LOCALFUNCTIONS && not defined(USE_BASEFUNCTIONSET_CODEGEN)
+#if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::LagrangeFiniteElementMap< ScalarFunctionSpaceType, GridPartType, Dune::GaussLobattoPointSet > LFEMap;
   typedef Dune::Fem::LocalFunctionsShapeFunctionSet< typename LFEMap::LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
   typedef Dune::Fem::CachingShapeFunctionSet < LocalFunctionsShapeFunctionSetType > ScalarLocalFiniteElementShapeFunctionSetType;
