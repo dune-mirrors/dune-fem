@@ -72,7 +72,7 @@ namespace Dune
             hessianFactor[ j ][ k ][ l ] = random();
 
       // return value
-      Dune::FieldVector< RangeFieldType, 7 > ret;
+      Dune::FieldVector< RangeFieldType, 7 > ret( 0 );
 
       const std::size_t nop = quadrature.nop();
 

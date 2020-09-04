@@ -50,6 +50,8 @@ void traverse ( GridPartType &gridPart )
   // create quadrature
   typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::Fem::DefaultQuadratureTraits > QuadratureType;
   QuadratureType quadrature( entity, polorder );
+  typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::Fem::GaussLobattoQuadratureTraits > GLQuadratureType;
+  GLQuadratureType glQuad( entity, polorder );
 
   // needs a geometry type to construct
   typedef Dune::Fem::CachingShapeFunctionSet < Dune::Fem::LagrangeShapeFunctionSet< ScalarFunctionSpaceType, polorder > > ScalarLagrangeShapeFunctionSetType;
@@ -81,7 +83,6 @@ void traverse ( GridPartType &gridPart )
 
   ErrorType error( 0 );
 
-  /*
 #if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::LagrangeFiniteElementMap< ScalarFunctionSpaceType, GridPartType, Dune::GaussLobattoPointSet > LFEMap;
   typedef Dune::Fem::LocalFunctionsShapeFunctionSet< typename LFEMap::LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
@@ -96,20 +97,17 @@ void traverse ( GridPartType &gridPart )
   // default basis function set
   Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLocalFiniteElementShapeFunctionSetType >
   basisSet0( entity, scalarLocalFiniteElementFunctionSet );
-  std::cout << "Check basisSet0 " << std::endl;
+  //std::cout << "Check basisSet0 " << std::endl;
 
   {
-    typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::Fem::GaussLobattoQuadratureTraits > GLQuadratureType;
-    GLQuadratureType glQuad( entity, polorder );
     error = Dune::Fem::checkQuadratureConsistency( basisSet0, glQuad, false );
-  }
-  if( error.infinity_norm() > eps )
-  {
-    std::cerr<<"set1: Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy, hessian axpy, v+j axpy): "<< error <<std::endl;
-    DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LagrangeShapeFunctionSet > test failed." );
+    if( error.infinity_norm() > eps )
+    {
+      std::cerr<<"set1: Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy, hessian axpy, v+j axpy): "<< error <<std::endl;
+      DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LagrangeShapeFunctionSet > test failed." );
+    }
   }
 
-  error = 0 ;
   error = Dune::Fem::checkQuadratureConsistency( basisSet0, quadrature, false );
   if( error.infinity_norm() > eps )
   {
@@ -118,9 +116,7 @@ void traverse ( GridPartType &gridPart )
   }
 
 #endif
-*/
 
-  error = 0;
   // default basis function set
   Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLagrangeShapeFunctionSetType >
   basisSet1( entity, scalarLagrangeShapeFunctionSet );
@@ -132,7 +128,6 @@ void traverse ( GridPartType &gridPart )
     DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LagrangeShapeFunctionSet > test failed." );
   }
 
-  error = 0;
   Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLegendreShapeFunctionSetType >
   basisSet2( entity, scalarLegendreShapeFunctionSet );
   //std::cout << "Check basisSet2 " << std::endl;
@@ -143,7 +138,6 @@ void traverse ( GridPartType &gridPart )
     DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LegendreShapeFunctionSet > test failed." );
   }
 
-  error = 0;
   Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarOrthonormalShapeFunctionSetType >
   basisSet3( entity, scalarOrthonormalShapeFunctionSet );
   //std::cout << "Check basisSet3 " << std::endl;
