@@ -287,9 +287,9 @@ namespace Dune
       // for Lagrange-type basis evaluated on interpolation points
       // this is the Kronecker delta, there we only need
       // to evaluate the shapefunction with number 'pt'
-      static const int quadPointSetId = detail::SelectPointSetId< Quadrature, -Dune::QuadratureType::size >::value;
+      static const int quadPointSetId = SelectQuadraturePointSetId< Quadrature >::value;
 
-      if( quadPointSetId == pointSetId )
+      if( quadPointSetId == pointSetId && quadrature.nop() == numShapeFunctions )
       {
         // negative values mean invalid point sets
         // we should not get here in this case

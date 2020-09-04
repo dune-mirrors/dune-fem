@@ -8,9 +8,12 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/version.hh>
 #include <dune/fem/quadrature/quadprovider.hh>
@@ -30,13 +33,6 @@ namespace Dune
    *  \remark The quadratures usually used are ElementQuadrature and
    *  CachingQuadrature.
    */
-
-
-  struct LagrangePointRuleInterface
-  {
-    static constexpr int lagranPointId = -1;
-  };
-
 
   /** \class   QuadraturePointWrapper
    *  \ingroup Quadrature
@@ -519,6 +515,16 @@ namespace Dune
       return ipList().weight( i );
     }
   };
+
+
+  /** \class SelectQuadraturePointSetId
+   *
+   * Select point set id from quadrature if available, otherwise set default
+   * value (-Dune::QuadratureType::size)
+   *
+   */
+  template <class Quadrature>
+  using SelectQuadraturePointSetId = detail::SelectPointSetId< Quadrature, -Dune::QuadratureType::size >;
 
   } //end namespace Fem
 
