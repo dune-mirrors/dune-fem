@@ -8,6 +8,7 @@
 #include <dune/fem/common/forloop.hh>
 
 #include <dune/geometry/type.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
@@ -172,6 +173,8 @@ namespace Dune
       typedef SimpleShapeFunctionSet< typename ShapeFunctionFactoryType::ShapeFunctionType > BaseType;
 
     public:
+      static const int pointSetId = (maxPolOrder <= 2) ? Dune::QuadratureType::GaussLobatto : -1;
+
       LagrangeShapeFunctionSet ( const Dune::GeometryType &type, const int order = maxPolOrder )
       : BaseType( ShapeFunctionFactoryType( type, order ) )
       {
@@ -188,7 +191,8 @@ namespace Dune
       ::evaluate ( const DomainType &x, RangeType &value ) const
     {
       FieldVector< int, 0 > diffVariable;
-      return genericShapeFunction_.evaluate( diffVariable, x, value );
+      genericShapeFunction_.evaluate( diffVariable, x, value );
+      //std::cout << "Lagrange Shapefunction val = " << value << std::endl;
     }
 
 

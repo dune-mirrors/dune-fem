@@ -8,11 +8,14 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/forloop.hh>
+
+#if HAVE_DUNE_LOCALFUNCTIONS
 #include <dune/localfunctions/utility/field.hh>
 #include <dune/localfunctions/lagrange/lagrangecoefficients.hh>
 #include <dune/localfunctions/lagrange/emptypoints.hh>
+#include <dune/localfunctions/lagrange/equidistantpoints.hh>
 
-#include <dune/fem/common/forloop.hh>
 
 namespace Dune
 {
@@ -33,7 +36,7 @@ namespace Dune
         else
         {
           std::cout << "Not implemented for pyramid geometries still missing!\n";
-          abort();
+          std::abort();
         }
       }
       template <unsigned int dim, class Points1DType>
@@ -53,9 +56,7 @@ namespace Dune
         else if (Impl::isTopology(Impl::prismConstruction,gt.id(),gt.dim()))
         {
           GeometryType baseGt(Impl::baseTopologyId(gt.id(),gt.dim()),gt.dim()-1);
-          const unsigned int order = points1D.size()+1;
           assert(dim>=gt.dim());
-          assert(points1D.size()==order-1);
           Builder<Field>::template setup<dim>(baseGt,points1D,points);
           const unsigned int baseSize = Builder::size(baseGt,points1D);
           for (unsigned int i=0;i<baseSize;++i)
@@ -74,7 +75,7 @@ namespace Dune
         else
         {
           std::cout << "Not implemented for pyramid geometries still missing!\n";
-          abort();
+          std::abort();
         }
       }
     };
@@ -180,13 +181,17 @@ namespace Dune
   ///////////////////////////////////////////////////////
 
   template< class F, unsigned int dim >
-  struct LobattoPointSet : public PointSetFromQuadrature<F,dim>
+  struct GaussLobattoPointSet : public PointSetFromQuadrature<F,dim>
   {
     static const unsigned int dimension = dim;
     typedef F Field;
     typedef PointSetFromQuadrature<F,dim> Base;
     typedef typename Base::LagrangePoint Point;
-    LobattoPointSet(unsigned int order)
+
+    // enum identifier from dune-geometry QuadratureRules
+    static const int pointSetId = Dune::QuadratureType::GaussLobatto;
+
+    GaussLobattoPointSet(unsigned int order)
       : Base(order)
     {}
     template <class Topology>
@@ -199,15 +204,27 @@ namespace Dune
       };
       return Base::template build<Topology>(quadFactory);
     }
+
+    bool buildCube()
+    {
+      using namespace Impl;
+      return build< typename CubeTopology< dim >::type > ();
+    }
   };
+
+
   template< class F, unsigned int dim >
-  struct GaussPointSet : public PointSetFromQuadrature<F,dim>
+  struct GaussLegendrePointSet : public PointSetFromQuadrature<F,dim>
   {
     static const unsigned int dimension = dim;
     typedef F Field;
     typedef PointSetFromQuadrature<F,dim> Base;
     typedef typename Base::LagrangePoint Point;
-    GaussPointSet(unsigned int order)
+
+    // enum identifier from dune-geometry QuadratureRules
+    static const int pointSetId = Dune::QuadratureType::GaussLegendre;
+
+    GaussLegendrePointSet(unsigned int order)
       : Base(order)
     {}
     template <class Topology>
@@ -220,6 +237,15 @@ namespace Dune
       };
       return Base::template build<Topology>(quadFactory);
     }
+
+    bool buildCube()
+    {
+      using namespace Impl;
+      return build< typename CubeTopology< dim >::type > ();
+    }
   };
 }  // namespace DUNE
+
+#endif // HAVE_DUNE_LOCALFUNCTIONS
+
 #endif // DUNE_LOBATTOBASIS_HH

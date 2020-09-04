@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_ELEMENTQUADRATURE_HH
 #define DUNE_FEM_ELEMENTQUADRATURE_HH
 
+#include <dune/geometry/quadraturerules.hh>
+
+#include <dune/fem/common/utility.hh>
+
 #include "quadrature.hh"
 #include "elementpointlist.hh"
 

@@ -44,11 +44,11 @@ namespace Dune
     // LocalFunctionsShapeFunctionSet
     // ------------------------------
 
-    template< class LocalBasis >
+    template< class LocalBasis, int pSetId = -1 >
     class LocalFunctionsShapeFunctionSet
     {
       // this type
-      typedef LocalFunctionsShapeFunctionSet< LocalBasis > ThisType;
+      typedef LocalFunctionsShapeFunctionSet< LocalBasis, pSetId > ThisType;
       // traits class
       typedef LocalFunctionsShapeFunctionSetTraits< LocalBasis > Traits;
 
@@ -58,6 +58,8 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      static const int pointSetId = pSetId;
 
       explicit LocalFunctionsShapeFunctionSet ( const LocalBasis &localBasis )
         : localBasis_( localBasis )

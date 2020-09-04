@@ -72,7 +72,7 @@ namespace Dune
             hessianFactor[ j ][ k ][ l ] = random();
 
       // return value
-      Dune::FieldVector< RangeFieldType, 7 > ret;
+      Dune::FieldVector< RangeFieldType, 7 > ret( 0 );
 
       const std::size_t nop = quadrature.nop();
 
@@ -92,7 +92,9 @@ namespace Dune
           std::vector< RangeType > values( basisFunctionSet.size() );
           basisFunctionSet.evaluateAll( quadrature[ qp ], values );
           for( std::size_t i = 0; i < values.size(); ++i )
+          {
             b.axpy( dofs[ i ], values[ i ] );
+          }
 
           ret[ 0 ] = std::max( ret[ 0 ], (a - b).two_norm() );
         }

@@ -6,7 +6,10 @@
 #include <vector>
 #include <type_traits>
 
+#include <dune/geometry/quadraturerules.hh>
+
 // dune-fem includes
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
@@ -51,12 +54,16 @@ namespace Dune
       //typedef DynamicArray< RangeVectorType >         RangeCacheVectorType;
       //typedef DynamicArray< JacobianRangeVectorType > JacobianCacheVectorType;
 
+    public:
+      // point set id if available (otherwise -1)
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType >::value;
+
       explicit CachingShapeFunctionSet ( const GeometryType &type,
                                          const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : type_( type )
-        , shapeFunctionSet_( shapeFunctionSet )
-        //, localRangeCache_()
-        //, localJacobianCache_()
+      , shapeFunctionSet_( shapeFunctionSet )
+      //, localRangeCache_()
+      //, localJacobianCache_()
       {
         QuadratureStorageRegistry::registerStorage( *this );
       }
@@ -274,8 +281,31 @@ namespace Dune
 
       const unsigned int numShapeFunctions = size();
       const unsigned int cpt = quadrature.cachingPoint( pt );
-      for( unsigned int i = 0; i < numShapeFunctions; ++i )
-        functor( i, cache[ cpt*numShapeFunctions + i ] );
+
+      //std::cout << "QP:" << Quadrature::pointSetId << " " << pointSetId << std::endl;
+
+      // for Lagrange-type basis evaluated on interpolation points
+      // this is the Kronecker delta, there we only need
+      // to evaluate the shapefunction with number 'pt'
+      static const int quadPointSetId = SelectQuadraturePointSetId< Quadrature >::value;
+
+      if( quadPointSetId == pointSetId && quadrature.nop() == numShapeFunctions )
+      {
+        // negative values mean invalid point sets
+        // we should not get here in this case
+        assert( quadPointSetId >= 0 );
+        assert( pointSetId >= 0 );
+
+        //std::cout << "SFS::lagrangePointId = " << pointSetId << std::endl;
+        // point should be 1
+        assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
+        functor( pt, RangeType(1) );
+      }
+      else
+      {
+        for( unsigned int i = 0; i < numShapeFunctions; ++i )
+          functor( i, cache[ cpt*numShapeFunctions + i ] );
+      }
     }
 
 

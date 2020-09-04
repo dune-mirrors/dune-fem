@@ -156,6 +156,33 @@ namespace Dune
 
   } // Std
 
+  namespace Fem
+  {
+
+    namespace detail {
+
+      //! selects Obj::pointSetId if available, otherwise defaultValue (default is -1)
+      template <class Obj, int defaultValue = -1 >
+      struct SelectPointSetId
+      {
+      private:
+        template <typename T, typename = int>
+        struct CheckPointSetId : public std::false_type { };
+
+        template <typename T>
+        struct CheckPointSetId<T, decltype((void) T::pointSetId, 0)> : public std::true_type { };
+
+        template <class T, bool>
+        struct SelectValue { static const int value = defaultValue; };
+
+        template <class T>
+        struct SelectValue< T, true > { static const int value = T::pointSetId;  };
+      public:
+        static constexpr int value = SelectValue< Obj, CheckPointSetId< Obj >::value >::value;
+      };
+    } // end namespace detail
+  } // end namespace Fem
+
 } //  namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMMON_UTILITY_HH

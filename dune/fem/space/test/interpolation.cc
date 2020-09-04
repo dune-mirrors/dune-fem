@@ -198,17 +198,17 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType >
         lagrangeDGSpaceB( gridPart, polOrder );
   Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
-      Dune::LobattoPointSet
+      Dune::GaussLobattoPointSet
   > lobattoDGSpace( gridPart, polOrder );
   Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
-      Dune::GaussPointSet
+      Dune::GaussLegendrePointSet
   > gaussDGSpace( gridPart, polOrder );
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeSpaceA( gridPart );
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >
         lagrangeSpaceB( gridPart, polOrder );
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType,
-      Dune::LobattoPointSet
+      Dune::GaussLobattoPointSet
   > lobattoSpace( gridPart, polOrder );
   Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
         hLegendreSpace( gridPart );
