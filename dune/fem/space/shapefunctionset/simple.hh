@@ -61,6 +61,10 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      // this number is positive if the shape function set
+      // is using Lagrange polynomials
+      static const int lagrangePointId = -1;
+
       template< class Factory >
       explicit SimpleShapeFunctionSet ( const Factory &factory );
 

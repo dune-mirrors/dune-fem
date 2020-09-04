@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_ELEMENTQUADRATURE_HH
 #define DUNE_FEM_ELEMENTQUADRATURE_HH
 
+#include <dune/geometry/quadraturerules.hh>
+
+#include <dune/fem/common/utility.hh>
+
 #include "quadrature.hh"
 #include "elementpointlist.hh"
 
@@ -73,6 +77,10 @@ namespace Dune
       // type of local coordinate (with respect to the codim-0 entity)
       typedef typename Quadrature< ctype, dimension, QuadratureTraits > :: CoordinateType
         CoordinateType;
+
+    public:
+      static const int pointSetId = detail::SelectPointSetId< QuadratureTraits<ctype,dimension>,
+                                                             -Dune::QuadratureType::size /* default value */ > :: value;
     };
 
 
@@ -115,6 +123,8 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       typedef typename BaseType :: IntegrationPointListType  IntegrationPointListType;
+
+      static const int pointSetId = IntegrationTraits::pointSetId;
 
     protected:
       using BaseType::quadImp;
@@ -237,6 +247,8 @@ namespace Dune
 
       //! type of quadrature for use on non-conforming intersections
       typedef ThisType NonConformingQuadratureType;
+
+      static const int pointSetId = IntegrationTraits::pointSetId;
 
     public:
       using BaseType::nop;

@@ -212,7 +212,7 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
                 "Dune::Fem::LegendreDiscontinuousGalerkinSpace"
     typeName = className + "< "\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) +\
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", "+\
       "Dune::Fem::CachingStorage >"
     ctorArgs = [gridView]
     spc = module(field, includes, typeName, storage=storage,
@@ -339,7 +339,7 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     else:
         includes += ["dune/fem/space/localfiniteelement/quadratureinterpolation.hh"]
         if pointType.lower() == "equidistant":
-            pointSet = ''
+            pointSet = 'Dune::EquidistantPointSet'
         elif pointType.lower() == "lobatto":
             pointSet = ', Dune::LobattoPointSet'
         elif pointType.lower() == "gauss":

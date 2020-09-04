@@ -63,7 +63,7 @@ namespace Dune
       // typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
       typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
 
-      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
+      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
       typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetProxyType;

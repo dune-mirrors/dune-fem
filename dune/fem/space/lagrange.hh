@@ -13,6 +13,7 @@
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
 #include <dune/fem/space/localfiniteelement/dgspace.hh>
+#include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
 
 namespace Dune
 {
@@ -41,9 +42,13 @@ namespace Dune
 
       typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double,
               GMPField<64>, GMPField<256> > LocalFiniteElementType;
+
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
+
+      // -1 is default value if PointSet has no member pointSetId
+      static const int pointSetId = detail::SelectPointSetId< PointSet<double, dimLocal>, -1 >::value;
 
       LagrangeFiniteElementMap ( const GridPart &gridPart, unsigned int order )
         : gridPart_( gridPart ), order_( order ), localFeVector_( size() )

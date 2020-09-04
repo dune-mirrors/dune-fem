@@ -32,6 +32,11 @@ namespace Dune
    */
 
 
+  struct LagrangePointRuleInterface
+  {
+    static constexpr int lagranPointId = -1;
+  };
+
 
   /** \class   QuadraturePointWrapper
    *  \ingroup Quadrature
