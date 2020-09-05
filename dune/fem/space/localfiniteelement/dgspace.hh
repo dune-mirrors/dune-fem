@@ -17,6 +17,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/mapper/compile.hh>
 #include <dune/fem/space/mapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
@@ -48,6 +49,7 @@ namespace Dune
 
       static constexpr int codimension = 0;
       static constexpr bool isScalar = LocalFiniteElementType::Traits::LocalBasisType::Traits::dimRange==1;
+      static constexpr bool fullBlocking = isScalar && scalarBlockSize>1;
 
       typedef std::conditional_t<isScalar,
               Hybrid::IndexRange< int, FunctionSpace::dimRange*scalarBlockSize >,
@@ -58,8 +60,9 @@ namespace Dune
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
-      // typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
-      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
+      using BlockMapperType = std::conditional_t<!fullBlocking,
+                     IndexSetDofMapper< GridPartType >,
+                     CodimensionMapper< GridPartType, codimension > >;
 
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
@@ -103,24 +106,19 @@ namespace Dune
      *  \todo please doc me
      **/
     template <class LFEMap,class Enabler>
-    struct FixedPolyOrder_;
-
-    template <class LFEMap>
-    struct FixedPolyOrder_<LFEMap,std::false_type>
+    struct FixedPolyOrder_
     {
       static const unsigned int scalarBlockSize = 1;
     };
     template <class LFEMap>
-    struct FixedPolyOrder_<LFEMap,std::true_type>
+    struct FixedPolyOrder_<LFEMap,
+      std::enable_if_t<LFEMap::numBasisFunctions>=0, std::true_type> >
     {
       static const unsigned int scalarBlockSize = LFEMap::numBasisFunctions;
       static const unsigned int polynomialOrder = LFEMap::polynomialOrder;
     };
     template <class LFEMap>
-    using FixedPolyOrder = FixedPolyOrder_<LFEMap,
-          std::enable_if_t<std::is_integral_v<decltype(LFEMap::numBasisFunctions)>,
-                           std::true_type> >;
-
+    using FixedPolyOrder = FixedPolyOrder_<LFEMap,std::true_type>;
 
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
     class DiscontinuousLocalFiniteElementSpace
@@ -184,12 +182,16 @@ namespace Dune
       {
         static BlockMapperType *createObject ( LFEMapType *lfeMap )
         {
-          return new BlockMapperType( lfeMap->gridPart(), [ lfeMap ] ( const auto &refElement ) {
-            if( lfeMap->hasCoefficients( refElement.type() ) )
-              return Dune::Fem::generateCodimensionCode( refElement, 0, lfeMap->localCoefficients( refElement.type() ).size() );
-            else
-              return Dune::Fem::DofMapperCode();
-          } );
+          if constexpr (!Traits::fullBlocking)
+            return new BlockMapperType( lfeMap->gridPart(),
+              [ lfeMap ] ( const auto &refElement ) {
+                if( lfeMap->hasCoefficients( refElement.type() ) )
+                  return Dune::Fem::generateCodimensionCode( refElement, 0, lfeMap->localCoefficients( refElement.type() ).size() );
+                else
+                  return Dune::Fem::DofMapperCode();
+              } );
+          else
+            return new BlockMapperType( lfeMap->gridPart() );
         }
 
         static void deleteObject ( BlockMapperType *object ) { delete object; }

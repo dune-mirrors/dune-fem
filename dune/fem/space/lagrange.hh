@@ -102,11 +102,17 @@ namespace Dune
     {
       typedef std::tuple<> KeyType; // no key
       static const unsigned int polynomialOrder = order;
-      static const unsigned int dim = FunctionSpace::dimDomain;
-      typedef LagrangePoint< GeometryTypes::cube(dim).id(), dim, order > LagrangePointType;
-      static const unsigned int numBasisFunctions = LagrangePointType::numLagrangePoints;
+      typedef typename GeometryWrapper<
+          Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::topologyId,
+                                                                  GridPart::dimension
+        >::ImplType ImplType;
+      typedef GenericLagrangeBaseFunction<
+          typename FunctionSpace::ScalarFunctionSpaceType, ImplType, order
+        > GenericBaseFunctionType;
+      static const unsigned int numBasisFunctions = GenericBaseFunctionType::numBaseFunctions;
       FixedOrderLagrangeFiniteElementMap ( const GridPart &gridPart, const KeyType & )
-        : LagrangeFiniteElementMap<FunctionSpace,GridPart,PointSet>(gridPart,order) {}
+        : LagrangeFiniteElementMap<FunctionSpace,GridPart,PointSet>(gridPart,order) {
+        }
     };
 
     // LagrangeSpace

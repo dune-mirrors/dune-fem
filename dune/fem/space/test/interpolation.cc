@@ -178,6 +178,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
 {
   // create grid
   Dune::GridPtr< GridType > grid( std::to_string( GridType::dimension ) + "dgrid.dgf" );
+  // Dune::GridPtr< GridType > grid( gridfile );
   grid->loadBalance();
   Dune::Fem::GlobalRefine::apply( *grid, refCount * Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 
@@ -195,14 +196,14 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
         discontinuousGalerkinSpace( gridPart );
   Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeDGSpaceA( gridPart );
-  Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType >
-        lagrangeDGSpaceB( gridPart, polOrder );
+  Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+        lagrangeDGSpaceB( gridPart );
   Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
       Dune::GaussLobattoPointSet
   > lobattoDGSpace( gridPart, polOrder );
-  Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
+  Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder,
       Dune::GaussLegendrePointSet
-  > gaussDGSpace( gridPart, polOrder );
+  > gaussDGSpace( gridPart );
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeSpaceA( gridPart );
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >
@@ -215,6 +216,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
         fourierSpace( gridPart, polOrder+1 );
 
+#if 0
   // Test:
   {
     auto quadrature = lobattoDGSpace.quadrature(Dune::GeometryTypes::cube(3));
@@ -239,12 +241,19 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
     assert(std::abs(weight-1.)<1e-15);
     // std::cout << "--------------------\n";
   }
+#endif
   // perform eoc loop
   eocLoop( *grid, steps,
-           discontinuousGalerkinSpace, lagrangeDGSpaceB, lobattoDGSpace, gaussDGSpace,
-           // lagrangeDGSpaceA,  // really slow...
-           lagrangeSpaceA, lagrangeSpaceB, lobattoSpace,
-           hLegendreSpace, fourierSpace
+           discontinuousGalerkinSpace,
+           lagrangeDGSpaceB,
+           lobattoDGSpace,
+           gaussDGSpace,
+           lagrangeDGSpaceA,
+           lagrangeSpaceA,
+           lagrangeSpaceB,
+           lobattoSpace,
+           hLegendreSpace,
+           fourierSpace
            );
 }
 
