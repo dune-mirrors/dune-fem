@@ -200,7 +200,7 @@ namespace Dune
       // get LobattoQuad with order+1 points
       auto quadFactory = [](int order)
       { return Dune::QuadratureRules<Field,1>::rule(
-          Dune::GeometryTypes::line, 2*order-1, Dune::QuadratureType::GaussLobatto);
+          Dune::GeometryTypes::line, (order > 0) ? 2*order-1 : 0, Dune::QuadratureType::GaussLobatto);
       };
       return Base::template build<Topology>(quadFactory);
     }
@@ -233,7 +233,7 @@ namespace Dune
       // get LobattoQuad with order+1 points
       auto quadFactory = [](int order)
       { return Dune::QuadratureRules<Field,1>::rule(
-          Dune::GeometryTypes::line, 2*order+1, Dune::QuadratureType::GaussLegendre);
+          Dune::GeometryTypes::line, (order > 0) ? 2*order+1 : 0, Dune::QuadratureType::GaussLegendre);
       };
       return Base::template build<Topology>(quadFactory);
     }
