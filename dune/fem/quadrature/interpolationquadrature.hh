@@ -61,7 +61,9 @@ namespace Dune
         : BaseType( id ),
           elementGeometry_( geometry )
         {
-          PointSetType points( order );
+          // revert quadrature order to polynomial order
+          const int polOrder = (order + 1)/2;
+          PointSetType points( polOrder );
           if( geometry.isCube() )
           {
             points.buildCube();
