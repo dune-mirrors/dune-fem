@@ -282,15 +282,15 @@ namespace Dune
       const unsigned int numShapeFunctions = size();
       const unsigned int cpt = quadrature.cachingPoint( pt );
 
-      //std::cout << "QP:" << Quadrature::pointSetId << " " << pointSetId << std::endl;
-
       // for Lagrange-type basis evaluated on interpolation points
       // this is the Kronecker delta, there we only need
       // to evaluate the shapefunction with number 'pt'
       static const int quadPointSetId = SelectQuadraturePointSetId< Quadrature >::value;
+      //std::cout << "QP:" << quadPointSetId << " " << pointSetId << std::endl;
 
       if constexpr ( quadPointSetId == pointSetId )
       {
+        //std::cout << "QP matches: " <<quadrature.nop() << " " << numShapeFunctions << std::endl;
         if( quadrature.nop() == numShapeFunctions )
         {
           // negative values mean invalid point sets
@@ -298,7 +298,6 @@ namespace Dune
           assert( quadPointSetId >= 0 );
           assert( pointSetId >= 0 );
 
-          //std::cout << "SFS::lagrangePointId = " << pointSetId << std::endl;
           // point should be 1
           assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
           functor( pt, RangeType(1) );
