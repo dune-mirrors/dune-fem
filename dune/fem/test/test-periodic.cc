@@ -11,15 +11,16 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 
-#include <dune/alugrid/grid.hh>
-#include <dune/alugrid/dgf.hh>
-
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/quadrature/elementquadrature.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
+
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#include <dune/alugrid/dgf.hh>
 
 static const int dim = 2;
 using GridType = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>;
@@ -100,7 +101,7 @@ std::shared_ptr< GridType > createGrid( const double length, const int cells )
   ptr.reset( Dune::GridPtr< GridType > (file).release() );
   return ptr;
 }
-
+#endif
 
 int main( int argc, char** argv )
 try
@@ -109,11 +110,12 @@ try
 
   Dune::Fem::MPIManager :: initialize( argc, argv );
 
-  std::string filename = "dgf/periodic" + std::to_string( dim ) + ".dgf";
-  if( argc > 1 )
-  {
-    filename = std::string(argv[1]);
-  }
+#if HAVE_DUNE_ALUGRID
+  //std::string filename = "dgf/periodic" + std::to_string( dim ) + ".dgf";
+  //if( argc > 1 )
+  //{
+  //  filename = std::string(argv[1]);
+  //}
 
   auto gridPtr = createGrid( 1.0, 4 );
   GridType& grid = *gridPtr;
@@ -126,6 +128,7 @@ try
     grid.globalRefine( 1 );
     checkPeriodic( grid );
   }
+#endif
 
   return 0;
 }
