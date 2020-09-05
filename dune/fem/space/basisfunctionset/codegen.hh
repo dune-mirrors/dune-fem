@@ -136,17 +136,53 @@ namespace Dune
 
         // second check, if file exists, do nothing
         int pos = exists( filename.str() );
-        if( pos >= 0 )  return  ;
+        if( pos >= 0 ) return;
 
         std::string filenameToWrite( path_ + "/" + filename.str() );
-        std::ofstream file( filenameToWrite.c_str(), std::ios::out );
 
+        // write code to string stream and compare with existing file
+        // if file does not exist, then write code to newly generated file
+        std::stringstream code;
         // call code generation function
-        codegenfunc( file, dim, dimRange, quadNop, numBase );
-        std::cout << "Generate code " << fileprefix << " for (" << dimRange << ","
-                  << quadNop << "," << numBase << ")" << std::endl;
+        codegenfunc( code, dim, dimRange, quadNop, numBase );
 
-        // insert evaluate pair
+        bool writeCode = false ;
+
+        {
+          std::ifstream infile( filenameToWrite );
+          if( infile )
+          {
+            std::stringstream checkstr;
+            checkstr << infile.rdbuf();
+
+            // if both string are identical we can stop here
+            // and don't write the header thus avoiding recompilation
+            if( checkstr.str().compare( code.str() ) != 0 )
+            {
+              // if strings differ then write code
+              writeCode = true;
+            }
+            infile.close();
+          }
+          else
+          {
+            // if file does not exist, then write code
+            writeCode = true;
+          }
+        }
+
+        if( writeCode )
+        {
+          // if file does not exist, then write code to newly generated file
+          std::ofstream file( filenameToWrite, std::ios::out );
+          file << code.str();
+          file.close();
+          std::cout << "Generate code " << fileprefix << " for (" << dimRange << ","
+                    << quadNop << "," << numBase << ")" << std::endl;
+        }
+
+        // insert evaluate pair in any case
+        // otherwise the lists with include files is wrong
         EvalPairType evalPair ( quadNop, numBase );
         evalSet_.insert( evalPair );
 
@@ -172,16 +208,20 @@ namespace Dune
       }
 
 
-      void dumpInfo() const
+      bool dumpInfo(const bool writeToCurrentDir = false ) const
       {
+        if( writeToCurrentDir )
         {
+          // write file with correct include to current directory
+          // this is usually not needed if include paths are correct
           std::ofstream file( outFileName_.c_str() );
           file << "#include \"" <<path_<< "/" << outFileName_ << "\"";
         }
 
         {
           std::string filename( path_ + "/" + outFileName_ );
-          std::ofstream file( filename.c_str() );
+          std::stringstream file;
+
           file << "#ifdef CODEGEN_INCLUDEMAXNUMS" << std::endl;
           file << "#ifndef CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl;
           file << "#define CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
@@ -228,6 +268,22 @@ namespace Dune
           file << "#endif  // CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl << std::endl;
           file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
 
+          std::ifstream infile( filename );
+          if( infile )
+          {
+            std::stringstream checkstr;
+            checkstr << infile.rdbuf();
+
+            // if both string are identical we can stop here
+            // and don't write the header thus avoiding recompilation
+            if( checkstr.str().compare( file.str() ) == 0 )
+              return false;
+          }
+
+          std::ofstream outfile( filename );
+          outfile << file.str();
+          outfile.close();
+
           // write C file with implementation of inner loop functions
           filename += ".c";
           std::ofstream Cfile( filename.c_str() );
@@ -239,6 +295,7 @@ namespace Dune
           {
             Cfile << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+          return true;
         }
       }
     protected:
@@ -1196,33 +1253,40 @@ namespace Dune
       //std::remove( autoFilename( CODEDIM, MAX_POLORD ).c_str() );
 
       Fem::CodegenInfo::instance().setFileName( filename );
-      Fem::CodegenInfo::instance().dumpInfo();
+      bool written = Fem::CodegenInfo::instance().dumpInfo();
 
-      std::cout << "Written code to " << filename << std::endl;
-      //////////////////////////////////////////////////
-      //  write include header
-      //////////////////////////////////////////////////
-      std::ofstream file( outpath + "/" + filename );
-
-      if( file )
+      if( written )
       {
-        std::string header( filename );
-        size_t size = header.size();
-        // replace all . with _
-        for( size_t i=0; i<size; ++i )
-        {
-          if( header[ i ] == '.' )
-            header[ i ] = '_';
-        }
+        std::cout << "Written code to " << filename << std::endl;
+        //////////////////////////////////////////////////
+        //  write include header
+        //////////////////////////////////////////////////
+        std::ofstream file( outpath + "/" + filename );
 
-        file << "#ifndef " << header << "_INCLUDED" << std::endl;
-        file << "#define " << header << "_INCLUDED" << std::endl;
-        file << "#ifndef USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
-        file << "#define USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
-        file << "#endif" << std::endl;
-        file << "// this is the file containing the necessary includes for the specialized codes" << std::endl;
-        file << "#define DUNE_FEM_INCLUDE_AUTOGENERATEDCODE_FILENAME_SPEC \"" << path << "/" << filename << "\"" << std::endl;
-        file << "#endif" << std::endl;
+        if( file )
+        {
+          std::string header( filename );
+          size_t size = header.size();
+          // replace all . with _
+          for( size_t i=0; i<size; ++i )
+          {
+            if( header[ i ] == '.' )
+              header[ i ] = '_';
+          }
+
+          file << "#ifndef " << header << "_INCLUDED" << std::endl;
+          file << "#define " << header << "_INCLUDED" << std::endl;
+          file << "#ifndef USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
+          file << "#define USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
+          file << "#endif" << std::endl;
+          file << "// this is the file containing the necessary includes for the specialized codes" << std::endl;
+          file << "#define DUNE_FEM_INCLUDE_AUTOGENERATEDCODE_FILENAME_SPEC \"" << path << "/" << filename << "\"" << std::endl;
+          file << "#endif" << std::endl;
+        }
+      }
+      else
+      {
+        std::cout << "No changes written to " << filename << std::endl << std::endl;
       }
     }
 
