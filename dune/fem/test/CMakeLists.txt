@@ -140,8 +140,7 @@ if( ${FEM_TORTURE_TESTS} )
   # endif()
 endif()
 
-dune_add_test( NAME test-periodic SOURCES test-periodic.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} test-periodic )
+dune_add_test( NAME test-periodic SOURCES test-periodic.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" CMAKE_GUARD dune-alugrid_FOUND)
 
 dune_add_test( NAME referencesolution SOURCES referencesolution.cc
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
