@@ -104,14 +104,14 @@ namespace Dune
       static const int minNumBaseFunctions = MIN_NUMBER_OF_BASE_FCT;
 
       static const int maxQuadNop = MAX_NUMBER_OF_QUAD_POINTS;
-      static const int minQuadNop = MAX_NUMBER_OF_QUAD_POINTS;
+      static const int minQuadNop = MIN_NUMBER_OF_QUAD_POINTS;
 
-      enum { maxQuadratures = 50 };
+      // maximal number of different quadratures we can use here
+      static const int maxQuadratures = 50;
 
       class EvaluatorStorage
       {
       protected:
-        //typedef std::pair< std::unique_ptr< ThisType >, bool > StorageItemType;
         std::vector< StorageItemType > storage_;
       public:
         EvaluatorStorage() :
@@ -122,7 +122,6 @@ namespace Dune
             item.first = false ;
             item.second.reset();
           }
-
         }
 
         StorageItemType& operator [] ( const int i ) { return storage_[ i ]; }
@@ -184,7 +183,8 @@ namespace Dune
           // create appropriate evaluator
 
           // if quadrature points or number of basis functions are not within
-          // the list of generated code range then don't search for a combination
+          // the range of generated code snippets then don't search for
+          // a matching combination
           if( (nop >= minQuadNop && nop <= maxQuadNop) &&
               (numBaseFct >= minNumBaseFunctions && numBaseFct <= maxNumBaseFunctions)
             )
@@ -193,7 +193,7 @@ namespace Dune
                 EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
                    :: create( dataCache , nop, numBaseFct ) );
           }
-          // if pointer was checked, set flag to true, pointer may still be null
+          // if pointer was checked, set flag to true, pointer may still be a nullptr
           item.first = true;
         }
 
