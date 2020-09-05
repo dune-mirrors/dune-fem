@@ -16,7 +16,6 @@
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 
-#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #include <dune/alugrid/dgf.hh>
 
@@ -99,20 +98,11 @@ std::shared_ptr< GridType > createGrid( const double length, const int cells )
   ptr.reset( Dune::GridPtr< GridType > (file).release() );
   return ptr;
 }
-#endif
 
 int main( int argc, char** argv )
+try
 {
-  static const int dim = 2;
-
   Dune::Fem::MPIManager :: initialize( argc, argv );
-
-#if HAVE_DUNE_ALUGRID
-  //std::string filename = "dgf/periodic" + std::to_string( dim ) + ".dgf";
-  //if( argc > 1 )
-  //{
-  //  filename = std::string(argv[1]);
-  //}
 
   auto gridPtr = createGrid( 1.0, 4 );
   GridType& grid = *gridPtr;
@@ -125,7 +115,20 @@ int main( int argc, char** argv )
     grid.globalRefine( 1 );
     checkPeriodic( grid );
   }
-#endif
 
   return 0;
+}
+catch ( Dune::Exception &e )
+{
+  std::cerr << e << std::endl;
+  return 1;
+}
+catch (std::exception &e) {
+  std::cerr << e.what() << std::endl;
+  return 1;
+}
+catch ( ... )
+{
+  std::cerr << "Generic exception!" << std::endl;
+  return 2;
 }
