@@ -100,9 +100,13 @@ namespace Dune
       typedef std::pair< bool, StoragePointerType > StorageItemType;
 
     protected:
-      enum { maxNumBaseFunctions = MAX_NUMBER_OF_BASE_FCT };
+      static const int maxNumBaseFunctions = MAX_NUMBER_OF_BASE_FCT;
+      static const int minNumBaseFunctions = MIN_NUMBER_OF_BASE_FCT;
+
+      static const int maxQuadNop = MAX_NUMBER_OF_QUAD_POINTS;
+      static const int minQuadNop = MAX_NUMBER_OF_QUAD_POINTS;
+
       enum { maxQuadratures = 50 };
-      enum { maxQuadNop = MAX_NUMBER_OF_QUAD_POINTS };
 
       class EvaluatorStorage
       {
@@ -162,10 +166,10 @@ namespace Dune
                                                const Storage& dataCache,
                                                const QuadratureType& quad)
       {
-        // assert that max numbers are big enough
-        assert( baseSet.numDifferentBaseFunctions() <= maxNumBaseFunctions );
-        assert( quad.nop()  <= maxQuadNop );
-        assert( quad.id()   < maxQuadratures );
+        const int nop = quad.nop();
+        const int numBaseFct = baseSet.numDifferentBaseFunctions();
+
+        assert( quad.id() < maxQuadratures );
 
         // static vector holding all evaluator instances
         static ThreadSafeValue< EvaluatorStorage > evaluatorStorage;
@@ -178,17 +182,22 @@ namespace Dune
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
           auto& item = evaluators[ quadId ];
           // create appropriate evaluator
-          item.second.reset(
-              EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
-                 :: create( dataCache , quad.nop(), baseSet.numDifferentBaseFunctions() ) );
+
+          // if quadrature points or number of basis functions are not within
+          // the list of generated code range then don't search for a combination
+          if( (nop >= minQuadNop && nop <= maxQuadNop) &&
+              (numBaseFct >= minNumBaseFunctions && numBaseFct <= maxNumBaseFunctions)
+            )
+          {
+            item.second.reset(
+                EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
+                   :: create( dataCache , nop, numBaseFct ) );
+          }
           // if pointer was checked, set flag to true, pointer may still be null
           item.first = true;
         }
 
-        assert( evaluators[ quadId ].second );
-        // make sure the storage is the same
-        //assert( dataCache.size() == evaluators[ quadId ]->storageSize() );
-        // return pointer to evaluator, if null then a fallback to default impl happens
+        // this can be a nullptr (in this case the default implementation is used)
         return evaluators[ quadId ].second;
       }
     };
