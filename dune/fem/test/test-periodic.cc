@@ -11,8 +11,6 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
-
 #include <dune/fem/quadrature/elementquadrature.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
@@ -104,7 +102,6 @@ std::shared_ptr< GridType > createGrid( const double length, const int cells )
 #endif
 
 int main( int argc, char** argv )
-try
 {
   static const int dim = 2;
 
@@ -131,18 +128,4 @@ try
 #endif
 
   return 0;
-}
-catch ( Dune::Exception &e )
-{
-  std::cerr << e << std::endl;
-  return 1;
-}
-catch (std::exception &e) {
-  std::cerr << e.what() << std::endl;
-  return 1;
-}
-catch ( ... )
-{
-  std::cerr << "Generic exception!" << std::endl;
-  return 2;
 }
