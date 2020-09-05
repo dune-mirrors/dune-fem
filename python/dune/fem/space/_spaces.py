@@ -79,6 +79,8 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, cachin
     if not caching:
         # if caching is disable add SimpleStorage to template list
         cachingOrSimpleStorage = ", Dune::Fem::SimpleStorage"
+    else:
+        cachingOrSimpleStorage = ", Dune::Fem::CodegenStorage"
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
@@ -360,7 +362,7 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
               "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
               "Dune::FemPy::GridPart< " + gridView._typeName + " >,"+\
               str(order) + ", " + pointSet +\
-              ", Dune::Fem::CachingStorage >"
+              ", Dune::Fem::CodegenStorage >"
             ctorArgs=[gridView]
 
     spc = module(field, includes, typeName, storage=storage,
