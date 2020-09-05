@@ -249,7 +249,7 @@ namespace Dune
                 QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
+        if constexpr ( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
           // get base function evaluate caller (calls evaluateRanges)
           const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
@@ -257,9 +257,16 @@ namespace Dune
           // true if implementation exists
           if( baseEval )
           {
+            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
             baseEval->evaluateRanges( quad, dofs, ranges );
             return ;
           }
+          /*
+          else
+          {
+            std::cout << "No eval found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
+          }
+          */
         }
 
 #endif
@@ -305,7 +312,7 @@ namespace Dune
                 JacobianArray, DofVector, Geometry >  Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
+        if constexpr ( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
           // get base function evaluate caller (calls axpyRanges)
           const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
@@ -407,7 +414,7 @@ namespace Dune
             QuadratureType, RangeArray, DofVector > Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
+        if constexpr ( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
           // get base function evaluate caller (calls axpyRanges)
           const auto& baseEval = BaseEvaluationType::storage( *this, rangeCache( quad ), quad );
@@ -415,10 +422,17 @@ namespace Dune
           // true if implementation exists
           if( baseEval )
           {
+            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
             // call appropriate axpyRanges method
             baseEval->axpyRanges( quad, rangeFactors, dofs );
             return ;
           }
+          /*
+          else
+          {
+            std::cout << "No axpy found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
+          }
+          */
         }
 #endif
         {
@@ -445,7 +459,7 @@ namespace Dune
                 JacobianArray, DofVector, Geometry >  Traits;
         typedef Fem :: EvaluateCallerInterface< Traits > BaseEvaluationType;
 
-        if( std::is_base_of< CachingInterface, QuadratureType > :: value )
+        if constexpr ( std::is_base_of< CachingInterface, QuadratureType > :: value )
         {
           // get base function evaluate caller (calls axpyRanges)
           const auto& baseEval = BaseEvaluationType::storage( *this, jacobianCache( quad ), quad );
