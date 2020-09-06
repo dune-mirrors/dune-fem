@@ -154,6 +154,13 @@ namespace Dune
       : public std::integral_constant< bool, std::is_same< U, V >::value &&are_all_same< V, T ... >::value >
     {};
 
+    // std::is_pod got deprecated
+
+    template<class T>
+    struct is_pod
+      : public std::integral_constant<bool, std::is_standard_layout<T>::value && std::is_trivial<T>::value>
+    {};
+
   } // Std
 
 } //  namespace Dune

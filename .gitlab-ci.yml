@@ -28,6 +28,17 @@ debian-11-gcc-9-17:
     DUNECI_TOOLCHAIN: gcc-9-17
   tags: [duneci]
 
+debian-11-gcc-10-20:
+  image: registry.dune-project.org/docker/ci/debian:11
+  script:
+    - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
+    - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
+    - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
+    - duneci-standard-test
+  variables:
+    DUNECI_TOOLCHAIN: gcc-10-20
+  tags: [duneci]
+
 debian-11-gcc-9-17-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
