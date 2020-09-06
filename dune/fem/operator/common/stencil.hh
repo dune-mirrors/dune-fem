@@ -11,6 +11,7 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/rangegenerators.hh>
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/common/utility.hh>
 
 namespace Dune
 {
@@ -196,7 +197,7 @@ namespace Dune
       typedef typename StencilType::DomainGlobalKeyType    DomainGlobalKeyType;
       typedef typename StencilType::RangeGlobalKeyType     RangeGlobalKeyType;
 
-      static_assert( std::is_pod< DomainGlobalKeyType > :: value, "StencilWrapper only works for POD DomainGlobalKeyType");
+      static_assert( Std::is_pod< DomainGlobalKeyType > :: value, "StencilWrapper only works for POD DomainGlobalKeyType");
 
       typedef LocalStencil                                 LocalStencilType;
       typedef std::vector< LocalStencilType >              GlobalStencilType;

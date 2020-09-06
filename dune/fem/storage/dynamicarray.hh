@@ -12,6 +12,7 @@
 
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/fem/common/utility.hh>
 
 namespace Dune
 {
@@ -28,7 +29,11 @@ namespace Dune
   {
     typedef std::allocator< T > BaseType;
   public:
+#if __cplusplus <= 201703L
     typedef typename BaseType :: pointer    pointer ;
+#else
+    typedef T* pointer;
+#endif
     typedef typename BaseType :: size_type  size_type;
 
     pointer allocate( size_type n )
@@ -57,12 +62,16 @@ namespace Dune
   template <typename T>
   class PODArrayAllocator : public std::allocator< T >
   {
-    static_assert( std::is_pod< T > :: value, "T is not POD" );
+    static_assert( Std::is_pod< T > :: value, "T is not POD" );
     typedef std::allocator< T > BaseType;
   public:
     PODArrayAllocator() = default;
 
+#if __cplusplus <= 201703L
     typedef typename BaseType :: pointer    pointer ;
+#else
+    typedef T* pointer;
+#endif
     typedef typename BaseType :: size_type  size_type;
     typedef typename BaseType :: value_type value_type;
 
@@ -91,7 +100,7 @@ namespace Dune
     }
   };
 
-  template <class T, class AllocatorType = typename std::conditional< std::is_pod< T > :: value,
+  template <class T, class AllocatorType = typename std::conditional< Std::is_pod< T > :: value,
                                              PODArrayAllocator< T >,
                                              StandardArrayAllocator< T > > :: type >
   class DynamicArray;
@@ -325,7 +334,7 @@ namespace Dune
     void resize ( size_type nsize )
     {
       // only initialize value if we are not using a POD type
-      doResize( nsize, ! std::is_pod< value_type >::value );
+      doResize( nsize, ! Std::is_pod< value_type >::value );
     }
 
     //! resize vector with new size nsize
