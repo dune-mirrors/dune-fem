@@ -216,6 +216,8 @@ namespace Dune
       /** \copydoc Dune::Fem::ShapeFunctionSets::ShapeFunctionSetType */
       typedef typename Implementation::ShapeFunctionSetType ShapeFunctionSetType;
 
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< CachedShapeFunctionSetType >::value;
+
       /** \name Construction
        *  \{
        */
@@ -270,6 +272,8 @@ namespace Dune
       typedef VectorialShapeFunctionSets< Implementation, Range > ThisType;
 
     public:
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< Implementation >::value;
+
       /** \brief shape function set type */
       typedef VectorialShapeFunctionSet< typename Implementation::ShapeFunctionSetType, Range > ShapeFunctionSetType;
 

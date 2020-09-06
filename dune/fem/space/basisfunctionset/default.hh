@@ -266,6 +266,7 @@ namespace Dune
       void evaluateAll ( const QuadratureType &quad, const DofVector &dofs, RangeArray &ranges ) const
       {
         assert( ranges.size() >= quad.nop() );
+
         // if shape function set supports codegen and quadrature supports caching
         if constexpr ( codegenSupported( quad ) )
         {
@@ -482,15 +483,17 @@ namespace Dune
           // true if implementation exists
           if( baseEval )
           {
-            std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
+            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
             // call appropriate axpyRanges method
             baseEval->axpyRanges( quad, rangeFactors, dofs );
             return ;
           }
+          /*
           else
           {
             std::cout << "No axpy found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
           }
+          */
         }
 
         /*
