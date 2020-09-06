@@ -224,7 +224,7 @@ namespace Dune
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
       typedef typename RangeVectorType :: value_type :: field_type FieldType;
 
-      static const int dimRange = BaseFunctionSetType :: dimRange;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
       typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
 
@@ -439,7 +439,7 @@ namespace Dune
       typedef EvaluateImplementation< Traits, quadNop, numBaseFct > ThisType;
 
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
-      static const int dimRange = BaseFunctionSetType :: dimRange;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
     public:
       // type of interface class
       typedef BaseType InterfaceType;
