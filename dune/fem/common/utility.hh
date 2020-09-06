@@ -180,6 +180,26 @@ namespace Dune
       public:
         static constexpr int value = SelectValue< Obj, CheckPointSetId< Obj >::value >::value;
       };
+
+      //! selects SFS::codegenShapeFunctionSet if available, otherwise defaultValue (default is false)
+      template <class SFS, bool defaultValue = false >
+      struct IsCodegenShapeFunctionSet
+      {
+      private:
+        template <typename T, typename = int>
+        struct CheckCodegenSFS : public std::false_type { };
+
+        template <typename T>
+        struct CheckCodegenSFS<T, decltype((void) T::codegenShapeFunctionSet, 0)> : public std::true_type { };
+
+        template <class T, bool>
+        struct SelectValue { static const bool value = defaultValue; };
+
+        template <class T>
+        struct SelectValue< T, true > { static const bool value = T::codegenShapeFunctionSet;  };
+      public:
+        static constexpr int value = SelectValue< SFS, CheckCodegenSFS< SFS >::value >::value;
+      };
     } // end namespace detail
   } // end namespace Fem
 

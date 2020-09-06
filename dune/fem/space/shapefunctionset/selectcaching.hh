@@ -67,6 +67,9 @@ namespace Dune
     public:
       typedef ShapeFunctionSet ImplementationType;
 
+      //! this indicates that generated codes for evaluate and axpy is available
+      static constexpr bool codegenShapeFunctionSet = true ;
+
       explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
                                                const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : BaseType( type, shapeFunctionSet )

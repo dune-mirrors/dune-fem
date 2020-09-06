@@ -22,6 +22,9 @@ namespace Dune
   namespace Fem
   {
 
+    namespace Codegen
+    {
+
     class CodegenInfoFinished : public Dune :: Exception {};
 
     class CodegenInfo
@@ -229,19 +232,28 @@ namespace Dune
           file << "#define MIN_NUMBER_OF_QUAD_POINTS " << nopMin_ << std::endl;
           file << "#define MAX_NUMBER_OF_BASE_FCT    " << baseMax_ << std::endl;
           file << "#define MIN_NUMBER_OF_BASE_FCT    " << baseMin_ << std::endl << std::endl;
+#if 0
           file << "/* include all headers with inner loop extern declarations */" << std::endl;
           file << "#define CODEGEN_COMPILE_INNERLOOPS 1" << std::endl;
+          file << "namespace Dune {" << std::endl;
+          file << "namespace Fem {" << std::endl;
+          file << "namespace Codegen {" << std::endl;
           for( size_t i = 0; i < filenames_.size(); ++i )
           {
             file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+          file << "}}} // end namespaces" << std::endl;
           file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl << std::endl;
           file << "#include \"" << filename << ".c\"" <<std::endl;
+#endif
 
           file << "#endif // CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
           file << "#elif defined CODEGEN_INCLUDEEVALCALLERS" << std::endl;
           file << "#ifndef CODEGEN_EVALCALLERS_INCLUDED" << std::endl;
           file << "#define CODEGEN_EVALCALLERS_INCLUDED" << std::endl << std::endl;
+          file << "namespace Dune {"<< std::endl;
+          file << "namespace Fem {"<< std::endl;
+          file << "namespace Codegen {"<< std::endl;
           typedef EvalSetType :: iterator iterator ;
           const iterator endit = evalSet_.end();
           for( iterator it = evalSet_.begin(); it != endit; ++it )
@@ -256,15 +268,20 @@ namespace Dune
             file << "  };"<< std::endl;
             file << std::endl;
           }
+          file << "}}} // end namespaces"<< std::endl;
           file << "#endif // CODEGEN_EVALCALLERS_INCLUDED" << std::endl << std::endl;
           file << "#else" << std::endl << std::endl ;
           file << "#ifndef CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
           file << "#define CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
-          file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
+          //file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
+          file << "namespace Dune {" << std::endl;
+          file << "namespace Fem {" << std::endl;
+          file << "namespace Codegen {" << std::endl;
           for( size_t i = 0; i < filenames_.size(); ++i )
           {
             file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+          file << "}}} // end namespaces" << std::endl;
           file << "#endif  // CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl << std::endl;
           file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
 
@@ -284,6 +301,7 @@ namespace Dune
           outfile << file.str();
           outfile.close();
 
+#if 0
           // write C file with implementation of inner loop functions
           filename += ".c";
           std::ofstream Cfile( filename.c_str() );
@@ -295,6 +313,7 @@ namespace Dune
           {
             Cfile << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+#endif
           return true;
         }
       }
@@ -360,7 +379,7 @@ namespace Dune
         if( stage == -1 )
         {
           out << "#ifndef HEADERCHECK" << std::endl;
-          out << "#if ! " << codegenPreCompVar << std::endl;
+          //out << "#if ! " << codegenPreCompVar << std::endl;
         }
         else if( stage == 0 )
         {
@@ -379,8 +398,8 @@ namespace Dune
         }
         else
         {
-          out << "#endif" << std::endl;
-          out << "#endif" << std::endl;
+          //out << "#endif" << std::endl;
+          //out << "#endif" << std::endl;
           out << "#endif" << std::endl;
         }
       }
@@ -435,7 +454,7 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct EvaluateRanges<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class RangeVectorType," << std::endl;
@@ -523,17 +542,17 @@ namespace Dune
         out << "    // store result" << std::endl;
         out << "    for(int row = 0; row < " << numRows << " ; ++row )" << std::endl;
         out << "    {" << std::endl;
-        out << "      RangeType& result = rangeVector[ row ];" << std::endl;
+        out << "      auto& result = rangeVector[ row ];" << std::endl;
         for( int r = 0 ; r < dimRange; ++ r )
         {
           out << "      result[ " << r << " ] = result" << r << "[ row ];" << std::endl;
         }
         out << "    }" << std::endl;
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         for( int i=0; i<simdWidth; ++i )
         {
           out << "        ";
@@ -553,10 +572,11 @@ namespace Dune
           else out << "," << std::endl;
         }
 
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoopEval( out, simdWidth, dimRange, numRows, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -604,7 +624,7 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct AxpyRanges<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
 
         out << std::endl;
@@ -690,13 +710,13 @@ namespace Dune
         out << "    }" << std::endl;
 
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
         ///////////////////////////////////
         //  inner loop
         ///////////////////////////////////
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         out << "       const " << doubletype() << "* " << restrictKey() << " base0," << std::endl;
         for( int i=1; i<simdWidth; ++ i )
           out << "       const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
@@ -710,10 +730,11 @@ namespace Dune
           else
             out << "," << std::endl;
         }
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoop( out, simdWidth, dimRange, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -785,14 +806,14 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct EvaluateJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct EvaluateJacobians<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class JacobianRangeVectorType," << std::endl;
         out << "            class LocalDofVectorType," << std::endl;
         out << "            class JacobianRangeFactorType>" << std::endl;
         out << "  static void eval( const QuadratureType&," << std::endl;
-        out << "                    const Fem :: EmptyGeometry&," << std::endl;
+        out << "                    const EmptyGeometry&," << std::endl;
         out << "                    const JacobianRangeVectorType&," << std::endl;
         out << "                    const LocalDofVectorType&," << std::endl;
         out << "                    JacobianRangeFactorType &)" << std::endl;
@@ -973,10 +994,10 @@ namespace Dune
         }
         out << "    }" << std::endl;
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         for( int i=0; i<simdWidth; ++i )
         {
           out << "                        ";
@@ -996,10 +1017,11 @@ namespace Dune
           }
         }
 
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerJacEvalLoop( out, simdWidth, dim, dimRange, numRows, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -1029,14 +1051,14 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct AxpyJacobians<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class JacobianRangeVectorType," << std::endl;
         out << "            class JacobianRangeFactorType," << std::endl;
         out << "            class LocalDofVectorType>" << std::endl;
         out << "  static void axpy( const QuadratureType&," << std::endl;
-        out << "                    const Fem :: EmptyGeometry&," << std::endl;
+        out << "                    const EmptyGeometry&," << std::endl;
         out << "                    const JacobianRangeVectorType&," << std::endl;
         out << "                    const JacobianRangeFactorType&," << std::endl;
         out << "                    LocalDofVectorType&)" << std::endl;
@@ -1059,7 +1081,7 @@ namespace Dune
         out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
         out << "                    LocalDofVectorType& dofs)" << std::endl;
         out << "  {" << std::endl;
-        //out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl << std::endl;
+        out << "    typedef typename JacobianRangeFactorType :: value_type JacobianRangeType;" << std::endl << std::endl;
 
         const size_t dofs = dimRange * numCols ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
@@ -1130,15 +1152,15 @@ namespace Dune
         out << "    }" << std::endl;
 
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
 
         ///////////////////////////////////
         //  inner loop
         ///////////////////////////////////
-        writePreCompHeader( out, 0 );
+        //writePreCompHeader( out, 0 );
 
-        out << "  void " << funcName << "(" << std::endl;
+        out << "  static void " << funcName << "(" << std::endl;
         out << "        const " << doubletype() << "* " << restrictKey() << " base," << std::endl;
         //for( int i=1; i<dim; ++ i )
         //  out << "        const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
@@ -1157,10 +1179,11 @@ namespace Dune
           else
             out << "," << std::endl;
         }
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoopAxpyJac( out, dim, dimRange, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
     };
@@ -1180,6 +1203,8 @@ namespace Dune
       return name.str();
     }
 
+    } // namespace Codegen
+
 
     template <class DiscreteFunctionSpace, class Vector>
     inline void generateCode (const DiscreteFunctionSpace& space,
@@ -1188,6 +1213,8 @@ namespace Dune
                               const std::string& outpath = "./",
                               const std::string& filename = "autogeneratedcode.hh" )
     {
+      using namespace Codegen;
+
       const int dimRange  = DiscreteFunctionSpace :: dimRange;
       const int dimDomain = DiscreteFunctionSpace :: dimDomain;
 
@@ -1229,31 +1256,31 @@ namespace Dune
       path += "/autogeneratedcode";
 
       // set output path
-      Fem::CodegenInfo::instance().setPath( path );
+      CodegenInfo::instance().setPath( path );
 
       // add my dimrange
-      Fem::CodegenInfo::instance().addDimRange( &space, dimRange );
+      CodegenInfo::instance().addDimRange( &space, dimRange );
 
       for( const auto& size : sizes )
       {
         for( const auto& quadNop : quadNops )
         {
-          Fem::CodegenInfo::instance().addEntry( "evalranges",
-                Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "evaljacobians",
-                Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "axpyranges",
-                Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "axpyjacobians",
-                Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "evalranges",
+                CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "evaljacobians",
+                CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyranges",
+                CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyjacobians",
+                CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
         }
       }
 
       //std::cerr << "Code for k="<< MAX_POLORD << " generated!! " << std::endl;
       //std::remove( autoFilename( CODEDIM, MAX_POLORD ).c_str() );
 
-      Fem::CodegenInfo::instance().setFileName( filename );
-      bool written = Fem::CodegenInfo::instance().dumpInfo();
+      CodegenInfo::instance().setFileName( filename );
+      bool written = CodegenInfo::instance().dumpInfo();
 
       if( written )
       {

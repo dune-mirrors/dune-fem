@@ -449,6 +449,10 @@ namespace Dune
     public:
       typedef ScalarShapeFunctionSet ScalarShapeFunctionSetType;
 
+      // if ScalarShapeFunctionSetType has a member variable codegenShapeFunctionSet then this is forwarded here
+      // otherwise this value defaults to false
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ScalarShapeFunctionSetType >::value;
+
     protected:
       typedef typename ScalarShapeFunctionSetType::FunctionSpaceType ScalarFunctionSpaceType;
 
