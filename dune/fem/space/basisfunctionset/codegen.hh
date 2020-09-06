@@ -1217,6 +1217,7 @@ namespace Dune
 
       const int dimRange  = DiscreteFunctionSpace :: dimRange;
       const int dimDomain = DiscreteFunctionSpace :: dimDomain;
+      const int dimGrad   = dimRange*dimDomain;
 
       typedef typename DiscreteFunctionSpace :: GridPartType GridPartType;
 
@@ -1260,6 +1261,7 @@ namespace Dune
 
       // add my dimrange
       CodegenInfo::instance().addDimRange( &space, dimRange );
+      CodegenInfo::instance().addDimRange( &space, dimGrad );
 
       for( const auto& size : sizes )
       {
@@ -1271,6 +1273,15 @@ namespace Dune
                 CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quadNop, size );
           CodegenInfo::instance().addEntry( "axpyranges",
                 CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyjacobians",
+                CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
+
+          CodegenInfo::instance().addEntry( "evalranges",
+                CodeGeneratorType :: evaluateCodegen, dimDomain, dimGrad, quadNop, size );
+          CodegenInfo::instance().addEntry( "evaljacobians",
+                CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimGrad, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyranges",
+                CodeGeneratorType :: axpyCodegen, dimDomain, dimGrad, quadNop, size );
           CodegenInfo::instance().addEntry( "axpyjacobians",
                 CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
         }

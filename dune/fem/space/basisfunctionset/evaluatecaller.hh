@@ -482,9 +482,11 @@ namespace Dune
 
       static InterfaceType* create( const RangeVectorType& )
       {
+      #ifndef NDEBUG
         std::cout << "Optimized EvaluateImplementation for < dimR="<<dimRange<< ", qp=" << quadNop << ", bases=" << numBaseFct << " > not created, falling back to default!" << std::endl;
         //DUNE_THROW(NotImplemented,"EvaluateImplementation for < " << quadNop << " , " << numBaseFct << " > not created!");
         //return (InterfaceType*) 0;
+      #endif
         return nullptr;
       }
     };
