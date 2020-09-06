@@ -61,13 +61,6 @@ namespace Dune
       // if underlying shape function set was created with storage CodegenStorage
       // then this value should be true (see selectcaching.hh)
       static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ShapeFunctionSetType >::value;
-      /*
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-      static constexpr bool generateCode = true ;
-#else
-      static constexpr bool generateCode = false ;
-#endif
-      */
 
     protected:
       typedef typename ShapeFunctionSetType::FunctionSpaceType   LocalFunctionSpaceType;
@@ -141,16 +134,6 @@ namespace Dune
           geometry_.emplace( other.geometry_.value() );
         return *this;
       }
-
-      /*
-      void registerEntry() const
-      {
-#ifdef BASEFUNCTIONSET_CODEGEN_GENERATE
-        // add my dimrange
-        Fem::CodegenInfo::instance().addDimRange( this, dimRange );
-#endif
-      }
-      */
 
       // Basis Function Set Interface Methods
       // ------------------------------------
@@ -279,27 +262,10 @@ namespace Dune
           // true if implementation exists, otherwise this is a nullptr
           if( baseEval )
           {
-            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
             baseEval->evaluateRanges( quad, dofs, ranges );
             return ;
           }
-          /*
-          else
-          {
-            std::cout << "No eval found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
-          }
-          */
         }
-
-        /*
-        // if enabled then generate code here
-        if constexpr ( generateCode )
-        {
-          registerEntry();
-          Fem::CodegenInfo::instance().addEntry( "evalranges",
-              Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-        }
-        */
 
         {
           // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
@@ -353,16 +319,6 @@ namespace Dune
             return ;
           }
         }
-
-        /*
-        // if enabled then generate code here
-        if constexpr ( generateCode )
-        {
-          registerEntry();
-          Fem::CodegenInfo::instance().addEntry( "evaljacobians",
-                Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-        }
-        */
 
         {
           // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
@@ -483,28 +439,10 @@ namespace Dune
           // true if implementation exists
           if( baseEval )
           {
-            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
-            // call appropriate axpyRanges method
             baseEval->axpyRanges( quad, rangeFactors, dofs );
             return ;
           }
-          /*
-          else
-          {
-            std::cout << "No axpy found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
-          }
-          */
         }
-
-        /*
-        // if enabled then generate code here
-        if constexpr ( generateCode )
-        {
-          registerEntry();
-          Fem::CodegenInfo::instance().addEntry( "axpyranges",
-                Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-        }
-        */
 
         {
           // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
@@ -539,16 +477,6 @@ namespace Dune
             return ;
           }
         }
-
-        /*
-        // if enabled then generate code here
-        if constexpr ( generateCode )
-        {
-          registerEntry();
-          Fem::CodegenInfo::instance().addEntry( "axpyjacobians",
-                  Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quad.nop(), size()/dimRange );
-        }
-        */
 
         {
           // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
