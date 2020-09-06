@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include <dune/fem/common/utility.hh>
+
 /**
   @file
   @author Christoph Gersbacher

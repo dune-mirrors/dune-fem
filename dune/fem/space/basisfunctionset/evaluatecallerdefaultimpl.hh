@@ -1,3 +1,10 @@
+#ifndef DUNE_FEM_SAPCE_EVALUATECALLERDEFAULTIMPL_HH
+#define DUNE_FEM_SAPCE_EVALUATECALLERDEFAULTIMPL_HH
+
+#include <iostream>
+
+#include <dune/fem/space/basisfunctionset/evaluatecallerdeclaration.hh>
+
 namespace Dune {
 namespace Fem {
 namespace Codegen {
@@ -175,3 +182,5 @@ struct AxpyJacobians< BaseFunctionSet, EmptyGeometry, dimRange, numRows, numCols
 };
 
 }}}
+
+#endif
