@@ -24,7 +24,7 @@ def load(includes, typeName, *args, baseClasses=None, preamble=None,
         baseClasses = []
     if codegen is not None:
         includesExt, moduleNameExt = codegen[0].codegen(
-          "op"+ "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest(),
+          "op"+ "_" + moduleName,
           interiorQuadratureOrders=codegen[1],
           skeletonQuadratureOrders=codegen[2] )
         includes = includesExt + includes
