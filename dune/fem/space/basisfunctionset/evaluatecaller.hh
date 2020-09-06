@@ -209,6 +209,7 @@ namespace Dune
     };
 
     template <class Traits,
+              int dimRange,
               int quadNop,
               int numBaseFct >
     class EvaluateRealImplementation
@@ -223,8 +224,7 @@ namespace Dune
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
       typedef typename RangeVectorType :: value_type :: field_type FieldType;
 
-      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
-      typedef EvaluateRealImplementation< Traits, quadNop, numBaseFct > ThisType;
+      typedef EvaluateRealImplementation< Traits, dimRange, quadNop, numBaseFct > ThisType;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
 
       // A copy is made of the storage here, otherwise strange memory corruptions happen
@@ -422,6 +422,7 @@ namespace Dune
     // The default EvaluateImplementation is empty
     // to create this has to be specified and derived from EvaluateCallerDefault
     template <class Traits,
+              int dimRange,
               int quadNop,
               int numBaseFct >
     class EvaluateImplementation
@@ -435,10 +436,9 @@ namespace Dune
       typedef typename Traits :: Geometry            Geometry ;
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
 
-      typedef EvaluateImplementation< Traits, quadNop, numBaseFct > ThisType;
+      typedef EvaluateImplementation< Traits, dimRange, quadNop, numBaseFct > ThisType;
 
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >   BaseType;
-      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
     public:
       // type of interface class
       typedef BaseType InterfaceType;
@@ -497,6 +497,8 @@ namespace Dune
     class EvaluateCaller
     {
     protected:
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
     public:
@@ -504,7 +506,7 @@ namespace Dune
                                        const size_t numbase )
       {
         if( numBaseFct == numbase )
-          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+          return EvaluateImplementation< Traits, dimRange, quadNop, numBaseFct > :: create( rangeStorage );
         else
           return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
       }
@@ -524,6 +526,8 @@ namespace Dune
     class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, numBaseFct >
     {
     protected:
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
       enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
@@ -532,7 +536,7 @@ namespace Dune
                                        const size_t numbase )
       {
         if( numBaseFct == numbase )
-          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+          return EvaluateImplementation< Traits, dimRange, quadNop, numBaseFct > :: create( rangeStorage );
         else
           return EvaluateCaller< Traits, quadNop, numBaseFct - 1 > :: createObj( rangeStorage, numbase );
       }
@@ -555,6 +559,8 @@ namespace Dune
     class EvaluateCaller< Traits, quadNop, MIN_NUMBER_OF_BASE_FCT >
     {
     protected:
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
       enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
       typedef EvaluateCallerInterface< typename Traits :: BaseTraits >  InterfaceType;
@@ -563,7 +569,7 @@ namespace Dune
                                        const size_t numbase )
       {
         if( numBaseFct == numbase )
-          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+          return EvaluateImplementation< Traits, dimRange, quadNop, numBaseFct > :: create( rangeStorage );
         else
         {
           std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::createObj: no working combination!" << std::endl;
@@ -587,6 +593,8 @@ namespace Dune
     class EvaluateCaller< Traits, MIN_NUMBER_OF_QUAD_POINTS, MIN_NUMBER_OF_BASE_FCT>
     {
     protected:
+      typedef typename Traits :: BaseFunctionSetType BaseFunctionSetType;
+      static const int dimRange = BaseFunctionSetType :: FunctionSpaceType:: dimRange;
       enum { quadNop = MIN_NUMBER_OF_QUAD_POINTS };
       enum { numBaseFct = MIN_NUMBER_OF_BASE_FCT };
       typedef typename Traits :: RangeVectorType     RangeVectorType ;
@@ -596,7 +604,7 @@ namespace Dune
                                        const size_t numbase )
       {
         if( numBaseFct == numbase )
-          return EvaluateImplementation< Traits, quadNop, numBaseFct > :: create( rangeStorage );
+          return EvaluateImplementation< Traits, dimRange, quadNop, numBaseFct > :: create( rangeStorage );
         else
         {
           std::cerr << "ERROR: EvaluateCaller< "<< quadNop << ", " << numBaseFct << " >::createObj: no working combination!" << std::endl;

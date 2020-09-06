@@ -56,7 +56,7 @@ namespace Dune
       typedef std::vector< int > KeyType;
       typedef std::set< KeyType > KeyStorageType;
 
-      typedef std::pair< int , int > EvalPairType ;
+      typedef std::pair< int, std::pair< int, int > > EvalPairType ;
       typedef std::set< EvalPairType > EvalSetType ;
 
       std::map< codegenfunc_t* , KeyStorageType > entryMap_;
@@ -186,7 +186,7 @@ namespace Dune
 
         // insert evaluate pair in any case
         // otherwise the lists with include files is wrong
-        EvalPairType evalPair ( quadNop, numBase );
+        EvalPairType evalPair ( dimRange, std::make_pair(quadNop, numBase) );
         evalSet_.insert( evalPair );
 
         if( baseMin_ == 0 ) baseMin_ = numBase;
@@ -258,11 +258,14 @@ namespace Dune
           const iterator endit = evalSet_.end();
           for( iterator it = evalSet_.begin(); it != endit; ++it )
           {
+            int dimRange = it->first;
+            int quadNop  = it->second.first;
+            int numBase  = it->second.second;
             file << "  template <class Traits>" << std::endl;
-            file << "  struct EvaluateImplementation< Traits, " << it->first << " , " << it->second << " >" << std::endl;
-            file << "    : public EvaluateRealImplementation< Traits, " << it->first << " , " << it->second << " >" << std::endl;
+            file << "  struct EvaluateImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >" << std::endl;
+            file << "    : public EvaluateRealImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >" << std::endl;
             file << "  {" << std::endl;
-            file << "    typedef EvaluateRealImplementation< Traits, " << it->first << " , " << it->second << " >  BaseType;" << std::endl;
+            file << "    typedef EvaluateRealImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >  BaseType;" << std::endl;
             file << "    typedef typename BaseType :: RangeVectorType  RangeVectorType;" << std::endl;
             file << "    EvaluateImplementation( const RangeVectorType& rv ) : BaseType ( rv ) {}" << std::endl;
             file << "  };"<< std::endl;
@@ -1261,7 +1264,8 @@ namespace Dune
 
       // add my dimrange
       CodegenInfo::instance().addDimRange( &space, dimRange );
-      CodegenInfo::instance().addDimRange( &space, dimGrad );
+      int gradSpace;
+      CodegenInfo::instance().addDimRange( &gradSpace, dimGrad );
 
       for( const auto& size : sizes )
       {
