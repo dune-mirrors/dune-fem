@@ -17,16 +17,23 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args, baseClasses=None, preamble=None, moduleExtension=""):
+def load(includes, typeName, *args, baseClasses=None, preamble=None,
+         codegen=None):
+    moduleName = hashlib.md5(typeName.encode('utf-8')).hexdigest()
     if baseClasses is None:
         baseClasses = []
-    from dune.fem.space import addBackend
+    if codegen is not None:
+        includesExt, moduleNameExt = codegen[0].codegen(
+          "op"+ "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest(),
+          interiorQuadratureOrders=codegen[1],
+          skeletonQuadratureOrders=codegen[2] )
+        includes = includesExt + includes
+        moduleName = moduleNameExt + "_" + moduleName
     includes = includes + ["dune/fempy/py/operator.hh"]
-    moduleName = "femoperator" +\
-        moduleExtension +\
-        "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    moduleName = "femoperator" + "_" + moduleName
     module = generator.load(includes, typeName, moduleName, *args,
-            preamble=preamble, dynamicAttr=True, baseClasses=baseClasses)
+                  preamble=preamble, dynamicAttr=True, baseClasses=baseClasses)
+    module.Operator.codegen = codegen
     return module
 
 linearGenerator = SimpleGenerator("LinearOperator", "Dune::FemPy")
