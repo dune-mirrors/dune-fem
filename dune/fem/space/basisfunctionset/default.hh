@@ -251,7 +251,7 @@ namespace Dune
         assert( ranges.size() >= quad.nop() );
 
         // if shape function set supports codegen and quadrature supports caching
-        if constexpr ( codegenSupported( quad ) )
+        if constexpr ( codegenShapeFunctionSet && std::is_base_of< CachingInterface, QuadratureType > :: value)
         {
           typedef Codegen :: EvaluateCallerInterfaceTraits< QuadratureType, RangeArray, DofVector > Traits;
           typedef Codegen :: EvaluateCallerInterface< Traits > BaseEvaluationType;
@@ -302,7 +302,7 @@ namespace Dune
         assert( jacobians.size() >= quad.nop() );
 
         // if shape function set supports codegen and quadrature supports caching
-        if constexpr ( codegenSupported( quad ) )
+        if constexpr ( codegenShapeFunctionSet && std::is_base_of< CachingInterface, QuadratureType > :: value)
         {
           typedef Codegen :: EvaluateCallerInterfaceTraits< QuadratureType, JacobianArray, DofVector, Geometry >  Traits;
           typedef Codegen :: EvaluateCallerInterface< Traits > BaseEvaluationType;
@@ -413,14 +413,6 @@ namespace Dune
       const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
-      //! return true if shape function set supports codegen and quadrature is a
-      //! caching quadrature
-      template <class Quadrature>
-      static constexpr bool codegenSupported (const Quadrature& quad )
-      {
-        return codegenShapeFunctionSet && std::is_base_of< CachingInterface, Quadrature > :: value;
-      }
-
       //! \brief evaluate all basis function and multiply with given values and add to dofs
       template< class QuadratureType, class RangeArray, class DofVector >
       void axpyImpl ( const QuadratureType &quad, const RangeArray &rangeFactors, DofVector &dofs, const RangeType& ) const
@@ -428,7 +420,7 @@ namespace Dune
         assert( rangeFactors.size() >= quad.nop() );
 
         // if shape function set supports codegen and quadrature supports caching
-        if constexpr ( codegenSupported( quad ) )
+        if constexpr ( codegenShapeFunctionSet && std::is_base_of< CachingInterface, QuadratureType > :: value)
         {
           typedef Codegen :: EvaluateCallerInterfaceTraits< QuadratureType, RangeArray, DofVector > Traits;
           typedef Codegen :: EvaluateCallerInterface< Traits > BaseEvaluationType;
@@ -460,7 +452,7 @@ namespace Dune
       {
         assert( jacobianFactors.size() >= quad.nop() );
         // if shape function set supports codegen and quadrature supports caching
-        if constexpr ( codegenSupported( quad ) )
+        if constexpr ( codegenShapeFunctionSet && std::is_base_of< CachingInterface, QuadratureType > :: value)
         {
           typedef Codegen :: EvaluateCallerInterfaceTraits< QuadratureType, JacobianArray, DofVector, Geometry >  Traits;
           typedef Codegen :: EvaluateCallerInterface< Traits > BaseEvaluationType;
