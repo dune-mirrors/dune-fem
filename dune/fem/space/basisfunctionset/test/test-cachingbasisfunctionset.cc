@@ -60,8 +60,8 @@ void traverse ( GridPartType &gridPart )
   QuadratureType quadrature( entity, polorder );
 #if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::CachingQuadrature< GridPartType, 0, Dune::Fem::GaussLobattoQuadratureTraits > GLQuadratureType;
-  GLQuadratureType glQuad( entity, polorder );
-  GLQuadratureType gl2Quad( entity, polorder+1 );
+  GLQuadratureType glQuad( entity, 2*polorder-1 );
+  GLQuadratureType gl2Quad( entity, 2*polorder );
 #endif
 
   // needs a geometry type to construct
@@ -91,8 +91,7 @@ void traverse ( GridPartType &gridPart )
 
   ErrorType error( 0 );
 
-#if 0
-  HAVE_DUNE_LOCALFUNCTIONS
+#if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::LagrangeFiniteElementMap< ScalarFunctionSpaceType, GridPartType, Dune::GaussLobattoPointSet > LFEMap;
   typedef Dune::Fem::LocalFunctionsShapeFunctionSet< typename LFEMap::LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
   typedef Dune::Fem::SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > ScalarLocalFiniteElementShapeFunctionSetType;

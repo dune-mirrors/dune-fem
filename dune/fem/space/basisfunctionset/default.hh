@@ -278,14 +278,16 @@ namespace Dune
           // true if implementation exists, otherwise this is a nullptr
           if( baseEval )
           {
-            std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
+            //std::cout <<"Use optimized apxy (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() <<std::endl;
             baseEval->evaluateRanges( quad, dofs, ranges );
             return ;
           }
+          /*
           else
           {
             std::cout << "No eval found for quad (" << quad.order() << "," << quad.nop() << ")" << "baseFct = "<< numDifferentBaseFunctions() << std::endl;
           }
+          */
         }
 
         /*
