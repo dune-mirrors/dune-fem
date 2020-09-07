@@ -173,8 +173,6 @@ namespace Dune
       typedef SimpleShapeFunctionSet< typename ShapeFunctionFactoryType::ShapeFunctionType > BaseType;
 
     public:
-      static const int pointSetId = (maxPolOrder <= 2) ? Dune::QuadratureType::GaussLobatto : -1;
-
       LagrangeShapeFunctionSet ( const Dune::GeometryType &type, const int order = maxPolOrder )
       : BaseType( ShapeFunctionFactoryType( type, order ) )
       {
@@ -192,7 +190,6 @@ namespace Dune
     {
       FieldVector< int, 0 > diffVariable;
       genericShapeFunction_.evaluate( diffVariable, x, value );
-      //std::cout << "Lagrange Shapefunction val = " << value << std::endl;
     }
 
 
