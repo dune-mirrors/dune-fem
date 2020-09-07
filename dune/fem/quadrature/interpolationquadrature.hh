@@ -61,8 +61,8 @@ namespace Dune
           // revert quadrature order to polynomial order
           if( geometry.isCube() )
           {
-            auto points = PointSetType::buildCubeQuadrature( 9 );
-            order_ = points.order();
+            auto points = PointSetType::buildCubeQuadrature( order );
+            order_ = points.quadOrder();
             for( unsigned int i=0; i<points.size(); ++i )
               addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
           }

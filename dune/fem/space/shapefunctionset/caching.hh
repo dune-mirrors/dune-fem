@@ -299,7 +299,8 @@ namespace Dune
           assert( pointSetId >= 0 );
 
           // point should be 1
-          assert( (cache[ cpt*numShapeFunctions + pt ] - RangeType(1)).two_norm() < 1e-8 ) ;
+          for( unsigned int i = 0; i < numShapeFunctions; ++i )
+            assert( (cache[ cpt*numShapeFunctions + i ] - RangeType(i==pt)).two_norm() < 1e-8 ) ;
           functor( pt, RangeType(1) );
           return;
         }

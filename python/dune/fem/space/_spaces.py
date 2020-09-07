@@ -481,7 +481,9 @@ def lagrangehp(gridView, order=1, dimRange=None, field="double", storage=None,
             ctorArgs=[gridView,order])
     return spc.as_ufl()
 
-def finiteVolume(gridView, dimRange=None, field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+def finiteVolume(gridView, dimRange=None, field="double",
+                 storage=None, scalar=False, dimrange=None,
+                 codegen='simple'):
     """create a finite volume space
 
     A finite volume space is a discontinuous function space, using the element

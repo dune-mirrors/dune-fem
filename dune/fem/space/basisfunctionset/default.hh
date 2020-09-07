@@ -291,6 +291,7 @@ namespace Dune
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
         assert( values.size() >= size() );
+        std::fill(values.begin(),values.end(),0);
         AssignFunctor< RangeArray > f( values );
         shapeFunctionSet().evaluateEach( x, f );
       }

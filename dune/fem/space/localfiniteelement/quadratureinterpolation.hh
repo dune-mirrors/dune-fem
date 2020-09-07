@@ -90,7 +90,7 @@ namespace Dune
     typedef typename Base::LagrangePoint Point;
     typedef std::vector<std::pair<Field,Field>> Points1DType;
     PointSetFromQuadrature(unsigned int order)
-      : Base(order)
+      : Base(order), quadOrder_(-1)
     {}
 
     template <class Topology, class Quad>
@@ -98,14 +98,15 @@ namespace Dune
     {
       unsigned int order = Base::order();
       const auto &quad = quadFactory(order);
+      quadOrder_ = quad.order();
       assert( quad.size() == order+1 );
       bool withEndPoints = false;
       Points1DType points1D;
       Field vertexWeight = 1;
       for (unsigned int i=0;i<=order;++i)
       {
-        // check if corner points are part of the quadrature - expexted to be
-        // first and last point
+        // remove corner points if part of the quadrature - are added in by
+        // topology construction of points
         Field p = field_cast<Field>(quad[i].position());
         Field q = p-1.;
         if (std::abs(p)<1e-12 || std::abs(q)<1e-12)
@@ -133,8 +134,13 @@ namespace Dune
     {
       return supports( GeometryType(Topology()), order );
     }
+    unsigned int quadOrder() const
+    {
+      return quadOrder_;
+    }
     protected:
     using Base::points_;
+    unsigned int quadOrder_;
     private:
     template <class Topology>
     struct Setup
@@ -255,12 +261,11 @@ namespace Dune
     }
     static unsigned int quad2PolOrder(int order)
     {
-      return (order>0)? (order-1)/2 : 0;
+      return order/2;
     }
 
     static auto buildCubeQuadrature(unsigned int quadOrder)
     {
-      std::cout << "generating GaussLegendre Quadrature\n";
       using namespace Impl;
       GaussLegendrePointSet ps(quad2PolOrder(quadOrder));
       ps.template build< typename CubeTopology< dim >::type > ();
