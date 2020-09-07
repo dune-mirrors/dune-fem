@@ -217,7 +217,7 @@ namespace Dune
     }
     static unsigned int quad2PolOrder(int order)
     {
-      return (order+1)/2;
+      return order/2 + 1;
     }
 
     static auto buildCubeQuadrature(unsigned int quadOrder)
