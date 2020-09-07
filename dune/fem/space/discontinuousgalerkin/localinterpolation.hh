@@ -52,10 +52,15 @@ namespace Dune
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
 
     public:
-      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int order = -1 )
+      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int quadOrder )
+      : DiscontinuousGalerkinLocalInterpolation( space, [quadOrder](const int) { return quadOrder; } )
+      {}
+
+      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space,
+                                                std::function<int(const int)> quadOrder = [](const int order) { return 2 * order; } )
       : space_( space ),
-        order_( space.order() ),
-        massMatrix_( space, (order < 0 ? 2*space.order() : order) ),
+        quadOrder_( quadOrder ),
+        massMatrix_( space, quadOrder_ ),
         values_()
       {}
 
@@ -75,12 +80,12 @@ namespace Dune
         if( entity.type().isNone() )
         {
           typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
-          ElementQuadratureType quadrature( entity, localFunction.order() + order_);
+          ElementQuadratureType quadrature( entity, localFunction.order() + space_.order( entity ) );
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
             typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
-            AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
+            AggloMassMatrix massMat( massMatrix_.space(), quadOrder_ );
 
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
@@ -89,7 +94,7 @@ namespace Dune
         }
         else
         {
-          QuadratureType quadrature( entity, localFunction.order() + order_);
+          QuadratureType quadrature( entity, localFunction.order() + space_.order( entity ) );
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
@@ -146,7 +151,7 @@ namespace Dune
       const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
 
       const DiscreteFunctionSpaceType &space_;
-      const int order_;
+      const std::function<int(const int)> quadOrder_;
       LocalMassMatrixType massMatrix_;
       mutable std::vector< RangeType > values_;
     };

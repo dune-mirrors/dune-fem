@@ -74,7 +74,7 @@ namespace Dune
       const IndexSetType& indexSet_;
 
       GeometryInformationType geoInfo_;
-      const int volumeQuadOrd_;
+      const std::function<int(const int)> volumeQuadratureOrder_;
       const bool affine_;
 
       mutable DGMatrixType dgMatrix_;
@@ -164,13 +164,13 @@ namespace Dune
       //! return appropriate quadrature order, default is 2 * order(entity)
       int volumeQuadratureOrder ( const EntityType &entity ) const
       {
-        return (volumeQuadOrd_ < 0 ? 2 * space().order( entity ) : volumeQuadOrd_);
+        return volumeQuadratureOrder_( space().order( entity ) );
       }
 
       //! return appropriate quadrature order, default is 2 * order()
       int maxVolumeQuadratureOrder () const
       {
-        return (volumeQuadOrd_ < 0 ? 2 * space().order() : volumeQuadOrd_);
+        return volumeQuadratureOrder_( space().order() );
       }
 
       // return number of max non blocked dofs
@@ -181,11 +181,16 @@ namespace Dune
 
     public:
       //! constructor taking space and volume quadrature order
-      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd = -1 )
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd )
+        : LocalMassMatrixImplementation( spc, [volQuadOrd](const int order) { return volQuadOrd; } )
+      {}
+
+      //! constructor taking space and volume quadrature order
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, std::function<int(const int)> volQuadOrderFct = [](const int order) { return 2 * order; } )
         : spc_( referenceToSharedPtr( spc ) )
         , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )
-        , volumeQuadOrd_ ( volQuadOrd )
+        , volumeQuadratureOrder_ ( volQuadOrderFct )
         , affine_ ( setup() )
         , rhs_(), row_(), matrix_()
         , phi_( maxNumDofs() )
@@ -201,7 +206,7 @@ namespace Dune
       : spc_(other.spc_),
         indexSet_( space().indexSet() ),
         geoInfo_( indexSet_ ),
-        volumeQuadOrd_( other.volumeQuadOrd_ ),
+        volumeQuadratureOrder_( other.volumeQuadratureOrder_ ),
         affine_( other.affine_ ),
         rhs_( other.rhs_ ), row_( other.row_ ), matrix_( other.matrix_ ),
         phi_( other.phi_ ),
@@ -730,9 +735,8 @@ namespace Dune
       typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > BaseType;
 
     public:
-      explicit LocalMassMatrix ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-      {}
+      // copy base class constructors
+      using BaseType :: LocalMassMatrixImplementation;
     };
 
 
@@ -753,9 +757,8 @@ namespace Dune
     public:
       typedef typename BaseType :: EntityType  EntityType;
 
-      explicit LocalMassMatrixImplementationDgOrthoNormal ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-      {}
+      // copy base class constructors
+      using BaseType :: LocalMassMatrixImplementation;
 
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller
