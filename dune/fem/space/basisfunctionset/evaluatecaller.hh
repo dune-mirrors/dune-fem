@@ -187,18 +187,31 @@ namespace Dune
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
           auto& item = evaluators[ quadId ];
           // create appropriate evaluator
+          const int pointSetId = detail::SelectPointSetId< typename BaseFunctionSet::ShapeFunctionSetType >::value;
+          const int quadPointSetId = SelectQuadraturePointSetId< QuadratureType >::value;
+
+          // if quadrature is an interpolation quadrature and matches the
+          // shapefunction set then only create an evaluation if the number of
+          // points is not equal
+          const bool noInterpolation = (pointSetId != quadPointSetId) && (nop !=
+            numBaseFct);
+#ifndef NDEBUG
+          if( ! noInterpolation )
+            std::cout << "EvaluateCallerInterface::storage: Not creating implementation because of interpolation feature!" <<std::endl;
+#endif
 
           // if quadrature points or number of basis functions are not within
           // the range of generated code snippets then don't search for
           // a matching combination
           if( (nop >= minQuadNop && nop <= maxQuadNop) &&
-              (numBaseFct >= minNumBaseFunctions && numBaseFct <= maxNumBaseFunctions)
-            )
+              (numBaseFct >= minNumBaseFunctions && numBaseFct <= maxNumBaseFunctions) &&
+              noInterpolation )
           {
             item.second.reset(
                 EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
                    :: create( dataCache , nop, numBaseFct ) );
           }
+
           // if pointer was checked, set flag to true, pointer may still be a nullptr
           item.first = true;
         }

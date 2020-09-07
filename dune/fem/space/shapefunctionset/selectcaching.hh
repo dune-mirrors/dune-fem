@@ -14,13 +14,13 @@ namespace Dune
     // -----------------------------
 
     template< class >
-    class CachingStorage;
+    class CachingStorage {};
 
     template< class >
-    class SimpleStorage;
+    class SimpleStorage {};
 
     template< class >
-    class CodegenStorage;
+    class CodegenStorage {};
 
     // SelectCachingShapeFunctionSet
     // -----------------------------

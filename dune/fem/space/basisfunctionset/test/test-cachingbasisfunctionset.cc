@@ -22,7 +22,7 @@
 #include <dune/fem/space/shapefunctionset/lagrange.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal.hh>
-#include <dune/fem/space/shapefunctionset/caching.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/basisfunctionset/simple.hh>
