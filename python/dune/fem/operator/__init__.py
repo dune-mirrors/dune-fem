@@ -23,12 +23,13 @@ def load(includes, typeName, *args, baseClasses=None, preamble=None,
     if baseClasses is None:
         baseClasses = []
     if codegen is not None:
-        includesExt, moduleNameExt = codegen[0].codegen(
-          "op"+ "_" + moduleName,
-          interiorQuadratureOrders=codegen[1],
-          skeletonQuadratureOrders=codegen[2] )
-        includes = includesExt + includes
-        moduleName = moduleNameExt + "_" + moduleName
+        if codegen[0].codegenStorage:
+            includesExt, moduleNameExt = codegen[0].codegen(
+                "op"+ "_" + moduleName,
+                interiorQuadratureOrders=codegen[1],
+                skeletonQuadratureOrders=codegen[2] )
+            includes = includesExt + includes
+            moduleName = moduleNameExt + "_" + moduleName
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + moduleName
     module = generator.load(includes, typeName, moduleName, *args,

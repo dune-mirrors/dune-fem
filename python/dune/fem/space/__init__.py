@@ -186,10 +186,11 @@ def storageToSolver(storage):
 
 generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
-def addAttr(module, self, field, scalar):
+def addAttr(module, self, field, scalar, codegen):
     setattr(self, "_module", module)
     setattr(self, "field", field)
     setattr(self, "scalar", scalar)
+    setattr(self, "codegenStorage", codegen)
     setattr(self, "interpolate",
             lambda *args,**kwargs: interpolate(self,*args,**kwargs))
     setattr(self, "codegen",
@@ -276,8 +277,7 @@ def addDiscreteFunction(space, storage):
     return dfIncludes, dfTypeName, backend, ctor
 
 def module(field, includes, typeName, *args,
-           storage=None, scalar=False,
-           codegenSpace=None, interiorQuadratureOrders=None, skeletonQuadratureOrders=None,
+           storage=None, scalar=False, codegen=False,
            ctorArgs):
     includes = includes + ["dune/fempy/py/space.hh"]
     defines = []
@@ -291,13 +291,6 @@ def module(field, includes, typeName, *args,
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest() \
                           + "_" + hashlib.md5(dfTypeName.encode('utf-8')).hexdigest()
 
-    if interiorQuadratureOrders is not None or\
-       skeletonQuadratureOrders is not None:
-        assert codegenSpace is not None
-        autogenFile, moduleNameExt = _codegen( codegenSpace, moduleName, interiorQuadratureOrders, skeletonQuadratureOrders )
-        includes = [autogenFile] + includes
-        moduleName = moduleName + moduleNameExt
-
     module = generator.load(includes+dfIncludes, [typeName,dfTypeName], moduleName,
                             ((*args,), (*dfArgs,)),
                             dynamicAttr=[True,True],
@@ -306,7 +299,7 @@ def module(field, includes, typeName, *args,
                             defines=defines)
 
     spc = module.Space(*ctorArgs)
-    addAttr(module, spc, field, scalar)
+    addAttr(module, spc, field, scalar, codegen)
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
     addDFAttr(module, module.DiscreteFunction, addStorage(spc,storage))
     if not backend is None:
