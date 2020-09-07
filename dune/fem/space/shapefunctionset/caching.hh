@@ -286,11 +286,11 @@ namespace Dune
       // this is the Kronecker delta, there we only need
       // to evaluate the shapefunction with number 'pt'
       static const int quadPointSetId = SelectQuadraturePointSetId< Quadrature >::value;
-      //std::cout << "QP:" << quadPointSetId << " " << pointSetId << std::endl;
+      // std::cout << "QP:" << quadPointSetId << " " << pointSetId << std::endl;
 
       if constexpr ( quadPointSetId == pointSetId )
       {
-        //std::cout << "QP matches: " <<quadrature.nop() << " " << numShapeFunctions << std::endl;
+        // std::cout << "QP matches: " << quadPointSetId << " " << pointSetId << " " << quadrature.nop() << " " << numShapeFunctions << std::endl;
         if( quadrature.nop() == numShapeFunctions )
         {
           // negative values mean invalid point sets

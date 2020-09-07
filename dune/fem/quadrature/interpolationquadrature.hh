@@ -59,22 +59,16 @@ namespace Dune
           elementGeometry_( geometry )
         {
           // revert quadrature order to polynomial order
-          const int polOrder = (order + 1)/2;
-          PointSetType points( polOrder );
           if( geometry.isCube() )
           {
-            points.buildCube();
+            auto points = PointSetType::buildCubeQuadrature( 9 );
+            order_ = points.order();
+            for( unsigned int i=0; i<points.size(); ++i )
+              addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
           }
           else
           {
             DUNE_THROW(InvalidStateException,"InterpolationQuadratureFactory: Unsupported geometry type " << geometry);
-          }
-
-          order_ = points.order();
-
-          for( unsigned int i=0; i<points.size(); ++i )
-          {
-            addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
           }
         }
 
@@ -136,6 +130,7 @@ namespace Dune
         static const int pointSetId = PointSet::pointSetId;
 
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > LineQuadratureType;
+        // typedef CubeQuadrature< FieldType, 1 > LineQuadratureType;
 
         typedef  Dune::Fem::QuadratureImp< FieldType, dim > IntegrationPointListType;
 

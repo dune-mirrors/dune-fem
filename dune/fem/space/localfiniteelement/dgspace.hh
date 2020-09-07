@@ -64,6 +64,7 @@ namespace Dune
                      IndexSetDofMapper< GridPartType >,
                      CodimensionMapper< GridPartType, codimension > >;
 
+      // TODO: need SFINAE since not all LFEMap have a pointSetId
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 

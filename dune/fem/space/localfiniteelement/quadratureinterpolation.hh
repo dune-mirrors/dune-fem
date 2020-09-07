@@ -200,15 +200,26 @@ namespace Dune
       // get LobattoQuad with order+1 points
       auto quadFactory = [](int order)
       { return Dune::QuadratureRules<Field,1>::rule(
-          Dune::GeometryTypes::line, (order > 0) ? 2*order-1 : 0, Dune::QuadratureType::GaussLobatto);
+          Dune::GeometryTypes::line, pol2QuadOrder(order),
+                    Dune::QuadratureType::GaussLobatto);
       };
       return Base::template build<Topology>(quadFactory);
     }
+    static unsigned int pol2QuadOrder(int order)
+    {
+      return (order>0)? 2*order-1 : 0;
+    }
+    static unsigned int quad2PolOrder(int order)
+    {
+      return (order+1)/2;
+    }
 
-    bool buildCube()
+    static auto buildCubeQuadrature(unsigned int quadOrder)
     {
       using namespace Impl;
-      return build< typename CubeTopology< dim >::type > ();
+      GaussLobattoPointSet ps(quad2PolOrder(quadOrder));
+      ps.template build< typename CubeTopology< dim >::type > ();
+      return ps;
     }
   };
 
@@ -233,16 +244,29 @@ namespace Dune
       // get LobattoQuad with order+1 points
       auto quadFactory = [](int order)
       { return Dune::QuadratureRules<Field,1>::rule(
-          Dune::GeometryTypes::line, (order > 0) ? 2*order+1 : 0, Dune::QuadratureType::GaussLegendre);
+          Dune::GeometryTypes::line, pol2QuadOrder(order), Dune::QuadratureType::GaussLegendre);
       };
       return Base::template build<Topology>(quadFactory);
     }
 
-    bool buildCube()
+    static unsigned int pol2QuadOrder(int order)
     {
-      using namespace Impl;
-      return build< typename CubeTopology< dim >::type > ();
+      return 2*order+1;
     }
+    static unsigned int quad2PolOrder(int order)
+    {
+      return (order>0)? (order-1)/2 : 0;
+    }
+
+    static auto buildCubeQuadrature(unsigned int quadOrder)
+    {
+      std::cout << "generating GaussLegendre Quadrature\n";
+      using namespace Impl;
+      GaussLegendrePointSet ps(quad2PolOrder(quadOrder));
+      ps.template build< typename CubeTopology< dim >::type > ();
+      return ps;
+    }
+
   };
 }  // namespace DUNE
 
