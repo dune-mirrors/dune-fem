@@ -260,7 +260,6 @@ namespace Dune
 
     static auto buildCubeQuadrature(unsigned int quadOrder)
     {
-      std::cout << "generating GaussLegendre Quadrature\n";
       using namespace Impl;
       GaussLegendrePointSet ps(quad2PolOrder(quadOrder));
       ps.template build< typename CubeTopology< dim >::type > ();
