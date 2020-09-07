@@ -42,9 +42,6 @@ namespace Dune
         typedef typename BaseType :: CoordinateType CoordinateType;
 
       protected:
-        enum { highest_order = 10 };
-
-      protected:
         const GeometryType elementGeometry_;
         int order_;
 
@@ -99,7 +96,8 @@ namespace Dune
          */
         static unsigned int maxOrder ()
         {
-          return highest_order;
+          return QuadratureRules<FieldType,dim>::
+            maxOrder( Dune::GeometryTypes::cube(dim), Dune::QuadratureType::Enum(PointSet::pointSetId) );
         }
       };
 
