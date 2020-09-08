@@ -35,9 +35,12 @@ namespace Dune
       //! field type
       typedef FieldImp FieldType;
 
-    private:
+    protected:
       typedef IntegrationPointListImp< FieldType, dim > ThisType;
 
+      // this is used for interpolation quadratures to obtain element
+      // interpolation points for face quadratures
+      typedef FieldVector< FieldType, dim+1 > ElementCoordinateType;
     public:
       //! type of local coordinates
       typedef FieldVector< FieldType, dim > CoordinateType;
@@ -144,16 +147,15 @@ namespace Dune
        */
       virtual GeometryType geometryType () const = 0;
 
-      /** \brief returns whether quadrature is also an interpolation point list
-        *        for a basis set
+      /** \brief returns list of element interpolation points for a given face quadrature
         */
-      virtual bool isInterpolationList() const { return false; }
-      virtual size_t numInterpolationPoints () const { return 0; }
-
-      virtual void setNumInterpolationPoints( size_t npoints ) const
+      virtual std::vector< ElementCoordinateType > interpolationPoints(const int reqDim) const
       {
-
+        return std::vector< ElementCoordinateType >();
       }
+
+      /** \brief return number of interpolation points */
+      virtual size_t numInterpolationPoints() const { return 0; }
 
     protected:
       /** \brief Adds an integration point to the list

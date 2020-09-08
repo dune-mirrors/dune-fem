@@ -21,21 +21,22 @@ namespace Dune
        *  \brief
        *
        */
-      template< typename FieldImp, int dim, class PointSet >
+      template< typename FieldImp, int dim, template <class,int> class PointSet >
       class InterpolationQuadratureFactory
       : public Dune::Fem::QuadratureImp< FieldImp, dim >
       {
       public:
         typedef FieldImp FieldType;
-        typedef PointSet PointSetType;
+        typedef PointSet< FieldType, dim > PointSetType;
 
         enum { dimension = dim };
 
       private:
-        typedef InterpolationQuadratureFactory< FieldType, dimension, PointSetType > ThisType;
+        typedef InterpolationQuadratureFactory< FieldType, dimension, PointSet > ThisType;
         typedef Dune::Fem::QuadratureImp< FieldType, dimension > BaseType;
 
       protected:
+        typedef typename BaseType :: ElementCoordinateType ElementCoordinateType;
         using BaseType :: addQuadraturePoint;
 
       public:
@@ -66,16 +67,9 @@ namespace Dune
             auto points = PointSetType::buildCubeQuadrature( order );
             order_ = points.quadOrder();
 
-            numInterpolPoints_ = points.size();
             for( unsigned int i=0; i<points.size(); ++i )
             {
               addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
-            }
-
-            if( dim < 3 )
-            {
-              numInterpolPoints_ = GaussLobattoPointSet< FieldType, dim+1
-                >::buildCubeQuadrature( order ).size();
             }
           }
           else
@@ -91,9 +85,24 @@ namespace Dune
           return order_;
         }
 
-        /** \copydoc Dune::Fem::QuadratureImp::isInterpolationList
+        /** \copydoc Dune::Fem::QuadratureImp::interpolationPoints
          */
-        virtual bool isInterpolationList() const { return true; }
+        virtual std::vector< ElementCoordinateType > interpolationPoints(const int reqDim ) const
+        {
+          // if requested dimension matches potential element dimension
+          if( reqDim == (dim+1) && dim < 3 )
+          {
+            typedef PointSet< FieldType, dim+1 > ElementPointSet;
+            auto points = ElementPointSet::buildCubeQuadrature( order_ );
+            numInterpolPoints_ = points.size();
+            std::vector< ElementCoordinateType > pts( numInterpolPoints_ );
+            for( size_t i=0; i<numInterpolPoints_; ++i )
+              pts[ i ] = points[ i ].point();
+            return pts;
+          }
+          else
+            return std::vector< ElementCoordinateType >();
+        }
 
         virtual size_t numInterpolationPoints() const { return numInterpolPoints_; }
 
@@ -109,14 +118,14 @@ namespace Dune
         static unsigned int maxOrder ()
         {
           return QuadratureRules<FieldType,dim>::
-            maxOrder( Dune::GeometryTypes::cube(dim), Dune::QuadratureType::Enum(PointSet::pointSetId) );
+            maxOrder( Dune::GeometryTypes::cube(dim), Dune::QuadratureType::Enum(PointSetType::pointSetId) );
         }
       };
 
-      template< class FieldType, int dim, class PointSet >
+      template< class FieldType, int dim, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl
       {
-        static const int pointSetId = PointSet::pointSetId;
+        static const int pointSetId = PointSet<FieldType,dim>::pointSetId;
 
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > SimplexQuadratureType;
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > CubeQuadratureType;
@@ -126,12 +135,12 @@ namespace Dune
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, class PointSet >
+      template< class FieldType, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 0, PointSet >
       {
         static const int dim = 0;
 
-        static const int pointSetId = PointSet::pointSetId;
+        static const int pointSetId = PointSet<FieldType,dim>::pointSetId;
 
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > PointQuadratureType;
 
@@ -140,27 +149,26 @@ namespace Dune
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, class PointSet >
+      template< class FieldType, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 1, PointSet >
       {
         static const int dim = 1;
 
-        static const int pointSetId = PointSet::pointSetId;
+        static const int pointSetId = PointSet<FieldType,dim>::pointSetId;
 
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > LineQuadratureType;
-        // typedef CubeQuadrature< FieldType, 1 > LineQuadratureType;
 
         typedef  Dune::Fem::QuadratureImp< FieldType, dim > IntegrationPointListType;
 
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, class PointSet >
+      template< class FieldType, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 3, PointSet >
       {
         static const int dim = 3;
 
-        static const int pointSetId = PointSet::pointSetId;
+        static const int pointSetId = PointSet<FieldType,dim>::pointSetId;
 
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > SimplexQuadratureType;
         typedef InterpolationQuadratureFactory< FieldType, dim, PointSet > CubeQuadratureType;
@@ -182,7 +190,7 @@ namespace Dune
   //
   //////////////////////////////////////////////////////////////////
   template <class  FieldType, int dim >
-  using GaussLobattoQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLobattoPointSet< FieldType, dim > >;
+  using GaussLobattoQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLobattoPointSet >;
 
   //////////////////////////////////////////////////////////////////
   //
@@ -191,7 +199,7 @@ namespace Dune
   //
   //////////////////////////////////////////////////////////////////
   template <class  FieldType, int dim >
-  using GaussLegendreQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLegendrePointSet< FieldType, dim > >;
+  using GaussLegendreQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLegendrePointSet >;
 #endif
 
   } // namespace Fem

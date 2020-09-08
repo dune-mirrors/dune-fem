@@ -364,11 +364,14 @@ namespace Dune
       return ipList().geometryType();
     }
 
-    bool isInterpolationList() const
+    /** \brief returns list of element interpolation points for a given face quadrature
+      */
+    auto interpolationPoints( const int reqDim ) const
     {
-      return ipList().isInterpolationList();
+      return ipList().isInterpolationPoints( reqDim );
     }
 
+    /** \brief return number of interpolation points */
     size_t numInterpolationPoints() const
     {
       return ipList().numInterpolationPoints();

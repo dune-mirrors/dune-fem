@@ -61,7 +61,17 @@ namespace Dune
                     "CachingInterface :: interpolationPoint must be overloaded!" );
       }
 
-      inline size_t nCachingPoints () const { return 0; }
+      /** \brief check if quadrature is interpolation quadrature
+       *
+       *  \param[in]  numShapeFunctions  number of shapeFunctions that has to
+       *              match number of quadrature points or number of
+       *              internal interpolation  points
+       */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
+      {
+        DUNE_THROW( NotImplemented,
+                    "CachingInterface :: isInterpolationQuadrature must be overloaded!" );
+      }
     };
 
 
@@ -165,9 +175,12 @@ namespace Dune
         return quadraturePoint;
       }
 
-      size_t numInterpolationPoints() const
+      /** \copydoc Dune::Fem::CachingInterface::isInterpolationQuadrature */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
       {
-        return 0;
+        // if pointSetId is not negative then we have an interpolation
+        // quadrature if the number of point are equal to number of shape functions
+        return (pointSetId >= 0) ? (nop() == numShapeFunctions) : false;
       }
     };
 
@@ -287,6 +300,15 @@ namespace Dune
         return mapper_.second[ quadraturePoint ];
       }
 
+      /** \copydoc Dune::Fem::CachingInterface::isInterpolationQuadrature */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
+      {
+        // if pointSetId is not negative then we have an interpolation
+        // quadrature if the number of point are equal to number of shape functions
+        return (pointSetId < 0) ? false :
+          (quadImp().ipList().numInterpolationPoints() == numShapeFunctions);
+      }
+
       // return local caching point
       // for debugging issues only
       size_t localCachingPoint ( const size_t i ) const
@@ -301,11 +323,6 @@ namespace Dune
         assert( point < nop() );
 
         return point;
-      }
-
-      size_t numInterpolationPoints() const
-      {
-        return ( pointSetId == 4 ) ? quadImp().ipList().numInterpolationPoints() : 0;
       }
 
     protected:

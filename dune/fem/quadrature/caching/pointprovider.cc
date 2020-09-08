@@ -143,25 +143,8 @@ namespace Dune
         mappers_.insert(std::make_pair(key,
                                        std::make_pair(MapperVectorType(numFaces), MapperVectorType(numFaces) ))).first;
 
-      static const bool computeInterpolationPoints =
-        quad.isInterpolationList() && elementGeo.isCube();
-
       MapperIteratorType iit;
-      std::vector< GlobalPointType > itps;
-      if( computeInterpolationPoints )
-      {
-        // TODO: Currently this is the only point set where this makes sense
-        // but this may change. Need to find a generalization
-        typedef GaussLobattoPointSet< ct, dim > PointSetType;
-        auto points = PointSetType::buildCubeQuadrature( quad.order() );
-        itps.reserve( points.size() );
-        for( unsigned int i=0; i<points.size(); ++i )
-        {
-          itps.push_back( points[ i ].point() );
-        }
-
-        quad.setNumInterpolationPoints( points.size() );
-      }
+      std::vector< GlobalPointType > itps = quad.interpolationPoints( dim );
 
       int globalNum = 0;
       const size_t nItp = itps.size();
@@ -180,14 +163,14 @@ namespace Dune
           pit->second[globalNum] =
             refElem.template geometry<codim>(face).global( points[pt] );
 
-          if( computeInterpolationPoints )
+          if( nItp > 0 )
           {
             // compare interpolation points with created point to get mapping
             for( size_t i=0; i<nItp; ++i )
             {
               if( (itps[ i ] - pit->second[globalNum]).two_norm() < 1e-12 )
               {
-                std::cout << "found match for point " << itps[ i ] << " = ("<<  i << "," << pt << ")" << std::endl;
+                //std::cout << "found match for point " << itps[ i ] << " = ("<<  i << "," << pt << ")" << std::endl;
                 itpMap[ pt ] = i;
               }
             }
@@ -198,7 +181,7 @@ namespace Dune
         }
 
         map.first[face] = pMap;   // = face*numLocalPoints+pt
-        if( computeInterpolationPoints )
+        if( nItp > 0 )
         {
           map.second[face] = itpMap; // = face*numLocalPoints+pt
         }

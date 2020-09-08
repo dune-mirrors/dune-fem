@@ -278,9 +278,7 @@ namespace Dune
       if constexpr ( quadPointSetId == pointSetId )
       {
         // std::cout << "QP matches: " << quadPointSetId << " " << pointSetId << " " << quadrature.nop() << " " << numShapeFunctions << std::endl;
-        if( (quadrature.nop() == numShapeFunctions) ||
-            (Quadrature::codimension == 1 && quadrature.numInterpolationPoints()
-             == numShapeFunctions))
+        if( quadrature.isInterpolationQuadrature(numShapeFunctions) )
         {
           // negative values mean invalid point sets
           // we should not get here in this case

@@ -192,22 +192,19 @@ namespace Dune
           const int pointSetId = detail::SelectPointSetId< typename BaseFunctionSet::ShapeFunctionSetType >::value;
           const int quadPointSetId = SelectQuadraturePointSetId< QuadratureType >::value;
 
-          // if quadrature is an interpolation quadrature and matches the
-          // shapefunction set then only create an evaluation if the number of
-          // points is not equal
-          const bool noInterpolation = (pointSetId != quadPointSetId) && (nop !=
-            numBaseFct);
 #ifndef NDEBUG
-          if( ! noInterpolation )
+          if( quad.isInterpolationQuadrature( numBaseFct ) )
             std::cout << "EvaluateCallerInterface::storage: Not creating implementation because of interpolation feature!" <<std::endl;
 #endif
 
           // if quadrature points or number of basis functions are not within
           // the range of generated code snippets then don't search for
           // a matching combination
+          // do not create an evaluation if the quadrature is an interpolation
+          // quadrature and matches the number of shape functions
           if( (nop >= minQuadNop && nop <= maxQuadNop) &&
               (numBaseFct >= minNumBaseFunctions && numBaseFct <= maxNumBaseFunctions) &&
-              noInterpolation )
+              ! quad.isInterpolationQuadrature( numBaseFct ) )
           {
             item.second.reset(
                 EvaluateCaller< NewTraits, maxQuadNop, maxNumBaseFunctions >
