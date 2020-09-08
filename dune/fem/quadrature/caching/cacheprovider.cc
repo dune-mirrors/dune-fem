@@ -58,7 +58,7 @@ namespace Dune
       const auto pointMappers =
         PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
 
-      const int numFaces = pointMappers.frist.size();
+      const int numFaces = pointMappers.first.size();
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
 
@@ -67,7 +67,7 @@ namespace Dune
 
       for (int face = 0; face < numFaces; ++face)
         it->second.addMapper(pointMappers.first[face],
-                             pointMappers.first[face],
+                             pointMappers.second[face],
                              face);
 
       return it;
