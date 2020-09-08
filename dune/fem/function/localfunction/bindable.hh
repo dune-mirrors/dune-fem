@@ -17,18 +17,30 @@ namespace Dune
     struct BindableGridFunction : public BindableFunction
     {
       typedef GridPart GridPartType;
-      typedef typename GridPart::template Codim<0>::EntityType EntityType;
-      typedef typename GridPart::IntersectionType IntersectionType;
-      typedef typename EntityType::Geometry::GlobalCoordinate DomainType;
-      typedef Dune::Fem::GridFunctionSpace<GridPartType, Range> FunctionSpaceType;
-      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-      typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+      typedef typename GridPart::template Codim<0>::EntityType   EntityType;
+      typedef typename GridPart::IntersectionType                IntersectionType;
+      typedef typename EntityType::Geometry                      Geometry;
+      typedef typename Geometry::GlobalCoordinate                DomainType;
+      typedef Dune::Fem::GridFunctionSpace<GridPartType, Range>  FunctionSpaceType;
+      typedef typename FunctionSpaceType::RangeFieldType         RangeFieldType;
+      typedef typename FunctionSpaceType::RangeType              RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType      JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType       HessianRangeType;
       BindableGridFunction(const GridPart &gridPart)
       : gridPart_(gridPart) {}
-      void bind(const EntityType &entity) { entity_ = entity; }
-      void unbind() {}
+
+      void bind(const EntityType &entity)
+      {
+        entity_ = entity;
+        geometry_.reset();
+        geometry_.emplace( entity_.geometry() );
+      }
+
+      void unbind()
+      {
+        geometry_.reset();
+      }
+
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
         bind( side==IntersectionSide::in?
@@ -38,12 +50,15 @@ namespace Dune
       template <class Point>
       DomainType global(const Point &x) const
       {
-        return entity_.geometry().global( Dune::Fem::coordinate(x) );
+        return geometry_.value().global( Dune::Fem::coordinate(x) );
       }
       const GridPart& gridPart() const { return gridPart_; }
       const EntityType &entity() const { return entity_; }
-      private:
+      const Geometry& geometry() const { return geometry_.value(); }
+
+    protected:
       EntityType entity_;
+      std::optional< Geometry > geometry_;
       const GridPart &gridPart_;
     };
 
