@@ -87,7 +87,8 @@ namespace Dune
       mutable std::vector< RangeType > phi_;
       mutable std::vector< RangeType > phiMass_;
 
-      typedef std::map< const int, MatrixType* > MassMatrixStorageType;
+      typedef std::pair< std::unique_ptr< MatrixType >, bool > MatrixPairType;
+      typedef std::map< const int, MatrixPairType > MassMatrixStorageType;
       typedef std::vector< MassMatrixStorageType > LocalInverseMassMatrixStorageType;
 
       mutable LocalInverseMassMatrixStorageType localInverseMassMatrix_;
@@ -111,33 +112,55 @@ namespace Dune
         {}
       };
 
+
+      bool checkDiagonalMatrix( const MatrixType& matrix ) const
+      {
+        const int rows = matrix.rows();
+        const int cols = matrix.cols();
+        for( int r=0; r<rows; ++r )
+        {
+          for( int c=0; c<cols; ++c )
+          {
+            // skip diagonal
+            if( r == c ) continue ;
+
+            // if we find one off diagonal non-zero return false
+            if( std::abs(matrix[r][c]) > 1e-12 )
+              return false;
+          }
+        }
+        return true;
+      }
+
       template< class BasisFunctionSet >
-      MatrixType &getLocalInverseMassMatrix ( const EntityType &entity, const Geometry &geo,
-                                              const BasisFunctionSet &basisSet, int numBasisFct ) const
+      MatrixPairType&
+      getLocalInverseMassMatrix ( const EntityType &entity, const Geometry &geo,
+                                  const BasisFunctionSet &basisSet, int numBasisFct ) const
       {
         const GeometryType geomType = geo.type();
         typedef typename MassMatrixStorageType::iterator iterator;
         MassMatrixStorageType &massMap = localInverseMassMatrix_[ GlobalGeometryTypeIndex::index( geomType ) ];
 
-        std::pair< iterator, bool > insertPair = massMap.insert( std::make_pair( numBasisFct, nullptr ) );
-        MatrixType *&matrix = insertPair.first->second;
-
+        std::pair< iterator, bool > insertPair = massMap.insert( std::make_pair( numBasisFct, MatrixPairType(nullptr,false) ) );
         if( insertPair.second )
         {
-          matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
+          insertPair.first->second.first.reset( new MatrixType( numBasisFct, numBasisFct, 0.0 ));
+          MatrixType& matrix = insertPair.first->second.first.operator *();
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
-          buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, *matrix, false );
+          buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, matrix, false );
           try {
-            matrix->invert();
+            matrix.invert();
           }
           catch ( Dune::FMatrixError &e )
           {
-            std::cerr << "Matrix is singular:" << std::endl << *matrix << std::endl;
+            std::cerr << "Matrix is singular:" << std::endl << matrix << std::endl;
             std::terminate();
           }
+          // store information whether matrix is diagonal or not
+          insertPair.first->second.second = checkDiagonalMatrix( matrix );
         }
 
-        return *matrix;
+        return insertPair.first->second;
       }
 
       template< class MassCaller, class BasisFunctionSet >
@@ -216,17 +239,6 @@ namespace Dune
         lastTopologyId_( other.lastTopologyId_ ),
         sequence_( other.sequence_ )
       {}
-
-      ~LocalMassMatrixImplementation ()
-      {
-        typedef typename MassMatrixStorageType::iterator iterator;
-        for( unsigned int i = 0; i < localInverseMassMatrix_.size(); ++i )
-        {
-          const iterator end = localInverseMassMatrix_[ i ].end();
-          for( iterator it = localInverseMassMatrix_[ i ].begin(); it != end; ++it )
-            delete it->second;
-        }
-      }
 
     public:
       //! returns true if geometry mapping is affine
@@ -508,8 +520,10 @@ namespace Dune
         const int numDofs = lf.size();
 
         // get local inverted mass matrix
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, basisFunctionSet, numDofs );
+        const MatrixType& invMassMatrix = *matrixPair.first;
+        const bool diagonal = matrixPair.second;
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -519,16 +533,25 @@ namespace Dune
         for( int l = 0; l < numDofs; ++l )
           rhs_[ l ] = lf[ l ] * massVolInv;
 
-        // apply inverse local mass matrix and store in lf
-        multiply( numDofs, invMassMatrix, rhs_, lf );
+        if( diagonal )
+        {
+          // apply inverse local mass matrix and store in lf
+          multiplyDiagonal( numDofs, invMassMatrix, rhs_, lf );
+        }
+        else
+        {
+          // apply inverse local mass matrix and store in lf
+          multiply( numDofs, invMassMatrix, rhs_, lf );
+        }
       }
 
       template< class LocalMatrix >
       void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+        const MatrixType &invMassMatrix = *matrixPair.first;
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -550,8 +573,9 @@ namespace Dune
       void leftMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+        const MatrixType &invMassMatrix = *matrixPair.first;
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -717,6 +741,24 @@ namespace Dune
 
           // set to result to result vector
           x[ row ] = sum;
+        }
+      }
+
+      // implement matvec with matrix (mv of densematrix is too stupid)
+      template <class Matrix, class Rhs, class X>
+      void multiplyDiagonal( const int size,
+                             const Matrix& matrix,
+                             const Rhs& rhs,
+                             X& x ) const
+      {
+        assert( (int) matrix.rows() == size );
+        assert( (int) matrix.cols() == size );
+        assert( (int) rhs.size() == size );
+
+        for( int row = 0; row < size; ++ row )
+        {
+          // set to result to result vector
+          x[ row ] = matrix[ row ][ row ] * rhs[ row ];
         }
       }
     };
