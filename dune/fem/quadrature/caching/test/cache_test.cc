@@ -290,7 +290,7 @@ namespace Dune
       // Loop over all faces
       for( int i = 0; i < refElement.size( codim ); ++i )
       {
-        const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
+        const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 ).first;
 
         doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
