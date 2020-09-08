@@ -46,12 +46,29 @@ namespace Dune
         bind( side==IntersectionSide::in?
               intersection.inside(): intersection.outside() );
       }
+
       bool continuous() const { return true; }
       template <class Point>
       DomainType global(const Point &x) const
       {
         return geometry_.value().global( Dune::Fem::coordinate(x) );
       }
+
+      // this method needs to be overloaded in the derived class
+      template <class Point>
+      void evaluate( const Point& x, RangeType& ret ) const;
+
+      template <class Quadrature, class RangeArray>
+      void evaluate( const Quadrature& quadrature, RangeArray& values ) const
+      {
+        const unsigned int nop = quadrature.nop();
+        values.resize( nop );
+        for( unsigned int qp=0; qp<nop; ++qp)
+        {
+          evaluate( quadrature[ qp ], values[ qp ]);
+        }
+      }
+
       const GridPart& gridPart() const { return gridPart_; }
       const EntityType &entity() const { return entity_; }
       const Geometry& geometry() const { return geometry_.value(); }
