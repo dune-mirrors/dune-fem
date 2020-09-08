@@ -50,6 +50,17 @@ namespace Dune
                     "CachingInterface :: cachingPoint must be overloaded!" );
       }
 
+      /** \brief map quadrature points to interpolation points
+       *
+       *  \param[in]  quadraturePoint  number of quadrature point to map to an
+       *                               interpolation point
+       */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        DUNE_THROW( NotImplemented,
+                    "CachingInterface :: interpolationPoint must be overloaded!" );
+      }
+
       inline size_t nCachingPoints () const { return 0; }
     };
 
@@ -107,6 +118,10 @@ namespace Dune
       //! type of iterator
       typedef QuadraturePointIterator< This > IteratorType;
 
+      //! id of point set, positive if interpolation point set, otherwise negative
+      static const int pointSetId = SelectQuadraturePointSetId<
+          typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
+
     protected:
       using Base::quadImp;
 
@@ -142,6 +157,17 @@ namespace Dune
       inline size_t cachingPoint( const size_t quadraturePoint ) const
       {
         return quadraturePoint;
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::interpolationPoint */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        return quadraturePoint;
+      }
+
+      size_t numInterpolationPoints() const
+      {
+        return 0;
       }
     };
 
@@ -187,9 +213,11 @@ namespace Dune
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
       typedef IntersectionIteratorType IntersectionIterator;
 
+      static const int pointSetId = SelectQuadraturePointSetId<
+          typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
 
     protected:
-      typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
+      typedef typename CachingTraits< RealType, dimension >::MapperPairType  MapperPairType;
       typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
 
       typedef CacheProvider< GridPartType, codimension >            CacheProviderType;
@@ -249,21 +277,35 @@ namespace Dune
       inline size_t cachingPoint( const size_t quadraturePoint ) const
       {
         assert( quadraturePoint < (size_t)nop() );
-        return mapper_[ quadraturePoint ];
+        return mapper_.first[ quadraturePoint ];
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::interpolationPoint */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        assert( quadraturePoint < mapper_.second.size() );
+        return mapper_.second[ quadraturePoint ];
       }
 
       // return local caching point
       // for debugging issues only
       size_t localCachingPoint ( const size_t i ) const
       {
+        const auto& mapper = mapper_.first;
+
         assert( i < (size_t)nop() );
 
-        assert( mapper_[ i ] >= 0 );
+        assert( mapper[ i ] >= 0 );
         int faceIndex = localFaceIndex();
-        unsigned int point = mapper_[ i ] - faceIndex * mapper_.size();
+        unsigned int point = mapper[ i ] - faceIndex * mapper.size();
         assert( point < nop() );
 
         return point;
+      }
+
+      size_t numInterpolationPoints() const
+      {
+        return ( pointSetId == 4 ) ? quadImp().ipList().numInterpolationPoints() : 0;
       }
 
     protected:
@@ -305,7 +347,7 @@ namespace Dune
 
     private:
       const int twist_;
-      const MapperType &mapper_;
+      const MapperPairType &mapper_;
       const PointVectorType &points_;
     };
 

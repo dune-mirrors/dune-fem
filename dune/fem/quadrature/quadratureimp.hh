@@ -144,6 +144,17 @@ namespace Dune
        */
       virtual GeometryType geometryType () const = 0;
 
+      /** \brief returns whether quadrature is also an interpolation point list
+        *        for a basis set
+        */
+      virtual bool isInterpolationList() const { return false; }
+      virtual size_t numInterpolationPoints () const { return 0; }
+
+      virtual void setNumInterpolationPoints( size_t npoints ) const
+      {
+
+      }
+
     protected:
       /** \brief Adds an integration point to the list
        *

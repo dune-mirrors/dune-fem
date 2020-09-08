@@ -190,8 +190,8 @@ try
   for( int order = 0; order < 3; ++order )
     checkQuadraturePoints< 3, Dune::Fem::DuneQuadratureTraits >( Dune::GeometryTypes::pyramid, order );
 
-  std::cout << "****  Checking GaussLobattoQuadratureTraits  ****" << std::endl;
 #if HAVE_DUNE_LOCALFUNCTIONS
+  std::cout << "****  Checking GaussLobattoQuadratureTraits  ****" << std::endl;
   for( int order = 0; order < 12; ++order )
     checkQuadraturePoints< 2, Dune::Fem::GaussLobattoQuadratureTraits >( Dune::GeometryTypes::quadrilateral, order );
   for( int order = 0; order < 12; ++order )

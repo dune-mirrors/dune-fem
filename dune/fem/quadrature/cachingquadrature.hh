@@ -80,8 +80,6 @@ namespace Dune
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-      static const int pointSetId = SelectQuadraturePointSetId< QuadratureTraits<RealType,dimension> > :: value;
-
     protected:
       using BaseType :: quadImp;
 
@@ -179,8 +177,6 @@ namespace Dune
 
       //! type of quadrature used for non-conforming intersections
       typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType;
-
-      //static const int pointSetId = IntegrationTraits::pointSetId;
 
       using BaseType::nop;
 

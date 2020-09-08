@@ -164,10 +164,10 @@ namespace Dune
 
     enum { dimension = dim };
 
+    typedef IntegrationTraits< FieldType, dimension > Traits;
+
   private:
     typedef IntegrationPointList< FieldType, dimension, IntegrationTraits > ThisType;
-
-    typedef IntegrationTraits< FieldType, dimension > Traits;
 
     typedef QuadratureProvider< FieldType, dimension, IntegrationTraits >
       QuadratureProviderType;
@@ -363,6 +363,16 @@ namespace Dune
     {
       return ipList().geometryType();
     }
+
+    bool isInterpolationList() const
+    {
+      return ipList().isInterpolationList();
+    }
+
+    size_t numInterpolationPoints() const
+    {
+      return ipList().numInterpolationPoints();
+    }
   };
 
 
@@ -394,11 +404,11 @@ namespace Dune
 
     static const unsigned int dimension = dim ;
 
+    typedef QuadratureTraits< FieldType, dimension > Traits;
+
   private:
     typedef Quadrature< FieldType, dimension, QuadratureTraits > ThisType;
     typedef IntegrationPointList< FieldType, dimension, QuadratureTraits > BaseType;
-
-    typedef QuadratureTraits< FieldType, dimension > Traits;
 
     typedef QuadratureProvider< FieldType, dimension, QuadratureTraits >
       QuadratureProviderType;

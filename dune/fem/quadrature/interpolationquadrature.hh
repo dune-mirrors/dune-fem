@@ -43,6 +43,7 @@ namespace Dune
 
       protected:
         const GeometryType elementGeometry_;
+        mutable size_t numInterpolPoints_;
         int order_;
 
       public:
@@ -56,15 +57,26 @@ namespace Dune
                                         const int order,
                                         const size_t id )
         : BaseType( id ),
-          elementGeometry_( geometry )
+          elementGeometry_( geometry ),
+          numInterpolPoints_( 0 )
         {
           // revert quadrature order to polynomial order
           if( geometry.isCube() )
           {
             auto points = PointSetType::buildCubeQuadrature( order );
             order_ = points.quadOrder();
+
+            numInterpolPoints_ = points.size();
             for( unsigned int i=0; i<points.size(); ++i )
+            {
               addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
+            }
+
+            if( dim < 3 )
+            {
+              numInterpolPoints_ = GaussLobattoPointSet< FieldType, dim+1
+                >::buildCubeQuadrature( order ).size();
+            }
           }
           else
           {
@@ -78,6 +90,12 @@ namespace Dune
         {
           return order_;
         }
+
+        /** \copydoc Dune::Fem::QuadratureImp::isInterpolationList
+         */
+        virtual bool isInterpolationList() const { return true; }
+
+        virtual size_t numInterpolationPoints() const { return numInterpolPoints_; }
 
         /** \copydoc Dune::Fem::QuadratureImp::geometry
          */

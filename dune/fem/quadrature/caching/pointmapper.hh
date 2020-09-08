@@ -56,6 +56,7 @@ namespace Dune
       typedef typename QuadratureType::CoordinateType PointType;
       typedef std::vector<PointType>    PointVectorType;
       typedef std::vector<size_t>       MapperType;
+      typedef std::pair< MapperType, MapperType > MapperPairType;
       typedef std::vector<MapperType>   MapperVectorType;
 
       typedef QuadratureKey QuadratureKeyType;

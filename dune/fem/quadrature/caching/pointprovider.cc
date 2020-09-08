@@ -8,6 +8,8 @@
 #include <dune/fem/quadrature/caching/registry.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 
+#include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
+
 namespace Dune
 {
 
@@ -71,7 +73,7 @@ namespace Dune
     PointProvider<ct, dim, 1>::mappers_;
 
     template <class ct, int dim>
-    const typename PointProvider<ct, dim, 1>::MapperVectorType&
+    const typename PointProvider<ct, dim, 1>::MapperVectorPairType&
     PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
                                           const GeometryType& elementGeo)
     {
@@ -80,7 +82,8 @@ namespace Dune
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
         std::vector<LocalPointType> pts(quad.nop());
-        for (size_t i = 0; i < quad.nop(); ++i) {
+        for (size_t i = 0; i < quad.nop(); ++i)
+        {
           pts[i] = quad.point(i);
         }
         it = addEntry(quad, pts, elementGeo);
@@ -90,7 +93,7 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    const typename PointProvider<ct, dim, 1>::MapperVectorType&
+    const typename PointProvider<ct, dim, 1>::MapperVectorPairType&
     PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
                                           const LocalPointVectorType& pts,
                                           const GeometryType& elementGeo)
@@ -138,23 +141,68 @@ namespace Dune
                                       GlobalPointVectorType(numGlobalPoints))).first;
       MapperIteratorType mit =
         mappers_.insert(std::make_pair(key,
-                                       MapperVectorType(numFaces))).first;
+                                       std::make_pair(MapperVectorType(numFaces), MapperVectorType(numFaces) ))).first;
+
+      static const bool computeInterpolationPoints =
+        quad.isInterpolationList() && elementGeo.isCube();
+
+      MapperIteratorType iit;
+      std::vector< GlobalPointType > itps;
+      if( computeInterpolationPoints )
+      {
+        // TODO: Currently this is the only point set where this makes sense
+        // but this may change. Need to find a generalization
+        typedef GaussLobattoPointSet< ct, dim > PointSetType;
+        auto points = PointSetType::buildCubeQuadrature( quad.order() );
+        itps.reserve( points.size() );
+        for( unsigned int i=0; i<points.size(); ++i )
+        {
+          itps.push_back( points[ i ].point() );
+        }
+
+        quad.setNumInterpolationPoints( points.size() );
+      }
+
       int globalNum = 0;
+      const size_t nItp = itps.size();
       for (int face = 0; face < numFaces; ++face)
       {
         // Assumption: all faces have the same type
         // (not true for pyramids and prisms)
         MapperType pMap(numLocalPoints);
+        MapperType itpMap(numLocalPoints);
 
-        for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
+        MapperVectorPairType& map = mit->second;
+
+        for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum)
+        {
           // Store point on reference element
           pit->second[globalNum] =
             refElem.template geometry<codim>(face).global( points[pt] );
 
+          if( computeInterpolationPoints )
+          {
+            // compare interpolation points with created point to get mapping
+            for( size_t i=0; i<nItp; ++i )
+            {
+              if( (itps[ i ] - pit->second[globalNum]).two_norm() < 1e-12 )
+              {
+                std::cout << "found match for point " << itps[ i ] << " = ("<<  i << "," << pt << ")" << std::endl;
+                itpMap[ pt ] = i;
+              }
+            }
+          }
+
           // Store point mapping
           pMap[pt] = globalNum;
         }
-        mit->second[face] = pMap;  // = face*numLocalPoints+pt
+
+        map.first[face] = pMap;   // = face*numLocalPoints+pt
+        if( computeInterpolationPoints )
+        {
+          map.second[face] = itpMap; // = face*numLocalPoints+pt
+        }
+
       } // end for all faces
 
       // register quadrature to existing storages

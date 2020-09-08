@@ -67,23 +67,25 @@ namespace Dune
       typedef FieldVector<ct, dim> GlobalPointType;
       typedef std::vector<GlobalPointType> GlobalPointVectorType;
       typedef typename Traits::QuadratureKeyType QuadratureKeyType;
+      typedef std::pair< MapperVectorType, MapperVectorType >  MapperVectorPairType;
 
     public:
       inline
-      static const MapperVectorType& getMappers(const QuadratureType& quad,
-                                                const GeometryType& elementGeo);
+      static const MapperVectorPairType& getMappers(const QuadratureType& quad,
+                                                    const GeometryType& elementGeo);
       // Access for non-symmetric quadratures
       inline
-      static const MapperVectorType& getMappers(const QuadratureType& quad,
-                                                const LocalPointVectorType& pts,
-                                                const GeometryType& elementGeo);
+      static const MapperVectorPairType& getMappers(const QuadratureType& quad,
+                                                    const LocalPointVectorType& pts,
+                                                    const GeometryType& elementGeo);
       inline
       static const GlobalPointVectorType& getPoints(const size_t id,
                                                     const GeometryType& elementGeo);
 
     private:
       typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
-      typedef std::map<const QuadratureKeyType, MapperVectorType> MapperContainerType;
+      typedef std::map<const QuadratureKeyType, MapperVectorPairType > MapperContainerType;
+
       typedef typename PointContainerType::iterator PointIteratorType;
       typedef typename MapperContainerType::iterator MapperIteratorType;
 
@@ -94,7 +96,7 @@ namespace Dune
                                          GeometryType elementGeo);
 
     private:
-      DUNE_EXPORT static PointContainerType points_;
+      DUNE_EXPORT static PointContainerType  points_;
       DUNE_EXPORT static MapperContainerType mappers_;
     };
 
