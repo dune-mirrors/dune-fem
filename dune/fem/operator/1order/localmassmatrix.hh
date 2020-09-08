@@ -244,8 +244,8 @@ namespace Dune
       void applyInverse ( MassCaller &caller, const EntityType &entity, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        if( affine() || geo.affine() )
-          applyInverseLocally( caller, entity, geo, basisFunctionSet, lf );
+        if( (affine() || geo.affine()) && !caller.hasMass() )
+          applyInverseLocally( entity, geo, basisFunctionSet, lf );
         else
           applyInverseDefault( caller, entity, geo, basisFunctionSet, lf );
       }
@@ -501,9 +501,8 @@ namespace Dune
       //  local applyInverse method for affine geometries
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
-      //! using the massFactor method of the caller
-      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
-      void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
+      template< class BasisFunctionSet, class LocalFunction >
+      void applyInverseLocally ( const EntityType &entity,
                                  const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         const int numDofs = lf.size();
