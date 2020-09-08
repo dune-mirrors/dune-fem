@@ -2,9 +2,9 @@
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
 
 #include <dune/common/ftraits.hh>
-#include <dune/common/dynvector.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 
 namespace Dune
@@ -161,14 +161,15 @@ namespace Dune
   struct FieldTraits< Fem::TemporaryLocalFunction<DiscreteFunctionSpace,Dof> >
   : public FieldTraits< Dof >
   {};
+
   namespace Fem
   {
     template< class DiscreteFunctionSpace, class Dof = typename DiscreteFunctionSpace::RangeFieldType >
     class TemporaryLocalFunction
-    : public BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::DynamicVector< Dof > >
+    : public BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::Fem::DynamicArray< Dof > >
     {
       typedef TemporaryLocalFunction< DiscreteFunctionSpace, Dof > ThisType;
-      typedef BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::DynamicVector< Dof > > BaseType;
+      typedef BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::Fem::DynamicArray< Dof > > BaseType;
 
     public:
       //! type of Entity
