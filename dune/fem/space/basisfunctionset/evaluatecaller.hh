@@ -188,9 +188,6 @@ namespace Dune
         {
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
           auto& item = evaluators[ quadId ];
-          // create appropriate evaluator
-          const int pointSetId = detail::SelectPointSetId< typename BaseFunctionSet::ShapeFunctionSetType >::value;
-          const int quadPointSetId = SelectQuadraturePointSetId< QuadratureType >::value;
 
 #ifndef NDEBUG
           if( quad.isInterpolationQuadrature( numBaseFct ) )
