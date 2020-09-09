@@ -144,9 +144,6 @@ namespace Dune
       //! \brief return size of basis function set
       std::size_t size () const { return shapeFunctionSet().size(); }
 
-      //! \brief return size of scalar basis function set
-      std::size_t numDifferentBaseFunctions () const { return size()/FunctionSpaceType::dimRange; }
-
       //! \brief return reference element
       auto referenceElement () const
         -> decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )

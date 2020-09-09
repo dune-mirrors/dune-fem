@@ -174,7 +174,8 @@ namespace Dune
                                                const QuadratureType& quad)
       {
         const int nop = quad.nop();
-        const int numBaseFct = baseSet.numDifferentBaseFunctions();
+        static const int dimRange = BaseFunctionSet :: FunctionSpaceType:: dimRange;
+        const int numBaseFct = baseSet.size() / dimRange;
 
         assert( quad.id() < maxQuadratures );
 
