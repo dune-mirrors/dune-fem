@@ -541,8 +541,19 @@ namespace Dune
           const VectorType& diagonal = *matrixPair.second;
           assert( int(diagonal.size()) == numDofs );
 
+#ifdef LOBHACK
+          static const int dimRange = LocalFunction::dimRange;
+          VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+          assert(volQuad.nop()*dimRange == numDofs);
+
+          int l = 0;
+          for( int qt = 0; qt < volQuad.nop(); ++qt )
+            for (int r = 0; r < dimRange; ++r,++l )
+              lf[ l ] *= diagonal[ l ] / geo.integrationElement( volQuad.point(qt) );
+#else
           for( int l = 0; l < numDofs; ++l )
             lf[ l ] *= massVolInv * diagonal[ l ];
+#endif
         }
         else
         {
@@ -623,6 +634,10 @@ namespace Dune
           return true;
         }
 
+        // test here for 'interpolation quadrature and shape function set'
+#ifdef LOBHACK
+        return true ;
+#endif
         // otherwise use geometry affinity
         return false ;
       }
