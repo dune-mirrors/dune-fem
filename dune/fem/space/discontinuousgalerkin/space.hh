@@ -114,13 +114,13 @@ namespace Dune
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,
                                             const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
+        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection ),
+          interpolation_( *this )
       {}
 
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        // return InterpolationType( basisFunctionSet( entity ) );
-        return InterpolationType( *this );
+        return interpolation_;
       }
 
     private:
@@ -130,6 +130,8 @@ namespace Dune
         ShapeFunctionSetsType shapeFunctionSets( gridPart );
         return BasisFunctionSetsType( std::move( shapeFunctionSets ) );
       }
+
+      mutable ThreadSafeValue< InterpolationType > interpolation_;
     };
 
 

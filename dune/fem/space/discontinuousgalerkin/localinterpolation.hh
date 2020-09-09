@@ -60,8 +60,8 @@ namespace Dune
                                                 std::function<int(const int)> quadOrder = [](const int order) { return 2 * order; } )
       : space_( space ),
         quadOrder_( quadOrder ),
-        massMatrix_( space, quadOrder_ ),
-        values_()
+        massMatrix_( new LocalMassMatrixType(space, quadOrder_ ) ),
+        values_( new std::vector< RangeType > () )
       {}
 
       DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = default;
@@ -85,7 +85,7 @@ namespace Dune
           if( ! isAffine )
           {
             typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
-            AggloMassMatrix massMat( massMatrix_.space(), quadOrder_ );
+            AggloMassMatrix massMat( space_, quadOrder_ );
 
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
@@ -100,7 +100,7 @@ namespace Dune
           {
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
-            massMatrix_.applyInverse( entity, basisFunctionSet, dofs );
+            massMatrix().applyInverse( entity, basisFunctionSet, dofs );
           }
         }
 
@@ -114,11 +114,14 @@ namespace Dune
                                  LocalDofVector &dofs ) const
       {
         const int nop = quadrature.nop();
+
+        assert( values_ );
+        std::vector< RangeType >& values = *values_;
         // adjust size of values
-        values_.resize( nop );
+        values.resize( nop );
 
         // evaluate local function for all quadrature points
-        localFunction.evaluateQuadrature( quadrature, values_ );
+        localFunction.evaluateQuadrature( quadrature, values );
 
         bool isAffine = isAlwaysAffine ;
         if( ! isAlwaysAffine )
@@ -130,7 +133,7 @@ namespace Dune
           {
             // apply weight
             for(auto qp : quadrature )
-              values_[ qp.index() ] *= qp.weight() * geometry.integrationElement( qp.position() );
+              values[ qp.index() ] *= qp.weight() * geometry.integrationElement( qp.position() );
           }
         }
 
@@ -138,22 +141,25 @@ namespace Dune
         {
           // apply weight only
           for(auto qp : quadrature )
-            values_[ qp.index() ] *= qp.weight();
+            values[ qp.index() ] *= qp.weight();
         }
 
         // add values to local function
-        // dofs.axpyQuadrature( quadrature, values_ );
-        space_.basisFunctionSet(entity).axpy( quadrature, values_, dofs );
+        space_.basisFunctionSet(entity).axpy( quadrature, values, dofs );
 
         return isAffine;
       }
 
-      const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
+      const LocalMassMatrixType &massMatrix () const
+      {
+        assert( massMatrix_ );
+        return *massMatrix_;
+      }
 
       const DiscreteFunctionSpaceType &space_;
       const std::function<int(const int)> quadOrder_;
-      LocalMassMatrixType massMatrix_;
-      mutable std::vector< RangeType > values_;
+      std::shared_ptr< LocalMassMatrixType > massMatrix_;
+      mutable std::shared_ptr< std::vector< RangeType > > values_;
     };
 
   } // namespace Fem
