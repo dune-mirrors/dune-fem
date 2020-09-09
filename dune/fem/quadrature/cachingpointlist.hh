@@ -234,7 +234,7 @@ namespace Dune
       // Note: we also exclude GaussLegendre(0) here, because on faces it is not
       //       an interpolation rule
       static const int pointSetId = (quadPointSetId > 0) ? quadPointSetId :
-        SelectQuadraturePointSetId< TwistUtilityType > :: value; // default value
+                  SelectQuadraturePointSetId< void > :: value; // default value
 
     protected:
       typedef typename CachingTraits< RealType, dimension >::MapperPairType  MapperPairType;
