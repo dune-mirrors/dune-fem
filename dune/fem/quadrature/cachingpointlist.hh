@@ -226,8 +226,15 @@ namespace Dune
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
       typedef IntersectionIteratorType IntersectionIterator;
 
-      static const int pointSetId = SelectQuadraturePointSetId<
-          typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
+    private:
+      static const int quadPointSetId =
+        SelectQuadraturePointSetId< typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
+
+    public:
+      // Note: we also exclude GaussLegendre(0) here, because on faces it is not
+      //       an interpolation rule
+      static const int pointSetId = (quadPointSetId > 0) ? quadPointSetId :
+        SelectQuadraturePointSetId< TwistUtilityType > :: value; // default value
 
     protected:
       typedef typename CachingTraits< RealType, dimension >::MapperPairType  MapperPairType;
@@ -305,10 +312,8 @@ namespace Dune
       {
         // if pointSetId is not negative then we have an interpolation
         // quadrature if the number of point are equal to number of shape functions
-        // Note: we also exclude GaussLegendre here, because on faces it is not
-        //       an interpolation rule
-        return (pointSetId <= 0 ) ? false :
-          (quadImp().ipList().numInterpolationPoints() == numShapeFunctions);
+        return (pointSetId < 0) ? false :
+          quadImp().ipList().isFaceInterpolationQuadrature( numShapeFunctions );
       }
 
       // return local caching point

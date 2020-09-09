@@ -106,8 +106,15 @@ namespace Dune
             return std::vector< ElementCoordinateType >();
         }
 
-        /** \copydoc Dune::Fem::QuadratureImp::numInterpolationPoints */
-        virtual size_t numInterpolationPoints() const { return numElementInterpolPoints_; }
+        /** \copydoc Dune::Fem::QuadratureImp::isFaceInterpolationQuadrature */
+        virtual bool isFaceInterpolationQuadrature( const size_t numShapeFunctions ) const
+        {
+          // when numElementInterpolPoints_ is set this means we have a face
+          // quadrature and then this is an interpolation quadrature if the
+          // number of shape functions matches the number of element
+          // interpolation points
+          return numShapeFunctions == numElementInterpolPoints_;
+        }
 
         /** \copydoc Dune::Fem::QuadratureImp::geometry
          */

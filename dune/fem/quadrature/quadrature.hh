@@ -368,13 +368,14 @@ namespace Dune
       */
     auto interpolationPoints( const int reqDim ) const
     {
-      return ipList().isInterpolationPoints( reqDim );
+      return ipList().interpolationPoints( reqDim );
     }
 
-    /** \brief return number of interpolation points */
-    size_t numInterpolationPoints() const
+    /** \brief return true if quadrature is also a set of interpolation points
+     * for the given shape functions */
+    bool isFaceInterpolationQuadrature( const size_t numShapeFunctions ) const
     {
-      return ipList().numInterpolationPoints();
+      return ipList().isFaceInterpolationQuadrature( numShapeFunctions );
     }
   };
 

@@ -154,8 +154,10 @@ namespace Dune
         return std::vector< ElementCoordinateType >();
       }
 
-      /** \brief return number of interpolation points */
-      virtual size_t numInterpolationPoints() const { return 0; }
+      /** \brief return true if quadrature is also a set of interpolation points
+       * for a given number of shape functions
+       */
+      virtual bool isFaceInterpolationQuadrature(const size_t numShapeFunctions ) const { return false; }
 
     protected:
       /** \brief Adds an integration point to the list
