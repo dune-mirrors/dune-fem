@@ -305,7 +305,9 @@ namespace Dune
       {
         // if pointSetId is not negative then we have an interpolation
         // quadrature if the number of point are equal to number of shape functions
-        return (pointSetId < 0) ? false :
+        // Note: we also exclude GaussLegendre here, because on faces it is not
+        //       an interpolation rule
+        return (pointSetId <= 0 ) ? false :
           (quadImp().ipList().numInterpolationPoints() == numShapeFunctions);
       }
 

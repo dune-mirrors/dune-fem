@@ -44,7 +44,7 @@ namespace Dune
 
       protected:
         const GeometryType elementGeometry_;
-        mutable size_t numInterpolPoints_;
+        mutable size_t numElementInterpolPoints_;
         int order_;
 
       public:
@@ -59,7 +59,7 @@ namespace Dune
                                         const size_t id )
         : BaseType( id ),
           elementGeometry_( geometry ),
-          numInterpolPoints_( 0 )
+          numElementInterpolPoints_( 0 ) // this is only set when interpolationPoints are requested
         {
           // revert quadrature order to polynomial order
           if( geometry.isCube() )
@@ -67,7 +67,6 @@ namespace Dune
             auto points = PointSetType::buildCubeQuadrature( order );
             order_ = points.quadOrder();
 
-            numInterpolPoints_ = points.size();
             assert(order_ >= order);
 
             for( unsigned int i=0; i<points.size(); ++i )
@@ -97,9 +96,9 @@ namespace Dune
           {
             typedef PointSet< FieldType, dim+1 > ElementPointSet;
             auto points = ElementPointSet::buildCubeQuadrature( order_ );
-            numInterpolPoints_ = points.size();
-            std::vector< ElementCoordinateType > pts( numInterpolPoints_ );
-            for( size_t i=0; i<numInterpolPoints_; ++i )
+            numElementInterpolPoints_ = points.size();
+            std::vector< ElementCoordinateType > pts( numElementInterpolPoints_ );
+            for( size_t i=0; i<numElementInterpolPoints_; ++i )
               pts[ i ] = points[ i ].point();
             return pts;
           }
@@ -107,7 +106,8 @@ namespace Dune
             return std::vector< ElementCoordinateType >();
         }
 
-        virtual size_t numInterpolationPoints() const { return numInterpolPoints_; }
+        /** \copydoc Dune::Fem::QuadratureImp::numInterpolationPoints */
+        virtual size_t numInterpolationPoints() const { return numElementInterpolPoints_; }
 
         /** \copydoc Dune::Fem::QuadratureImp::geometry
          */
@@ -165,9 +165,6 @@ namespace Dune
 
         typedef int QuadratureKeyType ;
       };
-      template <class FieldType>
-      struct InterpolationQuadratureTraitsImpl<FieldType,1,GaussLegendrePointSet>
-      : public DefaultQuadratureTraits< FieldType, 1 > {}; // quadrautre points not on boundary
 
       template< class FieldType, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 3, PointSet >
