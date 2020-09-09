@@ -118,7 +118,6 @@ namespace Dune
       bool checkDiagonalMatrix( const MatrixType& matrix ) const
       {
         const int rows = matrix.rows();
-        const int cols = matrix.cols();
         for( int r=0; r<rows; ++r )
         {
           for( int c=0; c<r; ++c ) // the mass matrix is symmetric
