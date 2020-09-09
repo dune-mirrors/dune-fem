@@ -121,11 +121,8 @@ namespace Dune
         const int cols = matrix.cols();
         for( int r=0; r<rows; ++r )
         {
-          for( int c=0; c<cols; ++c )
+          for( int c=0; c<r; ++c ) // the mass matrix is symmetric
           {
-            // skip diagonal
-            if( r == c ) continue ;
-
             // if we find one off diagonal non-zero return false
             if( std::abs(matrix[r][c]) > 1e-12 )
               return false;

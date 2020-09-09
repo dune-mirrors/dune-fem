@@ -67,6 +67,9 @@ namespace Dune
             auto points = PointSetType::buildCubeQuadrature( order );
             order_ = points.quadOrder();
 
+            numInterpolPoints_ = points.size();
+            assert(order_ >= order);
+
             for( unsigned int i=0; i<points.size(); ++i )
             {
               addQuadraturePoint( points[ i ].point(), points[ i ].weight() );
@@ -162,6 +165,9 @@ namespace Dune
 
         typedef int QuadratureKeyType ;
       };
+      template <class FieldType>
+      struct InterpolationQuadratureTraitsImpl<FieldType,1,GaussLegendrePointSet>
+      : public DefaultQuadratureTraits< FieldType, 1 > {}; // quadrautre points not on boundary
 
       template< class FieldType, template <class,int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 3, PointSet >
