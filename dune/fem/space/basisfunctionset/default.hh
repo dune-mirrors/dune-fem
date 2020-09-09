@@ -94,9 +94,6 @@ namespace Dune
       //! \brief type of reference element
       typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
-      typedef std::vector< ScalarRangeType >          RangeVectorType;
-      typedef std::vector< ScalarJacobianRangeType >  JacobianRangeVectorType;
-
       //! \brief constructor
       DefaultBasisFunctionSet () {}
 
@@ -479,13 +476,13 @@ namespace Dune
       }
 
       template <class QuadratureType>
-      const RangeVectorType& rangeCache( const QuadratureType& quad ) const
+      const auto& rangeCache( const QuadratureType& quad ) const
       {
         return shapeFunctionSet().scalarShapeFunctionSet().impl().rangeCache( quad );
       }
 
       template <class QuadratureType>
-      const JacobianRangeVectorType& jacobianCache( const QuadratureType& quad ) const
+      const auto& jacobianCache( const QuadratureType& quad ) const
       {
         return shapeFunctionSet().scalarShapeFunctionSet().impl().jacobianCache( quad );
       }
