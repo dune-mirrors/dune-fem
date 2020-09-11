@@ -37,6 +37,7 @@ namespace Dune
 
     public:
       typedef ShapeFunctionSet ImplementationType;
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSet >::value;
 
       // if ScalarShapeFunctionSetType has a member variable codegenShapeFunctionSet then this is forwarded here
       // otherwise this value defaults to false

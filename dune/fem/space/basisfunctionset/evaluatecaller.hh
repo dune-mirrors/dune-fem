@@ -190,7 +190,7 @@ namespace Dune
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
           auto& item = evaluators[ quadId ];
 
-#ifndef NDEBUG
+#if 0 // NDEBUG
           if( quad.isInterpolationQuadrature( numBaseFct ) )
             std::cout << "EvaluateCallerInterface::storage: Not creating implementation because of interpolation feature!" <<std::endl;
 #endif

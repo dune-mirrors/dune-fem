@@ -148,6 +148,7 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef typename Traits::LocalFiniteElementType LocalFiniteElementType;
+      // typedef L2LocalFiniteElement< typename Traits::LocalFiniteElementType > LocalFiniteElementType;
 
       typedef typename Traits::LFEMapType LFEMapType;
 
@@ -212,7 +213,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType() ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get()))
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
@@ -222,7 +223,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get()) )
       {}
 
       DiscontinuousLocalFiniteElementSpace ( const ThisType & ) = delete;

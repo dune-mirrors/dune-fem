@@ -94,6 +94,8 @@ namespace Dune
       //! \brief type of reference element
       typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType >::value;
+
       //! \brief constructor
       DefaultBasisFunctionSet () {}
 

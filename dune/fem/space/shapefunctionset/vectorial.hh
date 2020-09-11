@@ -453,6 +453,7 @@ namespace Dune
       // if ScalarShapeFunctionSetType has a member variable codegenShapeFunctionSet then this is forwarded here
       // otherwise this value defaults to false
       static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ScalarShapeFunctionSetType >::value;
+      static const int pointSetId = detail::SelectPointSetId< ScalarShapeFunctionSetType >::value;
 
     protected:
       typedef typename ScalarShapeFunctionSetType::FunctionSpaceType ScalarFunctionSpaceType;

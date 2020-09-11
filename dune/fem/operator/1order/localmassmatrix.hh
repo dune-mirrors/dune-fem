@@ -39,6 +39,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
+      enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
       enum { localBlockSize = DiscreteFunctionSpaceType :: localBlockSize };
       enum { dgNumDofs = localBlockSize };
 
@@ -103,8 +104,6 @@ namespace Dune
 
       struct NoMassDummyCaller
       {
-        static const int dimRange = DiscreteFunctionSpaceType::dimRange;
-
         typedef Dune::FieldMatrix< ctype, dimRange, dimRange > MassFactorType;
 
         // return false since we don;t have a mass term
@@ -260,13 +259,28 @@ namespace Dune
         return geoInfo_.referenceVolume( geo.type() ) / geo.volume();
       }
 
+      template< class BasisFunctionSet >
+      bool checkInterpolationBFS(const BasisFunctionSet &bfs) const
+      {
+        const unsigned int numShapeFunctions = bfs.size() / dimRange;
+        // for Lagrange-type basis evaluated on interpolation points
+        // this is the Kronecker delta, so the mass matrix is diagonal even
+        // on non affine grids
+        static const int quadPointSetId = SelectQuadraturePointSetId< VolumeQuadratureType >::value;
+        if constexpr ( quadPointSetId == BasisFunctionSet::pointSetId )
+          return VolumeQuadratureType( bfs.entity(), volumeQuadratureOrder( bfs.entity() ) )
+                     .isInterpolationQuadrature(numShapeFunctions);
+        return false;
+      }
+
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller
       template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverse ( MassCaller &caller, const EntityType &entity, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        if( (affine() || geo.affine()) && !caller.hasMass() )
+        if( ( affine() || geo.affine() || checkInterpolationBFS(basisFunctionSet) )
+            && !caller.hasMass() )
           applyInverseLocally( entity, geo, basisFunctionSet, lf );
         else
           applyInverseDefault( caller, entity, geo, basisFunctionSet, lf );
@@ -533,16 +547,12 @@ namespace Dune
         MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, basisFunctionSet, numDofs );
 
-        const double massVolInv = getAffineMassFactor( geo );
-
         // if diagonal exists then matrix is in diagonal form
         if( matrixPair.second )
         {
           const VectorType& diagonal = *matrixPair.second;
           assert( int(diagonal.size()) == numDofs );
 
-#ifdef LOBHACK
-          static const int dimRange = LocalFunction::dimRange;
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
           assert(volQuad.nop()*dimRange == numDofs);
 
@@ -550,13 +560,10 @@ namespace Dune
           for( int qt = 0; qt < volQuad.nop(); ++qt )
             for (int r = 0; r < dimRange; ++r,++l )
               lf[ l ] *= diagonal[ l ] / geo.integrationElement( volQuad.point(qt) );
-#else
-          for( int l = 0; l < numDofs; ++l )
-            lf[ l ] *= massVolInv * diagonal[ l ];
-#endif
         }
         else
         {
+          const double massVolInv = getAffineMassFactor( geo );
           // copy local function to right hand side
           // and apply inverse mass volume fraction
           rhs_.resize( numDofs );
@@ -634,10 +641,6 @@ namespace Dune
           return true;
         }
 
-        // test here for 'interpolation quadrature and shape function set'
-#ifdef LOBHACK
-        return true ;
-#endif
         // otherwise use geometry affinity
         return false ;
       }
