@@ -21,6 +21,8 @@ def _uflToExpr(grid,order,f):
     if isinstance(f, list) or isinstance(f, tuple):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
+    if isinstance(f, GridFunction):
+        return f
     if isinstance(f, ufl.core.expr.Expr):
         return expression2GF(grid,f,order).as_ufl()
     else:
