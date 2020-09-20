@@ -336,8 +336,10 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         if pointType.lower() == "equidistant":
             pointSet = 'Dune::EquidistantPointSet'
         elif pointType.lower() == "lobatto":
+            assert( gridView.type.isCube )
             pointSet = 'Dune::GaussLobattoPointSet'
         elif pointType.lower() == "gauss":
+            assert( gridView.type.isCube )
             pointSet = 'Dune::GaussLegendrePointSet'
         else:
             raise KeyError(
