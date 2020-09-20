@@ -194,7 +194,7 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
     if not (gridView.type.isCube):
         raise KeyError(\
             "the `dglegendre' space can only be used with a fully "+
-            "quadrilateral grid")
+            "quadrilateral/hexahedral grid")
     if dimRange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
@@ -336,10 +336,16 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         if pointType.lower() == "equidistant":
             pointSet = 'Dune::EquidistantPointSet'
         elif pointType.lower() == "lobatto":
-            assert( gridView.type.isCube )
+            if not (gridView.type.isCube):
+                raise KeyError(\
+                    "the `dglagrange(lobatto) space can only be used with a fully "+
+                    "quadrilateral/hexahedral grid")
             pointSet = 'Dune::GaussLobattoPointSet'
         elif pointType.lower() == "gauss":
-            assert( gridView.type.isCube )
+            if not (gridView.type.isCube):
+                raise KeyError(\
+                    "the `dglagrange(gauss) space can only be used with a fully "+
+                    "quadrilateral/hexahedral grid")
             pointSet = 'Dune::GaussLegendrePointSet'
         else:
             raise KeyError(
