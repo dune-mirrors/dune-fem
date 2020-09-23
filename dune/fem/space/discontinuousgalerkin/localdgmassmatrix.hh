@@ -30,7 +30,7 @@ namespace Dune
       typedef DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
       typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
     public:
-      using BaseType :: LocalMassMatrixImplementationDgOrthoNormal;
+      using BaseType :: BaseType;
     };
 
 
@@ -48,7 +48,7 @@ namespace Dune
       typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
       typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
     public:
-      using BaseType :: LocalMassMatrixImplementationDgOrthoNormal;
+      using BaseType :: BaseType;
     };
 
     /** \brief Local Mass Matrix for hierarchic Legendre space */
@@ -66,7 +66,7 @@ namespace Dune
       typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
       typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
     public:
-      using BaseType :: LocalMassMatrixImplementationDgOrthoNormal;
+      using BaseType :: BaseType;
     };
 
   } // namespace Fem
