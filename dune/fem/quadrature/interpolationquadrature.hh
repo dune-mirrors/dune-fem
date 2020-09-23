@@ -21,7 +21,7 @@ namespace Dune
        *  \brief
        *
        */
-      template< typename FieldImp, int dim, template <class,int> class PointSet >
+      template< typename FieldImp, int dim, template <class,unsigned int> class PointSet >
       class InterpolationQuadratureFactory
       : public Dune::Fem::QuadratureImp< FieldImp, dim >
       {
@@ -132,7 +132,7 @@ namespace Dune
         }
       };
 
-      template< class FieldType, int dim, template <class,int> class PointSet >
+      template< class FieldType, int dim, template <class,unsigned int> class PointSet >
       struct InterpolationQuadratureTraitsImpl
       {
         static const int pointSetId = PointSet<FieldType,dim>::pointSetId;
@@ -145,7 +145,7 @@ namespace Dune
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, template <class,int> class PointSet >
+      template< class FieldType, template <class,unsigned int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 0, PointSet >
       {
         static const int dim = 0;
@@ -159,7 +159,7 @@ namespace Dune
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, template <class,int> class PointSet >
+      template< class FieldType, template <class,unsigned int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 1, PointSet >
       {
         static const int dim = 1;
@@ -173,7 +173,7 @@ namespace Dune
         typedef int QuadratureKeyType ;
       };
 
-      template< class FieldType, template <class,int> class PointSet >
+      template< class FieldType, template <class,unsigned int> class PointSet >
       struct InterpolationQuadratureTraitsImpl< FieldType, 3, PointSet >
       {
         static const int dim = 3;
