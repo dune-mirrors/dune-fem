@@ -1008,10 +1008,19 @@ namespace Dune
         int linearIterations, nonlinearIterations;
       };
 
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, ParameterReader parameter = Parameter::container() )
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace,
+                       const Integrands &integrands,
+                       const ParameterReader& parameter = Parameter::container() )
+        : GalerkinScheme( dfSpace, integrands, true /* communicate */, parameter )
+      {}
+
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace,
+                       const Integrands &integrands,
+                       const bool communicate,
+                       const ParameterReader& parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
-          fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
-          invOp_(std::move(parameter))
+          fullOperator_( dfSpace, dfSpace, communicate, std::move( integrands ) ),
+          invOp_(parameter)
       {}
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
