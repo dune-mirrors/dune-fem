@@ -27,7 +27,9 @@
 #include <dune/fem/space/fourier.hh>
 #include <dune/fem/space/lagrange.hh>
 
+#if HAVE_DUNE_LOCALFUNCTIONS
 #include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
+#endif
 
 #include "../../test/exactsolution.hh"
 
@@ -196,6 +198,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
         discontinuousGalerkinSpace( gridPart );
   Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeDGSpaceA( gridPart );
+#if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeDGSpaceB( gridPart );
   Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
@@ -204,13 +207,16 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder,
       Dune::GaussLegendrePointSet
   > gaussDGSpace( gridPart );
+#endif
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
         lagrangeSpaceA( gridPart );
+#if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >
         lagrangeSpaceB( gridPart, polOrder );
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType,
       Dune::GaussLobattoPointSet
   > lobattoSpace( gridPart, polOrder );
+#endif
   Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
         hLegendreSpace( gridPart );
   Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
@@ -245,13 +251,17 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   // perform eoc loop
   eocLoop( *grid, steps,
            discontinuousGalerkinSpace,
+#if HAVE_DUNE_LOCALFUNCTIONS
            lagrangeDGSpaceB,
            lobattoDGSpace,
            gaussDGSpace,
+#endif
            lagrangeDGSpaceA,
            lagrangeSpaceA,
+           #if HAVE_DUNE_LOCALFUNCTIONS
            lagrangeSpaceB,
            lobattoSpace,
+#endif
            hLegendreSpace,
            fourierSpace
            );

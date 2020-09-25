@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <dune/common/gmpfield.hh>
+
 #include <dune/fem/space/lagrange/space.hh>
 
 #if HAVE_DUNE_LOCALFUNCTIONS
@@ -42,7 +44,13 @@ namespace Dune
 
       typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double,
               // GMPField<64>, GMPField<256> > LocalFiniteElementType;
-              double, GMPField<256> > LocalFiniteElementType;
+              double,
+#if HAVE_GMP
+              GMPField<256>
+#else
+              long double
+#endif
+                > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
