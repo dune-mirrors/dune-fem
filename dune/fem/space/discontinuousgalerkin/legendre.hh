@@ -116,10 +116,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
-      //typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
-      //typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
-
       explicit LegendreDiscontinuousGalerkinSpaceBase ( GridPartType &gridPart,
                                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                         const CommunicationDirection commDirection = ForwardCommunication )
@@ -156,16 +152,13 @@ namespace Dune
       explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                     const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, commInterface, commDirection ),
-          interpolation_( *this )
+        : BaseType( gridPart, commInterface, commDirection )
       {}
 
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return *interpolation_;
+        return InterpolationType( *this );
       }
-    protected:
-      mutable ThreadSafeValue< InterpolationType > interpolation_;
     };
 
 

@@ -45,17 +45,13 @@ namespace Dune
       explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                               const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                               const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, commInterface, commDirection ),
-          interpolation_( *this )
+        : BaseType( gridPart, commInterface, commDirection )
       {}
 
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return *interpolation_;
+        return InterpolationType( *this );
       }
-
-    protected:
-      mutable ThreadSafeValue< InterpolationType > interpolation_;
     };
 
     namespace Capabilities

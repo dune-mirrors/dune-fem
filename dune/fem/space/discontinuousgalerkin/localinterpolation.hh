@@ -25,12 +25,10 @@ namespace Dune
     /**
      * Local interpolation for Discontinuous Galerkin spaces.
      */
-    template< class DiscreteFunctionSpace,
-      class Quadrature = CachingQuadrature<typename DiscreteFunctionSpace::GridPartType,
-                                           DiscreteFunctionSpace::EntityType::codimension> >
+    template< class DiscreteFunctionSpace >
     class DiscontinuousGalerkinLocalInterpolation
     {
-      typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace, Quadrature > ThisType;
+      typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace > ThisType;
 
     public:
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
@@ -47,24 +45,20 @@ namespace Dune
       typedef typename RangeType::value_type RangeFieldType;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef Quadrature QuadratureType;
 
-      typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
+      typedef typename DiscreteFunctionSpaceType :: LocalMassMatrixType
+        LocalMassMatrixType;
+
+      typedef typename LocalMassMatrixType::VolumeQuadratureType  QuadratureType;
 
     public:
-      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int quadOrder )
-      : DiscontinuousGalerkinLocalInterpolation( space, [quadOrder](const int) { return quadOrder; } )
-      {}
-
-      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space,
-                                                std::function<int(const int)> quadOrder = [](const int order) { return 2 * order; } )
+      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space )
       : space_( space ),
-        quadOrder_( quadOrder ),
-        massMatrix_( new LocalMassMatrixType(space, quadOrder_ ) ),
-        values_( new std::vector< RangeType > () )
+        massStorage_( space_.localMassMatrixStorage() )
       {}
 
       DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = default;
+      DiscontinuousGalerkinLocalInterpolation ( ThisType &&other ) = default;
 
       ThisType &operator= ( const ThisType &other ) = delete;
 
@@ -85,8 +79,7 @@ namespace Dune
           if( ! isAffine )
           {
             typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
-            AggloMassMatrix massMat( space_, quadOrder_ );
-
+            AggloMassMatrix massMat( space_, massMatrix().volumeQuadratureOrder( entity ) );
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
             massMat.applyInverse( entity, basisFunctionSet, dofs );
@@ -115,8 +108,7 @@ namespace Dune
       {
         const int nop = quadrature.nop();
 
-        assert( values_ );
-        std::vector< RangeType >& values = *values_;
+        auto& values = massStorage_.second;
         // adjust size of values
         values.resize( nop );
 
@@ -152,14 +144,11 @@ namespace Dune
 
       const LocalMassMatrixType &massMatrix () const
       {
-        assert( massMatrix_ );
-        return *massMatrix_;
+        return massStorage_.first;
       }
 
-      const DiscreteFunctionSpaceType &space_;
-      const std::function<int(const int)> quadOrder_;
-      std::shared_ptr< LocalMassMatrixType > massMatrix_;
-      mutable std::shared_ptr< std::vector< RangeType > > values_;
+      const DiscreteFunctionSpaceType& space_;
+      typename DiscreteFunctionSpaceType::LocalMassMatrixStorageType& massStorage_;
     };
 
   } // namespace Fem

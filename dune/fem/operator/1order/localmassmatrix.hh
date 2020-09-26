@@ -193,10 +193,10 @@ namespace Dune
         return matrix_;
       }
 
-      //! return appropriate quadrature order, default is 2 * order(entity)
-      int volumeQuadratureOrder ( const EntityType &entity ) const
+      // return number of max non blocked dofs
+      int maxNumDofs () const
       {
-        return volumeQuadratureOrder_( space().order( entity ) );
+        return space().blockMapper().maxNumDofs() * localBlockSize;
       }
 
       //! return appropriate quadrature order, default is 2 * order()
@@ -205,13 +205,12 @@ namespace Dune
         return volumeQuadratureOrder_( space().order() );
       }
 
-      // return number of max non blocked dofs
-      int maxNumDofs () const
-      {
-        return space().blockMapper().maxNumDofs() * localBlockSize;
-      }
-
     public:
+      //! return appropriate quadrature order, default is 2 * order(entity)
+      int volumeQuadratureOrder ( const EntityType &entity ) const
+      {
+        return volumeQuadratureOrder_( space().order( entity ) );
+      }
       //! constructor taking space and volume quadrature order
       explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd )
         : LocalMassMatrixImplementation( spc, [volQuadOrd](const int order) { return volQuadOrd; } )

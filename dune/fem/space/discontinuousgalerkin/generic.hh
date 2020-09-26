@@ -52,8 +52,15 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
     protected:
-      using BaseType::asImp;
+      typedef typename Traits :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef CachingQuadrature<GridPartType, EntityType::codimension> VolumeQuadratureType;
+    public:
+      typedef LocalMassMatrix< DiscreteFunctionSpaceType, VolumeQuadratureType > LocalMassMatrixType;
+      typedef std::vector< typename BaseType::RangeType > VectorType;
+      typedef std::pair< LocalMassMatrixType, VectorType >  LocalMassMatrixStorageType;
 
+    protected:
+      using BaseType::asImp;
     public:
       /** \name Construction
        *  \{
@@ -115,9 +122,22 @@ namespace Dune
       const BasisFunctionSetsType &basisFunctionSets () const { return basisFunctionSets_; }
       BasisFunctionSetsType &basisFunctionSets () { return basisFunctionSets_; }
 
+      LocalMassMatrixStorageType& localMassMatrixStorage() const
+      {
+        auto& localMassPtr = *localMassMatrixStorage_;
+        if( ! localMassPtr )
+        {
+          localMassPtr.reset( new LocalMassMatrixStorageType( LocalMassMatrixType( asImp(), 2*order() ), VectorType() ) );
+        }
+
+        return *localMassPtr;
+      }
+
     private:
       BasisFunctionSetsType basisFunctionSets_;
       mutable BlockMapperType blockMapper_;
+
+      mutable ThreadSafeValue< std::shared_ptr< LocalMassMatrixStorageType > > localMassMatrixStorage_;
     };
 
   } // namespace Fem
