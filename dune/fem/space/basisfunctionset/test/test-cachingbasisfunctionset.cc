@@ -35,11 +35,14 @@
 #include <dune/fem/test/testgrid.hh>
 
 #ifdef USE_BASEFUNCTIONSET_CODEGEN
-  template <class T>
-  using Storage = Dune::Fem::CodegenStorage< T >;
+#define Storage Dune::Fem::CodegenStorage
+// clang-10-20 did not like the using
+//template <class T>
+//  using Storage = Dune::Fem::CodegenStorage< T >;
 #else
-  template <class T>
-  using Storage = Dune::Fem::CachingStorage< T >;
+#define Storage Dune::Fem::CachingStorage
+//  template <class T>
+//  using Storage = Dune::Fem::CachingStorage< T >;
 #endif
 
 
