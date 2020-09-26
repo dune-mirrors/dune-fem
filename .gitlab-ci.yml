@@ -17,7 +17,7 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
 
-debian-11-gcc-9-17:
+debian-11-gcc-10-17:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
@@ -25,30 +25,21 @@ debian-11-gcc-9-17:
     - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-9-17
+    # pybind11 does not compile with c++-20 standard right now
+    DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=OFF -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+    DUNECI_TOOLCHAIN: gcc-10-17
   tags: [duneci]
 
-debian-11-gcc-10-20:
-  image: registry.dune-project.org/docker/ci/debian:11
-  script:
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
-    - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
-    - duneci-standard-test
-  variables:
-    DUNECI_TOOLCHAIN: gcc-10-20
-  tags: [duneci]
-
-debian-11-gcc-9-17-minimal-no-petsc:
+debian-11-gcc-9-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
     - duneci-standard-test
   variables:
     DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
-    DUNECI_TOOLCHAIN: gcc-9-17
+    DUNECI_TOOLCHAIN: gcc-9-20
   tags: [duneci]
 
-ubuntu:20.04-clang-10-20:
+ubuntu:20.04-clang-10-17:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
   script:
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
