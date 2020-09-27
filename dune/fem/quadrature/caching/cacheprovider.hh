@@ -37,13 +37,15 @@ namespace Dune
 
     public:
       typedef typename Traits::MapperType MapperType;
+      typedef typename Traits::MapperPairType MapperPairType;
 
     public:
       CacheStorage(int numFaces, int maxTwist) :
         mappers_(numFaces)
       {
         for (MapperIteratorType it = mappers_.begin();
-             it != mappers_.end(); ++it) {
+             it != mappers_.end(); ++it)
+        {
           it->resize(maxTwist + Traits::twistOffset_);
         }
       }
@@ -53,29 +55,40 @@ namespace Dune
       {}
 
       void addMapper(const MapperType& faceMapper,
+                     const MapperType& interpolMapper,
                      const MapperType& twistMapper,
                      int faceIndex, int faceTwist)
       {
         assert(twistMapper.size() == faceMapper.size());
 
-        MapperType& mapper =
+        MapperPairType& mapper =
           mappers_[faceIndex][faceTwist + Traits::twistOffset_];
-        mapper.resize(twistMapper.size());
-
-        for (size_t i = 0; i < mapper.size(); ++i) {
-          mapper[i] = faceMapper[twistMapper[i]];
+        const size_t size = twistMapper.size();
+        mapper.first.resize( size );
+        for (size_t i = 0; i < size; ++i)
+        {
+          mapper.first[i] = faceMapper[twistMapper[i]];
         }
 
+        if( !interpolMapper.empty() )
+        {
+          assert(twistMapper.size() == interpolMapper.size());
+          mapper.second.resize( twistMapper.size() );
+
+          for (size_t i = 0; i < size; ++i) {
+            mapper.second[i] = interpolMapper[twistMapper[i]];
+          }
+        }
       }
 
-      const MapperType& getMapper(int faceIndex, int faceTwist) const
+      const MapperPairType& getMapper(int faceIndex, int faceTwist) const
       {
         assert( faceTwist + Traits::twistOffset_ >= 0 );
         return mappers_[faceIndex][faceTwist + Traits::twistOffset_];
       }
 
     private:
-      typedef std::vector<std::vector<MapperType> > MapperContainerType;
+      typedef std::vector< std::vector< MapperPairType > > MapperContainerType;
       typedef typename MapperContainerType::iterator MapperIteratorType;
 
     private:
@@ -95,6 +108,7 @@ namespace Dune
 
     public:
       typedef typename Traits::MapperType MapperType;
+      typedef typename Traits::MapperPairType MapperPairType;
 
     public:
       explicit CacheStorage ( int numFaces )
@@ -105,13 +119,20 @@ namespace Dune
       : mappers_( other.mappers_ )
       {}
 
-      void addMapper ( const MapperType &mapper, int faceIndex )
+      void addMapper ( const MapperType &mapper,
+                       const MapperType &interpolMapper,
+                       int faceIndex )
       {
         assert( (faceIndex >= 0) && (faceIndex < (int)mappers_.size()) );
-        mappers_[ faceIndex ] = mapper;
+        mappers_[ faceIndex ].first = mapper;
+        if( !interpolMapper.empty() )
+        {
+          assert( interpolMapper.size() == mapper.size() );
+          mappers_[ faceIndex ].second = interpolMapper;
+        }
       }
 
-      const MapperType &getMapper ( int faceIndex, int faceTwist ) const
+      const MapperPairType &getMapper ( int faceIndex, int faceTwist ) const
       {
 #ifndef NDEBUG
         if( faceIndex >= (int)mappers_.size() )
@@ -122,7 +143,7 @@ namespace Dune
       }
 
     private:
-      typedef typename std::vector<MapperType> MapperContainerType;
+      typedef typename std::vector< MapperPairType > MapperContainerType;
 
     private:
       MapperContainerType mappers_;
@@ -170,12 +191,14 @@ namespace Dune
       typedef typename Traits::MapperType MapperType;
       typedef typename Traits::QuadratureKeyType QuadratureKeyType;
 
+      typedef std::pair< MapperType, MapperType > MapperPairType;
+
     public:
       template <class QuadratureImpl>
-      static const MapperType& getMapper(const QuadratureImpl& quadImpl,
-                                         GeometryType elementGeometry,
-                                         int faceIndex,
-                                         int faceTwist)
+      static const MapperPairType& getMapper(const QuadratureImpl& quadImpl,
+                                             GeometryType elementGeometry,
+                                             int faceIndex,
+                                             int faceTwist)
       {
         // get quadrature implementation
         const QuadratureType& quad = quadImpl.ipList();

@@ -35,15 +35,23 @@ namespace Dune
     {
       // hierarchicalOrdering = true
       typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, true > BaseType;
+      typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
 
     public:
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType   EntityType;
+      typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
 
       explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                               const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                               const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection )
       {}
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( *this );
+      }
     };
 
     namespace Capabilities

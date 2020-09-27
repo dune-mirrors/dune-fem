@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <dune/common/gmpfield.hh>
+
 #include <dune/fem/space/lagrange/space.hh>
 
 #if HAVE_DUNE_LOCALFUNCTIONS
@@ -13,6 +15,7 @@
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
 #include <dune/fem/space/localfiniteelement/dgspace.hh>
+#include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
 
 namespace Dune
 {
@@ -39,10 +42,21 @@ namespace Dune
 
       static const int dimLocal = GridPart::dimension;
 
-      typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double > LocalFiniteElementType;
+      typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double,
+              // GMPField<64>, GMPField<256> > LocalFiniteElementType;
+              double,
+#if HAVE_GMP
+              GMPField<256>
+#else
+              long double
+#endif
+                > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
+
+      // -1 is default value if PointSet has no member pointSetId
+      static const int pointSetId = detail::SelectPointSetId< PointSet<double, dimLocal> >::value;
 
       LagrangeFiniteElementMap ( const GridPart &gridPart, unsigned int order )
         : gridPart_( gridPart ), order_( order ), localFeVector_( size() )
@@ -65,7 +79,7 @@ namespace Dune
           { index, lfe.localBasis(), lfe.localInterpolation() };
       }
 
-      bool hasCoefficients ( const GeometryType &type ) const { return true; }
+      bool hasCoefficients ( const GeometryType &type ) const { return PointSet<double,0>::supports(type,order()); }
 
       const LocalCoefficientsType& localCoefficients ( const GeometryType &type ) const
       {
@@ -89,7 +103,25 @@ namespace Dune
       mutable std::vector< std::unique_ptr< LocalFiniteElementType > > localFeVector_;
     };
 
-
+    template< class FunctionSpace, class GridPart, unsigned int order,
+      template< class, unsigned int > class PointSet = EquidistantPointSet>
+    struct FixedOrderLagrangeFiniteElementMap
+    : public LagrangeFiniteElementMap<FunctionSpace,GridPart,PointSet>
+    {
+      typedef std::tuple<> KeyType; // no key
+      static const unsigned int polynomialOrder = order;
+      typedef typename GeometryWrapper<
+          Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::topologyId,
+                                                                  GridPart::dimension
+        >::ImplType ImplType;
+      typedef GenericLagrangeBaseFunction<
+          typename FunctionSpace::ScalarFunctionSpaceType, ImplType, order
+        > GenericBaseFunctionType;
+      static const unsigned int numBasisFunctions = GenericBaseFunctionType::numBaseFunctions;
+      FixedOrderLagrangeFiniteElementMap ( const GridPart &gridPart, const KeyType & )
+        : LagrangeFiniteElementMap<FunctionSpace,GridPart,PointSet>(gridPart,order) {
+        }
+    };
 
     // LagrangeSpace
     // -------------
@@ -97,13 +129,28 @@ namespace Dune
     template< class FunctionSpace, class GridPart,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
               template< class > class Storage = CachingStorage >
-    using LagrangeSpace = LocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
+    using LagrangeSpace = LocalFiniteElementSpace<
+            LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
+            FunctionSpace, Storage >;
+    template< class FunctionSpace, class GridPart, unsigned int order,
+              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class > class Storage = CachingStorage >
+    using FixedOrderLagrangeSpace = LocalFiniteElementSpace<
+            FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,
+            FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
               template< class > class Storage = CachingStorage >
-    using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
+    using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
+            LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
+            FunctionSpace, Storage >;
+    template< class FunctionSpace, class GridPart, unsigned int order,
+              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class > class Storage = CachingStorage >
+    using FixedOrderDGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
+            FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,
+            FunctionSpace, Storage >;
 #else // #if HAVE_DUNE_LOCALFUNCTIONS
-
     // LagrangeSpace
     // -------------
     template< class FunctionSpace, class GridPart,

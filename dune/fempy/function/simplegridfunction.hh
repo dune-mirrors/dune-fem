@@ -342,6 +342,16 @@ namespace Dune
     {
       return gridFunction;
     }
+
+    template <class GridPart, class GridFunction>
+    struct GetGridFunction
+    {
+      using value = decltype(getGridFunction(
+                std::declval<const GridPart&>(),
+                std::declval<const GridFunction&>(),
+                1,PriorityTag<42>()));
+    };
+
     template <class GridPart, class RangeType, class Functor>
     void addVirtualizedFunctions(Functor functor)
     {

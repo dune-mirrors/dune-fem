@@ -7,6 +7,7 @@
 
 // dune-fem includes
 #include <dune/fem/common/fmatrixcol.hh>
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
@@ -448,6 +449,11 @@ namespace Dune
 
     public:
       typedef ScalarShapeFunctionSet ScalarShapeFunctionSetType;
+
+      // if ScalarShapeFunctionSetType has a member variable codegenShapeFunctionSet then this is forwarded here
+      // otherwise this value defaults to false
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ScalarShapeFunctionSetType >::value;
+      static const int pointSetId = detail::SelectPointSetId< ScalarShapeFunctionSetType >::value;
 
     protected:
       typedef typename ScalarShapeFunctionSetType::FunctionSpaceType ScalarFunctionSpaceType;

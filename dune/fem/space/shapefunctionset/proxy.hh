@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include <dune/fem/common/utility.hh>
+
 /**
   @file
   @author Christoph Gersbacher
@@ -35,6 +37,11 @@ namespace Dune
 
     public:
       typedef ShapeFunctionSet ImplementationType;
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSet >::value;
+
+      // if ScalarShapeFunctionSetType has a member variable codegenShapeFunctionSet then this is forwarded here
+      // otherwise this value defaults to false
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ImplementationType >::value;
 
       typedef typename ImplementationType::FunctionSpaceType FunctionSpaceType;
 

@@ -8,6 +8,7 @@
 #include <dune/fem/common/forloop.hh>
 
 #include <dune/geometry/type.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
@@ -188,7 +189,7 @@ namespace Dune
       ::evaluate ( const DomainType &x, RangeType &value ) const
     {
       FieldVector< int, 0 > diffVariable;
-      return genericShapeFunction_.evaluate( diffVariable, x, value );
+      genericShapeFunction_.evaluate( diffVariable, x, value );
     }
 
 

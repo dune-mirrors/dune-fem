@@ -21,7 +21,7 @@
 #include "basisfunctionsets.hh"
 #include "declaration.hh"
 #include "generic.hh"
-#include "interpolation.hh"
+#include "localinterpolation.hh"
 #include "shapefunctionsets.hh"
 
 namespace Dune
@@ -116,9 +116,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
-      typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
-
       explicit LegendreDiscontinuousGalerkinSpaceBase ( GridPartType &gridPart,
                                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                         const CommunicationDirection commDirection = ForwardCommunication )
@@ -126,11 +123,6 @@ namespace Dune
       {}
 
       static DFSpaceIdentifier type () { return LegendreDGSpace_id; }
-
-      InterpolationType interpolation ( const EntityType &entity ) const
-      {
-        return InterpolationType( basisFunctionSet( entity ) );
-      }
 
     private:
       static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
@@ -150,15 +142,23 @@ namespace Dune
     {
       // hierarchicalOrdering = false
       typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, false > BaseType;
+      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
 
     public:
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType   EntityType;
+      typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
 
       explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                     const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection )
       {}
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( *this );
+      }
     };
 
 

@@ -27,11 +27,11 @@ namespace Dune
 
       typedef PointGeometry GeometryType;
 
-      enum { polynomialOrder = order };
+      static constexpr unsigned int polynomialOrder = order;
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder >
         LagrangePointType;
-      enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
+      static const unsigned int numBaseFunctions = LagrangePointType :: numLagrangePoints;
 
       typedef typename FunctionSpaceType :: DomainType DomainType;
       typedef typename FunctionSpaceType :: RangeType RangeType;
@@ -106,7 +106,7 @@ namespace Dune
       enum { polynomialOrder = 0 };
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > LagrangePointType;
-      enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
+      static const unsigned int numBaseFunctions = LagrangePointType :: numLagrangePoints;
 
 
       typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -208,11 +208,11 @@ namespace Dune
 
       typedef PyramidGeometry< BaseGeometryType > GeometryType;
 
-      enum { polynomialOrder = order };
+      static constexpr unsigned int polynomialOrder = order;
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder >
         LagrangePointType;
-      enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
+      static const unsigned int numBaseFunctions = LagrangePointType :: numLagrangePoints;
 
 
       typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -432,10 +432,10 @@ namespace Dune
 
       typedef ProductGeometry< FirstGeometryType, SecondGeometryType > GeometryType;
 
-      enum { polynomialOrder = order };
+      static constexpr unsigned int polynomialOrder = order;
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > LagrangePointType;
-      enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
+      static const unsigned int numBaseFunctions = LagrangePointType :: numLagrangePoints;
 
       typedef typename FunctionSpaceType :: DomainType DomainType;
       typedef typename FunctionSpaceType :: RangeType RangeType;

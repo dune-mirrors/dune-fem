@@ -50,7 +50,28 @@ namespace Dune
                     "CachingInterface :: cachingPoint must be overloaded!" );
       }
 
-      inline size_t nCachingPoints () const { return 0; }
+      /** \brief map quadrature points to interpolation points
+       *
+       *  \param[in]  quadraturePoint  number of quadrature point to map to an
+       *                               interpolation point
+       */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        DUNE_THROW( NotImplemented,
+                    "CachingInterface :: interpolationPoint must be overloaded!" );
+      }
+
+      /** \brief check if quadrature is interpolation quadrature
+       *
+       *  \param[in]  numShapeFunctions  number of shapeFunctions that has to
+       *              match number of quadrature points or number of
+       *              internal interpolation  points
+       */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
+      {
+        DUNE_THROW( NotImplemented,
+                    "CachingInterface :: isInterpolationQuadrature must be overloaded!" );
+      }
     };
 
 
@@ -107,6 +128,10 @@ namespace Dune
       //! type of iterator
       typedef QuadraturePointIterator< This > IteratorType;
 
+      //! id of point set, positive if interpolation point set, otherwise negative
+      static const int pointSetId = SelectQuadraturePointSetId<
+          typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
+
     protected:
       using Base::quadImp;
 
@@ -142,6 +167,20 @@ namespace Dune
       inline size_t cachingPoint( const size_t quadraturePoint ) const
       {
         return quadraturePoint;
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::interpolationPoint */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        return quadraturePoint;
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::isInterpolationQuadrature */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
+      {
+        // if pointSetId is not negative then we have an interpolation
+        // quadrature if the number of point are equal to number of shape functions
+        return (pointSetId >= 0) ? (nop() == numShapeFunctions) : false;
       }
     };
 
@@ -187,9 +226,18 @@ namespace Dune
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
       typedef IntersectionIteratorType IntersectionIterator;
 
+    private:
+      static const int quadPointSetId =
+        SelectQuadraturePointSetId< typename IntegrationTraits::IntegrationPointListType::Traits > :: value;
+
+    public:
+      // Note: we also exclude GaussLegendre(0) here, because on faces it is not
+      //       an interpolation rule
+      static const int pointSetId = (quadPointSetId > 0) ? quadPointSetId :
+                  SelectQuadraturePointSetId< void > :: value; // default value
 
     protected:
-      typedef typename CachingTraits< RealType, dimension >::MapperType MapperType;
+      typedef typename CachingTraits< RealType, dimension >::MapperPairType  MapperPairType;
       typedef typename CachingTraits< RealType, dimension >::PointVectorType PointVectorType;
 
       typedef CacheProvider< GridPartType, codimension >            CacheProviderType;
@@ -249,18 +297,36 @@ namespace Dune
       inline size_t cachingPoint( const size_t quadraturePoint ) const
       {
         assert( quadraturePoint < (size_t)nop() );
-        return mapper_[ quadraturePoint ];
+        return mapper_.first[ quadraturePoint ];
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::interpolationPoint */
+      inline size_t interpolationPoint( const size_t quadraturePoint ) const
+      {
+        assert( quadraturePoint < mapper_.second.size() );
+        return mapper_.second[ quadraturePoint ];
+      }
+
+      /** \copydoc Dune::Fem::CachingInterface::isInterpolationQuadrature */
+      inline bool isInterpolationQuadrature( const size_t numShapeFunctions ) const
+      {
+        // if pointSetId is not negative then we have an interpolation
+        // quadrature if the number of point are equal to number of shape functions
+        return (pointSetId < 0) ? false :
+          quadImp().ipList().isFaceInterpolationQuadrature( numShapeFunctions );
       }
 
       // return local caching point
       // for debugging issues only
       size_t localCachingPoint ( const size_t i ) const
       {
+        const auto& mapper = mapper_.first;
+
         assert( i < (size_t)nop() );
 
-        assert( mapper_[ i ] >= 0 );
+        assert( mapper[ i ] >= 0 );
         int faceIndex = localFaceIndex();
-        unsigned int point = mapper_[ i ] - faceIndex * mapper_.size();
+        unsigned int point = mapper[ i ] - faceIndex * mapper.size();
         assert( point < nop() );
 
         return point;
@@ -305,7 +371,7 @@ namespace Dune
 
     private:
       const int twist_;
-      const MapperType &mapper_;
+      const MapperPairType &mapper_;
       const PointVectorType &points_;
     };
 

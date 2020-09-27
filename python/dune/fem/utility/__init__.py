@@ -47,23 +47,41 @@ def evaluate(expression, grid=None, space=None, target=None, coordinate=None):
         assert target
         pass # return solver info
 
+class Sampler:
+    def __init__(self, gridFunction ):
+        self.gridFunction = gridFunction
+        self.lineSampler = None
+        self.pointSampler = None
+
+    def lineSample(self,x0,x1,N):
+        from dune.generator import algorithm, path
+        from dune.common import FieldVector
+        import numpy
+        x0, x1 = FieldVector(x0), FieldVector(x1)
+        if self.lineSampler is None:
+            self.lineSampler = algorithm.load('sample', path(__file__)+'sample.hh', self.gridFunction, x0, x1, N)
+
+        p,v = self.lineSampler( self.gridFunction, x0, x1, N )
+        x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
+        length = (x1-x0).two_norm
+        for i in range(len(x)):
+            x[i] = (p[i]-x0).two_norm / length
+            y[i] = v[i][0]
+        return x,y
+
+    def pointSample(self, x0):
+        from dune.generator import algorithm, path
+        from dune.common import FieldVector
+        import numpy
+        x0 = FieldVector(x0)
+        if self.pointSampler is None:
+            self.pointSampler = algorithm.load('sample', path(__file__)+'sample.hh', self.gridFunction, x0)
+
+        v = self.pointSampler( gridFunction, x0 )
+        return v
+
 def lineSample(gridFunction,x0,x1,N):
-    from dune.generator import algorithm, path
-    from dune.common import FieldVector
-    import numpy
-    x0, x1 = FieldVector(x0), FieldVector(x1)
-    p,v = algorithm.run('sample', path(__file__)+'sample.hh', gridFunction, x0, x1, N)
-    x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
-    length = (x1-x0).two_norm
-    for i in range(len(x)):
-        x[i] = (p[i]-x0).two_norm / length
-        y[i] = v[i][0]
-    return x,y
+    return Sampler(gridFunction).lineSample(x0, x1, N)
+
 def pointSample(gridFunction,x0):
-    from dune.generator import algorithm, path
-    from dune.common import FieldVector
-    import numpy
-    x0 = FieldVector(x0)
-    v = algorithm.run('sample', path(__file__)+'sample.hh',
-                      gridFunction, x0)
-    return v
+    return Sampler(gridFunction).pointSample( x0 )

@@ -39,8 +39,8 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 
-#if not DEFAULTPOLORDER || not HAVE_DUNE_LOCALFUNCTIONS
-typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER >
+#if ! HAVE_DUNE_LOCALFUNCTIONS
+typedef DynamicLagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType >
    DiscreteFunctionSpaceType;
 #else
 typedef LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
@@ -69,6 +69,7 @@ void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
 int main(int argc, char ** argv)
 {
   MPIManager :: initialize( argc, argv );
+  const int rank = MPIManager :: rank();
   try
   {
     // add command line parameters to global parameter table
@@ -87,13 +88,12 @@ int main(int argc, char ** argv)
 
     GridPartType gridPart( grid );
 
-#if not DEFAULTPOLORDER || not HAVE_DUNE_LOCALFUNCTIONS
+#if not DEFAULTPOLORDER
     const int polOrder = POLORDER;
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 #else
     const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
 #endif
+    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 
@@ -103,7 +103,7 @@ int main(int argc, char ** argv)
     // let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
 
-    std::string casename( "lagrangeinterpolation_p" + std::to_string(polOrder) + "_" );
+    std::string casename( "lagrangeinterpolation_r" + std::to_string(rank) + "_p" + std::to_string(polOrder) + "_" );
 
     BinaryFileOutStream bout( casename + "solution-xdr.tmp" );
     writeOut( virtualize( bout ), solution );

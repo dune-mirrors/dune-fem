@@ -82,7 +82,7 @@ class BaseModel:
         code.append(AccessModifier('private'))
 
         initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'], const=True)
-        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
+        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).bind( entity() ), i)... );')
 
         constructConstants = Method('void', 'constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared<ConstantsType< i >>(), i)... );')

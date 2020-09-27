@@ -59,11 +59,14 @@ namespace Dune
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
+      // -1 is default value if pointSetId not available
+      static const int pointSetId = detail::SelectPointSetId< LFEMap >::value;
+
     public:
       // typedef Dune::Fem::IndexSetDofMapper< GridPartType, LagrangeLocalDofMapping< GridPartType > > BlockMapperType;
       typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
 
-      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
+      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType, pointSetId > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
       typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetProxyType;
@@ -261,6 +264,12 @@ namespace Dune
         return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
+      typedef typename LFEMapType::LocalCoefficientsType QuadratureType;
+      const QuadratureType& quadrature ( const GeometryType &type ) const
+      {
+        return (*lfeMap_).localCoefficients(type);
+      }
+
     private:
       ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe, const GeometryType &type ) const
       {
@@ -281,7 +290,14 @@ namespace Dune
     {
       typedef LocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
     };
-
+    template <class LFEMap, class FunctionSpace,
+              template <class> class Storage,
+              class NewFunctionSpace>
+    struct DifferentDiscreteFunctionSpace<
+        LocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>
+    {
+      typedef LocalFiniteElementSpace<LFEMap, NewFunctionSpace, Storage > Type;
+    };
   } // namespace Fem
 
 } // namespace Dune

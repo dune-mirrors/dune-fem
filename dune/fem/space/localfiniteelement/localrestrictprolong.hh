@@ -37,10 +37,19 @@ namespace Dune
         template <class Point>
         void evaluate ( const Point &x, RangeType &y ) const
         {
-          lfFather_.evaluate( localGeo_.global(x), y);
+          lfFather_.evaluate( localGeo_.global(coordinate(x)), y);
+        }
+        template <class Quadrature, class RangeArray>
+        void evaluateQuadrature( const Quadrature& quadrature, RangeArray& values ) const
+        {
+          const unsigned int nop = quadrature.nop();
+          values.resize( nop );
+          for( unsigned int qp=0; qp<nop; ++qp)
+            evaluate( quadrature[ qp ], values[ qp ]);
         }
 
         const EntityType& entity () const { return lfFather_.entity(); }
+        const unsigned int order () const { return lfFather_.order(); }
 
       private:
         const LocalGeometryType &localGeo_;
@@ -64,11 +73,14 @@ namespace Dune
         typedef typename LocalFunctionType::EntityType EntityType;
         typedef typename EntityType::LocalGeometry LocalGeometryType;
 
-        SonsWrapper (
+        template <class LFFather>
+        SonsWrapper ( const LFFather &father,
           const std::vector< EntityType >& childEntities,
           const std::vector< BasisFunctionSetType >& childBasisSets,
           const std::vector< std::vector<double> >& childDofs )
-          : childEntities_(childEntities), childBasisSets_(childBasisSets), childDofs_(childDofs)
+          : father_(father.entity())
+          , order_(father.order())
+          , childEntities_(childEntities), childBasisSets_(childBasisSets), childDofs_(childDofs)
         {}
         template <class Point>
         void evaluate ( const Point &x, RangeType &val ) const
@@ -80,7 +92,7 @@ namespace Dune
           {
             const auto &refSon = Dune::ReferenceElements< typename LocalGeometryType::ctype, LocalGeometryType::mydimension >
               ::general( childEntities_[i].type() );
-            auto y = childEntities_[i].geometryInFather().local(x);
+            auto y = childEntities_[i].geometryInFather().local(coordinate(x));
             if( refSon.checkInside( y ) )
             {
               childBasisSets_[i].evaluateAll( y, childDofs_[i], tmp );
@@ -91,8 +103,20 @@ namespace Dune
           assert( weight > 0); // weight==0 would mean that point was found in none of the children
           val /= weight;
         }
+        template <class Quadrature, class RangeArray>
+        void evaluateQuadrature( const Quadrature& quadrature, RangeArray& values ) const
+        {
+          const unsigned int nop = quadrature.nop();
+          values.resize( nop );
+          for( unsigned int qp=0; qp<nop; ++qp)
+            evaluate( quadrature[ qp ], values[ qp ]);
+        }
+        const EntityType& entity () const { return father_; }
+        const unsigned int order () const { return order_; }
 
       private:
+        const EntityType &father_;
+        unsigned int order_;
         const std::vector< EntityType >& childEntities_;
         const std::vector< BasisFunctionSetType >& childBasisSets_;
         const std::vector< std::vector<double> >& childDofs_;
@@ -156,7 +180,8 @@ namespace Dune
             childBasisSets[i] = space_.basisFunctionSet( childEntities[i] );
           }
           space_.interpolation(lfFather.entity())
-            ( Impl::SonsWrapper<BasisFunctionSetType, LFFather>( childEntities, childBasisSets, childDofs_ ),
+            ( Impl::SonsWrapper<BasisFunctionSetType, LFFather>(
+            lfFather, childEntities, childBasisSets, childDofs_ ),
               lfFather.localDofVector() );
         }
 

@@ -22,6 +22,9 @@ namespace Dune
   namespace Fem
   {
 
+    namespace Codegen
+    {
+
     class CodegenInfoFinished : public Dune :: Exception {};
 
     class CodegenInfo
@@ -53,7 +56,7 @@ namespace Dune
       typedef std::vector< int > KeyType;
       typedef std::set< KeyType > KeyStorageType;
 
-      typedef std::pair< int , int > EvalPairType ;
+      typedef std::pair< int, std::pair< int, int > > EvalPairType ;
       typedef std::set< EvalPairType > EvalSetType ;
 
       std::map< codegenfunc_t* , KeyStorageType > entryMap_;
@@ -136,18 +139,54 @@ namespace Dune
 
         // second check, if file exists, do nothing
         int pos = exists( filename.str() );
-        if( pos >= 0 )  return  ;
+        if( pos >= 0 ) return;
 
         std::string filenameToWrite( path_ + "/" + filename.str() );
-        std::ofstream file( filenameToWrite.c_str(), std::ios::out );
 
+        // write code to string stream and compare with existing file
+        // if file does not exist, then write code to newly generated file
+        std::stringstream code;
         // call code generation function
-        codegenfunc( file, dim, dimRange, quadNop, numBase );
-        std::cout << "Generate code " << fileprefix << " for (" << dimRange << ","
-                  << quadNop << "," << numBase << ")" << std::endl;
+        codegenfunc( code, dim, dimRange, quadNop, numBase );
 
-        // insert evaluate pair
-        EvalPairType evalPair ( quadNop, numBase );
+        bool writeCode = false ;
+
+        {
+          std::ifstream infile( filenameToWrite );
+          if( infile )
+          {
+            std::stringstream checkstr;
+            checkstr << infile.rdbuf();
+
+            // if both string are identical we can stop here
+            // and don't write the header thus avoiding recompilation
+            if( checkstr.str().compare( code.str() ) != 0 )
+            {
+              // if strings differ then write code
+              writeCode = true;
+            }
+            infile.close();
+          }
+          else
+          {
+            // if file does not exist, then write code
+            writeCode = true;
+          }
+        }
+
+        if( writeCode )
+        {
+          // if file does not exist, then write code to newly generated file
+          std::ofstream file( filenameToWrite, std::ios::out );
+          file << code.str();
+          file.close();
+          std::cout << "Generate code " << fileprefix << " for (" << dimRange << ","
+                    << quadNop << "," << numBase << ")" << std::endl;
+        }
+
+        // insert evaluate pair in any case
+        // otherwise the lists with include files is wrong
+        EvalPairType evalPair ( dimRange, std::make_pair(quadNop, numBase) );
         evalSet_.insert( evalPair );
 
         if( baseMin_ == 0 ) baseMin_ = numBase;
@@ -172,16 +211,20 @@ namespace Dune
       }
 
 
-      void dumpInfo() const
+      bool dumpInfo(const bool writeToCurrentDir = false ) const
       {
+        if( writeToCurrentDir )
         {
+          // write file with correct include to current directory
+          // this is usually not needed if include paths are correct
           std::ofstream file( outFileName_.c_str() );
           file << "#include \"" <<path_<< "/" << outFileName_ << "\"";
         }
 
         {
           std::string filename( path_ + "/" + outFileName_ );
-          std::ofstream file( filename.c_str() );
+          std::stringstream file;
+
           file << "#ifdef CODEGEN_INCLUDEMAXNUMS" << std::endl;
           file << "#ifndef CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl;
           file << "#define CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
@@ -189,45 +232,79 @@ namespace Dune
           file << "#define MIN_NUMBER_OF_QUAD_POINTS " << nopMin_ << std::endl;
           file << "#define MAX_NUMBER_OF_BASE_FCT    " << baseMax_ << std::endl;
           file << "#define MIN_NUMBER_OF_BASE_FCT    " << baseMin_ << std::endl << std::endl;
+#if 0
           file << "/* include all headers with inner loop extern declarations */" << std::endl;
           file << "#define CODEGEN_COMPILE_INNERLOOPS 1" << std::endl;
+          file << "namespace Dune {" << std::endl;
+          file << "namespace Fem {" << std::endl;
+          file << "namespace Codegen {" << std::endl;
           for( size_t i = 0; i < filenames_.size(); ++i )
           {
             file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+          file << "}}} // end namespaces" << std::endl;
           file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl << std::endl;
           file << "#include \"" << filename << ".c\"" <<std::endl;
+#endif
 
           file << "#endif // CODEGEN_INCLUDEMAXNUMS_INCLUDED" << std::endl << std::endl;
           file << "#elif defined CODEGEN_INCLUDEEVALCALLERS" << std::endl;
           file << "#ifndef CODEGEN_EVALCALLERS_INCLUDED" << std::endl;
           file << "#define CODEGEN_EVALCALLERS_INCLUDED" << std::endl << std::endl;
+          file << "namespace Dune {"<< std::endl;
+          file << "namespace Fem {"<< std::endl;
+          file << "namespace Codegen {"<< std::endl;
           typedef EvalSetType :: iterator iterator ;
           const iterator endit = evalSet_.end();
           for( iterator it = evalSet_.begin(); it != endit; ++it )
           {
+            int dimRange = it->first;
+            int quadNop  = it->second.first;
+            int numBase  = it->second.second;
             file << "  template <class Traits>" << std::endl;
-            file << "  struct EvaluateImplementation< Traits, " << it->first << " , " << it->second << " >" << std::endl;
-            file << "    : public EvaluateRealImplementation< Traits, " << it->first << " , " << it->second << " >" << std::endl;
+            file << "  struct EvaluateImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >" << std::endl;
+            file << "    : public EvaluateRealImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >" << std::endl;
             file << "  {" << std::endl;
-            file << "    typedef EvaluateRealImplementation< Traits, " << it->first << " , " << it->second << " >  BaseType;" << std::endl;
+            file << "    typedef EvaluateRealImplementation< Traits, " << dimRange << " , " << quadNop << " , " << numBase << " >  BaseType;" << std::endl;
             file << "    typedef typename BaseType :: RangeVectorType  RangeVectorType;" << std::endl;
             file << "    EvaluateImplementation( const RangeVectorType& rv ) : BaseType ( rv ) {}" << std::endl;
             file << "  };"<< std::endl;
             file << std::endl;
           }
+          file << "}}} // end namespaces"<< std::endl;
           file << "#endif // CODEGEN_EVALCALLERS_INCLUDED" << std::endl << std::endl;
           file << "#else" << std::endl << std::endl ;
           file << "#ifndef CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
           file << "#define CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl;
-          file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
+          //file << "#undef CODEGEN_COMPILE_INNERLOOPS" << std::endl;
+          file << "namespace Dune {" << std::endl;
+          file << "namespace Fem {" << std::endl;
+          file << "namespace Codegen {" << std::endl;
           for( size_t i = 0; i < filenames_.size(); ++i )
           {
             file << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+          file << "}}} // end namespaces" << std::endl;
           file << "#endif  // CODEGEN_INCLUDE_IMPLEMENTATION" << std::endl << std::endl;
           file << "#endif // CODEGEN_INCLUDEMAXNUMS" << std::endl;
 
+          std::ifstream infile( filename );
+          if( infile )
+          {
+            std::stringstream checkstr;
+            checkstr << infile.rdbuf();
+
+            // if both string are identical we can stop here
+            // and don't write the header thus avoiding recompilation
+            if( checkstr.str().compare( file.str() ) == 0 )
+              return false;
+          }
+
+          std::ofstream outfile( filename );
+          outfile << file.str();
+          outfile.close();
+
+#if 0
           // write C file with implementation of inner loop functions
           filename += ".c";
           std::ofstream Cfile( filename.c_str() );
@@ -239,6 +316,8 @@ namespace Dune
           {
             Cfile << "#include \""<< filenames_[ i ].first << "\"" << std::endl;
           }
+#endif
+          return true;
         }
       }
     protected:
@@ -303,7 +382,7 @@ namespace Dune
         if( stage == -1 )
         {
           out << "#ifndef HEADERCHECK" << std::endl;
-          out << "#if ! " << codegenPreCompVar << std::endl;
+          //out << "#if ! " << codegenPreCompVar << std::endl;
         }
         else if( stage == 0 )
         {
@@ -322,8 +401,8 @@ namespace Dune
         }
         else
         {
-          out << "#endif" << std::endl;
-          out << "#endif" << std::endl;
+          //out << "#endif" << std::endl;
+          //out << "#endif" << std::endl;
           out << "#endif" << std::endl;
         }
       }
@@ -378,7 +457,7 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct EvaluateRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct EvaluateRanges<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class RangeVectorType," << std::endl;
@@ -395,9 +474,11 @@ namespace Dune
         //out << "    typedef RangeType value_type;" << std::endl;
 
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << numRows * dimRange << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numRows * dimRange << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << numRows * dimRange << " );" << std::endl;
 
         // make length simd conform
+        //out << "    Field* resultTmp = (*memory).data();" << std::endl;
         out << "    Field* resultTmp = memory.data();" << std::endl;
         out << "    for( int i=0; i < " << numRows * dimRange << "; ++ i ) resultTmp[ i ] = 0;" << std::endl <<std::endl;
 
@@ -464,17 +545,17 @@ namespace Dune
         out << "    // store result" << std::endl;
         out << "    for(int row = 0; row < " << numRows << " ; ++row )" << std::endl;
         out << "    {" << std::endl;
-        out << "      RangeType& result = rangeVector[ row ];" << std::endl;
+        out << "      auto& result = rangeVector[ row ];" << std::endl;
         for( int r = 0 ; r < dimRange; ++ r )
         {
           out << "      result[ " << r << " ] = result" << r << "[ row ];" << std::endl;
         }
         out << "    }" << std::endl;
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         for( int i=0; i<simdWidth; ++i )
         {
           out << "        ";
@@ -494,10 +575,11 @@ namespace Dune
           else out << "," << std::endl;
         }
 
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoopEval( out, simdWidth, dimRange, numRows, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -545,7 +627,7 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct AxpyRanges<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct AxpyRanges<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
 
         out << std::endl;
@@ -567,8 +649,10 @@ namespace Dune
         //out << "    typedef typename ScalarRangeType :: field_type field_type;" << std::endl;
 
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << numCols * dimRange << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << numCols * dimRange << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << numCols * dimRange << " );" << std::endl;
 
+        //out << "    " << doubletype() << "* dofResult = (*memory).data();" << std::endl;
         out << "    " << doubletype() << "* dofResult = memory.data();" << std::endl;
         out << "    for( int i=0; i < " << numCols * dimRange << "; ++i ) dofResult[ i ] = 0;" << std::endl << std::endl;
 
@@ -587,13 +671,16 @@ namespace Dune
             out << "      const " << doubletype() << "* rangeFactor" << i << " = &rangeFactors[ row + " << i << " ][ 0 ];" << std::endl;
           out << "      " << funcName << "(";
           for( int i = 0; i < simdWidth; ++i )
-            out << " &rangeStorage[ quad.cachingPoint( row + " << i << " ) * " << numCols << " ][ 0 ],";
-          out << std::endl;
-          out << "                 rangeFactor0, ";
+          {
+            if( i>0 )
+              out << "                              ";
+            out << " &rangeStorage[ quad.cachingPoint( row + " << i << " ) * " << numCols << " ][ 0 ]," << std::endl;
+          }
+          out << "                               rangeFactor0, ";
           for( int i=1; i<simdWidth; ++ i )
             out << "rangeFactor" << i << ",";
           out << std::endl;
-          out << "                ";
+          out << "                              ";
           for( int r = 0; r < dimRange; ++ r )
           {
             out << " dofs" << r ;
@@ -626,13 +713,13 @@ namespace Dune
         out << "    }" << std::endl;
 
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
         ///////////////////////////////////
         //  inner loop
         ///////////////////////////////////
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         out << "       const " << doubletype() << "* " << restrictKey() << " base0," << std::endl;
         for( int i=1; i<simdWidth; ++ i )
           out << "       const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
@@ -646,10 +733,11 @@ namespace Dune
           else
             out << "," << std::endl;
         }
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoop( out, simdWidth, dimRange, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -721,14 +809,14 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct EvaluateJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct EvaluateJacobians<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class JacobianRangeVectorType," << std::endl;
         out << "            class LocalDofVectorType," << std::endl;
         out << "            class JacobianRangeFactorType>" << std::endl;
         out << "  static void eval( const QuadratureType&," << std::endl;
-        out << "                    const Fem :: EmptyGeometry&," << std::endl;
+        out << "                    const EmptyGeometry&," << std::endl;
         out << "                    const JacobianRangeVectorType&," << std::endl;
         out << "                    const LocalDofVectorType&," << std::endl;
         out << "                    JacobianRangeFactorType &)" << std::endl;
@@ -772,11 +860,13 @@ namespace Dune
 
         const size_t nDofs = numRows * dimRange * dim ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << nDofs << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << nDofs << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << nDofs << " );" << std::endl;
 
         for( int d = 0; d < dim ; ++ d )
         {
           // make length simd conform
+          //out << "    Field* resultTmp" << d << " = (*memory).data() + " << d * numRows * dimRange << ";" << std::endl;
           out << "    Field* resultTmp" << d << " = memory.data() + " << d * numRows * dimRange << ";" << std::endl;
         }
         out << "    for( int i=0; i<" << numRows * dimRange << "; ++i ) " << std::endl;
@@ -907,10 +997,10 @@ namespace Dune
         }
         out << "    }" << std::endl;
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
-        writePreCompHeader( out, 0 );
-        out << "  void " << funcName << "(" << std::endl;
+        //writePreCompHeader( out, 0 );
+        out << "  static void " << funcName << "(" << std::endl;
         for( int i=0; i<simdWidth; ++i )
         {
           out << "                        ";
@@ -930,10 +1020,11 @@ namespace Dune
           }
         }
 
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerJacEvalLoop( out, simdWidth, dim, dimRange, numRows, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
 
@@ -963,14 +1054,14 @@ namespace Dune
         writePreCompHeader( out, -1 );
 
         out << "template <class BaseFunctionSet> // dimRange = "<< dimRange << ", quadNop = " << numRows << ", scalarBasis = " << numCols << std::endl;
-        out << "struct AxpyJacobians<BaseFunctionSet, Fem :: EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
+        out << "struct AxpyJacobians<BaseFunctionSet, EmptyGeometry, " << dimRange << ", " << numRows << ", " << numCols << ">" << std::endl;
         out << "{" << std::endl;
         out << "  template< class QuadratureType,"<< std::endl;
         out << "            class JacobianRangeVectorType," << std::endl;
         out << "            class JacobianRangeFactorType," << std::endl;
         out << "            class LocalDofVectorType>" << std::endl;
         out << "  static void axpy( const QuadratureType&," << std::endl;
-        out << "                    const Fem :: EmptyGeometry&," << std::endl;
+        out << "                    const EmptyGeometry&," << std::endl;
         out << "                    const JacobianRangeVectorType&," << std::endl;
         out << "                    const JacobianRangeFactorType&," << std::endl;
         out << "                    LocalDofVectorType&)" << std::endl;
@@ -993,12 +1084,14 @@ namespace Dune
         out << "                    const JacobianRangeFactorType& jacFactors," << std::endl;
         out << "                    LocalDofVectorType& dofs)" << std::endl;
         out << "  {" << std::endl;
-        //out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl << std::endl;
+        out << "    typedef typename JacobianRangeFactorType :: value_type JacobianRangeType;" << std::endl << std::endl;
 
         const size_t dofs = dimRange * numCols ;
         out << "    typedef " << doubletype() << " Field;" << std::endl;
-        out << "    static std::vector< Field > memory( " << dofs << " );" << std::endl;
+        out << "    static thread_local std::vector< Field > memory( " << dofs << " );" << std::endl;
+        //out << "    static Dune::Fem::ThreadSafeValue< std::vector< Field > > memory( " << dofs << " );" << std::endl;
 
+        //out << "    Field* result = (*memory).data();" << std::endl;
         out << "    Field* result = memory.data();" << std::endl;
         out << "    for( int i = 0 ; i < " << dofs << "; ++i ) result[ i ] = 0;" << std::endl << std::endl;
 
@@ -1062,15 +1155,15 @@ namespace Dune
         out << "    }" << std::endl;
 
         out << "  }" << std::endl << std::endl;
-        out << "};" << std::endl;
+        //out << "};" << std::endl;
 
 
         ///////////////////////////////////
         //  inner loop
         ///////////////////////////////////
-        writePreCompHeader( out, 0 );
+        //writePreCompHeader( out, 0 );
 
-        out << "  void " << funcName << "(" << std::endl;
+        out << "  static void " << funcName << "(" << std::endl;
         out << "        const " << doubletype() << "* " << restrictKey() << " base," << std::endl;
         //for( int i=1; i<dim; ++ i )
         //  out << "        const " << doubletype() << "* " << restrictKey() << " base" << i << "," << std::endl;
@@ -1089,10 +1182,11 @@ namespace Dune
           else
             out << "," << std::endl;
         }
-        writePreCompHeader( out, 1 );
+        //writePreCompHeader( out, 1 );
         out << "  {" << std::endl;
         writeInnerLoopAxpyJac( out, dim, dimRange, numCols );
         out << "  }" << std::endl;
+        out << "};" << std::endl;
         writePreCompHeader( out, 2 );
       }
     };
@@ -1112,6 +1206,8 @@ namespace Dune
       return name.str();
     }
 
+    } // namespace Codegen
+
 
     template <class DiscreteFunctionSpace, class Vector>
     inline void generateCode (const DiscreteFunctionSpace& space,
@@ -1120,8 +1216,11 @@ namespace Dune
                               const std::string& outpath = "./",
                               const std::string& filename = "autogeneratedcode.hh" )
     {
+      using namespace Codegen;
+
       const int dimRange  = DiscreteFunctionSpace :: dimRange;
       const int dimDomain = DiscreteFunctionSpace :: dimDomain;
+      const int dimGrad   = dimRange*dimDomain;
 
       typedef typename DiscreteFunctionSpace :: GridPartType GridPartType;
 
@@ -1161,57 +1260,75 @@ namespace Dune
       path += "/autogeneratedcode";
 
       // set output path
-      Fem::CodegenInfo::instance().setPath( path );
+      CodegenInfo::instance().setPath( path );
 
       // add my dimrange
-      Fem::CodegenInfo::instance().addDimRange( &space, dimRange );
+      CodegenInfo::instance().addDimRange( &space, dimRange );
+      int gradSpace;
+      CodegenInfo::instance().addDimRange( &gradSpace, dimGrad );
 
       for( const auto& size : sizes )
       {
         for( const auto& quadNop : quadNops )
         {
-          Fem::CodegenInfo::instance().addEntry( "evalranges",
-                Fem :: CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "evaljacobians",
-                Fem :: CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "axpyranges",
-                Fem :: CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quadNop, size );
-          Fem::CodegenInfo::instance().addEntry( "axpyjacobians",
-                Fem :: CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "evalranges",
+                CodeGeneratorType :: evaluateCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "evaljacobians",
+                CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyranges",
+                CodeGeneratorType :: axpyCodegen, dimDomain, dimRange, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyjacobians",
+                CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
+
+          CodegenInfo::instance().addEntry( "evalranges",
+                CodeGeneratorType :: evaluateCodegen, dimDomain, dimGrad, quadNop, size );
+          CodegenInfo::instance().addEntry( "evaljacobians",
+                CodeGeneratorType :: evaluateJacobiansCodegen, dimDomain, dimGrad, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyranges",
+                CodeGeneratorType :: axpyCodegen, dimDomain, dimGrad, quadNop, size );
+          CodegenInfo::instance().addEntry( "axpyjacobians",
+                CodeGeneratorType :: axpyJacobianCodegen, dimDomain, dimRange, quadNop, size );
         }
       }
 
       //std::cerr << "Code for k="<< MAX_POLORD << " generated!! " << std::endl;
       //std::remove( autoFilename( CODEDIM, MAX_POLORD ).c_str() );
 
-      Fem::CodegenInfo::instance().setFileName( filename );
-      Fem::CodegenInfo::instance().dumpInfo();
+      CodegenInfo::instance().setFileName( filename );
+      bool written = CodegenInfo::instance().dumpInfo();
 
-      std::cout << "Written code to " << filename << std::endl;
-      //////////////////////////////////////////////////
-      //  write include header
-      //////////////////////////////////////////////////
-      std::ofstream file( outpath + "/" + filename );
-
-      if( file )
+      if( written )
       {
-        std::string header( filename );
-        size_t size = header.size();
-        // replace all . with _
-        for( size_t i=0; i<size; ++i )
-        {
-          if( header[ i ] == '.' )
-            header[ i ] = '_';
-        }
+        std::cout << "Written code to " << filename << std::endl;
+        //////////////////////////////////////////////////
+        //  write include header
+        //////////////////////////////////////////////////
+        std::ofstream file( outpath + "/" + filename );
 
-        file << "#ifndef " << header << "_INCLUDED" << std::endl;
-        file << "#define " << header << "_INCLUDED" << std::endl;
-        file << "#ifndef USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
-        file << "#define USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
-        file << "#endif" << std::endl;
-        file << "// this is the file containing the necessary includes for the specialized codes" << std::endl;
-        file << "#define DUNE_FEM_INCLUDE_AUTOGENERATEDCODE_FILENAME_SPEC \"" << path << "/" << filename << "\"" << std::endl;
-        file << "#endif" << std::endl;
+        if( file )
+        {
+          std::string header( filename );
+          size_t size = header.size();
+          // replace all . with _
+          for( size_t i=0; i<size; ++i )
+          {
+            if( header[ i ] == '.' )
+              header[ i ] = '_';
+          }
+
+          file << "#ifndef " << header << "_INCLUDED" << std::endl;
+          file << "#define " << header << "_INCLUDED" << std::endl;
+          file << "#ifndef USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
+          file << "#define USE_BASEFUNCTIONSET_CODEGEN" << std::endl;
+          file << "#endif" << std::endl;
+          file << "// this is the file containing the necessary includes for the specialized codes" << std::endl;
+          file << "#define DUNE_FEM_INCLUDE_AUTOGENERATEDCODE_FILENAME_SPEC \"" << path << "/" << filename << "\"" << std::endl;
+          file << "#endif" << std::endl;
+        }
+      }
+      else
+      {
+        std::cout << "No changes written to " << filename << std::endl << std::endl;
       }
     }
 

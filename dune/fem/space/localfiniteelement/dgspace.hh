@@ -17,6 +17,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/mapper/compile.hh>
 #include <dune/fem/space/mapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
@@ -33,8 +34,8 @@ namespace Dune
 
     // DiscontinuousLocalFiniteElementSpaceTraits
     // ------------------------------------------
-
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, template< class > class Storage,
+              unsigned int scalarBlockSize >
     struct DiscontinuousLocalFiniteElementSpaceTraits
     {
       typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
@@ -47,20 +48,32 @@ namespace Dune
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static constexpr int codimension = 0;
+      static constexpr bool isScalar = LocalFiniteElementType::Traits::LocalBasisType::Traits::dimRange==1;
+      static constexpr bool fullBlocking = isScalar && scalarBlockSize>1;
 
-      typedef Hybrid::IndexRange< int, 1 > LocalBlockIndices;
+      typedef std::conditional_t<isScalar,
+              Hybrid::IndexRange< int, FunctionSpace::dimRange*scalarBlockSize >,
+              Hybrid::IndexRange< int, 1 >
+              > LocalBlockIndices;
 
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
-      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
+      using BlockMapperType = std::conditional_t<!fullBlocking,
+                     IndexSetDofMapper< GridPartType >,
+                     CodimensionMapper< GridPartType, codimension > >;
 
-      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
+      // TODO: need SFINAE since not all LFEMap have a pointSetId
+      typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType, LFEMap::pointSetId > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
-      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetType;
-//      typedef VectorialShapeFunctionSet< ShapeFunctionSetProxy< StoredShapeFunctionSetType >, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetProxyType;
+      // only extend to vector valued in case that the original space is scalar
+      typedef std::conditional_t<isScalar,
+              VectorialShapeFunctionSet< ShapeFunctionSetProxyType, typename FunctionSpaceType::RangeType >,
+              ShapeFunctionSetProxyType
+              > ShapeFunctionSetType;
 
     private:
       template< class LFEM >
@@ -93,12 +106,32 @@ namespace Dune
      *
      *  \todo please doc me
      **/
+    template <class LFEMap,class Enabler>
+    struct FixedPolyOrder_
+    {
+      static const unsigned int scalarBlockSize = 1;
+    };
+    template <class LFEMap>
+    struct FixedPolyOrder_<LFEMap,
+      std::enable_if_t<LFEMap::numBasisFunctions>=0, std::true_type> >
+    {
+      static const unsigned int scalarBlockSize = LFEMap::numBasisFunctions;
+      static const unsigned int polynomialOrder = LFEMap::polynomialOrder;
+    };
+    template <class LFEMap>
+    using FixedPolyOrder = FixedPolyOrder_<LFEMap,std::true_type>;
+
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
     class DiscontinuousLocalFiniteElementSpace
-      : public DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
+      : public DiscreteFunctionSpaceDefault<
+          DiscontinuousLocalFiniteElementSpaceTraits< LFEMap,
+               FunctionSpace, Storage, FixedPolyOrder<LFEMap>::scalarBlockSize > >,
+        public FixedPolyOrder<LFEMap>
     {
       typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > > BaseType;
+      typedef DiscreteFunctionSpaceDefault<
+        DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace,
+        Storage, FixedPolyOrder<LFEMap>::scalarBlockSize > > BaseType;
 
       typedef typename BaseType::Traits Traits;
 
@@ -115,6 +148,7 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef typename Traits::LocalFiniteElementType LocalFiniteElementType;
+      // typedef L2LocalFiniteElement< typename Traits::LocalFiniteElementType > LocalFiniteElementType;
 
       typedef typename Traits::LFEMapType LFEMapType;
 
@@ -150,12 +184,16 @@ namespace Dune
       {
         static BlockMapperType *createObject ( LFEMapType *lfeMap )
         {
-          return new BlockMapperType( lfeMap->gridPart(), [ lfeMap ] ( const auto &refElement ) {
-            if( lfeMap->hasCoefficients( refElement.type() ) )
-              return Dune::Fem::generateCodimensionCode( refElement, 0, lfeMap->localCoefficients( refElement.type() ).size() );
-            else
-              return Dune::Fem::DofMapperCode();
-          } );
+          if constexpr (!Traits::fullBlocking)
+            return new BlockMapperType( lfeMap->gridPart(),
+              [ lfeMap ] ( const auto &refElement ) {
+                if( lfeMap->hasCoefficients( refElement.type() ) )
+                  return Dune::Fem::generateCodimensionCode( refElement, 0, lfeMap->localCoefficients( refElement.type() ).size() );
+                else
+                  return Dune::Fem::DofMapperCode();
+              } );
+          else
+            return new BlockMapperType( lfeMap->gridPart() );
         }
 
         static void deleteObject ( BlockMapperType *object ) { delete object; }
@@ -175,7 +213,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType() ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get()))
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
@@ -185,7 +223,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get()) )
       {}
 
       DiscontinuousLocalFiniteElementSpace ( const ThisType & ) = delete;
@@ -241,6 +279,11 @@ namespace Dune
         return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
+      typedef typename LFEMapType::LocalCoefficientsType QuadratureType;
+      const QuadratureType& quadrature ( const GeometryType &type ) const
+      {
+        return (*lfeMap_).localCoefficients(type);
+      }
     private:
       ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe, const GeometryType &type ) const
       {
@@ -253,6 +296,21 @@ namespace Dune
       std::unique_ptr< LFEMapType, typename LFEMapProviderType::Deleter > lfeMap_;
       std::unique_ptr< StoredShapeFunctionSetVectorType, typename StoredShapeFunctionSetVectorProviderType::Deleter > storedShapeFunctionSetVector_;
       std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
+    };
+
+    template< class LFEMap, class FunctionSpace, template< class > class Storage, int newRange >
+    struct ToNewDimRangeFunctionSpace<
+      DiscontinuousLocalFiniteElementSpace<LFEMap, FunctionSpace, Storage>, newRange>
+    {
+      typedef DiscontinuousLocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
+    };
+    template <class LFEMap, class FunctionSpace,
+              template <class> class Storage,
+              class NewFunctionSpace>
+    struct DifferentDiscreteFunctionSpace<
+        DiscontinuousLocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>
+    {
+      typedef DiscontinuousLocalFiniteElementSpace<LFEMap, NewFunctionSpace, Storage > Type;
     };
 
   } // namespace Fem

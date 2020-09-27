@@ -27,6 +27,10 @@
 #include <dune/fem/space/fourier.hh>
 #include <dune/fem/space/lagrange.hh>
 
+#if HAVE_DUNE_LOCALFUNCTIONS
+#include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
+#endif
+
 #include "../../test/exactsolution.hh"
 
 
@@ -154,7 +158,7 @@ void eocLoop ( GridType &grid, int steps, const DiscreteFunctionSpace &... discr
   // check that interpolation of polynomial is accurate to machine precision
   for( size_t i=0; i<n-1; ++i )
   {
-    if( std::abs(oldErrors2[ i ]) > 1e-14 )
+    if( std::abs(oldErrors2[ i ]) > 1e-12 )
       DUNE_THROW(Dune::GridError,"interpolation of polynomial of order " << polOrder << " not exact!");
   }
 
@@ -176,6 +180,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
 {
   // create grid
   Dune::GridPtr< GridType > grid( std::to_string( GridType::dimension ) + "dgrid.dgf" );
+  // Dune::GridPtr< GridType > grid( gridfile );
   grid->loadBalance();
   Dune::Fem::GlobalRefine::apply( *grid, refCount * Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 
@@ -189,14 +194,77 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
   typedef Dune::Fem::FunctionSpace< DomainFieldType, double, dimDomain, dimRange > FunctionSpaceType;
 
   // create discrete function spaces
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > discontinuousGalerkinSpace( gridPart );
-  Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > hLegendreSpace( gridPart );
-  //Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeDGSpace( gridPart );
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeSpace( gridPart );
-  Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > fourierSpace( gridPart, polOrder+1 );
+  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+        discontinuousGalerkinSpace( gridPart );
+  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+        lagrangeDGSpaceA( gridPart );
+#if HAVE_DUNE_LOCALFUNCTIONS
+  Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder >
+        lagrangeDGSpaceB( gridPart );
+  Dune::Fem::DGLagrangeSpace< FunctionSpaceType, GridPartType,
+      Dune::GaussLobattoPointSet
+  > lobattoDGSpace( gridPart, polOrder );
+  Dune::Fem::FixedOrderDGLagrangeSpace< FunctionSpaceType, GridPartType, polOrder,
+      Dune::GaussLegendrePointSet
+  > gaussDGSpace( gridPart );
+#endif
+  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+        lagrangeSpaceA( gridPart );
+#if HAVE_DUNE_LOCALFUNCTIONS
+  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >
+        lagrangeSpaceB( gridPart, polOrder );
+  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType,
+      Dune::GaussLobattoPointSet
+  > lobattoSpace( gridPart, polOrder );
+#endif
+  Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
+        hLegendreSpace( gridPart );
+  Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
+        fourierSpace( gridPart, polOrder+1 );
 
+#if 0
+  // Test:
+  {
+    auto quadrature = lobattoDGSpace.quadrature(Dune::GeometryTypes::cube(3));
+    double weight = 0;
+    // std::cout << "---- Lobatto ------\n";
+    for (auto &p : quadrature)
+    {
+      // std::cout << p.point() << " , " << p.weight() << " , " << p.localKey() << std::endl;
+      weight += p.weight();
+    }
+    assert(std::abs(weight-1.)<1e-15);
+  }
+  {
+    auto quadrature = gaussDGSpace.quadrature(Dune::GeometryTypes::cube(3));
+    double weight = 0;
+    // std::cout << "---- Gauss ------\n";
+    for (auto &p : quadrature)
+    {
+      // std::cout << p.point() << " , " << p.weight() << " , " << p.localKey() << std::endl;
+      weight += p.weight();
+    }
+    assert(std::abs(weight-1.)<1e-15);
+    // std::cout << "--------------------\n";
+  }
+#endif
   // perform eoc loop
-  eocLoop( *grid, steps, discontinuousGalerkinSpace, hLegendreSpace, lagrangeSpace, fourierSpace );
+  eocLoop( *grid, steps,
+           discontinuousGalerkinSpace,
+#if HAVE_DUNE_LOCALFUNCTIONS
+           lagrangeDGSpaceB,
+           lobattoDGSpace,
+           gaussDGSpace,
+#endif
+           lagrangeDGSpaceA,
+           lagrangeSpaceA,
+           #if HAVE_DUNE_LOCALFUNCTIONS
+           lagrangeSpaceB,
+           lobattoSpace,
+#endif
+           hLegendreSpace,
+           fourierSpace
+           );
 }
 
 // main

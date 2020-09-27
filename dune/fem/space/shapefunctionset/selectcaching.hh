@@ -14,13 +14,13 @@ namespace Dune
     // -----------------------------
 
     template< class >
-    class CachingStorage;
+    class CachingStorage {};
 
     template< class >
-    class SimpleStorage;
+    class SimpleStorage {};
 
     template< class >
-    class CodegenStorage;
+    class CodegenStorage {};
 
     // SelectCachingShapeFunctionSet
     // -----------------------------
@@ -66,6 +66,9 @@ namespace Dune
 
     public:
       typedef ShapeFunctionSet ImplementationType;
+
+      //! this indicates that generated codes for evaluate and axpy is available
+      static constexpr bool codegenShapeFunctionSet = true ;
 
       explicit SelectCachingShapeFunctionSet ( const GeometryType &type,
                                                const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )

@@ -132,6 +132,7 @@ namespace Dune
                  const std::string &path,
                  const std::string &filename)
             {
+              std::cout << "Generate code to " << filename << std::endl;
               Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
       }

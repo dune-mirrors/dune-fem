@@ -17,14 +17,24 @@ from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, *args, baseClasses=None, preamble=None):
+def load(includes, typeName, *args, baseClasses=None, preamble=None,
+         codegen=None):
+    moduleName = hashlib.md5(typeName.encode('utf-8')).hexdigest()
     if baseClasses is None:
         baseClasses = []
-    from dune.fem.space import addBackend
+    if codegen is not None:
+        if codegen[0].codegenStorage:
+            includesExt, moduleNameExt = codegen[0].codegen(
+                "op"+ "_" + moduleName,
+                interiorQuadratureOrders=codegen[1],
+                skeletonQuadratureOrders=codegen[2] )
+            includes = includesExt + includes
+            moduleName = moduleNameExt + "_" + moduleName
     includes = includes + ["dune/fempy/py/operator.hh"]
-    moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    moduleName = "femoperator" + "_" + moduleName
     module = generator.load(includes, typeName, moduleName, *args,
-            preamble=preamble, dynamicAttr=True, baseClasses=baseClasses)
+                  preamble=preamble, dynamicAttr=True, baseClasses=baseClasses)
+    module.Operator.codegen = codegen
     return module
 
 linearGenerator = SimpleGenerator("LinearOperator", "Dune::FemPy")
@@ -45,7 +55,7 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None):
 
 
 def galerkin(integrands, domainSpace=None, rangeSpace=None,
-    virtualize=None):
+             virtualize=None, communicate=True):
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -100,23 +110,23 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None,
 
     if not rstorage == storage:
         typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
-        constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
-                                  ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );'],
+        constructor = Constructor(['pybind11::object gridView', 'const bool communicate', integrandsType + ' &integrands'],
+                                  ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), communicate, integrands );'],
                                   ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace.gridPart(), integrands );'],
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace.gridPart(), communicate, integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
         import dune.create as create
         linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
         typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace, rSpace, integrands );'],
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace, rSpace, communicate, integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
     if integrands.hasDirichletBoundary:
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
 
-    op = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace, integrands)
+    op = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace,communicate,integrands)
     op.model = integrands
     return op
 

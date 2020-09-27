@@ -67,7 +67,8 @@ namespace Dune
                 if( intersection.neighbor() )
                 {
                   const auto& outside = intersection.outside();
-                  refMarked += grid.mark( Marker::refine, Dune::Fem::gridEntity(outside) );
+                  if (outside.level()<maxLevel)
+                    refMarked += grid.mark( Marker::refine, Dune::Fem::gridEntity(outside) );
                 }
               }
 

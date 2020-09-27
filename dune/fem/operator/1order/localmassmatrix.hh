@@ -39,6 +39,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
+      enum { dimRange = DiscreteFunctionSpaceType :: dimRange };
       enum { localBlockSize = DiscreteFunctionSpaceType :: localBlockSize };
       enum { dgNumDofs = localBlockSize };
 
@@ -68,26 +69,29 @@ namespace Dune
 
       // use dynamic matrix from dune-common
       typedef Dune::DynamicMatrix< RangeFieldType > MatrixType;
+      typedef Dune::DynamicVector< RangeFieldType > VectorType;
 
     protected:
       std::shared_ptr< const DiscreteFunctionSpaceType > spc_;
       const IndexSetType& indexSet_;
 
       GeometryInformationType geoInfo_;
-      const int volumeQuadOrd_;
+      const std::function<int(const int)> volumeQuadratureOrder_;
       const bool affine_;
 
       mutable DGMatrixType dgMatrix_;
       mutable DGVectorType dgX_, dgRhs_;
 
       // use dynamic vector from dune-common
-      mutable Dune::DynamicVector< RangeFieldType > rhs_, row_;
+
+      mutable VectorType rhs_, row_;
       mutable MatrixType matrix_;
 
       mutable std::vector< RangeType > phi_;
       mutable std::vector< RangeType > phiMass_;
 
-      typedef std::map< const int, MatrixType* > MassMatrixStorageType;
+      typedef std::pair< std::unique_ptr< MatrixType >, std::unique_ptr< VectorType > > MatrixPairType;
+      typedef std::map< const int, MatrixPairType > MassMatrixStorageType;
       typedef std::vector< MassMatrixStorageType > LocalInverseMassMatrixStorageType;
 
       mutable LocalInverseMassMatrixStorageType localInverseMassMatrix_;
@@ -100,8 +104,6 @@ namespace Dune
 
       struct NoMassDummyCaller
       {
-        static const int dimRange = DiscreteFunctionSpaceType::dimRange;
-
         typedef Dune::FieldMatrix< ctype, dimRange, dimRange > MassFactorType;
 
         // return false since we don;t have a mass term
@@ -111,33 +113,63 @@ namespace Dune
         {}
       };
 
+
+      bool checkDiagonalMatrix( const MatrixType& matrix ) const
+      {
+        const int rows = matrix.rows();
+        for( int r=0; r<rows; ++r )
+        {
+          for( int c=0; c<r; ++c ) // the mass matrix is symmetric
+          {
+            // if we find one off diagonal non-zero return false
+            if( std::abs(matrix[r][c]) > 1e-12 )
+              return false;
+          }
+        }
+        return true;
+      }
+
       template< class BasisFunctionSet >
-      MatrixType &getLocalInverseMassMatrix ( const EntityType &entity, const Geometry &geo,
-                                              const BasisFunctionSet &basisSet, int numBasisFct ) const
+      MatrixPairType&
+      getLocalInverseMassMatrix ( const EntityType &entity, const Geometry &geo,
+                                  const BasisFunctionSet &basisSet, int numBasisFct ) const
       {
         const GeometryType geomType = geo.type();
         typedef typename MassMatrixStorageType::iterator iterator;
         MassMatrixStorageType &massMap = localInverseMassMatrix_[ GlobalGeometryTypeIndex::index( geomType ) ];
 
-        std::pair< iterator, bool > insertPair = massMap.insert( std::make_pair( numBasisFct, nullptr ) );
-        MatrixType *&matrix = insertPair.first->second;
-
-        if( insertPair.second )
+        auto it = massMap.find( numBasisFct );
+        if( it == massMap.end() )
         {
-          matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
+          std::pair< iterator, bool > insertPair = massMap.insert( std::make_pair( numBasisFct, MatrixPairType(nullptr,nullptr) ) );
+          it = insertPair.first;
+          insertPair.first->second.first.reset( new MatrixType( numBasisFct, numBasisFct, 0.0 ));
+          MatrixType& matrix = insertPair.first->second.first.operator *();
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
-          buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, *matrix, false );
+          buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, matrix, false );
           try {
-            matrix->invert();
+            matrix.invert();
           }
           catch ( Dune::FMatrixError &e )
           {
-            std::cerr << "Matrix is singular:" << std::endl << *matrix << std::endl;
+            std::cerr << "Matrix is singular:" << std::endl << matrix << std::endl;
             std::terminate();
+          }
+          const bool diagonal = checkDiagonalMatrix( matrix );
+          // store diagonal if matrix is diagonal
+          if( diagonal )
+          {
+            insertPair.first->second.second.reset( new VectorType( matrix.rows() ) );
+            VectorType& diag = insertPair.first->second.second.operator *();
+            const int rows = matrix.rows();
+            for( int row=0; row<rows; ++row )
+            {
+              diag[ row ] = matrix[ row ][ row ];
+            }
           }
         }
 
-        return *matrix;
+        return it->second;
       }
 
       template< class MassCaller, class BasisFunctionSet >
@@ -161,31 +193,35 @@ namespace Dune
         return matrix_;
       }
 
-      //! return appropriate quadrature order, default is 2 * order(entity)
-      int volumeQuadratureOrder ( const EntityType &entity ) const
-      {
-        return (volumeQuadOrd_ < 0 ? 2 * space().order( entity ) : volumeQuadOrd_);
-      }
-
-      //! return appropriate quadrature order, default is 2 * order()
-      int maxVolumeQuadratureOrder () const
-      {
-        return (volumeQuadOrd_ < 0 ? 2 * space().order() : volumeQuadOrd_);
-      }
-
       // return number of max non blocked dofs
       int maxNumDofs () const
       {
         return space().blockMapper().maxNumDofs() * localBlockSize;
       }
 
+      //! return appropriate quadrature order, default is 2 * order()
+      int maxVolumeQuadratureOrder () const
+      {
+        return volumeQuadratureOrder_( space().order() );
+      }
+
     public:
+      //! return appropriate quadrature order, default is 2 * order(entity)
+      int volumeQuadratureOrder ( const EntityType &entity ) const
+      {
+        return volumeQuadratureOrder_( space().order( entity ) );
+      }
       //! constructor taking space and volume quadrature order
-      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd = -1 )
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd )
+        : LocalMassMatrixImplementation( spc, [volQuadOrd](const int order) { return volQuadOrd; } )
+      {}
+
+      //! constructor taking space and volume quadrature order
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, std::function<int(const int)> volQuadOrderFct = [](const int order) { return 2 * order; } )
         : spc_( referenceToSharedPtr( spc ) )
         , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )
-        , volumeQuadOrd_ ( volQuadOrd )
+        , volumeQuadratureOrder_ ( volQuadOrderFct )
         , affine_ ( setup() )
         , rhs_(), row_(), matrix_()
         , phi_( maxNumDofs() )
@@ -201,7 +237,7 @@ namespace Dune
       : spc_(other.spc_),
         indexSet_( space().indexSet() ),
         geoInfo_( indexSet_ ),
-        volumeQuadOrd_( other.volumeQuadOrd_ ),
+        volumeQuadratureOrder_( other.volumeQuadratureOrder_ ),
         affine_( other.affine_ ),
         rhs_( other.rhs_ ), row_( other.row_ ), matrix_( other.matrix_ ),
         phi_( other.phi_ ),
@@ -211,17 +247,6 @@ namespace Dune
         lastTopologyId_( other.lastTopologyId_ ),
         sequence_( other.sequence_ )
       {}
-
-      ~LocalMassMatrixImplementation ()
-      {
-        typedef typename MassMatrixStorageType::iterator iterator;
-        for( unsigned int i = 0; i < localInverseMassMatrix_.size(); ++i )
-        {
-          const iterator end = localInverseMassMatrix_[ i ].end();
-          for( iterator it = localInverseMassMatrix_[ i ].begin(); it != end; ++it )
-            delete it->second;
-        }
-      }
 
     public:
       //! returns true if geometry mapping is affine
@@ -233,14 +258,29 @@ namespace Dune
         return geoInfo_.referenceVolume( geo.type() ) / geo.volume();
       }
 
+      template< class BasisFunctionSet >
+      bool checkInterpolationBFS(const BasisFunctionSet &bfs) const
+      {
+        const unsigned int numShapeFunctions = bfs.size() / dimRange;
+        // for Lagrange-type basis evaluated on interpolation points
+        // this is the Kronecker delta, so the mass matrix is diagonal even
+        // on non affine grids
+        static const int quadPointSetId = SelectQuadraturePointSetId< VolumeQuadratureType >::value;
+        if constexpr ( quadPointSetId == BasisFunctionSet::pointSetId )
+          return VolumeQuadratureType( bfs.entity(), volumeQuadratureOrder( bfs.entity() ) )
+                     .isInterpolationQuadrature(numShapeFunctions);
+        return false;
+      }
+
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller
       template< class MassCaller, class BasisFunctionSet, class LocalFunction >
       void applyInverse ( MassCaller &caller, const EntityType &entity, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        if( affine() || geo.affine() )
-          applyInverseLocally( caller, entity, geo, basisFunctionSet, lf );
+        if( ( affine() || geo.affine() || checkInterpolationBFS(basisFunctionSet) )
+            && !caller.hasMass() )
+          applyInverseLocally( entity, geo, basisFunctionSet, lf );
         else
           applyInverseDefault( caller, entity, geo, basisFunctionSet, lf );
       }
@@ -496,35 +536,52 @@ namespace Dune
       //  local applyInverse method for affine geometries
       ///////////////////////////////////////////////////////////
       //! apply local mass matrix to local function lf
-      //! using the massFactor method of the caller
-      template< class MassCaller, class BasisFunctionSet, class LocalFunction >
-      void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
+      template< class BasisFunctionSet, class LocalFunction >
+      void applyInverseLocally ( const EntityType &entity,
                                  const Geometry &geo, const BasisFunctionSet &basisFunctionSet, LocalFunction &lf ) const
       {
         const int numDofs = lf.size();
 
         // get local inverted mass matrix
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, basisFunctionSet, numDofs );
 
-        const double massVolInv = getAffineMassFactor( geo );
+        // if diagonal exists then matrix is in diagonal form
+        if( matrixPair.second )
+        {
+          const VectorType& diagonal = *matrixPair.second;
+          assert( int(diagonal.size()) == numDofs );
 
-        // copy local function to right hand side
-        // and apply inverse mass volume fraction
-        rhs_.resize( numDofs );
-        for( int l = 0; l < numDofs; ++l )
-          rhs_[ l ] = lf[ l ] * massVolInv;
+          VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+          assert(volQuad.nop()*dimRange == numDofs);
 
-        // apply inverse local mass matrix and store in lf
-        multiply( numDofs, invMassMatrix, rhs_, lf );
+          int l = 0;
+          for( int qt = 0; qt < volQuad.nop(); ++qt )
+            for (int r = 0; r < dimRange; ++r,++l )
+              lf[ l ] *= diagonal[ l ] / geo.integrationElement( volQuad.point(qt) );
+        }
+        else
+        {
+          const double massVolInv = getAffineMassFactor( geo );
+          // copy local function to right hand side
+          // and apply inverse mass volume fraction
+          rhs_.resize( numDofs );
+          for( int l = 0; l < numDofs; ++l )
+            rhs_[ l ] = lf[ l ] * massVolInv;
+
+          const MatrixType& invMassMatrix = *matrixPair.first;
+          // apply inverse local mass matrix and store in lf
+          multiply( numDofs, invMassMatrix, rhs_, lf );
+        }
       }
 
       template< class LocalMatrix >
       void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+        const MatrixType &invMassMatrix = *matrixPair.first;
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -546,8 +603,9 @@ namespace Dune
       void leftMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
-        MatrixType &invMassMatrix =
+        MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+        const MatrixType &invMassMatrix = *matrixPair.first;
 
         const double massVolInv = getAffineMassFactor( geo );
 
@@ -730,9 +788,8 @@ namespace Dune
       typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > BaseType;
 
     public:
-      explicit LocalMassMatrix ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-      {}
+      // copy base class constructors
+      using BaseType :: LocalMassMatrixImplementation;
     };
 
 
@@ -753,9 +810,8 @@ namespace Dune
     public:
       typedef typename BaseType :: EntityType  EntityType;
 
-      explicit LocalMassMatrixImplementationDgOrthoNormal ( const DiscreteFunctionSpace &spc, int volQuadOrd = -1 )
-      : BaseType( spc, volQuadOrd )
-      {}
+      // copy base class constructors
+      using BaseType :: LocalMassMatrixImplementation;
 
       //! apply local dg mass matrix to local function lf
       //! using the massFactor method of the caller

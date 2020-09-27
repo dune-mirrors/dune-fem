@@ -25,12 +25,10 @@ namespace Dune
     /**
      * Local interpolation for Discontinuous Galerkin spaces.
      */
-    template< class DiscreteFunctionSpace,
-      class Quadrature = CachingQuadrature<typename DiscreteFunctionSpace::GridPartType,
-                                           DiscreteFunctionSpace::EntityType::codimension> >
+    template< class DiscreteFunctionSpace >
     class DiscontinuousGalerkinLocalInterpolation
     {
-      typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace, Quadrature > ThisType;
+      typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace > ThisType;
 
     public:
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
@@ -47,19 +45,20 @@ namespace Dune
       typedef typename RangeType::value_type RangeFieldType;
 
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef Quadrature QuadratureType;
 
-      typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
+      typedef typename DiscreteFunctionSpaceType :: LocalMassMatrixType
+        LocalMassMatrixType;
+
+      typedef typename LocalMassMatrixType::VolumeQuadratureType  QuadratureType;
 
     public:
-      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space, const int order = -1 )
+      DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space )
       : space_( space ),
-        order_( space.order() ),
-        massMatrix_( space, (order < 0 ? 2*space.order() : order) ),
-        values_()
+        massStorage_( space_.localMassMatrixStorage() )
       {}
 
       DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = default;
+      DiscontinuousGalerkinLocalInterpolation ( ThisType &&other ) = default;
 
       ThisType &operator= ( const ThisType &other ) = delete;
 
@@ -75,13 +74,12 @@ namespace Dune
         if( entity.type().isNone() )
         {
           typedef ElementQuadrature< GridPartType, EntityType::codimension > ElementQuadratureType;
-          ElementQuadratureType quadrature( entity, localFunction.order() + order_);
+          ElementQuadratureType quadrature( entity, localFunction.order() + space_.order( entity ) );
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
             typedef LocalMassMatrix< DiscreteFunctionSpaceType, ElementQuadratureType > AggloMassMatrix;
-            AggloMassMatrix massMat( massMatrix_.space(), 2*order_);
-
+            AggloMassMatrix massMat( space_, massMatrix().volumeQuadratureOrder( entity ) );
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
             massMat.applyInverse( entity, basisFunctionSet, dofs );
@@ -89,13 +87,13 @@ namespace Dune
         }
         else
         {
-          QuadratureType quadrature( entity, localFunction.order() + order_);
+          QuadratureType quadrature( entity, localFunction.order() + space_.order( entity ) );
           bool isAffine = computeInterpolation( entity, quadrature, localFunction, dofs );
           if( ! isAffine )
           {
             // apply inverse of mass matrix
             auto basisFunctionSet = space_.basisFunctionSet(entity);
-            massMatrix_.applyInverse( entity, basisFunctionSet, dofs );
+            massMatrix().applyInverse( entity, basisFunctionSet, dofs );
           }
         }
 
@@ -109,11 +107,13 @@ namespace Dune
                                  LocalDofVector &dofs ) const
       {
         const int nop = quadrature.nop();
+
+        auto& values = massStorage_.second;
         // adjust size of values
-        values_.resize( nop );
+        values.resize( nop );
 
         // evaluate local function for all quadrature points
-        localFunction.evaluateQuadrature( quadrature, values_ );
+        localFunction.evaluateQuadrature( quadrature, values );
 
         bool isAffine = isAlwaysAffine ;
         if( ! isAlwaysAffine )
@@ -125,7 +125,7 @@ namespace Dune
           {
             // apply weight
             for(auto qp : quadrature )
-              values_[ qp.index() ] *= qp.weight() * geometry.integrationElement( qp.position() );
+              values[ qp.index() ] *= qp.weight() * geometry.integrationElement( qp.position() );
           }
         }
 
@@ -133,22 +133,22 @@ namespace Dune
         {
           // apply weight only
           for(auto qp : quadrature )
-            values_[ qp.index() ] *= qp.weight();
+            values[ qp.index() ] *= qp.weight();
         }
 
         // add values to local function
-        // dofs.axpyQuadrature( quadrature, values_ );
-        space_.basisFunctionSet(entity).axpy( quadrature, values_, dofs );
+        space_.basisFunctionSet(entity).axpy( quadrature, values, dofs );
 
         return isAffine;
       }
 
-      const LocalMassMatrixType &massMatrix () const { return massMatrix_; }
+      const LocalMassMatrixType &massMatrix () const
+      {
+        return massStorage_.first;
+      }
 
-      const DiscreteFunctionSpaceType &space_;
-      const int order_;
-      LocalMassMatrixType massMatrix_;
-      mutable std::vector< RangeType > values_;
+      const DiscreteFunctionSpaceType& space_;
+      typename DiscreteFunctionSpaceType::LocalMassMatrixStorageType& massStorage_;
     };
 
   } // namespace Fem

@@ -157,6 +157,12 @@ namespace Dune
         return *data_[ i ];
       }
 
+      void clear()
+      {
+        for (std::size_t i=0;i<size();++i)
+          (*this)[i] = 0;
+      }
+
     private:
       DofStorageType data_;
     };

@@ -109,7 +109,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
-      // typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -119,7 +118,6 @@ namespace Dune
 
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        // return InterpolationType( basisFunctionSet( entity ) );
         return InterpolationType( *this );
       }
 
