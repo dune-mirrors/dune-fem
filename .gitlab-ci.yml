@@ -47,7 +47,7 @@ ubuntu:20.04-clang-10-17:
     - duneci-standard-test
   variables:
     # bug in CI clang-10-17 and clang-10-20 are mixed up
-    DUNECI_TOOLCHAIN: clang-10-17
+    DUNECI_TOOLCHAIN: clang-10-20
 
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
