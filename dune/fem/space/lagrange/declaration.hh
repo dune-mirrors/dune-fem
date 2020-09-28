@@ -12,11 +12,11 @@ namespace Dune
     // LagrangeDiscreteFunctionSpace
     // -----------------------------
 
-    template< class FunctionSpace, class GridPart, int order, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int order, class Storage >
     class LagrangeDiscreteFunctionSpace;
 
     // 6 is the maximal polynomial order that can be selected with DynamicLagrangeDiscreteFunctionSpace
-    template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
     using DynamicLagrangeDiscreteFunctionSpace = LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, -6, Storage >;
 
   } // namespace Fem

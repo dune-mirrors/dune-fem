@@ -21,7 +21,7 @@ namespace Dune
     // DefaultLocalRestrictProlong
     // ---------------------------
 
-    template< class FS, class GP, int ord, template< class > class S >
+    template< class FS, class GP, int ord, class S >
     class DefaultLocalRestrictProlong< Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
     : public PLagrangeLocalRestrictProlong< typename GP::GridType, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
     {
@@ -32,7 +32,7 @@ namespace Dune
     };
 
 
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, class StorageImp >
     class DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false > // invert mass matrix or not
     {
@@ -46,7 +46,7 @@ namespace Dune
       {}
     };
 
-    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, class StorageImp >
     class DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {

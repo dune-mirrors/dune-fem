@@ -76,7 +76,7 @@ namespace Dune
     // LocalAverageImpl for DiscontinuousGalerkinSpace
     // -----------------------------------------------
 
-    template< class LocalFunction, class GridPart, class FunctionSpace, int order, template< class > class Storage >
+    template< class LocalFunction, class GridPart, class FunctionSpace, int order, class Storage >
     class LocalAverageImpl< LocalFunction, GridPart, DiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >
     {
       static const bool cartesian = GridPartCapabilities::isCartesian< GridPart >::v;
@@ -118,7 +118,7 @@ namespace Dune
     // LocalAverageImpl for FiniteVolumeSpace
     // --------------------------------------
 
-    template< class LocalFunction, class GridPart, class FunctionSpace, int codim, template< class > class Storage >
+    template< class LocalFunction, class GridPart, class FunctionSpace, int codim, class Storage >
     class LocalAverageImpl< LocalFunction, GridPart, FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     {
     public:

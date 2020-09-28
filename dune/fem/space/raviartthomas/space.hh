@@ -208,7 +208,7 @@ namespace Dune
     // RaviartThomasSpace
     // ------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     using RaviartThomasSpace
         = LocalFiniteElementSpace< RaviartThomasLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >, FunctionSpace, Storage >;
 

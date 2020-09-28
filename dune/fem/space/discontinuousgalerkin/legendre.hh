@@ -30,16 +30,16 @@ namespace Dune
   namespace Fem
   {
     // Forward declaration
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     class LegendreDiscontinuousGalerkinSpace;
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     class HierarchicLegendreDiscontinuousGalerkinSpace;
 
     // LegendreDiscontinuousGalerkinSpaceTraits
     // ----------------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage, bool hierarchicalOrdering  >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage, bool hierarchicalOrdering  >
     struct LegendreDiscontinuousGalerkinSpaceTraits
     {
       // select space implementation depending on basis function ordering
@@ -98,7 +98,7 @@ namespace Dune
     // LegendreDiscontinuousGalerkinSpaceBase
     // --------------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage, bool hierarchicalOrdering >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage, bool hierarchicalOrdering >
     class LegendreDiscontinuousGalerkinSpaceBase
     : public GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > >
     {
@@ -136,7 +136,7 @@ namespace Dune
     // LegendreDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class LegendreDiscontinuousGalerkinSpace
     : public LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, false >
     {
@@ -165,44 +165,44 @@ namespace Dune
     namespace Capabilities
     {
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasFixedPolynomialOrder< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasStaticPolynomialOrder< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
         static const int order = polOrder;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isContinuous< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isLocalized< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isAdaptive< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct threadSafe< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct viewThreadSafe< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;

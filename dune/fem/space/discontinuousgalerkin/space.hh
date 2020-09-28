@@ -32,7 +32,7 @@ namespace Dune
     // DiscontinuousGalerkinSpaceTraits
     // --------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     struct DiscontinuousGalerkinSpaceTraits
     {
       typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
@@ -90,7 +90,7 @@ namespace Dune
     // DiscontinuousGalerkinSpace
     // --------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     class DiscontinuousGalerkinSpace
     : public GenericDiscontinuousGalerkinSpace< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
@@ -135,50 +135,50 @@ namespace Dune
     namespace Capabilities
     {
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasFixedPolynomialOrder< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasStaticPolynomialOrder< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
         static const int order = polOrder;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isContinuous< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isLocalized< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isAdaptive< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct threadSafe< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct viewThreadSafe< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isHierarchic< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;

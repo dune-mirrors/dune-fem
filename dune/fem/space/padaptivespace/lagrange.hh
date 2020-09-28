@@ -39,7 +39,7 @@ namespace Dune
     // PAdaptiveLagrangeSpaceTraits
     // ----------------------------
 
-    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, class Storage >
     struct PAdaptiveLagrangeSpaceTraits
     {
       static_assert((maxPolOrder > 0), "LagrangeSpace only defined for maxPolOrder > 0" );
@@ -112,7 +112,7 @@ namespace Dune
      *
      *  \brief   Lagrange discrete function space
      */
-    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, class Storage = CachingStorage >
     class PAdaptiveLagrangeSpace
     : public GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, maxPolOrder, Storage > >
     {

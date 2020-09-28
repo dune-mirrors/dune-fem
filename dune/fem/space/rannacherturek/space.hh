@@ -51,7 +51,7 @@ namespace Dune
     // RannacherTurekDiscreteFunctionSpaceTraits
     // -----------------------------------------
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, class Storage >
     struct RannacherTurekDiscreteFunctionSpaceTraits
     {
       static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
@@ -125,7 +125,7 @@ namespace Dune
      *
      *  \todo please doc me
      */
-    template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
     struct RannacherTurekDiscreteFunctionSpace
     : public DiscreteFunctionSpaceDefault< RannacherTurekDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, Storage > >
     {
@@ -254,7 +254,7 @@ namespace Dune
     // DifferentDiscreteFunctionSpace
     // ------------------------------
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage, class NewFunctionSpace >
+    template< class FunctionSpace, class GridPart, class Storage, class NewFunctionSpace >
     struct DifferentDiscreteFunctionSpace< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage >, NewFunctionSpace >
     {
       typedef RannacherTurekDiscreteFunctionSpace< NewFunctionSpace, GridPart, Storage > Type;

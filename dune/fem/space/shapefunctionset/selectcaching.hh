@@ -13,19 +13,16 @@ namespace Dune
     // External Forward Declarations
     // -----------------------------
 
-    template< class >
     class CachingStorage {};
 
-    template< class >
     class SimpleStorage {};
 
-    template< class >
     class CodegenStorage {};
 
     // SelectCachingShapeFunctionSet
     // -----------------------------
 
-    template< class ShapeFunctionSet, template< class > class Storage >
+    template< class ShapeFunctionSet, class Storage >
     class SelectCachingShapeFunctionSet;
 
     template< class ShapeFunctionSet >

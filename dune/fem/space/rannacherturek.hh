@@ -74,7 +74,7 @@ namespace Dune
       const GridPartType &gridPart_;
     };
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
     using RannacherTurekSpace
     = LocalFiniteElementSpace<
     RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage >;

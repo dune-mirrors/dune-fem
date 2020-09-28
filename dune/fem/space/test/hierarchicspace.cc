@@ -105,7 +105,7 @@ template <class DiscreteSpace,
 struct ToNewPolorder;
 
 template <class FunctionSpace, class GridPart, int polOrder,
-          template <class,class,int, template <class> class> class DiscreteSpace,
+          template <class,class,int,class> class DiscreteSpace,
           int newOrder>
 struct ToNewPolorder< DiscreteSpace< FunctionSpace, GridPart, polOrder, Dune::Fem::CachingStorage>, newOrder >
 {
