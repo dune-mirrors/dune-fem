@@ -77,7 +77,7 @@ class Sampler:
         if self.pointSampler is None:
             self.pointSampler = algorithm.load('sample', path(__file__)+'sample.hh', self.gridFunction, x0)
 
-        v = self.pointSampler( gridFunction, x0 )
+        v = self.pointSampler(self.gridFunction, x0 )
         return v
 
 def lineSample(gridFunction,x0,x1,N):
