@@ -556,9 +556,12 @@ namespace Dune
           assert(volQuad.nop()*dimRange == numDofs);
 
           int l = 0;
-          for( int qt = 0; qt < volQuad.nop(); ++qt )
+          const int nop = volQuad.nop();
+          for( int qt = 0; qt < nop; ++qt )
             for (int r = 0; r < dimRange; ++r,++l )
+            {
               lf[ l ] *= diagonal[ l ] / geo.integrationElement( volQuad.point(qt) );
+            }
         }
         else
         {
