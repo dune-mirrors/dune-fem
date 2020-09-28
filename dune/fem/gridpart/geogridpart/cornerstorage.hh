@@ -19,7 +19,7 @@ namespace Dune
 
     class IsDiscreteFunction;
 
-    template< class, class, int, template< class > class >
+    template< class, class, int, class >
     class LagrangeDiscreteFunctionSpace;
 
 
@@ -30,7 +30,7 @@ namespace Dune
     template< int codim, class CoordFunction, class DFSpace = typename CoordFunction::DiscreteFunctionSpaceType >
     class GeoDiscreteCoordFunctionCaller;
 
-    template< int codim, class CoordFunction, class FunctionSpace, class GridPart, template< class > class Storage >
+    template< int codim, class CoordFunction, class FunctionSpace, class GridPart, class Storage >
     class GeoDiscreteCoordFunctionCaller< codim, CoordFunction, LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > >
     {
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > DFSpace;

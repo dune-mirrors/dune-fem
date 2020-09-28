@@ -192,7 +192,7 @@ namespace Dune
     // SelectCachingShapeFunctionSets
     // ------------------------------
 
-    template< class GridPart, class ShapeFunctionSet, template< class > class Storage >
+    template< class GridPart, class ShapeFunctionSet, class Storage >
     class SelectCachingShapeFunctionSets
     {
       typedef SelectCachingShapeFunctionSets< GridPart, ShapeFunctionSet, Storage > ThisType;

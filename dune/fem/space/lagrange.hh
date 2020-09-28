@@ -128,25 +128,25 @@ namespace Dune
 
     template< class FunctionSpace, class GridPart,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
-              template< class > class Storage = CachingStorage >
+              class Storage = CachingStorage >
     using LagrangeSpace = LocalFiniteElementSpace<
             LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart, unsigned int order,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
-              template< class > class Storage = CachingStorage >
+              class Storage = CachingStorage >
     using FixedOrderLagrangeSpace = LocalFiniteElementSpace<
             FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
-              template< class > class Storage = CachingStorage >
+              class Storage = CachingStorage >
     using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
             LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart, unsigned int order,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
-              template< class > class Storage = CachingStorage >
+              class Storage = CachingStorage >
     using FixedOrderDGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
             FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,
             FunctionSpace, Storage >;
@@ -154,7 +154,7 @@ namespace Dune
     // LagrangeSpace
     // -------------
     template< class FunctionSpace, class GridPart,
-              template< class > class Storage = CachingStorage >
+              class Storage = CachingStorage >
     using LagrangeSpace = DynamicLagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, Storage >;
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS

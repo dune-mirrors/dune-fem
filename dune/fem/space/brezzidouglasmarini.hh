@@ -169,7 +169,7 @@ namespace Dune
     // BrezziDouglasMariniSpace
     // ------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     using BrezziDouglasMariniSpace
             = LocalFiniteElementSpace< BrezziDouglasMariniLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >,
                                        FunctionSpace, Storage >;

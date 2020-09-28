@@ -17,7 +17,7 @@ namespace Dune
     // DefaultLocalRestrictProlong
     // ---------------------------
 
-    template< class FunctionSpaceType, class GridPartType, int maxPolOrder, template< class > class StorageType >
+    template< class FunctionSpaceType, class GridPartType, int maxPolOrder, class StorageType >
     class DefaultLocalRestrictProlong< LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, maxPolOrder, StorageType > >
     : public LagrangeLocalRestrictProlong< typename GridPartType::GridType,
                                            // extract maxPolynomialOrder from space because maxPolOrder could be -1

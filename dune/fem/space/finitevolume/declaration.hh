@@ -10,7 +10,7 @@ namespace Dune
     // FiniteVolumeSpace
     // -----------------
 
-    template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int codim, class Storage >
     class FiniteVolumeSpace;
 
   } // namespace Fem

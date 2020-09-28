@@ -27,7 +27,7 @@ namespace Dune
     // FiniteVolumeSpaceTraits
     // -----------------------
 
-    template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int codim, class Storage >
     struct FiniteVolumeSpaceTraits
     {
       typedef FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > DiscreteFunctionSpaceType;
@@ -57,7 +57,7 @@ namespace Dune
     // FiniteVolumeSpace
     // -----------------
 
-    template< class FunctionSpace, class GridPart, int codim = 0, template< class > class Storage = SimpleStorage >
+    template< class FunctionSpace, class GridPart, int codim = 0, class Storage = SimpleStorage >
     class FiniteVolumeSpace
     : public GenericDiscontinuousGalerkinSpace< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, codim, Storage > >
     {
@@ -105,7 +105,7 @@ namespace Dune
     // DefaultLocalRestrictProlong for FiniteVolumeSpace
     // -------------------------------------------------
 
-    template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int codim, class Storage >
     class DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     : public ConstantLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     {
@@ -119,50 +119,50 @@ namespace Dune
     namespace Capabilities
     {
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct hasFixedPolynomialOrder< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct hasStaticPolynomialOrder< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = true;
         static const int order = 0;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct isContinuous< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct isHierarchic< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct isLocalized< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = false; // there is no method 'shapeFunctionSet( const EntityType & )'
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct isAdaptive< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct threadSafe< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int codim, class Storage >
       struct viewThreadSafe< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
       {
         static const bool v = true;

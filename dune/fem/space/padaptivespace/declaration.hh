@@ -10,14 +10,14 @@ namespace Dune
     // PAdaptiveDGSpace
     // ----------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storagee >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storagee >
     class PAdaptiveDGSpace;
 
 
     // PAdaptiveLagrangeSpace
     // ----------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class PAdaptiveLagrangeSpace;
 
   } // namespace Fem

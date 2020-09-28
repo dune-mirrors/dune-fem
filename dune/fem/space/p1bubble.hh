@@ -293,13 +293,13 @@ namespace Dune
       std::size_t size () const { return 5; }
     };
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, class Storage >
     class BubbleElementSpace;
 
     // BubbleElementSpaceTraits
     // ----------------------
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, class Storage >
     struct BubbleElementSpaceTraits
     {
       typedef BubbleElementSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
@@ -354,7 +354,7 @@ namespace Dune
     // ----------------
 
     //! [Class definition for new space]
-    template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
     class BubbleElementSpace
     : public DiscreteFunctionSpaceDefault< BubbleElementSpaceTraits< FunctionSpace, GridPart, Storage > >
     //! [Class definition for new space]
@@ -452,14 +452,14 @@ namespace Dune
 
     template< class FunctionSpace,
               class GridPart,
-              template<class> class Storage,
+              class Storage,
               class NewFunctionSpace >
     struct DifferentDiscreteFunctionSpace< BubbleElementSpace < FunctionSpace, GridPart, Storage >, NewFunctionSpace >
     {
       typedef BubbleElementSpace< NewFunctionSpace, GridPart, Storage > Type;
     };
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, class Storage >
     class DefaultLocalRestrictProlong < BubbleElementSpace< FunctionSpace, GridPart, Storage > >
     : public EmptyLocalRestrictProlong< BubbleElementSpace< FunctionSpace, GridPart, Storage > >
     {

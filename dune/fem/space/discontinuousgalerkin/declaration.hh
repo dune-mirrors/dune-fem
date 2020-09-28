@@ -11,28 +11,28 @@ namespace Dune
     // DiscontinuousGalerkinSpace
     // --------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class DiscontinuousGalerkinSpace;
 
 
     // LagrangeDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class LagrangeDiscontinuousGalerkinSpace;
 
 
     // LegendreDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class LegendreDiscontinuousGalerkinSpace;
 
 
     // HierarchicLegendreDiscontinuousGalerkinSpace
     // ----------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     class HierarchicLegendreDiscontinuousGalerkinSpace;
 
   } // namespace Fem

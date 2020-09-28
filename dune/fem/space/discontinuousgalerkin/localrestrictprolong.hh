@@ -165,7 +165,7 @@ namespace Dune
     // DefaultLocalRestrictProlong for DiscontinuousGalerkinSpace
     // ----------------------------------------------------------
 
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, class StorageImp >
     class DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
@@ -177,7 +177,7 @@ namespace Dune
       {}
     };
 
-    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, class StorageImp >
     class DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
@@ -191,7 +191,7 @@ namespace Dune
     // DefaultLocalRestrictProlong for LegendreDiscontinuousGalerkinSpace
     // ------------------------------------------------------------------
 
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, class StorageImp >
     class DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
@@ -203,7 +203,7 @@ namespace Dune
       {}
     };
 
-    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, class StorageImp >
     class DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
@@ -217,7 +217,7 @@ namespace Dune
     // DefaultLocalRestrictProlong for HierarchicLegendreDiscontinuousGalerkinSpace
     // ----------------------------------------------------------------------------
 
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, class StorageImp >
     class DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
@@ -229,7 +229,7 @@ namespace Dune
       {}
     };
 
-    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, class StorageImp >
     class DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
@@ -243,7 +243,7 @@ namespace Dune
     // DefaultLocalRestrictProlong for LagrangeDiscontinuousGalerkinSpace
     // ------------------------------------------------------------------
 
-    template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, int polOrd, class StorageImp >
     class DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >
     {
@@ -254,7 +254,7 @@ namespace Dune
       {}
     };
 
-    template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
+    template< class FunctionSpaceImp, class GridPartImp, class StorageImp >
     class DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {

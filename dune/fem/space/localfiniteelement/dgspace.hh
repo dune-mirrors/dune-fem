@@ -34,7 +34,7 @@ namespace Dune
 
     // DiscontinuousLocalFiniteElementSpaceTraits
     // ------------------------------------------
-    template< class LFEMap, class FunctionSpace, template< class > class Storage,
+    template< class LFEMap, class FunctionSpace, class Storage,
               unsigned int scalarBlockSize >
     struct DiscontinuousLocalFiniteElementSpaceTraits
     {
@@ -121,7 +121,7 @@ namespace Dune
     template <class LFEMap>
     using FixedPolyOrder = FixedPolyOrder_<LFEMap,std::true_type>;
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, class Storage >
     class DiscontinuousLocalFiniteElementSpace
       : public DiscreteFunctionSpaceDefault<
           DiscontinuousLocalFiniteElementSpaceTraits< LFEMap,
@@ -298,14 +298,13 @@ namespace Dune
       std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
     };
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage, int newRange >
+    template< class LFEMap, class FunctionSpace, class Storage, int newRange >
     struct ToNewDimRangeFunctionSpace<
       DiscontinuousLocalFiniteElementSpace<LFEMap, FunctionSpace, Storage>, newRange>
     {
       typedef DiscontinuousLocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
     };
-    template <class LFEMap, class FunctionSpace,
-              template <class> class Storage,
+    template <class LFEMap, class FunctionSpace, class Storage,
               class NewFunctionSpace>
     struct DifferentDiscreteFunctionSpace<
         DiscontinuousLocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>

@@ -39,7 +39,7 @@ namespace Dune
     // PAdaptiveDGSpaceTraits
     // ----------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage >
     struct PAdaptiveDGSpaceTraits
     : public PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage >
     {
@@ -70,7 +70,7 @@ namespace Dune
      *
      *  \brief   adaptive DG discrete function space
      */
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     class PAdaptiveDGSpace
     : public GenericDiscreteFunctionSpace< PAdaptiveDGSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {

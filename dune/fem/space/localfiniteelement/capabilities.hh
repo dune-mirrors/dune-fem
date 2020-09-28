@@ -14,10 +14,10 @@ namespace Dune
     // External Forward Declarations
     // -----------------------------
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage = CachingStorage >
+    template< class LFEMap, class FunctionSpace, class Storage = CachingStorage >
     class LocalFiniteElementSpace;
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage = CachingStorage >
+    template< class LFEMap, class FunctionSpace, class Storage = CachingStorage >
     class DiscontinuousLocalFiniteElementSpace;
 
 
@@ -25,27 +25,27 @@ namespace Dune
     namespace Capabilities
     {
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct hasFixedPolynomialOrder< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct hasFixedPolynomialOrder< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct hasStaticPolynomialOrder< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
         static const int order = 111;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct hasStaticPolynomialOrder< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
@@ -53,65 +53,65 @@ namespace Dune
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isContinuous< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isContinuous< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isLocalized< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isLocalized< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = true;
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isAdaptive< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct isAdaptive< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct threadSafe< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct threadSafe< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct viewThreadSafe< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
       };
 
-      template< class LFEMap, class FunctionSpace, template< class > class Storage >
+      template< class LFEMap, class FunctionSpace, class Storage >
       struct viewThreadSafe< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
