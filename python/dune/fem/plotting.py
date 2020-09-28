@@ -55,43 +55,39 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
             maxData = amax(data)
             if clim == None:
                 clim = [minData, maxData]
+            # having extend not 'both' does not seem to work (needs fixing)...
+            if clim[0] > minData and clim[1] < maxData:
+                extend = 'both'
+            elif clim[0] > minData:
+                extend = 'min'
+            elif clim[1] < maxData:
+                extend = 'max'
+            else:
+                extend = 'neither'
+            norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
             levels = linspace(clim[0], clim[1], 256, endpoint=True)
             if triplot == True:
                 pyplot.triplot(triangulation, antialiased=True,
-                        linewidth=0.2, color='black',
-                        )
+                        linewidth=0.2, color='black')
             else:
                 try:
                     pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels,
-                            **logNorm,extend="both")
+                            **logNorm,extend=extend)
                 except:
                     pyplot.tricontourf(triangulation, data, cmap=cmap,
-                            **logNorm,extend="both")
-            if colorbar is not None:
-                # having extend not 'both' does not seem to work (needs fixing)...
-                if clim[0] > minData and clim[1] < maxData:
-                    extend = 'both'
-                elif clim[0] > minData:
-                    extend = 'min'
-                elif clim[1] < maxData:
-                    extend = 'max'
-                else:
-                    extend = 'neither'
-                v = linspace(clim[0], clim[1], 10, endpoint=True)
-                norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
-                if not isinstance(colorbar,dict):
-                    cbar = {}
-                    cbar.setdefault("orientation",colorbar)
-                else:
-                    cbar = colorbar
-                    cbar.setdefault("orientation","vertical")
-                cbar.setdefault("shrink",1.0)
-                cbar.setdefault("extend",extend)
-                cbar.setdefault("norm",norm)
-                cbar.setdefault("ticks",v)
-                cbar = pyplot.colorbar(**cbar)
-                # cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend=extend, norm=norm, ticks=v)
-                cbar.ax.tick_params(labelsize=10)
+                            **logNorm,extend="both",norm=norm)
+                if colorbar is not None:
+                    v = linspace(clim[0], clim[1], 10, endpoint=True)
+                    if not isinstance(colorbar,dict):
+                        cbar = {}
+                        cbar.setdefault("orientation",colorbar)
+                    else:
+                        cbar = colorbar
+                        cbar.setdefault("orientation","vertical")
+                    cbar.setdefault("shrink",1.0)
+                    cbar.setdefault("ticks",v)
+                    cbar = pyplot.colorbar(**cbar)
+                    cbar.ax.tick_params(labelsize=10)
         if contours is not None:
             pyplot.tricontour(triangulation, data, levels=contours,
                     colors=contourColor, linewidths=contourWidth)
