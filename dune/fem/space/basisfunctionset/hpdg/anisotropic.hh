@@ -39,7 +39,7 @@ namespace Dune
       // Internal forward declaration
       // ----------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching = true >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class AnisotropicBasisFunctionSets;
 
 
@@ -49,11 +49,11 @@ namespace Dune
       // LegendreShapeFunctionSetTuple
       // -----------------------------
 
-      template< class FunctionSpace, int order, bool caching >
+      template< class FunctionSpace, int order, class Storage >
       class LegendreShapeFunctionSetTuple
       {
         // false == no hierarchical ordering
-        using FactoryType = LegendreShapeFunctionSets< typename Dune::Fem::ToNewDimDomainFunctionSpace< FunctionSpace, 1 >::Type, order, false, caching >;
+        using FactoryType = LegendreShapeFunctionSets< typename Dune::Fem::ToNewDimDomainFunctionSpace< FunctionSpace, 1 >::Type, order, false, Storage >;
         using ElementType = Dune::Fem::ShapeFunctionSetProxy< typename FactoryType::ShapeFunctionSetType >;
 
         template< int i, class MultiIndex >
@@ -84,11 +84,11 @@ namespace Dune
       // AnisotropicShapeFunctionSet
       // ---------------------------
 
-      template< class FunctionSpace, int order, bool caching >
+      template< class FunctionSpace, int order, class Storage >
       struct AnisotropicShapeFunctionSet
-      : public Dune::Fem::TensorProductShapeFunctionSet< FunctionSpace, typename LegendreShapeFunctionSetTuple< FunctionSpace, order, caching >::Type >
+      : public Dune::Fem::TensorProductShapeFunctionSet< FunctionSpace, typename LegendreShapeFunctionSetTuple< FunctionSpace, order, Storage >::Type >
       {
-        using BaseType = Dune::Fem::TensorProductShapeFunctionSet< FunctionSpace, typename LegendreShapeFunctionSetTuple< FunctionSpace, order, caching >::Type >;
+        using BaseType = Dune::Fem::TensorProductShapeFunctionSet< FunctionSpace, typename LegendreShapeFunctionSetTuple< FunctionSpace, order, Storage >::Type >;
 
       public:
         AnisotropicShapeFunctionSet ()
@@ -97,7 +97,7 @@ namespace Dune
 
         template< class MultiIndex >
         explicit AnisotropicShapeFunctionSet ( const MultiIndex &multiIndex )
-          : BaseType( LegendreShapeFunctionSetTuple< FunctionSpace, order, caching >::get( multiIndex ) )
+          : BaseType( LegendreShapeFunctionSetTuple< FunctionSpace, order, Storage >::get( multiIndex ) )
         {}
 
       private:
@@ -112,11 +112,11 @@ namespace Dune
       // AnisotropicBasisFunctionSetsTraits
       // ----------------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class AnisotropicBasisFunctionSetsTraits
       {
       public:
-        using ImplementationType = AnisotropicBasisFunctionSets< FunctionSpace, GridPart, maxOrder, caching >;
+        using ImplementationType = AnisotropicBasisFunctionSets< FunctionSpace, GridPart, maxOrder, Storage >;
 
         using GridPartType = GridPart;
         using EntityType = typename GridPartType::template Codim< 0 >::EntityType;
@@ -125,7 +125,7 @@ namespace Dune
         using KeyType = Dune::FieldVector< int, FunctionSpace::dimDomain >;
 
         using ScalarFunctionSpaceType = typename Dune::Fem::ToNewDimRangeFunctionSpace< FunctionSpace, 1 >::Type;
-        using ScalarShapeFunctionSetType = AnisotropicShapeFunctionSet< ScalarFunctionSpaceType, maxOrder, caching >;
+        using ScalarShapeFunctionSetType = AnisotropicShapeFunctionSet< ScalarFunctionSpaceType, maxOrder, Storage >;
         using ShapeFunctionSetType = Dune::Fem::VectorialShapeFunctionSet< ScalarShapeFunctionSetType, typename FunctionSpace::RangeType >;
 
         using BasisFunctionSetType = DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType >;
@@ -149,15 +149,15 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam maxOrder  maximum order
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  enable/disable Storage of quadratures
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Anisotropic
        */
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class AnisotropicBasisFunctionSets
-        : public BasisFunctionSets< AnisotropicBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >
+        : public BasisFunctionSets< AnisotropicBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, Storage > >
       {
-        using BaseType = BasisFunctionSets< AnisotropicBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >;
+        using BaseType = BasisFunctionSets< AnisotropicBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, Storage > >;
 
       public:
         /** \copydoc Dune::Fem::BasisFunctionSets::GridPartType */

@@ -12,6 +12,7 @@
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
 
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/basisfunctionset/hpdg/anisotropic.hh>
 
 #include "blockmapper.hh"
@@ -29,7 +30,7 @@ namespace Dune
       // Internal forward declaration
       // ----------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching = true >
+      template< class FunctionSpace, class GridPart, int order, class Storage = Fem::CachingStorage >
       class AnisotropicDiscontinuousGalerkinSpace;
 
 
@@ -39,7 +40,7 @@ namespace Dune
       // AnisotropicDiscontinuousGalerkinSpaceTraits
       // -------------------------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       struct AnisotropicDiscontinuousGalerkinSpaceTraits
       {
         using DiscreteFunctionSpaceType = hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order >;
@@ -48,7 +49,7 @@ namespace Dune
 
         using GridPartType = GridPart;
 
-        using BasisFunctionSetsType = hpDG::AnisotropicBasisFunctionSets< FunctionSpaceType, GridPartType, order, caching >;
+        using BasisFunctionSetsType = hpDG::AnisotropicBasisFunctionSets< FunctionSpaceType, GridPartType, order, Storage >;
         using BasisFunctionSetType = typename BasisFunctionSetsType::BasisFunctionSetType;
 
         static const int codimension = BasisFunctionSetType::EntityType::codimension;
@@ -78,15 +79,15 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam order  maximum polynomial order per coordinate
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  enable/disable Storage of quadratures
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Anisotropic
        */
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       class AnisotropicDiscontinuousGalerkinSpace
-      : public hpDG::DiscontinuousGalerkinSpace< AnisotropicDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >
+      : public hpDG::DiscontinuousGalerkinSpace< AnisotropicDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, Storage > >
       {
-        using BaseType = hpDG::DiscontinuousGalerkinSpace< AnisotropicDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >;
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< AnisotropicDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, Storage > >;
 
       public:
         using GridPartType = typename BaseType::GridPartType;
@@ -127,11 +128,11 @@ namespace Dune
     // DefaultLocalRestrictProlong
     // ---------------------------
 
-    template< class FunctionSpace, class GridPart, int order, bool caching >
-    class DefaultLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
-    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >
+    template< class FunctionSpace, class GridPart, int order, class Storage >
+    class DefaultLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >
     {
-      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >;
+      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >;
 
     public:
       explicit DefaultLocalRestrictProlong ( const typename BaseType::DiscreteFunctionSpaceType &space )
