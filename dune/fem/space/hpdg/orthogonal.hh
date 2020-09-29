@@ -11,6 +11,7 @@
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
 
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/basisfunctionset/hpdg/orthogonal.hh>
 
 #include "blockmapper.hh"
@@ -28,7 +29,7 @@ namespace Dune
       // Internal forward declaration
       // ----------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching = true >
+      template< class FunctionSpace, class GridPart, int order, class Storage = Fem::CachingStorage >
       class OrthogonalDiscontinuousGalerkinSpace;
 
 
@@ -38,16 +39,16 @@ namespace Dune
       // OrthogonalDiscontinuousGalerkinSpaceTraits
       // ------------------------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       struct OrthogonalDiscontinuousGalerkinSpaceTraits
       {
-        using DiscreteFunctionSpaceType = hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >;
+        using DiscreteFunctionSpaceType = hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >;
 
         using FunctionSpaceType = FunctionSpace;
 
         using GridPartType = GridPart;
 
-        using BasisFunctionSetsType = hpDG::OrthogonalBasisFunctionSets< FunctionSpaceType, GridPartType, order, caching >;
+        using BasisFunctionSetsType = hpDG::OrthogonalBasisFunctionSets< FunctionSpaceType, GridPartType, order, Storage >;
         using BasisFunctionSetType = typename BasisFunctionSetsType::BasisFunctionSetType;
 
         static const int codimension = BasisFunctionSetType::EntityType::codimension;
@@ -78,15 +79,15 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam order  maximum polynomial order per coordinate
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  for certain caching features
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Orthogonal
        */
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       class OrthogonalDiscontinuousGalerkinSpace
-        : public hpDG::DiscontinuousGalerkinSpace< OrthogonalDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >
+        : public hpDG::DiscontinuousGalerkinSpace< OrthogonalDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, Storage > >
       {
-        using BaseType = hpDG::DiscontinuousGalerkinSpace< OrthogonalDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >;
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< OrthogonalDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, Storage > >;
 
       public:
 
@@ -115,27 +116,22 @@ namespace Dune
 
      } // namespace hpDG
 
-#if 0
    /** \brief Local Mass Matrix for hierarchic Legendre space */
     template <class FunctionSpaceImp,
               class GridPartImp,
               int polOrd,
-              bool caching,
+              class Storage,
               class VolumeQuadratureImp>
     class LocalMassMatrix<
-      hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, caching >, VolumeQuadratureImp >
+      hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, Storage >, VolumeQuadratureImp >
       : public LocalMassMatrixImplementationDgOrthoNormal<
-          hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, caching >, VolumeQuadratureImp >
+          hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, Storage >, VolumeQuadratureImp >
     {
-      typedef hpDG::OrthogonalDiscontinuousGalerkinSpace<  FunctionSpaceImp, GridPartImp, polOrd, caching > DiscreteFunctionSpaceImp;
+      typedef hpDG::OrthogonalDiscontinuousGalerkinSpace<  FunctionSpaceImp, GridPartImp, polOrd, Storage > DiscreteFunctionSpaceImp;
       typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
     public:
-      LocalMassMatrix( const DiscreteFunctionSpaceImp& spc, const int volQuadOrd = -1 )
-        : BaseType( spc, volQuadOrd )
-      {}
+      using BaseType::BaseType;
     };
-#endif
-
 
 
 #ifndef DOXYGEN
@@ -143,11 +139,11 @@ namespace Dune
      // DefaultLocalRestrictProlong
      // ---------------------------
 
-    template< class FunctionSpace, class GridPart, int order, bool caching >
-    class DefaultLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
-      : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >
+    template< class FunctionSpace, class GridPart, int order, class Storage >
+    class DefaultLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >
+      : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >
     {
-      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >;
+      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >;
 
     public:
       explicit DefaultLocalRestrictProlong ( const typename BaseType::DiscreteFunctionSpaceType &space )
@@ -165,33 +161,33 @@ namespace Dune
       //  hpDG::OrthogonalDiscontinuousGalerkinSpace
       ////////////////////////////////////////////////////////////////////
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct hasStaticPolynomialOrder< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct hasStaticPolynomialOrder< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
         static const int order = polOrder;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isLocalized< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isLocalized< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isAdaptive< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isAdaptive< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct viewThreadSafe< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct viewThreadSafe< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isHierarchic< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isHierarchic< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };

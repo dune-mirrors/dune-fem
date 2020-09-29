@@ -38,7 +38,7 @@ namespace Dune
       // Internal forward declarations
       // -----------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching = true >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class OrthogonalBasisFunctionSets;
 
 
@@ -48,18 +48,15 @@ namespace Dune
       // OrthonormalShapeFunctionSets
       // ----------------------------
 
-      template< class FunctionSpace, int order, bool caching >
+      template< class FunctionSpace, int order, class Storage >
       class OrthonormalShapeFunctionSets
       {
-        using ThisType = OrthonormalShapeFunctionSets< FunctionSpace, order, caching >;
+        using ThisType = OrthonormalShapeFunctionSets< FunctionSpace, order, Storage >;
 
       public:
         /** \brief type of shape function set */
-        using ShapeFunctionSetType
-          = typename std::conditional< caching,
-                Dune::Fem::SelectCachingShapeFunctionSet< OrthonormalShapeFunctionSet< FunctionSpace >, Dune::Fem::CachingStorage >,
-                Dune::Fem::SelectCachingShapeFunctionSet< OrthonormalShapeFunctionSet< FunctionSpace >, Dune::Fem::SimpleStorage >
-              >::type;
+        using ShapeFunctionSetType =
+            Dune::Fem::SelectCachingShapeFunctionSet< OrthonormalShapeFunctionSet< FunctionSpace >, Storage >;
 
       private:
         static const int dimension = ShapeFunctionSetType::DomainType::dimension;
@@ -120,11 +117,11 @@ namespace Dune
       // OrthogonalBasisFunctionSetsTraits
       // ---------------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class OrthogonalBasisFunctionSetsTraits
       {
       public:
-        using ImplementationType = OrthogonalBasisFunctionSets< FunctionSpace, GridPart, maxOrder, caching >;
+        using ImplementationType = OrthogonalBasisFunctionSets< FunctionSpace, GridPart, maxOrder, Storage >;
 
         using GridPartType = GridPart;
         using Types = const std::vector< GeometryType > &;
@@ -134,7 +131,7 @@ namespace Dune
 
         using EntityType = typename GridPartType::template Codim< 0 >::EntityType;
 
-        using ShapeFunctionSetsType = OrthonormalShapeFunctionSets< Dune::Fem::FunctionSpace< typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType, EntityType::mydimension, 1 >, maxOrder, caching >;
+        using ShapeFunctionSetsType = OrthonormalShapeFunctionSets< Dune::Fem::FunctionSpace< typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType, EntityType::mydimension, 1 >, maxOrder, Storage >;
         using ShapeFunctionSetType = Dune::Fem::VectorialShapeFunctionSet< Dune::Fem::ShapeFunctionSetProxy< typename ShapeFunctionSetsType::ShapeFunctionSetType >, typename FunctionSpace::RangeType >;
 
         using BasisFunctionSetType = DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType >;
@@ -154,16 +151,16 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam maxOrder  maximum order
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  enable/disable Storage of quadratures
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Orthogonal
        */
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, class Storage >
       class OrthogonalBasisFunctionSets
-        : public BasisFunctionSets< OrthogonalBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >
+        : public BasisFunctionSets< OrthogonalBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, Storage > >
       {
-        using ThisType = OrthogonalBasisFunctionSets< FunctionSpace, GridPart, maxOrder, caching >;
-        using BaseType = BasisFunctionSets< OrthogonalBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >;
+        using ThisType = OrthogonalBasisFunctionSets< FunctionSpace, GridPart, maxOrder, Storage >;
+        using BaseType = BasisFunctionSets< OrthogonalBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, Storage > >;
 
       public:
         /** \copydoc Dune::Fem::BasisFunctionSets::GridPartType */
