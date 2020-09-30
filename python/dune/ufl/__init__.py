@@ -215,12 +215,12 @@ class Constant(ufl.Coefficient):
                 setattr(m,self.name,v)
             else:
                 m.setConstant(self,v)
-            # m(v)
     def registerModel(self,model):
         self.models += [model]
-        # self.models += [
-        #   lambda x: getattr(model.__class__,prop).__set__(model,x)
-        # ]
+        if hasattr(model,self.name):
+            setattr(model,self.name,self._value)
+        else:
+            model.setConstant(self,self._value)
     # def __eq__(self, other):
     #     return self._value == other._value
     # def __ne__(self, other):
