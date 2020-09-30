@@ -644,7 +644,7 @@ class ModelClass():
         constructor = Constructor(args=args, init=init)
         for idx, (cppType, value) in enumerate(zip(self.constantTypes, self.constantValues)):
             constructor.append(assign(get(idx)(constants_),
-                make_shared(cppType)(cppType+"("+value+")")))
+                make_shared(cppType)(cppType+"(0)")))
         for idx, (name, cppType) in enumerate(zip(self._parameterNames, self.constantTypes)):
             if name is not None:
                 constructor.append(assign(dereference(get(idx)(constants_)), UnformattedExpression('auto', arg_param.name + '.getValue< ' + cppType + ' >( "' + name + '" )', uses=[arg_param])))
