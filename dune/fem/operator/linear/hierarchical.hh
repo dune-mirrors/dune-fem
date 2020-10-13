@@ -109,10 +109,10 @@ namespace Dune
           };
       }
 
-    protected:
-      MatrixType &matrix () { return matrix_; }
 
     public:
+      MatrixType &matrix () const { return matrix_; }
+
       HierarchicalLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
         : domainSpace_( domainSpace ), rangeSpace_( rangeSpace )
       {}
