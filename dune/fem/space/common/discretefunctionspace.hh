@@ -135,8 +135,8 @@ namespace Dune
     template <class FunctionSpaceImp,
               class GridPartImp,
               int polOrd,
-              template <class> class StorageImp,
-              template <class,class,int,template <class> class> class DiscreteFunctionSpaceImp,
+              class StorageImp,
+              template <class,class,int,class> class DiscreteFunctionSpaceImp,
               class NewFunctionSpace>
     struct DifferentDiscreteFunctionSpace<
         DiscreteFunctionSpaceImp<FunctionSpaceImp,GridPartImp,polOrd,StorageImp>,

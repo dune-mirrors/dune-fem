@@ -52,9 +52,12 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
     protected:
-      typedef typename Traits :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef CachingQuadrature<GridPartType, EntityType::codimension> VolumeQuadratureType;
+
     public:
+      /** type of discrete function space implementation */
+      typedef typename Traits :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, VolumeQuadratureType > LocalMassMatrixType;
       typedef std::vector< typename BaseType::RangeType > VectorType;
       typedef std::pair< LocalMassMatrixType, VectorType >  LocalMassMatrixStorageType;

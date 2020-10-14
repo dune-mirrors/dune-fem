@@ -16,7 +16,7 @@ namespace Dune
       template< class FunctionSpaceImp,
                 class GridPartImp,
                 int polOrder,
-                template< class > class BasisFunctionStorageImp >
+                class BasisFunctionStorageImp >
       class LagrangeDiscreteFunctionSpace;
 
 
@@ -36,7 +36,7 @@ namespace Dune
       // specialization for Lagrange spaces
       // ----------------------------------
 
-      template <class FunctionSpaceImp, class GridPartImp, int polOrder, template <class> class BaseFunctionStorageImp >
+      template <class FunctionSpaceImp, class GridPartImp, int polOrder, class BaseFunctionStorageImp >
       struct LagrangePointSetExporter<
           LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > >
       {

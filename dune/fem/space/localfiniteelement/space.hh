@@ -36,7 +36,7 @@ namespace Dune
     // LocalFiniteElementSpaceTraits
     // -----------------------------
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, class Storage >
     struct LocalFiniteElementSpaceTraits
     {
       typedef LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
@@ -107,7 +107,7 @@ namespace Dune
      *
      *  \todo please doc me
      **/
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, class Storage >
     class LocalFiniteElementSpace
       : public DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
     {
@@ -284,15 +284,13 @@ namespace Dune
       std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
     };
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage, int newRange >
+    template< class LFEMap, class FunctionSpace, class Storage, int newRange >
     struct ToNewDimRangeFunctionSpace<
       LocalFiniteElementSpace<LFEMap, FunctionSpace, Storage>, newRange>
     {
       typedef LocalFiniteElementSpace<LFEMap, typename ToNewDimRangeFunctionSpace<FunctionSpace,newRange>::Type, Storage> Type;
     };
-    template <class LFEMap, class FunctionSpace,
-              template <class> class Storage,
-              class NewFunctionSpace>
+    template <class LFEMap, class FunctionSpace, class Storage, class NewFunctionSpace>
     struct DifferentDiscreteFunctionSpace<
         LocalFiniteElementSpace<LFEMap,FunctionSpace,Storage>, NewFunctionSpace>
     {

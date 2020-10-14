@@ -225,7 +225,7 @@ namespace Dune
       };
     } // namespce Impl
 
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, class Storage >
     class DefaultLocalRestrictProlong< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
     : public Impl::DefaultLocalRestrictProlongLFE
                < LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
@@ -235,7 +235,7 @@ namespace Dune
                < LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > > BaseType;
       using BaseType::BaseType;
     };
-    template< class LFEMap, class FunctionSpace, template< class > class Storage >
+    template< class LFEMap, class FunctionSpace, class Storage >
     class DefaultLocalRestrictProlong< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
     : public Impl::DefaultLocalRestrictProlongLFE
                < DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >

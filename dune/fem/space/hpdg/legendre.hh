@@ -10,6 +10,7 @@
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
 
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/basisfunctionset/hpdg/legendre.hh>
 
 #include "blockmapper.hh"
@@ -27,10 +28,10 @@ namespace Dune
       // Internal forward declaration
       // ----------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching = true >
+      template< class FunctionSpace, class GridPart, int order, class Storage = Fem::CachingStorage >
       class LegendreDiscontinuousGalerkinSpace;
 
-      template< class FunctionSpace, class GridPart, int order, bool caching = true >
+      template< class FunctionSpace, class GridPart, int order, class Storage = Fem::CachingStorage >
       class HierarchicLegendreDiscontinuousGalerkinSpace;
 
 
@@ -39,19 +40,19 @@ namespace Dune
       // LegendreDiscontinuousGalerkinSpaceTraits
       // ----------------------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool hierarchicalOrdering, bool caching >
+      template< class FunctionSpace, class GridPart, int order, bool hierarchicalOrdering, class Storage >
       struct LegendreDiscontinuousGalerkinSpaceTraits
       {
         // select space implementation depending on basis function ordering
         typedef typename std::conditional< hierarchicalOrdering,
-            HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >,
-            LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >::type  DiscreteFunctionSpaceType;
+            HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >,
+            LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >::type  DiscreteFunctionSpaceType;
 
         using FunctionSpaceType = FunctionSpace;
 
         using GridPartType = GridPart;
 
-        using BasisFunctionSetsType = hpDG::LegendreBasisFunctionSets< FunctionSpaceType, GridPartType, order, hierarchicalOrdering, caching >;
+        using BasisFunctionSetsType = hpDG::LegendreBasisFunctionSets< FunctionSpaceType, GridPartType, order, hierarchicalOrdering, Storage >;
         using BasisFunctionSetType = typename BasisFunctionSetsType::BasisFunctionSetType;
 
         static const int codimension = BasisFunctionSetType::EntityType::codimension;
@@ -81,15 +82,15 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam order  maximum polynomial order per coordinate
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  for certain caching features
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Legendre
        */
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       class LegendreDiscontinuousGalerkinSpace
-      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, caching > >
+      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, Storage > >
       {
-        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, caching > >;
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, Storage > >;
 
       public:
         using GridPartType = typename BaseType::GridPartType;
@@ -117,15 +118,15 @@ namespace Dune
        *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
        *  \tparam GridPart  a Dune::Fem::GridPart
        *  \tparam order  maximum polynomial order per coordinate
-       *  \tparam caching  enable/disable caching of quadratures
+       *  \tparam Storage  for certain caching features
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Legendre
        */
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, class Storage >
       class HierarchicLegendreDiscontinuousGalerkinSpace
-      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, caching > >
+      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, Storage > >
       {
-        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, caching > >;
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, Storage > >;
 
       public:
         using GridPartType = typename BaseType::GridPartType;
@@ -158,11 +159,11 @@ namespace Dune
      // DefaultLocalRestrictProlong
      // ---------------------------
 
-    template< class FunctionSpace, class GridPart, int order, bool caching >
-    class DefaultLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
-    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >
+    template< class FunctionSpace, class GridPart, int order, class Storage >
+    class DefaultLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >
     {
-      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >;
+      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >;
 
     public:
       explicit DefaultLocalRestrictProlong ( const typename BaseType::DiscreteFunctionSpaceType &space )
@@ -174,11 +175,11 @@ namespace Dune
      // DefaultLocalRestrictProlong
      // ---------------------------
 
-    template< class FunctionSpace, class GridPart, int order, bool caching >
-    class DefaultLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
-    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >
+    template< class FunctionSpace, class GridPart, int order, class Storage >
+    class DefaultLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >
     {
-      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >;
+      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >, false >;
 
     public:
       explicit DefaultLocalRestrictProlong ( const typename BaseType::DiscreteFunctionSpaceType &space )
@@ -196,27 +197,27 @@ namespace Dune
       //  hpDG::LegendreDiscontinuousGalerkinSpace
       ////////////////////////////////////////////////////////////////////
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct hasStaticPolynomialOrder< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct hasStaticPolynomialOrder< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
         static const int order = polOrder;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isLocalized< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isLocalized< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isAdaptive< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isAdaptive< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct viewThreadSafe< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct viewThreadSafe< hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
@@ -225,33 +226,33 @@ namespace Dune
       //  hpDG::HierarchicLegendreDiscontinuousGalerkinSpace
       ////////////////////////////////////////////////////////////////////
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct hasStaticPolynomialOrder< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct hasStaticPolynomialOrder< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
         static const int order = polOrder;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isLocalized< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isLocalized< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isAdaptive< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isAdaptive< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct viewThreadSafe< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct viewThreadSafe< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
-      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
-      struct isHierarchic< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isHierarchic< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };

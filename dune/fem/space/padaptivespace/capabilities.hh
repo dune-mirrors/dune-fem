@@ -17,14 +17,14 @@ namespace Dune
       // Dune::Fem::Capabilities for PAdaptiveDGSpace
       // --------------------------------------------
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasFixedPolynomialOrder< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasStaticPolynomialOrder< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
@@ -32,35 +32,35 @@ namespace Dune
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isContinuous< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isLocalized< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isAdaptive< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct threadSafe< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct viewThreadSafe< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
@@ -71,14 +71,14 @@ namespace Dune
       // Dune::Fem::Capabilities for PAdaptiveLagrangeSpace
       // --------------------------------------------------
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasFixedPolynomialOrder< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct hasStaticPolynomialOrder< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
@@ -86,35 +86,35 @@ namespace Dune
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isContinuous< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isLocalized< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct isAdaptive< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct threadSafe< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = false;
       };
 
 
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct viewThreadSafe< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;

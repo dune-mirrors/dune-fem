@@ -19,7 +19,7 @@ namespace Dune
 
     /** \brief Local Mass Matrix for DG space */
     template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-              template<class> class BaseFunctionStorageImp,
+              class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
     class LocalMassMatrix<
       DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
@@ -37,7 +37,7 @@ namespace Dune
 
     /** \brief Local Mass Matrix for Legendre space */
     template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-              template<class> class BaseFunctionStorageImp,
+              class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
     class LocalMassMatrix<
       LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
@@ -55,7 +55,7 @@ namespace Dune
     template <class FunctionSpaceImp,
               class GridPartImp,
               int polOrd,
-              template<class> class BaseFunctionStorageImp,
+              class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
     class LocalMassMatrix<
       HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,

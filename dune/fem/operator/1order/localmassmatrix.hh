@@ -11,6 +11,7 @@
 
 //- dune-fem includes
 #include <dune/fem/common/memory.hh>
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/misc/checkgeomaffinity.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
@@ -261,14 +262,18 @@ namespace Dune
       template< class BasisFunctionSet >
       bool checkInterpolationBFS(const BasisFunctionSet &bfs) const
       {
-        const unsigned int numShapeFunctions = bfs.size() / dimRange;
+        static const int quadPointSetId = SelectQuadraturePointSetId< VolumeQuadratureType >::value;
+        // if BasisFunctionSet does not have an static int member called pointSetId then this will be -1
+        static const int basePointSetId = detail::SelectPointSetId< BasisFunctionSet >::value;
         // for Lagrange-type basis evaluated on interpolation points
         // this is the Kronecker delta, so the mass matrix is diagonal even
         // on non affine grids
-        static const int quadPointSetId = SelectQuadraturePointSetId< VolumeQuadratureType >::value;
-        if constexpr ( quadPointSetId == BasisFunctionSet::pointSetId )
+        if constexpr ( quadPointSetId == basePointSetId )
+        {
+          const unsigned int numShapeFunctions = bfs.size() / dimRange;
           return VolumeQuadratureType( bfs.entity(), volumeQuadratureOrder( bfs.entity() ) )
                      .isInterpolationQuadrature(numShapeFunctions);
+        }
         return false;
       }
 
