@@ -558,10 +558,10 @@ namespace Dune
           assert( int(diagonal.size()) == numDofs );
 
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
-          assert(volQuad.nop()*dimRange == numDofs);
 
           int l = 0;
           const int nop = volQuad.nop();
+          assert(nop*dimRange == numDofs);
           for( int qt = 0; qt < nop; ++qt )
             for (int r = 0; r < dimRange; ++r,++l )
             {
