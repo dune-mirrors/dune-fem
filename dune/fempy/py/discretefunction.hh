@@ -192,9 +192,9 @@ namespace Dune
         {
           registerRestrictProlong< DF >( module, PriorityTag< 42 >() );
         }
-        catch (std::invalid_argument)
+        catch ( const std::invalid_argument& )
         {
-          std::cerr << "Warning: Restrict and Prolongation disabled - possibly no HierarchicGrid registered for this GridView\n";
+          std::cerr << "Warning: Restrict and Prolongation disabled - possibly no HierarchicGrid registered for this GridView " << std::endl;
         }
       }
 
