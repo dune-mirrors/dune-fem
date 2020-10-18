@@ -160,7 +160,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     writer.openPythonModule(name)
     code = []
     code += [TypeAlias("GridPart", gridPartType)]
-    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join([gridPartType] + coefficients) + " >")]
+    code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join(["GridPart"] + coefficients) + " >")]
     if virtualize:
         modelType = model.modelWrapper
         code += [TypeAlias("ModelWrapper", model.modelWrapper)]
