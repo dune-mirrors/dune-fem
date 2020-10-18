@@ -606,6 +606,7 @@ def combined(*spaces, **kwargs):
     from dune.fem.space import module, addStorage
 
     scalar = kwargs.get("scalar",False)
+    codegen = kwargs.get("codegen",True)
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
