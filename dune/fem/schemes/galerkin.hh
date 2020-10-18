@@ -28,6 +28,8 @@
 #include <dune/fem/schemes/integrands.hh>
 #include <dune/fem/schemes/dirichletwrapper.hh>
 
+#include <dune/fem/space/common/capabilities.hh>
+
 // fempy includes
 #include <dune/fempy/quadrature/fempyquadratures.hh>
 
@@ -39,6 +41,36 @@ namespace Dune
 
     namespace Impl
     {
+      template <class M>
+      class CheckOrderMethod
+      {
+        template <class T>
+        static std::true_type testSignature(int (T::*)());
+
+        template <class T>
+        static decltype(testSignature(&T::order)) test(std::nullptr_t);
+
+        template <class T>
+        static std::false_type test(...);
+
+        using type = decltype(test<M>(nullptr));
+      public:
+        static const bool value = type::value;
+      };
+
+      template <class F, bool>
+      struct CallOrder
+      {
+        static int order ( const F& ) { return 1; }
+      };
+
+      template <class F>
+      struct CallOrder< F, true >
+      {
+        static int order ( const F& f ) { return f.order(); }
+      };
+
+
 
       // GalerkinOperator
       // ----------------
@@ -55,10 +87,14 @@ namespace Dune
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       private:
-        typedef CachingQuadrature< GridPartType, 0 > InteriorQuadratureType;
-        typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
+        template <class Space>
+        struct QuadratureSelector
+        {
+          typedef CachingQuadrature< GridPartType, 0, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > InteriorQuadratureType;
+          typedef CachingQuadrature< GridPartType, 1, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > SurfaceQuadratureType;
         // typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
         // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
+        };
 
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;
@@ -250,7 +286,9 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(w.order()) );
+
+          typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(maxOrder(u, w)) );
 
           // evaluate u for all quadrature points
           DomainValueVectorType& domains = domainValues_;
@@ -280,7 +318,8 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder( std::max(domainBasis.order(),rangeBasis.order()) ) );
+          typedef typename QuadratureSelector< typename J::RangeSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
+          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder( maxOrder( u, domainBasis, rangeBasis )) );
           const size_t domainSize = domainBasis.size();
           const size_t quadNop = quadrature.nop();
 
@@ -326,7 +365,9 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadratureOrder(w.order()), SurfaceQuadratureType::INSIDE ) )
+          typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( u, w )), SurfaceQuadratureType::INSIDE );
+          for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -349,7 +390,9 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, surfaceQuadratureOrder(rangeBasis.order()), SurfaceQuadratureType::INSIDE ) )
+          typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder(u, domainBasis, rangeBasis )), SurfaceQuadratureType::INSIDE );
+          for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -376,7 +419,10 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(wIn.order()), false );
+
+          typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
+          const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn)), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -396,7 +442,9 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn, W &wOut ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(std::max( wIn.order(), wOut.order() )), false );
+          typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
+          const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn, wOut)), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -416,15 +464,20 @@ namespace Dune
         }
 
         template< bool conforming, class Intersection, class U, class J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut,
+                                             DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
         {
           const auto &domainBasisIn = jInIn.domainBasisFunctionSet();
           const auto &domainBasisOut = jOutIn.domainBasisFunctionSet();
 
           const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
 
+          const int order = std::max( maxOrder(uIn, uOut), maxOrder( domainBasisIn, domainBasisOut, rangeBasisIn ));
+
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(rangeBasisIn.order()), false );
+          typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
+          const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -460,7 +513,8 @@ namespace Dune
         }
 
         template< bool conforming, class Intersection, class U, class J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut,
+                                             DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
         {
           const auto &domainBasisIn = jInIn.domainBasisFunctionSet();
           const auto &domainBasisOut = jOutIn.domainBasisFunctionSet();
@@ -468,8 +522,12 @@ namespace Dune
           const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
           const auto &rangeBasisOut = jInOut.rangeBasisFunctionSet();
 
+          const int order = std::max( maxOrder(uIn, uOut), maxOrder( domainBasisIn, domainBasisOut, rangeBasisIn, rangeBasisOut ));
+
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, surfaceQuadratureOrder(std::max( rangeBasisIn.order(), rangeBasisOut.order() )), false );
+          typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
+          typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
+          const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -542,6 +600,8 @@ namespace Dune
         template< class... Args >
         explicit GalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
           : gridPart_( gridPart ), communicate_( communicate ), integrands_( std::forward< Args >( args )... ),
+            defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
+            defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
             interiorQuadOrder_(0), surfaceQuadOrder_(0)
         {
           if( ! communicate_ && Dune::Fem::Parameter::verbose() )
@@ -567,7 +627,13 @@ namespace Dune
         {
           w.clear();
 
-          TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wLocal( w.space() );
+          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+
+          TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( w.space() );
+
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
+
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
@@ -600,7 +666,13 @@ namespace Dune
         {
           w.clear();
 
-          TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
+          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+
+          TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
+
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
+
           Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
 
           const auto &indexSet = gridPart().indexSet();
@@ -666,9 +738,16 @@ namespace Dune
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, std::false_type ) const
         {
-          typedef TemporaryLocalMatrix< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > TemporaryLocalMatrixType;
+          typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
+          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
-          DiagonalStencil< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
+          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+
+          // select correct default quadrature orders
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
+
+          DiagonalStencil< DomainSpaceType, RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
           jOp.reserve( stencil );
           jOp.clear();
 
@@ -705,9 +784,16 @@ namespace Dune
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, std::true_type ) const
         {
-          typedef TemporaryLocalMatrix< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > TemporaryLocalMatrixType;
+          typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
+          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
-          DiagonalAndNeighborStencil< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
+          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+
+          // select correct default quadrature orders
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
+
+          DiagonalAndNeighborStencil< DomainSpaceType, RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
           jOp.reserve( stencil );
           jOp.clear();
 
@@ -793,13 +879,42 @@ namespace Dune
 
         const GridPartType &gridPart () const { return gridPart_; }
 
-        unsigned int interiorQuadratureOrder(unsigned int order) const { return interiorQuadOrder_==0 ? 2*order+3:interiorQuadOrder_; }
-        unsigned int surfaceQuadratureOrder(unsigned int order)  const { return surfaceQuadOrder_==0 ? 2*order+3:surfaceQuadOrder_; }
+        unsigned int interiorQuadratureOrder(unsigned int order) const { return interiorQuadOrder_ == 0 ? defaultInteriorOrder_(order) : interiorQuadOrder_; }
+        unsigned int surfaceQuadratureOrder(unsigned int order)  const { return surfaceQuadOrder_  == 0 ? defaultSurfaceOrder_ (order) : surfaceQuadOrder_;  }
 
-      private:
+      protected:
+        template <class U>
+        int maxOrder( const U& u ) const
+        {
+          return CallOrder< U, CheckOrderMethod< U > ::value > :: order( u );
+        }
+
+        template< class U, class W >
+        int maxOrder( const U& u, const W& w ) const
+        {
+          return std::max( maxOrder( u ), maxOrder( w ) );
+        }
+
+        template< class U, class V, class W >
+        int maxOrder( const U& u, const V& v, const W& w ) const
+        {
+          return std::max( maxOrder( u, v ), maxOrder( w ) );
+        }
+
+        template< class U, class V, class W, class X >
+        int maxOrder( const U& u, const V& v, const W& w, const X& x ) const
+        {
+          return std::max( maxOrder( u, v ), maxOrder( w, x) );
+        }
+
+      protected:
         const GridPartType &gridPart_;
         const bool communicate_;
         mutable IntegrandsType integrands_;
+
+        mutable std::function<int(const int)> defaultInteriorOrder_;
+        mutable std::function<int(const int)> defaultSurfaceOrder_;
+
         unsigned int interiorQuadOrder_;
         unsigned int surfaceQuadOrder_;
 

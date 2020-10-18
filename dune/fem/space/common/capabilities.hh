@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <dune/fem/quadrature/defaultquadratures.hh>
+
 namespace Dune
 {
 
@@ -120,6 +122,24 @@ namespace Dune
       };
 
 
+      /** \class DefaultQuadrature
+       *
+       *  \brief specialize when quadrature other than the standard quadrature
+       *  should be used for volume and surface integral compution.
+       */
+      template< class DiscreteFunctionSpace >
+      struct DefaultQuadrature
+      {
+        // traits specifying the quadrature points used for CachingQuadrature or ElementQuadrature.
+        template <class F, int d>
+        using DefaultQuadratureTraits = Dune::Fem::DefaultQuadratureTraits< F, d >;
+
+        //! return quadrature order for volume quadratures for given polynomial order k
+        static int volumeOrder( const int k ) {  return 2 * k; }
+        //! return quadrature order for surface quadratures (i.e. over intersections) for given polynomial order k
+        static int surfaceOrder( const int k )   {  return 2 * k + 1; }
+      };
+
 
       namespace Impl
       {
@@ -205,6 +225,11 @@ namespace Dune
       {
         static const bool v = hasInterpolation< DiscreteFunctionSpace >::v;
       };
+
+      template< class DiscreteFunctionSpace >
+      struct DefaultQuadrature< const DiscreteFunctionSpace >
+        : public DefaultQuadrature< DiscreteFunctionSpace >
+      {};
 
     } // namespace Capabilities
 
