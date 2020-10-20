@@ -108,6 +108,14 @@ class CodeGenerator(MultiFunction):
     def conditional(self, expr, cond, true, false):
         return ConditionalExpression('auto', cond, true, false)
 
+    # do nothing here (until complex conjugate is needed)
+    def Conj(self,expr,x):
+        return x
+
+    # do nothing here (until complex conjugate is needed)
+    def conj(self,expr,x):
+        return x
+
     def cos(self, expr, x):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))

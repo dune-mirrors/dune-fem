@@ -93,6 +93,9 @@ class MultiLinearExprSplitter(Transformer):
             result[key] = conditionalExprTensor(condition, trueCase.get(key, zero), falseCase.get(key, zero))
         return result
 
+    def conj(self, expr, x):
+        return x
+
     def max_value(self, expr, left, right):
         result = dict()
         if list(left.keys()) != [self.empty] or list(right.keys()) != [self.empty]:
