@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
 #define DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
 
+
+
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -123,6 +125,7 @@ namespace Dune
       };
 
 
+#if HAVE_DUNE_LOCALFUNCTIONS
       namespace detail
       {
 
@@ -173,6 +176,7 @@ namespace Dune
         : public detail::DefaultQuadratureSpec< LFEMap >
       {
       };
+#endif // #ifndef HAVE_DUNE_LOCALFUNCTIONS
 
 
     } // namespace Capabilities
@@ -180,5 +184,6 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
 
 #endif // #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
