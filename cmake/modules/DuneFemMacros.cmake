@@ -48,8 +48,13 @@ include(FindPThreads)
 
 find_package(SIONlib)
 include(AddSIONlibFlags)
-find_package(PAPI)
-include(AddPAPIFlags)
+
+if( DEFINED PAPI_ROOT OR DEFINED PAPI_DIR )
+  find_package(PAPI)
+  include(AddPAPIFlags)
+else()
+  message("-- Skipping PAPI check, since neither PAPI_ROOT nor PAPI_DIR were specified!")
+endif()
 
 # PETSC_ROOT overrules PETSC_DIR which overrules ENV PETSC_DIR
 if( PETSC_ROOT )
@@ -104,7 +109,12 @@ endif()
 
 # AMGX solver (AmgXWrapper) needs PETSC matrix structures, therefore PETSC is needed
 if(PETSC_FOUND)
-  find_package(AmgXSolver)
+  # only include AMGX check if varaibles were passed
+  if( DEFINED AMGX_ROOT OR DEFINED AMGX_DIR )
+    find_package(AmgXSolver)
+  else()
+    message("-- Skipping AmgXSolver check, since neither AMGX_ROOT nor AMGX_DIR were specified!")
+  endif()
 endif()
 
 # check for Eigen3
@@ -115,7 +125,12 @@ if(EIGEN3_FOUND)
   include_directories(${EIGEN3_INCLUDE_DIRS})
 endif()
 
-find_package(ViennaCL)
+# only include ViennaCL check if varaibles were passed
+if( DEFINED VIENNACL_ROOT OR DEFINED VIENNACL_DIR )
+  find_package(ViennaCL)
+else()
+  message("-- Skipping ViennaCL check, since neither VIENNACL_ROOT nor VIENNACL_DIR were specified!")
+endif()
 
 ####### abbreviations
 include(FemShort)
