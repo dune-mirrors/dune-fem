@@ -367,14 +367,14 @@ namespace Dune
      * \param[in]  name      name of the grid function
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only lvalue references. The grid function only
      *       references the original function.
      **/
     template< class Function, class GridPart >
     inline static GridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( std::string name, const Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( std::string name, const Function &function, const GridPart &gridPart, unsigned int order )
     {
       return GridFunctionAdapter< Function, GridPart >( std::move( name ), function, gridPart, order );
     }
@@ -384,14 +384,14 @@ namespace Dune
      *
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only lvalue references. The grid function only
      *       references the original function.
      **/
     template< class Function, class GridPart >
     inline static GridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( const Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( const Function &function, const GridPart &gridPart, unsigned int order )
     {
       return GridFunctionAdapter< Function, GridPart >( std::string(), function, gridPart, order );
     }
@@ -402,14 +402,14 @@ namespace Dune
      * \param[in]  name      name of the grid function
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only lvalue references. The grid function only
      *       references the original function.
      **/
     template< class Function, class GridPart >
     inline static GridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( std::string name, Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( std::string name, Function &function, const GridPart &gridPart, unsigned int order )
     {
       const Function& cf = function;
       return gridFunctionAdapter( name, cf, gridPart, order );
@@ -420,14 +420,14 @@ namespace Dune
      *
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only lvalue references. The grid function only
      *       references the original function.
      **/
     template< class Function, class GridPart >
     inline static GridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( Function &function, const GridPart &gridPart, unsigned int order )
     {
       const Function& cf = function;
       return gridFunctionAdapter( cf, gridPart, order );
@@ -439,14 +439,14 @@ namespace Dune
      * \param[in]  name      name of the grid function
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only rvalue references. The original function
      *       is move-constructed into the grid function.
      **/
     template< class Function, class GridPart >
     inline static BasicGridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( std::string name, Function &&function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( std::string name, Function &&function, const GridPart &gridPart, unsigned int order )
     {
       return BasicGridFunctionAdapter< Function, GridPart >( std::move( name ), std::move( function ), gridPart, order );
     }
@@ -456,14 +456,14 @@ namespace Dune
      *
      * \param[in]  function  function to convert
      * \param[in]  gridPart  grid part to restrict the domain to
-     * \param[in]  order     polynomial order to report (defaults to 111)
+     * \param[in]  order     polynomial order to report
      *
      * \note This version accepts only rvalue references. The original function
      *       is move-constructed into the grid function.
      **/
     template< class Function, class GridPart >
     inline static BasicGridFunctionAdapter< Function, GridPart >
-    gridFunctionAdapter ( Function &&function, const GridPart &gridPart, unsigned int order = 111 )
+    gridFunctionAdapter ( Function &&function, const GridPart &gridPart, unsigned int order )
     {
       return BasicGridFunctionAdapter< Function, GridPart >( std::string(), std::move( function ), gridPart, order );
     }

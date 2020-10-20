@@ -229,6 +229,7 @@ class EllipticModel:
     #    sourceWriter.emit(self.code(name=name, targs=targs))
 
     def exportSetConstant(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
+        sourceWriter.emit(TypeAlias('ModelType', modelClass))
         sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
         sourceWriter.emit('std::string id = pybind11::str( obj );')
         sourceWriter.emit('if( pybind11::hasattr(obj,"name") ) id = pybind11::str(obj.attr("name"));')
@@ -237,12 +238,12 @@ class EllipticModel:
         sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
         sourceWriter.closeFunction()
 
-        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::handle value'])
-        sourceWriter.emit('model.template constant< i >() = value.template cast< typename ' + modelClass + '::ConstantType< i > >();')
+        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=['ModelType &model', 'pybind11::handle value'])
+        sourceWriter.emit('model.template constant< i >() = value.template cast< typename ModelType::ConstantType< i > >();')
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::handle ) >'))
+        sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ModelType &model, pybind11::handle ) >'))
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle value ) {')

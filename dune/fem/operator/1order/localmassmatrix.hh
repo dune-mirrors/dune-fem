@@ -2,7 +2,6 @@
 #define DUNE_FEM_LOCALMASSMATRIX_HH
 
 //- dune-common includes
-#include <dune/common/dynvector.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/fmatrix.hh>
 
@@ -15,6 +14,7 @@
 #include <dune/fem/misc/checkgeomaffinity.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
+#include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/version.hh>
 
 namespace Dune
@@ -212,13 +212,15 @@ namespace Dune
       {
         return volumeQuadratureOrder_( space().order( entity ) );
       }
+
       //! constructor taking space and volume quadrature order
       explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd )
         : LocalMassMatrixImplementation( spc, [volQuadOrd](const int order) { return volQuadOrd; } )
       {}
 
       //! constructor taking space and volume quadrature order
-      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, std::function<int(const int)> volQuadOrderFct = [](const int order) { return 2 * order; } )
+      explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc,
+              std::function<int(const int)> volQuadOrderFct = [](const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(); } )
         : spc_( referenceToSharedPtr( spc ) )
         , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )

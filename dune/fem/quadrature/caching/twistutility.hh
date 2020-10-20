@@ -138,14 +138,11 @@ namespace Dune
     struct TwistUtility< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
       typedef ALUGrid< dim, dimw, elType, refineType, Comm > GridType;
-      typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
-      typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
-      typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
-      typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
 
     public:
       //! \brief return twist for inner face
-      static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
+      template< class Intersection >
+      static inline int twistInSelf(const GridType & grid, const Intersection& intersection)
       {
         assert( dim == 2 ? (intersection.impl().twistInInside() == 0 ||
                             intersection.impl().twistInInside() == 1 ) : true );
@@ -153,7 +150,8 @@ namespace Dune
       }
 
       //! \brief return twist for outer face
-      static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
+      template< class Intersection >
+      static inline int twistInNeighbor(const GridType &grid, const Intersection& intersection )
       {
         assert( dim == 2 ? (intersection.impl().twistInOutside() == 0 ||
                             intersection.impl().twistInOutside() == 1 ) : true );

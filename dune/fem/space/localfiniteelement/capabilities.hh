@@ -1,9 +1,13 @@
 #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
 #define DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
 
+
+
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
+
+#include <dune/fem/quadrature/interpolationquadrature.hh>
 
 namespace Dune
 {
@@ -20,6 +24,9 @@ namespace Dune
     template< class LFEMap, class FunctionSpace, class Storage = CachingStorage >
     class DiscontinuousLocalFiniteElementSpace;
 
+    template< class FunctionSpace, class GridPart, unsigned int order,
+              template< class, unsigned int > class PointSet>
+    struct FixedOrderLagrangeFiniteElementMap;
 
 
     namespace Capabilities
@@ -117,10 +124,66 @@ namespace Dune
         static const bool v = false;
       };
 
+
+#if HAVE_DUNE_LOCALFUNCTIONS
+      namespace detail
+      {
+
+        struct DefaultQuadratureGaussLobatto
+        {
+          template <class F, int d>
+          using DefaultQuadratureTraits = Dune::Fem::GaussLobattoQuadratureTraits< F, d >;
+
+          static int volumeOrder ( const int k ) { return (k > 0) ? (2 * k - 1) : 0; }
+          static int surfaceOrder( const int k ) { return (k > 0) ? (2 * k - 1) : 0; }
+        };
+
+        struct DefaultQuadratureGaussLegendre
+        {
+          template <class F, int d>
+          using DefaultQuadratureTraits = Dune::Fem::GaussLegendreQuadratureTraits< F, d >;
+
+          static int volumeOrder ( const int k ) { return 2 * k + 1; }
+          static int surfaceOrder( const int k ) { return 2 * k + 1; }
+        };
+
+        // default uses the default values for all spaces (see space/common/capabilities.hh)
+        template< class LFEMap >
+        struct DefaultQuadratureSpec : public Dune::Fem::Capabilities::DefaultQuadrature< LFEMap >
+        {};
+
+
+        ///-----  Specialization for GaussLobatto ----
+        template < class FunctionSpace, class GridPart, unsigned int order >
+        struct DefaultQuadratureSpec< Dune::Fem::FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, Dune::GaussLobattoPointSet > >
+          : public DefaultQuadratureGaussLobatto {};
+
+        ///-----  Specialization for GaussLegendre ----
+        template < class FunctionSpace, class GridPart, unsigned int order >
+        struct DefaultQuadratureSpec< Dune::Fem::FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, Dune::GaussLegendrePointSet > >
+          : public DefaultQuadratureGaussLegendre {};
+
+      } // end namespace detail
+
+      template< class LFEMap, class FunctionSpace, class Storage >
+      struct DefaultQuadrature< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
+        : public detail::DefaultQuadratureSpec< LFEMap >
+      {
+      };
+
+      template< class LFEMap, class FunctionSpace, class Storage >
+      struct DefaultQuadrature< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
+        : public detail::DefaultQuadratureSpec< LFEMap >
+      {
+      };
+#endif // #ifndef HAVE_DUNE_LOCALFUNCTIONS
+
+
     } // namespace Capabilities
 
   } // namespace Fem
 
 } // namespace Dune
+
 
 #endif // #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_CAPABILITIES_HH
