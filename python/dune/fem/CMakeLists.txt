@@ -15,4 +15,4 @@ add_python_targets(fem
 )
 
 dune_add_pybind11_module(NAME _fem)
-set_property(TARGET _fem PROPERTY LINK_LIBRARIES dunefem APPEND)
+set_property(TARGET _fem PROPERTY LINK_LIBRARIES dunecommon dunegeometry dunegrid dunefem APPEND)
