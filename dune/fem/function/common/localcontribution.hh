@@ -230,7 +230,8 @@ namespace Dune
       explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
         : discreteFunction_( discreteFunction ),
           localDofVector_( discreteFunction.space().maxNumDofs() ),
-          assemblyOperation_( std::forward< Args >( args )... )
+          assemblyOperation_( std::forward< Args >( args )... ),
+          bound_(false)
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
@@ -375,6 +376,7 @@ namespace Dune
 
       void bind ( const EntityType &entity )
       {
+        bound_ = true;
         basisFunctionSet_ = discreteFunction().space().basisFunctionSet( entity );
         localDofVector().resize( basisFunctionSet().size() );
         assemblyOperation_.begin( entity, discreteFunction(), localDofVector() );
@@ -382,8 +384,11 @@ namespace Dune
 
       void unbind ()
       {
-        assemblyOperation_.end( entity(), localDofVector(), discreteFunction() );
-        basisFunctionSet_ = BasisFunctionSetType();
+        if (bound_)
+        {
+          assemblyOperation_.end( entity(), localDofVector(), discreteFunction() );
+          basisFunctionSet_ = BasisFunctionSetType();
+        }
       }
 
       /** \brief return const reference to local DoF vector **/
@@ -396,6 +401,7 @@ namespace Dune
       LocalDofVectorType localDofVector_;
       BasisFunctionSetType basisFunctionSet_;
       AssemblyOperationType assemblyOperation_;
+      bool bound_;
     };
 
   } // namespace Fem

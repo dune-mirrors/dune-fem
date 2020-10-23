@@ -1241,7 +1241,9 @@ namespace Dune
 
       if(indexList_.size() > 0)
       {
+#ifndef NDEBUG
         std::cerr << "ERROR: Not all index sets have been removed from DofManager yet!" << std::endl;
+#endif
         while ( indexList_.rbegin() != indexList_.rend())
         {
           ManagedIndexSetInterface* iobj = (* indexList_.rbegin() );
