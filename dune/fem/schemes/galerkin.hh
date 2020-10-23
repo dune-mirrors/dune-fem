@@ -42,10 +42,16 @@ namespace Dune
     namespace Impl
     {
       template <class M>
-      class CheckOrderMethod
+      class CallOrder
       {
-        template <class T>
-        static std::true_type testSignature(int (T::*)());
+        // check for 'int order () const' or 'int order()'
+        // and variants returning unsigned int or size_t
+        template <class T> static std::true_type testSignature(int (T::*)() const);
+        template <class T> static std::true_type testSignature(int (T::*)());
+        template <class T> static std::true_type testSignature(unsigned int (T::*)() const);
+        template <class T> static std::true_type testSignature(unsigned int (T::*)());
+        template <class T> static std::true_type testSignature(std::size_t (T::*)() const);
+        template <class T> static std::true_type testSignature(std::size_t (T::*)());
 
         template <class T>
         static decltype(testSignature(&T::order)) test(std::nullptr_t);
@@ -54,23 +60,26 @@ namespace Dune
         static std::false_type test(...);
 
         using type = decltype(test<M>(nullptr));
+
+        template <class F>
+        static int callOrder(const F& f, std::false_type)
+        {
+#ifndef NDEBUG
+          std::cerr << "WARNING: not order method available on " << typeid(F).name() << ", defaulting to 1!" << std::endl;
+#endif
+          return 1;
+        }
+
+        template <class F>
+        static int callOrder(const F& f, std::true_type)
+        {
+          return f.order();
+        }
+
       public:
-        static const bool value = type::value;
+        template <class F>
+        static int order (const F& f ) { return callOrder(f, type() ); }
       };
-
-      template <class F, bool>
-      struct CallOrder
-      {
-        static int order ( const F& ) { return 1; }
-      };
-
-      template <class F>
-      struct CallOrder< F, true >
-      {
-        static int order ( const F& f ) { return f.order(); }
-      };
-
-
 
       // GalerkinOperator
       // ----------------
@@ -613,7 +622,7 @@ namespace Dune
         void setQuadratureOrders(unsigned int interior, unsigned int surface)
         {
           interiorQuadOrder_ = interior;
-          surfaceQuadOrder_ = surface;
+          surfaceQuadOrder_  = surface;
         }
 
         IntegrandsType &model() const
@@ -886,7 +895,7 @@ namespace Dune
         template <class U>
         int maxOrder( const U& u ) const
         {
-          return CallOrder< U, CheckOrderMethod< U > ::value > :: order( u );
+          return CallOrder< U > :: order( u );
         }
 
         template< class U, class W >

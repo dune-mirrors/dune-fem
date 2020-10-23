@@ -128,7 +128,6 @@ namespace Dune
 
         // grid width
         FieldVector<ctype, dimension> h(0);
-        FieldVector<ctype, dimworld> enBary;
         FieldVector<ctype, dimension-1> mid(0.5);
 
         const int map[3] = {1, 2, 4};
