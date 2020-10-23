@@ -160,8 +160,8 @@ namespace Dune
     class CacheProvider<GridPart, 0>
     {
     private:
-      enum { codim = 0 };
-      enum { dim = GridPart::dimension };
+      static const int codim = 0;
+      static const int dim = GridPart::dimension;
       typedef typename GridPart::ctype ct;
       typedef CachingTraits<ct, dim> Traits;
 
@@ -179,8 +179,8 @@ namespace Dune
     template <class GridPart>
     class CacheProvider<GridPart, 1>
     {
-      enum { codim = 1 };
-      enum { dim = GridPart::dimension };
+      static const int codim = 1;
+      static const int dim = GridPart::dimension;
       typedef typename GridPart::ctype ct;
       typedef CachingTraits<ct, dim-codim> Traits;
 
