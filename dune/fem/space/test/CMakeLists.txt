@@ -66,8 +66,8 @@ COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT
 LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
-dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
+dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
 if( ${FEM_TORTURE_TESTS} )
   # test adaptation of combinedspaces
@@ -87,8 +87,7 @@ if( ${FEM_TORTURE_TESTS} )
 
   dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
-
-  dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+  dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 endif()
 
 install( FILES checklocalinterpolation.hh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/test )
