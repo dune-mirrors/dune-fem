@@ -20,6 +20,7 @@ before_script:
 debian-11-gcc-10-17:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
+    - export TORTURE_TESTS=off
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
     - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
     - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
@@ -33,6 +34,7 @@ debian-11-gcc-10-17:
 debian-11-gcc-9-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
+    - export TORTURE_TESTS=off
     - duneci-standard-test
   variables:
     DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
@@ -41,6 +43,7 @@ debian-11-gcc-9-20-minimal-no-petsc:
 ubuntu:20.04-clang-10-17:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
   script:
+    - export TORTURE_TESTS=off
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
     - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
     - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
