@@ -33,12 +33,8 @@ dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} vtxprojection_adaptive )
 
-dune_add_test( NAME combinedspaceadaptation SOURCES adaptation.cc
-COMPILE_DEFINITIONS "COMBINEDSPACE;GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
-set( TESTS ${TESTS} combinedspaceadaptation )
-
 dune_add_test( NAME adaptation SOURCES adaptation.cc
-COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
+  COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;ALUGRID_CONFORM" MPI_RANKS 1 2 3 4 TIMEOUT 9999999 CMAKE_GUARD dune-alugrid_FOUND)
 set( TESTS ${TESTS} adaptation )
 
 dune_add_test(
