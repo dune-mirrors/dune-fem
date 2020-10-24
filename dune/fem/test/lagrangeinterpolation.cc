@@ -1,3 +1,4 @@
+// undef NDEBUG so we can always use assert.
 #undef NDEBUG
 
 #ifdef YASPGRID
@@ -22,7 +23,6 @@
 
 #include "testgrid.hh"
 #include "exactsolution.hh"
-#include "dfspace.hh"
 
 using namespace Dune;
 using namespace Fem;
@@ -37,39 +37,111 @@ typedef LeafGridPart< MyGridType > GridPartType;
 typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 #endif
 
-typedef TestFunctionSpace FunctionSpaceType;
-
-#if ! HAVE_DUNE_LOCALFUNCTIONS
-typedef DynamicLagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType >
-   DiscreteFunctionSpaceType;
-#else
-typedef LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
-#endif
-
-typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef FunctionSpace< double, double, GridPartType::dimensionworld, 1 >
+FunctionSpaceType;
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 
-
+template <class DiscreteFunctionType>
 void writeOut ( VirtualOutStream out, const DiscreteFunctionType &solution )
 {
   out << solution;
   out.flush();
 }
 
+template <class DiscreteFunctionType>
 void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
 {
   solution.clear();
   in >> solution;
 }
 
+template <class DiscreteFunctionSpaceType>
+int algorithm( MyGridType& grid, const int polOrder )
+{
+  const int step = TestGrid :: refineStepsForHalf();
+  grid.globalRefine( 2*step );
+  const int rank = grid.comm().rank();
+
+  ////////////////////////////////////////////////////////
+  // create data structures (after grid has been refined)
+  ////////////////////////////////////////////////////////
+
+  GridPartType gridPart( grid );
+
+  DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
+
+  typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+  DiscreteFunctionType solution( "solution", discreteFunctionSpace );
+  solution.clear();
+
+  // interpolate
+  interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), solution );
+
+  // let's check on IO
+  DiscreteFunctionType readback( "readback", discreteFunctionSpace );
+
+  std::string casename( "lagrangeinterpolation_r" + std::to_string(rank) + "_p" + std::to_string(polOrder) + "_" );
+
+  BinaryFileOutStream bout( casename + "solution-xdr.tmp" );
+  writeOut( virtualize( bout ), solution );
+
+  BinaryFileInStream bin( casename + "solution-xdr.tmp" );
+  readBack( virtualize( bin ), readback );
+  if( readback != solution )
+  {
+    std :: cerr << "binary read/write gives different function." << std :: endl;
+    assert( readback == solution );
+    return 1;
+  }
+
+  ASCIIOutStream aout( casename + "solution-ascii.tmp" );
+  writeOut( virtualize( aout ), solution );
+
+  ASCIIInStream ain( casename + "solution-ascii.tmp" );
+  readBack( virtualize( ain ), readback );
+  assert( readback == solution );
+  if( readback != solution )
+  {
+    std :: cerr << "ascii read/write gives different function." << std :: endl;
+    assert( readback == solution );
+    return 1;
+  }
+
+  // output to vtk file
+  VTKIO<GridPartType> vtkWriter(gridPart);
+  vtkWriter.addVertexData(solution);
+  vtkWriter.pwrite(casename+"lagrangeinterpol",
+                    Parameter::commonOutputPath().c_str(),"",
+                    Dune::VTK::ascii);
+
+  // reset grid
+  grid.globalRefine( -2*step );
+  return 0;
+}
+
+void run( MyGridType& grid, const int polOrder )
+{
+  // test dynamic Lagrange space
+  {
+    typedef DynamicLagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+    algorithm< DiscreteFunctionSpaceType >(grid, polOrder);
+  }
+
+#if HAVE_DUNE_LOCALFUNCTIONS
+  // test Lagrange space using LocalFiniteElementSpace
+  {
+    typedef LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+    algorithm< DiscreteFunctionSpaceType >(grid, polOrder);
+  }
+#endif
+}
 
 
 int main(int argc, char ** argv)
 {
   MPIManager :: initialize( argc, argv );
-  const int rank = MPIManager :: rank();
   try
   {
     // add command line parameters to global parameter table
@@ -78,61 +150,22 @@ int main(int argc, char ** argv)
     Dune::Fem::Parameter::append( (argc < 2) ? "parameter" : argv[ 1 ] );
 
     MyGridType &grid = TestGrid :: grid();
-    const int step = TestGrid :: refineStepsForHalf();
 
-    grid.globalRefine( 2*step );
-
-    ////////////////////////////////////////////////////////
-    // create data structures (after grid has been refined)
-    ////////////////////////////////////////////////////////
-
-    GridPartType gridPart( grid );
-
-#if not DEFAULTPOLORDER
-    const int polOrder = POLORDER;
-#else
-    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
-#endif
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
-    DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-    solution.clear();
-
-    // interpolate
-    interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), solution );
-
-    // let's check on IO
-    DiscreteFunctionType readback( "readback", discreteFunctionSpace );
-
-    std::string casename( "lagrangeinterpolation_r" + std::to_string(rank) + "_p" + std::to_string(polOrder) + "_" );
-
-    BinaryFileOutStream bout( casename + "solution-xdr.tmp" );
-    writeOut( virtualize( bout ), solution );
-
-    BinaryFileInStream bin( casename + "solution-xdr.tmp" );
-    readBack( virtualize( bin ), readback );
-    if( readback != solution )
+    // if parameter was specified then only run test for this pol order
+    // this is primarily for debugging
+    if( Dune::Fem::Parameter::exists("fem.lagrange.polynomialOrder") )
     {
-      std :: cerr << "binary read/write gives different function." << std :: endl;
-      return 1;
+      int p = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
+      run( grid, p );
+    }
+    else
+    {
+      for( int p=1; p <= 3; ++p )
+      {
+        run( grid, p );
+      }
     }
 
-    ASCIIOutStream aout( casename + "solution-ascii.tmp" );
-    writeOut( virtualize( aout ), solution );
-
-    ASCIIInStream ain( casename + "solution-ascii.tmp" );
-    readBack( virtualize( ain ), readback );
-    if( readback != solution )
-    {
-      std :: cerr << "ascii read/write gives different function." << std :: endl;
-      return 1;
-    }
-
-    // output to vtk file
-    VTKIO<GridPartType> vtkWriter(gridPart);
-    vtkWriter.addVertexData(solution);
-    vtkWriter.pwrite(casename+"vtxprojection",
-                      Parameter::commonOutputPath().c_str(),"",
-                      Dune::VTK::ascii);
     return 0;
   }
   catch( const Exception& e )

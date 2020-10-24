@@ -194,19 +194,22 @@ class MyOperator
   : public Dune::Fem::DifferentiableOperator<MyLinearOperator<N> >
 {
   typedef Dune::Fem::DifferentiableOperator<MyLinearOperator<N> > BaseType;
- public:
+  const bool lineSearch_;
+public:
+  MyOperator( const bool lineSearch ) : lineSearch_( lineSearch ) {}
+
   typedef typename BaseType::DomainFunctionType DomainFunctionType;
   typedef typename BaseType::RangeFunctionType RangeFunctionType;
   typedef typename BaseType::JacobianOperatorType JacobianOperatorType;
 
   void operator()(const DomainFunctionType& u, RangeFunctionType& w) const
   {
-    for (int i = 0; i < N; ++i) {
-#ifdef USE_LINESEARCH
-      w[i] = std::atan(u[i]);
-#else
-      w[i] = u[i]*u[i] - i;
-#endif
+    for (int i = 0; i < N; ++i)
+    {
+      if( lineSearch_ )
+        w[i] = std::atan(u[i]);
+      else
+        w[i] = u[i]*u[i] - i;
     }
   }
 
@@ -215,43 +218,26 @@ class MyOperator
     auto& matrix = jOp.matrix();
 
     matrix = 0.;
-    for (int i = 0; i < N; ++i) {
-#ifdef USE_LINESEARCH
-      matrix[i][i] = 1./(1.+u[i]*u[i]);
-#else
-      matrix[i][i] = 2*u[i];
-#endif
+    for (int i = 0; i < N; ++i)
+    {
+      if( lineSearch_ )
+        matrix[i][i] = 1./(1.+u[i]*u[i]);
+      else
+        matrix[i][i] = 2*u[i];
     }
   }
 
 };
 
-int main( int argc, char **argv )
+template <class FunctionType>
+void run(FunctionType& sol, FunctionType& rhs, const bool lineSearch )
 {
-  Dune::Fem::MPIManager::initialize( argc, argv );
-  Dune::Fem::Parameter::append( argc, argv );
-#ifdef USE_LINESEARCH
-  Dune::Fem::Parameter::append("fem.solver.newton.lineSearch","simple");
-#endif
-  if( argc == 1 )
-    Dune::Fem::Parameter::append("parameter");
-
-  const bool verbose = Dune::Fem::Parameter::verbose();
-  (void) verbose;
-
-  typedef DummyFunction<systemSize> FunctionType;
   typedef MyLinearOperator<systemSize> LinearOperatorType;
   typedef MyOperator<systemSize> OperatorType;
   typedef MyLinearInverseOperator<systemSize> LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator<LinearOperatorType, LinearInverseOperatorType> NewtonInverseOperatorType;
 
-#ifdef USE_LINESEARCH
-  FunctionType sol("sol", { 2, 2, 2, 2, 2 }), rhs("rhs", { -1.57, -1.5, 0, 1.5, 1.57 });
-#else
-  FunctionType sol("sol", { 1, 2, 3, 4, 7 }), rhs("rhs", {0,0,0,0,0});
-#endif
-
-  OperatorType op;
+  OperatorType op( lineSearch );
   NewtonInverseOperatorType opInv;
   opInv.bind( op );
 
@@ -268,6 +254,32 @@ int main( int argc, char **argv )
   std::cout << "Converged: " << (opInv.converged() ? "yes" : "no") << std::endl;
 
   opInv.unbind();
+}
+
+int main( int argc, char **argv )
+{
+  Dune::Fem::MPIManager::initialize( argc, argv );
+  Dune::Fem::Parameter::append( argc, argv );
+  if( argc == 1 )
+    Dune::Fem::Parameter::append("parameter");
+
+  const bool verbose = Dune::Fem::Parameter::verbose();
+  (void) verbose;
+
+  typedef DummyFunction<systemSize> FunctionType;
+
+  // standard Newton
+  {
+    FunctionType sol("sol", { 1, 2, 3, 4, 7 }), rhs("rhs", {0,0,0,0,0});
+    run( sol, rhs, false );
+  }
+
+  // Newton with line search
+  {
+    Dune::Fem::Parameter::append("fem.solver.newton.lineSearch","simple");
+    FunctionType sol("sol", { 2, 2, 2, 2, 2 }), rhs("rhs", { -1.57, -1.5, 0, 1.5, 1.57 });
+    run( sol, rhs, true );
+  }
 
   return 0;
 }

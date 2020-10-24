@@ -20,84 +20,21 @@ set( DEFAULTFLAGS "COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 # variable which gathers all test targets
 set( TESTS )
 
-# lagrangeinterpolation tests
-if( NOT ${FEM_TORTURE_TESTS} )
-  set( MINORDER 2 )
-  set( MAXORDER 2 )
-else()
-  set( MINORDER 1 )
-  if( NOT ${GRIDDIM} LESS 3 )
-    set( MAXORDER 4 )
-  else()
-    set( MAXORDER 2 )
-  endif()
-endif()
-
-foreach( order RANGE ${MINORDER} ${MAXORDER} )
-  dune_add_test( NAME lagrangeinterpolation_p${order} SOURCES lagrangeinterpolation.cc
-                 COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} lagrangeinterpolation_p${order} )
-endforeach()
 dune_add_test( NAME lagrangeinterpolation_dynamic SOURCES lagrangeinterpolation.cc
                COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} lagrangeinterpolation_dynamic )
 
-# dgl2projection tests for different discrete functions
-dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_adaptive )
-
-if( ${FEM_TORTURE_TESTS} )
-  set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
-else()
-  set( DFS blockvectorfunction )
-endif()
-foreach( df ${DFS} )
-  string( TOUPPER ${df} DF )
-  dune_add_test( NAME dgl2projection_${df} SOURCES dgl2projection.cc
-                 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_${DF};${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_${df} )
-endforeach()
-
-dune_add_test( NAME dgl2projection_vector_int SOURCES dgl2projection.cc
-               COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_vector_int )
-
-if( ${FEM_TORTURE_TESTS} )
-  # only run this test for YaspGrid
-  dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
-                 COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
-  set( TESTS ${TESTS} dgl2projection_legendre )
-endif()
-
-dune_add_test( NAME dgl2projection_hierarchiclegendre SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
-set( TESTS ${TESTS} dgl2projection_hierarchiclegendre )
-
-dune_add_test( NAME dgl2projection_fv SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "USE_FVSPACE;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_fv )
-
-if( ${FEM_TORTURE_TESTS} )
-  dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_filtered )
-
-  dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_idgridpart )
-endif()
+# dgl2projection tests for different discrete functions and spaces
+dune_add_test( NAME dgl2projection SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=2;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection )
 
 dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} vtxprojection_adaptive )
 
-dune_add_test( NAME combinedspaceadaptation SOURCES adaptation.cc
-COMPILE_DEFINITIONS "COMBINEDSPACE;GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
-set( TESTS ${TESTS} combinedspaceadaptation )
-
 dune_add_test( NAME adaptation SOURCES adaptation.cc
-COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
+  COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;ALUGRID_CONFORM" MPI_RANKS 1 2 3 4 TIMEOUT 9999999 CMAKE_GUARD dune-alugrid_FOUND)
 set( TESTS ${TESTS} adaptation )
 
 dune_add_test(
@@ -132,12 +69,6 @@ if( ${FEM_TORTURE_TESTS} )
   dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} test-tupleoperator )
-
-  # if( HAVE_EIGEN )
-  #   dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
-  #   COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
-  #   set( TESTS ${TESTS} l2projection_eigen )
-  # endif()
 endif()
 
 dune_add_test( NAME test-periodic SOURCES test-periodic.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" CMAKE_GUARD dune-alugrid_FOUND)

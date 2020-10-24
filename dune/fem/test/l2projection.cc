@@ -29,11 +29,6 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
-#elif HAVE_EIGEN && defined USE_EIGEN
-#include <dune/fem/storage/eigenvector.hh>
-#include <dune/fem/function/vectorfunction.hh>
-#include <dune/fem/operator/linear/eigenoperator.hh>
-#include <dune/fem/solver/eigen.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
@@ -47,27 +42,18 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
-
 #include "massoperator.hh"
 #include "testgrid.hh"
 
-
-
 // Global Type Definitions
 // -----------------------
-
-#if defined POLORDER
-const int polOrder = POLORDER;
-#else
-const int polOrder = 1;
-#endif
-
 
 typedef Dune::GridSelector :: GridType GridType;
 
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::FunctionSpace< typename GridType::ctype, typename GridType::ctype, GridType::dimensionworld, 1 > SpaceType;
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
+typedef Dune::Fem::DynamicLagrangeDiscreteFunctionSpace< SpaceType, GridPartType > DiscreteSpaceType;
+
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
@@ -76,11 +62,6 @@ typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorTyp
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
 typedef Dune::Fem::ISTLInverseOperator< DiscreteFunctionType, Dune::Fem::SolverParameter::cg > InverseOperatorType;
-#elif HAVE_EIGEN && defined USE_EIGEN
-typedef Dune::Fem::EigenVector< double > DofVectorType;
-typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteSpaceType, DofVectorType > > DiscreteFunctionType;
-typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-typedef Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #else
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
@@ -134,10 +115,11 @@ struct Algorithm
   typedef Function< GridPartType, SpaceType::RangeType > FunctionType;
 
   explicit Algorithm ( GridType &grid );
-  ErrorType operator() ( int step );
+  ErrorType operator() ( int step, int polOrder );
   ErrorType finalize ( DiscreteFunctionType &u );
   DiscreteSpaceType &space ();
   void nextMesh ();
+  void resetMesh (const int steps);
 
 private:
   GridPartType gridPart_;
@@ -154,9 +136,14 @@ inline void Algorithm :: nextMesh ()
   Dune::Fem::GlobalRefine::apply(gridPart_.grid(), Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
 
-inline Algorithm::ErrorType Algorithm::operator() ( int step )
+inline void Algorithm :: resetMesh (const int steps)
 {
-  DiscreteSpaceType space( gridPart_ );
+  gridPart_.grid().globalRefine( -steps * Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+}
+
+inline Algorithm::ErrorType Algorithm::operator() ( int step, int polOrder )
+{
+  DiscreteSpaceType space( gridPart_, polOrder );
   DiscreteFunctionType solution( "solution", space );
 
   // get operator
@@ -198,6 +185,39 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
   return error;
 }
 
+void run( GridType& grid, const int polOrder )
+{
+  const int nrSteps = 4;
+
+  std::cout<< "testing with polorder "<< polOrder <<std::endl;
+  Algorithm algorithm( grid );
+  std::vector< typename Algorithm::ErrorType > error( nrSteps );
+  for( int step = 0; step<nrSteps; ++step )
+  {
+    error[ step ] = algorithm( step, polOrder );
+    algorithm.nextMesh();
+  }
+
+  for( int step = 1; step <nrSteps; ++step )
+  {
+    double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
+    double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
+
+    if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
+    {
+      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed L2eoc " << l2eoc << " " << polOrder);
+    }
+
+    if( std::abs( h1eoc - polOrder )  > 0.2 )
+    {
+      //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
+      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed H1eoc " << h1eoc << " " << polOrder);
+    }
+  }
+
+  algorithm.resetMesh(nrSteps);
+}
+
 
 // Main Program
 // ------------
@@ -214,38 +234,9 @@ try
   Dune::Fem::Parameter::append( (argc < 2) ? "parameter" : argv[ 1 ] );
 
   GridType &grid = Dune::Fem::TestGrid :: grid();
+  for( int p=1; p<2; ++p )
+    run( grid, p );
 
-  const int nrSteps = 4;
-
-  std::cout<< "testing with polorder "<< polOrder <<std::endl;
-  Algorithm algorithm( grid );
-  Algorithm::ErrorType *error;
-  error = new  Algorithm::ErrorType[ nrSteps ];
-  for( int step = 0; step<nrSteps; ++step )
-  {
-    error[ step ] = algorithm( step );
-    algorithm.nextMesh();
-  }
-
-  for( int step = 1; step <nrSteps; ++step )
-  {
-    double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
-    double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
-
-    //std::cout<< "L2 Eoc: " << l2eoc << std::endl;
-    //std::cout<< "H1 Eoc: " << h1eoc << std::endl;
-    if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
-    {
-      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
-    }
-    if( std::abs( h1eoc - polOrder )  > 0.2 )
-    {
-      //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
-      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
-    }
-  }
-
-  delete error;
   Dune::Fem::Parameter::write( "parameter.log" );
 
   return 0;

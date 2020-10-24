@@ -69,27 +69,13 @@ private:
 // Scheme
 // ------
 
-template < class GridPart, class FunctionSpace >
+template < class GridPart, class DiscreteFunctionSpaceType >
 struct Scheme
 {
   typedef GridPart GridPartType;
   typedef typename GridPartType::GridType GridType;
 
-#ifndef USECOMBINEDSPACE
-  typedef FunctionSpace FunctionSpaceType;
-#ifdef CONFORMING_SPACE
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-  //typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-#else
-  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-#endif
-#else
-  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType1;
-  typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType2;
-  typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
-
   typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
-#endif
 
 #ifdef HAVE_DUNE_ISTL
   typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -200,7 +186,7 @@ struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > 
 // algorithm
 // ---------
 
-template <class HGridType>
+template <bool combinedSpace, class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
   // we want to solve the problem on the leaf elements of the grid
@@ -208,9 +194,23 @@ double algorithm ( HGridType &grid, const int step )
   GridPartType gridPart(grid);
 
   // use a scalar function space
-  typedef Dune::Fem::FunctionSpace< double, double, HGridType :: dimensionworld, 1 > FunctionSpaceType;
+  typedef Dune::Fem::FunctionSpace< double, double, HGridType :: dimensionworld, 1 > SingleFunctionSpace;
 
-  typedef Scheme< GridPartType, FunctionSpaceType > SchemeType;
+  typedef Dune::Fem::DiscontinuousGalerkinSpace< SingleFunctionSpace, GridPartType, POLORDER > DGSpaceType;
+
+  typedef typename
+  std::conditional< combinedSpace,
+      Dune::Fem::TupleDiscreteFunctionSpace< DGSpaceType, DGSpaceType >,
+#ifdef CONFORMING_SPACE
+      Dune::Fem::LagrangeDiscreteFunctionSpace< SingleFunctionSpace, GridPartType, POLORDER >
+#else
+      DGSpaceType
+#endif
+        >::type DiscreteFunctionSpaceType;
+
+  typedef typename DiscreteFunctionSpaceType::FunctionSpaceType  FunctionSpaceType;
+
+  typedef Scheme< GridPartType, DiscreteFunctionSpaceType > SchemeType;
   SchemeType scheme( gridPart, step );
 
   typedef Function< FunctionSpaceType > FunctionType;
@@ -304,13 +304,27 @@ try
   // number of global refinements to bisect grid width
   const int refineStepsForHalf = Dune::DGFGridInfo< HGridType >::refineStepsForHalf();
 
-  // refine grid
-  Dune :: Fem :: GlobalRefine::apply( grid, level * refineStepsForHalf );
+  // normal space
+  {
+    // refine grid
+    Dune :: Fem :: GlobalRefine::apply( grid, level * refineStepsForHalf );
 
-  // calculate first step
-  for( int step = 0; step < repeats; ++step )
-    algorithm( grid, step );
+    // calculate first step
+    for( int step = 0; step < repeats; ++step )
+      algorithm< false >( grid, step );
+  }
 
+  // combined space
+  {
+    // coarsen
+    grid.globalRefine( -level*refineStepsForHalf );
+    // refine grid
+    Dune :: Fem :: GlobalRefine::apply( grid, level * refineStepsForHalf );
+
+    // calculate first step
+    for( int step = 0; step < repeats; ++step )
+      algorithm< true >( grid, step );
+  }
   return 0;
 }
 catch( const Dune::Exception &exception )
