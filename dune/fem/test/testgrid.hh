@@ -18,6 +18,7 @@ namespace Dune
     class TestGrid
     {
       typedef TestGrid ThisType;
+    public:
       typedef Dune::GridSelector::GridType HGridType;
 
     protected:

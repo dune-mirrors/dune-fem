@@ -6,7 +6,6 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/interpolate.hh>
-#include <dune/fem/misc/gridwidth.hh>
 
 #include <dune/fem/misc/l1norm.hh>
 #include <dune/fem/misc/l2norm.hh>
@@ -155,14 +154,6 @@ int main(int argc, char ** argv)
     MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
-
-    // test grid width calculation
-    {
-      typedef ContainedGridPartType  GridPartType ;
-      GridPartType gridPart( grid );
-      // add check for grid width
-      std::cout << "Grid width: " << GridWidth :: calcGridWidth( gridPart ) << std::endl;
-    }
 
     // AdaptiveDiscreteFunction
     {
