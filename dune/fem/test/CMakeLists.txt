@@ -20,24 +20,6 @@ set( DEFAULTFLAGS "COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 # variable which gathers all test targets
 set( TESTS )
 
-# lagrangeinterpolation tests
-if( NOT ${FEM_TORTURE_TESTS} )
-  set( MINORDER 2 )
-  set( MAXORDER 2 )
-else()
-  set( MINORDER 1 )
-  if( NOT ${GRIDDIM} LESS 3 )
-    set( MAXORDER 4 )
-  else()
-    set( MAXORDER 2 )
-  endif()
-endif()
-
-foreach( order RANGE ${MINORDER} ${MAXORDER} )
-  dune_add_test( NAME lagrangeinterpolation_p${order} SOURCES lagrangeinterpolation.cc
-                 COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} lagrangeinterpolation_p${order} )
-endforeach()
 dune_add_test( NAME lagrangeinterpolation_dynamic SOURCES lagrangeinterpolation.cc
                COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} lagrangeinterpolation_dynamic )
@@ -91,12 +73,6 @@ if( ${FEM_TORTURE_TESTS} )
   dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} test-tupleoperator )
-
-  # if( HAVE_EIGEN )
-  #   dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
-  #   COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
-  #   set( TESTS ${TESTS} l2projection_eigen )
-  # endif()
 endif()
 
 dune_add_test( NAME test-periodic SOURCES test-periodic.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" CMAKE_GUARD dune-alugrid_FOUND)
