@@ -30,9 +30,7 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, 1 > D
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, TestGridPartType, 1 > DiscreteTestSpaceType;
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, 2 > P2DiscreteSpaceType;
 
-
-
-#if USE_ISTL && HAVE_DUNE_ISTL
+#if HAVE_DUNE_ISTL
 // the UMFPack implementation in dune-istl is inflexible and only works with
 // FieldMartrix. Here, we test MyBlock and therefore disable the directsolver
 // for AMG.
@@ -55,48 +53,34 @@ namespace Dune {
 }
 
 template< class DSpace, class RSpace >
-struct LinearOperator
+struct ISTLOperator
 {
   typedef Dune::Fem::ISTLLinearOperator<
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DSpace, Dune::MyBlock< typename DSpace::RangeFieldType, DSpace::localBlockSize > >,
     Dune::Fem::ISTLBlockVectorDiscreteFunction< RSpace, Dune::MyBlock< typename RSpace::RangeFieldType, RSpace::localBlockSize > >
     > type;
 };
+#endif
 
-#elif USE_PETSC && HAVE_PETSC
+#if HAVE_PETSC
 #include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
 
 template< class DSpace, class RSpace >
-struct LinearOperator
+struct PetscOperator
 {
   typedef Dune::Fem::PetscLinearOperator<
     Dune::Fem::PetscDiscreteFunction< DSpace >,
     Dune::Fem::PetscDiscreteFunction< RSpace >
     > type;
 };
+#endif
 
-#elif USE_EIGEN && HAVE_EIGEN
-#include <dune/fem/function/vectorfunction.hh>
-#include <dune/fem/operator/linear/eigenoperator.hh>
-#include <dune/fem/storage/eigenvector.hh>
-
-template< class DSpace, class RSpace >
-struct LinearOperator
-{
-  typedef Dune::Fem::EigenVector< double > DofVectorType;
-  typedef Dune::Fem::EigenLinearOperator<
-    Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DSpace, DofVectorType > >,
-    Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< RSpace, DofVectorType > >
-    > type;
-};
-
-#else
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
 
 template< class DSpace, class RSpace >
-struct LinearOperator
+struct SparseRowOperator
 {
   typedef Dune::Fem::SparseRowLinearOperator<
     Dune::Fem::AdaptiveDiscreteFunction< DSpace >,
@@ -104,35 +88,10 @@ struct LinearOperator
     > type;
 };
 
-#endif
 
-
-
-// Main Program
-// ------------
-
-int main ( int argc, char **argv )
-try
+template <template <class,class> class LinearOperator>
+void algorithm( GridType& grid, const bool petsc = false )
 {
-  // initialize MPI manager and PETSc
-  Dune::Fem::MPIManager::initialize( argc, argv );
-
-  // GridType grid( {1, 1}, {{2, 2}} );
-  std::stringstream gridfile;
-  gridfile << "DGF" << std::endl;
-  gridfile << "Interval" << std::endl;
-  Dune::FieldVector< double, GridType::dimension> lower( 0 );
-  Dune::FieldVector< double, GridType::dimension> upper( 1 );
-  Dune::FieldVector< int,    GridType::dimension> length( 2 );
-
-  gridfile << lower  << std::endl;
-  gridfile << upper  << std::endl;
-  gridfile << length << std::endl;
-  gridfile << "#" << std::endl;
-
-  Dune::GridPtr< GridType > gridPtr( gridfile );
-  GridType& grid = *gridPtr;
-
   GridPartType gridPart( grid );
   TestGridPartType testGridPart( gridPart );
 
@@ -170,7 +129,9 @@ try
     checkLinearOperator( linOp, diagonalRange( space, testSpace ), permutation );
   }
 
-#if not USE_PETSC && HAVE_PETSC
+  // the following does not work with PETSc
+  if( petsc ) return ;
+
   {
     // check for different space sizes, but same grid
     typename LinearOperator< DiscreteSpaceType, P2DiscreteSpaceType >::type
@@ -200,7 +161,53 @@ try
     };
     checkLinearOperator( linOp, diagonalRange( testSpace, p2Space ), permutation );
   }
-#endif // #if not USE_PETSC
+}
+
+
+// Main Program
+// ------------
+
+int main ( int argc, char **argv )
+try
+{
+  // initialize MPI manager and PETSc
+  Dune::Fem::MPIManager::initialize( argc, argv );
+
+  // GridType grid( {1, 1}, {{2, 2}} );
+  std::stringstream gridfile;
+  gridfile << "DGF" << std::endl;
+  gridfile << "Interval" << std::endl;
+  Dune::FieldVector< double, GridType::dimension> lower( 0 );
+  Dune::FieldVector< double, GridType::dimension> upper( 1 );
+  Dune::FieldVector< int,    GridType::dimension> length( 2 );
+
+  gridfile << lower  << std::endl;
+  gridfile << upper  << std::endl;
+  gridfile << length << std::endl;
+  gridfile << "#" << std::endl;
+
+  Dune::GridPtr< GridType > gridPtr( gridfile );
+  GridType& grid = *gridPtr;
+
+
+  // SparseRowLinearOperator
+  {
+    algorithm< SparseRowOperator >( grid );
+  }
+
+#if HAVE_DUNE_ISTL
+  // ISTLLinearOperator
+  {
+    algorithm< ISTLOperator >( grid );
+  }
+#endif
+
+#if HAVE_PETSC
+  // PetscOperator
+  {
+    algorithm< PetscOperator >( grid );
+  }
+#endif
 
   return 0;
 }
