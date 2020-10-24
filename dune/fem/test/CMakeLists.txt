@@ -42,51 +42,10 @@ dune_add_test( NAME lagrangeinterpolation_dynamic SOURCES lagrangeinterpolation.
                COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} lagrangeinterpolation_dynamic )
 
-# dgl2projection tests for different discrete functions
-dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_adaptive )
-
-if( ${FEM_TORTURE_TESTS} )
-  set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
-else()
-  set( DFS blockvectorfunction )
-endif()
-foreach( df ${DFS} )
-  string( TOUPPER ${df} DF )
-  dune_add_test( NAME dgl2projection_${df} SOURCES dgl2projection.cc
-                 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_${DF};${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_${df} )
-endforeach()
-
-dune_add_test( NAME dgl2projection_vector_int SOURCES dgl2projection.cc
-               COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_vector_int )
-
-if( ${FEM_TORTURE_TESTS} )
-  # only run this test for YaspGrid
-  dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
-                 COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
-  set( TESTS ${TESTS} dgl2projection_legendre )
-endif()
-
-dune_add_test( NAME dgl2projection_hierarchiclegendre SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
-set( TESTS ${TESTS} dgl2projection_hierarchiclegendre )
-
-dune_add_test( NAME dgl2projection_fv SOURCES dgl2projection.cc
-COMPILE_DEFINITIONS "USE_FVSPACE;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} dgl2projection_fv )
-
-if( ${FEM_TORTURE_TESTS} )
-  dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_filtered )
-
-  dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
-  COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
-  set( TESTS ${TESTS} dgl2projection_idgridpart )
-endif()
+# dgl2projection tests for different discrete functions and spaces
+dune_add_test( NAME dgl2projection SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=2;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection )
 
 dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
