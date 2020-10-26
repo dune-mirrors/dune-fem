@@ -79,7 +79,7 @@ namespace Dune
           y = transf.apply( help );
         }
         template< class Arg >
-        typename Traits::RangeType &y operator() ( const Arg &x ) const
+        typename Traits::RangeType operator() ( const Arg &x ) const
         {
           typename Traits::RangeType y;
           evaluate(x,y);
