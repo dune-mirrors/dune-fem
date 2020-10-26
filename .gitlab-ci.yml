@@ -3,7 +3,6 @@ variables:
   DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
 
   DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
-  #DUNE_CONTROL_PATH:  /duneci/modules:$CI_PROJECT_DIR
   DUNE_PY_DIR:        /duneci/modules/dune-py
   # adding this actually leads to the test failure seen in the core modules
   # don't know why this is required here but not for core modules - magic?
@@ -16,21 +15,22 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
 
 debian-11-gcc-10-17:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
     - export TORTURE_TESTS=off
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
     - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
     - duneci-standard-test
   variables:
     # pybind11 does not compile with c++-20 standard right now
-    DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=OFF -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+    DUNE_CMAKE_FLAGS:   "-DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DCMAKE_CXX_FLAGS='-std=c++17 -O2 -g -Wall -fdiagnostics-color=always' -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     # gcc-10-20 fails with a segfault in dune-grid (gridptr.hh)
     DUNECI_TOOLCHAIN: gcc-10-17
-  tags: [stuttgart2]  
+    DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
+  tags: [stuttgart2]
 
 debian-11-gcc-9-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
@@ -38,23 +38,24 @@ debian-11-gcc-9-20-minimal-no-petsc:
     - export TORTURE_TESTS=off
     - duneci-standard-test
   variables:
-    DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+    DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=OFF -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     DUNECI_TOOLCHAIN: gcc-9-20
-  tags: [stuttgart1]  
+  tags: [stuttgart1]
 
 ubuntu:20.04-clang-10-17:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
   script:
     - export TORTURE_TESTS=off
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
     - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
     - duneci-standard-test
   variables:
     # bug in CI clang-10-17 and clang-10-20 are mixed up
     DUNECI_TOOLCHAIN: clang-10-20
+    DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
+    DUNE_CMAKE_FLAGS:   "-DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DCMAKE_CXX_FLAGS='-std=c++17 -O2 -g -Wall -fdiagnostics-color=always' -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
   #DUNECI_TOOLCHAIN: clang-10-17
-  tags: [stuttgart3]  
+  tags: [stuttgart3]
 
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
@@ -62,10 +63,8 @@ debian:11--gcc-9-17:headercheck:
     - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
     - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
-    #- cd /builds/dune-fem/dune-fem/build-cmake
     - make headercheck
   variables:
-    DUNE_CMAKE_FLAGS:   "-DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+    DUNE_CMAKE_FLAGS: "-DDUNE_ENABLE_PYTHONBINDINGS=OFF -DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     DUNECI_TOOLCHAIN: gcc-9-17
-  tags: [duneci]  
-
+  tags: [duneci]
