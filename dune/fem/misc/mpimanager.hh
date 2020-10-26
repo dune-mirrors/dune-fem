@@ -28,6 +28,7 @@ namespace Dune
       DUNE_EXPORT static MPIManager &instance ()
       {
         static MPIManager instance;
+        std::cout << "MPIManager::instance " << &instance << std::endl;
         return instance;
       }
 
@@ -69,6 +70,7 @@ namespace Dune
       static void initialize ( int &argc, char **&argv )
       {
         MPIHelper *&helper = instance().helper_;
+        std::cout << "initialize\n";
         std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
         // the following initalization is only enabled for

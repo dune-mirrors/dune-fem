@@ -16,6 +16,7 @@ PYBIND11_MODULE( _fem, module )
   {
     int argc = 0;
     char **argv = nullptr;
+    std::cout << "_fem.cc\n";
     Dune::Fem::MPIManager::initialize( argc, argv );
 
     int numThreads = 1;
