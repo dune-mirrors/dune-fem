@@ -32,7 +32,7 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
-//#include <dune/fem/solver/amgistl.hh>
+#include <dune/fem/solver/istl.hh>
 #endif // HAVE_DUNE_ISTL
 
 #if HAVE_PETSC
@@ -381,7 +381,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
-#if 0 // the inverse linear operator ignores all verbosity setting
   // ISTL::InverseOperator< LinearOperator > + ISTLLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
@@ -389,9 +388,12 @@ int main(int argc, char** argv)
     using InverseOperator   = Dune::Fem::ISTL::InverseOperator< LinearOperator >;
 
     std::string designation(" === ISTL::InverseOperator + ISTLLinearOperator === ");
-    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+    InverseOperator::SolverParameterType param( Dune::Fem::parameterDict(
+        "istl.",
+            "verbosity", verboseSolver ? "full" : "off"
+      ) );
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param );
   }
-#endif
 
 #if HAVE_SUPERLU
   // ISTLInverseOperator< ISTLSuperLU > + ISTLLinearOperator
