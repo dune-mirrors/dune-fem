@@ -10,6 +10,8 @@
 # constant and $b$ a given vector.
 # <codecell>
 
+from mpi4py import MPI
+
 import numpy, math
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
