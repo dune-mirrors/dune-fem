@@ -263,6 +263,13 @@ namespace Dune
         auto global = geometry.global( coordinate( x ) );
         function().evaluate( global, ret );
       }
+      template< class PointType >
+      RangeType operator() ( const PointType &x ) const
+      {
+        RangeType ret;
+        evaluate(x,ret);
+        return ret;
+      }
 
       //! jacobian of local function
       template< class PointType >
