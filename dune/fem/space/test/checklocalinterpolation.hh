@@ -33,6 +33,14 @@ struct LocalBasis
     dest = 0;
     bSet_.evaluateAll( arg, comp_, dest );
   }
+  template <class Point>
+  RangeType operator()(const Point &arg) const
+  {
+    RangeType dest;
+    evaluate(arg,dest);
+    return dest;
+  }
+
 
   template< class Point >
   RangeType evaluate ( const Point &arg ) const
