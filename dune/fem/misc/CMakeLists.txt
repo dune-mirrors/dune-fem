@@ -12,4 +12,5 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
 
 dune_add_subdirs(petsc threads)
 
+dune_add_library(misc OBJECT mpimanager.cc)
 dune_add_library(misc OBJECT femtimer.cc)

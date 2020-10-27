@@ -19,17 +19,22 @@ namespace Dune
   namespace Fem
   {
 
-    struct MPIManager
+    struct DUNE_EXPORT MPIManager
     {
       typedef Dune::CollectiveCommunication< MPIHelper::MPICommunicator >
         CollectiveCommunication;
-
+      DUNE_EXPORT static std::unique_ptr<MPIManager> instance_;
     private:
       DUNE_EXPORT static MPIManager &instance ()
       {
-        static MPIManager instance;
-        std::cout << "MPIManager::instance " << &instance << std::endl;
-        return instance;
+        // DUNE_EXPORT static std::unique_ptr<MPIManager> instance_ = nullptr;
+        if (!instance_)
+        {
+          std::cout << "MPIManager make_unique\n";
+          instance_ = std::make_unique<MPIManager>();
+        }
+        std::cout << "MPIManager::instance " << &instance_ << std::endl;
+        return *instance_;
       }
 
       static bool mpiFinalized ()

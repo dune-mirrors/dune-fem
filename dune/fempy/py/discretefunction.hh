@@ -128,6 +128,7 @@ namespace Dune
       inline auto addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<2> )
       -> void_t< decltype(getBlockVector(std::declval<DF&>().dofVector().array())) >
       {
+        #if 0
         typedef typename DF::DofVectorType DofVector;
         //check if BlockVector Is already registered if not register it
         typedef std::decay_t< decltype( getBlockVector( std::declval< DofVector& >().array() ) ) > BlockVector;
@@ -141,6 +142,7 @@ namespace Dune
         {
           return self.dofVector().array();
         });
+        #endif
       }
       template< class DF , class ... options>
       inline void addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<1> )
