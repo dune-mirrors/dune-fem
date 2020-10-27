@@ -347,7 +347,7 @@ namespace Dune
         inline void prepare(A... ) const
         {}
 
-        virtual void finalize() const
+        virtual void finalize()
         {
           const_cast< ThisType& > (*this).finalize();
         }

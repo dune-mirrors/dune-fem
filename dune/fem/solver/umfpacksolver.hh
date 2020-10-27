@@ -129,7 +129,7 @@ public:
   }
 
   // \brief Free allocated memory.
-  virtual void finalize() const
+  virtual void finalize()
   {
     if( ccsmat_ )
     {

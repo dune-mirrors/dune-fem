@@ -124,6 +124,13 @@ namespace Dune
         this->get().evaluate( p, hRet );
         ret = converter_( hRet );
       }
+      template< class Point >
+      RangeType operator()( const Point &p ) const
+      {
+        RangeType ret;
+        evaluate(p,ret);
+        return ret;
+      }
 
       template< class Point >
       void jacobian ( const Point &p, JacobianRangeType &jac ) const
