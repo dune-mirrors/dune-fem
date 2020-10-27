@@ -78,6 +78,7 @@ class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTr
 
   friend class InverseOperatorInterface< Traits >;
 public:
+  typedef LDLInverseOperator< DF, Matrix > ThisType;
 
   typedef typename BaseType :: SolverDiscreteFunctionType
     SolverDiscreteFunctionType;
@@ -293,7 +294,7 @@ protected:
     ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
     ldl_permt(dimMat, dest, Y_, P_);
 
-    finalize();
+    const_cast<ThisType*>(this)->finalize();
   }
 
   /** \brief Solve the system.

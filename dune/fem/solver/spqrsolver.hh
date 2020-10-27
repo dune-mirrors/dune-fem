@@ -228,7 +228,7 @@ public:
   {
     prepare();
     apply(arg.leakPointer(),dest.leakPointer());
-    finalize();
+    const_cast<ThisType*>(this)->finalize();
     return 1;
   }
 
