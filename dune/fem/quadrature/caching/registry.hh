@@ -35,7 +35,7 @@ namespace Dune
         virtual GeometryType type () const = 0;
       };
 
-    private:
+    // private:
       typedef std::list< StorageInterface * > StorageListType;
 
       struct QuadratureInfo
@@ -47,17 +47,17 @@ namespace Dune
       };
 
       typedef std::list< QuadratureInfo > QuadratureInfoListType;
+      DUNE_EXPORT static StorageListType storageList_;
+      DUNE_EXPORT static QuadratureInfoListType quadratureInfoList_;
 
       DUNE_EXPORT static StorageListType &storageList ()
       {
-        static StorageListType storageList;
-        return storageList;
+        return storageList_;
       }
 
       DUNE_EXPORT static QuadratureInfoListType &quadratureInfoList ()
       {
-        static QuadratureInfoListType quadratureInfoList;
-        return quadratureInfoList;
+        return quadratureInfoList_;
       }
 
     public:
