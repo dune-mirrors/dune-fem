@@ -13,6 +13,7 @@
 
 // dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -47,17 +48,15 @@ namespace Dune
       };
 
       typedef std::list< QuadratureInfo > QuadratureInfoListType;
-      DUNE_EXPORT static StorageListType storageList_;
-      DUNE_EXPORT static QuadratureInfoListType quadratureInfoList_;
 
       DUNE_EXPORT static StorageListType &storageList ()
       {
-        return storageList_;
+        return Singleton< StorageListType > :: instance();
       }
 
       DUNE_EXPORT static QuadratureInfoListType &quadratureInfoList ()
       {
-        return quadratureInfoList_;
+        return Singleton< QuadratureInfoListType > :: instance();
       }
 
     public:

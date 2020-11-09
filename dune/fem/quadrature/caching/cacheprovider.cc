@@ -4,11 +4,6 @@ namespace Dune
   {
 
     template <class GridPart>
-    typename CacheProvider<GridPart, 1>::MapperContainerType
-    CacheProvider<GridPart, 1>::mappers_;
-
-
-    template <class GridPart>
     typename CacheProvider<GridPart, 1>::MapperIteratorType
     CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
                                              GeometryType elementGeometry,
@@ -29,6 +24,9 @@ namespace Dune
       const int minTwist = twistMappers.minTwist();
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
+
+      MapperContainerType& mappers_ = mappers();
+
       MapperIteratorType it = mappers_.insert
         (std::make_pair( key,
                          CacheStorageType(numFaces, maxTwist))).first;
@@ -61,6 +59,8 @@ namespace Dune
       const int numFaces = pointMappers.first.size();
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
+
+      MapperContainerType& mappers_ = mappers();
 
       MapperIteratorType it
         = mappers_.insert(std::make_pair(key, CacheStorageType(numFaces))).first;

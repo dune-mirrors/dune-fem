@@ -15,6 +15,8 @@
 
 #include <dune/fem/quadrature/quadrature.hh>
 
+#include <dune/fem/storage/singleton.hh>
+
 //- Local includes
 #include "pointmapper.hh"
 #include "topology.hh"
@@ -131,7 +133,8 @@ namespace Dune
         // instance of map
         MapperContainerType mappers_;
 
-        //! cosntructor
+      public:
+        //! constructor
         MapperContainer() : mappers_(100, (TwistStorageType*) 0)
         {}
 
@@ -145,13 +148,10 @@ namespace Dune
           }
         }
 
-      public:
         //! return reference to mappers
         DUNE_EXPORT static MapperContainerType& instance()
         {
-          // create singleton instance
-          static MapperContainer mc;
-          return mc.mappers_;
+          return Singleton< MapperContainer > :: instance().mappers_;
         }
       };
     };
