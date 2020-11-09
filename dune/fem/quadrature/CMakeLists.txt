@@ -17,5 +17,4 @@ dune_add_library(quadrature OBJECT
     pardgsimplexquadrature3d.cc
     caching/twistutility.cc
     caching/topology.cc
-    caching/registry.cc
     )
