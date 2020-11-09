@@ -20,12 +20,6 @@ namespace Dune
       enum { MAXP = 8 };
       enum { highest_order = 2 };
 
-      //! Access to the singleton object.
-      DUNE_EXPORT static const PyramidPoints& instance() {
-        static PyramidPoints pyramidPoints;
-        return pyramidPoints;
-      }
-
       //! Access to the ith point of quadrature rule m.
       const FieldVector<double, 3>& point(int m, int i) const
       {
@@ -50,7 +44,6 @@ namespace Dune
         return N[m];
       }
 
-    private:
       //! initialize quadrature points on the interval for all orders
       PyramidPoints()
       {

@@ -145,7 +145,7 @@ namespace Dune
       QuadratureImp<ct, 3>(id),
       order_((order <= 0) ? 1 : order)
     {
-      const PyramidPoints& points = PyramidPoints::instance();
+      PyramidPoints points;
 
       int m = 0;
       for (int i = 0; i < PyramidPoints::numQuads; ++i) {
