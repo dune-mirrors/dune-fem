@@ -47,6 +47,10 @@ namespace Dune
         DUNE_EXPORT
         static Object& instance()
         {
+#if 1
+          static Object obj;
+          return obj;
+#else
           PointerType& ptr = storage_[ std::type_index(typeid(Object)) ];
           if( ! ptr )
           {
@@ -57,10 +61,13 @@ namespace Dune
             ptr = PointerType( (void *) obj, Deleter< Object > () );
           }
           return *((Object *) ptr.operator->());
+#endif
         }
       };
     }
 
+    /** \brief return singleton instance of given Object type.
+     */
     template< class Object >
     struct Singleton
     {
@@ -69,16 +76,8 @@ namespace Dune
       DUNE_EXPORT
       static Object& instance()
       {
-        // TODO: introduce cmake variable
-#if 1
-        // def DUNE_FEM_USE_HASED_BASED_SINGLETON
+        // forward to non-templated class
         return detail::SingletonStorage::template instance< Object > ();
-#else
-        // traditional way of creating static variable
-        // that does not work with older clang compilers
-        static Object obj;
-        return obj;
-#endif
       }
     };
 
