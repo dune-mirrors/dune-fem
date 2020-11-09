@@ -15,6 +15,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -147,12 +148,11 @@ namespace Dune
       void printToFile ( const std::string &fileName, int step );
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
+      friend class Dune::Fem::detail::SingletonStorage;
+
       DUNE_EXPORT static Timer &instance ()
       {
-        static Timer instance_;
-        // don't use this class in multi thread environment
-        assert( ThreadManager :: singleThreadMode() );
-        return instance_;
+        return Singleton< Timer > ::instance();
       }
 
     public:
