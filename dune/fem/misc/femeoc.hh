@@ -73,7 +73,6 @@ namespace Dune
       std::vector< std::string > description_;
       std::vector< int > pos_;
 
-    public:
       FemEoc ()
       : tableWriter_( 0 ),
         level_( 0 )
@@ -84,7 +83,6 @@ namespace Dune
         clearFile();
       }
 
-    protected:
       void clearFile()
       {
         if( tableWriter_ )
@@ -241,11 +239,12 @@ namespace Dune
                     std::ostream& out);
 
     public:
+      friend class Dune::Fem::detail::SingletonStorage;
+
       DUNE_EXPORT static FemEoc& instance()
       {
         return Singleton< FemEoc > :: instance();
       }
-
       //! close file and allow FemEoc to used for a second run
       static void clear() {
         instance().clearFile();

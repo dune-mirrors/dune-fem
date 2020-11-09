@@ -133,7 +133,6 @@ namespace Dune
         // instance of map
         MapperContainerType mappers_;
 
-      public:
         //! constructor
         MapperContainer() : mappers_(100, (TwistStorageType*) 0)
         {}
@@ -148,6 +147,8 @@ namespace Dune
           }
         }
 
+      public:
+        friend class Dune::Fem::detail::SingletonStorage;
         //! return reference to mappers
         DUNE_EXPORT static MapperContainerType& instance()
         {
