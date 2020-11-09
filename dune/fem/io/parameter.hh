@@ -13,6 +13,8 @@
 #include <dune/fem/io/parameter/container.hh>
 #include <dune/fem/io/parameter/reader.hh>
 
+#include <dune/fem/storage/singleton.hh>
+
 namespace Dune
 {
 
@@ -192,8 +194,7 @@ namespace Dune
     public:
       DUNE_EXPORT static ParameterContainer &container ()
       {
-        static ParameterContainer container;
-        return container;
+        return Singleton< ParameterContainer > :: instance();
       }
 
       /** \brief add parameters from the command line

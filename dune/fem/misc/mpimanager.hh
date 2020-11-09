@@ -13,6 +13,8 @@
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #endif
 
+#include <dune/fem/storage/singleton.hh>
+
 namespace Dune
 {
 
@@ -23,18 +25,10 @@ namespace Dune
     {
       typedef Dune::CollectiveCommunication< MPIHelper::MPICommunicator >
         CollectiveCommunication;
-      DUNE_EXPORT static std::unique_ptr<MPIManager> instance_;
     private:
       DUNE_EXPORT static MPIManager &instance ()
       {
-        // DUNE_EXPORT static std::unique_ptr<MPIManager> instance_ = nullptr;
-        if (!instance_)
-        {
-          std::cout << "MPIManager make_unique\n";
-          instance_ = std::make_unique<MPIManager>();
-        }
-        std::cout << "MPIManager::instance " << &instance_ << std::endl;
-        return *instance_;
+        return Singleton< MPIManager > :: instance();
       }
 
       static bool mpiFinalized ()
