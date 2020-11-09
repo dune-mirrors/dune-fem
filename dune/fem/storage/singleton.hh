@@ -20,12 +20,15 @@ namespace Dune
   {
     namespace detail
     {
-      struct SingletonStorage
+      class SingletonStorage
       {
+      public:
         typedef std::shared_ptr< void > PointerType;
         typedef std::type_index          KeyType;
 
         typedef std::unordered_map< KeyType, PointerType > StorageType;
+
+      private:
         static StorageType storage_;
 
         template <class Object>
@@ -37,6 +40,7 @@ namespace Dune
           }
         };
 
+      public:
         /** \brief return singleton instance of given Object type.
          */
         template <class Object>
