@@ -82,13 +82,13 @@ def compute(space,epsilon,weakBnd):
     info = scheme.solve(target=uh)
     error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
     for i in range(3):
-        gridView.hierarchicalGrid.globalRefine(1)
         uh.interpolate(0)
         scheme.solve(target=uh)
         error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
         eoc   += [ math.log(error1/error0) / math.log(0.5) ]
         print(i,error0,error1,eoc)
         error0 = error1
+        gridView.hierarchicalGrid.globalRefine(1)
 
     # print(space.order,epsilon,eoc)
     if (eoc[-1]-(space.order+1)) < -0.1:
@@ -98,22 +98,25 @@ def compute(space,epsilon,weakBnd):
 
 storage = "fem"
 
-gridView = leafGridView([-1, -1], [1, 1], [20, 20])
+def newGridView():
+    return leafGridView([-1, -1], [1, 1], [4, 4])
+
+gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
 eoc = compute(space,1e-5,True)
 
-gridView = leafGridView([-1, -1], [1, 1], [20, 20])
+gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
 eoc = compute(space,1,True)
 
-gridView = leafGridView([-1, -1], [1, 1], [20, 20])
-space    = dgSpace(gridView, order=3, storage=storage)
-eoc = compute(space,1e-5,True)
+#gridView = newGridView()
+#space    = dgSpace(gridView, order=3, storage=storage)
+#eoc = compute(space,1e-5,True)
 
-gridView = leafGridView([-1, -1], [1, 1], [20, 20])
+gridView = newGridView()
 space    = lagrange(gridView, order=2, storage=storage)
 eoc = compute(space,1,True)
 
-gridView = leafGridView([-1, -1], [1, 1], [20, 20])
+gridView = newGridView()
 space    = lagrange(gridView, order=2, storage=storage)
 eoc = compute(space,1,False)
