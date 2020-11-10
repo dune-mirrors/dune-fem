@@ -69,7 +69,6 @@ namespace Dune
       static void initialize ( int &argc, char **&argv )
       {
         MPIHelper *&helper = instance().helper_;
-        std::cout << "initialize\n";
         std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
         // the following initalization is only enabled for

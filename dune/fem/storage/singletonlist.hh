@@ -185,11 +185,11 @@ namespace Dune
     protected:
       ListType singletonList_;
 
+    public:
       inline SingletonListStorage ()
       : singletonList_()
       {}
 
-    public:
       inline ~SingletonListStorage ()
       {
         while( !singletonList().empty() )

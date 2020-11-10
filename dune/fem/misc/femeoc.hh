@@ -73,6 +73,7 @@ namespace Dune
       std::vector< std::string > description_;
       std::vector< int > pos_;
 
+    public:
       FemEoc ()
       : tableWriter_( 0 ),
         level_( 0 )
@@ -83,6 +84,7 @@ namespace Dune
         clearFile();
       }
 
+    private:
       void clearFile()
       {
         if( tableWriter_ )

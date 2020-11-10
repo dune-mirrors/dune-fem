@@ -2,6 +2,7 @@
 #define DUNE_FEM_GAUSSPOINTS_HH
 
 #include <cassert>
+#include <vector>
 
 #include <dune/common/visibility.hh>
 
@@ -31,25 +32,14 @@ namespace Dune
       enum { highestOrder=19 };
 
     private:
-      double G[MAXP+1][MAXP]; // positions of Gauss points
-      double W[MAXP+1][MAXP]; // weights associated with points
-      int    O[MAXP+1];       // order of the rule
+      std::vector< std::vector< double > > G; //[MAXP+1][MAXP]; // positions of Gauss points
+      std::vector< std::vector< double > > W; //[MAXP+1][MAXP]; // weights associated with points
+      std::vector< int > O;                   //[MAXP+1];       // order of the rule
 
-    private:
+    public:
       /*! \brief constructor initializing the Gauss points for all orders
        */
       GaussPts ();
-
-    public:
-      /*! \brief obtain the singleton object
-       *
-       *  \returns the singleton instance of this class
-       */
-      DUNE_EXPORT static const GaussPts &instance()
-      {
-        static GaussPts gaussPts;
-        return gaussPts;
-      }
 
       /*! \brief obtain the i-th point of the m-th quadratre
        *

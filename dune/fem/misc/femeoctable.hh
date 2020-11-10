@@ -13,6 +13,7 @@
 
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -79,6 +80,7 @@ namespace Dune
       std::vector< bool > initial_;
       std::vector< std::vector< int > > pos_;
 
+    public:
       FemEocTable() :
         nrOfTabs_(0),
         outputFile_(),
@@ -108,6 +110,7 @@ namespace Dune
         }
       }
 
+    private:
       int init(const std::string& path,
                const std::string& name, const std::string& descript)
       {
@@ -305,9 +308,11 @@ namespace Dune
         }
       }
      public:
-      DUNE_EXPORT static FemEocTable& instance() {
-        static FemEocTable instance_;
-        return instance_;
+      friend class Dune::Fem::detail::SingletonStorage;
+
+      DUNE_EXPORT static FemEocTable& instance()
+      {
+        return Singleton< FemEocTable >::instance();
       }
 
       //! creates a new table and opens the corresponding file path/name

@@ -103,7 +103,6 @@ namespace Dune
       double W[numQuads][MAXP]; // weights associated with points
       int O[numQuads];          // order of the rule
       int N[numQuads];          // number of points in quadrature rule
-
     };
 
   } // namespace Fem

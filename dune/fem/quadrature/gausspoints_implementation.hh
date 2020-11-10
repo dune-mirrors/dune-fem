@@ -10,6 +10,9 @@ namespace Dune
   {
 
     inline GaussPts :: GaussPts ()
+      : G( MAXP+1, std::vector<double>(MAXP,0.0)),
+        W( MAXP+1, std::vector<double>(MAXP,0.0)),
+        O( MAXP+1, 0 )
     {
       int m = 0;
       O[m] = -1;

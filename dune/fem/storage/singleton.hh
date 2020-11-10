@@ -7,7 +7,9 @@
 #include <memory>
 #include <typeindex>
 #include <utility>
+#include <map>
 #include <unordered_map>
+#include <vector>
 
 #include <dune/common/visibility.hh>
 
@@ -22,23 +24,33 @@ namespace Dune
     {
       class SingletonStorage
       {
-      public:
-        typedef std::shared_ptr< void > PointerType;
-        typedef std::type_index          KeyType;
+        struct Item
+        {
+          virtual ~Item() {}
+        };
 
+        template <class Object>
+        struct ItemWrapper : public Item
+        {
+          Object obj_;
+        };
+
+      public:
+        struct NullDeleter
+        {
+          void operator()(Item *p) {}
+        };
+
+        //typedef std::unique_ptr< Item, NullDeleter > PointerType;
+        typedef std::unique_ptr< Item > PointerType;
+        typedef std::type_index         KeyType;
+
+        //typedef std::map< KeyType, PointerType > StorageType;
+        //typedef std::vector< PointerType > StorageType;
         typedef std::unordered_map< KeyType, PointerType > StorageType;
 
       private:
-        static StorageType storage_;
-
-        template <class Object>
-        struct Deleter
-        {
-          void operator()(void* p) const
-          {
-            delete (Object *) p;
-          }
-        };
+        static StorageType* storage_;
 
       public:
         /** \brief return singleton instance of given Object type.
@@ -47,20 +59,28 @@ namespace Dune
         DUNE_EXPORT
         static Object& instance()
         {
-#if 1
+          if(! storage_ )
+            storage_ = new StorageType();
+
+          StorageType& storage = *storage_;
+#if 0
           static Object obj;
           return obj;
 #else
-          PointerType& ptr = storage_[ std::type_index(typeid(Object)) ];
+          //std::cout << "Accessing Object " << typeid(Object).name() << std::endl;
+          //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
+
+          typedef ItemWrapper< Object > ItemWrapperType;
+          PointerType& ptr = storage[ std::type_index(typeid(Object)) ];
           if( ! ptr )
           {
             assert( Fem::ThreadManager::singleThreadMode() );
+            ptr.reset( new ItemWrapperType() );
             //std::cout << "Create Object " << typeid(Object).name() << std::endl;
             //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
-            Object* obj = new Object();
-            ptr = PointerType( (void *) obj, Deleter< Object > () );
           }
-          return *((Object *) ptr.operator->());
+          assert( dynamic_cast< ItemWrapperType* > (ptr.operator->()) );
+          return static_cast< ItemWrapperType& > (*ptr).obj_;
 #endif
         }
       };
@@ -69,17 +89,26 @@ namespace Dune
     /** \brief return singleton instance of given Object type.
      */
     template< class Object >
-    struct Singleton
+    struct DUNE_EXPORT Singleton
     {
+      //static std::unique_ptr< Object > instance_;
+
       /** \brief return singleton instance of given Object type.
        */
       DUNE_EXPORT
       static Object& instance()
       {
+        static Object& inst = detail::SingletonStorage::template instance< Object > ();
+        return inst;
+        //if( ! instance_ )
+        //  instance_.reset( new Object() );
+        //return *instance_;
         // forward to non-templated class
-        return detail::SingletonStorage::template instance< Object > ();
+        //return detail::SingletonStorage::template instance< Object > ();
       }
     };
+
+    //template <class Object> std::unique_ptr< Object > DUNE_EXPORT Singleton< Object >::instance_;
 
   } // namespace Fem
 

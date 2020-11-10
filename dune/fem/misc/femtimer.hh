@@ -72,9 +72,11 @@ namespace Dune
         {}
       };
 
+    public:
       Timer ();
       ~Timer ();
 
+    private:
       void push_time() { timesS_.push( timer_.elapsed() ); }
 
       double pop_time()
@@ -149,6 +151,7 @@ namespace Dune
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
       friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< Timer >;
 
       DUNE_EXPORT static Timer &instance ()
       {

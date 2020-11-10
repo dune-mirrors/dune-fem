@@ -15,6 +15,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/tuples.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -340,10 +341,12 @@ namespace Dune
       }
 
     public:
+      friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< PersistenceManager >;
+
       DUNE_EXPORT static PersistenceManager &instance ()
       {
-        static PersistenceManager theInstance;
-        return theInstance;
+        return Singleton< PersistenceManager >::instance();
       }
 
       static BackupStreamType& backupStream()
