@@ -151,7 +151,7 @@ namespace Dune
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
       friend class Dune::Fem::detail::SingletonStorage;
-      friend class Dune::Fem::Singleton< Timer >;
+      friend struct Dune::Fem::Singleton< Timer >;
 
       DUNE_EXPORT static Timer &instance ()
       {

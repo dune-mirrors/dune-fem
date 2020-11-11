@@ -342,7 +342,7 @@ namespace Dune
 
     public:
       friend class Dune::Fem::detail::SingletonStorage;
-      friend class Dune::Fem::Singleton< PersistenceManager >;
+      friend struct Dune::Fem::Singleton< PersistenceManager >;
 
       DUNE_EXPORT static PersistenceManager &instance ()
       {

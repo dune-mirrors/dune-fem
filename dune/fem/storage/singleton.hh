@@ -50,7 +50,7 @@ namespace Dune
         typedef std::unordered_map< KeyType, PointerType > StorageType;
 
       private:
-        static StorageType* storage_;
+        static std::unique_ptr<StorageType> storage_;
 
         // placing variables as static inside functions only works with gcc
         static const bool placeStaticVariableInline = false ;
@@ -70,7 +70,7 @@ namespace Dune
           else
           {
             if(! storage_ )
-              storage_ = new StorageType();
+              storage_.reset( new StorageType() );
 
             StorageType& storage = *storage_;
             //std::cout << "Accessing Object " << typeid(Object).name() << std::endl;
