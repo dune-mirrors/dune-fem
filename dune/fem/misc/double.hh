@@ -57,6 +57,8 @@ namespace Dune
         count_[ thread ] += count ;
       }
 
+      friend class Dune::Fem::detail::SingletonStorage;
+
       static ThisType& instance( const std::string& name )
       {
         return Singleton< ThisType >::instance( name );
@@ -102,14 +104,15 @@ namespace Dune
         return *this;
       }
 
+      friend class Dune::Fem::detail::SingletonStorage;
       DUNE_EXPORT static ThisType &instance ()
       {
 #ifdef HAVE_PTHREAD
         static thread_local ThisType instance;
-#else
-        static ThisType instance;
-#endif
         return instance;
+#else
+        return Singleton< ThisType >::instance();
+#endif
       }
     };
 
