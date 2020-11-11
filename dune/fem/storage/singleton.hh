@@ -29,59 +29,65 @@ namespace Dune
           virtual ~Item() {}
         };
 
+      public:
         template <class Object>
         struct ItemWrapper : public Item
         {
           Object obj_;
+          template <class... Args>
+          ItemWrapper(Args &&... args) : obj_(std::forward< Args >( args )...)
+          {}
         };
 
-      public:
         struct NullDeleter
         {
           void operator()(Item *p) {}
         };
 
-        //typedef std::unique_ptr< Item, NullDeleter > PointerType;
         typedef std::unique_ptr< Item > PointerType;
         typedef std::type_index         KeyType;
 
-        //typedef std::map< KeyType, PointerType > StorageType;
-        //typedef std::vector< PointerType > StorageType;
         typedef std::unordered_map< KeyType, PointerType > StorageType;
 
       private:
         static StorageType* storage_;
 
+        // placing variables as static inside functions only works with gcc
+        static const bool placeStaticVariableInline = false ;
+
       public:
         /** \brief return singleton instance of given Object type.
          */
-        template <class Object>
-        DUNE_EXPORT
-        static Object& instance()
+        template <class Object, class... Args>
+        static Object& instance(Args &&... args)
         {
-          if(! storage_ )
-            storage_ = new StorageType();
-
-          StorageType& storage = *storage_;
-#if 0
-          static Object obj;
-          return obj;
-#else
-          //std::cout << "Accessing Object " << typeid(Object).name() << std::endl;
-          //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
-
-          typedef ItemWrapper< Object > ItemWrapperType;
-          PointerType& ptr = storage[ std::type_index(typeid(Object)) ];
-          if( ! ptr )
+          // this way of creating static variables only works with gcc, not with clang
+          if constexpr ( placeStaticVariableInline )
           {
-            assert( Fem::ThreadManager::singleThreadMode() );
-            ptr.reset( new ItemWrapperType() );
-            //std::cout << "Create Object " << typeid(Object).name() << std::endl;
-            //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
+            static Object obj( std::forward< Args >( args )...);
+            return obj;
           }
-          assert( dynamic_cast< ItemWrapperType* > (ptr.operator->()) );
-          return static_cast< ItemWrapperType& > (*ptr).obj_;
-#endif
+          else
+          {
+            if(! storage_ )
+              storage_ = new StorageType();
+
+            StorageType& storage = *storage_;
+            //std::cout << "Accessing Object " << typeid(Object).name() << std::endl;
+            //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
+
+            typedef ItemWrapper< Object > ItemWrapperType;
+            PointerType& ptr = storage[ std::type_index(typeid(Object)) ];
+            if( ! ptr )
+            {
+              assert( Fem::ThreadManager::singleThreadMode() );
+              ptr.reset( new ItemWrapperType(std::forward< Args >( args )...) );
+              //std::cout << "Create Object " << typeid(Object).name() << std::endl;
+              //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
+            }
+            assert( dynamic_cast< ItemWrapperType* > (ptr.operator->()) );
+            return static_cast< ItemWrapperType& > (*ptr).obj_;
+          }
         }
       };
     }
@@ -91,24 +97,17 @@ namespace Dune
     template< class Object >
     struct DUNE_EXPORT Singleton
     {
-      //static std::unique_ptr< Object > instance_;
-
       /** \brief return singleton instance of given Object type.
+       *  \param args Possible constructor arguments for object when created for first time
        */
-      DUNE_EXPORT
-      static Object& instance()
+      template <class... Args>
+      static Object& instance(Args &&... args)
       {
-        static Object& inst = detail::SingletonStorage::template instance< Object > ();
+        // catch reference as static variable to avoid map search later on
+        static Object& inst = detail::SingletonStorage::template instance< Object, Args... > (std::forward< Args >( args )...);
         return inst;
-        //if( ! instance_ )
-        //  instance_.reset( new Object() );
-        //return *instance_;
-        // forward to non-templated class
-        //return detail::SingletonStorage::template instance< Object > ();
       }
     };
-
-    //template <class Object> std::unique_ptr< Object > DUNE_EXPORT Singleton< Object >::instance_;
 
   } // namespace Fem
 

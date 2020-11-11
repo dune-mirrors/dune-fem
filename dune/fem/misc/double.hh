@@ -15,6 +15,7 @@
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -56,10 +57,9 @@ namespace Dune
         count_[ thread ] += count ;
       }
 
-      DUNE_EXPORT static ThisType& instance( const std::string& name )
+      static ThisType& instance( const std::string& name )
       {
-        static ThisType instance( name );
-        return instance;
+        return Singleton< ThisType >::instance( name );
       }
     };
 
