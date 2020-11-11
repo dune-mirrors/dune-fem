@@ -10,6 +10,7 @@
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/defaultquadratures.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -103,8 +104,7 @@ namespace Dune
 
       static ThisType& instance()
       {
-        static ThisType reg;
-        return reg;
+        return Dune::Fem::Singleton< ThisType >::instance();
       }
 
     public:
