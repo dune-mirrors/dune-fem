@@ -31,6 +31,8 @@ namespace Dune
 
     DUNE_EXPORT inline pybind11::object getGridFunctionWrapper ()
     {
+      // store module as static variable. No need for Singleton here since
+      // it can be loaded multiple times.
       static pybind11::object o = pybind11::module::import( "dune.ufl" ).attr( "GridFunction" );
       return o;
     }
