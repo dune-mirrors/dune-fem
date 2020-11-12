@@ -3,11 +3,10 @@
 
 //- System includes
 #include <cassert>
-#include <iostream>
+#include <algorithm>
 #include <memory>
 #include <typeindex>
 #include <utility>
-#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -24,12 +23,13 @@ namespace Dune
     {
       class SingletonStorage
       {
+        // item to be stored in storage list
         struct Item
         {
           virtual ~Item() {}
         };
 
-      public:
+        // item to be created containing the correct object
         template <class Object>
         struct ItemWrapper : public Item
         {
@@ -39,18 +39,38 @@ namespace Dune
           {}
         };
 
+        // null delete for shared_ptr hash map
         struct NullDeleter
         {
-          void operator()(Item *p) {}
+          void operator()(Item *p) const {}
         };
 
+        typedef std::shared_ptr< Item > WeakPointerType;
         typedef std::unique_ptr< Item > PointerType;
         typedef std::type_index         KeyType;
 
-        typedef std::unordered_map< KeyType, PointerType > StorageType;
+        typedef std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >  StorageType;
+
+        // delete for singletons deleting each singleton object
+        // in reverse order of creation
+        struct SingletonDeleter
+        {
+          void operator()(StorageType* storage) const
+          {
+            // delete singletons in reverse order
+            std::for_each(storage->second.rbegin(), storage->second.rend(),
+                          [](PointerType& item) { item.reset(); });
+
+            storage->second.clear();
+            storage->first.clear();
+          }
+        };
+
+      public:
+        typedef std::unique_ptr<StorageType, SingletonDeleter> StoragePointer;
 
       private:
-        static std::unique_ptr<StorageType> storage_;
+        static StoragePointer storage_;
 
         // placing variables as static inside functions only works with gcc
         static const bool placeStaticVariableInline = false ;
@@ -73,18 +93,24 @@ namespace Dune
               storage_.reset( new StorageType() );
 
             StorageType& storage = *storage_;
-            //std::cout << "Accessing Object " << typeid(Object).name() << std::endl;
-            //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
 
             typedef ItemWrapper< Object > ItemWrapperType;
-            PointerType& ptr = storage[ std::type_index(typeid(Object)) ];
+
+            // get pointer of singleton objects belonging to hash id
+            auto& ptr = storage.first[ std::type_index(typeid(Object)) ];
+            // if pointer has not been set create object
             if( ! ptr )
             {
               assert( Fem::ThreadManager::singleThreadMode() );
-              ptr.reset( new ItemWrapperType(std::forward< Args >( args )...) );
-              //std::cout << "Create Object " << typeid(Object).name() << std::endl;
-              //std::cout << "typeindex = " << std::type_index(typeid(Object)).hash_code() << std::endl;
+
+              // create object in vector for later correct deletion order
+              storage.second.emplace_back( PointerType(new ItemWrapperType(std::forward< Args >( args )...) ) );
+
+              // create pointer to object in hash map for later use
+              ptr = WeakPointerType( storage.second.back().operator->(), NullDeleter() );
             }
+
+            // return object reference
             assert( dynamic_cast< ItemWrapperType* > (ptr.operator->()) );
             return static_cast< ItemWrapperType& > (*ptr).obj_;
           }
@@ -103,7 +129,7 @@ namespace Dune
       template <class... Args>
       static Object& instance(Args &&... args)
       {
-        // catch reference as static variable to avoid map search later on
+        // capture reference as static variable to avoid map search later on
         static Object& inst = detail::SingletonStorage::template instance< Object, Args... > (std::forward< Args >( args )...);
         return inst;
       }

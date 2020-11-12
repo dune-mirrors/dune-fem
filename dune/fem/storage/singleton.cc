@@ -8,7 +8,7 @@ namespace Dune
   {
     namespace detail
     {
-      typename std::unique_ptr<SingletonStorage::StorageType> SingletonStorage::storage_(nullptr);
+      typename SingletonStorage::StoragePointer SingletonStorage::storage_(nullptr);
     }
 
   } // namespace Fem
