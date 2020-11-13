@@ -7,8 +7,6 @@
 #include <list>
 #include <map>
 
-#include <dune/common/visibility.hh>
-
 #include <dune/fem/storage/singleton.hh>
 
 #include <dune/fempy/grid/adaptation.hh>
@@ -28,7 +26,7 @@ namespace Dune
       // -----------------------
 
       template< class Grid >
-      DUNE_EXPORT inline std::map< Grid *, GridAdaptation< Grid > * > &gridAdaptationInstances ()
+      inline std::map< Grid *, GridAdaptation< Grid > * > &gridAdaptationInstances ()
       {
         typedef std::map< Grid *, GridAdaptation< Grid > * > InstancesMapType;
         return Dune::Fem::Singleton< InstancesMapType >::instance();

@@ -156,7 +156,7 @@ namespace Dune {
         }
       }
 
-      friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< FlopCounter >;
 
       static FlopCounter& instance()
       {

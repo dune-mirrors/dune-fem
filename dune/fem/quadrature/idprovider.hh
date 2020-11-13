@@ -3,7 +3,6 @@
 
 #include <cstdlib>
 
-#include <dune/common/visibility.hh>
 #include <dune/fem/storage/singleton.hh>
 
 namespace Dune
@@ -16,10 +15,10 @@ namespace Dune
     class IdProvider
     {
     public:
-      friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< IdProvider >;
 
       //! Access to the singleton object.
-      DUNE_EXPORT static IdProvider& instance()
+      static IdProvider& instance()
       {
         return Singleton< IdProvider >::instance();
       }

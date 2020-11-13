@@ -108,19 +108,18 @@ namespace Dune
       }
 
     public:
-      DUNE_EXPORT static const QuadratureRuleType& quadratureRule( const QuadratureKeyType& key )
+      static const QuadratureRuleType& quadratureRule( const QuadratureKeyType& key )
       {
         assert( quadratureExists( key ) );
         return instance().rules_[ key ];
       }
 
-      DUNE_EXPORT static bool quadratureExists( const QuadratureKeyType& key )
+      static bool quadratureExists( const QuadratureKeyType& key )
       {
         return instance().quadExists( key );
       }
 
       template <class Rules>
-      DUNE_EXPORT
       static void registerQuadratureRule( const Rules& rules, const QuadratureKeyType& key, const Dune::GeometryType& geometry )
       {
         QuadratureRuleType& rule = instance().getRule( key );

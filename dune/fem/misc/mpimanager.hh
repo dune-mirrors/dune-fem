@@ -5,7 +5,6 @@
 
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/quadrature/caching/registry.hh>
 
@@ -21,12 +20,12 @@ namespace Dune
   namespace Fem
   {
 
-    struct DUNE_EXPORT MPIManager
+    struct MPIManager
     {
       typedef Dune::CollectiveCommunication< MPIHelper::MPICommunicator >
         CollectiveCommunication;
     private:
-      DUNE_EXPORT static MPIManager &instance ()
+      static MPIManager &instance ()
       {
         return Singleton< MPIManager > :: instance();
       }
@@ -56,7 +55,7 @@ namespace Dune
           }
         }
 
-        DUNE_EXPORT static void initialize( const bool verbose, int &argc, char **&argv )
+        static void initialize( const bool verbose, int &argc, char **&argv )
         {
           // needed for later calling Petsc::finalize to the right time
           static PETSc petsc;

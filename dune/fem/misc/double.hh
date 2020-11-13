@@ -10,7 +10,6 @@
 //- Dune includes
 #include <dune/common/version.hh>
 #include <dune/common/typetraits.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -57,7 +56,7 @@ namespace Dune
         count_[ thread ] += count ;
       }
 
-      friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< ThisType >;
 
       static ThisType& instance( const std::string& name )
       {
@@ -104,8 +103,8 @@ namespace Dune
         return *this;
       }
 
-      friend class Dune::Fem::detail::SingletonStorage;
-      DUNE_EXPORT static ThisType &instance ()
+      friend class Dune::Fem::Singleton< ThisType >;
+      static ThisType &instance ()
       {
 #ifdef HAVE_PTHREAD
         static thread_local ThisType instance;

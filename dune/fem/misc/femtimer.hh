@@ -10,7 +10,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
@@ -150,10 +149,9 @@ namespace Dune
       void printToFile ( const std::string &fileName, int step );
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
-      friend class Dune::Fem::detail::SingletonStorage;
-      friend struct Dune::Fem::Singleton< Timer >;
+      friend class Dune::Fem::Singleton< Timer >;
 
-      DUNE_EXPORT static Timer &instance ()
+      static Timer &instance ()
       {
         return Singleton< Timer > ::instance();
       }

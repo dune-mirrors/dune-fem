@@ -9,7 +9,6 @@
 #include <tuple>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/file/latextablewriter.hh>
@@ -241,12 +240,12 @@ namespace Dune
                     std::ostream& out);
 
     public:
-      friend class Dune::Fem::detail::SingletonStorage;
-
-      DUNE_EXPORT static FemEoc& instance()
+      friend class Dune::Fem::Singleton< FemEoc >;
+      static FemEoc& instance()
       {
         return Singleton< FemEoc > :: instance();
       }
+
       //! close file and allow FemEoc to used for a second run
       static void clear() {
         instance().clearFile();

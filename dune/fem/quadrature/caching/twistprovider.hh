@@ -9,8 +9,6 @@
 #include <vector>
 
 //- Dune includes
-#include <dune/common/visibility.hh>
-
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/quadrature/quadrature.hh>
@@ -148,9 +146,9 @@ namespace Dune
           }
         }
 
-        friend class Dune::Fem::detail::SingletonStorage;
+        friend class Dune::Fem::Singleton< MapperContainerType >;
         //! return reference to mappers
-        DUNE_EXPORT static MapperContainerType& instance()
+        static MapperContainerType& instance()
         {
           return Singleton< MapperContainer > :: instance().mappers_;
         }

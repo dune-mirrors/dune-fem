@@ -7,7 +7,6 @@
 
 //- Dune includes
 #include <dune/common/math.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/storage/singleton.hh>
 
@@ -50,7 +49,7 @@ namespace Dune
       typedef typename PointContainerType::iterator PointIteratorType;
 
     private:
-      DUNE_EXPORT static PointContainerType& points()
+      static PointContainerType& points()
       {
         return Singleton< PointContainerType > :: instance();
       }
@@ -101,12 +100,12 @@ namespace Dune
                                          GeometryType elementGeo);
 
     private:
-      DUNE_EXPORT static PointContainerType& points()
+      static PointContainerType& points()
       {
         return Singleton< PointContainerType > :: instance();
       }
 
-      DUNE_EXPORT static MapperContainerType& mappers()
+      static MapperContainerType& mappers()
       {
         return Singleton< MapperContainerType > :: instance();
       }

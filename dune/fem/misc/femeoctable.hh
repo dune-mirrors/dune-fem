@@ -9,7 +9,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/parameter.hh>
@@ -308,9 +307,9 @@ namespace Dune
         }
       }
      public:
-      friend class Dune::Fem::detail::SingletonStorage;
+      friend class Dune::Fem::Singleton< FemEocTable >;
 
-      DUNE_EXPORT static FemEocTable& instance()
+      static FemEocTable& instance()
       {
         return Singleton< FemEocTable >::instance();
       }

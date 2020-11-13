@@ -10,8 +10,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/common/visibility.hh>
-
 //- dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/singleton.hh>
@@ -80,7 +78,7 @@ namespace Dune
 
       //! list that store pairs of key/object pointers
       //! singleton list
-      DUNE_EXPORT static ListType &singletonList ()
+      static ListType &singletonList ()
       {
         //static SingletonListStorage s;
         SingletonListStorage& s = Singleton< SingletonListStorage >::instance();
@@ -181,7 +179,6 @@ namespace Dune
     {
       typedef SingletonListStorage ThisType;
 
-      friend class Dune::Fem::detail::SingletonStorage;
     protected:
       ListType singletonList_;
 

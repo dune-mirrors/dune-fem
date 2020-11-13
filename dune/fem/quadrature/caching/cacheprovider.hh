@@ -6,7 +6,6 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/storage/singleton.hh>
@@ -234,7 +233,7 @@ namespace Dune
       createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
 
     private:
-      DUNE_EXPORT static MapperContainerType& mappers()
+      static MapperContainerType& mappers()
       {
         return Singleton< MapperContainerType >::instance();
       }

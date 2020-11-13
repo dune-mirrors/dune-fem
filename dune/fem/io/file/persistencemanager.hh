@@ -9,8 +9,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/common/visibility.hh>
-
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
@@ -341,10 +339,9 @@ namespace Dune
       }
 
     public:
-      friend class Dune::Fem::detail::SingletonStorage;
-      friend struct Dune::Fem::Singleton< PersistenceManager >;
+      friend class Dune::Fem::Singleton< PersistenceManager >;
 
-      DUNE_EXPORT static PersistenceManager &instance ()
+      static PersistenceManager &instance ()
       {
         return Singleton< PersistenceManager >::instance();
       }
