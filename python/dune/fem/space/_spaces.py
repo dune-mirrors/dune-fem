@@ -655,7 +655,8 @@ def product(*spaces, **kwargs):
     from dune.fem.space import module, addStorage
     from dune.fem.function import tupleDiscreteFunction
 
-    scalar = kwargs.get("scalar",False)
+    scalar  = kwargs.get("scalar",False)
+    codegen = kwargs.get("codegen",False)
 
     if len(spaces)==1 and (isinstance(spaces[0],list) or isinstance(spaces[0],tuple)):
         spaces = spaces[0]
