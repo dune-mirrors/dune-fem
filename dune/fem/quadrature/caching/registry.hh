@@ -6,13 +6,12 @@
 #include <algorithm>
 #include <list>
 
-#include <dune/common/visibility.hh>
-
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -35,7 +34,7 @@ namespace Dune
         virtual GeometryType type () const = 0;
       };
 
-    private:
+    // private:
       typedef std::list< StorageInterface * > StorageListType;
 
       struct QuadratureInfo
@@ -48,16 +47,14 @@ namespace Dune
 
       typedef std::list< QuadratureInfo > QuadratureInfoListType;
 
-      DUNE_EXPORT static StorageListType &storageList ()
+      static StorageListType &storageList ()
       {
-        static StorageListType storageList;
-        return storageList;
+        return Singleton< StorageListType > :: instance();
       }
 
-      DUNE_EXPORT static QuadratureInfoListType &quadratureInfoList ()
+      static QuadratureInfoListType &quadratureInfoList ()
       {
-        static QuadratureInfoListType quadratureInfoList;
-        return quadratureInfoList;
+        return Singleton< QuadratureInfoListType > :: instance();
       }
 
     public:

@@ -41,6 +41,13 @@ namespace Dune
         {
           lf_.evaluate( x, y );
         }
+        template< class Arg >
+        typename Traits::RangeType operator()(const Arg &x) const
+        {
+          typename Traits::RangeType y;
+          evaluate(x,y);
+          return y;
+        }
 
       private:
         const LocalFunction &lf_;
@@ -70,6 +77,13 @@ namespace Dune
           lf_.evaluate( x, help );
           typename Transformation::InverseTransformationType transf( geometry_, x );
           y = transf.apply( help );
+        }
+        template< class Arg >
+        typename Traits::RangeType operator() ( const Arg &x ) const
+        {
+          typename Traits::RangeType y;
+          evaluate(x,y);
+          return y;
         }
 
       private:

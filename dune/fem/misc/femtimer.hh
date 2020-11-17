@@ -10,11 +10,11 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -71,9 +71,11 @@ namespace Dune
         {}
       };
 
+    public:
       Timer ();
       ~Timer ();
 
+    private:
       void push_time() { timesS_.push( timer_.elapsed() ); }
 
       double pop_time()
@@ -147,12 +149,11 @@ namespace Dune
       void printToFile ( const std::string &fileName, int step );
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
-      DUNE_EXPORT static Timer &instance ()
+      friend class Dune::Fem::Singleton< Timer >;
+
+      static Timer &instance ()
       {
-        static Timer instance_;
-        // don't use this class in multi thread environment
-        assert( ThreadManager :: singleThreadMode() );
-        return instance_;
+        return Singleton< Timer > ::instance();
       }
 
     public:

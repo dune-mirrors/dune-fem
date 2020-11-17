@@ -17,14 +17,12 @@ namespace Dune
   {
 
     template <class ct, int dim>
-    typename PointProvider<ct, dim, 0>::PointContainerType
-    PointProvider<ct, dim, 0>::points_;
-
-    template <class ct, int dim>
     void PointProvider<ct, dim, 0>::
     registerQuadrature(const QuadratureType& quad)
     {
       QuadratureKeyType key( quad.geometryType(), quad.id() );
+
+      PointContainerType& points_ = points();
 
       if (points_.find( key ) == points_.end() )
       {
@@ -50,6 +48,8 @@ namespace Dune
     {
       QuadratureKeyType key( elementGeo, id );
 
+      PointContainerType& points_ = points();
+
       typename PointContainerType::const_iterator pos = points_.find( key );
 #ifndef NDEBUG
       if( pos == points_.end() )
@@ -65,19 +65,13 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    typename PointProvider<ct, dim, 1>::PointContainerType
-    PointProvider<ct, dim, 1>::points_;
-
-    template <class ct, int dim>
-    typename PointProvider<ct, dim, 1>::MapperContainerType
-    PointProvider<ct, dim, 1>::mappers_;
-
-    template <class ct, int dim>
     const typename PointProvider<ct, dim, 1>::MapperVectorPairType&
     PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
                                           const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo , quad.id() );
+
+      MapperContainerType& mappers_ = mappers();
 
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
@@ -100,6 +94,8 @@ namespace Dune
     {
       QuadratureKeyType key( elementGeo, quad.id() );
 
+      MapperContainerType& mappers_ = mappers();
+
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
         it = addEntry(quad, pts, elementGeo);
@@ -114,6 +110,7 @@ namespace Dune
     {
       QuadratureKeyType key( elementGeo, id );
 
+      PointContainerType& points_ = points();
       assert(points_.find(key) != points_.end());
       return points_.find(key)->second;
     }
@@ -121,7 +118,7 @@ namespace Dune
     template <class ct, int dim>
     typename PointProvider<ct, dim, 1>::MapperIteratorType
     PointProvider<ct, dim, 1>::addEntry(const QuadratureType& quad,
-                                        const LocalPointVectorType& points,
+                                        const LocalPointVectorType& pts,
                                         GeometryType elementGeo)
     {
       // amke sure we are in single thread mode
@@ -132,13 +129,16 @@ namespace Dune
 
       const auto &refElem = Dune::ReferenceElements<ct, dim>::general(elementGeo);
 
-      const int numLocalPoints = points.size();
+      const int numLocalPoints = pts.size();
       const int numFaces = refElem.size(codim);
       const int numGlobalPoints = numFaces*numLocalPoints;
 
+
+      PointContainerType& points_ = points();
       PointIteratorType pit =
         points_.insert(std::make_pair(key,
                                       GlobalPointVectorType(numGlobalPoints))).first;
+      MapperContainerType& mappers_ = mappers();
       MapperIteratorType mit =
         mappers_.insert(std::make_pair(key,
                                        std::make_pair(MapperVectorType(numFaces), MapperVectorType(numFaces) ))).first;
@@ -161,7 +161,7 @@ namespace Dune
         {
           // Store point on reference element
           pit->second[globalNum] =
-            refElem.template geometry<codim>(face).global( points[pt] );
+            refElem.template geometry<codim>(face).global( pts[pt] );
 
           if( nItp > 0 )
           {

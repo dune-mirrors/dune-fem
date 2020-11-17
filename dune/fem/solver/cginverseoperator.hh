@@ -340,17 +340,12 @@ namespace Dune
         {
           prepare();
           apply(arg,dest);
-          finalize();
+          const_cast< ThisType& > (*this).finalize();
         }
 
         template<typename... A>
         inline void prepare(A... ) const
         {}
-
-        inline void finalize() const
-        {
-          const_cast< ThisType& > (*this).finalize();
-        }
 
         /** \brief application operator
          *

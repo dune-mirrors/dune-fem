@@ -9,12 +9,11 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/common/visibility.hh>
-
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/tuples.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -340,10 +339,11 @@ namespace Dune
       }
 
     public:
-      DUNE_EXPORT static PersistenceManager &instance ()
+      friend class Dune::Fem::Singleton< PersistenceManager >;
+
+      static PersistenceManager &instance ()
       {
-        static PersistenceManager theInstance;
-        return theInstance;
+        return Singleton< PersistenceManager >::instance();
       }
 
       static BackupStreamType& backupStream()

@@ -38,7 +38,7 @@ namespace Dune
 
       typedef FieldVector< ct, dim > CoordinateType;
 
-      const GaussPts& gp = GaussPts::instance();
+      const GaussPts gp;
 
       // find the right Gauss Rule from given order
       int m = 0;
@@ -106,7 +106,8 @@ namespace Dune
       SimplexPointsAdapter<2> simplexPoints(order);
       int simplexOrder = simplexPoints.order();
 
-      const GaussPts& gp = GaussPts::instance();
+      const GaussPts gp;
+
       // find the right Gauss Rule from given order
       int m = 0;
       for (int i = 0; i <= GaussPts::MAXP; i++) {
@@ -145,7 +146,7 @@ namespace Dune
       QuadratureImp<ct, 3>(id),
       order_((order <= 0) ? 1 : order)
     {
-      const PyramidPoints& points = PyramidPoints::instance();
+      const PyramidPoints points;
 
       int m = 0;
       for (int i = 0; i < PyramidPoints::numQuads; ++i) {

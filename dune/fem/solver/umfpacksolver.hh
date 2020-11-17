@@ -75,6 +75,8 @@ public:
   typedef typename BaseType :: OperatorType           OperatorType;
   typedef typename BaseType :: AssembledOperatorType  AssembledOperatorType;
 
+  typedef UMFPACKInverseOperator< DiscreteFunction,Matrix> ThisType;
+
   typedef DiscreteFunction DiscreteFunctionType;
 
   // \brief The column-compressed matrix type.
@@ -129,7 +131,7 @@ public:
   }
 
   // \brief Free allocated memory.
-  void finalize() const
+  virtual void finalize()
   {
     if( ccsmat_ )
     {
@@ -164,7 +166,7 @@ public:
       std::cout << "Error Estimate: " << UMF_Apply_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Apply_Info[UMFPACK_OMEGA2] << std::endl;
     }
 
-    finalize();
+    const_cast<ThisType*>(this)->finalize();
 
     return 1;
   }

@@ -3,7 +3,7 @@
 
 #include <cstdlib>
 
-#include <dune/common/visibility.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -15,23 +15,24 @@ namespace Dune
     class IdProvider
     {
     public:
+      friend class Dune::Fem::Singleton< IdProvider >;
+
       //! Access to the singleton object.
-      DUNE_EXPORT static IdProvider& instance()
+      static IdProvider& instance()
       {
-        static IdProvider idProvider;
-        return idProvider;
+        return Singleton< IdProvider >::instance();
       }
 
       //! Return a new identifier.
       //! \note Identifiers are never freed.
       size_t newId() { return lowestFreeId_++; }
 
-    private:
       //! Constructor (for the singleton object)
       IdProvider() :
         lowestFreeId_(0)
       {}
 
+    private:
       IdProvider(const IdProvider&);
       IdProvider& operator=(const IdProvider&);
 

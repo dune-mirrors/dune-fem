@@ -166,7 +166,8 @@ namespace Dune
 
       // constructor taking a pack of basisFunctionSets
       TupleBasisFunctionSet ( const BasisFunctionSets & ... basisFunctionSets )
-        : basisFunctionSetTuple_( basisFunctionSets ... )
+        : basisFunctionSetTuple_( basisFunctionSets ... ),
+          offset_()
       {
         offset_[ 0 ] = 0;
         Fem::ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );
@@ -174,7 +175,8 @@ namespace Dune
 
       // constructor taking a tuple of basisfunction sets
       TupleBasisFunctionSet ( const BasisFunctionSetTupleType &basisFunctionSetTuple )
-        : basisFunctionSetTuple_( basisFunctionSetTuple )
+        : basisFunctionSetTuple_( basisFunctionSetTuple ),
+          offset_()
       {
         offset_[ 0 ] = 0;
         Fem::ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );

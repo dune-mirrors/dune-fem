@@ -5,13 +5,14 @@
 
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/quadrature/caching/registry.hh>
 
 #if HAVE_PETSC
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #endif
+
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -23,12 +24,10 @@ namespace Dune
     {
       typedef Dune::CollectiveCommunication< MPIHelper::MPICommunicator >
         CollectiveCommunication;
-
     private:
-      DUNE_EXPORT static MPIManager &instance ()
+      static MPIManager &instance ()
       {
-        static MPIManager instance;
-        return instance;
+        return Singleton< MPIManager > :: instance();
       }
 
       static bool mpiFinalized ()
@@ -56,7 +55,7 @@ namespace Dune
           }
         }
 
-        DUNE_EXPORT static void initialize( const bool verbose, int &argc, char **&argv )
+        static void initialize( const bool verbose, int &argc, char **&argv )
         {
           // needed for later calling Petsc::finalize to the right time
           static PETSc petsc;

@@ -180,7 +180,7 @@ public:
   }
 
   // \brief Free allocated memory.
-  void finalize() const
+  virtual void finalize()
   {
     if( ccsmat_ )
     {
@@ -228,7 +228,7 @@ public:
   {
     prepare();
     apply(arg.leakPointer(),dest.leakPointer());
-    finalize();
+    const_cast<ThisType*>(this)->finalize();
     return 1;
   }
 

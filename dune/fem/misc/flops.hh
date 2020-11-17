@@ -14,6 +14,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune {
 
@@ -155,10 +156,11 @@ namespace Dune {
         }
       }
 
+      friend class Dune::Fem::Singleton< FlopCounter >;
+
       static FlopCounter& instance()
       {
-        static FlopCounter counter;
-        return counter;
+        return Dune::Fem::Singleton< FlopCounter >::instance();
       }
 
     public:

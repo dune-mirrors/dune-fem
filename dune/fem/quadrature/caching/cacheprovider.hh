@@ -6,9 +6,9 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/visibility.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/storage/singleton.hh>
 
 #include "pointmapper.hh"
 #include "twistprovider.hh"
@@ -206,6 +206,7 @@ namespace Dune
         // create key
         const QuadratureKeyType key (elementGeometry, quad.id() );
 
+        MapperContainerType& mappers_ = mappers();
         MapperIteratorType it = mappers_.find( key );
 
         if( it == mappers_.end() )
@@ -232,7 +233,10 @@ namespace Dune
       createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
 
     private:
-      DUNE_EXPORT static MapperContainerType mappers_;
+      static MapperContainerType& mappers()
+      {
+        return Singleton< MapperContainerType >::instance();
+      }
     };
 
   } // namespace Fem
