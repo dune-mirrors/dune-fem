@@ -138,7 +138,7 @@ namespace Dune
       ds /= DomainFieldType( numSamples - 1 );
 
       const typename GridFunction::RangeFieldType invalid
-        = std::numeric_limits< typename GridFunction::RangeFieldType >::infinity();
+        = std::numeric_limits< typename GridFunction::RangeFieldType >::quiet_NaN();
       for( int i = 0; i < numSamples; ++i )
         samples[ i ] = typename GridFunction::RangeType( invalid );
 
@@ -201,7 +201,10 @@ namespace Dune
 
       bool valid = true;
       for( int i = 0; i < numSamples; ++i )
-        valid &= (samples[ i ] != typename GridFunction::RangeType( invalid ));
+      {
+        valid &= ! std::isnan( samples[ i ] );
+      }
+
       if( !valid )
         DUNE_THROW( InvalidStateException, "LineSegmentSampler could not find all samples." );
     }
