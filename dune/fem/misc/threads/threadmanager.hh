@@ -76,6 +76,9 @@ namespace Dune
 #ifdef _OPENMP
     struct OpenMPThreadManager : public EmptyThreadManager
     {
+      //! true if pthreads are used
+      static constexpr bool pthreads = false ;
+
       /** return maximal number of threads possbile in the current run
           \note can be set by the OMP_NUM_THREADS environment variable
                 from outside of the code */
