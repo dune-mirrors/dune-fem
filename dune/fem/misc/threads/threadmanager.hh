@@ -17,7 +17,7 @@
 #endif
 #endif
 
-#ifdef HAVE_PTHREADS
+#if HAVE_PTHREAD
 #include <pthread.h>
 #endif
 
