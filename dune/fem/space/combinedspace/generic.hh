@@ -14,7 +14,6 @@ namespace Dune
 
   namespace Fem
   {
-
     // GenericCombinedDiscreteFunctionSpace
     // ------------------------------------
 

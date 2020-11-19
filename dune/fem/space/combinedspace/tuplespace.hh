@@ -28,15 +28,13 @@ namespace Dune
   {
 
     // forward declaration
-
-    template< class ... DiscreteFunctionSpaces >
-    class TupleDiscreteFunctionSpace;
-
+    template< class CombineOp, class ... DiscreteFunctionSpaces >
+    class TupleDiscreteFunctionSpaceImpl;
 
     // TupleDiscreteFunctionSpaceTraits
     // --------------------------------
 
-    template< class ... DiscreteFunctionSpaces >
+    template< class CombineOp, class ... DiscreteFunctionSpaces >
     struct TupleDiscreteFunctionSpaceTraits
     {
       static_assert( sizeof ... ( DiscreteFunctionSpaces ) > 0,
@@ -93,10 +91,10 @@ namespace Dune
       typedef typename GridPartType::IntersectionType IntersectionType;
 
       // type of this space
-      typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > DiscreteFunctionSpaceType;
+      typedef TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > DiscreteFunctionSpaceType;
 
       //! implementation of basefunction set
-      typedef TupleBasisFunctionSet< typename DiscreteFunctionSpaces::BasisFunctionSetType ... > BasisFunctionSetType;
+      typedef TupleBasisFunctionSet< CombineOp, typename DiscreteFunctionSpaces::BasisFunctionSetType ... > BasisFunctionSetType;
 
       // mapper
       typedef TupleMapper< GridPartType, NonBlockMapper< typename DiscreteFunctionSpaces::BlockMapperType, DiscreteFunctionSpaces::localBlockSize > ... > BlockMapperType;
@@ -107,7 +105,7 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      typedef TupleSpaceInterpolation< DiscreteFunctionSpaces ... > InterpolationType;
+      typedef TupleSpaceInterpolation< CombineOp, DiscreteFunctionSpaces ... > InterpolationType;
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
@@ -177,18 +175,22 @@ namespace Dune
      *
      *  Provides a DiscreteFunctionSpace combined from arbitrary number of DiscreteFunctionSpaces
      *  of different types into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h times .... ).
+     *
+     *  CombineOp describes the way in which the spaces have been combined, options are:
+     *  TupleSpaceProduct:    V = V_1 x V_2 x ...
+     *  TupleSpaceSummation:  V = V_1 + V_2 + ...
      */
 
     /** \class   DiscreteFunctionSpace
      *  \ingroup DiscreteFunctionSpace
      *  \brief    discrete function space
      */
-    template< class ... DiscreteFunctionSpaces >
-    class TupleDiscreteFunctionSpace
-      : public GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > >
+    template< class CombineOp, class ... DiscreteFunctionSpaces >
+    class TupleDiscreteFunctionSpaceImpl
+      : public GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< CombineOp, DiscreteFunctionSpaces ... > >
     {
-      typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > ThisType;
-      typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > > BaseType;
+      typedef TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > ThisType;
+      typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< CombineOp, DiscreteFunctionSpaces ... > > BaseType;
 
     public:
       typedef decltype ( std::index_sequence_for< DiscreteFunctionSpaces ... >() ) Sequence;
@@ -206,9 +208,9 @@ namespace Dune
        *  \param[in]  commDirection  communication direction to use (optional)
        *
        */
-      TupleDiscreteFunctionSpace ( GridPartType &gridPart,
-                                   const InterfaceType commInterface = InteriorBorder_All_Interface,
-                                   const CommunicationDirection commDirection = ForwardCommunication )
+      TupleDiscreteFunctionSpaceImpl ( GridPartType &gridPart,
+                                       const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                       const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
@@ -219,7 +221,7 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaces &&... spaces )
+      TupleDiscreteFunctionSpaceImpl ( DiscreteFunctionSpaces &&... spaces )
         : BaseType( std::make_tuple( std::make_shared( std::move( spaces ) )... ) )
       {}
 
@@ -230,7 +232,7 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      TupleDiscreteFunctionSpace ( const DiscreteFunctionSpaces &... spaces )
+      TupleDiscreteFunctionSpaceImpl ( const DiscreteFunctionSpaces &... spaces )
         : BaseType( std::make_tuple( referenceToSharedPtr( spaces )... ) )
       {}
 
@@ -241,7 +243,7 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      TupleDiscreteFunctionSpace ( std::shared_ptr< const DiscreteFunctionSpaces >... spaces )
+      TupleDiscreteFunctionSpaceImpl ( std::shared_ptr< const DiscreteFunctionSpaces >... spaces )
         : BaseType( std::make_tuple( std::move( spaces )... ) )
       {}
 
@@ -252,11 +254,11 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      explicit TupleDiscreteFunctionSpace ( DiscreteFunctionSpaceTupleType spaceTuple )
+      explicit TupleDiscreteFunctionSpaceImpl ( DiscreteFunctionSpaceTupleType spaceTuple )
         : BaseType( std::move( spaceTuple ) )
       {}
 
-      TupleDiscreteFunctionSpace ( const ThisType & ) = delete;
+      TupleDiscreteFunctionSpaceImpl ( const ThisType & ) = delete;
       ThisType &operator= ( const ThisType & ) = delete;
 
       //! return tuple of const References to the contained sub spaces
@@ -290,20 +292,20 @@ namespace Dune
     // ------------------------------
 
     //! specialization of DifferentDiscreteFunctionSpace for TupleDiscreteFunctionSpace
-    template< class ... DiscreteFunctionSpaces, class NewFunctionSpace >
-    struct DifferentDiscreteFunctionSpace< TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >, NewFunctionSpace >
+    template< class CombineOp, class ... DiscreteFunctionSpaces, class NewFunctionSpace >
+    struct DifferentDiscreteFunctionSpace< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces... >, NewFunctionSpace >
     {
-      static_assert( (NewFunctionSpace::dimRange % TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >::dimRange == 0),
+      static_assert( (NewFunctionSpace::dimRange % TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces... >::dimRange == 0),
                      "DifferentDiscreteFunctionSpace can only be applied to TupleFunctionSpace, if new dimRange is a multiple of the original one." );
 
     private:
-      static const int factor = (NewFunctionSpace::dimRange / TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >::dimRange);
+      static const int factor = (NewFunctionSpace::dimRange / TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces... >::dimRange);
 
       template< class DiscreteFunctionSpace >
       using NewSubFunctionSpace = typename ToNewDimRangeFunctionSpace< NewFunctionSpace, factor*DiscreteFunctionSpace::dimRange >::Type;
 
     public:
-      typedef TupleDiscreteFunctionSpace< typename DifferentDiscreteFunctionSpace< DiscreteFunctionSpaces, NewSubFunctionSpace< DiscreteFunctionSpaces > >::Type... > Type;
+      typedef TupleDiscreteFunctionSpaceImpl< CombineOp, typename DifferentDiscreteFunctionSpace< DiscreteFunctionSpaces, NewSubFunctionSpace< DiscreteFunctionSpaces > >::Type... > Type;
     };
 
 
@@ -311,12 +313,12 @@ namespace Dune
     // DefaultLocalRestrictProlong
     // ---------------------------
 
-    template< class ... DiscreteFunctionSpaces >
-    class DefaultLocalRestrictProlong< TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > >
+    template< class CombineOp, class ... DiscreteFunctionSpaces >
+    class DefaultLocalRestrictProlong< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
       : public TupleLocalRestrictProlong< DiscreteFunctionSpaces ... >
     {
-      typedef DefaultLocalRestrictProlong< TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > > ThisType;
-      typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > DiscreteFunctionSpacesType;
+      typedef DefaultLocalRestrictProlong< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > > ThisType;
+      typedef TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > DiscreteFunctionSpacesType;
       typedef TupleLocalRestrictProlong< DiscreteFunctionSpaces ... > BaseType;
 
     public:
@@ -326,6 +328,16 @@ namespace Dune
 
     };
 
+    // Creating a space V = V_1 x V_2 x ...
+    template < class ... DiscreteFunctionSpaces >
+    using TupleDiscreteFunctionSpace = TupleDiscreteFunctionSpaceImpl< TupleSpaceProduct, DiscreteFunctionSpaces ... >;
+
+    // Creating a space V = V_1 + V_2 + ...
+    template < class ... DiscreteFunctionSpaces >
+    using SummationDiscreteFunctionSpace = TupleDiscreteFunctionSpaceImpl< TupleSpaceSummation, DiscreteFunctionSpaces ... >;
+
+    template < class ... DiscreteFunctionSpaces >
+    using EnrichedDiscreteFunctionSpace = SummationDiscreteFunctionSpace< DiscreteFunctionSpaces ... >;
 
   } // namespace Fem
 
