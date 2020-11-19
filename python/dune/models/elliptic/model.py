@@ -242,7 +242,7 @@ class EllipticModel:
         sourceWriter.emit('model.template constant< i >() = value.template cast< typename ModelType::ConstantType< i > >();')
         sourceWriter.closeFunction()
 
-        sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        sourceWriter.openFunction('auto DUNE_PRIVATE defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ModelType &model, pybind11::handle ) >'))
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')

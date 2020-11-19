@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cmath>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/space/common/functionspace.hh>
