@@ -88,6 +88,7 @@ if( ${FEM_TORTURE_TESTS} )
   dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
   dune_add_test( SOURCES test-raviartthomasinterpolation.cc CMAKE_GUARD dune-localfunctions_FOUND LINK_LIBRARIES dunefem TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+  dune_add_test( SOURCES test-tuplespace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 endif()
 
 install( FILES checklocalinterpolation.hh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/test )
