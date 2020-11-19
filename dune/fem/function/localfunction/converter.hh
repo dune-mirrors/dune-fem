@@ -157,7 +157,7 @@ namespace Dune
 
       int order () const { return this->get().order(); }
 
-      const EntityType &entity () const { return this->get().entity(); }
+      EntityType entity () const { return this->get().entity(); }
 
       void init ( const EntityType &entity ) { this->get().init( entity ); }
 
