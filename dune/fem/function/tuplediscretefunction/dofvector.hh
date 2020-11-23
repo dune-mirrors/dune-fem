@@ -7,6 +7,7 @@
 
 #include <dune/common/hybridutilities.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 #include <dune/fem/function/common/functor.hh>
@@ -85,11 +86,23 @@ namespace Dune
         return *this;
       }
 
+    private:
+      template <int i>
+      struct Acc
+      {
+        static void apply(const ThisType &a, const ThisType& b, FieldType&  result )
+        {
+          result += (a.template subDofVector< i >() * b.template subDofVector<i>());
+        }
+      };
+
+    public:
       FieldType operator* ( const ThisType &other ) const
       {
-        return Hybrid::accumulate( Sequence(), FieldType( 0 ), [ this, &other ] ( FieldType v, auto &&i ) -> FieldType {
-            return v + std::get< i.value >( *this ) * std::get< i.value >( other );
-          } );
+        FieldType result( 0 );
+        static const int length = std::tuple_size< BaseType >::value;
+        Dune::Fem::ForLoop<Acc, 0, length-1>::apply(*this, other, result);
+        return result;
       }
 
       const ThisType &operator*= ( const FieldType &scalar )
