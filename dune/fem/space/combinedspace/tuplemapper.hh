@@ -215,6 +215,13 @@ namespace Dune
           DUNE_THROW( NotImplemented, "Method offSet() called on non-adaptive block mapper" );
         }
 
+        void update()
+        {
+          // compute update for each mapper (if any)
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
+            [ & ](auto i){ std::get< i >( mapperTuple_ ).update(); } );
+        }
+
         /*** NonInterface Methods ***/
 
         SizeType offset ( int i ) const { return globalOffset_[ i ]; }
@@ -447,14 +454,13 @@ namespace Dune
         template< class Entity >
         void removeEntity ( const Entity & ) { update(); }
 
-      protected:
-
         void update ()
         {
           oldGlobalOffset_ = globalOffset_;
           BaseType::init();
         }
 
+      protected:
         template< std::size_t ... i >
         SizeType numBlocks ( std::index_sequence< i ... > ) const
         {

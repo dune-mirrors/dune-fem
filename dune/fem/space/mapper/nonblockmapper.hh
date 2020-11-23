@@ -173,6 +173,8 @@ namespace Dune
 
         const BlockMapperType &blockMapper () const { return blockMapper_; }
 
+        void update () { blockMapper_.update(); }
+
       private:
         BlockMapperType &blockMapper_;
       };

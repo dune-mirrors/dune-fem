@@ -436,7 +436,7 @@ namespace Dune
       {
         // note: The mapper might already have been updated, so do not use
         //       it to obtain old array size.
-        mapper().update(); // ???
+        mapper().update(); // make sure the mapper is up2date
 
         const int newSize = mapper().size();
         const int oldSize = array_.size();
