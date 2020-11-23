@@ -79,6 +79,8 @@ int main ( int argc, char **argv )
   std::cout << "DOFs          " << dfSpace.size() << std::endl;
   interpolate( uGridExact, u );
 
+  Dune::Fem::GlobalRefine::apply( *grid, 2 );
+
   // output analytical function and interolation to vtk file
   Dune::Fem::VTKIO< GridPartType > vtkIO( gridPart, Dune::VTK::nonconforming );
   vtkIO.addVertexData( uGridExact );

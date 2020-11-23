@@ -3,6 +3,7 @@
 
 #include <utility>
 
+#include <dune/common/visibility.hh>
 #include <dune/common/deprecated.hh>
 #include <dune/common/hybridutilities.hh>
 
@@ -16,10 +17,12 @@ namespace Dune
   {
     static_assert( (first <= last), "Fem::Fem::ForLoop: first > last" );
 
+    static const std::size_t N = last + 1 - first;
+
     template<typename... Args>
-    static void apply(Args&&... args)
+    static DUNE_PRIVATE void apply(Args&&... args)
     {
-      Dune::Hybrid::forEach(std::make_index_sequence<last+1-first>{},
+      Dune::Hybrid::forEach(std::make_index_sequence<N>{},
         [&](auto i){Operation<i+first>::apply(args...);});
     }
   };
