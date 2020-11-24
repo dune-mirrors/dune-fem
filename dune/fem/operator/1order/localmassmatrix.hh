@@ -322,6 +322,7 @@ namespace Dune
         applyInverse( lf.entity(), lf );
       }
 
+      //! compute localMatrix * M^-1
       template< class LocalMatrix >
       void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
@@ -333,6 +334,7 @@ namespace Dune
           rightMultiplyInverseDefault( entity, geo, localMatrix );
       }
 
+      //! compute M^-1 * localMatrix
       template< class LocalMatrix >
       void leftMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
@@ -390,6 +392,7 @@ namespace Dune
         }
       }
 
+      //! compute localMatrix * M^-1
       template< class LocalMatrix >
       void rightMultiplyInverseDgOrthoNormalBasis ( LocalMatrix &localMatrix ) const
       {
@@ -418,6 +421,7 @@ namespace Dune
         }
       }
 
+      //! compute M^-1 * localMatrix
       template< class LocalMatrix >
       void leftMultiplyInverseDgOrthoNormalBasis ( LocalMatrix &localMatrix ) const
       {
@@ -494,6 +498,7 @@ namespace Dune
         multiply( numDofs, invMassMatrix, rhs_, lf );
       }
 
+      //! compute localMatrix * M^-1
       template< class LocalMatrix >
       void rightMultiplyInverseDefault ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
@@ -516,6 +521,7 @@ namespace Dune
         }
       }
 
+      //! compute M^-1 * localMatrix
       template< class LocalMatrix >
       void leftMultiplyInverseDefault ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
@@ -609,6 +615,7 @@ namespace Dune
         }
       }
 
+      //! compute M^-1 * localMatrix
       template< class LocalMatrix >
       void leftMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
@@ -866,12 +873,14 @@ namespace Dune
         applyInverse( lf.entity(), lf.basisFunctionSet(), lf );
       }
 
+      //! compute localMatrix * M^-1
       template< class LocalMatrix >
       void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
         BaseType::rightMultiplyInverseDgOrthoNormalBasis( localMatrix );
       }
 
+      //! compute M^-1 * localMatrix
       template< class LocalMatrix >
       void leftMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
