@@ -156,8 +156,8 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 
-def galerkin(integrands, space=None, solver=None, parameters={},
-        errorMeasure=None, virtualize=None):
+def _galerkin(integrands, space=None, solver=None, parameters={},
+              errorMeasure=None, virtualize=None, communicate=True, inverseMass=False ):
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -214,9 +214,10 @@ def galerkin(integrands, space=None, solver=None, parameters={},
         integrandsType = integrands._typeName
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
+    invMassFlag = "true" if inverseMass else "false"
     typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' +\
             linearOperatorType + ', ' + solverTypeName + ', ' +\
-            useDirichletBC + ' >'
+            useDirichletBC + ',' + invMassFlag + ' >'
 
     ctors = []
     ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands'],
@@ -234,6 +235,18 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
     return scheme
+
+def galerkin(integrands, space=None, solver=None, parameters={},
+                errorMeasure=None, virtualize=None):
+    return _galerkin(integrands, space=space, solver=solver,
+                     parameters=parameters, errorMeasure=errorMeasure,
+                     virtualize=virtualize)
+
+def molGalerkin(integrands, space=None, solver=None, parameters={},
+                errorMeasure=None, virtualize=None):
+    return _galerkin(integrands, space=space, solver=solver,
+                     parameters=parameters, errorMeasure=errorMeasure,
+                     virtualize=virtualize, inverseMass=True)
 
 
 def h1(model, space=None, solver=None, parameters={}):

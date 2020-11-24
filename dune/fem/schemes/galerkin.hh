@@ -25,6 +25,7 @@
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
+#include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/schemes/integrands.hh>
 #include <dune/fem/schemes/dirichletwrapper.hh>
 
@@ -607,8 +608,11 @@ namespace Dune
         // constructor
 
         template< class... Args >
-        explicit GalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-          : gridPart_( gridPart ), communicate_( communicate ), integrands_( std::forward< Args >( args )... ),
+        explicit GalerkinOperator ( const GridPartType &gridPart, const bool communicate, const bool inverseMass, Args &&... args )
+          : gridPart_( gridPart ),
+            communicate_( communicate ),
+            inverseMass_( inverseMass ),
+            integrands_( std::forward< Args >( args )... ),
             defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
             defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
             interiorQuadOrder_(0), surfaceQuadOrder_(0)
@@ -646,7 +650,6 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uLocal = u.localFunction( entity );
             uLocal.bind( entity );
             wLocal.bind( entity );
             wLocal.clear();
@@ -665,9 +668,6 @@ namespace Dune
 
             w.addLocalDofs( entity, wLocal.localDofVector() );
           }
-
-          if( communicate_ )
-            w.communicate();
         }
 
         template< class GridFunction, class DiscreteFunction >
@@ -687,8 +687,6 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uInside = u.localFunction( inside );
-
             uInside.bind( inside );
             wInside.bind( inside );
             wInside.clear();
@@ -723,9 +721,35 @@ namespace Dune
 
             w.addLocalDofs( inside, wInside.localDofVector() );
           }
+        }
 
-          if( communicate_ )
-            w.communicate();
+        template< class DiscreteFunction >
+        void applyInverseMass ( DiscreteFunction &w ) const
+        {
+          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+
+          TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( w.space() );
+
+          typedef typename QuadratureSelector< DiscreteFunctionSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
+
+          typedef LocalMassMatrix< DiscreteFunctionSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
+          LocalMassMatrixType localMassMatrix( w.space(), defaultInteriorOrder_ );
+
+          // iterate over all elements since base evaluate already did communication
+          for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
+          {
+            // fill temp local function with dofs
+            wLocal.bind( entity );
+            w.getLocalDofs( entity, wLocal );
+
+            // apply inverse mass
+            // TODO: add mass term if needed
+            localMassMatrix.applyInverse( entity, wLocal );
+
+            // write back local dofs
+            w.setLocalDofs( entity, wLocal );
+            wLocal.unbind();
+          }
         }
 
       public:
@@ -739,6 +763,16 @@ namespace Dune
             evaluate( u, w, std::true_type() );
           else
             evaluate( u, w, std::false_type() );
+
+          // for method of lines apply inverse mass here
+          if( inverseMass_ )
+          {
+            applyInverseMass( w );
+          }
+
+          // synchronize result
+          if( communicate_ )
+            w.communicate();
         }
 
         // assemble
@@ -768,7 +802,6 @@ namespace Dune
 
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uLocal = u.localFunction( entity );
             uLocal.bind( entity );
 
             jOpLocal.init( entity, entity );
@@ -817,7 +850,6 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uIn = u.localFunction( inside );
             uIn.bind( inside );
 
             jOpInIn.init( inside, inside );
@@ -866,6 +898,41 @@ namespace Dune
           }
         }
 
+        template< class JacobianOperator >
+        void applyInverseMass ( JacobianOperator &jOp, const bool hasSkeleton ) const
+        {
+          typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
+          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
+
+          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+          typedef typename QuadratureSelector< DomainSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
+          typedef LocalMassMatrix< DomainSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
+
+          LocalMassMatrixType localMassMatrix( jOp.domainSpace(), this->defaultInteriorOrder_ );
+          TemporaryLocalMatrixType jOpIn ( jOp.domainSpace(), jOp.rangeSpace() );
+          TemporaryLocalMatrixType jOpOut( jOp.domainSpace(), jOp.rangeSpace() );
+
+          // multiply with inverse mass matrix
+          for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
+          {
+            jOpIn.init( inside, inside );
+            localMassMatrix.leftMultiplyInverse( jOpIn );
+
+            if( hasSkeleton )
+            {
+              for( const auto &intersection : intersections( gridPart(), inside ) )
+              {
+                if( intersection.neighbor() )
+                {
+                  const EntityType &outside = intersection.outside();
+                  jOpOut.init( outside, inside );
+                  localMassMatrix.leftMultiplyInverse( jOpOut );
+                }
+              }
+            }
+          }
+        }
+
       public:
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp ) const
@@ -878,6 +945,12 @@ namespace Dune
             assemble( u, jOp, std::true_type() );
           else
             assemble( u, jOp, std::false_type() );
+
+          // for method of lines apply inverse mass here
+          if( inverseMass_ )
+          {
+            applyInverseMass( jOp, integrands_.hasSkeleton() );
+          }
 
           // note: assembly done without local contributions so need
           // to call flush assembly
@@ -919,6 +992,7 @@ namespace Dune
       protected:
         const GridPartType &gridPart_;
         const bool communicate_;
+        const bool inverseMass_;
         mutable IntegrandsType integrands_;
 
         mutable std::function<int(const int)> defaultInteriorOrder_;
@@ -954,8 +1028,8 @@ namespace Dune
       typedef typename RangeFunctionType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit GalerkinOperator ( const GridPartType &gridPart,const bool communicate, Args &&... args )
-        : impl_( gridPart, communicate, std::forward< Args >( args )... )
+      explicit GalerkinOperator ( const GridPartType &gridPart,const bool communicate, const bool inverseMass, Args &&... args )
+        : impl_( gridPart, communicate, inverseMass, std::forward< Args >( args )... )
       {}
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
@@ -1005,8 +1079,8 @@ namespace Dune
 
       template< class... Args >
       explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace, const RangeDiscreteFunctionSpaceType &rSpace,
-                                                const bool communicate, Args &&... args )
-        : BaseType( rSpace.gridPart(), communicate, std::forward< Args >( args )... ),
+                                                const bool communicate, const bool inverseMass, Args &&... args )
+        : BaseType( rSpace.gridPart(), communicate, inverseMass, std::forward< Args >( args )... ),
           dSpace_(dSpace), rSpace_(rSpace)
       {}
 
@@ -1053,8 +1127,8 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-        : BaseType( gridPart, communicate, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, const bool communicate, const bool inverseMass, Args &&... args )
+        : BaseType( gridPart, communicate, inverseMass, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
       {}
     };
 
@@ -1074,8 +1148,9 @@ namespace Dune
       typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
-      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace, const bool communicate=true )
-        : BaseType( dfSpace.gridPart(), communicate, model )
+      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace,
+                                            const bool communicate=true, const bool inverseMass = false  )
+        : BaseType( dfSpace.gridPart(), communicate, inverseMass, model )
       {}
 
       template< class GridFunction >
@@ -1096,7 +1171,7 @@ namespace Dune
     // GalerkinScheme
     // --------------
 
-    template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC >
+    template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC, bool inverseMass = false >
     struct GalerkinScheme
     {
       typedef InverseOperator InverseOperatorType;
@@ -1143,7 +1218,7 @@ namespace Dune
                        const bool communicate,
                        const ParameterReader& parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
-          fullOperator_( dfSpace, dfSpace, communicate, std::move( integrands ) ),
+          fullOperator_( dfSpace, dfSpace, communicate, inverseMass, std::move( integrands ) ),
           invOp_(parameter)
       {}
 
@@ -1234,6 +1309,7 @@ namespace Dune
       DifferentiableOperatorType fullOperator_;
       mutable NewtonOperatorType invOp_;
     };
+
 
   } // namespace Fem
 
