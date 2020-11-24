@@ -400,7 +400,7 @@ namespace Dune
         linkStorage_(),
         recvIndexMap_( new IndexMapType[ mySize_ ] ),
         sendIndexMap_( new IndexMapType[ mySize_ ] ),
-        mpAccess_( new MPAccessImplType( MPIHelper::getCommunicator() ) ),
+        mpAccess_( new MPAccessImplType( gridPart_.comm() ) ),
         exchangeTime_( 0.0 ),
         buildTime_( 0.0 ),
         sequence_( -1 ),
@@ -678,7 +678,7 @@ namespace Dune
       void sendBackSendMaps()
       {
         // create ALU communicator
-        MPAccessImplType mpAccess( MPIHelper::getCommunicator() );
+        MPAccessImplType mpAccess( space_.gridPart().comm() );
 
         // build linkage
         mpAccess.removeLinkage();
