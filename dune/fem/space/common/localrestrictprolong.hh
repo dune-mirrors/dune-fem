@@ -55,16 +55,16 @@ namespace Dune
         assert( weight > 0.0 );
         //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
 
-        const int numDofs = lfFather.numDofs();
-        assert( lfFather.numDofs() == lfSon.numDofs() );
+        const int size = lfFather.size();
+        assert( lfFather.size() == lfSon.size() );
         if( initialize )
         {
-          for( int i = 0; i < numDofs; ++i )
+          for( int i = 0; i < size; ++i )
             lfFather[ i ] = weight * lfSon[ i ];
         }
         else
         {
-          for( int i = 0; i < numDofs; ++i )
+          for( int i = 0; i < size; ++i )
             lfFather[ i ] += weight * lfSon[ i ];
         }
       }
@@ -77,9 +77,9 @@ namespace Dune
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        const int numDofs = lfFather.numDofs();
-        assert( lfFather.numDofs() == lfSon.numDofs() );
-        for( int i = 0; i < numDofs; ++i )
+        const int size = lfFather.size();
+        assert( lfFather.size() == lfSon.size() );
+        for( int i = 0; i < size; ++i )
           lfSon[ i ] = lfFather[ i ];
       }
 

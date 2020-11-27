@@ -346,6 +346,13 @@ namespace Dune
        */
       int numDofs () const { return localDofVector().size(); }
 
+      /** \brief obtain the number of local DoFs
+       *
+       *  Obtain the number of local DoFs of this local function. The value is
+       *  identical to the number of basis functons on the entity.
+       *
+       *  \returns number of local DoFs
+       */
       SizeType size () const { return localDofVector().size(); }
 
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
