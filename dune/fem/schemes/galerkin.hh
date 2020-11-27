@@ -1171,7 +1171,7 @@ namespace Dune
     // GalerkinScheme
     // --------------
 
-    template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC, bool inverseMass = false >
+    template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC, const bool inverseMass = false >
     struct GalerkinScheme
     {
       typedef InverseOperator InverseOperatorType;
