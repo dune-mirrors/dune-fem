@@ -1196,6 +1196,7 @@ namespace Dune
       typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
       typedef InverseOperator LinearInverseOperatorType;
       typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
+      static const bool invMass = inverseMass;
 
       struct SolverInfo
       {
@@ -1218,7 +1219,7 @@ namespace Dune
                        const bool communicate,
                        const ParameterReader& parameter = Parameter::container() )
         : dfSpace_( dfSpace ),
-          fullOperator_( dfSpace, dfSpace, communicate, inverseMass, std::move( integrands ) ),
+          fullOperator_( dfSpace, dfSpace, communicate, invMass, std::move( integrands ) ),
           invOp_(parameter)
       {}
 
