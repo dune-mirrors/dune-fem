@@ -76,13 +76,13 @@ namespace Dune
       }
 
       //! return number of rows
-      size_type rows() const
+      size_type rows () const
       {
         return dim_[0];
       }
 
       //! return number of columns
-      size_type cols() const
+      size_type cols () const
       {
         return dim_[1];
       }
@@ -90,8 +90,8 @@ namespace Dune
       //! set entry to value (also setting 0 will result in an entry)
       void set(const size_type row, const size_type col, const field_type val)
       {
-        assert((col>=0) && (col <= dim_[1]));
-        assert((row>=0) && (row <= dim_[0]));
+        assert((col>=0) && (col < dim_[1]));
+        assert((row>=0) && (row < dim_[0]));
 
         const size_type column = colIndex(row,col) ;
         assert( column != defaultCol && column != zeroCol );
@@ -103,8 +103,8 @@ namespace Dune
       //! add value to row,col entry
       void add(const size_type row, const size_type col, const field_type val)
       {
-        assert((col>=0) && (col <= dim_[1]));
-        assert((row>=0) && (row <= dim_[0]));
+        assert((col>=0) && (col < dim_[1]));
+        assert((row>=0) && (row < dim_[0]));
 
         const size_type column = colIndex(row,col) ;
         assert( column != defaultCol && column != zeroCol );
@@ -143,8 +143,8 @@ namespace Dune
       //! return value of entry (row,col)
       field_type get(const size_type row, const size_type col) const
       {
-        assert((col>=0) && (col <= dim_[1]));
-        assert((row>=0) && (row <= dim_[0]));
+        assert((col>=0) && (col < dim_[1]));
+        assert((row>=0) && (row < dim_[0]));
 
         const size_type endrow = endRow( row );
         for( size_type i = startRow( row ); i<endrow; ++i )
@@ -165,15 +165,28 @@ namespace Dune
       //! set all entries in row to zero
       void clearRow(const size_type row)
       {
-        assert((row>=0) && (row <= dim_[0]));
+        assert((row>=0) && (row < dim_[0]));
 
         const size_type endrow = endRow( row );
-        for(size_type col = startRow( row ); col<endrow; ++col )
+        for(size_type idx = startRow( row ); idx<endrow; ++idx )
         {
-          values_ [col] = 0;
+          values_[ idx ] = 0;
           // if ( !compressed_ )
-          //    columns_[col] = zeroCol;
+          //    columns_[idx] = zeroCol;
         }
+      }
+
+      //! scale all entries in row with a given value
+      void scale(const size_type row, const size_type col, const field_type val)
+      {
+        assert((row>=0) && (row < rows()) );
+        assert((col>=0) && (col < cols()) );
+
+        const size_type column = colIndex(row,col) ;
+        assert( column != defaultCol && column != zeroCol );
+
+        // scale value
+        values_ [ column ] *= val;
       }
 
       //! return max number of non zeros
@@ -280,12 +293,12 @@ namespace Dune
         }
       }
 
-      size_type startRow( const size_type row ) const
+      size_type startRow ( const size_type row ) const
       {
         return rows_[ row ];
       }
 
-      size_type endRow( const size_type row ) const
+      size_type endRow ( const size_type row ) const
       {
         return rows_[ row+1 ];
       }
@@ -459,7 +472,7 @@ namespace Dune
 
     protected:
       //! get reference to storage object, for internal use
-      MatrixType &matrix() const
+      MatrixType& matrix() const
       {
         return matrix_;
       }
@@ -468,7 +481,7 @@ namespace Dune
 
     public:
       //! get reference to storage object
-      MatrixType &exportMatrix() const
+      MatrixType& exportMatrix() const
       {
         finalizeAssembly();
         return matrix_;
@@ -476,7 +489,7 @@ namespace Dune
 
 
       //! interface method from LocalMatrixFactory
-      ObjectType *newObject() const
+      ObjectType* newObject() const
       {
         return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
@@ -671,7 +684,9 @@ namespace Dune
       //! resort row numbering in matrix to have ascending numbering
       void resort()
       {
-        matrix_.resort();
+        DUNE_THROW(NotImplemented,"SpMatrixObject::resort is not implemented");
+        // this method does not even exist on SpMatrix!!!
+        // matrix_.resort();
       }
 
     protected:
@@ -766,7 +781,7 @@ namespace Dune
         // rows are determined by the range space
         rowIndices_.resize( rangeMapper_.numDofs( rangeEntity ) );
         rangeMapper_.mapEach( rangeEntity, AssignFunctor< RowIndicesType >( rowIndices_ ) );
-        // columns are determind by the domain space
+        // columns are determined by the domain space
         columnIndices_.resize( domainMapper_.numDofs( domainEntity ) );
         domainMapper_.mapEach( domainEntity, AssignFunctor< ColumnIndicesType >( columnIndices_ ) );
       }
@@ -808,6 +823,14 @@ namespace Dune
         matrix_.set( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
+      //! scale matrix entry with value
+      void scale(size_type localRow, size_type localCol, DofType value)
+      {
+        assert( (localRow >= 0) && (localRow < rows()) );
+        assert( (localCol >= 0) && (localCol < columns()) );
+        matrix_.scale( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
+      }
+
       //! set matrix row to zero except diagonla entry
       void unitRow(size_type localRow)
       {
@@ -832,25 +855,32 @@ namespace Dune
       //! clear all entries belonging to local matrix
       void clear()
       {
-        const auto row = rows();
-        for(auto i=decltype(row){0}; i < row; ++i )
+        const size_type nrows = rows();
+        for(size_type i=0; i < nrows; ++i )
           matrix_.clearRow( rowIndices_[ i ] );
       }
 
       //! scale local matrix with a certain value
       void scale( const DofType& value )
       {
-        const auto row = rows();
-        for(auto i=decltype(row){0}; i < row; ++i )
-          matrix_.scaleRow( rowIndices_[ i ] , value );
+        const size_type nrows = rows();
+        const size_type ncols = columns();
+        for(size_type i=0; i < nrows; ++i )
+        {
+          for( size_type j=0; j < ncols; ++j )
+          {
+            scale(i, j, value );
+          }
+        }
       }
 
       //! resort all global rows of matrix to have ascending numbering
       void resort()
       {
-        const auto row = rows();
-        for(auto i=decltype(row){0}; i < row; ++i )
-          matrix_.resortRow( rowIndices_[ i ] );
+        DUNE_THROW(NotImplemented,"SpMatrixObject::LocalMatrix::resort is not implemented");
+        //const size_type nrows = rows();
+        //for(size_type i=0; i < nrows; ++i )
+          //matrix_.resortRow( rowIndices_[ i ] );
       }
 
     protected:
