@@ -179,6 +179,15 @@ namespace Dune
         return fields_[ localRow * columns() + localCol ];
       }
 
+      inline void scale( const RangeFieldType &value )
+      {
+        const std::size_t size = fields_.size();
+        for( std::size_t i=0; i<size; ++i )
+        {
+          fields_[ i ] *= value;
+        }
+      }
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::clear */
       inline void clear ()
       {
