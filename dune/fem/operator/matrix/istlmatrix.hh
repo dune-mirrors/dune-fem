@@ -418,6 +418,8 @@ namespace Dune
       typedef typename MatrixObjectType::MatrixType MatrixType;
       //! type of little blocks
       typedef typename MatrixType::block_type LittleBlockType;
+      // type of row and column indices
+      typedef typename MatrixType :: size_type size_type;
 
       typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
       typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
@@ -540,9 +542,15 @@ namespace Dune
 
       void scale (const DofType& scalar)
       {
-        for(auto i=0; i<matrices_.size(); ++i)
-          for(auto j=0; j<matrices_[i].size(); ++j)
+        const size_type nrows = matrices_.size();
+        for(size_type i=0; i<nrows; ++i)
+        {
+          const size_type ncols = matrices_[i].size();
+          for(size_type j=0; j<ncols; ++j)
+          {
             (*matrices_[i][j]) *= scalar;
+          }
+        }
       }
 
       void add(const int localRow, const int localCol , const DofType value)
@@ -577,9 +585,15 @@ namespace Dune
       //! clear all entries belonging to local matrix
       void clear ()
       {
-        for(auto i=0; i<matrices_.size(); ++i)
-          for(auto j=0; j<matrices_[i].size(); ++j)
+        const size_type nrows = matrices_.size();
+        for(size_type i=0; i<nrows; ++i)
+        {
+          const size_type ncols = matrices_[i].size();
+          for(size_type j=0; j<ncols; ++j)
+          {
             (*matrices_[i][j]) = (DofType) 0;
+          }
+        }
       }
 
       //! set matrix row to zero
