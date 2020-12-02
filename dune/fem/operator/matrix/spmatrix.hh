@@ -823,14 +823,6 @@ namespace Dune
         matrix_.set( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
-      //! scale matrix entry with value
-      void scale(size_type localRow, size_type localCol, DofType value)
-      {
-        assert( (localRow >= 0) && (localRow < rows()) );
-        assert( (localCol >= 0) && (localCol < columns()) );
-        matrix_.scale( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
-      }
-
       //! set matrix row to zero except diagonla entry
       void unitRow(size_type localRow)
       {
@@ -860,6 +852,15 @@ namespace Dune
           matrix_.clearRow( rowIndices_[ i ] );
       }
 
+      //! resort all global rows of matrix to have ascending numbering
+      void resort()
+      {
+        DUNE_THROW(NotImplemented,"SpMatrixObject::LocalMatrix::resort is not implemented");
+        //const size_type nrows = rows();
+        //for(size_type i=0; i < nrows; ++i )
+          //matrix_.resortRow( rowIndices_[ i ] );
+      }
+
       //! scale local matrix with a certain value
       void scale( const DofType& value )
       {
@@ -874,13 +875,13 @@ namespace Dune
         }
       }
 
-      //! resort all global rows of matrix to have ascending numbering
-      void resort()
+    protected:
+      //! scale matrix entry with value
+      void scale(size_type localRow, size_type localCol, DofType value)
       {
-        DUNE_THROW(NotImplemented,"SpMatrixObject::LocalMatrix::resort is not implemented");
-        //const size_type nrows = rows();
-        //for(size_type i=0; i < nrows; ++i )
-          //matrix_.resortRow( rowIndices_[ i ] );
+        assert( (localRow >= 0) && (localRow < rows()) );
+        assert( (localCol >= 0) && (localCol < columns()) );
+        matrix_.scale( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
     protected:

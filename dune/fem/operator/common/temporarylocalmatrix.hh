@@ -171,6 +171,7 @@ namespace Dune
         fields_[ localRow * columns() + localCol ] = value;
       }
 
+      /** \copydoc Dune::Fem::LocalMatrixInterface::get */
       inline const RangeFieldType get ( const int localRow,
                                         const int localCol ) const
       {
@@ -179,6 +180,7 @@ namespace Dune
         return fields_[ localRow * columns() + localCol ];
       }
 
+      /** \copydoc Dune::Fem::LocalMatrixInterface::scale */
       inline void scale( const RangeFieldType &value )
       {
         const std::size_t size = fields_.size();
