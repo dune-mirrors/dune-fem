@@ -902,30 +902,30 @@ namespace Dune
         void applyInverseMass ( JacobianOperator &jOp, const bool hasSkeleton ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
-          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
-          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
           typedef typename QuadratureSelector< DomainSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
           typedef LocalMassMatrix< DomainSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
 
           LocalMassMatrixType localMassMatrix( jOp.domainSpace(), this->defaultInteriorOrder_ );
-          TemporaryLocalMatrixType jOpIn ( jOp.domainSpace(), jOp.rangeSpace() );
-          TemporaryLocalMatrixType jOpOut( jOp.domainSpace(), jOp.rangeSpace() );
 
           // multiply with inverse mass matrix
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            jOpIn.init( inside, inside );
-            localMassMatrix.leftMultiplyInverse( jOpIn );
+            // scale diagonal
+            {
+              auto jOpIn = jOp.localMatrix( inside, inside );
+              localMassMatrix.leftMultiplyInverse( jOpIn );
+            }
 
             if( hasSkeleton )
             {
               for( const auto &intersection : intersections( gridPart(), inside ) )
               {
+                // scale off-diagonal
                 if( intersection.neighbor() )
                 {
                   const EntityType &outside = intersection.outside();
-                  jOpOut.init( outside, inside );
+                  auto jOpOut = jOp.localMatrix(outside, inside );
                   localMassMatrix.leftMultiplyInverse( jOpOut );
                 }
               }
