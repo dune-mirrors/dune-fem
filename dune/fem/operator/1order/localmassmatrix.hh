@@ -402,7 +402,9 @@ namespace Dune
 
         // in case of affine mappings we only have to multiply with a factor
         if( affine() || geo.affine() )
+        {
           localMatrix.scale( getAffineMassFactor( geo ) );
+        }
         else
         {
           NoMassDummyCaller caller;
@@ -431,7 +433,9 @@ namespace Dune
 
         // in case of affine mappings we only have to multiply with a factor
         if( affine() || geo.affine() )
+        {
           localMatrix.scale( getAffineMassFactor( geo ) );
+        }
         else
         {
           NoMassDummyCaller caller;
