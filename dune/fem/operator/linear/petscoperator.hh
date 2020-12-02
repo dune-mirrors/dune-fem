@@ -633,7 +633,6 @@ namespace Dune
         applyLocalMatrix( domainEntity, rangeEntity, localMat, operation, INSERT_VALUES, std::integral_constant< bool, false>() );
       }
 
-
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
@@ -657,6 +656,38 @@ namespace Dune
           for( std::size_t j =0; j< c.size(); ++j )
             localMat.set( i, j, v[ i * c.size() +j ] );
 
+        setStatus( statAssembled );
+      }
+
+      void scaleLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const RangeFieldType &s )
+      {
+        // make sure matrix is in correct state before using
+        finalizeAssembly();
+
+        assert( status_==statAssembled || status_==statGet );
+        setStatus( statGet );
+
+        std::vector< PetscInt >&  r = r_;
+        std::vector< PetscInt >&  c = c_;
+        std::vector< PetscScalar >& v = v_;
+
+        setupIndices( rangeMappers_, rangeEntity, r );
+        setupIndices( domainMappers_, domainEntity, c );
+
+        const unsigned int rSize = r.size();
+        const unsigned int cSize = c.size();
+        const std::size_t size = rSize * cSize;
+
+        v.resize( size );
+        // get values
+        ::Dune::Petsc::MatGetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data() );
+
+        // scale values
+        for( std::size_t i=0; i<size; ++i )
+          v[ i ] *= s;
+
+        // set values again
+        ::Dune::Petsc::MatSetValues( petscMatrix_, rSize, r.data(), cSize, c.data(), v.data(), INSERT_VALUES );
         setStatus( statAssembled );
       }
 
@@ -793,28 +824,11 @@ namespace Dune
                     const DomainSpaceType &domainSpace,
                     const RangeSpaceType &rangeSpace )
       : BaseType( domainSpace, rangeSpace ),
-        petscLinearOperator_( petscLinOp ),
-        values_(0)
+        petscLinearOperator_( petscLinOp )
       {}
 
       void finalize()
       {
-        return; //!
-        // USE: MatSetValuesBlocked for bs>1!
-        if (status_ == statAdd) // only add is cached at the moment
-        {
-          PetscScalar v[rows()][columns()];
-          for (int r=0;r<rows();++r)
-          {
-            for (int c=0;c<columns();++c)
-            {
-              int idx = c + r*columns();
-              v[r][c] = values_[idx];
-            }
-          }
-          ::Dune::Petsc::MatSetValues( petscMatrix(), rows(), &(rowIndices_[0]), columns(), &(colIndices_[0]),
-                                       &v[0][0], ADD_VALUES );
-        }
       }
 
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
@@ -833,15 +847,6 @@ namespace Dune
         setupIndices( petscLinearOperator_.rangeMappers_, rangeEntity, rowIndices_ );
         setupIndices( petscLinearOperator_.domainMappers_, domainEntity, colIndices_ );
 
-        values_.resize( columns()*rows(), 0. );
-        for (int r=0;r<rows();++r)
-        {
-          for (int c=0;c<columns();++c)
-          {
-            int idx = c + r*columns();
-            values_[idx] = 0;
-          }
-        }
         status_ = statAssembled;
         petscLinearOperator_.setStatus(status_);
       }
@@ -852,9 +857,6 @@ namespace Dune
         status_ = statAdd;
         petscLinearOperator_.setStatus(status_);
         ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, ADD_VALUES );
-        //! int idx = localCol + localRow*columns();
-        //! assert( idx < values_.size() );
-        //! values_[idx] += value;
       }
 
       inline void set(const int localRow, const int localCol, const RangeFieldType &value )
@@ -863,10 +865,8 @@ namespace Dune
         status_ = statInsert;
         petscLinearOperator_.setStatus(status_);
         ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, INSERT_VALUES );
-        // int idx = localCol + localRow*columns();
-        // assert( idx < values_.size() );
-        // values_[idx] = value;
       }
+
       //! set matrix row to zero
       void clearRow ( const int localRow )
       {
@@ -879,14 +879,8 @@ namespace Dune
         {
           ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIdx, globalColIndex( localCol ), 0.0, INSERT_VALUES );
         }
-
-        /*
-        ::Dune::Petsc::MatAssemblyBegin( petscMatrix(), MAT_FLUSH_ASSEMBLY );
-        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix(), MAT_FLUSH_ASSEMBLY );
-        const int r[] = {globalRowIndex( localRow )};
-        ::MatZeroRows(petscMatrix(),1,r,0,0,0);
-        */
       }
+
       inline const RangeFieldType get ( const int localRow, const int localCol ) const
       {
         assert( status_==statAssembled || status_==statGet );
@@ -897,6 +891,11 @@ namespace Dune
         const int c[] = {globalColIndex( localCol )};
         ::Dune::Petsc::MatGetValues( petscMatrix(), 1, r, 1, c, v );
         return v[0];
+      }
+
+      inline void scale ( const RangeFieldType &factor )
+      {
+        const_cast< PetscLinearOperatorType& > (petscLinearOperator_).scaleLocalMatrix( this->domainEntity(), this->rangeEntity(), factor );
       }
 
     private:
@@ -928,7 +927,6 @@ namespace Dune
       const PetscLinearOperatorType &petscLinearOperator_;
       IndexVectorType rowIndices_;
       IndexVectorType colIndices_;
-      std::vector<RangeFieldType> values_;
       mutable Status status_;
     };
 
