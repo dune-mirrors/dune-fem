@@ -340,7 +340,7 @@ namespace Dune
       {
         const EntityType &entity = localMatrix.domainEntity();
         Geometry geo = entity.geometry();
-        if( affine() || geo.affine() )
+        if( ( affine() || geo.affine() || checkInterpolationBFS(localMatrix.rangeBasisFunctionSet())) )
           leftMultiplyInverseLocally( entity, geo, localMatrix );
         else
           leftMultiplyInverseDefault( entity, geo, localMatrix );
@@ -571,14 +571,16 @@ namespace Dune
 
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
 
-          int l = 0;
           const int nop = volQuad.nop();
           assert(nop*dimRange == numDofs);
-          for( int qt = 0; qt < nop; ++qt )
-            for (int r = 0; r < dimRange; ++r,++l )
+          for( int l=0, qt = 0; qt < nop; ++qt )
+          {
+            const auto intel = geo.integrationElement( volQuad.point(qt) );
+            for (int r = 0; r < dimRange; ++r, ++l )
             {
-              lf[ l ] *= diagonal[ l ] / geo.integrationElement( volQuad.point(qt) );
+              lf[ l ] *= diagonal[ l ] / intel;
             }
+          }
         }
         else
         {
@@ -595,27 +597,75 @@ namespace Dune
         }
       }
 
-      template< class LocalMatrix >
-      void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
+      template <class LocalMatrix>
+      void multiplyInverseDiagonal( const EntityType &entity, const Geometry &geo,
+                                    const VectorType& refElemDiagonal,
+                                    LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
-        MatrixPairType& matrixPair =
-          getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
-        const MatrixType &invMassMatrix = *matrixPair.first;
 
-        const double massVolInv = getAffineMassFactor( geo );
+        assert( int(refElemDiagonal.size()) == cols );
 
-        rhs_.resize( cols );
+        VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+
+        VectorType& elementDiagonal = rhs_;
+        elementDiagonal.resize( cols );
+
+        const int nop = volQuad.nop();
+        assert(nop*dimRange == cols);
+        for( int l = 0, qt = 0; qt < nop; ++qt )
+        {
+          const auto intel = geo.integrationElement( volQuad.point(qt) );
+          for (int r = 0; r < dimRange; ++r,++l )
+          {
+            elementDiagonal[ l ] = refElemDiagonal[ l ] / intel;
+          }
+        }
+
         row_.resize( cols );
 
         const int rows = localMatrix.rows();
         for( int i = 0; i < rows; ++i )
         {
           for( int j = 0; j < cols; ++j )
-            rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
-          invMassMatrix.mtv( rhs_, row_ );
+            row_[ j ] = elementDiagonal[ j ] * localMatrix.get( i, j );
+
           for( int j = 0; j < cols; ++j )
             localMatrix.set( i, j, row_[ j ] );
+        }
+      }
+
+      template< class LocalMatrix >
+      void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
+      {
+        const int cols = localMatrix.columns();
+        MatrixPairType& matrixPair =
+          getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+
+        // if diagonal exists then matrix is in diagonal form
+        // stored as inverse on the reference element
+        if( matrixPair.second )
+        {
+          multiplyInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+        }
+        else
+        {
+          const MatrixType &invMassMatrix = *matrixPair.first;
+
+          const double massVolInv = getAffineMassFactor( geo );
+
+          rhs_.resize( cols );
+          row_.resize( cols );
+
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            for( int j = 0; j < cols; ++j )
+              rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+            invMassMatrix.mtv( rhs_, row_ );
+            for( int j = 0; j < cols; ++j )
+              localMatrix.set( i, j, row_[ j ] );
+          }
         }
       }
 
@@ -626,21 +676,31 @@ namespace Dune
         const int cols = localMatrix.columns();
         MatrixPairType& matrixPair =
           getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
-        const MatrixType &invMassMatrix = *matrixPair.first;
 
-        const double massVolInv = getAffineMassFactor( geo );
-
-        rhs_.resize( cols );
-        row_.resize( cols );
-
-        const int rows = localMatrix.rows();
-        for( int i = 0; i < rows; ++i )
+        // if diagonal exists then matrix is in diagonal form
+        // stored as inverse on the reference element
+        if( matrixPair.second )
         {
-          for( int j = 0; j < cols; ++j )
-            rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
-          invMassMatrix.mv( rhs_, row_ );
-          for( int j = 0; j < cols; ++j )
-            localMatrix.set( i, j, row_[ j ] );
+          multiplyInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+        }
+        else
+        {
+          const MatrixType &invMassMatrix = *matrixPair.first;
+
+          const double massVolInv = getAffineMassFactor( geo );
+
+          rhs_.resize( cols );
+          row_.resize( cols );
+
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            for( int j = 0; j < cols; ++j )
+              rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+            invMassMatrix.mv( rhs_, row_ );
+            for( int j = 0; j < cols; ++j )
+              localMatrix.set( i, j, row_[ j ] );
+          }
         }
       }
 
