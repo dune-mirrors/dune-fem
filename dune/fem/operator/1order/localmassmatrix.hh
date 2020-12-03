@@ -328,7 +328,7 @@ namespace Dune
       {
         const EntityType &entity = localMatrix.rangeEntity();
         Geometry geo = entity.geometry();
-        if( affine() || geo.affine() )
+        if( ( affine() || geo.affine() || checkInterpolationBFS(localMatrix.rangeBasisFunctionSet())) )
           rightMultiplyInverseLocally( entity, geo, localMatrix );
         else
           rightMultiplyInverseDefault( entity, geo, localMatrix );
@@ -517,9 +517,14 @@ namespace Dune
         const int rows = localMatrix.rows();
         for( int i = 0; i < rows; ++i )
         {
+          // get i-th row from localMatrix
           for( int j = 0; j < cols; ++j )
             rhs_[ j ] = localMatrix.get( i, j );
+
+          // multiply with all columns of inverse mass matrix
           invMassMatrix.mtv( rhs_, row_ );
+
+          // store as i-th row in localMatrix
           for( int j = 0; j < cols; ++j )
             localMatrix.set( i, j, row_[ j ] );
         }
@@ -540,11 +545,16 @@ namespace Dune
         const int rows = localMatrix.rows();
         for( int i = 0; i < rows; ++i )
         {
+          // get j-th column from localMatrix
           for( int j = 0; j < cols; ++j )
-            rhs_[ j ] = localMatrix.get( i, j );
+            rhs_[ j ] = localMatrix.get( j, i );
+
+          // multiply with all rows in inverse mass matrix
           invMassMatrix.mv( rhs_, row_ );
+
+          // store as j-th column in localMatrix
           for( int j = 0; j < cols; ++j )
-            localMatrix.set( i, j, row_[ j ] );
+            localMatrix.set( j, i, row_[ j ] );
         }
       }
 
@@ -598,9 +608,10 @@ namespace Dune
       }
 
       template <class LocalMatrix>
-      void multiplyInverseDiagonal( const EntityType &entity, const Geometry &geo,
-                                    const VectorType& refElemDiagonal,
-                                    LocalMatrix &localMatrix ) const
+      const VectorType&
+      setupInverseDiagonal( const EntityType &entity, const Geometry &geo,
+                            const VectorType& refElemDiagonal,
+                            LocalMatrix &localMatrix ) const
       {
         const int cols = localMatrix.columns();
 
@@ -621,18 +632,7 @@ namespace Dune
             elementDiagonal[ l ] = refElemDiagonal[ l ] / intel;
           }
         }
-
-        row_.resize( cols );
-
-        const int rows = localMatrix.rows();
-        for( int i = 0; i < rows; ++i )
-        {
-          for( int j = 0; j < cols; ++j )
-            row_[ j ] = elementDiagonal[ j ] * localMatrix.get( i, j );
-
-          for( int j = 0; j < cols; ++j )
-            localMatrix.set( i, j, row_[ j ] );
-        }
+        return elementDiagonal;
       }
 
       template< class LocalMatrix >
@@ -646,7 +646,22 @@ namespace Dune
         // stored as inverse on the reference element
         if( matrixPair.second )
         {
-          multiplyInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+          const VectorType& elementDiagonal =
+            setupInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+
+          row_.resize( cols );
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            // get i-th row from localMatrix
+            // and multiply with diagonal of inverse mass matrix
+            for( int j = 0; j < cols; ++j )
+              row_[ j ] = elementDiagonal[ j ] * localMatrix.get( i, j );
+
+            // store as i-th row in localMatrix
+            for( int j = 0; j < cols; ++j )
+              localMatrix.set( i, j, row_[ j ] );
+          }
         }
         else
         {
@@ -660,9 +675,15 @@ namespace Dune
           const int rows = localMatrix.rows();
           for( int i = 0; i < rows; ++i )
           {
+            // get i-th row from localMatrix
+            // and multiply with diagonal of inverse mass matrix
             for( int j = 0; j < cols; ++j )
               rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+
+            // multiply with all columns of inverse mass matrix
             invMassMatrix.mtv( rhs_, row_ );
+
+            // store as i-th row of localMatrix
             for( int j = 0; j < cols; ++j )
               localMatrix.set( i, j, row_[ j ] );
           }
@@ -681,7 +702,22 @@ namespace Dune
         // stored as inverse on the reference element
         if( matrixPair.second )
         {
-          multiplyInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+          const VectorType& elementDiagonal =
+            setupInverseDiagonal( entity, geo, *matrixPair.second, localMatrix );
+
+          row_.resize( cols );
+          const int rows = localMatrix.rows();
+          for( int i = 0; i < rows; ++i )
+          {
+            // get j-th column from localMatrix
+            // and multiply with diagonal of inverse mass matrix
+            for( int j = 0; j < cols; ++j )
+              row_[ j ] = elementDiagonal[ j ] * localMatrix.get( j, i );
+
+            // store as j-th column of localMatrix
+            for( int j = 0; j < cols; ++j )
+              localMatrix.set( j, i, row_[ j ] );
+          }
         }
         else
         {
@@ -695,11 +731,16 @@ namespace Dune
           const int rows = localMatrix.rows();
           for( int i = 0; i < rows; ++i )
           {
+            // get j-th column from localMatrix
             for( int j = 0; j < cols; ++j )
-              rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+              rhs_[ j ] = localMatrix.get( j, i ) * massVolInv;
+
+            // apply to all rows of inverse mass matrix
             invMassMatrix.mv( rhs_, row_ );
+
+            // store as j-th column of localMatrix
             for( int j = 0; j < cols; ++j )
-              localMatrix.set( i, j, row_[ j ] );
+              localMatrix.set( j, i, row_[ j ] );
           }
         }
       }
