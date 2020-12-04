@@ -412,11 +412,16 @@ namespace Dune
         return new ObjectType( *this, domainSpace(), rangeSpace() );
       }
 
-      //! return local matrix representation
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        *  return local matrix object
+        */
+      [[deprecated]]
       LocalMatrixType localMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType(localMatrixStack_, domainEntity, rangeEntity);
       }
+
       LocalColumnObjectType localColumn( const DomainEntityType &colEntity ) const
       {
         return LocalColumnObjectType ( *this, colEntity );

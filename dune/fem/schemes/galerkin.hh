@@ -921,13 +921,6 @@ namespace Dune
             localMassMatrix.leftMultiplyInverse( jOpIn );
             jOp.setLocalMatrix( inside, inside, jOpIn );
 
-            /*
-            {
-              auto jOpIn = jOp.localMatrix( inside, inside );
-              localMassMatrix.leftMultiplyInverse( jOpIn );
-            }
-            */
-
             if( hasSkeleton )
             {
               for( const auto &intersection : intersections( gridPart(), inside ) )
@@ -940,9 +933,6 @@ namespace Dune
                   jOp.getLocalMatrix( outside, inside, jOpOut );
                   localMassMatrix.leftMultiplyInverse( jOpOut );
                   jOp.setLocalMatrix( outside, inside, jOpOut );
-
-                  //auto jOpOut = jOp.localMatrix(outside, inside );
-                  //localMassMatrix.leftMultiplyInverse( jOpOut );
                 }
               }
             }

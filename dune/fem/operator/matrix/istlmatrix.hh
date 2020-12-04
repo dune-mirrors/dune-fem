@@ -441,6 +441,10 @@ namespace Dune
 
       typedef typename MatrixType::size_type Index;
 
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        */
+      [[deprecated]]
       ISTLLocalMatrix ( const MatrixObjectType& mObj, const DomainSpaceType& domainSpace, const RangeSpaceType& rangeSpace )
         : BaseType( domainSpace, rangeSpace ),
           rowMapper_( rangeSpace.blockMapper() ),
@@ -450,6 +454,10 @@ namespace Dune
           matrixObj_( mObj )
       {}
 
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        */
+      [[deprecated]]
       ISTLLocalMatrix ( const ISTLLocalMatrix& org )
         : BaseType( org ),
           rowMapper_(org.rowMapper_),
@@ -978,13 +986,21 @@ namespace Dune
         return new ObjectType(*this, domainSpace(), rangeSpace());
       }
 
-      //! return local matrix object
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        *  return local matrix object
+        */
+      [[deprecated]]
       LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
 
-      //! return uninitialized local matrix object
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        *  return local matrix object
+        */
+      [[deprecated]]
       LocalMatrixType localMatrix() const
       {
         return LocalMatrixType( localMatrixStack_ );

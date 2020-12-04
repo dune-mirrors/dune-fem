@@ -494,13 +494,19 @@ namespace Dune
         return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
 
-      //! get local matrix
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        *  return local matrix object
+        */
       LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
 
-      //! get uninitialized local matrix
+      /** \deprecated Use TemporaryLocalMatrix in combination with
+        *             {add,set,get}LocalMatrix on matrix object
+        *  return local matrix object
+        */
       LocalMatrixType localMatrix() const
       {
         return LocalMatrixType( localMatrixStack_ );
