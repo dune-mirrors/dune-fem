@@ -110,18 +110,18 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
 
     if not rstorage == storage:
         typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
-        constructor = Constructor(['pybind11::object gridView', 'const bool communicate, const bool inverseMass, ', integrandsType + ' &integrands'],
+        constructor = Constructor(['pybind11::object gridView', 'const bool communicate, const bool inverseMass', integrandsType + ' &integrands'],
                                   ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), communicate, integrands );'],
                                   ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate, const bool inverseMass, ', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace.gridPart(), communicate, integrands );'],
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate, const bool inverseMass', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace.gridPart(), communicate, inverseMass, integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
         import dune.create as create
         linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
         typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate, const bool inverseMass, ', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace, rSpace, communicate, integrands );'],
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate, const bool inverseMass', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace, rSpace, communicate, inverseMass, integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
     if integrands.hasDirichletBoundary:
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
