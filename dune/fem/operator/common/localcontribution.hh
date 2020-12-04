@@ -12,6 +12,7 @@
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 #include <dune/fem/storage/rowreferencevector.hh>
 #include <dune/fem/storage/subvector.hh>
 
@@ -130,11 +131,11 @@ namespace Dune
 
 
 
-      // SetBase
-      // -------
+      // SetAndSeclectBaseImpl
+      // ---------------------
 
-      template< class AssembledOperator >
-      struct SetBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
+      template< class AssembledOperator, const bool getAndSet >
+      struct SetAndSeclectBaseImpl
       {
         typedef typename AssembledOperator::RangeFieldType value_type;
 
@@ -143,7 +144,15 @@ namespace Dune
         template< class DomainEntity, class RangeEntity, class LocalMatrix >
         void begin ( const DomainEntity &domainEntity, const RangeEntity &rangeEntity, const AssembledOperator &op, LocalMatrix &localMatrix ) const
         {
-          localMatrix.clear();
+          if constexpr ( getAndSet )
+          {
+            // get values first for modification
+            op.getLocalMatrix( domainEntity, rangeEntity, localMatrix );
+          }
+          else // set only
+          {
+            localMatrix.clear();
+          }
         }
 
         template< class DomainEntity, class RangeEntity, class LocalMatrix >
@@ -153,40 +162,26 @@ namespace Dune
         }
       };
 
+      // SetBase
+      // -------
+      template< class AssembledOperator >
+      struct SetBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
+        : public SetAndSeclectBaseImpl< AssembledOperator, false > // set only
+      {
+      };
+
+      // SetSelectedBase
+      // ---------------
+
+      template< class AssembledOperator >
+      struct SetSelectedBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
+        : public SetAndSeclectBaseImpl< AssembledOperator, true > // get and set
+      {
+      };
+
     } // namespace Assembly
 
   } // namespace Fem
-
-
-
-  // DenseMatVecTraits for LocalContribution
-  // ---------------------------------------
-
-  template< class AssembledOperator, template< class > class AssemblyOperation >
-  struct DenseMatVecTraits< Fem::LocalContribution< AssembledOperator, AssemblyOperation, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > > >
-  {
-    typedef Fem::LocalContribution< AssembledOperator, AssemblyOperation > derived_type;
-    typedef typename AssembledOperator::RangeFieldType value_type;
-    typedef DynamicVector< value_type > row_type;
-    typedef std::vector< value_type > container_type;
-    typedef typename container_type::size_type size_type;
-
-    typedef Fem::RowReferenceVector< value_type > row_reference;
-    typedef Fem::RowReferenceVector< const value_type > const_row_reference;
-  };
-
-
-
-  // FieldTraits for LocalContribution
-  // ---------------------------------
-
-  template< class AssembledOperator, template< class > class AssemblyOperation >
-  struct FieldTraits< Fem::LocalContribution< AssembledOperator, AssemblyOperation, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > > >
-  {
-    typedef typename FieldTraits< typename AssembledOperator::RangeFieldType >::field_type field_type;
-    typedef typename FieldTraits< typename AssembledOperator::RangeFieldType >::real_type real_type;
-  };
-
 
 
   namespace Fem
@@ -197,24 +192,31 @@ namespace Dune
 
     template< class AssembledOperator, template< class > class AssemblyOperation >
     class LocalContribution< AssembledOperator, AssemblyOperation, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
-      : public Dune::DenseMatrix< LocalContribution< AssembledOperator, AssemblyOperation > >
+      : public TemporaryLocalMatrix< typename AssembledOperator::DomainFunctionType::DiscreteFunctionSpaceType,
+                                     typename AssembledOperator::RangeFunctionType::DiscreteFunctionSpaceType
+                                   >
     {
-      typedef LocalContribution< AssembledOperator, AssemblyOperation > ThisType;
-      typedef Dune::DenseMatrix< LocalContribution< AssembledOperator, AssemblyOperation > > BaseType;
-
     public:
       typedef AssembledOperator AssembledOperatorType;
       typedef AssemblyOperation< AssembledOperator > AssemblyOperationType;
 
-      typedef typename AssembledOperatorType::DomainFunctionType::DiscreteFunctionSpaceType::BasisFunctionSetType DomainBasisFunctionSetType;
-      typedef typename AssembledOperatorType::RangeFunctionType::DiscreteFunctionSpaceType::BasisFunctionSetType RangeBasisFunctionSetType;
+      typedef typename AssembledOperatorType::DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename AssembledOperatorType::RangeFunctionType::DiscreteFunctionSpaceType  RangeSpaceType;
 
-      typedef typename DomainBasisFunctionSetType::EntityType DomainEntityType;
-      typedef typename RangeBasisFunctionSetType::EntityType RangeEntityType;
+    private:
+      typedef LocalContribution< AssembledOperator, AssemblyOperation > ThisType;
+      typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType >   BaseType;
+
+    public:
+      typedef typename DomainSpaceType::BasisFunctionSetType   DomainBasisFunctionSetType;
+      typedef typename RangeSpaceType::BasisFunctionSetType    RangeBasisFunctionSetType;
+
+      typedef typename DomainBasisFunctionSetType::EntityType  DomainEntityType;
+      typedef typename RangeBasisFunctionSetType::EntityType   RangeEntityType;
 
       typedef typename AssembledOperatorType::RangeFieldType value_type;
 
-      typedef std::vector< value_type > LocalMatrixEntriesType;
+      typedef typename BaseType :: MatrixEntriesType  LocalMatrixEntriesType;
       typedef typename LocalMatrixEntriesType::size_type SizeType;
 
       typedef RowReferenceVector< value_type > row_reference;
@@ -228,7 +230,9 @@ namespace Dune
 
       template< class T >
       struct IsRangeValue
-        : public InTypeRange< T, typename RangeBasisFunctionSetType::RangeType, typename RangeBasisFunctionSetType::JacobianRangeType, typename RangeBasisFunctionSetType::HessianRangeType >
+        : public InTypeRange< T, typename RangeBasisFunctionSetType::RangeType,
+                                 typename RangeBasisFunctionSetType::JacobianRangeType,
+                                 typename RangeBasisFunctionSetType::HessianRangeType >
       {};
 
       struct ColIndexMapper
@@ -241,11 +245,17 @@ namespace Dune
         SizeType j_, cols_;
       };
 
+    protected:
+      using BaseType::mat_cols;
+
     public:
+      using BaseType::domainBasisFunctionSet;
+      using BaseType::rangeBasisFunctionSet;
+
       template< class... Args >
       explicit LocalContribution ( AssembledOperator &assembledOperator, Args &&... args )
-        : assembledOperator_( assembledOperator ),
-          localMatrixEntries_( assembledOperator.domainSpace().maxNumDofs() * assembledOperator.rangeSpace().maxNumDofs() ),
+        : BaseType( assembledOperator.domainSpace(), assembledOperator.rangeSpace() ),
+          assembledOperator_( assembledOperator ),
           assemblyOperation_( std::forward< Args >( args )... )
       {
         assembledOperator.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
@@ -262,9 +272,6 @@ namespace Dune
       const AssembledOperatorType &assembledOperator () const { return assembledOperator_; }
       AssembledOperatorType &assembledOperator () { return assembledOperator_; }
 
-      /** \brief set all DoFs to zero **/
-      void clear () { std::fill( localMatrixEntries().begin(), localMatrixEntries().end(), value_type( 0 ) ); }
-
       SubVector< LocalMatrixEntriesType, ColIndexMapper > column ( SizeType j )
       {
         return SubVector< LocalMatrixEntriesType, ColIndexMapper >( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
@@ -274,6 +281,9 @@ namespace Dune
       {
         return SubVector< const LocalMatrixEntriesType, ColIndexMapper >( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
       }
+
+      // inherited from DenseMatrix
+      using BaseType :: axpy;
 
       template< class Point, class... Factors >
       auto axpy ( const Point &x, const Factors &... factors )
@@ -299,61 +309,28 @@ namespace Dune
        **/
       int order () const { return domainBasisFunctionSet().order() + rangeBasisFunctionSet().order(); }
 
-      /**
-       * \brief obtain the basis function set for the domain of this local contribution
-       * \returns reference to the basis function set
-       **/
-      const DomainBasisFunctionSetType &domainBasisFunctionSet () const { return domainBasisFunctionSet_; }
-
-      /**
-       * \brief obtain the basis function set for the range of this local contribution
-       * \returns reference to the basis function set
-       **/
-      const RangeBasisFunctionSetType &rangeBasisFunctionSet () const { return rangeBasisFunctionSet_; }
-
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
       void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
-        domainBasisFunctionSet_ = assembledOperator().domainSpace().basisFunctionSet( domainEntity );
-        rangeBasisFunctionSet_ = assembledOperator().rangeSpace().basisFunctionSet( rangeEntity );
-        localMatrixEntries().resize( mat_rows() * mat_cols() );
+        BaseType::bind( domainEntity, rangeEntity );
         assemblyOperation_.begin( domainEntity, rangeEntity, assembledOperator(), *this );
       }
 
+      /** \copydoc Dune::Fem::LocalMatrixInterface::unbind */
       void unbind ()
       {
         assemblyOperation_.end( domainBasisFunctionSet().entity(), rangeBasisFunctionSet().entity(), *this, assembledOperator() );
-        domainBasisFunctionSet_ = DomainBasisFunctionSetType();
-        rangeBasisFunctionSet_ = RangeBasisFunctionSetType();
+        BaseType::unbind();
       }
 
       /** \brief return const reference to vector of local matrix entries **/
-      const LocalMatrixEntriesType &localMatrixEntries () const { return localMatrixEntries_; }
+      const LocalMatrixEntriesType &localMatrixEntries () const { return fields_; }
       /** \brief return reference to vector of local matrix entries **/
-      LocalMatrixEntriesType &localMatrixEntries () { return localMatrixEntries_; }
+      LocalMatrixEntriesType &localMatrixEntries () { return fields_; }
 
-      // make this thing a dense matrix
-      SizeType mat_rows () const { return rangeBasisFunctionSet().size(); }
-      SizeType mat_cols () const { return domainBasisFunctionSet().size(); }
-
-      row_reference mat_access ( SizeType i )
-      {
-        const SizeType cols = mat_cols();
-        return row_reference( localMatrixEntries_.data() + i*cols, cols );
-      }
-
-      const_row_reference mat_access ( SizeType i ) const
-      {
-        const SizeType cols = mat_cols();
-        return const_row_reference( localMatrixEntries_.data() + i*cols, cols );
-      }
-
-      const value_type* data() const { return localMatrixEntries_.data(); }
-
-    private:
+    protected:
+      using BaseType::fields_;
       AssembledOperatorType &assembledOperator_;
-      LocalMatrixEntriesType localMatrixEntries_;
-      DomainBasisFunctionSetType domainBasisFunctionSet_;
-      RangeBasisFunctionSetType rangeBasisFunctionSet_;
       AssemblyOperationType assemblyOperation_;
     };
 

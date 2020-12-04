@@ -88,6 +88,23 @@ namespace Dune
           ( asImp().init( domainEntity, rangeEntity ) );
       }
 
+      /** \brief initialize the local matrix to entities
+       *  \param[in]  domainEntity  entity within grid of domain space,
+       *  \param[in]  rangeEntity   entity within grid of range space
+       */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+          ( asImp().bind( domainEntity, rangeEntity ) );
+      }
+
+      /** \brief clear local matrix from entities
+       */
+      void unbind ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().unbind() );
+      }
+
       /*! \brief add value to matrix entry (row,col) where row and col are
           local row and local column
           \param[in] localRow local row
@@ -319,8 +336,21 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
+        bind( domainEntity, rangeEntity );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
         domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::unbind */
+      void unbind ()
+      {
+        domainBaseSet_ = DomainBasisFunctionSetType();
+        rangeBaseSet_  = RangeBasisFunctionSetType();
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */

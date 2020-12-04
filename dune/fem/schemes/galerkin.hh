@@ -25,6 +25,7 @@
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
+#include <dune/fem/operator/common/localcontribution.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/schemes/integrands.hh>
 #include <dune/fem/schemes/dirichletwrapper.hh>
@@ -904,22 +905,21 @@ namespace Dune
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
           typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
-          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
           typedef typename QuadratureSelector< DomainSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
           typedef LocalMassMatrix< DomainSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
 
           LocalMassMatrixType localMassMatrix( jOp.domainSpace(), this->defaultInteriorOrder_ );
-          TemporaryLocalMatrixType jOpIn ( jOp.domainSpace(), jOp.rangeSpace() );
-          TemporaryLocalMatrixType jOpOut( jOp.domainSpace(), jOp.rangeSpace() );
+
+          Dune::Fem::SetSelectedLocalContribution< JacobianOperator > jOpLocal( jOp );
 
           // multiply with inverse mass matrix
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
             // scale diagonal
-            jOpIn.init( inside, inside );
-            jOp.getLocalMatrix( inside, inside, jOpIn );
-            localMassMatrix.leftMultiplyInverse( jOpIn );
-            jOp.setLocalMatrix( inside, inside, jOpIn );
+            {
+              auto guard = bindGuard( jOpLocal, inside, inside );
+              localMassMatrix.leftMultiplyInverse( jOpLocal );
+            }
 
             if( hasSkeleton )
             {
@@ -929,10 +929,8 @@ namespace Dune
                 if( intersection.neighbor() )
                 {
                   const EntityType &outside = intersection.outside();
-                  jOpOut.init( outside, inside );
-                  jOp.getLocalMatrix( outside, inside, jOpOut );
-                  localMassMatrix.leftMultiplyInverse( jOpOut );
-                  jOp.setLocalMatrix( outside, inside, jOpOut );
+                  auto guard = bindGuard( jOpLocal, outside, inside );
+                  localMassMatrix.leftMultiplyInverse( jOpLocal );
                 }
               }
             }
