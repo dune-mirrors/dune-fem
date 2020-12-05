@@ -289,7 +289,8 @@ namespace Dune
       auto axpy ( const Point &x, const Factors &... factors )
         -> std::enable_if_t< Std::And( (IsRangeValue< std::decay_t< decltype( std::declval< Factors & >()[ 0 ] ) > >::value)... ) >
       {
-        for( SizeType j = 0; j < mat_cols(); ++j )
+        const SizeType matCols = mat_cols();
+        for( SizeType j = 0; j < matCols; ++j )
         {
           auto col = column( j );
           rangeBasisFunctionSet().axpy( x, factors[ j ]..., col );

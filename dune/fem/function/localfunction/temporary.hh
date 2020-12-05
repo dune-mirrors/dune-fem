@@ -2,9 +2,10 @@
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_TEMPORARY_HH
 
 #include <dune/common/ftraits.hh>
+#include <dune/common/dynvector.hh>
+
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
-#include <dune/fem/storage/dynamicarray.hh>
 
 
 namespace Dune
@@ -119,8 +120,42 @@ namespace Dune
         BaseType::init( dfSpace_.basisFunctionSet( entity ) );
       }
 
+      /** \brief initialize the local function for an entity
+       *
+          Binds the local function to an entity.
+
+          \note A local function must be initialized to an entity before it can
+                be used.
+
+          \note This function can be called multiple times to use the local
+                function for more than one entity.
+
+          \param[in] entity entity to bind the local function to
+       */
       void bind ( const EntityType &entity ) { init( entity ); }
-      void unbind () {}
+
+      /** \brief Unbinds a local function from an entity.
+       */
+      void unbind ()
+      {
+        BaseType::unbind();
+      }
+
+      /** \brief initialize the local function for an entity adjacent to the
+       * intersection
+       *
+       *  Binds the local function to an entity.
+       *
+       *  \note A local function must be initialized to an entity before it can
+       *        be used.
+       *
+       *  \note This function can be called multiple times to use the local
+       *        function for more than one entity.
+       *
+       *   \param[in] intersection to bind the local function to
+       *              either inside or outside entity
+       *   \param[in] side  side of intersection, i.e. in or out
+       */
       template <class IntersectionType>
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
@@ -128,6 +163,8 @@ namespace Dune
               intersection.inside(): intersection.outside() );
       }
 
+      /** \brief return discrete function space this local function belongs to
+       */
       const DiscreteFunctionSpaceType &space() const
       {
         return dfSpace_;
@@ -157,6 +194,7 @@ namespace Dune
     template< class DiscreteFunctionSpace, class Dof >
     class TemporaryLocalFunction;
   }
+
   template< class DiscreteFunctionSpace, class Dof  >
   struct FieldTraits< Fem::TemporaryLocalFunction<DiscreteFunctionSpace,Dof> >
   : public FieldTraits< Dof >
@@ -166,10 +204,10 @@ namespace Dune
   {
     template< class DiscreteFunctionSpace, class Dof = typename DiscreteFunctionSpace::RangeFieldType >
     class TemporaryLocalFunction
-    : public BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::Fem::DynamicArray< Dof > >
+    : public BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::DynamicVector< Dof > >
     {
       typedef TemporaryLocalFunction< DiscreteFunctionSpace, Dof > ThisType;
-      typedef BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::Fem::DynamicArray< Dof > > BaseType;
+      typedef BasicTemporaryLocalFunction< DiscreteFunctionSpace, Dune::DynamicVector< Dof > > BaseType;
 
     public:
       //! type of Entity
@@ -184,9 +222,9 @@ namespace Dune
           Creates the local function without initializing the fields depending on
           the current entity.
 
-          \note Before using the local function it must be initilized by
+          \note Before using the local function it must be bound by
           \code
-          localFunction.init( entity );
+          localFunction.bind( entity );
           \endcode
 
           \param[in] dfSpace discrete function space the local function shall
@@ -198,8 +236,8 @@ namespace Dune
       /** \brief constructor creating a local function and binding it to an
                  entity
 
-          Creates the local function and initilizes the fields depending on the
-          current entity. It is not necessary, though allowed, to call init
+          Creates the local function and initializes the fields depending on the
+          current entity. It is not necessary, though allowed, to call bind
           before using the discrete function.
 
           \note The degrees of freedom are not initialized by this function.

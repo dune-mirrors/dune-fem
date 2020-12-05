@@ -903,7 +903,6 @@ namespace Dune
         void applyInverseMass ( JacobianOperator &jOp, const bool hasSkeleton ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
-          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
           typedef typename QuadratureSelector< DomainSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
           typedef LocalMassMatrix< DomainSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;

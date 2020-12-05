@@ -11,6 +11,37 @@
 
 namespace Dune
 {
+  namespace Fem {
+    // forward declaration for DenseMatVecTraits
+    template< class BasisFunctionSet, class LocalDofVector >
+    class LocalFunction;
+  }
+
+
+  // DenseMatVecTraits for LocalFunction for Discrete Functions
+  // ----------------------------------------------------------
+
+  template< class BasisFunctionSet, class LocalDofVector >
+  struct DenseMatVecTraits< Fem::LocalFunction< BasisFunctionSet, LocalDofVector > >
+  {
+    typedef Fem::LocalFunction< BasisFunctionSet, LocalDofVector >  derived_type;
+    typedef typename LocalDofVector::value_type                     value_type;
+    //typedef LocalDofVector                                          container_type;
+    typedef typename LocalDofVector::size_type                      size_type;
+  };
+
+
+
+  // FieldTraits for LocalContribution for Discrete Functions
+  // --------------------------------------------------------
+
+  template< class BasisFunctionSet, class LocalDofVector >
+  struct FieldTraits< Fem::LocalFunction< BasisFunctionSet, LocalDofVector > >
+  {
+    typedef typename FieldTraits< typename LocalDofVector::value_type >::field_type field_type;
+    typedef typename FieldTraits< typename LocalDofVector::value_type >::real_type  real_type;
+  };
+
 
   namespace Fem
   {
@@ -29,6 +60,7 @@ namespace Dune
      */
 
 
+
     // LocalFunction
     // -------------
 
@@ -41,8 +73,10 @@ namespace Dune
      */
     template< class BasisFunctionSet, class LocalDofVector >
     class LocalFunction
+      : public Dune::DenseVector< LocalFunction< BasisFunctionSet, LocalDofVector > >
     {
       typedef LocalFunction< BasisFunctionSet, LocalDofVector > ThisType;
+      typedef Dune::DenseVector< ThisType > BaseType;
     public:
 
       //! type of basis function set
@@ -142,21 +176,10 @@ namespace Dune
        */
       DofType &operator[] ( SizeType num ) { return localDofVector_[ num ]; }
 
-      /** \brief add another local function to this one
-       *
-       *  \note The local function to add may be any implementation of a
-       *        LocalFunction.
-       *
-       *  \param[in]  lf  local function to add
-       *
-       *  \returns a reference to this local function (i.e., *this)
-       */
-      template< class T >
-      ThisType& operator+= ( const LocalFunction< BasisFunctionSet, T > &other )
-      {
-        localDofVector() += other.localDofVector();
-        return *this;
-      }
+      using BaseType :: operator +=;
+      using BaseType :: operator -=;
+      using BaseType :: operator *=;
+      using BaseType :: operator /=;
 
       /** \brief assign all DoFs of this local function
        *
@@ -174,22 +197,7 @@ namespace Dune
         std::fill( localDofVector().begin(), localDofVector().end(), DofType( 0 ) );
       }
 
-      /** \brief subtract another local function to this one
-       *
-       *  \note The local function to suctract may be any implementation of a
-       *        LocalFunction.
-       *
-       *  \param[in]  lf  local function to subtract
-       *
-       *  \returns a reference to this local function (i.e., *this)
-       */
-      template< class T >
-      ThisType &operator-= ( const LocalFunction< BasisFunctionSet, T > &other )
-      {
-        localDofVector() -= other.localDofVector();
-        return *this;
-      }
-
+#if 0
       /** \brief add a multiple of another local function to this one
        *
        *  \note The local function to add may be any implementation of a
@@ -206,6 +214,8 @@ namespace Dune
         localDofVector().axpy( s, other.localDofVector() );
         return *this;
       }
+#endif
+      using BaseType :: axpy;
 
       /** \brief axpy operation for local function
        *
@@ -291,12 +301,6 @@ namespace Dune
        */
       const EntityType &entity () const { return basisFunctionSet().entity(); }
 
-      //! \todo please doc me
-      void init ( const BasisFunctionSetType &basisFunctionSet )
-      {
-        basisFunctionSet_ = basisFunctionSet;
-        localDofVector_.resize( basisFunctionSet.size() );
-      }
 
       /** \brief evaluate the local function
        *
@@ -414,6 +418,59 @@ namespace Dune
       LocalDofVectorType &localDofVector () { return localDofVector_; }
 
     protected:
+      /** \brief initialize the local function for an entity
+       *
+          Binds the local function to an basisFunctionSet and entity.
+
+          \note Must be overloaded on the derived implementation class.
+
+          \param[in] entity to bind the local function to
+       */
+      void init ( const EntityType& entity )
+      {
+        DUNE_THROW(NotImplemented,"LocalFunction::init( entity ) must be overloaded on derived class!");
+      }
+
+      /** \brief initialize the local function for an entity
+       *
+          Binds the local function to an basisFunctionSet and entity.
+
+          \note Must be overloaded on the derived implementation class.
+
+          \param[in] entity to bind the local function to
+       */
+      void bind ( const EntityType& entity )
+      {
+        DUNE_THROW(NotImplemented,"LocalFunction::bind( entity ) must be overloaded on derived class!");
+      }
+
+      /** \brief clears the local function by removing the basisFunctionSet
+       *
+       */
+      void unbind ()
+      {
+        basisFunctionSet_ = BasisFunctionSetType();
+      }
+
+      /** \brief initialize the local function for an basisFunctionSet
+       *
+          Binds the local function to an basisFunctionSet and entity.
+
+          \note A local function must be initialized to an entity before it can
+                be used.
+
+          \note This function can be called multiple times to use the local
+                function for more than one entity.
+
+          \param[in] basisFunctionSet to bind the local function to
+       */
+      void init ( const BasisFunctionSetType &basisFunctionSet )
+      {
+        basisFunctionSet_ = basisFunctionSet;
+        localDofVector_.resize( basisFunctionSet.size() );
+      }
+
+
       // evaluate local function and store results in vector of RangeTypes
       // this method only helps to identify the correct method on
       // the basis function set
