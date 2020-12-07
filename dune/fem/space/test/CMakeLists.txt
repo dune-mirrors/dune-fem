@@ -25,7 +25,6 @@ set( TESTS
 )
 
 set( EXPENSIVE_TESTS
-  combinedspacetest
   functiontupleadapt
   hierarchicspace
   interpolation
