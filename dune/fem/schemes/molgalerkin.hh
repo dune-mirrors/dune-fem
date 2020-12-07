@@ -34,11 +34,16 @@ namespace Dune
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
 
       template< class... Args >
-      explicit MOLGalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-        : impl_( gridPart, false /* communicate */, std::forward< Args >( args )... ),
-          communicate_( communicate ) // store communicate here since applyInverseMass has to be applied first
-      {}
+      explicit MOLGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : impl_( gridPart, std::forward< Args >( args )... ),
+          communicate_( true )
+      {
+        // disable communicate in Impl::GalerkinOperator
+        // since applyInverseMass has to be applied first
+        impl_.setCommunicate( false );
+      }
 
+      void setCommunicate( const bool communicate ) { communicate_ = communicate; }
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
@@ -94,7 +99,7 @@ namespace Dune
 
       // GalerkinOperator implementation (see galerkin.hh)
       GalerkinOperatorImplType impl_;
-      const bool communicate_;
+      bool communicate_;
     };
 
 
@@ -122,8 +127,8 @@ namespace Dune
       template< class... Args >
       explicit MOLDifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
                                                    const RangeDiscreteFunctionSpaceType &rSpace,
-                                                   const bool communicate, Args &&... args )
-        : BaseType( rSpace.gridPart(), communicate, std::forward< Args >( args )... ),
+                                                   Args &&... args )
+        : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace),
           rSpace_(rSpace)
       {}
@@ -212,8 +217,8 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit MOLAutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-        : BaseType( gridPart, communicate, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      explicit MOLAutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : BaseType( gridPart, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
       {}
     };
 
@@ -233,9 +238,8 @@ namespace Dune
       typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
-      MOLModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace,
-                                            const bool communicate=true )
-        : BaseType( dfSpace.gridPart(), communicate, model )
+      MOLModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
+        : BaseType( dfSpace.gridPart(), model )
       {}
 
       template< class GridFunction >

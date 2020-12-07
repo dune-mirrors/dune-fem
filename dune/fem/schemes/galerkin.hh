@@ -609,17 +609,22 @@ namespace Dune
         // constructor
 
         template< class... Args >
-        explicit GalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
+        explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
           : gridPart_( gridPart ),
-            communicate_( communicate ),
             integrands_( std::forward< Args >( args )... ),
             defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
             defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
-            interiorQuadOrder_(0), surfaceQuadOrder_(0)
+            interiorQuadOrder_(0), surfaceQuadOrder_(0),
+            communicate_( true )
         {
+        }
+
+        void setCommunicate( const bool communicate )
+        {
+          communicate_ = communicate;
           if( ! communicate_ && Dune::Fem::Parameter::verbose() )
           {
-            std::cout << "GalerkinOperator::GalerkinOperator: communicate was disabled!" << std::endl;
+            std::cout << "Impl::GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
           }
         }
 
@@ -915,7 +920,6 @@ namespace Dune
 
       protected:
         const GridPartType &gridPart_;
-        const bool communicate_;
         mutable IntegrandsType integrands_;
 
         mutable std::function<int(const int)> defaultInteriorOrder_;
@@ -929,6 +933,7 @@ namespace Dune
         mutable DomainValueVectorType basisValues_;
         mutable DomainValueVectorType domainValues_;
 
+        bool communicate_;
       };
 
     } // namespace Impl
@@ -951,9 +956,11 @@ namespace Dune
       typedef typename RangeFunctionType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit GalerkinOperator ( const GridPartType &gridPart,const bool communicate, Args &&... args )
-        : impl_( gridPart, communicate, std::forward< Args >( args )... )
+      explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : impl_( gridPart, std::forward< Args >( args )... )
       {}
+
+      void setCommunicate( const bool communicate ) { impl_.setCommunicate( communicate ); }
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
 
@@ -1001,9 +1008,10 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace, const RangeDiscreteFunctionSpaceType &rSpace,
-                                                const bool communicate, Args &&... args )
-        : BaseType( rSpace.gridPart(), communicate, std::forward< Args >( args )... ),
+      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
+                                                const RangeDiscreteFunctionSpaceType &rSpace,
+                                                Args &&... args )
+        : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace), rSpace_(rSpace)
       {}
 
@@ -1050,8 +1058,8 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-        : BaseType( gridPart, communicate, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : BaseType( gridPart, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
       {}
     };
 
@@ -1071,9 +1079,8 @@ namespace Dune
       typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
-      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace,
-                                            const bool communicate=true )
-        : BaseType( dfSpace.gridPart(), communicate, model )
+      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
+        : BaseType( dfSpace.gridPart(), model )
       {}
 
       template< class GridFunction >
@@ -1135,15 +1142,8 @@ namespace Dune
         GalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
                              const Integrands &integrands,
                              const ParameterReader& parameter = Parameter::container() )
-          : GalerkinSchemeImpl( dfSpace, integrands, true /* communicate */, parameter )
-        {}
-
-        GalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
-                             const Integrands &integrands,
-                             const bool communicate,
-                             const ParameterReader& parameter = Parameter::container() )
           : dfSpace_( dfSpace ),
-            fullOperator_( dfSpace, dfSpace, communicate, std::move( integrands ) ),
+            fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
             invOp_(parameter)
         {}
 
