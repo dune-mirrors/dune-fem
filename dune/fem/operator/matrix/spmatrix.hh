@@ -498,6 +498,7 @@ namespace Dune
         *             {add,set,get}LocalMatrix on matrix object
         *  return local matrix object
         */
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
@@ -507,6 +508,7 @@ namespace Dune
         *             {add,set,get}LocalMatrix on matrix object
         *  return local matrix object
         */
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       LocalMatrixType localMatrix() const
       {
         return LocalMatrixType( localMatrixStack_ );

@@ -444,7 +444,7 @@ namespace Dune
       /** \deprecated Use TemporaryLocalMatrix in combination with
         *             {add,set,get}LocalMatrix on matrix object
         */
-      [[deprecated]]
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       ISTLLocalMatrix ( const MatrixObjectType& mObj, const DomainSpaceType& domainSpace, const RangeSpaceType& rangeSpace )
         : BaseType( domainSpace, rangeSpace ),
           rowMapper_( rangeSpace.blockMapper() ),
@@ -457,7 +457,7 @@ namespace Dune
       /** \deprecated Use TemporaryLocalMatrix in combination with
         *             {add,set,get}LocalMatrix on matrix object
         */
-      [[deprecated]]
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       ISTLLocalMatrix ( const ISTLLocalMatrix& org )
         : BaseType( org ),
           rowMapper_(org.rowMapper_),
@@ -990,7 +990,7 @@ namespace Dune
         *             {add,set,get}LocalMatrix on matrix object
         *  return local matrix object
         */
-      [[deprecated]]
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
@@ -1000,7 +1000,7 @@ namespace Dune
         *             {add,set,get}LocalMatrix on matrix object
         *  return local matrix object
         */
-      [[deprecated]]
+      [[deprecated("Use TemporaryLocalMatrix,LocalContribution and {get,add,set}LocalMatrix")]]
       LocalMatrixType localMatrix() const
       {
         return LocalMatrixType( localMatrixStack_ );
