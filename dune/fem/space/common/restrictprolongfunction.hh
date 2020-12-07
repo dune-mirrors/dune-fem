@@ -4,6 +4,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/grid/common/grid.hh>
+#include <dune/fem/function/localfunction/const.hh>
 
 namespace Dune
 {
@@ -35,46 +36,45 @@ namespace Dune
       void operator() ( const CoarseFunction &coarseFunction,
                         FineFunction &fineFunction ) const
       {
-        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
 
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        ConstLocalFunction< CoarseFunction > coarseLocalFunction( coarseFunction );
+        MutableLocalFunction< FineFunction > fineLocalFunction( fineFunction );
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
         for( const auto& entity : coarseSpace )
         {
-          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+          auto cg = bindGuard( coarseLocalFunction, entity );
 
           if( isDefinedOn( fineFunction, entity ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            auto fg = bindGuard( fineLocalFunction, entity );
             fineLocalFunction.assign( coarseLocalFunction );
           }
           else
-            hierarchicProlong( coarseLocalFunction, fineFunction );
+            hierarchicProlong( coarseLocalFunction, fineLocalFunction );
         }
       }
 
     private:
-      template< class CoarseLocalFunction, class FineFunction >
+      template< class CoarseLocalFunction, class FineLocalFunction >
       void hierarchicProlong ( const CoarseLocalFunction &coarseLocalFunction,
-                               FineFunction &fineFunction ) const
+                               FineLocalFunction &fineLocalFunction ) const
       {
         typedef typename CoarseLocalFunction::EntityType Entity;
         typedef typename Entity::HierarchicIterator HierarchicIterator;
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
-        const Entity &father = coarseLocalFunction.entity();
-        const int childLevel = father.level()+1;
+        const Entity &parent = coarseLocalFunction.entity();
+        const int childLevel = parent.level()+1;
 
-        const HierarchicIterator hend = father.hend( childLevel );
-        for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
+        const HierarchicIterator hend = parent.hend( childLevel );
+        for( HierarchicIterator hit = parent.hbegin( childLevel ); hit != hend; ++hit )
         {
-          const Entity &son = *hit;
-          if( isDefinedOn( fineFunction, son ) )
+          const Entity &child = *hit;
+          if( isDefinedOn( fineLocalFunction.discreteFunction(), child ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-            localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), true );
+            auto guard = bindGuard( fineLocalFunction, child );
+            localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, child.geometryInFather(), true );
           }
           else
             DUNE_THROW( GridError, "Cannot prolong over more than one level." );
@@ -120,53 +120,52 @@ namespace Dune
       void operator() ( const FineFunction &fineFunction,
                         CoarseFunction &coarseFunction ) const
       {
-        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
 
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        ConstLocalFunction< FineFunction > fineLocalFunction( fineFunction );
+        MutableLocalFunction< CoarseFunction > coarseLocalFunction( coarseFunction );
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
         for( const auto& entity : coarseSpace )
         {
-          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+          auto cg = bindGuard( coarseLocalFunction, entity );
 
           if( isDefinedOn( fineFunction, entity ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            auto fg = bindGuard( fineLocalFunction, entity );
             coarseLocalFunction.assign( fineLocalFunction );
           }
           else
-            hierarchicRestrict( fineFunction, coarseLocalFunction );
+            hierarchicRestrict( fineLocalFunction, coarseLocalFunction );
         }
       }
 
     private:
-      template< class FineFunction, class CoarseLocalFunction >
-      void hierarchicRestrict ( const FineFunction &fineFunction,
+      template< class FineLocalFunction, class CoarseLocalFunction >
+      void hierarchicRestrict ( const FineLocalFunction &fineLocalFunction,
                                 CoarseLocalFunction &coarseLocalFunction ) const
       {
         typedef typename CoarseLocalFunction::EntityType Entity;
         typedef typename Entity::HierarchicIterator HierarchicIterator;
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
-        const Entity &father = coarseLocalFunction.entity();
-        const int childLevel = father.level()+1;
+        const Entity &parent = coarseLocalFunction.entity();
+        const int childLevel = parent.level()+1;
 
         bool initialize = true;
-        const HierarchicIterator hend = father.hend( childLevel );
-        for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
+        const HierarchicIterator hend = parent.hend( childLevel );
+        for( HierarchicIterator hit = parent.hbegin( childLevel ); hit != hend; ++hit )
         {
-          const Entity &son = *hit;
-          if( isDefinedOn( fineFunction, son ) )
+          const Entity &child = *hit;
+          if( isDefinedOn( fineLocalFunction.discreteFunction(), child ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
-            localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
+            auto guard = bindGuard( fineLocalFunction, child );
+            localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, child.geometryInFather(), initialize );
           }
           else
             DUNE_THROW( GridError, "Cannot restrict over more than one level." );
           initialize = false;
         }
-        localRestrictProlong_.restrictFinalize(father);
+        localRestrictProlong_.restrictFinalize(parent);
       }
 
       template< class Function >

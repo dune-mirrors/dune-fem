@@ -24,6 +24,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/space/common/interpolate.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -123,66 +124,6 @@ public:
 };
 
 
-// ********************************************************************
-template <class DiscreteFunctionType>
-class L2Projection
-{
-  typedef typename DiscreteFunctionType::FunctionSpaceType DiscreteFunctionSpaceType;
-
- public:
-  template <class FunctionType>
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd)
-  {
-    typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-
-    const DiscreteFunctionSpaceType& space =  discFunc.space();
-
-    discFunc.clear();
-
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
-    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
-
-    for(const auto& entity : space)
-    {
-      // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
-
-      LocalFuncType lf = discFunc.localFunction(entity);
-
-      //! Note: BaseFunctions must be ortho-normal!!!!
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ;
-      const BaseFunctionSetType & baseset =
-        lf.baseFunctionSet();
-
-      //const typename MyGridType::template Codim<0>::Entity::Geometry&
-      //  itGeom = entity.geometry();
-
-      const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
-      for(int qP = 0; qP < quadNop ; ++qP)
-      {
-        // f.evaluate(itGeom.global(quad.point(qP)), ret);
-        f.localFunction(entity).jacobian(quad,qP, ret);
-        for(int i=0; i<numDofs; ++i) {
-          baseset.evaluate(i,quad[qP],phi);
-          lf[i] += quad.weight(qP) * (ret * phi) ;
-        }
-      }
-    }
-  }
-
-  template <class FunctionType>
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc)
-  {
-    const DiscreteFunctionSpaceType& space =  discFunc.space();
-    int polOrd = 2 * space.order();
-    project(f,discFunc,polOrd);
-  }
-};
-
-
 
 // calculates \Vert u - u_h \Vert_{L^2}
 template< class DiscreteFunctionImp >
@@ -217,11 +158,13 @@ public:
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
 
+    Dune::Fem::ConstLocalFunction< DiscreteFunctionType > dfLocal( discreteFunction );
+
     RangeType error( 0 );
     for( const auto& entity : discreteFunctionSpace )
     {
       CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
+      auto guard = Dune::Fem::bindGuard( dfLocal, entity );
 
       const GeometryType &geometry = entity.geometry();
 
@@ -234,7 +177,7 @@ public:
 
         RangeType phi, psi;
         function.evaluate( geometry.global( x ), time, phi );
-        localFunction.evaluate( quadrature[qp], psi );
+        dfLocal.evaluate( quadrature[qp], psi );
 
         for( int i = 0; i < DimRange; ++i )
           error[ i ] += weight * ((phi[ i ] - psi[ i ])*(phi[ i ] - psi[ i ]));
@@ -297,11 +240,13 @@ public:
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
 
+    Dune::Fem::ConstLocalFunction< DiscreteFunctionType > dfLocal( discreteFunction );
+
     RangeType error( 0 );
     for( const auto& entity : discreteFunctionSpace )
     {
       CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
+      auto guard = Dune::Fem::bindGuard( dfLocal, entity );
 
       const GeometryType &geometry = entity.geometry();
 
@@ -315,11 +260,11 @@ public:
 
         RangeType phi, psi;
         function.evaluate( y, time, phi );
-        localFunction.evaluate( quadrature[qp], psi );
+        dfLocal.evaluate( quadrature[qp], psi );
 
         JacobianRangeType Dphi, Dpsi;
         function.jacobian( y, time, Dphi );
-        localFunction.jacobian( quadrature[ qp ], Dpsi );
+        dfLocal.jacobian( quadrature[ qp ], Dpsi );
 
         for( int i = 0; i < DimRange; ++i ) {
           RangeFieldType localError = (phi[ i ] - psi[ i ])*(phi[ i ] - psi[ i ]);
@@ -360,14 +305,6 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
 
   //! perform Lagrange interpolation
   interpolate( gridFunctionAdapter( f, part, discreteFunctionSpace.order() + 2 ), solution );
-
-  #if 0
-  DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
-  DiscreteGradientFunctionType graddf("grad", discreteGradientFunctionSpace );
-
-  //! perform l2-projection
-  L2Projection< DiscreteGradientFunctionType > :: project( solution, graddf );
-  #endif
 
   // calculation L2 error
   // pol ord for calculation the error chould by higher than

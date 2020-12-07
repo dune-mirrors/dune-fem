@@ -16,6 +16,7 @@
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/common/rangegenerators.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
@@ -225,6 +226,7 @@ namespace Dune
        *  \param[in]  entity  Entity to focus view of discrete function
        *  \returns a local function associated with the entity
        */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       LocalFunctionType localFunction ( const EntityType &entity )
       {
         return asImp().localFunction( entity );
@@ -235,6 +237,7 @@ namespace Dune
        *  \param[in]  entity  Entity to focus view of discrete function
        *  \returns a local function associated with the entity
        */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       const LocalFunctionType localFunction ( const EntityType &entity ) const
       {
         return asImp().localFunction( entity );
@@ -246,6 +249,7 @@ namespace Dune
        *
        *  \returns an uninitialized local function
        */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       LocalFunctionType localFunction ()
       {
         return asImp().localFunction();
@@ -303,6 +307,7 @@ namespace Dune
        *
        *  \returns an uninitialized local function
        */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       const LocalFunctionType localFunction () const
       {
         return asImp().localFunction();
@@ -647,6 +652,8 @@ namespace Dune
     protected:
       using BaseType :: asImp;
 
+      typedef TemporaryLocalFunction< DiscreteFunctionSpaceType > TemporaryLocalFunctionType;
+
       /** \brief Constructor storing discrete function space and local function
        *         factory
        *
@@ -696,15 +703,19 @@ namespace Dune
       const GridPartType &gridPart () const { return space().gridPart(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       LocalFunctionType localFunction () { return LocalFunctionType( asImp() ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
+      [[deprecated("Use {Const,Temporary,Mutable}LocalFunction and LocalContribution instead!")]]
       const LocalFunctionType localFunction () const { return LocalFunctionType( asImp() ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
@@ -811,14 +822,14 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
       void evaluate ( const DomainType &x, RangeType &value ) const
       {
-        asImp().evaluateGlobal( x, [ &value ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        asImp().evaluateGlobal( x, [ &value ] ( const LocalCoordinateType &x, const TemporaryLocalFunctionType &localFunction )
                                               { localFunction.evaluate( x, value ); } );
       }
 
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
       void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
-        asImp().evaluateGlobal( x, [ &jacobian ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        asImp().evaluateGlobal( x, [ &jacobian ] ( const LocalCoordinateType &x, const TemporaryLocalFunctionType &localFunction )
                                                  { localFunction.jacobian( x, jacobian ); } );
 
       }
@@ -826,7 +837,7 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
-        asImp().evaluateGlobal( x, [ &hessian ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        asImp().evaluateGlobal( x, [ &hessian ] ( const LocalCoordinateType &x, const TemporaryLocalFunctionType &localFunction )
                                                 { localFunction.hessian( x, hessian ); } );
       }
 
@@ -1021,6 +1032,8 @@ namespace Dune
       // the local function storage
       typename Traits :: LocalDofVectorStackType ldvStack_;
       mutable LocalDofVectorAllocatorType ldvAllocator_;
+
+      mutable TemporaryLocalFunctionType localFunction_;
 
       std::string name_;
       ScalarProductType scalarProduct_;

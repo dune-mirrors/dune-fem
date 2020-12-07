@@ -5,6 +5,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/common/memory.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
@@ -30,6 +31,7 @@ namespace Dune
                            sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
                  * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
       ldvAllocator_( &ldvStack_ ),
+      localFunction_( space() ),
       name_( name ),
       scalarProduct_( dfSpace )
     {
@@ -43,6 +45,7 @@ namespace Dune
                              sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
                    * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
         ldvAllocator_( &ldvStack_ ),
+        localFunction_( space() ),
         name_( std::move( name ) ),
         scalarProduct_( dfSpace )
     {}
@@ -56,6 +59,7 @@ namespace Dune
                              sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
                    * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
         ldvAllocator_( &ldvStack_ ),
+        localFunction_( space() ),
         name_( other.name_ ),
         scalarProduct_( other.scalarProduct_ )
     {
@@ -72,6 +76,7 @@ namespace Dune
       dfSpace_( std::move( other.dfSpace_ ) ),
       ldvStack_( std::move( other.ldvStack_ ) ),
       ldvAllocator_( &ldvStack_ ),
+      localFunction_( space() ),
       name_( std::move( other.name_ ) ),
       scalarProduct_( std::move( other.scalarProduct_ ) )
     {
@@ -161,7 +166,13 @@ namespace Dune
 
       const auto& entity(entitySearch( x ));
       const auto geometry = entity.geometry();
-      functor( geometry.local( x ), BaseType::localFunction( entity ) );
+
+      // bind local function to entity
+      auto guard = bindGuard( localFunction_, entity );
+      // obtain dofs (since it's a temporary local function)
+      getLocalDofs( entity, localFunction_.localDofVector());
+      // evaluate functor
+      functor( geometry.local( x ), localFunction_ );
     }
 
 

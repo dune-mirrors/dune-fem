@@ -94,11 +94,13 @@ namespace Dune
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
         discreteFunction().getLocalDofReferences( entity, localDofVector() );
       }
+
       void bind ( const EntityType &entity )
       {
         init(entity);
       }
-      void unbind() {}
+
+      void unbind() { BaseType::unbind(); }
 
       const DiscreteFunctionType &discreteFunction () const
       {
@@ -109,7 +111,7 @@ namespace Dune
         return *discreteFunction_;
       }
 
-    private:
+    protected:
       DiscreteFunctionType *discreteFunction_;
     };
 

@@ -105,41 +105,36 @@ class DGL2ProjectionAllPartitionNoComm
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc,
                        int polOrd = -1 )
   {
-    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType
-      FunctionSpaceType;
-    typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename GridPartType :: template Codim < 0 > ::
-      template Partition< All_Partition > :: IteratorType IteratorType;
-    typedef typename IteratorType::Entity EntityType;
-    typedef typename EntityType::Geometry GeometryType;
+    typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-    const FunctionSpaceType& space =  discFunc.space();
+    const DiscreteFunctionSpaceType& space =  discFunc.space();
 
     if( polOrd < 0 )  polOrd = 2 * space.order() + 2 ;
 
     discFunc.clear();
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    TemporaryLocalFunction< DiscreteFunctionSpaceType > dfLocal( space );
 
-    typename FunctionSpaceType::RangeType ret (0.0);
-    typename FunctionSpaceType::RangeType phi (0.0);
+    typename DiscreteFunctionSpaceType::RangeType ret (0.0);
+    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
-    IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
-    IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
-    for( ; it != endit ; ++it)
+    for( const auto& entity : elements( space.gridPart(), Partitions::all ) )
     {
-      const EntityType &entity = *it;
-      const GeometryType &itGeom = entity.geometry();
-
-      LocalFuncType lf = discFunc.localFunction(entity);
+      const auto &itGeom = entity.geometry();
+      dfLocal.bind( entity );
+      dfLocal.clear();
 
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
       for( size_t qP = 0; qP < quad.nop(); ++qP )
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         ret *= quad.weight(qP) ;
-        lf.axpy( quad[qP], ret );
+        dfLocal.axpy( quad[qP], ret );
       }
+
+      discFunc.setLocalDofs(entity, dfLocal );
+      dfLocal.unbind();
     }
   }
 };
@@ -150,6 +145,7 @@ void resetNonInterior( DiscreteFunctionType &solution )
     DiscreteFunctionSpaceType;
 
   const DiscreteFunctionSpaceType& space = solution.space();
+  TemporaryLocalFunction< DiscreteFunctionSpaceType > dfLocal( space );
 
   int count = 0;
   for( const auto& entity : elements( space.gridPart(), Partitions::all ) )
@@ -157,7 +153,10 @@ void resetNonInterior( DiscreteFunctionType &solution )
     if( entity.partitionType() != InteriorEntity )
     {
       ++count ;
-      solution.localFunction( entity ).clear();
+      dfLocal.bind( entity );
+      dfLocal.clear();
+      solution.setLocalDofs( entity, dfLocal );
+      dfLocal.unbind();
     }
   }
 
