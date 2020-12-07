@@ -157,7 +157,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
 
 def _galerkin(integrands, space=None, solver=None, parameters={},
-              errorMeasure=None, virtualize=None, communicate=True, schemeName=None ):
+              errorMeasure=None, virtualize=None, schemeName=None ):
     if schemeName is None:
         raise Exception("_galerkin needs a scheme Name: GalerkinScheme or MethodOfLinesScheme")
 
