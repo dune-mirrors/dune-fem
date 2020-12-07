@@ -25,13 +25,13 @@ set( TESTS
 )
 
 set( EXPENSIVE_TESTS
+  combinedspacetest
   functiontupleadapt
   hierarchicspace
   interpolation
   l2projection
   lagrangeglobalrefine
   lagrangeinterpolation
-  legendretest
   localadapter
 )
 
