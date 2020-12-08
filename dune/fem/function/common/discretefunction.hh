@@ -294,6 +294,8 @@ namespace Dune
        *
        *  \param[in]   entity    Entity to focus view of discrete function
        *  \param[out]  localDofs the local dofs vector to be set
+       *
+       *  \note localDofs should have sufficient size to store the dof values
        */
       template< class Vector >
       void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const

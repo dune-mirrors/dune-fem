@@ -66,7 +66,7 @@ namespace Dune
       void operator () ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
         // set all dofs to zero
-        dofs.clear();
+        std::fill( dofs.begin(), dofs.end(), typename LocalDofVector::value_type(0) );
 
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
