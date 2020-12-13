@@ -21,6 +21,8 @@
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
+#include <dune/fem/io/streams/standardstreams.hh>
+
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
@@ -446,8 +448,19 @@ namespace Dune
             return ret;
           }, pybind11::keep_alive< 0, 1 >(),
              pybind11::return_value_policy::take_ownership );
-      }
 
+        cls.def( "read", [] ( DF &self, pybind11::bytes state ) {
+          std::istringstream stream( state );
+          Dune::Fem::StandardInStream inStream(stream);
+          self.read( inStream );
+          } );
+        cls.def( "write", [] ( DF &self ) -> pybind11::bytes {
+          std::ostringstream stream;
+          Dune::Fem::StandardOutStream outStream(stream);
+          self.write( outStream );
+          return stream.str();
+          } );
+      }
 
     } // namespace detail
 

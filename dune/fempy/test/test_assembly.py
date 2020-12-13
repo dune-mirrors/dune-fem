@@ -20,46 +20,49 @@ from ufl import Identity, TestFunction, TrialFunction, SpatialCoordinate, ds, dx
 
 test_fem   = True
 test_istl  = True
-test_petsc = True
+try:
+    import petsc4py
+    test_petsc = True
+except:
+    test_petsc = False
 
 test_scalar = True
 test_vector = True
 test_21 = True
 test_12 = True
-testLoop = 10
-
-
+testLoop = 1
+# testLoop = 10
 
 grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [189, 189]), dimgrid=2)
 
 def test(model,spaceName,dimD,dimR,storage):
-    print("########################################")
-    print("#### ",spaceName,storage,dimD,dimR,flush=True)
+    # print("########################################")
+    # print("#### ",spaceName,storage,dimD,dimR,flush=True)
     spaceD  = create.space(spaceName, grid, dimRange=dimD, order=1, storage=storage)
     spaceR  = create.space(spaceName, grid, dimRange=dimR, order=1, storage=storage)
     scheme = create.operator("galerkin", model, spaceD, spaceR)
     uD     = create.function("discrete", spaceD, name=storage)
     uD.clear()
-    start = time.clock()
+    start = time.time()
     for i in range(testLoop):
         A = linearOperator(scheme) # , parameters={"petsc.blockedmode":False})
-    end = time.clock()
-    print( "setup+assembly:",(end-start)/testLoop, flush=True )
-    start = time.clock()
+    end = time.time()
+    # print( "setup+assembly:",(end-start)/testLoop, flush=True )
+    start = time.time()
     for i in range(testLoop):
         jacobian(scheme,uD,A)
-    end = time.clock()
-    print( "assembly only: ",(end-start)/testLoop, flush=True )
+    end = time.time()
+    # print( "assembly only: ",(end-start)/testLoop, flush=True )
     sys.stdout.flush()
 
     try:
         import petsc4py
         from petsc4py import PETSc
         mat = A.as_petsc
-        print(mat.getInfo(), flush=True)
+        # print(mat.getInfo(), flush=True)
     except:
         pass
-    print("########################################")
+    # print("########################################")
 
 if test_scalar:
     dimRange = 1

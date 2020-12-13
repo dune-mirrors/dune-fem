@@ -6,6 +6,7 @@ add_subdirectory(space)
 add_subdirectory(py)
 add_subdirectory(pybind11)
 add_subdirectory(quadrature)
+add_subdirectory(test)
 
 set(HEADERS
   parameter.hh
