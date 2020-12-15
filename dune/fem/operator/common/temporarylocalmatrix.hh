@@ -120,8 +120,9 @@ namespace Dune
       typedef RowReferenceVector< value_type > row_reference;
       typedef RowReferenceVector< const value_type > const_row_reference;
 
+      typedef std::vector< RangeFieldType > MatrixEntriesType;
     protected:
-      std::vector< RangeFieldType > fields_;
+      MatrixEntriesType fields_;
 
     public:
       using BaseType::domainBasisFunctionSet;
@@ -147,8 +148,22 @@ namespace Dune
       inline void init ( const DomainEntityType &domainEntity,
                          const RangeEntityType &rangeEntity )
       {
-        BaseType :: init( domainEntity, rangeEntity );
+        bind( domainEntity, rangeEntity );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
+      template< class DomainEntityType, class RangeEntityType >
+      inline void bind ( const DomainEntityType &domainEntity,
+                         const RangeEntityType &rangeEntity )
+      {
+        BaseType :: bind( domainEntity, rangeEntity );
         fields_.resize( rows() * columns() );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::unbind */
+      inline void unbind ()
+      {
+        BaseType::unbind();
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::add */
@@ -171,12 +186,23 @@ namespace Dune
         fields_[ localRow * columns() + localCol ] = value;
       }
 
+      /** \copydoc Dune::Fem::LocalMatrixInterface::get */
       inline const RangeFieldType get ( const int localRow,
                                         const int localCol ) const
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
         return fields_[ localRow * columns() + localCol ];
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::scale */
+      inline void scale( const RangeFieldType &value )
+      {
+        const std::size_t size = fields_.size();
+        for( std::size_t i=0; i<size; ++i )
+        {
+          fields_[ i ] *= value;
+        }
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::clear */

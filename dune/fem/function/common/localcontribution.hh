@@ -12,6 +12,7 @@
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 
 namespace Dune
 {
@@ -117,84 +118,65 @@ namespace Dune
       };
 
 
+      namespace detail
+      {
+
+        template< class DiscreteFunction, const bool getAndSet >
+        struct SetAndSelectDFImpl
+        {
+          typedef typename DiscreteFunction::DofType DofType;
+
+          typedef Global::Set< DiscreteFunction > GlobalOperationType;
+
+          template< class Entity, class LocalDofVector >
+          void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
+          {
+            if constexpr ( getAndSet )
+            {
+              // obtain local dofs
+              df.getLocalDofs ( entity, localDofVector );
+            }
+            else
+            {
+              // reset all dofs
+              std::fill( localDofVector.begin(), localDofVector.end(), DofType( 0 ) );
+            }
+          }
+
+          template< class Entity, class LocalDofVector >
+          void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
+          {
+            df.setLocalDofs( entity, localDofVector );
+          }
+        };
+      }
+
 
       // SetBase
       // -------
 
       template< class DiscreteFunction >
       struct SetBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
-      {
-        typedef typename DiscreteFunction::DofType DofType;
-
-        typedef Global::Set< DiscreteFunction > GlobalOperationType;
-
-        template< class Entity, class LocalDofVector >
-        void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
-        {
-          std::fill( localDofVector.begin(), localDofVector.end(), DofType( 0 ) );
-        }
-
-        template< class Entity, class LocalDofVector >
-        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
-        {
-          df.setLocalDofs( entity, localDofVector );
-        }
-      };
-
+        : public detail::SetAndSelectDFImpl< DiscreteFunction, false >
+      {};
 
       // SetSelectedBase
       // ---------------
 
       template< class DiscreteFunction >
       struct SetSelectedBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
-      {
-        typedef typename DiscreteFunction::DofType DofType;
-
-        typedef Global::Set< DiscreteFunction > GlobalOperationType;
-
-        template< class Entity, class LocalDofVector >
-        void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
-        {
-          df.getLocalDofs ( entity, localDofVector );
-        }
-
-        template< class Entity, class LocalDofVector >
-        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
-        {
-          df.setLocalDofs( entity, localDofVector );
-        }
-      };
+        : public detail::SetAndSelectDFImpl< DiscreteFunction, true >
+      {};
 
     } // namespace Assembly
+  }
 
-  } // namespace Fem
-
-
-
-  // DenseMatVecTraits for LocalContribution for Discrete Functions
-  // --------------------------------------------------------------
-
+  // consistency with Dune::DenseVector and DenseMatrix
   template< class DiscreteFunction, template< class > class AssemblyOperation >
-  struct DenseMatVecTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > > >
+  struct FieldTraits< Fem::LocalContribution< DiscreteFunction,  AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > > >
+    : public FieldTraits< typename DiscreteFunction::DofType >
   {
-    typedef Fem::LocalContribution< DiscreteFunction, AssemblyOperation > derived_type;
-    typedef typename DiscreteFunction::DofType value_type;
-    typedef std::vector< value_type > container_type;
-    typedef typename container_type::size_type size_type;
   };
-
-
-
-  // FieldTraits for LocalContribution for Discrete Functions
-  // --------------------------------------------------------
-
-  template< class DiscreteFunction, template< class > class AssemblyOperation >
-  struct FieldTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > > >
-  {
-    typedef typename FieldTraits< typename DiscreteFunction::DofType >::field_type field_type;
-    typedef typename FieldTraits< typename DiscreteFunction::DofType >::real_type real_type;
-  };
-
 
 
   namespace Fem
@@ -205,10 +187,11 @@ namespace Dune
 
     template< class DiscreteFunction, template< class > class AssemblyOperation >
     class LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
-      : public Dune::DenseVector< LocalContribution< DiscreteFunction, AssemblyOperation > >
+      : public TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType >
     {
-      typedef LocalContribution< DiscreteFunction, AssemblyOperation > ThisType;
-      typedef Dune::DenseVector< LocalContribution< DiscreteFunction, AssemblyOperation > > BaseType;
+      typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef LocalContribution< DiscreteFunction, AssemblyOperation >  ThisType;
+      typedef TemporaryLocalFunction< DiscreteFunctionSpaceType >       BaseType;
 
     public:
       typedef DiscreteFunction DiscreteFunctionType;
@@ -221,17 +204,21 @@ namespace Dune
       typedef typename RangeType::field_type RangeFieldType;
       typedef typename DiscreteFunctionType::JacobianRangeType JacobianRangeType;
 
-      typedef std::vector< DofType > LocalDofVectorType;
+      typedef typename BaseType :: LocalDofVectorType  LocalDofVectorType;
       typedef typename LocalDofVectorType::size_type SizeType;
 
       typedef typename BasisFunctionSetType::EntityType EntityType;
 
+      using BaseType::entity;
+      using BaseType::localDofVector;
+      using BaseType::axpy;
+
       template< class... Args >
       explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
-        : discreteFunction_( discreteFunction ),
-          localDofVector_( discreteFunction.space().maxNumDofs() ),
+        : BaseType( discreteFunction.space() ),
+          discreteFunction_( discreteFunction ),
           assemblyOperation_( std::forward< Args >( args )... ),
-          bound_(false)
+          bound_( false )
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
@@ -244,157 +231,13 @@ namespace Dune
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
 
-      const DiscreteFunctionType &discreteFunction () const { return discreteFunction_; }
-      DiscreteFunctionType &discreteFunction () { return discreteFunction_; }
-
-      /**
-       * \brief access to local dofs (read-only)
-       *
-       * \param[in]  i  local dof number
-       * \return reference to dof
-       **/
-      const DofType &operator[] ( SizeType i ) const { return localDofVector()[ i ]; }
-
-      /**
-       * \brief access to local dofs (read-write)
-       *
-       * \param[in]  i  local DoF number
-       * \return reference to DoF
-       **/
-      DofType &operator[] ( SizeType i ) { return localDofVector()[ i ]; }
-
-      /** \brief set all DoFs to zero **/
-      void clear ()
-      {
-        std::fill( localDofVector().begin(), localDofVector().end(), DofType( 0 ) );
-      }
-
-      /**
-       * \brief axpy operation for local contribution
-       *
-       * Denoting the DoFs of the local contribution by \f$u_i\f$ and the basis
-       * functions by \f$\varphi_i\f$, this function performs the following
-       * operation:
-       * \f[
-       * u_i = u_i + factor \cdot \varphi_i( x )
-       * \f]
-       *
-       * \param[in]  x       point to evaluate basis functions in
-       * \param[in]  factor  axpy factor
-       **/
-      template< class PointType >
-      void axpy ( const PointType &x, const RangeType &factor )
-      {
-        basisFunctionSet().axpy( x, factor, localDofVector() );
-      }
-
-      /**
-       * \brief axpy operation for local contribution
-       *
-       * Denoting the DoFs of the local contribution by \f$u_i\f$ and the basis
-       * functions by \f$\varphi_i\f$, this function performs the following
-       * operation:
-       * \f[
-       * u_i = u_i + factor \cdot \nabla\varphi_i( x )
-       * \f]
-       *
-       * \param[in]  x       point to evaluate jacobian of basis functions in
-       * \param[in]  factor  axpy factor
-       **/
-      template< class PointType >
-      void axpy ( const PointType &x, const JacobianRangeType &factor )
-      {
-        basisFunctionSet().axpy( x, factor, localDofVector() );
-      }
-
-      /**
-       * \brief axpy operation for local contribution
-       *
-       * Denoting the DoFs of the local contribution by \f$u_i\f$ and the basis
-       * functions by \f$\varphi_i\f$, this function performs the following
-       * operation:
-       * \f[
-       * u_i = u_i + factor1 \cdot \varphi_i( x ) + factor2 \cdot \nabla\varphi_i( x )
-       * \f]
-       *
-       * \param[in]  x        point to evaluate basis functions in
-       * \param[in]  factor1  axpy factor for \f$\varphi( x )\f$
-       * \param[in]  factor2  axpy factor for \f$\nabla\varphi( x )\f$
-       **/
-      template< class PointType >
-      void axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
-      {
-        basisFunctionSet().axpy( x, factor1, factor2, localDofVector() );
-      }
-
-      /**
-       * \brief obtain the order of this local contribution
-       *
-       * The order of a local contribution refers to the polynomial order required
-       * to integrate it exactly.
-       *
-       * \note It is not completely clear what this value should be, e.g., for
-       *       bilinear basis functions.
-       *
-       * \returns order of the local contribution
-       **/
-      int order () const { return basisFunctionSet().order(); }
-
-      /**
-       * \brief obtain the basis function set for this local contribution
-       * \returns reference to the basis function set
-       */
-      const BasisFunctionSetType &basisFunctionSet () const { return basisFunctionSet_; }
-
-      /**
-       * \brief obtain the entity, this local contribution lives on
-       * \returns reference to the entity
-       **/
-      const EntityType &entity () const { return basisFunctionSet().entity(); }
-
-      /** \brief obtain the number of local DoFs
-       *
-       *  Obtain the number of local DoFs of this local function. The value is
-       *  identical to the number of basis functons on the entity.
-       *
-       *  \returns number of local DoFs
-       */
-      SizeType size () const { return localDofVector().size(); }
-
-      /** \brief obtain the number of local DoFs
-       *
-       *  Obtain the number of local DoFs of this local function. The value is
-       *  identical to the number of basis functons on the entity.
-       *
-       *  \returns number of local DoFs
-       */
-      int numDofs () const { return localDofVector().size(); }
-
-      /**
-       * \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
-       *        add the result to the local coefficients
-       **/
-      template< class QuadratureType, class VectorType >
-      void axpyQuadrature ( const QuadratureType &quad, const VectorType &values )
-      {
-        basisFunctionSet().axpy( quad, values, localDofVector() );
-      }
-
-      /**
-       * \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
-       *        add the result to the local coefficients
-       **/
-      template< class QuadratureType, class RangeVectorType, class JacobianRangeVectorType >
-      void axpyQuadrature ( const QuadratureType &quad, const RangeVectorType& rangeVector, const JacobianRangeVectorType& jacobianVector )
-      {
-        basisFunctionSet().axpy( quad, rangeVector, jacobianVector, localDofVector() );
-      }
+      const DiscreteFunctionType& discreteFunction () const { return discreteFunction_; }
+      DiscreteFunctionType& discreteFunction () { return discreteFunction_; }
 
       void bind ( const EntityType &entity )
       {
+        BaseType::bind( entity );
         bound_ = true;
-        basisFunctionSet_ = discreteFunction().space().basisFunctionSet( entity );
-        localDofVector().resize( basisFunctionSet().size() );
         assemblyOperation_.begin( entity, discreteFunction(), localDofVector() );
       }
 
@@ -402,20 +245,23 @@ namespace Dune
       {
         if (bound_)
         {
+          // write back dofs to discrete function
           assemblyOperation_.end( entity(), localDofVector(), discreteFunction() );
-          basisFunctionSet_ = BasisFunctionSetType();
+          // unbind local contribution
+          BaseType::unbind();
         }
       }
 
-      /** \brief return const reference to local DoF vector **/
-      const LocalDofVectorType &localDofVector () const { return localDofVector_; }
-      /** \brief return mutable reference to local DoF vector **/
-      LocalDofVectorType &localDofVector () { return localDofVector_; }
+    protected:
+      // LocalContribution is not a LocalFunction,
+      // thus disable evaluate,jacobian and hessian methods
+      using BaseType::evaluate;
+      using BaseType::evaluateQuadrature;
+      using BaseType::jacobian;
+      using BaseType::hessian;
 
-    private:
-      DiscreteFunctionType &discreteFunction_;
-      LocalDofVectorType localDofVector_;
-      BasisFunctionSetType basisFunctionSet_;
+    protected:
+      DiscreteFunctionType& discreteFunction_;
       AssemblyOperationType assemblyOperation_;
       bool bound_;
     };

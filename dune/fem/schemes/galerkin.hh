@@ -25,6 +25,8 @@
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
+#include <dune/fem/operator/common/localcontribution.hh>
+#include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/schemes/integrands.hh>
 #include <dune/fem/schemes/dirichletwrapper.hh>
 
@@ -95,7 +97,6 @@ namespace Dune
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-      private:
         template <class Space>
         struct QuadratureSelector
         {
@@ -105,6 +106,7 @@ namespace Dune
         // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
         };
 
+      private:
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;
         typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
@@ -607,15 +609,22 @@ namespace Dune
         // constructor
 
         template< class... Args >
-        explicit GalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-          : gridPart_( gridPart ), communicate_( communicate ), integrands_( std::forward< Args >( args )... ),
+        explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+          : gridPart_( gridPart ),
+            integrands_( std::forward< Args >( args )... ),
             defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
             defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
-            interiorQuadOrder_(0), surfaceQuadOrder_(0)
+            interiorQuadOrder_(0), surfaceQuadOrder_(0),
+            communicate_( true )
         {
+        }
+
+        void setCommunicate( const bool communicate )
+        {
+          communicate_ = communicate;
           if( ! communicate_ && Dune::Fem::Parameter::verbose() )
           {
-            std::cout << "GalerkinOperator::GalerkinOperator: communicate was disabled!" << std::endl;
+            std::cout << "Impl::GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
           }
         }
 
@@ -646,7 +655,6 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uLocal = u.localFunction( entity );
             uLocal.bind( entity );
             wLocal.bind( entity );
             wLocal.clear();
@@ -665,9 +673,6 @@ namespace Dune
 
             w.addLocalDofs( entity, wLocal.localDofVector() );
           }
-
-          if( communicate_ )
-            w.communicate();
         }
 
         template< class GridFunction, class DiscreteFunction >
@@ -687,8 +692,6 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uInside = u.localFunction( inside );
-
             uInside.bind( inside );
             wInside.bind( inside );
             wInside.clear();
@@ -723,9 +726,6 @@ namespace Dune
 
             w.addLocalDofs( inside, wInside.localDofVector() );
           }
-
-          if( communicate_ )
-            w.communicate();
         }
 
       public:
@@ -739,6 +739,10 @@ namespace Dune
             evaluate( u, w, std::true_type() );
           else
             evaluate( u, w, std::false_type() );
+
+          // synchronize result
+          if( communicate_ )
+            w.communicate();
         }
 
         // assemble
@@ -768,7 +772,6 @@ namespace Dune
 
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uLocal = u.localFunction( entity );
             uLocal.bind( entity );
 
             jOpLocal.init( entity, entity );
@@ -817,7 +820,6 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
           {
-            // const auto uIn = u.localFunction( inside );
             uIn.bind( inside );
 
             jOpInIn.init( inside, inside );
@@ -918,7 +920,6 @@ namespace Dune
 
       protected:
         const GridPartType &gridPart_;
-        const bool communicate_;
         mutable IntegrandsType integrands_;
 
         mutable std::function<int(const int)> defaultInteriorOrder_;
@@ -932,6 +933,7 @@ namespace Dune
         mutable DomainValueVectorType basisValues_;
         mutable DomainValueVectorType domainValues_;
 
+        bool communicate_;
       };
 
     } // namespace Impl
@@ -954,9 +956,11 @@ namespace Dune
       typedef typename RangeFunctionType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit GalerkinOperator ( const GridPartType &gridPart,const bool communicate, Args &&... args )
-        : impl_( gridPart, communicate, std::forward< Args >( args )... )
+      explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : impl_( gridPart, std::forward< Args >( args )... )
       {}
+
+      void setCommunicate( const bool communicate ) { impl_.setCommunicate( communicate ); }
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
 
@@ -1004,9 +1008,10 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace, const RangeDiscreteFunctionSpaceType &rSpace,
-                                                const bool communicate, Args &&... args )
-        : BaseType( rSpace.gridPart(), communicate, std::forward< Args >( args )... ),
+      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
+                                                const RangeDiscreteFunctionSpaceType &rSpace,
+                                                Args &&... args )
+        : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace), rSpace_(rSpace)
       {}
 
@@ -1053,8 +1058,8 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, const bool communicate, Args &&... args )
-        : BaseType( gridPart, communicate, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : BaseType( gridPart, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
       {}
     };
 
@@ -1074,8 +1079,8 @@ namespace Dune
       typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
-      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace, const bool communicate=true )
-        : BaseType( dfSpace.gridPart(), communicate, model )
+      ModelDifferentiableGalerkinOperator ( ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
+        : BaseType( dfSpace.gridPart(), model )
       {}
 
       template< class GridFunction >
@@ -1091,149 +1096,153 @@ namespace Dune
       }
     };
 
+    namespace Impl
+    {
 
+      // GalerkinSchemeImpl
+      // ------------------
+
+      template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC,
+                template <class,class> class DifferentiableGalerkinOperatorImpl = DifferentiableGalerkinOperator >
+      struct GalerkinSchemeImpl
+      {
+        typedef InverseOperator InverseOperatorType;
+        typedef Integrands ModelType;
+        using DifferentiableOperatorType = std::conditional_t< addDirichletBC,
+           DirichletWrapperOperator< DifferentiableGalerkinOperatorImpl< Integrands, LinearOperator >>,
+           DifferentiableGalerkinOperatorImpl< Integrands, LinearOperator > >;
+
+        typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
+        typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
+        typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
+        typedef typename DifferentiableOperatorType::JacobianOperatorType JacobianOperatorType;
+
+        typedef RangeFunctionType DiscreteFunctionType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+        typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+
+        typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
+        typedef InverseOperator LinearInverseOperatorType;
+        typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
+
+        struct SolverInfo
+        {
+          SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
+            : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
+          {}
+
+          bool converged;
+          int linearIterations, nonlinearIterations;
+        };
+
+        GalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
+                             const Integrands &integrands,
+                             const ParameterReader& parameter = Parameter::container() )
+          : dfSpace_( dfSpace ),
+            fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
+            invOp_(parameter)
+        {}
+
+        void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
+
+        const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
+        DifferentiableOperatorType &fullOperator() { return fullOperator_; }
+
+        void constraint ( DiscreteFunctionType &u ) const {}
+
+        template< class GridFunction >
+        void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
+        {
+          fullOperator()( u, w );
+        }
+
+        void setErrorMeasure(ErrorMeasureType &errorMeasure) const
+        {
+          invOp_.setErrorMeasure(errorMeasure);
+        }
+
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
+        {
+          DiscreteFunctionType rhs0 = rhs;
+          setZeroConstraints( rhs0 );
+          setModelConstraints( solution );
+
+          invOp_.bind(fullOperator());
+          invOp_( rhs0, solution );
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+        }
+
+        SolverInfo solve ( DiscreteFunctionType &solution ) const
+        {
+          DiscreteFunctionType bnd( solution );
+          bnd.clear();
+          setModelConstraints( solution );
+          invOp_.bind(fullOperator());
+          invOp_( bnd, solution );
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+        }
+
+        template< class GridFunction >
+        void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
+        {
+          fullOperator().jacobian( ubar, linearOp );
+        }
+
+        const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
+        const GridPartType &gridPart () const { return space().gridPart(); }
+        ModelType &model() const { return fullOperator().model(); }
+
+        void setConstraints( DomainFunctionType &u ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( u );
+        }
+        void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( value, u );
+        }
+        void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( u, v );
+        }
+        void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().subConstraints( u, v );
+        }
+
+      protected:
+        void setZeroConstraints( DiscreteFunctionType &u ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u );
+        }
+        void setModelConstraints( DiscreteFunctionType &u ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( u );
+        }
+        const DiscreteFunctionSpaceType &dfSpace_;
+        DifferentiableOperatorType fullOperator_;
+        mutable NewtonOperatorType invOp_;
+      };
+
+    } // end namespace Impl
 
     // GalerkinScheme
     // --------------
 
     template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC >
-    struct GalerkinScheme
-    {
-      typedef InverseOperator InverseOperatorType;
-      typedef Integrands ModelType;
-      using DifferentiableOperatorType = std::conditional_t< addDirichletBC,
-         DirichletWrapperOperator< DifferentiableGalerkinOperator< Integrands, LinearOperator >>,
-         DifferentiableGalerkinOperator< Integrands, LinearOperator > >;
-
-      typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
-      typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
-      typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
-      typedef typename DifferentiableOperatorType::JacobianOperatorType JacobianOperatorType;
-
-      typedef RangeFunctionType DiscreteFunctionType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
-      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-      typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
-      typedef InverseOperator LinearInverseOperatorType;
-      typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
-
-      struct SolverInfo
-      {
-        SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
-          : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
-        {}
-
-        bool converged;
-        int linearIterations, nonlinearIterations;
-      };
-
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace,
-                       const Integrands &integrands,
-                       const ParameterReader& parameter = Parameter::container() )
-        : GalerkinScheme( dfSpace, integrands, true /* communicate */, parameter )
-      {}
-
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace,
-                       const Integrands &integrands,
-                       const bool communicate,
-                       const ParameterReader& parameter = Parameter::container() )
-        : dfSpace_( dfSpace ),
-          fullOperator_( dfSpace, dfSpace, communicate, std::move( integrands ) ),
-          invOp_(parameter)
-      {}
-
-      void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
-
-      const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
-      DifferentiableOperatorType &fullOperator() { return fullOperator_; }
-
-      void constraint ( DiscreteFunctionType &u ) const {}
-
-      template< class GridFunction >
-      void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
-      {
-        fullOperator()( u, w );
-      }
-
-      void setErrorMeasure(ErrorMeasureType &errorMeasure) const
-      {
-        invOp_.setErrorMeasure(errorMeasure);
-      }
-
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
-      {
-        DiscreteFunctionType rhs0 = rhs;
-        setZeroConstraints( rhs0 );
-        setModelConstraints( solution );
-
-        invOp_.bind(fullOperator());
-        invOp_( rhs0, solution );
-        invOp_.unbind();
-        return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
-      }
-
-      SolverInfo solve ( DiscreteFunctionType &solution ) const
-      {
-        DiscreteFunctionType bnd( solution );
-        bnd.clear();
-        setModelConstraints( solution );
-        invOp_.bind(fullOperator());
-        invOp_( bnd, solution );
-        invOp_.unbind();
-        return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
-      }
-
-      template< class GridFunction >
-      void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
-      {
-        fullOperator().jacobian( ubar, linearOp );
-      }
-
-      const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
-      const GridPartType &gridPart () const { return space().gridPart(); }
-      ModelType &model() const { return fullOperator().model(); }
-
-      void setConstraints( DomainFunctionType &u ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().setConstraints( u );
-      }
-      void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().setConstraints( value, u );
-      }
-      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().setConstraints( u, v );
-      }
-      void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().subConstraints( u, v );
-      }
-
-    protected:
-      void setZeroConstraints( DiscreteFunctionType &u ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u );
-      }
-      void setModelConstraints( DiscreteFunctionType &u ) const
-      {
-        if constexpr (addDirichletBC)
-          fullOperator().setConstraints( u );
-      }
-      const DiscreteFunctionSpaceType &dfSpace_;
-      DifferentiableOperatorType fullOperator_;
-      mutable NewtonOperatorType invOp_;
-    };
+    using GalerkinScheme = Impl::GalerkinSchemeImpl< Integrands, LinearOperator, InverseOperator, addDirichletBC,
+                                                     DifferentiableGalerkinOperator >;
 
   } // namespace Fem
 

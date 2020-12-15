@@ -41,6 +41,7 @@
 #define DUNE_DIRICHLETCONSTRAINTS_HH
 
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
 namespace Dune {
 
@@ -247,12 +248,23 @@ public:
     // if Dirichlet Dofs have been found, treat them
     if( hasDirichletDofs_ )
     {
+      typedef typename LinearOperator::DomainSpaceType  DomainSpaceType;
+      typedef typename LinearOperator::RangeSpaceType   RangeSpaceType;
+      typedef Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+      TemporaryLocalMatrixType localMatrix( linearOperator.domainSpace(), linearOperator.rangeSpace() );
+
       const IteratorType end = space_.end();
       for( IteratorType it = space_.begin(); it != end; ++it )
       {
         const EntityType &entity = *it;
-        // adjust linear operator
-        dirichletDofsCorrectOnEntity( linearOperator, entity );
+        // init localMatrix to entity
+        localMatrix.init( entity, entity );
+        // obtain local matrix values
+        linearOperator.getLocalMatrix( entity, entity, localMatrix );
+        // adjust local matrix
+        dirichletDofsCorrectOnEntity( entity, localMatrix );
+        // write back changed local matrix to linear operator
+        linearOperator.setLocalMatrix( entity, entity, localMatrix );
       }
     }
   }
@@ -267,17 +279,12 @@ protected:
    *
    *   \param[in]  entity  entity to perform Dirichlet treatment on
    */
-  template< class LinearOperator, class EntityType >
-  void dirichletDofsCorrectOnEntity ( LinearOperator& linearOperator,
-                                      const EntityType &entity ) const
+  template< class EntityType, class LocalMatrix >
+  void dirichletDofsCorrectOnEntity ( const EntityType &entity,
+                                      LocalMatrix& localMatrix ) const
   {
     // get slave dof structure (for parallel runs)   /*@LST0S@*/
-    const auto &slaveDofs = linearOperator.rangeSpace().slaveDofs();
-
-    typedef typename LinearOperator :: LocalMatrixType LocalMatrixType;
-
-    // get local matrix from linear operator
-    LocalMatrixType localMatrix = linearOperator.localMatrix( entity, entity );
+    const auto &slaveDofs = localMatrix.rangeSpace().slaveDofs();
 
     // get number of basis functions
     const int localBlocks = space_.blockMapper().numDofs( entity );

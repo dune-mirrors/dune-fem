@@ -156,8 +156,11 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
 
-def galerkin(integrands, space=None, solver=None, parameters={},
-        errorMeasure=None, virtualize=None):
+def _galerkin(integrands, space=None, solver=None, parameters={},
+              errorMeasure=None, virtualize=None, schemeName=None ):
+    if schemeName is None:
+        raise Exception("_galerkin needs a scheme Name: GalerkinScheme or MethodOfLinesScheme")
+
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -203,7 +206,8 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     includes = [] # integrands._includes
     includes += space._includes + dfIncludes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
-    includes += ["dune/fem/schemes/galerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
+    # molgalerkin includes galerkin.hh so it works for both
+    includes += ["dune/fem/schemes/molgalerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
 
     spaceType = space._typeName
     valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'
@@ -214,9 +218,8 @@ def galerkin(integrands, space=None, solver=None, parameters={},
         integrandsType = integrands._typeName
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
-    typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' +\
-            linearOperatorType + ', ' + solverTypeName + ', ' +\
-            useDirichletBC + ' >'
+    typeName = 'Dune::Fem::'+schemeName+'< ' + integrandsType + ', ' +\
+            linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
     ctors = []
     ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands'],
@@ -234,6 +237,18 @@ def galerkin(integrands, space=None, solver=None, parameters={},
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
     return scheme
+
+def galerkin(integrands, space=None, solver=None, parameters={},
+             errorMeasure=None, virtualize=None):
+    return _galerkin(integrands, space=space, solver=solver,
+                     parameters=parameters, errorMeasure=errorMeasure,
+                     virtualize=virtualize, schemeName='GalerkinScheme')
+
+def molGalerkin(integrands, space=None, solver=None, parameters={},
+                errorMeasure=None, virtualize=None):
+    return _galerkin(integrands, space=space, solver=solver,
+                     parameters=parameters, errorMeasure=errorMeasure,
+                     virtualize=virtualize, schemeName='MethodOfLinesScheme')
 
 
 def h1(model, space=None, solver=None, parameters={}):

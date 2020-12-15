@@ -54,8 +54,8 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None):
     return module
 
 
-def galerkin(integrands, domainSpace=None, rangeSpace=None,
-             virtualize=None, communicate=True):
+def _galerkin(integrands, domainSpace=None, rangeSpace=None,
+              virtualize=None, communicate=True, operatorPrefix = '' ):
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -106,29 +106,43 @@ def galerkin(integrands, domainSpace=None, rangeSpace=None,
         includes += integrands._includes
         integrandsType = integrands._typeName
 
-
-
     if not rstorage == storage:
-        typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
-        constructor = Constructor(['pybind11::object gridView', 'const bool communicate', integrandsType + ' &integrands'],
-                                  ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), communicate, integrands );'],
+        typeName = 'Dune::Fem::' + operatorPrefix + 'GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
+        constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
+                                  ['return new DuneType( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );'],
                                   ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace.gridPart(), communicate, integrands );'],
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace.gridPart(), integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
         import dune.create as create
         linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
-        typeName = 'Dune::Fem::DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
-        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', 'const bool communicate', integrandsType + ' &integrands'],
-                                  ['return new DuneType( dSpace, rSpace, communicate, integrands );'],
+        typeName = 'Dune::Fem::' + operatorPrefix + 'DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
+        constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
+                                  ['return new DuneType( dSpace, rSpace, integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
     if integrands.hasDirichletBoundary:
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
 
-    op = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace,communicate,integrands)
+    setCommunicate = Method('setCommunicate', '''[]( DuneType &self, const bool communicate ) { self.setCommunicate( communicate ); }''' )
+    op = load(includes, typeName, setCommunicate, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
+    # apply communicate flag
+    op.setCommunicate( communicate )
     return op
+
+# galerkin operator
+def galerkin(integrands, domainSpace=None, rangeSpace=None,
+             virtualize=None, communicate=True):
+    return _galerkin(integrands, domainSpace=domainSpace, rangeSpace=rangeSpace,
+                     virtualize=virtualize, communicate=communicate)
+
+# method of lines galerkin operator (applies inverse mass matrix)
+def molGalerkin(integrands, domainSpace=None, rangeSpace=None,
+                virtualize=None, communicate=True):
+    return _galerkin(integrands, domainSpace=domainSpace, rangeSpace=rangeSpace,
+                     virtualize=virtualize, communicate=communicate,
+                     operatorPrefix='MOL')
 
 def h1(model, domainSpace=None, rangeSpace=None):
     if rangeSpace is None:

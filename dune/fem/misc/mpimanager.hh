@@ -58,7 +58,7 @@ namespace Dune
         static void initialize( const bool verbose, int &argc, char **&argv )
         {
           // needed for later calling Petsc::finalize to the right time
-          static PETSc petsc;
+          Singleton< PETSc > :: instance();
           ::Dune::Petsc::initialize( verbose, argc, argv );
         }
       };
@@ -128,14 +128,6 @@ namespace Dune
 
       static int rank ()
       {
-        //int wasFinalized = -1;
-        //MPI_Finalized( &wasFinalized );
-        //if( wasFinalized)
-        //{
-        //  assert(false);
-        //  std::abort();
-        //}
-
         return comm().rank();
       }
 

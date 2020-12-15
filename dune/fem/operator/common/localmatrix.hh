@@ -88,6 +88,23 @@ namespace Dune
           ( asImp().init( domainEntity, rangeEntity ) );
       }
 
+      /** \brief initialize the local matrix to entities
+       *  \param[in]  domainEntity  entity within grid of domain space,
+       *  \param[in]  rangeEntity   entity within grid of range space
+       */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+          ( asImp().bind( domainEntity, rangeEntity ) );
+      }
+
+      /** \brief clear local matrix from entities
+       */
+      void unbind ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().unbind() );
+      }
+
       /*! \brief add value to matrix entry (row,col) where row and col are
           local row and local column
           \param[in] localRow local row
@@ -95,8 +112,8 @@ namespace Dune
           \param[in] value value to add
       */
       void add ( const int localRow,
-                        const int localCol,
-                        const RangeFieldType &value )
+                 const int localCol,
+                 const RangeFieldType &value )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().add(localRow,localCol,value));
@@ -109,8 +126,8 @@ namespace Dune
           \param[in] value value to set
       */
       void set ( const int localRow,
-                        const int localCol,
-                        const RangeFieldType &value )
+                 const int localCol,
+                 const RangeFieldType &value )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().set(localRow,localCol,value));
@@ -144,7 +161,7 @@ namespace Dune
       template <class DomainLocalFunctionType,
                 class RangeLocalFunctionType>
       void multiplyAdd(const DomainLocalFunctionType& lhs,
-                              RangeLocalFunctionType& rhs) const
+                       RangeLocalFunctionType& rhs) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
           asImp().multiplyAdd( lhs, rhs ) );
@@ -157,10 +174,9 @@ namespace Dune
           \return value of matrix entry
       */
       const RangeFieldType get ( const int localRow,
-                                        const int localCol ) const
+                                 const int localCol ) const
       {
-        CHECK_INTERFACE_IMPLEMENTATION(
-          asImp().get(localRow,localCol));
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().get(localRow,localCol));
         return asImp().get(localRow,localCol);
       }
 
@@ -320,8 +336,21 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
+        bind( domainEntity, rangeEntity );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
         domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::unbind */
+      void unbind ()
+      {
+        domainBaseSet_ = DomainBasisFunctionSetType();
+        rangeBaseSet_  = RangeBasisFunctionSetType();
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */

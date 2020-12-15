@@ -32,7 +32,6 @@ set( EXPENSIVE_TESTS
   l2projection
   lagrangeglobalrefine
   lagrangeinterpolation
-  legendretest
   localadapter
 )
 

@@ -7,7 +7,7 @@
 
 //- local includes
 #include <dune/fem/function/localfunction/const.hh>
-#include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
 namespace Dune
@@ -210,7 +210,10 @@ namespace Dune
       typedef typename BaseType::DomainFieldType DomainFieldType;
 
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+
+      typedef ConstLocalFunction< DiscreteFunctionType > ConstLocalFunctionType;
+      typedef MutableLocalFunction< DiscreteFunctionType > MutableLocalFunctionType;
+
       typedef typename DiscreteFunctionType::GridPartType GridPartType;
 
       typedef DefaultLocalRestrictProlong< DiscreteFunctionSpaceType > LocalRestrictProlongType;
@@ -218,6 +221,7 @@ namespace Dune
       explicit RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
       : discreteFunction_( discreteFunction ),
         constLf_( discreteFunction ),
+        targetLf_( discreteFunction_ ),
         localRP_( discreteFunction_.space() )
       {
         // enable dof compression for this discrete function
@@ -262,21 +266,29 @@ namespace Dune
                            const LocalGeometry &geometryInFather,
                            bool initialize ) const
       {
-        constLf_.init( son );
-        LocalFunctionType lfFather = discreteFunction_.localFunction( father );
+        auto clf = bindGuard( constLf_, son );
 
-        localRP_.restrictLocal( lfFather, constLf_, geometryInFather, initialize );
+        if( initialize )
+        {
+          targetLf_.bind( father );
+          // unbind is done in restrictFinalize
+        }
+
+        assert( father == targetLf_.entity() );
+        localRP_.restrictLocal( targetLf_, constLf_, geometryInFather, initialize );
       }
 
       //! finalize restriction on father
       template <class Entity>
       void restrictFinalize(const Entity &father) const
       {
-        typedef typename GridPartType::template Codim< Entity::codimension >::EntityType GridPartEntityType;
-        const GridPartType &gridPart = discreteFunction_.gridPart();
-        const GridPartEntityType &gpFather = gridPart.convert( father );
-        LocalFunctionType lfFather = discreteFunction_.localFunction( gpFather );
-        localRP_.restrictFinalize( lfFather );
+        // make sure targetLf_ still is bound to father
+        assert( discreteFunction_.gridPart().convert( father ) == targetLf_.entity() );
+
+        localRP_.restrictFinalize( targetLf_ );
+
+        // release target local function
+        targetLf_.unbind();
       }
 
 
@@ -302,10 +314,18 @@ namespace Dune
                           const LocalGeometry &geometryInFather,
                           bool initialize ) const
       {
-        constLf_.init( father );
-        LocalFunctionType lfSon = discreteFunction_.localFunction( son );
+        // initialize father local function (only once)
+        //if( initialize )
+        {
+          constLf_.unbind();
+          constLf_.bind( father );
+        }
 
-        localRP_.prolongLocal( constLf_, lfSon, geometryInFather, initialize );
+        auto tlf = bindGuard( targetLf_, son );
+
+        localRP_.prolongLocal( constLf_, targetLf_, geometryInFather, initialize );
+        // write to discrete function
+        discreteFunction_.setLocalDofs( son, targetLf_ );
       }
 
       //! add discrete function to communicator with given unpack operation
@@ -341,7 +361,8 @@ namespace Dune
 
     protected:
       DiscreteFunctionType &discreteFunction_;
-      mutable LocalFunctionType constLf_;
+      mutable ConstLocalFunctionType   constLf_;
+      mutable MutableLocalFunctionType targetLf_;
       mutable LocalRestrictProlongType localRP_;
     };
     ///@}

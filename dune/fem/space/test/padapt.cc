@@ -264,6 +264,9 @@ bool checkContinuous( DiscreteFunctionType &solution )
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
 
+  Dune::Fem::ConstLocalFunction< DiscreteFunctionType > uInside( solution );
+  Dune::Fem::ConstLocalFunction< DiscreteFunctionType > uOutside( solution );
+
   for( const auto& entity : solution.space() )
   {
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
@@ -278,13 +281,19 @@ bool checkContinuous( DiscreteFunctionType &solution )
         IntersectionQuadratureType interQuad( solution.space().gridPart(), intersection, 4 );
         const QuadratureImp &quadInside  = interQuad.inside();
         const QuadratureImp &quadOutside = interQuad.outside();
+
+        const auto nb = intersection.outside();
+
+        auto iGuard = bindGuard( uInside, entity);
+        auto oGuard = bindGuard( uOutside, nb );
+
         for( unsigned int qp = 0; qp < quadInside.nop(); ++qp )
 	      {
-          DiscreteFunctionType::RangeType uIn,uOut;
-          solution.localFunction(entity).evaluate(quadInside[qp], uIn);
+          typename DiscreteFunctionType::RangeType uIn,uOut;
 
-          auto nb = intersection.outside();
-          solution.localFunction(nb).evaluate(quadOutside[qp], uOut);
+          uInside.evaluate(quadInside[qp], uIn);
+          uOutside.evaluate(quadOutside[qp], uOut);
+
           ret = std::max(ret, (uIn-uOut).two_norm());
         }
       }

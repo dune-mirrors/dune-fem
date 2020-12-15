@@ -10,6 +10,8 @@
 #include <dune/common/dynvector.hh>
 
 #include <dune/fem/function/localfunction/localfunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 
 #include "dataprojection.hh"
 
@@ -85,14 +87,14 @@ namespace Dune
                           const std::vector< std::size_t > &origin,
                           const std::vector< std::size_t > &destination )
         {
-          LocalFunctionType localFunction( prior );
-          read( origin, localFunction.localDofVector() );
+          LocalFunctionType localFunc( prior );
+          read( origin, localFunc.localDofVector() );
 
           assert( present.size() == space().basisFunctionSet( entity ).size() );
           LocalDofVectorType localDofVector( present.size() );
 
           const auto interpolation = space().interpolation( entity );
-          interpolation( localFunction, localDofVector );
+          interpolation( localFunc, localDofVector );
 
           write( destination, localDofVector );
         }
@@ -112,14 +114,18 @@ namespace Dune
             *it = *dfit;
           }
 
+          ConstLocalFunction< TemporaryStorage > tmpLF( tmp );
+          MutableLocalFunction< DiscreteFunction > lf( df );
+
           // interpolate to new space, this can be a
           // Lagrange interpolation or a L2 projection, both locally
           const auto end = df.space().end();
           for( auto it = df.space().begin(); it != end; ++it )
           {
             const auto& entity = *it;
-            const auto tmpLF = tmp.localFunction( entity );
-            auto lf = df.localFunction( entity );
+
+            auto tguard = bindGuard( tmpLF, entity );
+            auto lguard = bindGuard( lf, entity );
 
             // if size is the same we can just copy the dof values
             if( tmpLF.size() == lf.size() )

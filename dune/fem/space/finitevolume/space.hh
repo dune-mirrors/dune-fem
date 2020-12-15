@@ -101,6 +101,25 @@ namespace Dune
     };
 
 
+   /** \brief Local Mass Matrix for FV space */
+    template <class FunctionSpaceImp, class GridPartImp, int polOrd,
+              class BaseFunctionStorageImp,
+              class VolumeQuadratureImp>
+    class LocalMassMatrix<
+      FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
+      VolumeQuadratureImp >
+      : public LocalMassMatrixImplementationDgOrthoNormal<
+          FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
+    {
+      typedef FiniteVolumeSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
+      typedef LocalMassMatrixImplementationDgOrthoNormal< DiscreteFunctionSpaceImp, VolumeQuadratureImp > BaseType;
+    public:
+      using BaseType :: BaseType;
+    };
+
+
+
+
 
     // DefaultLocalRestrictProlong for FiniteVolumeSpace
     // -------------------------------------------------

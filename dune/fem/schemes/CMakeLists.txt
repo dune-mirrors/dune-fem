@@ -9,6 +9,7 @@ set(HEADERS
   galerkin.hh
   integrands.hh
   linearized.hh
+  molgalerkin.hh
 )
 
 if( NOT dune-python_FOUND )
