@@ -44,7 +44,7 @@ def compute(space,epsilon,weakBnd):
     # characteristic function for left/right boundary
     dD   = conditional((1+x[0])*(1-x[0])<1e-10,1,0)
     # penalty parameter
-    beta = Constant(10*space.order**2,"beta")
+    beta = Constant( 10*space.order**2 if space.order > 0 else 1,"beta")
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
