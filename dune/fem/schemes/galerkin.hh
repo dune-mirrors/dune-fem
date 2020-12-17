@@ -701,12 +701,9 @@ namespace Dune
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
-              if( intersection.boundary() )
-              {
-                if( integrands_.hasBoundary() )
-                  addBoundaryIntegral( intersection, uInside, wInside );
-              }
-              else if( intersection.neighbor() )
+              // check neighbor first since on periodic boundary both,
+              // neighbor and boundary are true
+              if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();
 
@@ -721,6 +718,11 @@ namespace Dune
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside, wOutside );
                   w.addLocalDofs( outside, wOutside.localDofVector() );
                 }
+              }
+              else if( intersection.boundary() )
+              {
+                if( integrands_.hasBoundary() )
+                  addBoundaryIntegral( intersection, uInside, wInside );
               }
             }
 
@@ -830,12 +832,9 @@ namespace Dune
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
-              if( intersection.boundary() )
-              {
-                if( integrands_.hasBoundary() )
-                  addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
-              }
-              else if( intersection.neighbor() )
+              // check neighbor first since on periodic boundary both,
+              // neighbor and boundary are true
+              if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();
 
@@ -861,6 +860,11 @@ namespace Dune
                 }
 
                 jOp.addLocalMatrix( outside, inside, jOpOutIn );
+              }
+              else if( intersection.boundary() )
+              {
+                if( integrands_.hasBoundary() )
+                  addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
               }
             }
 
