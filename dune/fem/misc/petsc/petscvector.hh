@@ -526,10 +526,11 @@ namespace Dune
 
         // finally, create the PETSc Vecs
         const PetscInt *ghostBlocks = mappers_.parallelMapper().mapping().data() + localBlocks;
+        const auto& comm = mappers_.space().gridPart().comm();
         if( blockSize == 1 )
-          ::Dune::Petsc::VecCreateGhost( localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
+          ::Dune::Petsc::VecCreateGhost( comm, localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
         else
-          ::Dune::Petsc::VecCreateGhostBlock( blockSize, localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
+          ::Dune::Petsc::VecCreateGhostBlock( comm, blockSize, localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
       }
 

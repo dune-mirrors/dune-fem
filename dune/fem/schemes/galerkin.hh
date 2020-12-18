@@ -701,8 +701,8 @@ namespace Dune
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
-              // check neighbor first since on periodic boundary both,
-              // neighbor and boundary are true
+              // check neighbor first since on periodic boundaries both,
+              // neighbor and boundary are true, so we treat neighbor first
               if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();
@@ -832,8 +832,8 @@ namespace Dune
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
-              // check neighbor first since on periodic boundary both,
-              // neighbor and boundary are true
+              // check neighbor first since on periodic boundaries both,
+              // neighbor and boundary are true, so we treat neighbor first
               if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();

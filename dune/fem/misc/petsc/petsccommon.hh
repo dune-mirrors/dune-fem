@@ -35,13 +35,6 @@ namespace Dune
 #undef VecType
     VecType;
 
-
-#if HAVE_MPI
-#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_WORLD
-#else
-#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_SELF
-#endif
-
     /*
      * exceptions
      */
@@ -120,13 +113,34 @@ namespace Dune
       ::PetscFinalize();
     }
 
+    template <class Comm>
+    inline auto castToPetscComm( const Comm& comm )
+    {
+      // this is needed because Dune::No_Comm or
+      // Dune::Communication< No_Comm > does not cast into MPI_Comm
+      if constexpr ( std::is_same< Dune::No_Comm, Comm > :: value ||
+                     std::is_same< Dune::Communication< No_Comm >, Comm >::value )
+      {
+        return PETSC_COMM_SELF;
+      }
+      else
+      {
+        return comm;
+      }
+    }
+
     /*
      * ==================================================
      * These are simple mappings to PETSc's C-routines. (Maybe some of them are not needed...).
      *
      * The PETSC_VERSION_... customizations are not very well tested yet
      */
-    inline static void KSPCreate ( KSP *inksp ) { ErrorCheck( ::KSPCreate( FEM_PETSC_COMM_DEFAULT, inksp ) ); }
+    template <class Comm>
+    inline static void KSPCreate ( const Comm& comm, KSP *inksp )
+    {
+      ErrorCheck( ::KSPCreate( castToPetscComm( comm ), inksp ) );
+    }
+
     inline static void KSPDestroy ( KSP *ksp ) {
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::KSPDestroy( *ksp ) );
@@ -139,10 +153,22 @@ namespace Dune
     inline static void KSPSetUp ( KSP ksp ) { ErrorCheck( ::KSPSetUp( ksp ) ); }
     inline static void KSPSetType ( KSP ksp, const KSPType type ) { ErrorCheck( ::KSPSetType( ksp, type ) ); }
     inline static void KSPGMRESSetRestart ( KSP ksp, PetscInt restart ) { ErrorCheck( ::KSPGMRESSetRestart( ksp, restart ) ); }
-    inline static void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  )
+
+    template <class Comm>
+    inline static void KSPView ( const Comm& comm,
+                                 KSP ksp,
+                                 PetscViewer viewer )
     {
       ErrorCheck( ::KSPView( ksp, viewer ) );
     }
+
+    template <class Comm>
+    inline static void KSPView ( const Comm& comm,
+                                 KSP ksp )
+    {
+      KSPView( comm, ksp, PETSC_VIEWER_STDOUT_( castToPetscComm(comm) ) );
+    }
+
     inline static void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
                                void *mctx,PetscErrorCode (*monitordestroy)(void*)
@@ -171,7 +197,12 @@ namespace Dune
     inline static void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 
     // preconditioning
-    inline static void PCCreate  ( PC* pc) { ErrorCheck( ::PCCreate( FEM_PETSC_COMM_DEFAULT, pc ) ); }
+    template <class Comm>
+    inline static void PCCreate  ( const Comm& comm, PC* pc)
+    {
+      ErrorCheck( ::PCCreate( castToPetscComm( comm ), pc ) );
+    }
+
     inline static void PCDestroy ( PC* pc) {
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
       ErrorCheck( ::PCDestroy( *pc ) );
@@ -204,10 +235,19 @@ namespace Dune
     inline static void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
     inline static void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
     inline static void MatAssembled( Mat mat, PetscBool* assembled ) { ErrorCheck( ::MatAssembled( mat, assembled ) ); }
-    inline static void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
-    inline static void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz )
+
+    template <class Comm>
+    inline static void MatCreate ( const Comm& comm, Mat *A )
     {
-      ErrorCheck( ::MatCreateBlockMat( FEM_PETSC_COMM_DEFAULT, n, m, bs, nz, nnz, A) );
+      ErrorCheck( ::MatCreate( castToPetscComm( comm ), A) );
+    }
+
+    template <class Comm>
+    inline static void MatCreateBlockMat ( const Comm& comm,
+                                           Mat *A,
+                                           PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz )
+    {
+      ErrorCheck( ::MatCreateBlockMat( castToPetscComm( comm ), n, m, bs, nz, nnz, A) );
     }
     inline static void MatDestroy ( Mat *A ) {
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
@@ -341,11 +381,19 @@ namespace Dune
     inline static void VecAssemblyEnd ( Vec vec ) { ErrorCheck( ::VecAssemblyEnd( vec ) ); }
     inline static void VecAXPY ( Vec y, PetscScalar alpha, Vec x) { ErrorCheck( ::VecAXPY( y, alpha, x ) ); }
     inline static void VecCopy ( Vec x, Vec y ) { ErrorCheck( ::VecCopy( x, y ) ); }
-    inline static void VecCreate ( Vec *vec ) { ErrorCheck( ::VecCreate( FEM_PETSC_COMM_DEFAULT, vec ) ); }
-    inline static void VecCreateGhost ( PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
-      { ErrorCheck( ::VecCreateGhost( FEM_PETSC_COMM_DEFAULT, n, N, nghost, ghosts, vv ) ); }
 
-    inline static void VecCreateGhostBlock ( PetscInt bs, PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
+    template <class Comm>
+    inline static void VecCreate ( const Comm& comm, Vec *vec )
+    {
+      ErrorCheck( ::VecCreate( castToPetscComm( comm ), vec ) );
+    }
+
+    template <class Comm>
+    inline static void VecCreateGhost ( const Comm& comm, PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
+      { ErrorCheck( ::VecCreateGhost( castToPetscComm( comm ), n, N, nghost, ghosts, vv ) ); }
+
+    template <class Comm>
+    inline static void VecCreateGhostBlock ( const Comm& comm, PetscInt bs, PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
     {
 #if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
       std::unique_ptr< PetscInt[] > ghostsCopy( new PetscInt[ nghost * bs ] );
@@ -356,7 +404,7 @@ namespace Dune
       }
       VecCreateGhost( n, N, nghost * bs, ghostsCopy.get(), vv );
 #else // #if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
-      ErrorCheck( ::VecCreateGhostBlock( FEM_PETSC_COMM_DEFAULT, bs, n, N, nghost, ghosts, vv ) );
+      ErrorCheck( ::VecCreateGhostBlock( castToPetscComm( comm ), bs, n, N, nghost, ghosts, vv ) );
 #endif // #else // #if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
     }
 

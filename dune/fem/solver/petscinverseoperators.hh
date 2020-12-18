@@ -123,7 +123,8 @@ namespace Dune
 
         // Create linear solver context
         ksp_.reset( new KSP() );
-        ::Dune::Petsc::KSPCreate( &ksp() );
+        const auto& comm = assembledOperator_->domainSpace().gridPart().comm();
+        ::Dune::Petsc::KSPCreate( comm, &ksp() );
 
         // attach Matrix to linear solver context
         Mat& A = assembledOperator_->exportMatrix();
@@ -399,7 +400,7 @@ namespace Dune
         // set monitor in verbose mode
         if( parameter.verbose() && Parameter::verbose() )
         {
-          ::Dune::Petsc::KSPView( ksp() );
+          ::Dune::Petsc::KSPView( comm, ksp() );
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
         }
       }
