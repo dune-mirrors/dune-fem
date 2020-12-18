@@ -567,7 +567,7 @@ class ModelClass():
                       bases=self.bases)
 
         code.append(self.gridPartType)
-
+        code.append(TypeAlias("GridView", "typename GridPartType::GridViewType"))
         if self.bindable:
             code.append(TypeAlias("FunctionSpaceType", "Dune::Fem::GridFunctionSpace<GridPartType,Dune::Dim<"+str(self.dimRange)+">>"))
 

@@ -14,13 +14,15 @@ namespace Dune
 
     // GridFunctionView
     // ----------------
+    struct IsGridFunctionView {};
 
     template< class GF, bool isDiscreteFunction = std::is_base_of< Fem::IsDiscreteFunction, GF >::value >
     struct GridFunctionView;
 
     template< class GF >
     struct GridFunctionView< GF, false >
-    : public BindableGridFunction<typename GF::GridPartType, typename GF::RangeType>
+    : public BindableGridFunction<typename GF::GridPartType, typename GF::RangeType>,
+             public IsGridFunctionView
     {
       using Base = BindableGridFunction<typename GF::GridPartType, typename GF::RangeType>;
       typedef typename GF::EntityType Entity;
@@ -51,7 +53,8 @@ namespace Dune
 
     template< class GF >
     struct GridFunctionView< GF, true >
-    : public BindableGridFunctionWithSpace<typename GF::GridPartType, typename GF::RangeType>
+    : public BindableGridFunctionWithSpace<typename GF::GridPartType, typename GF::RangeType>,
+             public IsGridFunctionView
     {
       using Base = BindableGridFunctionWithSpace<typename GF::GridPartType, typename GF::RangeType>;
       typedef typename GF::EntityType Entity;
@@ -108,20 +111,16 @@ namespace Dune
     // localFunction
     // -------------
 
-    template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
+    template< class GF,
+      std::enable_if_t< !std::is_base_of< Fem::IsGridFunctionView, GF >::value &&
+                         std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0
+      >
     inline static GridFunctionView< GF > localFunction ( const GF &gf )
     {
       return GridFunctionView< GF >( gf );
     }
 
   } // namespace Fem
-
-#if 0
-  namespace Python
-  {
-    using Fem::localFunction;
-  } // namespace Fem
-#endif
 
 } // namespace Dune
 

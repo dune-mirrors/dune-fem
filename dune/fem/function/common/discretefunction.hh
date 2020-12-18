@@ -116,6 +116,7 @@ namespace Dune
 
       //! type of the underlying grid part
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+      typedef typename GridPartType::GridViewType GridView;
 
       //! type of the underlying grid
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;

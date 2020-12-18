@@ -36,6 +36,7 @@ namespace Dune
       typedef Fem::BindableGridFunctionWithSpace<GridPart,Dim<Value::dimension>> Base;
 
     public:
+      typedef typename GridPart::GridViewType GridView;
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
       typedef typename GridPart::IntersectionType IntersectionType;
 

@@ -159,6 +159,7 @@ namespace Dune
     public:
       typedef Space DiscreteFunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef typename GridPart::GridViewType GridView;
 
       typedef SimpleLocalFunction< GridPart, LocalEvaluator > LocalFunctionType;
 
@@ -276,6 +277,7 @@ namespace Dune
 
     public:
       typedef typename Base::GridPartType GridPartType;
+      typedef typename GridPart::GridViewType GridView;
 
       typedef typename Base::DomainType DomainType;
       typedef typename Base::RangeType RangeType;
