@@ -293,7 +293,7 @@ namespace Dune
           unitRows_.clear();
 
           // create matrix
-          ::Dune::Petsc::MatCreate( &petscMatrix_ );
+          ::Dune::Petsc::MatCreate( domainSpace().gridPart().comm(), &petscMatrix_ );
 
           // set sizes of the matrix (columns == domain and rows == range)
           const PetscInt localCols = domainMappers_.ghostMapper().interiorSize() * domainLocalBlockSize;
