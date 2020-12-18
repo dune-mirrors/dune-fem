@@ -5,3 +5,7 @@
 *.swp
 # ignore cmake petsc module
 /cmake/modules/petsc/
+# ignore files generated during python setup.py sdist
+MANIFEST
+_skbuild/
+dist

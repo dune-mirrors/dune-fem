@@ -56,8 +56,12 @@ def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
             predefined=predefined, *args, **kwargs)
     if Func is None:
         raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
-    from dune.fem.plotting import plotPointData
-    setattr(Func, "plot", plotPointData)
+    try:
+        from dune.fem.plotting import plotPointData
+        setattr(Func, "plot", plotPointData)
+    except ImportError:
+        setattr(Func, "plot", lambda *args,**kwargs:
+           print("problem importing plotting utility - possibly matplotlib is missing?"))
     func = Func(gridView,name,order,*args,**kwargs)
     if not hasattr(func,"scalar"):
         func.scalar = scalar

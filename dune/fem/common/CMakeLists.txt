@@ -8,6 +8,7 @@ dune_install( bindguard.hh
               forloop.hh
               geometrytypemap.hh
               hybrid.hh
+              intersectionside.hh
               localcontribution.hh
               memory.hh
               referencevector.hh
