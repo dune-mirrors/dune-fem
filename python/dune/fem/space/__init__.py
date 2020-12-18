@@ -163,8 +163,12 @@ def addDFAttr(module, cls, storage):
     if hasattr(cls,"_project"):
         setattr(cls, "project", dfProject )
     setattr(cls, "localContribution", localContribution )
-    from dune.fem.plotting import plotPointData
-    setattr(cls, "plot", plotPointData)
+    try:
+        from dune.fem.plotting import plotPointData
+        setattr(cls, "plot", plotPointData)
+    except ImportError:
+        setattr(cls, "plot", lambda *args,**kwargs:
+           print("problem importing plotting utility - possibly matplotlib is missing?"))
 
 def addBackend(Df,backend):
     def backend_(self):

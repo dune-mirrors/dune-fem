@@ -1,12 +1,12 @@
+# general stuff
+cmake_minimum_required(VERSION 3.13)
+
 # set up project
 project("dune-fem" C CXX)
 
 #circumvent not building docs
 set(BUILD_DOCS 1)
 set(DUNE_REENABLE_ADD_TEST TRUE)
-
-# general stuff
-cmake_minimum_required(VERSION 2.8.12)
 
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
         "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))

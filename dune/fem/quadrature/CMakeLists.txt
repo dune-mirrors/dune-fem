@@ -1,12 +1,12 @@
 dune_install(agglomerationquadrature.hh
-             cachingpointlist.hh cachingquadrature.hh cornerpointset.hh
-             defaultquadratures.hh dunequadratures.hh elementpointlist.hh
-             elementpointlistbase.hh elementquadrature.hh femquadratures.hh
-             femquadratures_inline.hh gausspoints.hh gausspoints_implementation.hh
-             idprovider.hh integrator.hh lumpingquadrature.hh quadrature.hh
-             quadratureimp.hh quadratureimp_inline.hh pyramidpoints.hh
-             quadprovider.hh intersectionquadrature.hh
-             pardgsimplexquadrature.hh )
+             cachingpointlist.hh       cachingquadrature.hh cornerpointset.hh
+             defaultquadratures.hh     dunequadratures.hh   elementpointlist.hh
+             elementpointlistbase.hh   elementquadrature.hh femquadratures.hh
+             femquadratures_inline.hh  gausspoints.hh       gausspoints_implementation.hh
+             idprovider.hh             integrator.hh        interpolationquadrature.hh
+             lumpingquadrature.hh      quadrature.hh        quadratureimp.hh
+             quadratureimp_inline.hh   pyramidpoints.hh     quadprovider.hh
+             intersectionquadrature.hh pardgsimplexquadrature.hh )
 
 dune_add_subdirs(caching geometric test)
 

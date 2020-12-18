@@ -5,4 +5,5 @@ dune_install(
   space.hh
   shapefunctionset.hh
   localrestrictprolong.hh
+  quadratureinterpolation.hh
 )

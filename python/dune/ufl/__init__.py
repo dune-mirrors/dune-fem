@@ -288,10 +288,12 @@ class GridIndexed(Indexed):
         if gc.gf.scalar:
             assert i==0
             self.__impl__ = gc.gf
+            self.gf = gc
         else:
             self.__impl__ = gc.gf[i]
-        self.gf = gc
+            self.gf = None
     def __getattr__(self, item):
+        if item == "gf": return None
         result = getattr(self.__impl__, item)
         return result
     def plot(self,*args,**kwargs):
@@ -469,10 +471,12 @@ class CoordWrapper:
 
 def expression2GF(grid,expression,order,name=None):
     try:
-        return expression.gf
+        if expression.gf is not None:
+            return expression.gf
     except:
-        from dune.fem.function import localFunction, uflFunction
-        return uflFunction(grid, "expr" if name is None else name, order, expression)
+        pass
+    from dune.fem.function import localFunction, uflFunction
+    return uflFunction(grid, "expr" if name is None else name, order, expression)
 
 # register markdown formatter for integrands, forms and equations to IPython
 

@@ -8,6 +8,7 @@ add_subdirectory(utility)
 
 add_python_targets(fem
   __init__
+  __main__
   _adaptation
   _spaceadaptation
   plotting
@@ -16,3 +17,4 @@ add_python_targets(fem
 
 dune_add_pybind11_module(NAME _fem)
 set_property(TARGET _fem PROPERTY LINK_LIBRARIES dunecommon dunegeometry dunegrid dunefem APPEND)
+install(TARGETS _fem LIBRARY DESTINATION python/dune/fem)
