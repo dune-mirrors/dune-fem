@@ -1,6 +1,6 @@
 Module: dune-fem
 Version: 2.8-git
-Author: The Dune Core developers
+Author: The Dune-Fem developer team
 Maintainer: dune-fem@lists.dune-project.org
 Description: A discretization module providing an implementation of mathematical abstractions to solve PDEs on parallel computers including local grid adaptivity, dynamic load balancing, and higher order discretization schemes
 URL: https://gitlab.dune-project.org/dune-fem/dune-fem
