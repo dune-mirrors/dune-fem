@@ -19,10 +19,10 @@ from dune.ufl import Space
 from ufl import Identity, TestFunction, TrialFunction, SpatialCoordinate, ds, dx, inner, grad, div
 
 test_fem   = True
-test_istl  = True
+test_istl  = False
 try:
     import petsc4py
-    test_petsc = True
+    test_petsc = False
 except:
     test_petsc = False
 
@@ -53,7 +53,7 @@ def test(model,spaceName,dimD,dimR,storage):
         jacobian(scheme,uD,A)
     end = time.time()
     # print( "assembly only: ",(end-start)/testLoop, flush=True )
-    sys.stdout.flush()
+    # sys.stdout.flush()
 
     try:
         import petsc4py
