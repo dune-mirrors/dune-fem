@@ -395,7 +395,7 @@ class ModelClass():
                 if not extracedAll:
                     break
 
-        self.constantList = [c for c in coefficients if c.is_cellwise_constant()]
+        self.constantList = sorted((c for c in coefficients if c.is_cellwise_constant()), key=lambda c: c.count())
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
 
         constants=[fieldVectorType(c,useScalar=True) for c in self.constantList]
