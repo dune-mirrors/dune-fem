@@ -5,6 +5,8 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/fvector.hh>
+#include <dune/fem/common/coordinate.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
 {

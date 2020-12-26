@@ -41,9 +41,17 @@
 #define DUNE_DIRICHLETCONSTRAINTS_HH
 
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
+#include <dune/fem/common/bindguard.hh>
+#include <dune/fem/common/coordinate.hh>
+#include <dune/fem/common/localcontribution.hh>
 
 namespace Dune {
+
+namespace Fem {
+class HasLocalFunction;
+}
 
 template < class Model, class DiscreteFunctionSpace >
 class DirichletConstraints

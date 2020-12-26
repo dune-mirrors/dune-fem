@@ -1,3 +1,5 @@
+#error "THIS FILE IS NOT BEING USED AND DOES NOT SEEM TO COMPILE!"
+
 /**************************************************************************
 
   The dune-fem module is a module of DUNE (see www.dune-project.org).

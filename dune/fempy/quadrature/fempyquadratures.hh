@@ -8,6 +8,7 @@
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/numpy.h>
 
+#include <dune/fem/quadrature/quadprovider.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/defaultquadratures.hh>
 #include <dune/fem/storage/singleton.hh>

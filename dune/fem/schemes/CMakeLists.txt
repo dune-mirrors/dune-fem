@@ -12,6 +12,8 @@ set(HEADERS
   molgalerkin.hh
 )
 
+exclude_from_headercheck( dgfemscheme.hh )
+
 if( NOT DUNE_ENABLE_PYTHONBINDINGS )
   exclude_from_headercheck( ${HEADERS} )
 endif()
