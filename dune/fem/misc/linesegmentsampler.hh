@@ -202,7 +202,7 @@ namespace Dune
       bool valid = true;
       for( int i = 0; i < numSamples; ++i )
       {
-        valid &= ! std::isnan( samples[ i ] );
+        valid &= ! std::isnan( samples[ i ].two_norm() );
       }
 
       if( !valid )

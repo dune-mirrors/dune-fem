@@ -102,6 +102,13 @@ struct DirichletWrapperOperator
   }
 
   template <typename O = Operator>
+  auto setCommunicate ( const bool commuicate )
+  -> Dune::void_t< decltype( std::declval< O >().setCommunicate(true) ) >
+  {
+    op_.setCommunicate(commuicate);
+  }
+
+  template <typename O = Operator>
   auto setQuadratureOrders(unsigned int interior, unsigned int surface)
   -> Dune::void_t< decltype( std::declval< O >().setQuadratureOrders(0,0) ) >
   {
