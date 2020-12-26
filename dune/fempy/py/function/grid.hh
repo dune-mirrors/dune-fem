@@ -6,8 +6,10 @@
 #include <string>
 #include <utility>
 
+#include <dune/python/pybind11/pybind11.h>
 #include <dune/common/visibility.hh>
 
+#include <dune/fem/function/localfunction/bindable.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
 

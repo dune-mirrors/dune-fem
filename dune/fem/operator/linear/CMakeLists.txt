@@ -2,7 +2,7 @@ dune_install(blockdiagonal.hh istladapter.hh istloperator.hh
              petscoperator.hh spoperator.hh denserow.hh eigenoperator.hh
              numpyoperator.hh )
 
-if( NOT dune-python_FOUND )
+if( NOT DUNE_ENABLE_PYTHONBINDINGS )
   exclude_from_headercheck( "numpyoperator.hh" )
 endif()
 

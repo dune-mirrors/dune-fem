@@ -6,12 +6,13 @@ add_subdirectory(space)
 add_subdirectory(py)
 add_subdirectory(pybind11)
 add_subdirectory(quadrature)
+add_subdirectory(test)
 
 set(HEADERS
   parameter.hh
 )
 
-if( NOT dune-python_FOUND )
+if( NOT DUNE_ENABLE_PYTHONBINDINGS )
   exclude_from_headercheck( ${HEADERS} )
 endif()
 

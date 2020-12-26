@@ -12,7 +12,9 @@ set(HEADERS
   molgalerkin.hh
 )
 
-if( NOT dune-python_FOUND )
+exclude_from_headercheck( dgfemscheme.hh )
+
+if( NOT DUNE_ENABLE_PYTHONBINDINGS )
   exclude_from_headercheck( ${HEADERS} )
 endif()
 

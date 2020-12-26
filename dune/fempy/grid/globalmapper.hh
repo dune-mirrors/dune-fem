@@ -1,3 +1,5 @@
+#error "THIS FILE IS NOT BEING USED AND DOES NOT SEEM TO COMPILE!"
+
 #ifndef DUNE_FEMPY_GRID_GLOBALMAPPER_HH
 #define DUNE_FEMPY_GRID_GLOBALMAPPER_HH
 
@@ -14,7 +16,7 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
 
-#include <dune/grid/common/commdatahandleif.hh>
+#include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
@@ -69,7 +71,7 @@ namespace Dune
       template< class Entity >
       Index subIndex ( const Entity &entity, int i, unsigned int codim ) const
       {
-        const GeometryType gt = ReferenceElements< double, Entity::mydimension >::general( e.type() ).type( i, codim );
+        const GeometryType gt = ReferenceElements< double, Entity::mydimension >::general( entity.type() ).type( i, codim );
         assert( layout_.contains( gt ) && indexSet_.contains( entity ) );
         return indices_[ GlobalGeometryTypeIndex::index( gt ) ][ indexSet_.subIndex( entity, i, codim ) ];
       }
@@ -89,7 +91,7 @@ namespace Dune
       template< class Entity >
       bool contains ( const Entity &entity, int i, unsigned int codim, Index &index ) const
       {
-        const GeometryType gt = ReferenceElements< double, Entity::mydimension >::general( e.type() ).type( i, codim );
+        const GeometryType gt = ReferenceElements< double, Entity::mydimension >::general( entity.type() ).type( i, codim );
         if( !layout_.contains( gt ) || !indexSet_.contains( entity ) )
           return false;
         index = indices_[ GlobalGeometryTypeIndex::index( gt ) ][ indexSet_.subIndex( entity, i, codim ) ];

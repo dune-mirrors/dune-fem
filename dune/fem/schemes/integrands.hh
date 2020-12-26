@@ -13,6 +13,8 @@
 
 #include <dune/fempy/quadrature/cachingpoint.hh>
 #include <dune/fempy/quadrature/elementpoint.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/common/explicitfieldvector.hh>
 
 namespace Dune
 {

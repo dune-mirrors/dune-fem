@@ -38,13 +38,13 @@ namespace Dune
     template< class BinaryFunction, class C, class T, std::size_t size >
     inline static int scan ( const Dune::CollectiveCommunication< C > &comm, std::array< T, size > &inout )
     {
-      return return scan( comm, inout.data(), size );
+      return scan( comm, inout.data(), size );
     }
 
     template< class BinaryFunction, class C, class T, class A >
     inline static int scan ( const Dune::CollectiveCommunication< C > &comm, std::vector< T, A > &inout )
     {
-      return return scan( comm, inout.data(), inout.size() );
+      return scan( comm, inout.data(), inout.size() );
     }
 
   } // namespace FemPy
