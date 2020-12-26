@@ -6,7 +6,7 @@ set(HEADERS
   virtualizedrestrictprolong.hh
 )
 
-if( NOT dune-python_FOUND )
+if( NOT DUNE_ENABLE_PYTHONBINDINGS )
   exclude_from_headercheck( ${HEADERS} )
 endif()
 
