@@ -21,7 +21,12 @@
 #include <dune/fempy/py/grid/numpy.hh>
 #include <dune/fempy/py/space.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
+#include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
+
+#if HAVE_DUNE_VTK
+#include <dune/vtk/function.hh>
+#endif
 
 namespace Dune
 {
@@ -144,12 +149,6 @@ namespace Dune
         assert( lfClass.second );
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
 
-        /*
-        cls.def( "__repr__", [] ( GridFunction &self ) -> std::string {
-            return "GridFunction< " + std::to_string( GridFunction::RangeType::dimension ) + " >(name = " + self.name() + ")";
-          } );
-        */
-
         cls.def_property_readonly( "dimRange", [] ( GridFunction & ) -> int { return GridFunction::RangeType::dimension; } );
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
         cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
@@ -193,25 +192,11 @@ namespace Dune
             } );
 
 
-#if 0
-        cls.def_property_readonly( "as_ufl", [] ( GridFunction &self ) -> pybind11::handle {
-              pybind11::tuple args( 1 );
-              args[ 0 ] = self;
-              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
-            } );
-#elif 0
-        cls.def( "as_ufl", [] ( GridFunction &self ) -> pybind11::handle {
-              pybind11::tuple args( 1 );
-              args[ 0 ] = self;
-              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
-            }, pybind11::keep_alive<0,1>() );
-#else
         cls.def( "as_ufl", [] ( pybind11::object &self ) -> pybind11::handle {
               pybind11::tuple args( 1 );
               args[ 0 ] = self;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
             },  pybind11::keep_alive< 0, 1 >() );
-#endif
       }
 
 
@@ -251,6 +236,20 @@ namespace Dune
       detail::clsVirtualizedGridFunction< GridView, Value >( scope ).
              def( pybind11::init< GridFunction >() );
       pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridView, Value > >();
+#if HAVE_DUNE_VTK
+      using GridView = typename GridFunction::GridView;
+      using VtkGF = Dune::Vtk::Function<GridView>;
+      // register the Function class if not already available
+      auto vgfClass = Python::insertClass<VtkGF>(scope,"VtkFunction",
+          Python::GenerateTypeName("Dune::Vtk::Function",MetaType<GridView>()),
+          Python::IncludeFiles{"dune/vtk/function.hh"});
+      assert( !vgfClass.second );
+      vgfClass.first.def( pybind11::init( [] ( GridFunction &gf ) {
+          // TODO: perhpas grid functions should just have a name attribute in general
+          return new VtkGF( localFunction(gf), gf.name() );
+        } ) );
+      pybind11::implicitly_convertible<GridFunction,VtkGF>();
+#endif
     }
 
     template< class GridFunction, class... options >
@@ -264,18 +263,21 @@ namespace Dune
       detail::registerGridFunction( scope, cls );
       detail::clsVirtualizedGridFunction< GridPart, Value >( scope ).def( pybind11::init< GridFunction >() );
       pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridPart, Value > >();
-    }
 
-#if 0 // not used anymore
-    // registerVirtualizedGridFunction
-    // -------------------------------
-
-    template< class GridPart, int... dimRange >
-    inline static void registerVirtualizedGridFunction ( pybind11::handle scope, std::integer_sequence< int, dimRange... > )
-    {
-      std::ignore = std::make_tuple( detail::clsVirtualizedGridFunction< GridPart, FieldVector< double, dimRange > >( scope )... );
-    };
+#if HAVE_DUNE_VTK
+      using GridView = typename GridFunction::GridView;
+      using VtkGF = Dune::Vtk::Function<GridView>;
+      // register the Function class if not already available
+      auto vgfClass = Python::insertClass<VtkGF>(scope,"VtkFunction",
+          Python::GenerateTypeName("Dune::Vtk::Function",MetaType<GridView>()),
+          Python::IncludeFiles{"dune/vtk/function.hh"});
+      assert( !vgfClass.second );
+      vgfClass.first.def( pybind11::init( [] ( GridFunction &gf ) {
+          return new VtkGF( localFunction(gf), gf.name() );
+        } ) );
+      pybind11::implicitly_convertible<GridFunction,VtkGF>();
 #endif
+    }
 
 
     namespace detail
@@ -344,36 +346,6 @@ namespace Dune
 
     } // namespace detail
 
-#if 0 // should not be needed since replaced by dune-python version
-    // defGlobalGridFunction
-    // ---------------------
-
-    template< class GridPart, int... dimRange >
-    inline static auto defGlobalGridFunction ( pybind11::handle scope, std::string name, std::integer_sequence< int, dimRange... > )
-    {
-      std::ignore = std::make_tuple( detail::registerPyGlobalGridFunction< GridPart >( scope, name, std::integral_constant< int, dimRange >() )... );
-
-      typedef std::function< pybind11::object( const GridPart &, std::string, int, pybind11::function, pybind11::object ) > Dispatch;
-      std::array< Dispatch, sizeof...( dimRange ) > dispatch = {{ Dispatch( detail::pyGlobalGridFunction< GridPart, dimRange > )... }};
-
-      return [ dispatch ] ( pybind11::object gv, std::string name, int order, pybind11::function evaluate ) {
-          typedef typename GridPart::GridViewType GridView;
-          const auto &gp = gridPart<GridView>( gv );
-          // typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
-          auto x = gp.template begin<0>()->geometry().center();
-          pybind11::gil_scoped_acquire acq;
-          pybind11::object v( evaluate( x ) );
-          const std::size_t dimR = len( v );
-          if( dimR >= dispatch.size() )
-            DUNE_THROW( NotImplemented, "globalGridFunction not implemented for dimRange = " + std::to_string( dimR ) );
-          return dispatch[ dimR ]( gp, std::move( name ), order, std::move( evaluate ), std::move(gv) );
-        };
-    }
-
-#endif
-// the following is used for df.__getitem__(i) - could perhaps be
-// implemented using the dune-python SimpleGridFunction
-
     namespace detail
     {
 
@@ -425,39 +397,6 @@ namespace Dune
 
     } // namespace detail
 
-#if 0
-
-    // defLocalGridFunction
-    // --------------------
-
-    template< class GridPart, int... dimRange >
-    inline static auto defLocalGridFunction ( pybind11::handle scope, std::string name, std::integer_sequence< int, dimRange... > )
-    {
-      std::ignore = std::make_tuple( detail::registerPyLocalGridFunction< GridPart >( scope, name, std::integral_constant< int, dimRange >() )... );
-
-      typedef std::function< pybind11::object( const GridPart &, std::string, int, pybind11::function, pybind11::object ) > Dispatch;
-      std::array< Dispatch, sizeof...( dimRange ) > dispatch = {{ Dispatch( detail::pyLocalGridFunction< GridPart, dimRange > )... }};
-
-      return [ dispatch ] ( pybind11::object gv, std::string name, int order, pybind11::function evaluate ) {
-          typedef typename GridPart::GridViewType GridView;
-          const auto &gp = gridPart<GridView>( gv );
-          int dimR = -1;
-          if( gp.template begin< 0 >() != gp.template end< 0 >() )
-          {
-            typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate x( 0 );
-            pybind11::gil_scoped_acquire acq;
-            pybind11::object v( evaluate( *gp.template begin< 0 >(), x ) );
-            dimR = len( v );
-          }
-          dimR = gp.comm().max( dimR );
-          if( dimR < 0 )
-            DUNE_THROW( InvalidStateException, "Cannot create local grid function on empty grid" );
-          if( static_cast< std::size_t >( dimR ) >= dispatch.size() )
-            DUNE_THROW( NotImplemented, "localGridFunction not implemented for dimRange = " + std::to_string( dimR ) );
-          return dispatch[ static_cast< std::size_t >( dimR ) ]( gp, std::move( name ), order, std::move( evaluate ), std::move( gv ) );
-        };
-    }
-#endif // old global/local grid function - now using dune-python
   } // namespace FemPy
 
 } // namespace Dune

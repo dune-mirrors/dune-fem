@@ -112,9 +112,9 @@ from dune.grid.grid_generator import _writeVTKDispatcher
 def vtkDispatchUFL(grid,f):
     from dune.fem.function._functions import uflFunction
     order = 5 # needs to be derived from f
-    gf = uflFunction(grid, "tmp", order, f)
+    # gf = uflFunction(grid, "tmp", order, f)
     try:
-        gf = uflFunction(grid, "tmp", order, f)
+        gf = uflFunction(grid, "tmp", order, f).gf
     except AttributeError:
         gf = None
     return gf

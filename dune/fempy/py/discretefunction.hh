@@ -330,6 +330,19 @@ namespace Dune
             return new VirtualizedGridFunction< GridPart, Value >( pyGridFunction( df ) );
           } ) );
         pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
+#if HAVE_DUNE_VTK
+        using GridView = typename DF::GridView;
+        using VtkGF = Dune::Vtk::Function<GridView>;
+        // register the Function class if not already available
+        auto vgfClass = Python::insertClass<VtkGF>(module,"VtkFunction",
+            Python::GenerateTypeName("Dune::Vtk::Function",MetaType<GridView>()),
+            Python::IncludeFiles{"dune/vtk/function.hh"});
+        assert( !vgfClass.second );
+        vgfClass.first.def( pybind11::init( [] ( DF &df ) {
+            return new VtkGF( localFunction(df), df.name() );
+          } ) );
+        pybind11::implicitly_convertible<DF,VtkGF>();
+#endif
 
         registerRestrictProlong< DF >( module );
 
