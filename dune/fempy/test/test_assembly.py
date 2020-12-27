@@ -2,18 +2,9 @@ import time,sys
 import dune
 import dune.create as create
 
-try:
-    from dune.fem.operator import linear as linearOperator
-    def jacobian(scheme,uh,A):
-        scheme.jacobian(uh,A)
-except: # for 2.6
-    def linearOperator(scheme):
-        u_h    = create.function("discrete", scheme.space, name="tmp")
-        u_h.clear()
-        return scheme.assemble(u_h)
-    def jacobian(scheme,uh,A):
-        A = scheme.assemble(uh)
-
+from dune.fem.operator import linear as linearOperator
+def jacobian(scheme,uh,A):
+    scheme.jacobian(uh,A)
 
 from dune.ufl import Space
 from ufl import Identity, TestFunction, TrialFunction, SpatialCoordinate, ds, dx, inner, grad, div
@@ -26,10 +17,10 @@ try:
 except:
     test_petsc = False
 
-test_scalar = True
+test_scalar = False
 test_vector = True
 test_21 = True
-test_12 = True
+test_12 = False
 testLoop = 1
 # testLoop = 10
 
