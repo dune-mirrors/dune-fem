@@ -220,7 +220,7 @@ namespace Dune
 
       //! constructor taking space and volume quadrature order
       explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc,
-              std::function<int(const int)> volQuadOrderFct = [](const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(); } )
+              std::function<int(const int)> volQuadOrderFct = [](const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); } )
         : spc_( referenceToSharedPtr( spc ) )
         , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )
