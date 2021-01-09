@@ -4,12 +4,12 @@
 //- dune-common includes
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/shared_ptr.hh>
 
 //- dune-geometry includes
 #include <dune/geometry/typeindex.hh>
 
 //- dune-fem includes
-#include <dune/fem/common/memory.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/misc/checkgeomaffinity.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -221,7 +221,7 @@ namespace Dune
       //! constructor taking space and volume quadrature order
       explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc,
               std::function<int(const int)> volQuadOrderFct = [](const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); } )
-        : spc_( referenceToSharedPtr( spc ) )
+        : spc_( Dune::stackobject_to_shared_ptr( spc ) )
         , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )
         , volumeQuadratureOrder_ ( volQuadOrderFct )

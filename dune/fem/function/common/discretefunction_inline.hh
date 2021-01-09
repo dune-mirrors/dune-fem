@@ -3,10 +3,11 @@
 
 #include <fstream>
 
+#include <dune/common/shared_ptr.hh>
+
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/common/bindguard.hh>
-#include <dune/fem/common/memory.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -26,14 +27,14 @@ namespace Dune
     inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( const std::string &name,
                                    const DiscreteFunctionSpaceType &dfSpace )
-    : dfSpace_( referenceToSharedPtr( dfSpace ) ),
+    : dfSpace_( Dune::stackobject_to_shared_ptr( dfSpace ) ),
       ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
                            sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
                  * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
       ldvAllocator_( &ldvStack_ ),
       localFunction_( space() ),
       name_( name ),
-      scalarProduct_( dfSpace )
+      scalarProduct_( space() )
     {
     }
 
@@ -47,7 +48,7 @@ namespace Dune
         ldvAllocator_( &ldvStack_ ),
         localFunction_( space() ),
         name_( std::move( name ) ),
-        scalarProduct_( dfSpace )
+        scalarProduct_( space() )
     {}
 
 
@@ -61,7 +62,7 @@ namespace Dune
         ldvAllocator_( &ldvStack_ ),
         localFunction_( space() ),
         name_( other.name_ ),
-        scalarProduct_( other.scalarProduct_ )
+        scalarProduct_( space() )
     {
       if( other.assembleOperation_ != std::type_index( typeid( void ) ) )
         DUNE_THROW( InvalidStateException, "Cannot copy discrete function during assembly" );

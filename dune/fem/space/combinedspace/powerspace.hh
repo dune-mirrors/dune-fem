@@ -6,10 +6,10 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/common/memory.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
@@ -179,7 +179,7 @@ namespace Dune
       {}
 
       PowerDiscreteFunctionSpace ( const DiscreteFunctionSpace &space )
-        : BaseType( referenceToSharedPtr( space ) )
+        : BaseType( Dune::stackobject_to_shared_ptr( space ) )
       {}
 
       PowerDiscreteFunctionSpace ( std::shared_ptr< DiscreteFunctionSpace > space )

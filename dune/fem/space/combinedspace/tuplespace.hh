@@ -8,6 +8,7 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
+#include <dune/common/shared_ptr.hh>
 
 #include <dune/grid/common/grid.hh>
 
@@ -233,7 +234,7 @@ namespace Dune
        *  Otherwise the behaviour of this space is undefined.
        */
       TupleDiscreteFunctionSpaceImpl ( const DiscreteFunctionSpaces &... spaces )
-        : BaseType( std::make_tuple( referenceToSharedPtr( spaces )... ) )
+        : BaseType( std::make_tuple( Dune::stackobject_to_shared_ptr( spaces )... ) )
       {}
 
       /** \brief constructor
