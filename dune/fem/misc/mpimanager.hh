@@ -70,42 +70,54 @@ namespace Dune
         MPIHelper *&helper = instance().helper_;
         std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
-        // the following initalization is only enabled for
-        // MPI-thread parallel programs
+        // the following initialization overrides the MPI_Init in dune-common
+        // to avoid a call to MPI_Finalize before all singletons have been deleted
 #if HAVE_MPI
-#ifdef USE_SMP_PARALLEL
         int wasInitialized = -1;
         MPI_Initialized( &wasInitialized );
         if(!wasInitialized)
         {
-          int provided;
-          // use MPI_Init_thread for hybrid parallel programs
-          int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
+#ifndef USE_SMP_PARALLEL
+          // standard MPI_Init
+          // call normal MPI_Init here to prevent MPIHelper to interfering
+          // with MPI_Finalize one program exit which would cause failure
+          {
+            int is_initialized = MPI_Init(&argc, &argv);
+            if( is_initialized != MPI_SUCCESS )
+              DUNE_THROW(InvalidStateException,"MPI_Init failed!");
+          }
+#else     // threaded init
+          {
+            int provided;
+            // use MPI_Init_thread for hybrid parallel programs
+            int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
 
-          if( is_initialized != MPI_SUCCESS )
-            DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
+            if( is_initialized != MPI_SUCCESS )
+              DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
 
 #if not defined NDEBUG && defined DUNE_DEVEL_MODE
-          // for OpenMPI provided seems to be MPI_THREAD_SINGLE
-          // but the bybrid version still works. On BlueGene systems
-          // the MPI_THREAD_FUNNELED is really needed
-          if( provided != MPI_THREAD_FUNNELED )
-          {
-            if( provided == MPI_THREAD_SINGLE )
-              dwarn << "MPI thread support = single (instead of funneled)!" << std::endl;
-            else
-              dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
+            // for OpenMPI provided seems to be MPI_THREAD_SINGLE
+            // but the bybrid version still works. On BlueGene systems
+            // the MPI_THREAD_FUNNELED is really needed
+            if( provided != MPI_THREAD_FUNNELED )
+            {
+              if( provided == MPI_THREAD_SINGLE )
+                dwarn << "MPI thread support = single (instead of funneled)!" << std::endl;
+              else
+                dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
+            }
           }
-#endif  // end NDEBUG
+#endif    // end NDEBUG
+#endif    // end USE_SMP_PARALLEL
         } // end if(!wasInitialized)
-#endif  // end USE_SMP_PARALLEL
 #endif  // end HAVE_MPI
 
         // if already initialized, do nothing further
         if( helper && comm )
           return ;
 
-        // if not already called, this will call MPI_Init
+        // this will just initialize the static variables inside MPIHelper but
+        // not call MPI_Init again
         helper = &MPIHelper::instance( argc, argv );
         comm.reset( new CollectiveCommunication( helper->getCommunicator() ) );
 
