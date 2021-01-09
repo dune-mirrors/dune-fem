@@ -65,6 +65,18 @@ namespace Dune
 #endif // #if HAVE_PETSC
 
     public:
+      ~MPIManager()
+      {
+#if HAVE_MPI
+        // if MPI_Init was called here and finalize has not been
+        // called yet, then this is the place to call it
+        if( wasInitializedHere_ && !mpiFinalized() )
+        {
+          MPI_Finalize();
+        }
+#endif
+      }
+
       static void initialize ( int &argc, char **&argv )
       {
         MPIHelper *&helper = instance().helper_;
@@ -109,6 +121,8 @@ namespace Dune
           }
 #endif    // end NDEBUG
 #endif    // end USE_SMP_PARALLEL
+          instance().wasInitializedHere_ = true;
+
         } // end if(!wasInitialized)
 #endif  // end HAVE_MPI
 
@@ -151,6 +165,7 @@ namespace Dune
     private:
       MPIHelper *helper_ = nullptr;
       std::unique_ptr< CollectiveCommunication > comm_;
+      bool wasInitializedHere_ = false ;
     };
 
   } // namespace Fem
