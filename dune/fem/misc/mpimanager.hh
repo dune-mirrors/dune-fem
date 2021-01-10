@@ -118,8 +118,8 @@ namespace Dune
               else
                 dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
             }
-          }
 #endif    // end NDEBUG
+          }
 #endif    // end USE_SMP_PARALLEL
           instance().wasInitializedHere_ = true;
 
