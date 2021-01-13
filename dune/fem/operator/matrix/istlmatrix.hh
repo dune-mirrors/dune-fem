@@ -840,7 +840,7 @@ namespace Dune
       template <class Vector>
       void setUnitRows( const Vector &rows )
       {
-        const auto &slaveDofs = domainSpace().slaveDofs();
+        const auto &auxiliaryDofs = domainSpace().auxiliaryDofs();
 
         for (auto r : rows)
         {
@@ -857,7 +857,7 @@ namespace Dune
               entry = 0;
             if (col.index() == blockRow)
             {
-              (*col)[localRowIdx][localRowIdx] = slaveDofs.isSlave( r )? 0.0 : 1.0;
+              (*col)[localRowIdx][localRowIdx] = auxiliaryDofs.contains( r )? 0.0 : 1.0;
 #ifndef NDEBUG
               set = true;
 #endif

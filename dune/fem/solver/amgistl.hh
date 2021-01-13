@@ -150,22 +150,22 @@ namespace Dune
         {
           typedef typename T::field_type field_type;
 
-          // clear slave DoFs
-          const auto &slaveDofs = dfSpace_.slaveDofs();
-          for( int i : slaveDofs )
+          // clear auxiliary DoFs
+          const auto &auxiliaryDofs = dfSpace_.auxiliaryDofs();
+          for( int i : auxiliaryDofs )
             x[ i ] = field_type( 0 );
         }
 
         template< class T, class F >
         void dot ( const T &x, const T &y, F &scp ) const
         {
-          const auto &slaveDofs = dfSpace_.slaveDofs();
+          const auto &auxiliaryDofs = dfSpace_.auxiliaryDofs();
 
-          const int numSlaves = slaveDofs.size();
-          for( int slave = 0, i = 0; slave < numSlaves; ++slave, ++i )
+          const int numAuxiliarys = auxiliaryDofs.size();
+          for( int auxiliary = 0, i = 0; auxiliary < numAuxiliarys; ++auxiliary, ++i )
           {
-            const int nextSlave = slaveDofs[ slave ];
-            for( ; i < nextSlave; ++i )
+            const int nextAuxiliary = auxiliaryDofs[ auxiliary ];
+            for( ; i < nextAuxiliary; ++i )
               scp += x[ i ] * y[ i ];
           }
 
@@ -283,8 +283,8 @@ namespace Dune
 
         // construct local attributes
         std::vector< typename LocalIndexType::Attribute > attribute( localMapper.size(), Dune::OwnerOverlapCopyAttributeSet::owner );
-        for( const auto &slave : dfSpace.slaveDofs() )
-          attribute[ slave ] = Dune::OwnerOverlapCopyAttributeSet::copy;
+        for( const auto &auxiliary : dfSpace.auxiliaryDofs() )
+          attribute[ auxiliary ] = Dune::OwnerOverlapCopyAttributeSet::copy;
 
         // build parallel index set
         communication->indexSet().beginResize();

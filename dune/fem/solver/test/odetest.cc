@@ -50,16 +50,16 @@ private:
 
   struct SpaceDummy {
     typedef GridPartDummy GridPartType;
-    typedef std::array<int, 1 > SlaveDofsType;
+    typedef std::array<int, 1 > AuxiliaryDofsType;
 
-    SpaceDummy () : slaveDofs_() { slaveDofs_[ 0 ] = N; }
+    SpaceDummy () : auxiliaryDofs_() { auxiliaryDofs_[ 0 ] = N; }
 
     int size () const { return N; }
 
     const GridPartType &gridPart () const { return gridPart_; }
-    const SlaveDofsType &slaveDofs () const { return slaveDofs_; }
+    const AuxiliaryDofsType &auxiliaryDofs () const { return auxiliaryDofs_; }
 
-    SlaveDofsType slaveDofs_;
+    AuxiliaryDofsType auxiliaryDofs_;
     GridPartType gridPart_;
   };
   typedef Dune::FieldVector<double, N> BaseType;

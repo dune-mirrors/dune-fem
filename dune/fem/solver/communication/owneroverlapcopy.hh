@@ -117,8 +117,8 @@ namespace Dune
 
         // construct local attributes
         std::vector< typename LocalIndexType::Attribute > attribute( localMapper.size(), Dune::OwnerOverlapCopyAttributeSet::owner );
-        for( const auto &slave : dfSpace.slaveDofs() )
-          attribute[ slave ] = Dune::OwnerOverlapCopyAttributeSet::copy;
+        for( const auto &auxiliary : dfSpace.auxiliaryDofs() )
+          attribute[ auxiliary ] = Dune::OwnerOverlapCopyAttributeSet::copy;
 
         // build parallel index set
         communication->indexSet().beginResize();

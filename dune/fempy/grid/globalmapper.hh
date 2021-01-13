@@ -36,7 +36,7 @@ namespace Dune
     {
       typedef GlobalMapper< GV, Layout > This;
 
-      struct MarkSlaves;
+      struct MarkAuxiliarys;
       struct Minimize;
 
     public:
@@ -113,14 +113,14 @@ namespace Dune
 
 
 
-    // GlobalMapper::MarkSlaves
+    // GlobalMapper::MarkAuxiliarys
     // ------------------------
 
     template< class GV, template< int > class Layout, class Idx >
-    struct GlobalMapper< GV, Layout, Idx >::MarkSlaves
+    struct GlobalMapper< GV, Layout, Idx >::MarkAuxiliarys
       : public CommDataHandleIF< CommDataHandle, int >
     {
-      MarkSlaves ( GlobalMapper< GV, Layout, Idx > &mapper, std::bitset< dimension+1 > contains )
+      MarkAuxiliarys ( GlobalMapper< GV, Layout, Idx > &mapper, std::bitset< dimension+1 > contains )
         : mapper_( mapper ), contains_( contains ), localRank_( mapper_.gridView_.comm().rank() )
       {}
 
@@ -334,10 +334,10 @@ namespace Dune
         }
       }
 
-      // mark slaves (index = std::numeric_limits< Index >::max())
+      // mark auxiliarys (index = std::numeric_limits< Index >::max())
 
-      MarkSlaves markSlaves( *this, contains );
-      gridView_.communicate( markSlaves, InteriorBorder_InteriorBorder_Interface, ForwardCommunication );
+      MarkAuxiliarys markAuxiliarys( *this, contains );
+      gridView_.communicate( markAuxiliarys, InteriorBorder_InteriorBorder_Interface, ForwardCommunication );
 
       // assign indices to all master entities
 
@@ -362,7 +362,7 @@ namespace Dune
           index += (index < std::numeric_limits< Index >::max() ? localRange_.first : 0);
       }
 
-      // communicate slave indices
+      // communicate auxiliary indices
 
       Minimize minimize( *this, contains );
       gridView_.communicate( minimize, All_All_Interface, ForwardCommunication );

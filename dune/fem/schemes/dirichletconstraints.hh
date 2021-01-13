@@ -291,8 +291,8 @@ protected:
   void dirichletDofsCorrectOnEntity ( const EntityType &entity,
                                       LocalMatrix& localMatrix ) const
   {
-    // get slave dof structure (for parallel runs)   /*@LST0S@*/
-    const auto &slaveDofs = localMatrix.rangeSpace().slaveDofs();
+    // get auxiliary dof structure (for parallel runs)   /*@LST0S@*/
+    const auto &auxiliaryDofs = localMatrix.rangeSpace().auxiliaryDofs();
 
     // get number of basis functions
     const int localBlocks = space_.blockMapper().numDofs( entity );
@@ -316,7 +316,7 @@ protected:
           localMatrix.clearRow( localDof );
 
           // set diagonal to 1
-          double value = slaveDofs.isSlave( global )? 0.0 : 1.0;
+          double value = auxiliaryDofs.contains( global )? 0.0 : 1.0;
           localMatrix.set( localDof, localDof, value );
         }
       }

@@ -28,15 +28,15 @@ namespace LinearSolver
     const auto& s      = s_df.dofVector();
     const auto& r_star = r_star_df.dofVector();
 
-    const auto& slaveDofs = r_df.space().slaveDofs();
+    const auto& auxiliaryDofs = r_df.space().auxiliaryDofs();
 
     global_dot[ 4 ] = global_dot[ 3 ] = global_dot[ 2 ] = global_dot[ 1 ] = global_dot[ 0 ] = 0.0;
 
-    const size_t numSlaves = slaveDofs.size();
-    for( size_t slave = 0, i = 0 ; slave < numSlaves; ++slave )
+    const size_t numAuxiliarys = auxiliaryDofs.size();
+    for( size_t auxiliary = 0, i = 0 ; auxiliary < numAuxiliarys; ++auxiliary )
     {
-      const size_t nextSlave = slaveDofs[ slave ];
-      for(; i < nextSlave; ++i )
+      const size_t nextAuxiliary = auxiliaryDofs[ auxiliary ];
+      for(; i < nextAuxiliary; ++i )
       {
         global_dot[ 0 ] += r[ i ] * s[ i ];
         global_dot[ 1 ] += r[ i ] * r[ i ];

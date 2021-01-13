@@ -61,12 +61,12 @@ namespace Dune
         /** \brief block mapper type */
         using BlockMapperType = typename BaseType::BlockMapperType;
 
-        typedef typename BaseType::SlaveDofsType SlaveDofsType;
+        typedef typename BaseType::AuxiliaryDofsType AuxiliaryDofsType;
 
     protected:
-      struct SlaveDofsFactory
+      struct AuxiliaryDofsFactory
       {
-        typedef std::pair< SlaveDofsType, int > ObjectType;
+        typedef std::pair< AuxiliaryDofsType, int > ObjectType;
 
         static ObjectType *createObject ( std::pair< GridPartType *, BlockMapperType * > key )
         {
@@ -76,7 +76,7 @@ namespace Dune
         static void deleteObject ( ObjectType *object ) { delete object; }
       };
 
-      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< SlaveDofsType, int >, SlaveDofsFactory > SlaveDofsProviderType;
+      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< AuxiliaryDofsType, int >, AuxiliaryDofsFactory > AuxiliaryDofsProviderType;
 
 
 

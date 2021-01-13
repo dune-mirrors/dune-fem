@@ -146,8 +146,8 @@ namespace Dune
       typedef PetscMappers< DomainSpaceType > DomainMappersType;
       typedef PetscMappers< RangeSpaceType > RangeMappersType;
 
-      typedef SlaveDofs< typename DomainSpaceType::GridPartType, typename DomainMappersType::GhostMapperType > DomainSlaveDofsType;
-      typedef SlaveDofs< typename RangeSpaceType::GridPartType, typename RangeMappersType::GhostMapperType > RangeSlaveDofsType;
+      typedef AuxiliaryDofs< typename DomainSpaceType::GridPartType, typename DomainMappersType::GhostMapperType > DomainAuxiliaryDofsType;
+      typedef AuxiliaryDofs< typename RangeSpaceType::GridPartType, typename RangeMappersType::GhostMapperType > RangeAuxiliaryDofsType;
 
     public:
       // the local matrix
@@ -342,15 +342,15 @@ namespace Dune
           }
           else
           {
-            DomainSlaveDofsType domainSlaveDofs( domainMappers_.ghostMapper() );
-            RangeSlaveDofsType rangeSlaveDofs( rangeMappers_.ghostMapper() );
+            DomainAuxiliaryDofsType domainAuxiliaryDofs( domainMappers_.ghostMapper() );
+            RangeAuxiliaryDofsType rangeAuxiliaryDofs( rangeMappers_.ghostMapper() );
 
             std::vector< PetscInt > d_nnz( localRows / bs, 0 );
             std::vector< PetscInt > o_nnz( localRows / bs, 0 );
             for( const auto entry : stencil.globalStencil() )
             {
               const int petscIndex = rangeMappers_.ghostIndex( entry.first );
-              if( rangeSlaveDofs.isSlave( petscIndex ) )
+              if( rangeAuxiliaryDofs.contains( petscIndex ) )
                 continue;
 
               for (unsigned int rb = 0; rb<rangeLocalBlockSize/bs; ++rb)
@@ -362,7 +362,7 @@ namespace Dune
                 d_nnz[ row ] = o_nnz[ row ] = 0;
                 for( const auto local : entry.second )
                 {
-                  if( !domainSlaveDofs.isSlave( domainMappers_.ghostIndex( local ) ) )
+                  if( !domainAuxiliaryDofs.contains( domainMappers_.ghostIndex( local ) ) )
                     d_nnz[ row ] += domainLocalBlockSize/bs;
                   else
                     o_nnz[ row ] += domainLocalBlockSize/bs;

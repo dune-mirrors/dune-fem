@@ -12,7 +12,7 @@
 #include <dune/grid/common/datahandleif.hh>
 
 #include <dune/fem/gridpart/common/indexset.hh>
-#include <dune/fem/space/common/slavedofs.hh>
+#include <dune/fem/space/common/auxiliarydofs.hh>
 #include <dune/fem/space/mapper/capabilities.hh>
 
 namespace Dune
@@ -31,8 +31,8 @@ namespace Dune
       struct BuildDataHandle
         : public CommDataHandleIF< BuildDataHandle< GridPart, BaseMapper, GlobalKey >, GlobalKey >
       {
-        explicit BuildDataHandle ( const BaseMapper &baseMapper, const SlaveDofs< GridPart, BaseMapper > &slaveDofs, std::vector< GlobalKey > &mapping )
-          : baseMapper_( baseMapper ), slaveDofs_( slaveDofs ), mapping_( mapping )
+        explicit BuildDataHandle ( const BaseMapper &baseMapper, const AuxiliaryDofs< GridPart, BaseMapper > &auxiliaryDofs, std::vector< GlobalKey > &mapping )
+          : baseMapper_( baseMapper ), auxiliaryDofs_( auxiliaryDofs ), mapping_( mapping )
         {}
 
         bool contains ( int dim, int codim ) const { return baseMapper_.contains( codim ); }
@@ -42,7 +42,7 @@ namespace Dune
         void gather ( Buffer &buffer, const Entity &entity ) const
         {
           baseMapper_.mapEachEntityDof( entity, [ this, &buffer ] ( int, auto index ) {
-              if( !slaveDofs_.isSlave( index ) )
+              if( !auxiliaryDofs_.contains( index ) )
                 buffer.write( mapping_[ index ] );
             } );
         }
@@ -55,7 +55,7 @@ namespace Dune
 
           assert( n == static_cast< std::size_t >( baseMapper_.numEntityDofs( entity ) ) );
           baseMapper_.mapEachEntityDof( entity, [ this, &buffer ] ( int, auto index ) {
-              assert( slaveDofs_.isSlave( index ) );
+              assert( auxiliaryDofs_.contains( index ) );
               buffer.read( mapping_[ index ] );
           } );
         }
@@ -64,13 +64,14 @@ namespace Dune
         std::size_t size ( const Entity &entity ) const
         {
           std::size_t size = 0;
-          baseMapper_.mapEachEntityDof( entity, [ this, &size ] ( int, auto index ) { size += static_cast< std::size_t >( !slaveDofs_.isSlave( index ) ); } );
+          baseMapper_.mapEachEntityDof( entity, [ this, &size ] ( int, auto index )
+              { size += static_cast< std::size_t >( !auxiliaryDofs_.contains( index ) ); } );
           return size;
         }
 
       protected:
         const BaseMapper &baseMapper_;
-        const SlaveDofs< GridPart, BaseMapper > &slaveDofs_;
+        const AuxiliaryDofs< GridPart, BaseMapper > &auxiliaryDofs_;
         std::vector< GlobalKey > &mapping_;
       };
 
@@ -171,21 +172,22 @@ namespace Dune
 
       void update ()
       {
-        SlaveDofs< GridPartType, BaseMapperType > slaveDofs( gridPart(), baseMapper() );
-        slaveDofs.rebuild();
+        AuxiliaryDofs< GridPartType, BaseMapperType > auxiliaryDofs( gridPart(), baseMapper() );
+        auxiliaryDofs.rebuild();
+        auto primaryDofs = Dune::Fem::primaryDofs( auxiliaryDofs );
 
-        size_ = masterDofs( slaveDofs ).size();
+        size_ = primaryDofs.size();
         offset_ = exScan( gridPart().comm(), size_ );
         size_ = gridPart().comm().sum( size_ );
 
         std::size_t baseSize = baseMapper().size();
         mapping_.resize( baseSize );
         GlobalKeyType next = static_cast< GlobalKeyType >( offset_ );
-        for( const auto i : masterDofs( slaveDofs ) )
+        for( const auto i : primaryDofs )
           mapping_[ i ] = next++;
-        assert( next == static_cast< GlobalKeyType >( offset_ + masterDofs( slaveDofs ).size() ) );
+        assert( next == static_cast< GlobalKeyType >( offset_ + primaryDofs.size() ) );
 
-        __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), slaveDofs, mapping_ );
+        __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), auxiliaryDofs, mapping_ );
         gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
       }
 

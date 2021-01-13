@@ -74,14 +74,14 @@ namespace LinearSolver
         y[ l ] = 0;
       }
 
-      const auto& slaveDofs = vjp.space().slaveDofs();
+      const auto& auxiliaryDofs = vjp.space().auxiliaryDofs();
       const auto& vj = vjp.dofVector();
 
-      const size_t numSlaves = slaveDofs.size();
-      for( size_t slave = 0, i = 0 ; slave < numSlaves; ++slave )
+      const size_t numAuxiliarys = auxiliaryDofs.size();
+      for( size_t auxiliary = 0, i = 0 ; auxiliary < numAuxiliarys; ++auxiliary )
       {
-        const size_t nextSlave = slaveDofs[ slave ];
-        for(; i < nextSlave; ++i )
+        const size_t nextAuxiliary = auxiliaryDofs[ auxiliary ];
+        for(; i < nextAuxiliary; ++i )
         {
           for(int l=0; l<m; ++l)
           {
