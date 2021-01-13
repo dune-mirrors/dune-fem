@@ -52,7 +52,7 @@ void checkPeriodic( Grid& grid )
         const auto& geomOutside = intersection.outside().geometry();
 
         const int nop = faceQuadInner.nop();
-        assert( nop == faceQuadOuter.nop() );
+        assert( nop == int(faceQuadOuter.nop()) );
         for( int qp = 0; qp<nop; ++qp )
         {
           auto gIn  = geomInside.global ( faceQuadInner.point(qp ) );
