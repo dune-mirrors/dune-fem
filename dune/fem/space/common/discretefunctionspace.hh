@@ -22,7 +22,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/slavedofs.hh>
+#include <dune/fem/space/common/auxiliarydofs.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
@@ -223,8 +223,12 @@ namespace Dune
       typedef typename GridPartType :: template Codim< Traits::codimension > :: EntityType EntityType;
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
-      //! type of slave dofs
-      typedef SlaveDofs< GridPartType, BlockMapperType > SlaveDofsType;
+      //! type of auxiliary dofs
+      typedef AuxiliaryDofs< GridPartType, BlockMapperType > AuxiliaryDofsType;
+
+      //! deprecated type
+      [[deprecated("Use AuxiliaryDofsType instead!")]]
+      typedef AuxiliaryDofsType SlaveDofsType;
 
       /** \brief defines type of data handle for communication
           \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
@@ -553,11 +557,18 @@ namespace Dune
         return asImp().createDataHandle( discreteFunction, operation );
       }
 
-      /** \brief get slave dofs */
-      const SlaveDofsType& slaveDofs() const
+      /** \brief get auxiliary dofs */
+      const AuxiliaryDofsType& auxiliaryDofs() const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().slaveDofs() );
-        return asImp().slaveDofs();
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().auxiliaryDofs() );
+        return asImp().auxiliaryDofs();
+      }
+
+      /** \brief deprecated method, use auxiliaryDofs */
+      [[deprecated("Use auxiliaryDofs instead!")]]
+      const AuxiliaryDofsType& slaveDofs() const
+      {
+        return auxiliaryDofs();
       }
 
     protected:
@@ -647,12 +658,12 @@ namespace Dune
       typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
-      typedef typename BaseType::SlaveDofsType SlaveDofsType;
+      typedef typename BaseType::AuxiliaryDofsType AuxiliaryDofsType;
 
     protected:
-      struct SlaveDofsFactory
+      struct AuxiliaryDofsFactory
       {
-        typedef std::pair< SlaveDofsType, int > ObjectType;
+        typedef std::pair< AuxiliaryDofsType, int > ObjectType;
 
         static ObjectType *createObject ( std::pair< GridPartType *, BlockMapperType * > key )
         {
@@ -662,7 +673,7 @@ namespace Dune
         static void deleteObject ( ObjectType *object ) { delete object; }
       };
 
-      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< SlaveDofsType, int >, SlaveDofsFactory > SlaveDofsProviderType;
+      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< AuxiliaryDofsType, int >, AuxiliaryDofsFactory > AuxiliaryDofsProviderType;
 
     protected:
       GridPartType &gridPart_;
@@ -876,18 +887,18 @@ namespace Dune
           :: Type( discreteFunction, operation );
       }
 
-      /** \brief get slave dofs */
-      const SlaveDofsType& slaveDofs() const
+      /** \brief get auxiliary dofs */
+      const AuxiliaryDofsType& auxiliaryDofs() const
       {
-        if ( !slaveDofs_ )
-          slaveDofs_.reset( &(SlaveDofsProviderType::getObject( std::make_pair( &this->gridPart(), &this->blockMapper() ) )) );
+        if ( !auxiliaryDofs_ )
+          auxiliaryDofs_.reset( &(AuxiliaryDofsProviderType::getObject( std::make_pair( &this->gridPart(), &this->blockMapper() ) )) );
         const int sequence = asImp().sequence();
-        if( slaveDofs_->second != sequence )
+        if( auxiliaryDofs_->second != sequence )
         {
-          slaveDofs_->first.rebuild();
-          slaveDofs_->second = sequence;
+          auxiliaryDofs_->first.rebuild();
+          auxiliaryDofs_->second = sequence;
         }
-        return slaveDofs_->first;
+        return auxiliaryDofs_->first;
       }
 
       /** \brief default implementation of addFunction does nothing at the moment */
@@ -922,7 +933,7 @@ namespace Dune
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
-      mutable std::unique_ptr< std::pair< SlaveDofsType, int >, typename SlaveDofsProviderType::Deleter > slaveDofs_;
+      mutable std::unique_ptr< std::pair< AuxiliaryDofsType, int >, typename AuxiliaryDofsProviderType::Deleter > auxiliaryDofs_;
     };
 
 

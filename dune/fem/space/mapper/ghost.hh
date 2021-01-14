@@ -27,9 +27,9 @@ namespace Dune
     // -----------------------------
 
     template< class GridPart, class Mapper >
-    class SlaveDofs;
+    class AuxiliaryDofs;
 
-    template< class SlaveDofs >
+    template< class AuxiliaryDofs >
     struct MasterDofs;
 
 
@@ -316,13 +316,13 @@ namespace Dune
 
 
 
-    // SlaveDofs for GhostDofMapper
+    // AuxiliaryDofs for GhostDofMapper
     // ----------------------------
 
     template< class GridPart, class BaseMapper, class GlobalKey >
-    class SlaveDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > >
+    class AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > >
     {
-      typedef SlaveDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > ThisType;
+      typedef AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > ThisType;
 
     public:
       typedef GridPart GridPartType;
@@ -333,25 +333,25 @@ namespace Dune
 
       typedef __GhostDofMapper::ConstIterator< GlobalKeyType > ConstIteratorType;
 
-      explicit SlaveDofs ( const MapperType &mapper )
+      explicit AuxiliaryDofs ( const MapperType &mapper )
         : mapper_( mapper )
       {}
 
-      SlaveDofs ( const GridPartType &gridPart, const MapperType &mapper )
-        : SlaveDofs( mapper )
+      AuxiliaryDofs ( const GridPartType &gridPart, const MapperType &mapper )
+        : AuxiliaryDofs( mapper )
       {}
 
       //! return dof number of salve with index
       GlobalKeyType operator [] ( int index ) const { return mapper().interiorSize() + index; }
 
-      //! return number of slave dofs
+      //! return number of auxiliary dofs
       SizeType size () const { return mapper().ghostSize()+1; }
 
       ConstIteratorType begin () const { return ConstIteratorType( mapper().interiorSize() ); }
       ConstIteratorType end () const { return ConstIteratorType( mapper().interiorSize() + mapper().ghostSize() ); }
 
-      //! return true if index is contained, meaning is a slave dof
-      bool isSlave ( GlobalKeyType index ) const { return (static_cast< SizeType >( index ) >= mapper().interiorSize()); }
+      //! return true if index is contained, meaning it is an auxiliary dof
+      bool contains ( GlobalKeyType index ) const { return (static_cast< SizeType >( index ) >= mapper().interiorSize()); }
 
       void rebuild () {}
 
@@ -364,23 +364,23 @@ namespace Dune
 
 
 
-    // MasterDofs for SlaveDofs< GhostDofMapper >
+    // MasterDofs for AuxiliaryDofs< GhostDofMapper >
     // ------------------------------------------
 
     template< class GridPart, class BaseMapper, class GlobalKey >
-    struct MasterDofs< SlaveDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > >
+    struct MasterDofs< AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > >
     {
-      typedef SlaveDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > SlaveDofsType;
+      typedef AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > AuxiliaryDofsType;
 
-      typedef typename SlaveDofsType::GlobalKeyType GlobalKeyType;
-      typedef typename SlaveDofsType::GridPartType GridPartType;
-      typedef typename SlaveDofsType::MapperType MapperType;
-      typedef typename SlaveDofsType::SizeType SizeType;
+      typedef typename AuxiliaryDofsType::GlobalKeyType GlobalKeyType;
+      typedef typename AuxiliaryDofsType::GridPartType GridPartType;
+      typedef typename AuxiliaryDofsType::MapperType MapperType;
+      typedef typename AuxiliaryDofsType::SizeType SizeType;
 
       typedef __GhostDofMapper::ConstIterator< GlobalKeyType > ConstIteratorType;
 
-      explicit MasterDofs ( const SlaveDofsType &slaveDofs )
-        : mapper_( slaveDofs.mapper() )
+      explicit MasterDofs ( const AuxiliaryDofsType &auxiliaryDofs )
+        : mapper_( auxiliaryDofs.mapper() )
       {}
 
       ConstIteratorType begin () const { return ConstIteratorType( 0 ); }

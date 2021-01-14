@@ -141,10 +141,10 @@ void performTest ( const DiscreteFunctionSpace &dfSpace )
   DiscreteFunctionType u( "solution", dfSpace );
   interpolateOnly( uGridExact, u );
 
-  // copy discrete function and clear slave dofs
+  // copy discrete function and clear auxiliary dofs
   DiscreteFunctionType w( u );
-  for( const auto &slaveDof : dfSpace.slaveDofs() )
-    Dune::Hybrid::forEach( BlockIndices(), [ &w, &slaveDof ] ( auto &&j ) { w.dofVector()[ slaveDof ][ j ] = DofType( 0 ); } );
+  for( const auto &auxiliaryDof : dfSpace.auxiliaryDofs() )
+    Dune::Hybrid::forEach( BlockIndices(), [ &w, &auxiliaryDof ] ( auto &&j ) { w.dofVector()[ auxiliaryDof ][ j ] = DofType( 0 ); } );
 
   // make sure u and w differ
   if( equals( u.dofVector().array(), w.dofVector().array() ) )

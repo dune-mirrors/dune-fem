@@ -94,7 +94,7 @@ namespace Dune
       {
         typedef HierarchicalCommunication< DiscreteFunctionSpace > ThisType;
 
-        typedef typename DiscreteFunctionSpace::SlaveDofsType SlaveDofsType;
+        typedef typename DiscreteFunctionSpace::AuxiliaryDofsType AuxiliaryDofsType;
 
       public:
         typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
@@ -117,13 +117,13 @@ namespace Dune
         template< class T >
         void project ( T &x ) const
         {
-          project( dfSpace_.slaveDofs(), x );
+          project( dfSpace_.auxiliaryDofs(), x );
         }
 
         template< class T, class F >
         void dot ( const T &x, const T &y, F &scp ) const
         {
-          dot( dfSpace_.slaveDofs(), x, y, scp );
+          dot( dfSpace_.auxiliaryDofs(), x, y, scp );
           scp = communicator().sum( scp );
         }
 
@@ -140,33 +140,33 @@ namespace Dune
 
       private:
         template< class... V >
-        static void project ( const SlaveDofsType &slaveDofs, MultiTypeBlockVector< V... > &x )
+        static void project ( const AuxiliaryDofsType &auxiliaryDofs, MultiTypeBlockVector< V... > &x )
         {
-          Dune::Hybrid::forEach( std::index_sequence_for< V... >(), [ &slaveDofs, &x ] ( auto &&i ) { ThisType::project( slaveDofs, x[ i ] ); } );
+          Dune::Hybrid::forEach( std::index_sequence_for< V... >(), [ &auxiliaryDofs, &x ] ( auto &&i ) { ThisType::project( auxiliaryDofs, x[ i ] ); } );
         }
 
         template< class B, class A >
-        static void project ( const SlaveDofsType &slaveDofs, BlockVector< B, A > &x )
+        static void project ( const AuxiliaryDofsType &auxiliaryDofs, BlockVector< B, A > &x )
         {
           typedef typename B::field_type field_type;
-          for( int i : slaveDofs )
+          for( int i : auxiliaryDofs )
             x[ i ] = field_type( 0 );
         }
 
         template< class... V, class F >
-        static void dot ( const SlaveDofsType &slaveDofs, const MultiTypeBlockVector< V... > &x, const MultiTypeBlockVector< V... > &y, F &scp )
+        static void dot ( const AuxiliaryDofsType &auxiliaryDofs, const MultiTypeBlockVector< V... > &x, const MultiTypeBlockVector< V... > &y, F &scp )
         {
-          Dune::Hybrid::forEach( std::index_sequence_for< V... >(), [ &slaveDofs, &x, &y, &scp ] ( auto &&i ) { ThisType::dot( slaveDofs, x[ i ], y[ i ], scp ); } );
+          Dune::Hybrid::forEach( std::index_sequence_for< V... >(), [ &auxiliaryDofs, &x, &y, &scp ] ( auto &&i ) { ThisType::dot( auxiliaryDofs, x[ i ], y[ i ], scp ); } );
         }
 
         template< class B, class A, class F >
-        static void dot ( const SlaveDofsType &slaveDofs, const BlockVector< B, A > &x, const BlockVector< B, A > &y, F &scp )
+        static void dot ( const AuxiliaryDofsType &auxiliaryDofs, const BlockVector< B, A > &x, const BlockVector< B, A > &y, F &scp )
         {
-          const int numSlaves = slaveDofs.size();
-          for( int slave = 0, i = 0; slave < numSlaves; ++slave, ++i )
+          const int numAuxiliarys = auxiliaryDofs.size();
+          for( int auxiliary = 0, i = 0; auxiliary < numAuxiliarys; ++auxiliary, ++i )
           {
-            const int nextSlave = slaveDofs[ slave ];
-            for( ; i < nextSlave; ++i )
+            const int nextAuxiliary = auxiliaryDofs[ auxiliary ];
+            for( ; i < nextAuxiliary; ++i )
               scp += x[ i ] * y[ i ];
           }
         }

@@ -23,7 +23,7 @@
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/misc/mpimanager.hh>
-#include <dune/fem/space/common/slavedofs.hh>
+#include <dune/fem/space/common/auxiliarydofs.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/function/blockvectorfunction/declaration.hh>
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
@@ -64,7 +64,7 @@ namespace Dune
 #endif
 
     //! Proxy class to evaluate ScalarProduct
-    //! holding SlaveDofs which is singleton per space and mapper
+    //! holding AuxiliaryDofs which is singleton per space and mapper
     template< class DiscreteFunction >
     class ParallelScalarProduct
 #if HAVE_DUNE_ISTL
@@ -89,7 +89,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
       // type of communication manager object which does communication
-      typedef SlaveDofs< typename DiscreteFunctionSpaceType::GridPartType, MapperType > SlaveDofsType;
+      typedef AuxiliaryDofs< typename DiscreteFunctionSpaceType::GridPartType, MapperType > AuxiliaryDofsType;
 
       typedef RangeFieldType  field_type;
       typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
@@ -104,7 +104,7 @@ namespace Dune
         return space_;
       }
 
-      //! evaluate scalar product and omit slave nodes
+      //! evaluate scalar product and omit auxiliary nodes
       template < class OtherDiscreteFunctionType >
       RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const OtherDiscreteFunctionType &y ) const
       {
@@ -113,20 +113,20 @@ namespace Dune
         return dotProduct( x.dofVector(), y.dofVector() );
       }
 
-      const SlaveDofsType &slaveDofs() const
+      const AuxiliaryDofsType &auxiliaryDofs() const
       {
-        return space().slaveDofs();
+        return space().auxiliaryDofs();
       }
 
     protected:
-      //! evaluate scalar product on dofVector and omit slave nodes
+      //! evaluate scalar product on dofVector and omit auxiliary nodes
       template < class DofVector, class OtherDofVector >
       RangeFieldType dotProduct ( const DofVector &x, const OtherDofVector &y ) const
       {
         typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
 
         RangeFieldType scp = 0;
-        for( const auto i : masterDofs( space().slaveDofs() ) )
+        for( const auto i : primaryDofs( space().auxiliaryDofs() ) )
           Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, i ] ( auto &&j ) { scp += x[ i ][ j ] * y[ i ][ j ]; } );
         return space().gridPart().comm().sum( scp );
       }
@@ -149,7 +149,7 @@ namespace Dune
         return std::abs( std::sqrt( dotProduct( x, x ) ) );
       }
 
-      //! delete slave values (for debugging)
+      //! delete auxiliary values (for debugging)
       void deleteNonInterior( BlockVectorType& x) const
       {
 #if HAVE_MPI
@@ -160,12 +160,12 @@ namespace Dune
         // only delete ghost entries
         if( deleteGhostEntries )
         {
-          const auto &slaveDofs = space().slaveDofs();
+          const auto &auxiliaryDofs = space().auxiliaryDofs();
 
           // don't delete the last since this is the overall Size
-          const int slaveSize = slaveDofs.size() - 1;
-          for(int slave = 0; slave<slaveSize; ++slave)
-            x[ slaveDofs[slave] ] = 0;
+          const int auxiliarySize = auxiliaryDofs.size() - 1;
+          for(int auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
+            x[ auxiliaryDofs[auxiliary] ] = 0;
         }
 #endif // #if HAVE_MPI
       }

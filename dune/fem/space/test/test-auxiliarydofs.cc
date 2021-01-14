@@ -33,18 +33,18 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartTyp
 
 void baseTests ( MyGridType &grid, int level )
 {
-  typedef typename DiscreteFunctionSpaceType :: SlaveDofsType SlaveDofsType;
+  typedef typename DiscreteFunctionSpaceType :: AuxiliaryDofsType AuxiliaryDofsType;
   GridPartType gridPart( grid );
   DiscreteFunctionSpaceType *space1 = new DiscreteFunctionSpaceType( gridPart );
   DiscreteFunctionSpaceType *space2 = new DiscreteFunctionSpaceType( gridPart );
-  const SlaveDofsType &slaveDofs1 = space1->slaveDofs();
-  std::cout << "number of slave dofs: " << slaveDofs1.size() << std::endl;
+  const AuxiliaryDofsType &auxiliaryDofs1 = space1->auxiliaryDofs();
+  std::cout << "number of auxiliary dofs: " << auxiliaryDofs1.size() << std::endl;
   space1->~DiscreteFunctionSpaceType();
   char *tmp = new(space1)char[sizeof(DiscreteFunctionSpaceType)];
   for (unsigned int i=0;i<sizeof(DiscreteFunctionSpaceType);++i) tmp[i]=0;
   delete [] tmp;
-  const SlaveDofsType &slaveDofs2 = space2->slaveDofs();
-  std::cout << "number of slave dofs: " << slaveDofs2.size() << std::endl;
+  const AuxiliaryDofsType &auxiliaryDofs2 = space2->auxiliaryDofs();
+  std::cout << "number of auxiliary dofs: " << auxiliaryDofs2.size() << std::endl;
   delete space2;
 }
 

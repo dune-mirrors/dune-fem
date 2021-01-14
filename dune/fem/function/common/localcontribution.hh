@@ -48,10 +48,10 @@ namespace Dune
           {
             typedef typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
 
-            // clear slave DoFs
+            // clear auxiliary DoFs
             auto &dofVector = df.dofVector();
-            for( const auto &slaveDof : df.space().slaveDofs() )
-              Hybrid::forEach( LocalBlockIndices(), [ &dofVector, &slaveDof ] ( auto &&j ) { dofVector[ slaveDof ][ j ] = DofType( 0 ); } );
+            for( const auto &auxiliaryDof : df.space().auxiliaryDofs() )
+              Hybrid::forEach( LocalBlockIndices(), [ &dofVector, &auxiliaryDof ] ( auto &&j ) { dofVector[ auxiliaryDof ][ j ] = DofType( 0 ); } );
           }
 
           static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Add() ); }

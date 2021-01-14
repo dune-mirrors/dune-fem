@@ -993,9 +993,6 @@ namespace Dune
         }
       }
 
-    protected:
-      friend LocalFunctionType;
-
       //! get local Dofs and store a reference to it in the LocalDofVector
       void getLocalDofReferences ( const EntityType &entity, LocalDofVectorType &localDofs )
       {
@@ -1003,6 +1000,7 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+    protected:
       /** \copydoc Dune::PersistentObject::backup */
       virtual void backup() const
       {

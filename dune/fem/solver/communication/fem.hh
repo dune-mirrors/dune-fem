@@ -97,21 +97,21 @@ namespace Dune
         {
           typedef typename T::field_type field_type;
 
-          // clear slave DoFs
-          for( int i : dfSpace_.slaveDofs() )
+          // clear auxiliary DoFs
+          for( int i : dfSpace_.auxiliaryDofs() )
             x[ i ] = field_type( 0 );
         }
 
         template< class T, class F >
         void dot ( const T &x, const T &y, F &scp ) const
         {
-          const auto &slaveDofs = dfSpace_.slaveDofs();
+          const auto &auxiliaryDofs = dfSpace_.auxiliaryDofs();
 
-          const int numSlaves = slaveDofs.size();
-          for( int slave = 0, i = 0; slave < numSlaves; ++slave, ++i )
+          const int numAuxiliarys = auxiliaryDofs.size();
+          for( int auxiliary = 0, i = 0; auxiliary < numAuxiliarys; ++auxiliary, ++i )
           {
-            const int nextSlave = slaveDofs[ slave ];
-            for( ; i < nextSlave; ++i )
+            const int nextAuxiliary = auxiliaryDofs[ auxiliary ];
+            for( ; i < nextAuxiliary; ++i )
               scp += x[ i ] * y[ i ];
           }
 

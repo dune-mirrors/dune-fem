@@ -329,8 +329,8 @@ namespace Dune
         // exchange data
         communicate( x );
 
-        typedef typename ParallelScalarProductType :: SlaveDofsType SlaveDofsType;
-        const SlaveDofsType& slaveDofs = scp_.slaveDofs();
+        typedef typename ParallelScalarProductType :: AuxiliaryDofsType AuxiliaryDofsType;
+        const AuxiliaryDofsType& auxiliaryDofs = scp_.auxiliaryDofs();
 
         typedef typename Y :: block_type LittleBlockVectorType;
         LittleBlockVectorType tmp;
@@ -338,11 +338,11 @@ namespace Dune
 
         // counter for rows
         int i = 0;
-        const int slaveSize = slaveDofs.size();
-        for(int slave = 0; slave<slaveSize; ++slave)
+        const int auxiliarySize = auxiliaryDofs.size();
+        for(int auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
         {
-          const int nextSlave = slaveDofs[slave];
-          for(; i<nextSlave; ++i)
+          const int nextAuxiliary = auxiliaryDofs[auxiliary];
+          for(; i<nextAuxiliary; ++i)
           {
             tmp = 0;
             // get row

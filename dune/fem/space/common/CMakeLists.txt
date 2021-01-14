@@ -3,6 +3,7 @@ dune_install(
   adaptmanager.hh
   adaptationmanager.hh
   allgeomtypes.hh
+  auxiliarydofs.hh
   basesetlocalkeystorage.hh
   cachedcommmanager.hh
   capabilities.hh
