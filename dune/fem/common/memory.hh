@@ -25,8 +25,22 @@ namespace Dune
     inline static std::shared_ptr< T > referenceToSharedPtr ( T &t )
     try
     {
-      return t.shared_from_this();
+      // obtain internal weak pointer of enable_shared_from_this class.
+      // if the obtained internal weak_ptr of the enable_shared_from_this object is empty
+      // then no previously created shared_ptr exists and we create a phony one using the null_deleter
+      if( t.weak_from_this().use_count() == 0 )
+      {
+        return std::shared_ptr< T >( &t, Dune::null_deleter< T >() );
+      }
+      else
+      {
+        // return a shared pointer with the same count from the previously
+        // created shared_ptr
+        return t.shared_from_this();
+      }
     }
+    // std::bad_weak_ptr is for example thrown when a shared_ptr
+    // is created from and empty weak_ptr
     catch( std::bad_weak_ptr& )
     {
       return std::shared_ptr< T >( &t, Dune::null_deleter< T >() );
