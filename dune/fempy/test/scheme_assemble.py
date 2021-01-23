@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time,sys
 import numpy as np
 import dune.grid

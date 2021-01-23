@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # <markdowncell>
 # # Advection-Diffusion: Discontinuous Galerkin Method with Upwinding
 # So far we have been using Lagrange spaces of different order to solve our

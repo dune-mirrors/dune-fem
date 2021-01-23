@@ -30,7 +30,8 @@ debian-11-gcc-10-17:
     # gcc-10-20 fails with a segfault in dune-grid (gridptr.hh)
     DUNECI_TOOLCHAIN: gcc-10-17
     DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
-  tags: [stuttgart2]
+  #tags: [stuttgart2]
+  tags: [duneci]
 
 debian-11-gcc-9-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
@@ -56,7 +57,8 @@ ubuntu:20.04-clang-10-17:
     DUNE_CMAKE_FLAGS:   "-DDUNE_ENABLE_PYTHONBINDINGS=ON -DCMAKE_CXX_COMPILER=clang++-10 -DCMAKE_C_COMPILER=clang-10 -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DCMAKE_CXX_FLAGS='-std=c++17 -O2 -g -Wall -fdiagnostics-color=always' -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
   #DUNECI_TOOLCHAIN: clang-10-17
-  tags: [stuttgart3]
+  #tags: [stuttgart3]
+  tags: [duneci]
 
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
