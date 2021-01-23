@@ -258,7 +258,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
 #endif
            lagrangeDGSpaceA,
            lagrangeSpaceA,
-           #if HAVE_DUNE_LOCALFUNCTIONS
+#if HAVE_DUNE_LOCALFUNCTIONS
            lagrangeSpaceB,
            lobattoSpace,
 #endif
