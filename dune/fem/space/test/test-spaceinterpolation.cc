@@ -80,6 +80,44 @@ struct ErrorTuple< std::tuple< T... > >
 };
 
 
+template< class DiscreteFunctionSpace >
+void testReferenceToSharedPtr( DiscreteFunctionSpace &discreteFunctionSpace )
+{
+  //typedef typename DiscreteFunctionSpace :: GridPartType  GridPartType;
+  //GridPartType& gridPart = const_cast< DiscreteFunctionSpace& >
+  //  (discreteFunctionSpace).gridPart();
+  auto& gridPart = discreteFunctionSpace.gridPart();
+
+  DiscreteFunctionSpace space( gridPart );
+  std::shared_ptr< DiscreteFunctionSpace > weakPtr1 = Dune::Fem::referenceToSharedPtr( space );
+  std::shared_ptr< DiscreteFunctionSpace > weakPtr2 = Dune::Fem::referenceToSharedPtr( space );
+
+  if( weakPtr1.operator->() != weakPtr2.operator->() )
+    DUNE_THROW(Dune::GridError,"referenceToSharedPtr not working correctly");
+
+  if( weakPtr1.use_count() != 2 )
+    DUNE_THROW(Dune::GridError,"referenceToSharedPtr not working correctly");
+
+  std::shared_ptr< DiscreteFunctionSpace > spcPtr( new DiscreteFunctionSpace(gridPart) );
+  // create a reference
+  DiscreteFunctionSpace& spc = *spcPtr;
+
+  // now if the reference is used to create another shared ptr it should point
+  // to the original shared ptr reference
+  std::shared_ptr< DiscreteFunctionSpace > spcPtr2 =
+    Dune::Fem::referenceToSharedPtr( spc );
+
+  if( spcPtr2.operator->() != spcPtr.operator->() )
+    DUNE_THROW(Dune::GridError,"referenceToSharedPtr not working correctly");
+
+  if( spcPtr.use_count() != 2 )
+    DUNE_THROW(Dune::GridError,"referenceToSharedPtr not working correctly");
+
+}
+
+
+
+
 
 // Type Definitions
 // ----------------
@@ -122,6 +160,10 @@ std::pair< Real< DiscreteFunctionSpace >, Real< DiscreteFunctionSpace > >
 algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
 {
   DiscreteFunctionSpace space( gridPart );
+
+  // test reference to shared pointer functionality
+  testReferenceToSharedPtr( space );
+
   Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpace > u( "solution", space );
 
   // interpolate a function
