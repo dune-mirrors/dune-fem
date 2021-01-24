@@ -30,8 +30,8 @@ debian-11-gcc-10-17:
     # gcc-10-20 fails with a segfault in dune-grid (gridptr.hh)
     DUNECI_TOOLCHAIN: gcc-10-17
     DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
-  #tags: [stuttgart2]
-  tags: [duneci]
+  tags: [stuttgart2]
+  #tags: [duneci]
 
 debian-11-gcc-9-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:11
