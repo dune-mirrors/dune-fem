@@ -59,7 +59,32 @@ class Sampler:
         import numpy
         x0, x1 = FieldVector(x0), FieldVector(x1)
         if self.lineSampler is None:
-            self.lineSampler = algorithm.load('sample', path(__file__)+'sample.hh', self.gridFunction, x0, x1, N)
+            import io
+            _lineSampleCode = \
+            """
+            #ifndef FEMPY_UTILITY_HH
+            #define FEMPY_UTILITY_HH
+            #include <vector>
+            #include <utility>
+            #include <dune/fem/misc/linesegmentsampler.hh>
+            #include <dune/fem/gridpart/common/entitysearch.hh>
+            #include <dune/fem/function/localfunction/const.hh>
+
+            template <class GF, class DT>
+            std::pair<std::vector<DT>, std::vector<typename GF::RangeType>>
+            sample(const GF &gf, DT &start, DT &end, int n)
+            {
+              Dune::Fem::LineSegmentSampler<typename GF::GridPartType> sampler(gf.gridPart(),start,end);
+              std::vector<DT> coords(n);
+              std::vector<typename GF::RangeType> values(n);
+              sampler(gf,values);
+              sampler.samplePoints(coords);
+              return std::make_pair(coords,values);
+            }
+            #endif
+
+            """
+            self.lineSampler = algorithm.load('sample', io.StringIO(_lineSampleCode), self.gridFunction, x0, x1, N)
 
         p,v = self.lineSampler( self.gridFunction, x0, x1, N )
         x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
@@ -75,7 +100,28 @@ class Sampler:
         import numpy
         x0 = FieldVector(x0)
         if self.pointSampler is None:
-            self.pointSampler = algorithm.load('sample', path(__file__)+'sample.hh', self.gridFunction, x0)
+            import io
+            _pointSampleCode = \
+            """
+            #ifndef FEMPY_UTILITY_HH
+            #define FEMPY_UTILITY_HH
+            #include <dune/fem/misc/linesegmentsampler.hh>
+            #include <dune/fem/gridpart/common/entitysearch.hh>
+            #include <dune/fem/function/localfunction/const.hh>
+
+            template <class GF, class DT>
+            typename GF::RangeType sample(const GF &gf, DT &point)
+            {
+              typedef typename GF::DiscreteFunctionSpaceType::GridPartType GridPartType;
+              Dune::Fem::EntitySearch<GridPartType> search(gf.space().gridPart());
+              const auto &entity = search(point);
+              const auto localPoint = entity.geometry().local(point);
+              return constLocalFunction(gf,entity).evaluate(localPoint);
+            }
+            #endif // FEMPY_UTILITY_HH
+
+            """
+            self.pointSampler = algorithm.load('sample', io.StringIO(_pointSampleCode), self.gridFunction, x0)
 
         v = self.pointSampler(self.gridFunction, x0 )
         return v
