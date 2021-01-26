@@ -3,6 +3,8 @@
 
 #include <limits>
 #include <vector>
+#include <cmath>
+#include <type_traits>
 
 #include <dune/common/fvector.hh>
 
@@ -137,8 +139,9 @@ namespace Dune
       DomainType ds = right_ - left_;
       ds /= DomainFieldType( numSamples - 1 );
 
-      const typename GridFunction::RangeFieldType invalid
-        = std::numeric_limits< typename GridFunction::RangeFieldType >::quiet_NaN();
+      typedef typename GridFunction::RangeFieldType RangeFieldType;
+      const RangeFieldType invalid
+        = std::numeric_limits< RangeFieldType >::quiet_NaN();
       for( int i = 0; i < numSamples; ++i )
         samples[ i ] = typename GridFunction::RangeType( invalid );
 
@@ -200,9 +203,17 @@ namespace Dune
       gridPart().comm().template allreduce< Op >( &(samples[ 0 ]), numSamples );
 
       bool valid = true;
-      for( int i = 0; i < numSamples; ++i )
+
+      // only use isnan when field type is a floating point
+      if constexpr ( std::is_floating_point< RangeFieldType >::value )
       {
-        valid &= ! std::isnan( samples[ i ].two_norm() );
+        for( int i = 0; i < numSamples; ++i )
+        {
+          for( int d=0; d<GridFunction::RangeType::dimension; ++d )
+          {
+            valid &= ! std::isnan( samples[ i ][ d ] );
+          }
+        }
       }
 
       if( !valid )
