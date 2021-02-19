@@ -97,6 +97,9 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
 
     includes = ["dune/fem/schemes/galerkin.hh", "dune/fempy/py/grid/gridpart.hh"]
+    if operatorPrefix == 'MOL':
+        includes += ["dune/fem/schemes/molgalerkin.hh"]
+
     includes += domainSpace._includes + domainFunctionIncludes
     includes += rangeSpace._includes + rangeFunctionIncludes
 
