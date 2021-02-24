@@ -157,11 +157,6 @@ class Source(object):
         nameSpace.append(integrands.code(self.name(),integrands.targs))
         code.append(nameSpace)
 
-        code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        coefficients = integrands.coefficientCppTypes
-        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
-        code.append(TypeAlias('Integrands', integrandsName))
-
         writer = SourceWriter()
         writer.emit("#ifndef GuardIntegrands_" + self.signature())
         writer.emit("#define GuardIntegrands_" + self.signature())
@@ -169,6 +164,11 @@ class Source(object):
 
         name = self.name()
         writer.openPythonModule(name)
+
+        coefficients = integrands.coefficientCppTypes
+        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
+        writer.emit(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
+        writer.emit(TypeAlias('Integrands', integrandsName))
         writer.emit('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         writer.emit('Dune::FemPy::registerIntegrands< Integrands >( module, cls );')
         if coefficients:

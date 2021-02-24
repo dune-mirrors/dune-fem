@@ -341,7 +341,7 @@ def gridPartType(gf):
         gv = gf.space.grid._typeName
     except:
         gv = gf.grid._typeName
-    gvType = gv.split("::GridViewType")
+    gvType = re.split('::GridViewType$', gv)
     if len(gvType) == 2: # is a dune fem grid part
         return gvType[0]
     else:

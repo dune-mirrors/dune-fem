@@ -149,19 +149,18 @@ class UFLFunctionSource(codegen.ModelClass):
         # main part
         nameSpace = NameSpace('UFLLocalFunctions_' + self.signature())
         nameSpace.append(self.codeString)
-        localFunctionName = 'UFLLocalFunction< ' + ', '.join(['GridPart'] + self.coefficientCppTypes) + ' >'
-        nameSpace.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        nameSpace.append(TypeAlias('UFLLocalFunctionType', localFunctionName))
         code.append(nameSpace)
-        code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        localFunctionName = nameSpace.name+'::UFLLocalFunctionType'
-        # code.append([TypeAlias('UFLLocalFunction', localFunctionName)])
+        gridPartName = 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'
+        localFunctionName = nameSpace.name+'::UFLLocalFunction< ' + ', '.join([gridPartName] + self.coefficientCppTypes) + ' >'
 
         name = self.name()
         writer = SourceWriter()
         writer.emit(code)
         writer.openPythonModule(name)
-        writer.emit('auto cls = Dune::Python::insertClass<'+localFunctionName+'>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        # writer.emit(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
+        # writer.emit(TypeAlias('GridPart', gridPartName))
+        writer.emit(TypeAlias('LocalFunctionType', localFunctionName))
+        writer.emit('auto cls = Dune::Python::insertClass<LocalFunctionType>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         writer.emit('Dune::FemPy::registerUFLLocalFunction( module, cls );')
 
         initArgs = 'pybind11::object gridView, const std::string &name, int order'
@@ -295,7 +294,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
 
     # call code generator
     from dune.generator import builder
-    module = builder.load(source.name(), source, "localfunctionufl")
+    module = builder.load(source.name(), source, "UFLLocalFunction")
 
     class LocalFunction(module.UFLLocalFunction):
         def __init__(self, gridView, name, order, *args, **kwargs):
