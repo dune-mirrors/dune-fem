@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMPY_PY_INTEGRANDS_HH
-#define DUNE_FEMPY_PY_INTEGRANDS_HH
+#ifndef DUNE_FEMPY_PY_UFLLOCALFUNCTION_HH
+#define DUNE_FEMPY_PY_UFLLOCALFUNCTION_HH
 
 #include <functional>
 #include <tuple>
@@ -94,4 +94,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_PY_INTEGRANDS_HH
+#endif // #ifndef DUNE_FEMPY_PY_UFLLOCALFUNCTIONS_HH

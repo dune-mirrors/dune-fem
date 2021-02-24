@@ -41,7 +41,10 @@ def interpolate(space, expr, name=None, **kwargs):
     """
     expr = _uflToExpr(space.grid,space.order,expr)
     if name is None:
-        name = expr.name
+        try:
+            name = expr.name
+        except AttributeError:
+            raise ValueError("interpolation requires a name for the resulting discrete function - either the expression needs a name attribute or 'name' needs to be provided as second argument.")
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=expr, **kwargs)
 
