@@ -2,11 +2,14 @@
 #define DUNE_FEMPY_FEMPYQUADRATURES_HH
 
 //- Dune includes
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#if USING_DUNE_PYTHON
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/numpy.h>
+#endif
 
 #include <dune/fem/quadrature/quadprovider.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
@@ -123,6 +126,7 @@ namespace Dune
       template <class Rules>
       static void registerQuadratureRule( const Rules& rules, const QuadratureKeyType& key, const Dune::GeometryType& geometry )
       {
+#if USING_DUNE_PYTHON
         QuadratureRuleType& rule = instance().getRule( key );
 
         pybind11::object pyrule = rules( geometry );
@@ -141,6 +145,9 @@ namespace Dune
 
           rule.push_back( QuadraturePointType( hatx, weight) );
         }
+#else
+        DUNE_THROW(Dune::InvalidStateException,"registerQuadratureRule only works when USING_DUNE_PYTHON == 1");
+#endif
       }
     };
 
