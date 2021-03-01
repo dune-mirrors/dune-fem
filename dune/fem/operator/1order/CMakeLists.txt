@@ -1,1 +1,1 @@
-dune_install(dgmasspass.hh localmassmatrix.hh)
+dune_install(localmassmatrix.hh)
