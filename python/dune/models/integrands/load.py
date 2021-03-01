@@ -282,7 +282,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
 
     # call code generator
     from dune.generator import builder
-    module = builder.load(source.name(), source, "integrands")
+    module = builder.load(source.name(), source, "Integrands")
 
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)

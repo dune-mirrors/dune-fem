@@ -428,7 +428,7 @@ namespace Dune
             template< class Point, class JacobianRangeType >
             void jacobian ( const Point &p, JacobianRangeType &val ) const
             {
-              DUNE_THROW(NotImplemented,"SimpleLocalFunction does not provide a jocobian!");
+              DUNE_THROW(NotImplemented,"SimpleLocalFunction does not provide a jacobian!");
             }
             template< class Point, class HessianRangeType >
             void hessian ( const Point &p, HessianRangeType &val ) const
