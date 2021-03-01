@@ -417,6 +417,14 @@ namespace Dune
       /** \brief return mutable reference to local Dof Vector  */
       LocalDofVectorType &localDofVector () { return localDofVector_; }
 
+
+      /** \brief Returns true if local function if bind or init was previously called.
+       */
+      bool valid () const
+      {
+        return basisFunctionSet_.valid();
+      }
+
     protected:
       /** \brief initialize the local function for an entity
        *
@@ -449,6 +457,7 @@ namespace Dune
        */
       void unbind ()
       {
+        // basically sets entity pointer inside basis function set to nullptr
         basisFunctionSet_ = BasisFunctionSetType();
       }
 
@@ -469,7 +478,6 @@ namespace Dune
         basisFunctionSet_ = basisFunctionSet;
         localDofVector_.resize( basisFunctionSet.size() );
       }
-
 
       // evaluate local function and store results in vector of RangeTypes
       // this method only helps to identify the correct method on

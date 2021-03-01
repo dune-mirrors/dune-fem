@@ -264,6 +264,12 @@ namespace Dune
         return std::get< 0 >( basisFunctionSetTuple_ ).type();
       }
 
+      //! \copydoc BasisFunctionSet::valid
+      bool valid () const
+      {
+        return std::get< 0 >( basisFunctionSetTuple_ ).valid();
+      }
+
       //! \copydoc BasisFunctionSet::entity
       const EntityType &entity () const
       {

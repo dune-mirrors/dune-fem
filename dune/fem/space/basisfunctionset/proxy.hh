@@ -8,6 +8,9 @@
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
+#warning "Deprecated header, not used anymore!"
+#error
+
 /**
   @file
   @author Christoph Gersbacher

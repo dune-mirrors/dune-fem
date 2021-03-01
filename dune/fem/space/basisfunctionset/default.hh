@@ -396,9 +396,12 @@ namespace Dune
       //! \brief return entity
       const Entity &entity () const
       {
-        assert( entity_ );
+        assert( valid() );
         return *entity_;
       }
+
+      //! \brief return true if entity pointer is set
+      bool valid () const { return bool(entity_); }
 
       //! \brief return geometry type
       Dune::GeometryType type () const { return entity().type(); }

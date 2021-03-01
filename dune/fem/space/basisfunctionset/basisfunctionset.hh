@@ -127,6 +127,9 @@ namespace Dune
 
       //! \brief return entity
       const EntityType &entity () const;
+
+      //! \brief return true if entity was set
+      bool valid () const;
     };
 
   } // namespace Fem
