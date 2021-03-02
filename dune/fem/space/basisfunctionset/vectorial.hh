@@ -430,6 +430,7 @@ namespace Dune
       }
 
       const EntityType &entity () const { return scalarBasisFunctionSet().entity(); }
+      bool valid () const { return scalarBasisFunctionSet().valid(); }
 
       DofAlignmentType dofAlignment () const { return dofAlignment_ ; }
 

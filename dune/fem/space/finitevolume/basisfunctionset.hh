@@ -192,6 +192,9 @@ namespace Dune
       /** \copydoc Dune::Fem::BasisFunctionSet::type */
       Dune::GeometryType type () const { return entity().type(); }
 
+      //! \brief return true if entity pointer is set
+      bool valid () const { return bool(entity_); }
+
     private:
       const EntityType *entity_;
     };

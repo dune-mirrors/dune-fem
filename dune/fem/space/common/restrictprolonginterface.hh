@@ -268,7 +268,7 @@ namespace Dune
       {
         auto clf = bindGuard( constLf_, son );
 
-        if( initialize )
+        if( initialize || ! targetLf_.valid() )
         {
           targetLf_.bind( father );
           // unbind is done in restrictFinalize
