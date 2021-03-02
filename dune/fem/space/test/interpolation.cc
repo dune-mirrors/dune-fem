@@ -158,7 +158,7 @@ void eocLoop ( GridType &grid, int steps, const DiscreteFunctionSpace &... discr
   // check that interpolation of polynomial is accurate to machine precision
   for( size_t i=0; i<n-1; ++i )
   {
-    if( std::abs(oldErrors2[ i ]) > 1e-12 )
+    if( std::abs(oldErrors2[ i ]) > 1e-11 )
       DUNE_THROW(Dune::GridError,"interpolation of polynomial of order " << polOrder << " not exact!");
   }
 
@@ -264,7 +264,7 @@ void runTest( const int refCount, const int steps, std::istream& gridfile )
 #endif
            hLegendreSpace,
            fourierSpace
-           );
+         );
 }
 
 // main
