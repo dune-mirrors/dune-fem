@@ -4,14 +4,25 @@
 #define DUNE_COLCOMPSPMATRIX_HH
 
 #if HAVE_DUNE_ISTL
-#include <dune/istl/colcompmatrix.hh>
-#else
+#include <dune/istl/bccsmatrixinitializer.hh>
+
+// if the original deprecated header has not been included
+// it is ok to declare the ColCompMatrix here
+#ifndef DUNE_ISTL_COLCOMPMATRIX_HH
+namespace Dune
+{
+  template <class M, class RowIndex = int>
+  struct ColCompMatrix : public ISTL::Impl::BCCSMatrix< typename M::field_type, RowIndex>{};
+} // namespace Dune
+#endif
+
+#else // #if HAVE_DUNE_ISTL
 namespace Dune
 {
   template<class M,class RowIndex=int>
   struct ColCompMatrix {};
 } // namespace Dune
-#endif
+#endif // #if HAVE_DUNE_ISTL
 
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
