@@ -115,14 +115,17 @@ namespace Dune
       verifyLocalMatrixPermutation ( const LinearOperator &linOp, const DomainEntity &domainEntity, const RangeEntity &rangeEntity,
                                      const std::vector< std::pair< int, int > > &permutation, PriorityTag< 1 > )
       {
-        static_assert( std::is_same< typename LinearOperator::LocalMatrixType, decltype( linOp.localMatrix( domainEntity, rangeEntity ) ) >::value,
-                       "LinearOperator::localMatrix must return an object of type LinearOperator::LocalMatrixType" );
-        verifyPermutation( linOp.localMatrix( domainEntity, rangeEntity ), permutation );
+        Dune::Fem::TemporaryLocalMatrix< typename LinearOperator::DomainSpaceType, typename LinearOperator::RangeSpaceType >
+          localMat( linOp.domainSpace(), linOp.rangeSpace() );
+        localMat.bind( domainEntity, rangeEntity );
+        linOp.getLocalMatrix( domainEntity, rangeEntity, localMat );
+        verifyPermutation( localMat, permutation );
+        localMat.unbind();
       }
 
       template< class LinearOperator, class DomainEntity, class RangeEntity >
       inline void verifyLocalMatrixPermutation ( const LinearOperator &linOp, const DomainEntity &domainEntity, const RangeEntity &rangeEntity,
-                                                const std::vector< std::pair< int, int > > &permutation, PriorityTag< 0 > )
+                                                 const std::vector< std::pair< int, int > > &permutation, PriorityTag< 0 > )
       {
         static bool warn = true;
         if( warn )
