@@ -29,7 +29,7 @@ mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 include(CheckCXXSourceCompiles)
 
 # check for OpenMP
-set(USE_OPENMP OFF CACHE BOOL "whether we are using OpenMP.")
+set(USE_OPENMP ON CACHE BOOL "whether we are using OpenMP.")
 # if open mp should be used perform cmake check
 if(USE_OPENMP)
   include(FindOpenMP)
