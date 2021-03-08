@@ -12,7 +12,7 @@
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
 
 #ifdef USE_SMP_PARALLEL
-#ifdef HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #define USE_THREADPARTITIONER
 #include <dune/fem/misc/threads/threadpartitioner.hh>
 #endif
