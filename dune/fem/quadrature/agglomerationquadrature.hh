@@ -27,8 +27,11 @@ namespace Dune
       //! codimension of the element quadrature
       enum { codimension = 0 };
 
-      //! dimension of the world
+      //! dimension of the grid
       enum { dimension = GridPartType :: dimension };
+
+      //! dimension of the world
+      enum { dimensionworld = GridPartType :: dimensionworld };
 
       //! type for reals (usually double)
       typedef typename GridPartType :: ctype RealType;
@@ -99,10 +102,11 @@ namespace Dune
 
     public:
       //! returns quadrature points for polyhedral cells
-      static IntegrationPointListType computeQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
+      // this only works for 2d so far
+      template <int dimw = dimensionworld >
+      static std::enable_if_t<dimension == 2 && dimw == 2, IntegrationPointListType>
+      computeQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
       {
-        // this only works for 2d so far
-        assert( dimension == 2 );
         typedef ElementQuadrature< GridPartImp, 0 > QuadratureType;
         Dune::GeometryType simplexType = Dune::GeometryTypes::simplex( dimension );
 
@@ -177,6 +181,14 @@ namespace Dune
         // removing the pointer to the stack
         std::shared_ptr< const IntegrationPointListImpl > quadPtr( &quadImp, Deleter() );
         return IntegrationPointListType( quadPtr );
+      }
+
+      template <int dimw = dimensionworld >
+      static std::enable_if_t<dimension != 2 || dimw != 2, IntegrationPointListType>
+      computeQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey )
+      {
+        assert(false);
+        return IntegrationPointListType( {} );
       }
     };
 
