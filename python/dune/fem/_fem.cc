@@ -46,6 +46,15 @@ PYBIND11_MODULE( _fem, module )
 
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
 
+    param.def( "write", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
+        std::ofstream file( fileName );
+        if( file )
+        {
+          self.write( file );
+          file.close();
+        }
+      }, "fileName"_a );
+
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
         self.append( fileName );
       }, "fileName"_a );
