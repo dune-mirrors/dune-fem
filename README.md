@@ -72,8 +72,22 @@ A [tutorial][18] for the recently added Python binding ca be found [here][18].
 Installation
 ------------
 
+**Using pip**
+
+dune-fem can be installed using the Package Index of Python (pip).
+
+```
+pip install dune-fem
+```
+
+See https://dune-project.org/doc/installation-pip/ for a more detailed
+description.
+
+**From source**
+
 For a full explanation of the DUNE installation process please read
 the [installation notes][2].
+
 
  [0]: https://www.dune-project.org/modules/dune-fem/
  [1]: https://www.dune-project.org
