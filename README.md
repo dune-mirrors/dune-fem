@@ -89,7 +89,7 @@ description.
 For a full explanation of the DUNE installation process please read
 the [installation notes][2].
 
-When using the main branch observe the [![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem/-/pipelines/)
+When using the main branch observe the [build status][19]
 to make sure you get a working version.
 
  [0]: https://www.dune-project.org/modules/dune-fem/
@@ -111,3 +111,4 @@ to make sure you get a working version.
  [16]: http://www.fz-juelich.de/jsc/sionlib
  [17]: http://icl.cs.utk.edu/papi/software/index.html
  [18]: https://dune-project.org/sphinx/content/sphinx/dune-fem/
+ [19]: https://gitlab.dune-project.org/dune-fem/dune-fem/-/pipelines/
