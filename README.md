@@ -53,6 +53,22 @@ licensed under version 2 or later of the GNU General Public License.
 
 See the file [LICENSE][7] for full copying permissions.
 
+
+References
+----------
+
+A detailed description of DUNE-FEM can be found in
+
+* A. Dedner, R. Klöfkorn, M. Nolte, and M. Ohlberger. A Generic Interface for Parallel and Adaptive Scientific Computing:
+  Abstraction Principles and the DUNE-FEM Module.
+  Computing, 90(3-4):165--196, 2010. http://dx.doi.org/10.1007/s00607-010-0110-3
+
+
+Tutorial
+--------
+
+A [tutorial][18] for the recently added Python binding ca be found [here][18].
+
 Installation
 ------------
 
@@ -77,3 +93,4 @@ the [installation notes][2].
  [15]: http://faculty.cse.tamu.edu/davis/suitesparse.html
  [16]: http://www.fz-juelich.de/jsc/sionlib
  [17]: http://icl.cs.utk.edu/papi/software/index.html
+ [18]: https://dune-project.org/sphinx/content/sphinx/dune-fem/
