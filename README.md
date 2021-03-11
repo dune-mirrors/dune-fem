@@ -61,6 +61,9 @@ A detailed description of DUNE-FEM can be found in
   Abstraction Principles and the DUNE-FEM Module.
   Computing, 90(3-4):165--196, 2010. http://dx.doi.org/10.1007/s00607-010-0110-3
 
+* A. Dedner, R. Klöfkorn, and M. Nolte. Python Bindings for the DUNE-FEM module.
+  Zenodoo, 2020 http://dx.doi.org/10.5281/zenodo.3706994
+
 
 Tutorial
 --------
