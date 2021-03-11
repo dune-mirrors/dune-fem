@@ -65,7 +65,7 @@ A detailed description of DUNE-FEM can be found in
 Tutorial
 --------
 
-A [tutorial][18] for the recently added Python binding ca be found [here][18].
+A [tutorial][18] for the recently added Python bindings can be found [here][18].
 
 Installation
 ------------
