@@ -1,7 +1,7 @@
 DUNE-FEM
 ========
 
-[![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem-test/commits/master)
+[![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem/-/pipelines/)
 
 [DUNE-FEM][0] is a [Distributed and Unified Numerics Environment][1]
 module which defines interfaces for implementing discretization methods like Finite Element Methods (FEM)
@@ -13,7 +13,9 @@ to the DUNE-FEM [bugtracker][6] instead.
 Dependencies
 ------------
 
-DUNE-FEM requires GCC (5+) or clang (3.8+) and depends on the following DUNE modules:
+DUNE-FEM requires a recent C++ compiler (e.g. g++ or clang),
+cmake, pkg-config (see DUNE [installation][2] for details)
+and depends on the following DUNE modules:
 
 * [dune-common][10]
 
