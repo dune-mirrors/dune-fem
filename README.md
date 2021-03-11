@@ -1,8 +1,6 @@
 DUNE-FEM
 ========
 
-[![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem/-/pipelines/)
-
 [DUNE-FEM][0] is a [Distributed and Unified Numerics Environment][1]
 module which defines interfaces for implementing discretization methods like Finite Element Methods (FEM)
 and Finite Volume Methods (FV) and Discontinuous Galerkin Methods (DG).
@@ -88,6 +86,8 @@ description.
 For a full explanation of the DUNE installation process please read
 the [installation notes][2].
 
+When using the main branch observe the [![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem/-/pipelines/)
+to make sure you get a working version.
 
  [0]: https://www.dune-project.org/modules/dune-fem/
  [1]: https://www.dune-project.org
