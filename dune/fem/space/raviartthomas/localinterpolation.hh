@@ -120,7 +120,7 @@ namespace Dune
 
       // 1st order, 2d Cube
       template< class Domain, class Range >
-      struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, Domain, Range, 2, 1 > >
+      struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::GeometryTypes::cube( 2 ).id(), Domain, Range, 2, 1 > >
       {
         using DomainType = FieldVector< Domain, 2 >;
         using FaceDomainType = FieldVector< Domain, 1 >;
@@ -158,7 +158,7 @@ namespace Dune
 
       // 1st order, 3d Cube
       template< class Domain, class Range >
-      struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::Impl::CubeTopology< 3 >::type::id, Domain, Range, 3, 1 > >
+      struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::GeometryTypes::cube( 3 ).id(), Domain, Range, 3, 1 > >
       {
         using DomainType = FieldVector< Domain, 3 >;
         using FaceDomainType = FieldVector< Domain, 2 >;
