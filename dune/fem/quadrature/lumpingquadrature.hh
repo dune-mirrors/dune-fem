@@ -24,17 +24,16 @@ namespace Fem {
  * it can simply be plugged into existing code by replacing
  * the quadrature rules.
  */
-template<class FieldImp, class Topology>
+template<class FieldImp, Dune::GeometryType::Id geometryId>
 class LumpingQuadrature
-  : public QuadratureImp<FieldImp, Topology::dimension>
+  : public QuadratureImp<FieldImp, Dune::GeometryType(geometryId).dim()>
 {
  public:
   typedef FieldImp FieldType;
-  typedef Topology TopologyType;
-  static constexpr auto dimension = TopologyType::dimension;
+  static constexpr auto dimension = Dune::GeometryType(geometryId).dim();
 
  private:
-  typedef LumpingQuadrature<FieldType, TopologyType> ThisType;
+  typedef LumpingQuadrature<FieldType, geometryId> ThisType;
   typedef QuadratureImp<FieldType, dimension> BaseType;
 
  public:
@@ -57,7 +56,7 @@ class LumpingQuadrature
 
   /** \copydoc QuadratureImp::geometry
    */
-  virtual GeometryType geometryType() const { return GeometryType(TopologyType::id, dimension); }
+  virtual GeometryType geometryType() const { return Dune::GeometryType(geometryId); }
   /** \copydoc QuadratureImp::order
    */
   virtual int order () const { return 1; }
@@ -71,12 +70,17 @@ struct DefaultLumpingQuadratureTraits
 {
   typedef QuadratureImp<FieldType, dimension> IntegrationPointListType;
 
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::SimplexTopology<dimension>::type> SimplexQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::CubeTopology<dimension>::type> CubeQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::PrismTopology<dimension>::type> PrismQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::PyramidTopology<dimension>::type> PyramidQuadratureType;
-  typedef SimplexQuadratureType PointQuadratureType;
+  static constexpr Dune::GeometryType::Id simplexId = Dune::GeometryTypes::simplex(dimension);
+  static constexpr Dune::GeometryType::Id cubeId    = Dune::GeometryTypes::cube(dimension);
+  static constexpr Dune::GeometryType::Id prismId   = Dune::GeometryTypes::prism ;
+  static constexpr Dune::GeometryType::Id pyramidId = Dune::GeometryTypes::pyramid;
+
+  typedef LumpingQuadrature<FieldType, simplexId>  SimplexQuadratureType;
+  typedef LumpingQuadrature<FieldType, cubeId   >  CubeQuadratureType;
+  typedef LumpingQuadrature<FieldType, prismId  >  PrismQuadratureType;
+  typedef LumpingQuadrature<FieldType, pyramidId>  PyramidQuadratureType;
   typedef SimplexQuadratureType LineQuadratureType;
+  typedef SimplexQuadratureType PointQuadratureType;
 
   typedef int QuadratureKeyType;
 };

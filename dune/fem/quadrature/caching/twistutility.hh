@@ -120,8 +120,7 @@ namespace Dune
       elementGeometry(const Intersection& intersection,
                       const bool inside)
       {
-        return GeometryType( Dune::Impl::SimplexTopology< dimension >::type::id,
-                             dimension );
+        return Dune::GeometryTypes::simplex(dimension);
       }
     };
 #endif // #if HAVE_ALBERTA

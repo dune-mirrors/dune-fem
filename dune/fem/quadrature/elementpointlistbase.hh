@@ -346,15 +346,13 @@ namespace Dune
         // for cube and simplex geom types the dim-1 geom type
         // is also cube or simplex
 
-        typedef Dune::Impl::CubeTopology< dimension > CubeTopologyType;
         static const bool isCube =
               GridPartCapabilities::hasSingleGeometryType< GridPartType >::v &&
-              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == CubeTopologyType::type::id ;
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == Dune::GeometryTypes::cube(dimension).id();
 
-        typedef Dune::Impl::SimplexTopology< dimension > SimplexTopologyType;
         static const bool isSimplex =
               GridPartCapabilities::hasSingleGeometryType< GridPartType >::v &&
-              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == SimplexTopologyType::type::id ;
+              GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId == Dune::GeometryTypes::simplex(dimension).id();
 
         if( isCube || isSimplex )
         {

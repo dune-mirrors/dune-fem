@@ -20,43 +20,6 @@ namespace Dune
   namespace Fem
   {
 
-    namespace Impl
-    {
-      template< class Topology >
-      struct UniqueTopology;
-
-      template<>
-      struct UniqueTopology< Dune::Impl::Point >
-      {
-        typedef Dune::Impl::Point Type;
-      };
-
-      template<>
-      struct UniqueTopology< Dune::Impl::Prism< Dune::Impl::Point > >
-      {
-        typedef Dune::Impl::Prism< Dune::Impl::Point > Type;
-      };
-
-      template<>
-      struct UniqueTopology< Dune::Impl::Pyramid< Dune::Impl::Point > >
-      {
-        typedef Dune::Impl::Prism< Dune::Impl::Point > Type;
-      };
-
-      template< class BaseTopology >
-      struct UniqueTopology< Dune::Impl::Prism< BaseTopology > >
-      {
-        typedef Dune::Impl::Prism< typename UniqueTopology< BaseTopology >::Type > Type;
-      };
-
-      template< class BaseTopology >
-      struct UniqueTopology< Dune::Impl::Pyramid< BaseTopology > >
-      {
-        typedef Dune::Impl::Pyramid< typename UniqueTopology< BaseTopology >::Type > Type;
-      };
-
-    } // namespace Impl
-
 #ifndef DOXYGEN
 
     // OrthonormalShapeFunctions
@@ -122,8 +85,58 @@ namespace Dune
       typedef RangeFieldType Array[ 3 ];
       typedef void (*Hessian) ( const int i, const DomainFieldType *, Array & );
 
-      template< class Topology >
-      class Initialize;
+      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
+      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
+
+      static void setFunctionPointers(const Dune::GeometryType& geomType,
+                                      Evaluate &evaluate, Jacobian &jacobian )
+      {
+        if( geomType.isLine() )
+        {
+          evaluate = OrthonormalBase1d::eval_line;
+          jacobian = OrthonormalBase1d::grad_line;
+          return ;
+        }
+        else if( geomType.isQuadrilateral() )
+        {
+          evaluate = OrthonormalBase2d::eval_quadrilateral_2d;
+          jacobian = OrthonormalBase2d::grad_quadrilateral_2d;
+          return ;
+        }
+        else if( geomType.isTriangle() )
+        {
+          evaluate = OrthonormalBase2d::eval_triangle_2d;
+          jacobian = OrthonormalBase2d::grad_triangle_2d;
+          return ;
+        }
+        else if( geomType.isHexahedron() )
+        {
+          evaluate = OrthonormalBase3d::eval_hexahedron_3d;
+          jacobian = OrthonormalBase3d::grad_hexahedron_3d;
+          return ;
+        }
+        else if ( geomType.isTetrahedron() )
+        {
+          evaluate = OrthonormalBase3d::eval_tetrahedron_3d;
+          jacobian = OrthonormalBase3d::grad_tetrahedron_3d;
+          return ;
+        }
+        else if( geomType.isPrism() )
+        {
+          evaluate = OrthonormalBase3d::eval_prism_3d;
+          jacobian = OrthonormalBase3d::grad_prism_3d;
+          return ;
+        }
+        else if ( geomType.isPyramid() )
+        {
+          evaluate = OrthonormalBase3d::eval_pyramid_3d;
+          jacobian = OrthonormalBase3d::grad_pyramid_3d;
+          return ;
+        }
+
+        DUNE_THROW(InvalidStateException,"Invalid geometry type " << geomType );
+      }
 
     public:
       /** \copydoc Dune::Fem::ShapeFunctionSet::dimension */
@@ -154,17 +167,18 @@ namespace Dune
         if( type.isNone() )
           type = Dune::GeometryTypes::cube(type.dim());
 
-        Dune::Impl::IfTopology< Initialize, dimension >
-          ::apply( type.id(), evaluate_, jacobian_ );
+        // set functions pointers for evaluate and jacobian
+        // depending on geometry type
+        setFunctionPointers( type, evaluate_, jacobian_ );
         assert( evaluate_ );
         assert( jacobian_ );
 
         if( dimension == 2 )
         {
           if( type.isTriangle() )
-            hessian_ = OrthonormalBase_2D< DomainFieldType, RangeFieldType >::hess_triangle_2d;
+            hessian_ = OrthonormalBase2d::hess_triangle_2d;
           else if( type.isQuadrilateral() )
-            hessian_ = OrthonormalBase_2D< DomainFieldType, RangeFieldType >::hess_quadrilateral_2d;
+            hessian_ = OrthonormalBase2d::hess_quadrilateral_2d;
         }
       }
 
@@ -272,95 +286,6 @@ namespace Dune
       Hessian hessian_;
     };
 
-
-
-    // OrthonormalShapeFunctionSet::Initialize
-    // ---------------------------------------
-
-    template< class FunctionSpace >
-    template< class Topology >
-    class OrthonormalShapeFunctionSet< FunctionSpace >::Initialize
-    {
-      typedef Dune::Impl::Prism< Dune::Impl::Point > Line;
-      typedef Dune::Impl::Prism< Line > Quadrilateral;
-      typedef Dune::Impl::Pyramid< Line > Triangle;
-      typedef Dune::Impl::Prism< Quadrilateral > Hexahedron;
-      typedef Dune::Impl::Pyramid< Quadrilateral > Pyramid;
-      typedef Dune::Impl::Prism< Triangle > Prism;
-      typedef Dune::Impl::Pyramid< Triangle > Tetrahedron;
-
-      template< class T >
-      class BasicGeometryType
-      {
-        template< unsigned int topologyId >
-        struct UniqueId
-        {
-          static const unsigned int v = topologyId | (unsigned int)Dune::Impl::prismConstruction;
-        };
-
-      public:
-        typedef typename Dune::Fem::Impl::UniqueTopology< T >::Type Type;
-      };
-
-      template< class T >
-      static typename BasicGeometryType< T >::Type basicGeometryType ()
-      {
-        return typename BasicGeometryType< T >::Type();
-      }
-
-    public:
-      static void apply ( Evaluate &evaluate, Jacobian &jacobian )
-      {
-        initialize( evaluate, jacobian, basicGeometryType< Topology >() );
-      }
-
-    private:
-      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
-      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
-      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Line & )
-      {
-        evaluate = OrthonormalBase1d::eval_line;
-        jacobian = OrthonormalBase1d::grad_line;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Quadrilateral & )
-      {
-        evaluate = OrthonormalBase2d::eval_quadrilateral_2d;
-        jacobian = OrthonormalBase2d::grad_quadrilateral_2d;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Triangle & )
-      {
-        evaluate = OrthonormalBase2d::eval_triangle_2d;
-        jacobian = OrthonormalBase2d::grad_triangle_2d;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Pyramid & )
-      {
-        evaluate = OrthonormalBase3d::eval_pyramid_3d;
-        jacobian = OrthonormalBase3d::grad_pyramid_3d;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Hexahedron & )
-      {
-        evaluate = OrthonormalBase3d::eval_hexahedron_3d;
-        jacobian = OrthonormalBase3d::grad_hexahedron_3d;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Prism & )
-      {
-        evaluate = OrthonormalBase3d::eval_prism_3d;
-        jacobian = OrthonormalBase3d::grad_prism_3d;
-      }
-
-      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Tetrahedron & )
-      {
-        evaluate = OrthonormalBase3d::eval_tetrahedron_3d;
-        jacobian = OrthonormalBase3d::grad_tetrahedron_3d;
-      }
-    };
 
   } // namespace Fem
 

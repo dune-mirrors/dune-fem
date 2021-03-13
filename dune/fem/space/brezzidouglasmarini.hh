@@ -35,7 +35,7 @@ namespace Dune
 
       // 2d, Cube, first order
       template< class D >
-      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, D, D, 2, 1 >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::cube(2).id(), D, D, 2, 1 >
         : public BDM1Cube2DLocalFiniteElement< D, D >
       {
         static const int numOrientations = 16;
@@ -46,7 +46,7 @@ namespace Dune
 
       // 3d, Cube, first order
       template< class D >
-      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 3 >::type::id, D, D, 3, 1 >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::cube(3).id(), D, D, 3, 1 >
         : public BDM1Cube3DLocalFiniteElement< D, D >
       {
         static const int numOrientations = 64;
@@ -57,7 +57,7 @@ namespace Dune
 
       // 2d, Cube, second order
       template< class D >
-      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, D, D, 2, 2 >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::cube(2).id(), D, D, 2, 2 >
         : public BDM2Cube2DLocalFiniteElement< D, D >
       {
         static const int numOrientations = 16;
@@ -69,7 +69,7 @@ namespace Dune
 
       // 2d, simplex, first order
       template< class D >
-      struct BDMLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, D, D, 2, 1 >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::simplex(2).id(), D, D, 2, 1 >
         : public BDM1Simplex2DLocalFiniteElement< D, D >
       {
         static const int numOrientations = 8;
@@ -80,7 +80,7 @@ namespace Dune
 
       // 2d, simplex, second order
       template< class D >
-      struct BDMLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, D, D, 2, 2 >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::simplex(2).id(), D, D, 2, 2 >
         : public BDM2Simplex2DLocalFiniteElement< D, D >
       {
         static const int numOrientations = 8;

@@ -17,7 +17,7 @@ namespace Dune
     template< class GridPart >
     class CornerPointSet;
 
-    template< class ct, class Topology >
+    template< class ct, Dune::GeometryType::Id geometryId >
     class CornerPointList;
 
 
@@ -51,10 +51,15 @@ namespace Dune
     public:
       typedef IntegrationPointListImp< ct, dim > IntegrationPointListType;
 
-      typedef CornerPointList< ct, typename Dune::Impl::SimplexTopology< dim >::type > SimplexQuadratureType;
-      typedef CornerPointList< ct, typename Dune::Impl::CubeTopology< dim >::type > CubeQuadratureType;
-      typedef CornerPointList< ct, typename Dune::Impl::PrismTopology< pdim >::type > PrismQuadratureType;
-      typedef CornerPointList< ct, typename Dune::Impl::PyramidTopology< pdim >::type > PyramidQuadratureType;
+      static constexpr Dune::GeometryType::Id simplexId = Dune::GeometryTypes::simplex(dim);
+      static constexpr Dune::GeometryType::Id cubeId    = Dune::GeometryTypes::cube(dim);
+      static constexpr Dune::GeometryType::Id prismId   = Dune::GeometryTypes::prism ;
+      static constexpr Dune::GeometryType::Id pyramidId = Dune::GeometryTypes::pyramid;
+
+      typedef CornerPointList< ct, simplexId >   SimplexQuadratureType;
+      typedef CornerPointList< ct, cubeId    >   CubeQuadratureType;
+      typedef CornerPointList< ct, prismId   >   PrismQuadratureType;
+      typedef CornerPointList< ct, pyramidId >   PyramidQuadratureType;
 
       typedef SimplexQuadratureType PointQuadratureType;
       typedef SimplexQuadratureType LineQuadratureType;
@@ -91,11 +96,11 @@ namespace Dune
     // CornerPointList
     // ---------------
 
-    template< class ct, class Topology >
+    template< class ct, Dune::GeometryType::Id geometryId >
     class CornerPointList
-    : public IntegrationPointListImp< ct, Topology::dimension >
+    : public IntegrationPointListImp< ct, Dune::GeometryType(geometryId).dim() >
     {
-      typedef IntegrationPointListImp< ct, Topology::dimension > BaseType;
+      typedef IntegrationPointListImp< ct, Dune::GeometryType(geometryId).dim() > BaseType;
 
     public:
       typedef typename BaseType::CoordinateType CoordinateType;
@@ -107,7 +112,7 @@ namespace Dune
 
       static unsigned int maxOrder () { return 1; }
 
-      GeometryType geometryType () const { return GeometryType( Topology() ); }
+      GeometryType geometryType () const { return GeometryType( geometryId ); }
 
     protected:
       using BaseType::addIntegrationPoint;
@@ -121,16 +126,16 @@ namespace Dune
     // Implementation of CornerPointList
     // ---------------------------------
 
-    template< class ct, class Topology >
-    inline CornerPointList< ct, Topology >::CornerPointList ( const size_t id )
+    template< class ct, Dune::GeometryType::Id geometryId >
+    inline CornerPointList< ct, geometryId >::CornerPointList ( const size_t id )
     : BaseType( id )
     {
       initialize();
     }
 
 
-    template< class ct, class Topology >
-    inline CornerPointList< ct, Topology >
+    template< class ct, Dune::GeometryType::Id geometryId >
+    inline CornerPointList< ct, geometryId >
       ::CornerPointList ( const GeometryType &type, const int order, const size_t id )
     : BaseType( id )
     {
@@ -138,14 +143,14 @@ namespace Dune
     }
 
 
-    template< class ct, class Topology >
-    inline void CornerPointList< ct, Topology >::initialize ()
+    template< class ct, Dune::GeometryType::Id geometryId >
+    inline void CornerPointList< ct, geometryId >::initialize ()
     {
-      GeometryType gt( Topology::id, Topology::dimension );
-      const auto &refElement = Dune::ReferenceElements< ct, Topology::dimension >::general( gt );
-      const unsigned int size = refElement.size( Topology::dimension );
+      static constexpr GeometryType gt( geometryId );
+      const auto &refElement = Dune::ReferenceElements< ct, gt.dim() >::general( gt );
+      const unsigned int size = refElement.size( gt.dim() );
       for( unsigned int i = 0; i < size; ++i )
-        addIntegrationPoint( refElement.position( i, Topology::dimension ) );
+        addIntegrationPoint( refElement.position( i, gt.dim() ) );
     }
 
   } //namespace Fem
