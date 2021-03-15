@@ -789,6 +789,7 @@ def generateMethod(struct,expr, cppType, name,
         returnResult=True,
         defaultReturn='0',
         targs=None, args=None, static=False, const=False, volatile=False,
+        inline=False,
         evalSwitch=True,
         predefined=None):
     if predefined is None:
@@ -816,7 +817,7 @@ def generateMethod(struct,expr, cppType, name,
     meth = clsMethod(returnType, name,
             code=code,
             args=args,
-            targs=targs, static=static, const=const, volatile=volatile)
+            targs=targs, static=static, const=const, volatile=volatile, inline=inline)
     struct.append(meth)
 
 def uflSignature(form,*args):

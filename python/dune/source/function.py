@@ -19,11 +19,12 @@ class Function(Block):
 
 
 class Method(Block):
-    def __init__(self, cppType, name, targs=None, args=None, code=None, static=False, const=False, volatile=False):
+    def __init__(self, cppType, name, targs=None, args=None, code=None, static=False, const=False, inline=False, volatile=False):
         Block.__init__(self)
         self.cppType = cppType
         self.name = name
         self.static = static
+        self.inline = inline
         self.resetQualifiers(const=const, volatile=volatile)
         if static and (const or volatile):
             raise Exception('Cannot cv-qualify static method.')

@@ -309,7 +309,7 @@ class SourceWriter:
             self.emit(None if self.begin else '', indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            signature = ('static ' if src.static else '') + self.typedName(src) + ' ('
+            signature = ('static ' if src.static else '') + ('inline ' if src.inline else '') + self.typedName(src) + ' ('
             if src.args:
                 signature += ' ' + ', '.join(self.formatArgument(arg) for arg in src.args) + ' '
             signature += ')'
