@@ -58,7 +58,7 @@ def run(restore=False):
         print("restoring discrete function")
         checkPointer.restore()
 
-    df.plot()
+    # df.plot()
     if not restore:
         checkPointer.backup()
 
