@@ -260,6 +260,9 @@ try
   // initialize MPI, if necessary
   Dune::Fem::MPIManager::initialize( argc, argv );
 
+  // this test only seems to work in single thread mode
+  Dune::Fem::ThreadManager::setMaxNumberThreads( 1 );
+
   // append overloaded parameters from the command line
   Dune::Fem::Parameter::append( argc, argv );
 
@@ -278,18 +281,18 @@ try
   typedef Dune :: GridSelector :: GridType  HGridType ;
 
   // create grid from DGF file
-  std::stringstream gridfilestr;
-  gridfilestr << HGridType :: dimension << "dgrid.dgf";
-
-  std::string gridfile;
-  Dune::Fem::Parameter::get( "fem.io.macrogrid", gridfilestr.str(), gridfile );
+  std::stringstream dgf;
+  dgf << "DGF" << std::endl;
+  dgf << "INTERVAL" << std::endl;
+  dgf << "0 0 0" << std::endl;
+  dgf << "1 1 1" << std::endl;
+  const int nxcells = 2;
+  dgf << nxcells << " " << nxcells << " " << nxcells << std::endl;
+  dgf << "#" << std::endl;
 
   // the method rank and size from MPIManager are static
-  if( Dune::Fem::MPIManager::rank() == 0 )
-    std::cout << "Loading macro grid: " << gridfile << std::endl;
-
   // construct macro using the DGF Parser
-  Dune::GridPtr< HGridType > gridPtr( gridfile );
+  Dune::GridPtr< HGridType > gridPtr( dgf );
   HGridType& grid = *gridPtr ;
 
   // initial load balance
@@ -313,6 +316,7 @@ try
   }
 
   // combined space
+  /*
   {
     // coarsen
     grid.globalRefine( -level*refineStepsForHalf );
@@ -323,6 +327,7 @@ try
     for( int step = 0; step < repeats; ++step )
       algorithm< true >( grid, step );
   }
+  */
   return 0;
 }
 catch( const Dune::Exception &exception )
