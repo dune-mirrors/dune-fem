@@ -25,14 +25,11 @@ namespace Dune
     struct Builder
     {
       template <class Points1DType>
-      static int size(GeometryType gt, const Points1DType &points1D)
+      static int size(const GeometryType gt, const Points1DType &points1D)
       {
         if (gt.dim()==0) return 1;
-        else if (Impl::isTopology(Impl::prismConstruction,gt.id(),gt.dim()))
-        {
-          GeometryType baseGt(Impl::baseTopologyId(gt.id(),gt.dim()),gt.dim()-1);
-          return Builder<Field>::size(baseGt,points1D)*points1D.size(); // (order-1);
-        }
+        else if (Impl::isTensor(gt))
+          return Builder<Field>::size(Impl::getBase(gt),points1D)*points1D.size(); // (order-1);
         else
         {
           std::cout << "Not implemented for pyramid geometries still missing!\n";
@@ -40,7 +37,7 @@ namespace Dune
         }
       }
       template <unsigned int dim, class Points1DType>
-      static void setup(GeometryType gt, const Points1DType &points1D,
+      static void setup(const GeometryType gt, const Points1DType &points1D,
                         LagrangePoint< Field, dim > *points )
       {
         if (dim==0)
@@ -53,9 +50,9 @@ namespace Dune
           points->point_[0] = Zero<Field>();
           points->weight_ = 1.;
         }
-        else if (Impl::isTopology(Impl::prismConstruction,gt.id(),gt.dim()))
+        else if (Impl::isTensor(gt))
         {
-          GeometryType baseGt(Impl::baseTopologyId(gt.id(),gt.dim()),gt.dim()-1);
+          GeometryType baseGt = Impl::getBase(gt);
           assert(dim>=gt.dim());
           Builder<Field>::template setup<dim>(baseGt,points1D,points);
           const unsigned int baseSize = Builder::size(baseGt,points1D);
@@ -93,9 +90,10 @@ namespace Dune
       : Base(order), quadOrder_(-1)
     {}
 
-    template <class Topology, class Quad>
+    template <GeometryType::Id geometryId, class Quad>
     bool build (const Quad& quadFactory)
     {
+      constexpr GeometryType gt(geometryId);
       unsigned int order = Base::order();
       const auto &quad = quadFactory(order);
       quadOrder_ = quad.order();
@@ -118,21 +116,20 @@ namespace Dune
           points1D.push_back(std::make_pair(p,quad[i].weight()));
       }
       if (withEndPoints)
-        Dune::Fem::ForLoop<Setup<Topology>::template InitCodim,0,dimension>::
-          apply(GeometryType(Topology()),order,points1D,vertexWeight,points_);
+        Dune::Fem::ForLoop<Setup::template InitCodim,0,dimension>::
+          apply(gt,order,points1D,vertexWeight,points_);
       else
-        Setup<Topology>::template InitCodim<dimension>::
-          apply(GeometryType(Topology()),order,points1D,vertexWeight,points_);
+        Setup::template InitCodim<dimension>::
+          apply(gt,order,points1D,vertexWeight,points_);
       return true;
     }
     static bool supports ( GeometryType gt, int order )
     {
       return gt.isCube();
     }
-    template <class Topology>
-    static bool supports (int order)
-    {
-      return supports( GeometryType(Topology()), order );
+    template< GeometryType::Id geometryId>
+    static bool supports ( std::size_t order ) {
+      return supports( GeometryType( geometryId ), order );
     }
     unsigned int quadOrder() const
     {
@@ -142,7 +139,6 @@ namespace Dune
     using Base::points_;
     unsigned int quadOrder_;
     private:
-    template <class Topology>
     struct Setup
     {
       template <int pdim>
@@ -165,7 +161,6 @@ namespace Dune
             std::vector< LagrangePoint<Field,dimension-codim> > subPoints(size);
             Impl::Builder<Field>::template setup<dimension-codim>( subGt, points1D, &(subPoints[0]) );
 
-            const GeometryType geoType( Topology::id, dimension );
             const auto &refElement = referenceElement<Field,dimension>(gt);
             const auto &mapping = refElement.template geometry< codim >( subEntity );
 
@@ -200,7 +195,7 @@ namespace Dune
     GaussLobattoPointSet(unsigned int order)
       : Base(order)
     {}
-    template <class Topology>
+    template< GeometryType::Id geometryId >
     bool build ()
     {
       // get LobattoQuad with order+1 points
@@ -209,7 +204,7 @@ namespace Dune
           Dune::GeometryTypes::line, pol2QuadOrder(order),
                     Dune::QuadratureType::GaussLobatto);
       };
-      return Base::template build<Topology>(quadFactory);
+      return Base::template build<geometryId>(quadFactory);
     }
     static unsigned int pol2QuadOrder(int order)
     {
@@ -224,7 +219,7 @@ namespace Dune
     {
       using namespace Impl;
       GaussLobattoPointSet ps(quad2PolOrder(quadOrder));
-      ps.template build< typename CubeTopology< dim >::type > ();
+      ps.template build<GeometryTypes::cube(dim)>();
       return ps;
     }
   };
@@ -244,7 +239,7 @@ namespace Dune
     GaussLegendrePointSet(unsigned int order)
       : Base(order)
     {}
-    template <class Topology>
+    template< GeometryType::Id geometryId >
     bool build ()
     {
       // get LobattoQuad with order+1 points
@@ -252,7 +247,7 @@ namespace Dune
       { return Dune::QuadratureRules<Field,1>::rule(
           Dune::GeometryTypes::line, pol2QuadOrder(order), Dune::QuadratureType::GaussLegendre);
       };
-      return Base::template build<Topology>(quadFactory);
+      return Base::template build<GeometryType(geometryId)>(quadFactory);
     }
 
     static unsigned int pol2QuadOrder(int order)
@@ -268,7 +263,7 @@ namespace Dune
     {
       using namespace Impl;
       GaussLegendrePointSet ps(quad2PolOrder(quadOrder));
-      ps.template build< typename CubeTopology< dim >::type > ();
+      ps.template build<GeometryTypes::cube(dim)>();
       return ps;
     }
 
