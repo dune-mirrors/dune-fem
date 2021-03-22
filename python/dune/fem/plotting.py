@@ -1,12 +1,36 @@
 import matplotlib
 from matplotlib import pyplot
-from numpy import amin, amax, linspace, linalg, log
+from numpy import amin, amax, linspace, linalg, log, append, zeros, int32
 from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
 
 from dune.plotting import block, disable
 from ufl import as_vector
 globalBlock = block
+
+def triangulationOfNetwork(grid, level=0, linewidth=0.01):
+    from matplotlib.tri import Triangulation
+    x, t = grid.tesselate(level)
+    n, m = len(x), len(t)
+    t = append(t.T, [zeros(m, dtype=int32)], axis=0).T
+    t = append(t, zeros((m,3), dtype=int32), axis=0)
+    x = append(x, zeros((2*m,2)), axis=0)
+    for i in range(m):
+        i0 = n+2*i
+        t[i][2] = i0
+        t[m+i][0] = t[i][1]
+        t[m+i][1] = i0
+        t[m+i][2] = i0+1
+        x0 = x[t[i][0]]
+        x1 = x[t[i][1]]
+        d = x1 - x0
+        d *= 0.5 * linewidth / (d[0]**2+d[1]**2)**(1/2)
+        d = [d[1],-d[0]]
+        x[i0] = x0 + d
+        x[i0+1] = x1 + d
+        x[t[i][0]] -= d
+        x[t[i][1]] -= d
+    return Triangulation(x[:,0], x[:,1], t)
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
@@ -18,15 +42,37 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
     elif colorbar == False:
         colorbar = None
 
-    if (gridLines is not None) and (gridLines != ""):
+    if grid.dimWorld==2 and (gridLines is not None) and (gridLines != ""):
         polys = grid.polygons()
         for p in polys:
             coll = PolyCollection(p,facecolor='none',edgecolor=gridLines,linewidth=linewidth,zorder=2)
             pyplot.gca().add_collection(coll)
 
     if not solution == None:
-        triangulation = grid.triangulation(level)
         data = solution.pointData(level)
+
+        if grid.dimGrid == 1 and grid.dimension == 1:
+            if solution.dimRange > 1:
+                data = linalg.norm(solution.pointData(level),axis=1)
+            else:
+                data = solution.pointData(level)[:,0]
+            pyplot.plot(grid.tesselate(level)[0], data, '-p')
+            if xlim:
+                fig.gca().set_xlim(xlim)
+            fig.tight_layout()
+            return
+
+        if grid.dimGrid == 1:
+            triangulation = triangulationOfNetwork(grid, level, linewidth)
+            n = len(data)
+            data = append(data.T, [zeros(len(triangulation.triangles))], axis=1).T
+            for i in range(n//2):
+                for j in range(2):
+                    data[n+2*i+j] = data[2*i+j]
+        else:
+            triangulation = grid.triangulation(level)
+            data = solution.pointData(level)
+
         try:
             x1 = vectors[0]
             x2 = vectors[1]
@@ -84,8 +130,6 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                         cbar = colorbar
                         cbar.setdefault("orientation","vertical")
                     cbar.setdefault("shrink",1.0)
-                    cbar.setdefault("extend",extend)
-                    cbar.setdefault("norm",norm)
                     cbar.setdefault("ticks",v)
                     cbar = pyplot.colorbar(**cbar, fraction=0.046, pad=0.04)
                     cbar.ax.tick_params(labelsize=10)
@@ -122,8 +166,8 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         else:
             grid = solution
             solution = None
-    if not grid.dimension == 2:
-        print("inline plotting so far only available for 2d grids")
+    if not grid.dimWorld == 2 and solution is None:
+        print("inline plotting of grid only available for 2d grids")
         return
 
     if figure is None:
@@ -160,8 +204,8 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         else:
             grid = solution
             solution = None
-    if not grid.dimension == 2:
-        print("inline plotting so far only available for 2d grids")
+    if not grid.dimWorld == 2 and solution is None:
+        print("inline plotting of grid only available for 2d grids")
         return
 
     if not show:
