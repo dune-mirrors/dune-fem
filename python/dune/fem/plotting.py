@@ -8,10 +8,10 @@ from dune.plotting import block, disable
 from ufl import as_vector
 globalBlock = block
 
-def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None,
+def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
-        triplot=False, logscale=False):
+        triplot=False, logscale=False, ticks=11):
 
     if colorbar == True:
         colorbar = "vertical"
@@ -21,7 +21,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
     if (gridLines is not None) and (gridLines != ""):
         polys = grid.polygons()
         for p in polys:
-            coll = PolyCollection(p,facecolor='none',edgecolor=gridLines,linewidth=0.5,zorder=2)
+            coll = PolyCollection(p,facecolor='none',edgecolor=gridLines,linewidth=linewidth,zorder=2)
             pyplot.gca().add_collection(coll)
 
     if not solution == None:
@@ -37,8 +37,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
 
         if not vectors is None:
             pyplot.quiver(triangulation.x, triangulation.y, data[:,x1], data[:,x2],
-                      units='xy', scale=10., zorder=3, color='blue',
-                      width=0.007, headwidth=3., headlength=4.)
+                      units='xy', scale=None, zorder=3, color='black')
             return
         else:
             if solution.dimRange > 1:
@@ -68,7 +67,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
             levels = linspace(clim[0], clim[1], 256, endpoint=True)
             if triplot == True:
                 pyplot.triplot(triangulation, antialiased=True,
-                        linewidth=0.2, color='black')
+                        linewidth=linewidth, color='black')
             else:
                 try:
                     pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels,
@@ -85,8 +84,10 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
                         cbar = colorbar
                         cbar.setdefault("orientation","vertical")
                     cbar.setdefault("shrink",1.0)
+                    cbar.setdefault("extend",extend)
+                    cbar.setdefault("norm",norm)
                     cbar.setdefault("ticks",v)
-                    cbar = pyplot.colorbar(**cbar)
+                    cbar = pyplot.colorbar(**cbar, fraction=0.046, pad=0.04)
                     cbar.ax.tick_params(labelsize=10)
         if contours is not None:
             pyplot.tricontour(triangulation, data, levels=contours,
@@ -98,16 +99,17 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", vectors=None
         fig.gca().set_xlim(xlim)
     if ylim:
         fig.gca().set_ylim(ylim)
+    fig.tight_layout()
 
 from ufl.core.expr import Expr
 from dune.ufl import expression2GF
-def plotPointData(solution, figure=None,
+def plotPointData(solution, figure=None, linewidth=0.1,
         level=0, gridLines="black", vectors=False,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar="vertical", grid=None, triplot=False,
         block=globalBlock,
-        logscale=False):
+        logscale=False, ticks=11):
     if disable: return
     try:
         grid = solution.grid
@@ -135,10 +137,10 @@ def plotPointData(solution, figure=None,
         except:
             pass
         newFig = False
-    _plotPointData(figure, grid, solution, level, gridLines,
+    _plotPointData(figure, grid, solution, level, gridLines, linewidth,
                     vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
-                    logscale)
+                    logscale, ticks)
 
     if newFig and block:
         pyplot.show(block=block)
