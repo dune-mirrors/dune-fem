@@ -120,7 +120,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                             **logNorm,extend=extend)
                 except:
                     pyplot.tricontourf(triangulation, data, cmap=cmap,
-                            **logNorm,extend="both",norm=norm)
+                            **logNorm,extend=extend,norm=norm)
                 if colorbar is not None:
                     v = linspace(clim[0], clim[1], 10, endpoint=True)
                     if not isinstance(colorbar,dict):
@@ -225,14 +225,14 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
     # first the grid if required
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
-        _plotPointData(figure,grid,None,level,gridLines,False,
+        _plotPointData(figure,grid,None,level,gridLines,0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
-        _plotPointData(figure,grid,solution[p],level,"",False,
+        _plotPointData(figure,grid,solution[p],level,"",0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar)
 
