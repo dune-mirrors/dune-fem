@@ -79,7 +79,7 @@ namespace Dune
 
 
     template <class Field, int dim>
-    class QuadraturePointsRegistry
+    struct QuadraturePointsRegistry
     {
       typedef QuadraturePointsRegistry< Field, dim > ThisType;
 
@@ -93,8 +93,6 @@ namespace Dune
 
     protected:
       std::map< QuadratureKeyType, QuadratureRuleType > rules_;
-
-      QuadraturePointsRegistry() {}
 
       QuadratureRuleType& getRule(const QuadratureKeyType& key)
       {
