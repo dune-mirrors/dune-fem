@@ -169,7 +169,7 @@ def compileUFL(form, patch, *args, **kwargs):
     for bc in dirichletBCs:
         bc.ufl_value = replace(bc.ufl_value, coeff)
     if patch is not None:
-        patch = [replace(a,coeff) for a in patch]
+        patch = [a if not isinstance(a, Expr) else replace(a,coeff) for a in patch]
 
     phi = form.arguments()[0]
     dimRange = phi.ufl_shape[0]
@@ -229,8 +229,9 @@ def compileUFL(form, patch, *args, **kwargs):
         uflCoefficients |= set(c)
     if patch is not None:
         for a in patch:
-            _, c = extract_arguments_and_coefficients(a)
-            uflCoefficients |= set(c)
+            if isinstance(a, Expr):
+                _, c = extract_arguments_and_coefficients(a)
+                uflCoefficients |= set(c)
 
     constants = dict()
     coefficients = dict()
