@@ -214,11 +214,13 @@ protected:
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
-  void setZeroConstraints( ... ) const { }
+  template<class...Args>
+  void setZeroConstraints(Args&&...) const { }
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
-  void setModelConstraints( ... ) const { }
+  template<class...Args>
+  void setModelConstraints(Args&&... ) const { }
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
   mutable InverseOperatorType invOp_;
