@@ -42,7 +42,7 @@ def storageType(codegen):
 
 def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, caching=True,
           scalar=False, dimrange=None, codegen=True):
-    """create a discontinous galerkin space with elementwise orthonormal basis functions
+    """create a discontinuous galerkin space with elementwise orthonormal basis functions
 
     Args:
         gridView: the underlying grid view
@@ -107,7 +107,7 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, cachin
 
 def dgonbhp(gridView, order=1, dimRange=None, field="double",
             storage=None, scalar=False, dimrange=None, codegen=True):
-    """create a discontinous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
+    """create a discontinuous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
@@ -161,7 +161,7 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
 
 def dglegendre(gridView, order=1, dimRange=None, field="double",
                storage=None, hierarchical=True, scalar=False, dimrange=None, codegen=True):
-    """create a discontinous galerkin space with elementwise legendre tensor product basis function
+    """create a discontinuous galerkin space with elementwise legendre tensor product basis function
 
     Args:
         gridView: the underlying grid view
@@ -225,7 +225,7 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
 
 def dglegendrehp(gridView, order=1, dimRange=None, field="double",
                  storage=None, scalar=False, dimrange=None, codegen=True):
-    """create a discontinous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
+    """create a discontinuous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
@@ -284,7 +284,7 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
 
 def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                scalar=False, dimrange=None, pointType=None, codegen=True):
-    """create a discontinous galerkin space with elementwise lagrange basis function
+    """create a discontinuous galerkin space with elementwise lagrange basis function
 
     Args:
         gridView: the underlying grid view
