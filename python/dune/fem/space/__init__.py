@@ -151,6 +151,30 @@ def dfProject(self, f):
             + str(self.space.dimRange))
     return self._project(func)
 
+def dfAssign(self, other):
+    """ assign dofs of other discrete function to self
+    Args:
+        self: discrete function
+        other: other discrete function
+    """
+    try:
+        # try natural, when dof vectors match
+        # (which is slightly more than df's match)
+        self.dofVector.assign(other.dofVector)
+    except:
+        # this is the case when storage is different
+        import io
+        from dune.generator import algorithm
+        _assignCode = \
+"""
+template <class A, class B>
+void assignDF( A& a, const B& b )
+{
+  a.assign( b );
+}
+"""
+        algorithm.run('assignDF', io.StringIO(_assignCode), self, other )
+
 def localContribution(self, assembly):
     if assembly == "set":
         return self.setLocalContribution()
@@ -163,6 +187,7 @@ def addDFAttr(module, cls, storage):
     setattr(cls, "_module", module)
     setattr(cls, "_storage", storage)
     setattr(cls, "interpolate", dfInterpolate )
+    setattr(cls, "assign", dfAssign )
     if hasattr(cls,"_project"):
         setattr(cls, "project", dfProject )
     setattr(cls, "localContribution", localContribution )
