@@ -75,7 +75,8 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
 
     Args:
         hostGridView:        grid view to filter
-        contains:            function (Element -> bool) returning whether an element is contained in the resulting grid view
+        contains:            function (Element -> int) returns a domain id for each element is contained in the resulting grid view
+        domainId:            contains==domainId used to define entities inside the filtered gv
         useFilteredIndexSet: build index set containing only filtered entites? (defaults to false)
 
     Returns:
