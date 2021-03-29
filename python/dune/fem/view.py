@@ -82,7 +82,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     Returns:
         GridView: the constructed grid view
     """
-    includes = hostGridView._includes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh"]
+    includes = hostGridView._includes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
 
     hostGridViewType = hostGridView._typeName
     hostGridPartType = "Dune::FemPy::GridPart< " + hostGridViewType + " >"
@@ -110,7 +110,7 @@ def geometryGridView(coordFunction):
     Returns:
         GridView: the constructed grid view
     """
-    includes = coordFunction._includes + ["dune/fem/gridpart/geometrygridpart.hh"]
+    includes = coordFunction._includes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction._typeName + " >"
     typeName = gridPartName + "::GridViewType"
 
