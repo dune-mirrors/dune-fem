@@ -14,7 +14,7 @@ git pull origin master
 cp doc/*.py doc/*.ipynb doc/*.hh doc/*.dgf doc/*.msh ..
 cd ..
 rm -rf tmp
-rm py2ipynb.py pandoc-formatting.py gitlab-formatting.py interpolation.py svg2pdf.py
+rm pandoc-formatting.py gitlab-formatting.py interpolation.py svg2pdf.py
 '''
 subprocess.check_output(commands, shell=True)
 

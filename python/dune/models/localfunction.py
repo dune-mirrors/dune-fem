@@ -29,6 +29,7 @@ from dune.ufl.codegen import uflSignature, TooHighDerivative
 from dune.ufl import codegen
 
 class UFLFunctionSource(codegen.ModelClass):
+    version = "v1_1"
     def __init__(self, gridType, gridIncludes, expr,
             name,order,
             tempVars=True, virtualize=True,
@@ -111,7 +112,8 @@ class UFLFunctionSource(codegen.ModelClass):
         return hashIt(self.codeString + coeffTypes)
     def signature(self):
         return self._signature()
-        return uflSignature(None, *self.coefficientCppTypes, *self._constantNames, self.expr)
+        return uflSignature(None, *self.coefficientCppTypes,
+                            *self._constantNames, self.expr)+UFLFunctionSource.version
 
     def name(self):
         from dune.common.hashit import hashIt

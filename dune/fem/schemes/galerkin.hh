@@ -1105,7 +1105,10 @@ namespace Dune
 
       // GalerkinSchemeImpl
       // ------------------
-
+      template <class O, bool addDirichletBC>
+      struct DirichletBlockSelector { using type = void; };
+      template <class O>
+      struct DirichletBlockSelector<O,true> { using type = typename O::DirichletBlockVector; };
       template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC,
                 template <class,class> class DifferentiableGalerkinOperatorImpl = DifferentiableGalerkinOperator >
       struct GalerkinSchemeImpl
@@ -1115,6 +1118,10 @@ namespace Dune
         using DifferentiableOperatorType = std::conditional_t< addDirichletBC,
            DirichletWrapperOperator< DifferentiableGalerkinOperatorImpl< Integrands, LinearOperator >>,
            DifferentiableGalerkinOperatorImpl< Integrands, LinearOperator > >;
+        using DirichletBlockVector = typename DirichletBlockSelector<
+                 DirichletWrapperOperator<
+                    DifferentiableGalerkinOperatorImpl< Integrands, LinearOperator >>,
+                 addDirichletBC>::type;
 
         typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
         typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
@@ -1221,6 +1228,11 @@ namespace Dune
         {
           if constexpr (addDirichletBC)
             fullOperator().subConstraints( u, v );
+        }
+        const auto dirichletBlocks() const
+        {
+          if constexpr (addDirichletBC)
+            return fullOperator().dirichletBlocks();
         }
 
       protected:

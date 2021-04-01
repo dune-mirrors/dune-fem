@@ -59,11 +59,18 @@
 //----------
 
 template < class Op, class DF, typename = void >
-struct AddDirichletBC { static const bool value = false; };
+struct AddDirichletBC
+{
+  static const bool value = false;
+  using DirichletBlockVector = void;
+};
 template < class Op, class DF>
 struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declval<const Op>().
             setConstraints( std::declval<DF&>() ) )>::value > >
-{ static const bool value = true; };
+{
+  static const bool value = true;
+  using DirichletBlockVector = typename Op::DirichletBlockVector;
+};
 
 
 template< class Operator, class LinearInverseOperator >
@@ -97,6 +104,8 @@ public:
 
   typedef typename FunctionSpaceType::RangeType RangeType;
   static const int dimRange = FunctionSpaceType::dimRange;
+  static constexpr bool addDirichletBC = AddDirichletBC<Operator,DomainFunctionType>::value;
+  using DirichletBlockVector = typename AddDirichletBC<Operator,DomainFunctionType>::DirichletBlockVector;
   /*********************************************************/
 
   FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
@@ -140,6 +149,14 @@ public:
   setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
   {
     implicitOperator_.setConstraints( value, u );
+  }
+  // template <typename O = Operator>
+  // std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,
+  //    const decltype(implicitOperator_.dirichletBlocks())&>
+  const auto &dirichletBlocks() const
+  {
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      return implicitOperator_.dirichletBlocks();
   }
 
   void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const

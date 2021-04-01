@@ -377,7 +377,7 @@ namespace Dune
       typedef typename GridPartType::IntersectionType IntersectionType;
 
       using RRangeType = typename detail::GetDimRange<std::tuple_element_t<0,RangeValueType>>::type;
-      typedef Dune::FieldVector<int,RRangeType::dimension> DirichletComponentType;
+      typedef std::array<int,RRangeType::dimension> DirichletComponentType;
       typedef typename EntityType::Geometry::LocalCoordinate DomainType;
 
     private:

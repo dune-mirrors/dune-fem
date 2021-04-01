@@ -88,6 +88,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
+    version = "v1_1"
     def __init__(self, integrands, gridType, gridIncludes, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
         self.gridType = gridType
@@ -108,7 +109,7 @@ class Source(object):
                 *self.integrands._constantNames,
                 *[a for a in self.args if isinstance(a,DirichletBC)],
                 *self.integrands.baseSignature
-                )
+                )+Source.version
 
     def name(self):
         from dune.common.hashit import hashIt
