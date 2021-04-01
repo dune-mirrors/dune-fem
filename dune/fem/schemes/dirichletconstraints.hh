@@ -75,8 +75,8 @@ public:
   static const int localBlockSize = DiscreteFunctionSpaceType :: localBlockSize ;
   static_assert( localBlockSize == DiscreteFunctionSpaceType::FunctionSpaceType::dimRange,
       "local block size of the space must be identical to the dimension of the range of the function space.");
-  typedef FieldVector<int, localBlockSize> DirichletBlock;
-  typedef FieldVector<int, localBlockSize> ModelDirichletBlock;
+  typedef std::array<int,localBlockSize> DirichletBlock;
+  typedef std::vector< DirichletBlock > DirichletBlockVector;
   // static_assert( dimD >= localBlockSize,
   //     "local block size of the space must be less or equahl to the dimension of the range of the model.");
 
@@ -277,6 +277,12 @@ public:
     }
   }
 
+  const DirichletBlockVector &dirichletBlocks() const
+  {
+    updateDirichletDofs();
+    return dirichletBlocks_;
+  }
+
 protected:
 
   /*! treatment of Dirichlet-DoFs for one entity
@@ -417,7 +423,7 @@ protected:
       const int blocks = space_.blockMapper().size() ;
       dirichletBlocks_.resize( blocks );
       for( int i=0; i<blocks; ++i )
-        dirichletBlocks_[ i ] = DirichletBlock(0) ;
+        dirichletBlocks_[ i ].fill(0);
 
       typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
       typedef typename IteratorType :: Entity EntityType;
@@ -491,7 +497,8 @@ protected:
       if( intersection.boundary() )
       {
         // get dirichlet information from model
-        ModelDirichletBlock block(0);
+        DirichletBlock block;
+        block.fill(0);
         const bool isDirichletIntersection = model.isDirichletIntersection( intersection, block );
         if (isDirichletIntersection)
         {
@@ -502,7 +509,7 @@ protected:
           {
             if ( !globalBlockDofsFilter[i] ) continue;
             // mark global DoF number
-            for(int k = 0; k < DirichletBlock::dimension; ++k)
+            for(int k = 0; k < localBlockSize; ++k)
               dirichletBlocks_[globalBlockDofs[ i ] ][k] = block [k];
 
             // we have Dirichlet values
@@ -517,7 +524,7 @@ protected:
 
   ModelType &model_;
   const DiscreteFunctionSpaceType& space_;
-  mutable std::vector< DirichletBlock > dirichletBlocks_;
+  mutable DirichletBlockVector dirichletBlocks_;
   mutable bool hasDirichletDofs_ ;
   mutable int sequence_ ;
 

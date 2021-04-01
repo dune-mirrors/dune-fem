@@ -89,7 +89,7 @@ class Integrands(codegen.ModelClass):
             # code.append(TypeAlias("BoundaryIdProviderType",\ "Dune::Fem::BoundaryIdGetter< typename GridPartType::GridType >"))
             # idGetter = Variable('BoundaryIdProviderType', "boundaryIdGetter_")
             # code.append(Declaration(idGetter))
-            code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
+            code.append(TypeAlias("DirichletComponentType","std::array<int,"+str(self.dimRange)+">"))
             code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
             code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'],
                 code=self.isDirichletIntersection\

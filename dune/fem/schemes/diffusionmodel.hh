@@ -178,7 +178,7 @@ public:
 
   VirtualDiffusionModelMethods(LocalDomainType)
 
-  typedef Dune::FieldVector<int, dimRange> DirichletComponentType;
+  typedef std::array<int, dimRange> DirichletComponentType;
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
   virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
@@ -293,7 +293,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
     return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
   }
 
-  typedef Dune::FieldVector<int, dimR> DirichletComponentType;
+  typedef std::array<int, dimR> DirichletComponentType;
   virtual bool hasDirichletBoundary () const
   {
     return impl().hasDirichletBoundary();
@@ -420,7 +420,7 @@ public:
 
   VirtualDiffusionModelMethods(LocalDomainType)
 
-  typedef Dune::FieldVector<int, dimRange> DirichletComponentType;
+  typedef std::array<int, dimRange> DirichletComponentType;
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
   virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
@@ -525,7 +525,7 @@ struct DGDiffusionModelWrapper : public DGDiffusionModel<typename ModelImpl::Gri
     return detail::CallSetTime< ModelImpl, detail::CheckTimeMethod< ModelImpl >::value >::time( impl() );
   }
 
-  typedef Dune::FieldVector<int, dimR> DirichletComponentType;
+  typedef std::array<int, dimR> DirichletComponentType;
   virtual bool hasDirichletBoundary () const
   {
     return impl().hasDirichletBoundary();
@@ -604,7 +604,7 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimR> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, std::array<int, dimR> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }

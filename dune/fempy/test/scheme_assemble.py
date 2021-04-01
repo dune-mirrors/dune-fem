@@ -14,7 +14,8 @@ test_fem   = True
 test_istl  = True
 try:
     import petsc4py
-    test_petsc = True
+    # test_petsc = True
+    test_petsc = False # issue with petsc state
 except:
     test_petsc = False
 

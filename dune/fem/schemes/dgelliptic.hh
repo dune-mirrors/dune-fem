@@ -367,7 +367,8 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
         }
         else if( intersection.boundary() )
         {
-          Dune::FieldVector<int,dimRange> components(0);
+          std::array<int,dimRange> components;
+          components.fill(0);
           model().isDirichletIntersection( intersection, components);
 
           typedef typename IntersectionType::Geometry IntersectionGeometryType;
@@ -646,7 +647,8 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
       }
       else if( intersection.boundary() )
       {
-        Dune::FieldVector<int,dimRange> components(0);
+        std::array<int,dimRange> components;
+        components.fill(0);
         model().isDirichletIntersection( intersection, components);
 
         typedef typename IntersectionType::Geometry  IntersectionGeometryType;

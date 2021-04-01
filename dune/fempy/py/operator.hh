@@ -11,6 +11,8 @@
 #include <dune/fempy/parameter.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
+#include <dune/python/pybind11/stl.h>
+#include <dune/python/pybind11/stl_bind.h>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
@@ -80,26 +82,28 @@ namespace Dune
 
       // registerConstraints
       // -------------------
-
-      template< class Operator, class... options >
-      inline static auto registerOperatorConstraints ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval<const Operator>().setConstraints
-              ( std::declval<typename Operator::DomainFunctionType&>() ) ) >
-      {
-        typedef typename Operator::DomainFunctionType DomainFunction;
-        typedef typename Operator::RangeFunctionType  RangeFunction;
-        cls.def( "setConstraints", [] ( Operator &self, DomainFunction &u) { self.setConstraints( u ); } );
-        cls.def( "setConstraints", [] ( Operator &self, const typename DomainFunction::RangeType &value, DomainFunction &u) { self.setConstraints( value, u ); } );
-        cls.def( "setConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.setConstraints( u,v ); } );
-        cls.def( "subConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.subConstraints( u,v ); } );
-      }
-      template< class Operator, class... options >
-      inline static void registerOperatorConstraints ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
-      {}
+      template < class Op, class DF, typename = void >
+      struct AddDirichletBC
+      { static constexpr bool value = false; };
+      template < class Op, class DF>
+      struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declval<const Op>().
+                  setConstraints( std::declval<DF&>() ) )>::value > >
+      { static constexpr bool value = !std::is_same_v<typename Op::DirichletBlockVector,void>; };
       template< class Operator, class... options >
       inline static void registerOperatorConstraints ( pybind11::class_< Operator, options... > cls )
       {
-        registerOperatorConstraints( cls, PriorityTag< 42 >() );
+        typedef typename Operator::DomainFunctionType DomainFunction;
+        typedef typename Operator::RangeFunctionType  RangeFunction;
+        if constexpr (AddDirichletBC<Operator,DomainFunction>::value)
+        {
+          cls.def( "setConstraints", [] ( Operator &self, DomainFunction &u) { self.setConstraints( u ); } );
+          cls.def( "setConstraints", [] ( Operator &self, const typename DomainFunction::RangeType &value, DomainFunction &u) { self.setConstraints( value, u ); } );
+          cls.def( "setConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.setConstraints( u,v ); } );
+          cls.def( "subConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.subConstraints( u,v ); } );
+          using DirichletBlockVector = typename Operator::DirichletBlockVector;
+          pybind11::bind_vector<DirichletBlockVector>(cls, "DirichletBlockVector");
+          cls.def_property_readonly( "dirichletBlocks",  [] ( Operator &self ) { return self.dirichletBlocks(); } );
+        }
       }
 
       template< class Operator, class... options >

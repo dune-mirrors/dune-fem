@@ -292,7 +292,7 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model >
         if( !intersection.boundary() )
           continue;
 
-        Dune::FieldVector<int,RangeRangeType::dimension> components(0);
+        std::array<int,RangeRangeType::dimension> components(0);
 
         const bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
@@ -417,7 +417,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
         if( !intersection.boundary() )
           continue;
 
-        Dune::FieldVector<int,RangeRangeType::dimension> components(0);
+        std::array<int,RangeRangeType::dimension> components(0);
         bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
         const auto &intersectionGeometry = intersection.geometry();

@@ -19,6 +19,7 @@ from dune.ufl.codegen import generateMethod
 from ufl.differentiation import Grad
 
 class EllipticModel:
+    version = "v1_1"
     def __init__(self, dimDomain, dimRange, u, signature):
         assert isInteger(dimRange)
         self.dimDomain = dimDomain
@@ -26,7 +27,7 @@ class EllipticModel:
         self.trialFunction = u
         self.init = []
         self.vars = None
-        self.signature = signature
+        self.signature = signature + EllipticModel.version
         self.field = "double"
 
         self._constants = []
@@ -199,7 +200,7 @@ class EllipticModel:
 
         code.append(Method('bool', 'hasNeumanBoundary', const=True, code=return_(self.hasNeumanBoundary)))
 
-        code.append(TypeAlias("DirichletComponentType","Dune::FieldVector<int,"+str(self.dimRange)+">"))
+        code.append(TypeAlias("DirichletComponentType","std::array<int,"+str(self.dimRange)+">"))
         code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
         code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'DirichletComponentType &dirichletComponent'], code=self.isDirichletIntersection, const=True))
         code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))

@@ -34,6 +34,7 @@ struct DirichletWrapperOperator
   typedef typename Operator::JacobianOperatorType JacobianOperatorType;
   typedef typename RangeDiscreteFunctionSpaceType::RangeType DomainRangeType;
   typedef Constraints ConstraintsType;
+  typedef typename ConstraintsType::DirichletBlockVector DirichletBlockVector;
 
   template <class... Args>
   DirichletWrapperOperator ( Args&... args )
@@ -61,6 +62,10 @@ struct DirichletWrapperOperator
   {
     // subtract boundary values from solution
     constraints()( u, w, ConstraintsType::Operation::sub );
+  }
+  const auto &dirichletBlocks() const
+  {
+    return constraints().dirichletBlocks();
   }
 
   //! application operator
