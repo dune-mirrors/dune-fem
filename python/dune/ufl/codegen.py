@@ -116,6 +116,14 @@ class CodeGenerator(MultiFunction):
     def conj(self,expr,x):
         return x
 
+    # do nothing here (until complex real is needed)
+    def Real(self,expr,x):
+        return x
+
+    # do nothing here (until complex real is needed)
+    def real(self,expr,x):
+        return x
+
     def cos(self, expr, x):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))
