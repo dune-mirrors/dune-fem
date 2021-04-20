@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/topologyfactory.hh>
+#include <dune/localfunctions/utility/topologyfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -28,7 +28,7 @@ namespace Dune
       static int size(const GeometryType gt, const Points1DType &points1D)
       {
         if (gt.dim()==0) return 1;
-        else if (Impl::isTensor(gt))
+        else if (gt.isPrismatic())
           return Builder<Field>::size(Impl::getBase(gt),points1D)*points1D.size(); // (order-1);
         else
         {
@@ -50,7 +50,7 @@ namespace Dune
           points->point_[0] = Zero<Field>();
           points->weight_ = 1.;
         }
-        else if (Impl::isTensor(gt))
+        else if (gt.isPrismatic())
         {
           GeometryType baseGt = Impl::getBase(gt);
           assert(dim>=gt.dim());

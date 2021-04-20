@@ -130,12 +130,12 @@ namespace Dune
       typedef LagrangeShapeFunctionInterface< FunctionSpace > ShapeFunctionType;
 
     private:
-      template< class Topology >
+      template< GeometryType::Id geometryId>
       struct Switch;
 
     public:
       explicit LagrangeShapeFunctionFactory ( const Dune::GeometryType &type, const int order = maxPolOrder )
-        : topologyId_( type.id() ),
+        : gt_(type),
           order_( order )
       {}
 
@@ -146,7 +146,7 @@ namespace Dune
       ShapeFunctionType *createShapeFunction( std::size_t i ) const;
 
     private:
-      const unsigned int topologyId_;
+      const Dune::GeometryType gt_;
       const int order_;
     };
 
@@ -240,11 +240,12 @@ namespace Dune
     // ------------------------------------
 
     template< class FunctionSpace, int maxPolOrder >
-    template< class Topology >
+    template< GeometryType::Id geometryId>
     struct LagrangeShapeFunctionFactory< FunctionSpace, maxPolOrder >::Switch
     {
       // get generic geometry type
-      static const unsigned int topologyId = Topology::id;
+      static constexpr GeometryType gt = geometryId;
+      static const unsigned int topologyId = gt.id();
       typedef typename GeometryWrapper< topologyId, dimension >
         ::ImplType ImplType;
 
@@ -307,7 +308,8 @@ namespace Dune
       ::numShapeFunctions () const
     {
       std::size_t numShapeFunctions( 0 );
-      Dune::Impl::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
+      Dune::Impl::IfGeometryType< Switch, dimension >::apply
+                  ( gt_, order_, numShapeFunctions );
       return numShapeFunctions;
     }
 
@@ -318,7 +320,8 @@ namespace Dune
       ::createShapeFunction( const std::size_t i ) const
     {
       ShapeFunctionType *shapeFunction( nullptr );
-      Dune::Impl::IfTopology< Switch, dimension >::apply( topologyId_, i, order_, shapeFunction );
+      Dune::Impl::IfGeometryType< Switch, dimension >::apply
+                  ( gt_, i, order_, shapeFunction );
       assert( shapeFunction );
       return shapeFunction;
     }

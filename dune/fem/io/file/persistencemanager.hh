@@ -492,7 +492,7 @@ namespace Dune
     // !!!! not accessable outside namespace Dune::Fem ?!?!?!
     namespace
     {
-      PersistenceManager &persistenceManager DUNE_UNUSED = PersistenceManager::instance();
+      PersistenceManager &persistenceManager __attribute__((unused)) = PersistenceManager::instance();
     }
 
 
