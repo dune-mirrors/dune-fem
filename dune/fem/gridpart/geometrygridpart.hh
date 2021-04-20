@@ -290,6 +290,12 @@ namespace Dune
         // here, grid part information can be passed, if necessary
         return EntityObj( Implementation( gridFunction_, entity ) );
       }
+      template < class EntitySeed >
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
+      {
+        return convert( hostGridPart().entity(seed) );
+      }
 
       const HostGridPartType &hostGridPart () const
       {
