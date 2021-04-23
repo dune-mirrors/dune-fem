@@ -316,6 +316,9 @@ namespace Dune
       //! flag is tru if set is in compressed status
       mutable bool compressed_;
 
+      //! flag is true if set has to be resized
+      mutable bool resized_;
+
     protected:
       using BaseType::grid_;
       using BaseType::dofManager_;
@@ -363,6 +366,7 @@ namespace Dune
         , gridPart_( gridPart )
         , sequence_( dofManager_.sequence() )
         , compressed_(true) // at start the set is compressed
+        , resized_(false) // at start the set has to be resized
       {
         // codim 0 is used by default
         codimLeafSet_[ 0 ].reset( new CodimIndexSetType( grid_, 0 ) );
@@ -490,7 +494,12 @@ namespace Dune
       void insertEntity( const GridElementType &entity )
       {
         // here we have to add the support of higher codims
-        resizeVectors();
+        if( !resized_ )
+        {
+          resizeVectors();
+          resized_ = true;
+        }
+
         insertIndex( entity );
       }
 
@@ -863,6 +872,8 @@ namespace Dune
       compressed_ = true;
       // update sequence number
       sequence_ = dofManager_.sequence();
+      // we have to resize again
+      resized_ = false;
 
       return haveToCopy;
     }
