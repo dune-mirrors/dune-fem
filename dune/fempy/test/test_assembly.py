@@ -24,7 +24,10 @@ test_12 = False
 testLoop = 1
 # testLoop = 10
 
-grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [189, 189]), dimgrid=2)
+try:
+    grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [189, 189]), dimgrid=2)
+except:
+    grid = create.grid("Yasp", dune.grid.cartesianDomain([0, 0], [1, 1], [189, 189]), dimgrid=2)
 
 def test(model,spaceName,dimD,dimR,storage):
     # print("########################################")

@@ -1,3 +1,3 @@
 [build-system]
-requires = ['setuptools', 'wheel', 'scikit-build', 'cmake', 'ninja', 'requests', 'dune-grid<=2.8.0.dev20201214']
+requires = ['dune-grid>=2.8.0.dev0', 'mpi4py', 'matplotlib', 'scipy', 'fenics-ufl==2019.1.0', 'dune-alugrid>=2.8.0.dev0', 'dune-istl>=2.8.0.dev0', 'dune-localfunctions>=2.8.0.dev0']
 build-backend = 'setuptools.build_meta'

@@ -305,7 +305,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator== ( const MakeVectorialExpression< Scalar, Vectorial > &a,
-                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+                 const MakeVectorialExpression< Scalar, Vectorial > &b ) const
     {
       return ((a.component() == b.component()) && (a.scalar() == b.scalar()));
     }
@@ -313,7 +313,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator!= ( const MakeVectorialExpression< Scalar, Vectorial > &a,
-                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+                 const MakeVectorialExpression< Scalar, Vectorial > &b ) const
     {
       return ((a.component() != b.component()) || (a.scalar() != b.scalar()));
     }
@@ -321,7 +321,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator== ( const Vectorial &a,
-                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+                 const MakeVectorialExpression< Scalar, Vectorial > &b ) const
     {
       return (a == static_cast< Vectorial >( b ));
     }
@@ -329,7 +329,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator!= ( const Vectorial &a,
-                 const MakeVectorialExpression< Scalar, Vectorial > &b )
+                 const MakeVectorialExpression< Scalar, Vectorial > &b ) const
     {
       return (a != static_cast< Vectorial >( b ));
     }
@@ -337,7 +337,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator== ( const MakeVectorialExpression< Scalar, Vectorial > &a,
-                 const Vectorial &b )
+                 const Vectorial &b ) const
     {
       return (static_cast< Vectorial >( a ) == b);
     }
@@ -345,7 +345,7 @@ namespace Dune
     template< class Scalar, class Vectorial >
     inline bool
     operator!= ( const MakeVectorialExpression< Scalar, Vectorial > &a,
-                 const Vectorial &b )
+                 const Vectorial &b ) const
     {
       return (static_cast< Vectorial >( a ) != b);
     }

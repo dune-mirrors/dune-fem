@@ -11,7 +11,11 @@ from dune.ufl import Space
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, ds, dx, inner, grad
 
 test_fem   = True
-test_istl  = True
+try:
+    import dune.istl
+    test_istl  = True
+except ImportError:
+    test_istl  = False
 try:
     import petsc4py
     # test_petsc = True
@@ -24,7 +28,10 @@ testLoop = 1
 # testLoop = 1000
 
 # grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [89, 89]), dimgrid=2)
-grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [9, 9]), dimgrid=2)
+try:
+    grid = create.grid("ALUConform", dune.grid.cartesianDomain([0, 0], [1, 1], [9, 9]), dimgrid=2)
+except:
+    grid = create.grid("Yasp", dune.grid.cartesianDomain([0, 0], [1, 1], [9, 9]), dimgrid=2)
 
 d = 0.001
 p = 1.7

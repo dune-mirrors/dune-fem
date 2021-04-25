@@ -1,6 +1,6 @@
 from mpi4py import MPI
 
-import numpy, math
+import numpy, math, sys
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
@@ -95,7 +95,6 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     # print(space.order,epsilon,eoc)
     if (eoc[-1]-(space.order+1)) < -0.1:
         print("ERROR:",space.order,epsilon,eoc)
-    assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
 
@@ -105,28 +104,39 @@ threading.use = 8
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
+test = True
 for i in range(10):
   print(i,"dgSpace, 1e-5, True, True")
   gridView = newGridView()
   space    = dgSpace(gridView, order=2, storage=storage)
   eoc = compute(space,1e-5,True,True) # , 'mol')
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"dgSpace, 1, True, True")
   gridView = newGridView()
   space    = dgSpace(gridView, order=2, storage=storage)
   eoc = compute(space,1,True,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, True, True")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,True,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, False, True")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,False,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, False, False")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,False,False)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
+
+  if not test: break
+
+print("-----------------------")
+sys.exit(0 if test else 1)
