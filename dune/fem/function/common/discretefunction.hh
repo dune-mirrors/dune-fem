@@ -940,8 +940,12 @@ namespace Dune
       // Non-Interface Methods
       // ---------------------
 
+/*
       template <class DFType>
-      inline bool operator== ( const DiscreteFunctionInterface< DFType>  &g ) const;
+      inline bool operator== ( const DiscreteFunctionInterface< DFType> &g ) const;
+*/
+      template <class DFType>
+      inline bool operator== ( const DFType &g ) const;
 
       template <class DFType>
       bool operator!= ( const DiscreteFunctionInterface< DFType > &g ) const
