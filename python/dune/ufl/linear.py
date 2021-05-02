@@ -96,6 +96,9 @@ class MultiLinearExprSplitter(Transformer):
     def conj(self, expr, x):
         return x
 
+    def real(self, expr, x):
+        return x
+
     def max_value(self, expr, left, right):
         result = dict()
         if list(left.keys()) != [self.empty] or list(right.keys()) != [self.empty]:
