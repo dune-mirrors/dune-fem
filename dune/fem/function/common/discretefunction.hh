@@ -470,6 +470,12 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().communicate() );
       }
 
+      template <class DFType>
+      inline bool compare ( const DiscreteFunctionInterface<DFType> &g ) const
+      {
+        return asImp().compare( g );
+      }
+
       /** \brief add another discrete function to this one
        *
        *  \param[in]  g  discrete function to add
@@ -937,21 +943,11 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      template <class DFType>
+      inline bool compare ( const DiscreteFunctionInterface< DFType> &g ) const;
+
       // Non-Interface Methods
       // ---------------------
-
-/*
-      template <class DFType>
-      inline bool operator== ( const DiscreteFunctionInterface< DFType> &g ) const;
-*/
-      template <class DFType>
-      inline bool operator== ( const DFType &g ) const;
-
-      template <class DFType>
-      bool operator!= ( const DiscreteFunctionInterface< DFType > &g ) const
-      {
-        return !(operator==( g ));
-      }
 
       /** \brief obtain the local function storage
        *
@@ -1047,10 +1043,21 @@ namespace Dune
       std::size_t assembleCount_ = 0;
     }; // end class DiscreteFunctionDefault
 
+    template< class ImplX, class ImplY >
+    inline bool operator== ( const DiscreteFunctionInterface< ImplX > &x,
+                             const DiscreteFunctionInterface< ImplY > &y )
+    {
+      return x.compare(y);
+    }
+    template< class ImplX, class ImplY >
+    inline bool operator!= ( const DiscreteFunctionInterface< ImplX > &x,
+                             const DiscreteFunctionInterface< ImplY > &y )
+    {
+      return !x.compare(y);
+    }
 
     template< class DiscreteFunction >
     class ManagedDiscreteFunction;
-
 
     template< class DiscreteFunction >
     struct DiscreteFunctionTraits< ManagedDiscreteFunction< DiscreteFunction > >

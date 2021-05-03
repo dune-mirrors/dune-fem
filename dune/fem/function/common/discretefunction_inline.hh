@@ -342,7 +342,7 @@ namespace Dune
     template< class Impl >
     template< class DFType >
     inline bool DiscreteFunctionDefault< Impl >
-      :: operator== ( const DiscreteFunctionInterface< DFType > &g ) const
+      :: compare ( const DiscreteFunctionInterface< DFType > &g ) const
     {
       if( BaseType :: size() != g.size() )
         return false;
