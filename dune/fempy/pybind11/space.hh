@@ -41,8 +41,9 @@ namespace pybind11
     // -------------------------------------------------
 
     template< class T >
-    struct type_caster< T, std::enable_if_t< std::is_same< Dune::Fem::DFSpaceIdentifier,
-      std::decay_t< decltype( std::declval<T>().type() ) > >::value > >
+    struct type_caster< T, std::enable_if_t<
+      std::is_same< Dune::Fem::DFSpaceIdentifier,
+                    std::decay_t< decltype( std::declval<T>().type() ) > >::value > >
       : public type_caster_base< T >
     {
       typedef type_caster_base< T > Base;
