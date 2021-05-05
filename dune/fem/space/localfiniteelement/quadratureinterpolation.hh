@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <dune/geometry/type.hh>
-#include <dune/localfunctions/utility/topologyfactory.hh>
+#include <dune/geometry/topologyfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
