@@ -132,7 +132,9 @@ namespace Dune
                  const std::string &path,
                  const std::string &filename)
             {
+            #ifndef NDEBUG
               std::cout << "Generate code to " << filename << std::endl;
+            #endif
               Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
       }
@@ -152,7 +154,7 @@ namespace Dune
             parent = pybind11::detail::get_object_handle( &obj, pybind11::detail::get_type_info( typeid( T ) ) );
           pySpace = pybind11::cast( space, pybind11::return_value_policy::reference_internal, parent );
         }
-        return pySpace;
+        return pySpace.attr("as_ufl")();
       }
       template< class T >
       pybind11::object getSpace ( const T &obj, pybind11::handle parent = pybind11::handle() )
