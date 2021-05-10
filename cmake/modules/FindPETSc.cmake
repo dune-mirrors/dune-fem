@@ -24,7 +24,7 @@
 
 cmake_policy(VERSION 3.3)
 
-include(DuneMPI)
+include(AddMPIFlags)
 
 set(PETSC_VALID_COMPONENTS
   C

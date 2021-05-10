@@ -7,7 +7,7 @@
 
 cmake_policy(VERSION 3.3)
 
-include(DuneMPI)
+include(AddMPIFlags)
 
 set(AMGX_VALID_COMPONENTS
     C
