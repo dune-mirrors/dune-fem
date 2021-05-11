@@ -58,7 +58,9 @@ void traverse ( GridPartType &gridPart )
   ScalarLagrangeShapeFunctionSetType scalarLagrangeShapeFunctionSet( entity.type() );
   ScalarLegendreShapeFunctionSetType scalarLegendreShapeFunctionSet( polorder );
 
-  double eps = 1e-6;
+  // CXXFLAGS="-std=c++17 -O3 -ffast-math -march=native" leads to a small
+  // increase in the error so that (with g++-9.3) fails with eps=1e-6
+  double eps = 2e-6;
 
   ErrorType error( 0 );
   typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLagrangeShapeFunctionSetType > ScalarBasisFunctionSetType1;

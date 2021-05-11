@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import time,sys
 import dune
 import dune.create as create

@@ -65,8 +65,6 @@ namespace Dune
     protected:
       int order_;
 
-      static const unsigned int topologyId = Dune::Impl::SimplexTopology< dim >::type::id ;
-
     public:
       /** \brief constructor filling the list of points and weights
        *
@@ -80,7 +78,7 @@ namespace Dune
        */
       virtual GeometryType geometryType () const
       {
-        return GeometryType( topologyId, dim );
+        return Dune::GeometryTypes::simplex(dim);
       }
 
       /** \copydoc Dune::Fem::QuadratureImp::order
@@ -133,8 +131,6 @@ namespace Dune
     protected:
       int order_;
 
-      static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id ;
-
     public:
       /** \brief constructor filling the list of points and weights
        *
@@ -147,7 +143,7 @@ namespace Dune
       /** \copydoc Dune::Fem::QuadratureImp::geometry */
       virtual GeometryType geometryType () const
       {
-        return GeometryType( topologyId, dim );
+        return Dune::GeometryTypes::cube(dim);
       }
 
       /** \copydoc Dune::Fem::QuadratureImp::order */
@@ -193,8 +189,6 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = Dune::Impl::PrismTopology< 3 >::type::id ;
-
     public:
       /** \brief constructor filling the list of points and weights
        *
@@ -207,7 +201,7 @@ namespace Dune
       /** \copydoc Dune::Fem::QuadratureImp::geometry */
       virtual GeometryType geometryType () const
       {
-        return GeometryType( topologyId, 3 );
+        return Dune::GeometryTypes::prism;
       }
 
       /** \copydoc Dune::Fem::QuadratureImp::order */
@@ -253,8 +247,6 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = Dune::Impl::PyramidTopology< 3 >::type::id ;
-
     public:
       /** \brief constructor filling the list of points and weights
        *
@@ -267,7 +259,7 @@ namespace Dune
       /** \copydoc Dune::Fem::QuadratureImp::geometry */
       virtual GeometryType geometryType () const
       {
-        return GeometryType( topologyId, 3 );
+        return Dune::GeometryTypes::pyramid;
       }
 
       /** \copydoc Dune::Fem::QuadratureImp::order */

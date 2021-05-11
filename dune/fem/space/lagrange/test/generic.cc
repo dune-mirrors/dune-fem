@@ -21,7 +21,7 @@ using namespace Fem;
 #endif
 
 #ifndef TOPOLOGYTYPE
-#define TOPOLOGYTYPE SimplexTopology
+#define TOPOLOGYTYPE Dune::GeometeyTypes::simplex
 #endif
 
 typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
@@ -32,14 +32,14 @@ typedef FunctionSpaceType :: RangeType RangeType;
 typedef Fem::LagrangeShapeFunctionFactory< FunctionSpaceType, POLORDER > ShapeFunctionFactoryType;
 typedef ShapeFunctionFactoryType::ShapeFunctionType ShapeFunctionType;
 
-typedef Fem::LagrangePoint< Dune::Impl::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER > LagrangePointType;
-typedef Fem::LagrangePointListImplementation< double, Dune::Impl::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER >
+typedef Fem::LagrangePoint< TOPOLOGYTYPE(DIMENSION).id(), DIMENSION, POLORDER > LagrangePointType;
+typedef Fem::LagrangePointListImplementation< double, TOPOLOGYTYPE(DIMENSION).id(), DIMENSION, POLORDER >
   LagrangePointListType;
 
 
 int main( int argc, char **argv )
 {
-  GeometryType geometryType( Dune::Impl::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION );
+  GeometryType geometryType = TOPOLOGYTYPE(DIMENSION);
   ShapeFunctionFactoryType shapeFunctionFactory ( geometryType );
 
   const unsigned int numShapeFunctions = shapeFunctionFactory.numShapeFunctions();
