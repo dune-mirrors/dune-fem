@@ -40,8 +40,8 @@ def storageType(codegen):
             "codege=" + codegen + ": " +\
             "codegen needs to be in [True,False,'codegen','caching','simple'")
 
-def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, caching=True,
-          scalar=False, dimrange=None, codegen=True):
+def dgonb(gridView, order=1, dimRange=None, field="double",
+          storage=None, scalar=False, dimrange=None, codegen=True):
     """create a discontinuous galerkin space with elementwise orthonormal basis functions
 
     Args:
@@ -82,22 +82,11 @@ def dgonb(gridView, order=1, dimRange=None, field="double", storage=None, cachin
     if field == "complex":
         field = "std::complex<double>"
 
-    try:
-        if not gridView.hierarchicalGrid.cachingStorage():
-            caching = False
-    except:
-        pass
-    cachingOrSimpleStorage = ""
-    if not caching:
-        # if caching is disable add SimpleStorage to template list
-        cachingOrSimpleStorage = ", Dune::Fem::SimpleStorage"
-    else:
-        cachingOrSimpleStorage = ", Dune::Fem::CodegenStorage"
     includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + cachingOrSimpleStorage + " >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " + storageType(codegen) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
