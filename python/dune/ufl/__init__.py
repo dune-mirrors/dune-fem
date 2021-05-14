@@ -345,17 +345,16 @@ class GridFunction(ufl.Coefficient):
         else:
             return self.gf.copy(name).as_ufl()
 
+    # the following methods should be implemented here to avoid using the
+    # ufl versions since they can be implemented in-place.
     def __imul__(self,a):
-        self.__impl__ *= a
-        self.__impl__ = self.__impl__.__impl__ # this a hack: the C++ method needs to return 'self' which is then automatically wrapped!
+        self.gf.mul(a)
         return self
     def __iadd__(self,other):
-        self.__impl__ += other
-        self.__impl__ = self.__impl__.__impl__
+        self.gf.add(other)
         return self
     def __isub__(self,other):
-        self.__impl__ -= other
-        self.__impl__ = self.__impl__.__impl__
+        self.gf.sub(other)
         return self
     def __getitem__(self,i):
         if isinstance(i,int):
