@@ -139,11 +139,11 @@ class UFLFunctionSource(codegen.ModelClass):
         code.append(Include("dune/fempy/py/grid/gridpart.hh"))
         code.append(Include('dune/common/exceptions.hh'))
 
-        if self._coefficients:
+        if self.coefficientList:
             if self.virtualize:
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
             else:
-                for c in self._coefficients:
+                for c in self.coefficientList:
                     for i in c._includes:
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/ufllocalfunction.hh"))
