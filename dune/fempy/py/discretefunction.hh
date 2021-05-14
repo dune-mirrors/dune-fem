@@ -134,10 +134,12 @@ namespace Dune
         //check if BlockVector Is already registered if not register it
         typedef std::decay_t< decltype( getBlockVector( std::declval< DofVector& >().array() ) ) > BlockVector;
         //it's here that I need to add it's name to the type registery
+#if HAVE_DUNE_ISTL
         if( !pybind11::already_registered< BlockVector >() )
         {
           Python::registerBlockVector< BlockVector >( cls );
         }
+#endif
         cls.def_property_readonly( "_backend", [] ( DF &self )
         -> decltype( getBlockVector(std::declval<DF&>().dofVector().array()) )
         {
@@ -375,9 +377,9 @@ namespace Dune
         //cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); }, "other"_a );
         cls.def( "scalarProductDofs", [] ( DF &self, const DF &other ) { return self.scalarProductDofs( other ); }, "other"_a );
         cls.def( "axpy", [] ( DF &self, double a, const DF &y ) { self.axpy( a, y ); }, "a"_a, "y"_a );
-        cls.def( "__iadd__", [] ( DF &self, const DF &other ) { return self += other; }, "other"_a );
-        cls.def( "__isub__", [] ( DF &self, const DF &other ) { return self -= other; }, "other"_a );
-        cls.def( "__imul__", [] ( DF &self, double a ) { return self *= a; }, "a"_a );
+        cls.def("add", [] ( DF &self, const DF &other ) { self += other; }, "other"_a );
+        cls.def("sub", [] ( DF &self, const DF &other ) { self -= other; }, "other"_a );
+        cls.def("mul", [] ( DF &self, double factor )   { self *= factor; }, "factor"_a );
 
         cls.def( "_interpolate", [] ( DF &self, typename Space::RangeType value ) {
             const auto gf = simpleGridFunction( self.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 );
