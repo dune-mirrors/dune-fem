@@ -160,7 +160,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
     except AttributeError:
         if isinstance(solution, list) or isinstance(solution,tuple):
             solution = as_vector(solution)
-        if isinstance(solution, Expr) and grid is not None:
+        if isinstance(solution, Expr):
             assert grid, "need to provide a named grid argument to plot a ufl expression directly"
             solution = expression2GF(grid, solution, 1)
         else:
