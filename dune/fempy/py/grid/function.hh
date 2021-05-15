@@ -173,9 +173,10 @@ namespace Dune
           registerPyLocalGridFunction<GridPartType>( scope, "LocalGridFunction", std::integral_constant< int, 1 >() );
 
         cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c ) {
+            const auto pself = &self; // make sure reference is correctly capture in lambda and doesn't go out of scope
             return makePyLocalGridFunction( self.gridPart(), self.name() + "_" + std::to_string(c), self.space().order(),
-                pybind11::cpp_function( [ self, c ] ( const Entity &e, const typename Entity::Geometry::LocalCoordinate &x ) {
-                    return Fem::ConstLocalFunction<GridFunction>(e,self).evaluate(x)[c];
+                pybind11::cpp_function( [ pself, c ] ( const Entity &e, const typename Entity::Geometry::LocalCoordinate &x ) {
+                    return Fem::ConstLocalFunction<GridFunction>(e,*pself).evaluate(x)[c];
                   } ), std::integral_constant< int, 1 >() );
           }, pybind11::keep_alive< 0, 1 >() );
 
