@@ -138,9 +138,7 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," +\
-      storageType(codegen) +\
-      + " >"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," + storageType(codegen) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
