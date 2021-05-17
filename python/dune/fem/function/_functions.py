@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import sys, os
 import logging
 logger = logging.getLogger(__name__)
+from numpy import dtype as np_dtype
 
 import dune.ufl
 import dune.grid
@@ -73,6 +74,14 @@ def cppFunction(gridView, name, order, fctName, includes,
     gf = gridView.function(fctName,includes,*args,order=order,name=name)
     return dune.ufl.GridFunction( gf )
 
+def _assertSizesMatch(space, dofVector):
+    assert space.size == len(dofVector), f"space (size={space.size}) and vector (size={len(dofVector)}) do not match!"
+    if hasattr(dofVector, "dtype"):
+        dtype = dofVector.dtype
+        itemsize = np_dtype(dofVector.dtype).itemsize
+        match = space._sizeOfField == itemsize and dtype == 'float64' if space.field == 'double' else True
+        assert match, f"space (dtype={space._sizeOfField},{space.field}) and vector (dtype={itemsize},{dtype}) do not match!"
+
 def discreteFunction(space, name, expr=None, dofVector=None):
     """create a discrete function
 
@@ -88,6 +97,7 @@ def discreteFunction(space, name, expr=None, dofVector=None):
     if dofVector is None:
         df = space.DiscreteFunction(space,name)
     else:
+        _assertSizesMatch(space, dofVector)
         df = space.DiscreteFunction(name,space,dofVector)
 
     if expr is None and dofVector is None:
