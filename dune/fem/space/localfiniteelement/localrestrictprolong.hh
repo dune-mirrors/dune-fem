@@ -165,8 +165,10 @@ namespace Dune
 
           childSeeds_.push_back(lfSon.entity().seed());
           childDofs_.push_back(std::vector<double>(lfSon.size()));
-          for (unsigned int i=0;i<lfSon.size();++i)
-            childDofs_.back()[i] = lfSon[i];
+          std::vector<double>& chDofs = childDofs_.back();
+          const unsigned int numDofs = lfSon.size();
+          for (unsigned int i=0;i<numDofs; ++i )
+            chDofs[i] = lfSon[i];
         }
 
         template <class LFFather>
@@ -174,15 +176,27 @@ namespace Dune
         {
           std::vector< EntityType > childEntities(childSeeds_.size());
           std::vector< BasisFunctionSetType > childBasisSets(childSeeds_.size());
-          for (unsigned int i=0; i<childSeeds_.size();++i)
+          const unsigned int cSize = childSeeds_.size();
+          for (unsigned int i=0; i<cSize; ++i)
           {
             childEntities[i] = space_.gridPart().entity( childSeeds_[i] );
             childBasisSets[i] = space_.basisFunctionSet( childEntities[i] );
           }
+
+          const unsigned int numDofs = lfFather.size();
+
+          // interpolate methods in dune-localfunctions expect std::vector< T >
+          tmpDofs_.resize( numDofs );
+
+          // call interpolation
           space_.interpolation(lfFather.entity())
             ( Impl::SonsWrapper<BasisFunctionSetType, LFFather>(
-            lfFather, childEntities, childBasisSets, childDofs_ ),
-              lfFather.localDofVector() );
+              lfFather, childEntities, childBasisSets, childDofs_ ),
+              tmpDofs_ );
+
+          // copy back
+          for (unsigned int i=0; i<numDofs; ++i)
+            lfFather[ i ] = tmpDofs_[ i ];
         }
 
         //! prolong data to children
@@ -199,13 +213,13 @@ namespace Dune
           FatherWrapperType fatherWraper(geometryInFather,lfFather);
 
           // interpolate methods in dune-localfunctions expect std::vector< T >
-          sonDofs_.resize( numDofs );
+          tmpDofs_.resize( numDofs );
 
-          interpol( fatherWraper, sonDofs_ );
+          interpol( fatherWraper, tmpDofs_ );
 
           // copy back
           for (int i=0; i<numDofs; ++i)
-            lfSon[ i ] = sonDofs_[ i ];
+            lfSon[ i ] = tmpDofs_[ i ];
         }
 
         //! do discrete functions need a communication after restriction / prolongation?
@@ -221,7 +235,7 @@ namespace Dune
         mutable std::vector< EntitySeedType > childSeeds_;
         mutable std::vector< std::vector<double> > childDofs_;
 
-        mutable std::vector< double > sonDofs_;
+        mutable std::vector< double > tmpDofs_;
       };
     } // namespce Impl
 

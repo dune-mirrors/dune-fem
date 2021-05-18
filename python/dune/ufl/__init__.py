@@ -84,6 +84,8 @@ class FemSpace(Space):
             return self
         else:
             return FemSpace(self.femSpace,scalar=False)
+    def as_ufl(self):
+        return self
 
     def __getattr__(self, item):
         def tocontainer(func):
@@ -339,11 +341,13 @@ class GridFunction(ufl.Coefficient):
     def toVectorCoefficient(self):
         return GridFunction(self.gf,scalar=False)
 
+    def as_ufl(self):
+        return self
     def copy(self,name=None):
         if name is None:
-            return self.gf.copy().as_ufl()
+            return self.gf.copy()
         else:
-            return self.gf.copy(name).as_ufl()
+            return self.gf.copy(name)
 
     # the following methods should be implemented here to avoid using the
     # ufl versions since they can be implemented in-place.
