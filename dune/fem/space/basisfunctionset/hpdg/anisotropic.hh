@@ -183,7 +183,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::types */
         typename BaseType::Types types () const noexcept
         {
-          return std::array< GeometryType, 1 >{{ GeometryTypes::cube( EntityType::mydimension ) }};
+          return std::array< GeometryType, 1 >{{ Dune::GeometryTypes::cube( EntityType::mydimension ) }};
         }
 
         /** \copydoc Dune::Fem::BasisFunctionSets::maxBlocks */
@@ -267,7 +267,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::basisFunctionSet */
         static BasisFunctionSetType basisFunctionSet ( const EntityType &entity, const KeyType &key ) noexcept
         {
-          assert( entity.type() == GeometryTypes::cube( EntityType::mydimension ) );
+          assert( entity.type() == Dune::GeometryTypes::cube( EntityType::mydimension ) );
           return BasisFunctionSetType( entity, shapeFunctionSet( key ) );
         }
 

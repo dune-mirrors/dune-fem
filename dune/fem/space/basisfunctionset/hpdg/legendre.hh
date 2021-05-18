@@ -74,7 +74,7 @@ namespace Dune
       private:
         static GeometryType type ()
         {
-          return GeometryTypes::cube( FunctionSpace::dimDomain );
+          return Dune::GeometryTypes::cube( FunctionSpace::dimDomain );
         }
 
         std::array< std::unique_ptr< ShapeFunctionSetType >, order+1 > shapeFunctionSets_;
@@ -154,7 +154,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::types */
         typename BaseType::Types types () const
         {
-          return std::array< GeometryType, 1 >{{ GeometryTypes::cube( EntityType::mydimension ) }};
+          return std::array< GeometryType, 1 >{{ Dune::GeometryTypes::cube( EntityType::mydimension ) }};
         }
 
         /** \copydoc Dune::Fem::BasisFunctionSets::maxBlocks */
