@@ -308,8 +308,9 @@ namespace Dune
       ::numShapeFunctions () const
     {
       std::size_t numShapeFunctions( 0 );
-      Dune::Impl::IfGeometryType< Switch, dimension >::apply
-                  ( gt_, order_, numShapeFunctions );
+      Dune::Impl::toGeometryTypeIdConstant<dimension>(gt_, [&](auto geometryTypeId) {
+        Switch<decltype(geometryTypeId)::value>::apply(order_, numShapeFunctions);
+      });
       return numShapeFunctions;
     }
 
@@ -320,8 +321,9 @@ namespace Dune
       ::createShapeFunction( const std::size_t i ) const
     {
       ShapeFunctionType *shapeFunction( nullptr );
-      Dune::Impl::IfGeometryType< Switch, dimension >::apply
-                  ( gt_, i, order_, shapeFunction );
+      Dune::Impl::toGeometryTypeIdConstant<dimension>(gt_, [&](auto geometryTypeId) {
+        Switch<decltype(geometryTypeId)::value>::apply(i, order_,shapeFunction);
+      });
       assert( shapeFunction );
       return shapeFunction;
     }

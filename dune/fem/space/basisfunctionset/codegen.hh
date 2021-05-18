@@ -180,8 +180,10 @@ namespace Dune
           std::ofstream file( filenameToWrite, std::ios::out );
           file << code.str();
           file.close();
+#ifndef NDEBUG
           std::cout << "Generate code " << fileprefix << " for (" << dimRange << ","
                     << quadNop << "," << numBase << ")" << std::endl;
+#endif
         }
 
         // insert evaluate pair in any case
