@@ -34,6 +34,10 @@
 #include <dune/fem/space/rannacherturek.hh>
 #include <dune/fem/space/raviartthomas.hh>
 
+#include <dune/fem/space/hpdg/orthogonal.hh>
+#include <dune/fem/space/hpdg/anisotropic.hh>
+#include <dune/fem/space/hpdg/legendre.hh>
+
 #include <dune/fem/io/file/dataoutput.hh>
 
 #include <dune/fem/space/test/checklocalinterpolation.hh>
@@ -138,6 +142,9 @@ typedef std::tuple<
   Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+  Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 3 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
