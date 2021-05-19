@@ -93,11 +93,26 @@ namespace Dune
         using GridPartType = typename BaseType::GridPartType;
         using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
+        typedef typename BaseType::KeyType  KeyType;
 
         explicit AnisotropicDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                          const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                                          const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
           : BaseType( gridPart, BasisFunctionSetsType(), defaultKey(), interface, direction )
+        {}
+
+        explicit AnisotropicDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                         const typename BaseType::KeyType key,
+                                                         const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                         const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType(), key, interface, direction )
+        {}
+
+        explicit AnisotropicDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                         const std::vector<int>& key,
+                                                         const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                         const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType(), convert(key), interface, direction )
         {}
 
         template <class Function,
@@ -111,11 +126,20 @@ namespace Dune
         {}
 
       private:
-        static typename BaseType::KeyType defaultKey ()
+        KeyType convert( const std::vector<int>& v ) const
         {
-          typename BaseType::KeyType key;
+          KeyType key;
+          assert( key.size() == v.size() );
+          for( unsigned int i=0; i<key.size(); ++i )
+            key[ i ] = v[ i ];
+          return key;
+        }
+
+        static KeyType defaultKey ()
+        {
+          KeyType key;
           std::fill( key.begin(), key.end(), order );
-          return std::move( key );
+          return key;
         }
       };
 

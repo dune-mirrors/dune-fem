@@ -151,6 +151,15 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::KeyType */
         using DataType = typename BaseType::DataType;
 
+        /** \brief constructor */
+        LegendreBasisFunctionSets () = default;
+
+        /** \brief copy constructor */
+        LegendreBasisFunctionSets ( const ThisType & ) = default;
+
+        /** \brief move constructor */
+        LegendreBasisFunctionSets ( ThisType && ) = default;
+
         /** \copydoc Dune::Fem::BasisFunctionSets::types */
         typename BaseType::Types types () const
         {
