@@ -67,6 +67,7 @@ LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 dune_add_test( SOURCES test-auxiliarydofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
 
 dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+dune_add_test( NAME test-4d-spaceinterpolation SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "GRIDDIM=4;YASPGRID;DIMRANGE=3;" )
 
 if( ${FEM_TORTURE_TESTS} )
   # test adaptation of combinedspaces

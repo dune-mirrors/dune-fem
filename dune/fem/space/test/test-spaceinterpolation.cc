@@ -133,29 +133,38 @@ static const int dimRange = GridPartType::dimensionworld;
 
 typedef Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimRange > > FunctionSpaceType;
 
-typedef std::tuple<
-  Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 3 >,
+
+typedef typename std::conditional< 3 < GridPartType::dimension, // space-time could be 4d
+   std::tuple<
+    Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >
+             > ,
+   // or standard examples for dim <= 3
+   std::tuple<
+    Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
+    Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
+    Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+    Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 3 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
+    Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
+    Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
+    Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
+    Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
-  > DiscreteFunctionSpacesType;
+    Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
+          > > :: type DiscreteFunctionSpacesType;
 
 typedef ErrorTuple< DiscreteFunctionSpacesType >::Type ErrorTupleType;
 
@@ -244,7 +253,7 @@ int main ( int argc, char **argv )
 
     auto indices = std::make_index_sequence< std::tuple_size< DiscreteFunctionSpacesType >::value >();
 
-    std::array< ErrorTupleType, 4 > errors;
+    std::array< ErrorTupleType, (GridType::dimension <= 3) ? 4 : 2> errors;
     for( ErrorTupleType &e : errors )
     {
       Dune::Hybrid::forEach( indices, [ &gridPart, &e ] ( auto &&idx ) {
