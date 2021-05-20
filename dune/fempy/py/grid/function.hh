@@ -193,11 +193,9 @@ namespace Dune
             } );
 
 
-        cls.def( "as_ufl", [] ( pybind11::object &self ) -> pybind11::handle {
-              pybind11::tuple args( 1 );
-              args[ 0 ] = self;
-              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
-            },  pybind11::keep_alive< 0, 1 >() );
+        cls.def( "as_ufl", [] ( pybind11::object self ) {
+              return Dune::FemPy::getGridFunctionWrapper()(self);
+            }, pybind11::keep_alive< 0, 1 >() );
       }
 
 
