@@ -25,6 +25,9 @@ namespace Dune
       typedef CubeQuadrature< FieldType, dim > CubeQuadratureType;
       typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
 
+      // dummy types for d > 3
+      typedef CubeQuadratureType SimplexQuadratureType;
+
       typedef int QuadratureKeyType ;
     };
 
