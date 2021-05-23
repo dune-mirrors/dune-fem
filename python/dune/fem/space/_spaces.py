@@ -260,8 +260,7 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ">"
-    #  storageType(codegen) + ">"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " + storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
                  scalar=scalar, codegen=codegen,
