@@ -11,6 +11,42 @@ from dune.deprecate import deprecated
 # cell
 # ----
 
+##########################################
+### 4d patch
+##########################################
+def _patchufl4d():
+    from ufl.sobolevspace import H1
+    from ufl.finiteelement.elementlist import ufl_elements, any_cell, register_element
+    from ufl.cell import num_cell_entities, cellname2facetname, _simplex_dim2cellname, _hypercube_dim2cellname
+
+    ## check if this has been added before
+    if not 'pentachoron' in ufl.cell.num_cell_entities:
+        ufl.cell.num_cell_entities["pentachoron"] = (5, 10, 10, 5, 1) # 4d-simplex
+        ufl.cell.num_cell_entities["tesseract"]   = (16, 32, 24, 8, 1)    # 4d-cube
+
+        ## recompute cell name to dimension mapping
+        ufl.cell.cellname2dim = dict((k, len(v) - 1) for k, v in ufl.cell.num_cell_entities.items())
+
+        ufl.cell.cellname2facetname["pentachoron"] = "tetrahedron"
+        ufl.cell.cellname2facetname["tesseract"]   = "hexahedron"
+
+        ufl.cell._simplex_dim2cellname[4]   = "pentachoron"
+        ufl.cell._hypercube_dim2cellname[4] = "tesseract"
+
+        ## add types to element lists
+        ufl.finiteelement.elementlist.simplices =\
+            ufl.finiteelement.elementlist.simplices + ("pentachoron",)
+        ufl.finiteelement.elementlist.cubes = \
+            ufl.finiteelement.elementlist.cubes + ("tesseract",)
+        ufl.finiteelement.elementlist.any_cell =\
+                ufl.finiteelement.elementlist.any_cell + ("pentachoron", "tesseract", )
+
+        ## register Lagrange again with new element type list
+        ufl_elements.pop("Lagrange")
+        ufl_elements.pop("CG")
+        register_element("Lagrange", "CG", 0, H1, "identity", (1, None), ufl.finiteelement.elementlist.any_cell)  # "P"
+
+
 def cell(dimDomainOrGrid):
     if isinstance(dimDomainOrGrid,ufl.Cell):
         return dimDomainOrGrid
@@ -32,8 +68,12 @@ def cell(dimDomainOrGrid):
         return ufl.Cell("triangle", dimWorld)
     elif dimDomain == 3:
         return ufl.Cell("tetrahedron", dimWorld)
+    elif dimDomain == 4:
+        # add 4d cell types to ufl data structures
+        _patchufl4d()
+        return ufl.Cell("pentachoron", dimWorld)
     else:
-        raise NotImplementedError('UFL cell not implemented for dimension' + str(dimDomain) + '.')
+        raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
 
 
 class Space(ufl.FunctionSpace):

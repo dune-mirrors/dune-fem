@@ -43,7 +43,7 @@ namespace Dune
       template< class FunctionSpace, class GridPart, int order, class Storage >
       struct AnisotropicDiscontinuousGalerkinSpaceTraits
       {
-        using DiscreteFunctionSpaceType = hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order >;
+        using DiscreteFunctionSpaceType = hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, Storage >;
 
         using FunctionSpaceType = FunctionSpace;
 
