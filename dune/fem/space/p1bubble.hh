@@ -61,6 +61,10 @@ namespace Dune
         }
       }
 
+      template <class Entity>
+      void bind( const Entity & ) {}
+      void unbind() {}
+
     private:
       std::vector< DomainType > points_;
     };
@@ -436,14 +440,22 @@ namespace Dune
 
       // Non-interface methods
 
+      /** \brief return local interpolation object for LocalInterpolation
+       */
+      InterpolationType interpolation () const
+      {
+        return InterpolationType();
+      }
+
       /** \brief return local interpolation for given entity
        *
        *  \param[in]  entity  grid part entity
        *  \note this method is needed to call the global function inteprolate( ... )
        */
+      [[deprecated]]
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return InterpolationType();
+        return interpolation();
       }
 
     protected:

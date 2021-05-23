@@ -12,7 +12,9 @@
 
 // dune-fem includes
 #include <dune/fem/common/hybrid.hh>
+
 #include <dune/fem/space/basisfunctionset/default.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -152,7 +154,10 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef LagrangePointSet< GridPartType, maxPolynomialOrder > LagrangePointSetType;
-      typedef LagrangeLocalInterpolation< GridPartType, maxPolynomialOrder, BasisFunctionSetType > InterpolationType;
+      typedef LagrangeLocalInterpolation< GridPartType, maxPolynomialOrder, BasisFunctionSetType >  LocalInterpolationType;
+      typedef LocalInterpolationType InterpolationImplType;
+
+      typedef LocalInterpolationWrapper< ThisType >  InterpolationType;
 
     private:
       typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
@@ -286,13 +291,30 @@ namespace Dune
       // Non-interface methods //
       ///////////////////////////
 
+      /** \brief return interpolation object
+       */
+      InterpolationType interpolation () const
+      {
+        return InterpolationType( *this );
+      }
+
       /** \brief return local interpolation for given entity
        *
        *  \param[in]  entity  grid part entity
        */
-      InterpolationType interpolation ( const EntityType &entity ) const
+      [[deprecated]]
+      LocalInterpolationType interpolation ( const EntityType &entity ) const
       {
-        return InterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder_ ), basisFunctionSet( entity ) );
+        return LocalInterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder_ ), basisFunctionSet( entity ) );
+      }
+
+      /** \brief return local interpolation for given entity
+       *
+       *  \param[in]  entity  grid part entity
+       */
+      LocalInterpolationType localInterpolation ( const EntityType &entity ) const
+      {
+        return LocalInterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder_ ), basisFunctionSet( entity ) );
       }
 
       /** \brief return shape function set for given entity

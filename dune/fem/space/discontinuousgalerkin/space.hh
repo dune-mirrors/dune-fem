@@ -109,6 +109,8 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
+      typedef InterpolationType  InterpolationImplType;
+
 
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -116,9 +118,20 @@ namespace Dune
         : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
       {}
 
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation () const
       {
         return InterpolationType( *this );
+      }
+
+      [[deprecated]]
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return interpolation ();
+      }
+
+      InterpolationType localInterpolation ( const EntityType &entity ) const
+      {
+        return interpolation ();
       }
 
     private:

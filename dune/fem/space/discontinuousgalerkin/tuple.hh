@@ -12,6 +12,7 @@
 #include <dune/fem/function/localfunction/converter.hh>
 #include <dune/fem/space/combinedspace/tuplelocalrestrictprolong.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/discontinuousgalerkin/generic.hh>
 #include <dune/fem/space/discontinuousgalerkin/basisfunctionsets.hh>
 #include <dune/fem/space/shapefunctionset/tuple.hh>
@@ -97,6 +98,8 @@ namespace Dune
             offset += size;
           } );
       }
+
+      void unbind() {}
 
     protected:
       ShapeFunctionSetType shapeFunctionSet_;
@@ -249,7 +252,8 @@ namespace Dune
       template< std::size_t i >
       using SubDiscreteFunctionSpaceType = typename BasisFunctionSetsType::template SubDiscreteFunctionSpaceType< i >;
 
-      typedef TupleLocalInterpolation< typename BasisFunctionSetsType::ShapeFunctionSetType, typename DFS::InterpolationType... > InterpolationType;
+      typedef TupleLocalInterpolation< typename BasisFunctionSetsType::ShapeFunctionSetType, typename DFS::InterpolationImplType... > InterpolationImplType;
+      typedef LocalInterpolationWrapper< ThisType > InterpolationType;
 
       using BaseType::basisFunctionSets;
 
@@ -257,7 +261,12 @@ namespace Dune
         : BaseType( gridPart, BasisFunctionSetsType( gridPart, commInterface, commDirection ), commInterface, commDirection )
       {}
 
-      InterpolationType interpolation ( const EntityType &entity ) const { return interpolation( entity, std::index_sequence_for< DFS... >() ); }
+      InterpolationType interpolation () const { return InterpolationType( *this ); }
+
+      [[deprecated]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const { return localInterpolation( entity ); }
+
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const { return localInterpolation( entity, std::index_sequence_for< DFS... >() ); }
 
       template< std::size_t i >
       const SubDiscreteFunctionSpaceType< i > &subDiscreteFunctionSpace ( std::integral_constant< std::size_t, i > = {} ) const
@@ -267,9 +276,9 @@ namespace Dune
 
     private:
       template< std::size_t... i >
-      InterpolationType interpolation ( const EntityType &entity, std::index_sequence< i... > ) const
+      InterpolationImplType localInterpolation ( const EntityType &entity, std::index_sequence< i... > ) const
       {
-        return InterpolationType( basisFunctionSets().shapeFunctionSet( entity ), subDiscreteFunctionSpace< i >().interpolation( entity )... );
+        return InterpolationImplType( basisFunctionSets().shapeFunctionSet( entity ), subDiscreteFunctionSpace< i >().localInterpolation( entity )... );
       }
     };
 

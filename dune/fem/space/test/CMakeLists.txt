@@ -13,11 +13,16 @@ if( NOT GRIDDIM )
 endif()
 
 # the default compiler flags
-set( DEFAULTFLAGS "GRIDDIM=${GRIDDIM};${GRIDTYPE};DIMRANGE=3;POLORDER=3;WANT_GRAPE=0" )
+set( BASICFLAGS "${GRIDTYPE};DIMRANGE=3;POLORDER=3;WANT_GRAPE=0" )
+set( DEFAULTFLAGS "GRIDDIM=${GRIDDIM};${BASICFLAGS}" )
+set( DEFAULTFLAGS_2D "GRIDDIM=2;${BASICFLAGS}" )
 set( CONFORMINGFLAGS "GRIDDIM=${GRIDDIM};${CONFGRID};DIMRANGE=3;POLORDER=3;WANT_GRAPE=0" )
 
 # lagrange adapt needs different compile time flags
 dune_add_test( NAME lagrangeadapt SOURCES lagrangeadapt.cc COMPILE_DEFINITIONS "${CONFORMINGFLAGS}" LINK_LIBRARIES dunefem )
+
+# lagrange for LFE spaces needs some different compile time flags
+dune_add_test( NAME lagrangeadapt_lfespace SOURCES lagrangeadapt.cc COMPILE_DEFINITIONS "${CONFORMINGFLAGS};USE_LFE=1" LINK_LIBRARIES dunefem )
 
 set( TESTS
   adapt
@@ -66,9 +71,12 @@ LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
 
 dune_add_test( SOURCES test-auxiliarydofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
 
-dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+dune_add_test( NAME test-spaceinterpolation-2d SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS_2D}" )
 
 if( ${FEM_TORTURE_TESTS} )
+  # 3d space interpolation is more expensive, therefore only when torture tests enabled
+  dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+
   # test adaptation of combinedspaces
   dune_add_test( NAME adapt_combinedspace_pointbased SOURCES adapt.cc
   COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE;POINTBASED"

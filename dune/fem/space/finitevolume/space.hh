@@ -91,9 +91,15 @@ namespace Dune
       static DFSpaceIdentifier type () { return FiniteVolumeSpace_id; }
 
       /** \brief return local interpolation */
+      InterpolationType interpolation () const
+      {
+        return InterpolationType();
+      }
+
+      /** \brief return local interpolation */
       static InterpolationType interpolation ( const EntityType &entity )
       {
-        return InterpolationType( entity );
+        return InterpolationType();
       }
 
       /** \brief extend size of space beyond what the index set is delivering */

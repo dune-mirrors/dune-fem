@@ -16,6 +16,7 @@
 
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 #include <dune/fem/space/common/dataprojection.hh>
 
@@ -88,9 +89,13 @@ namespace Dune
         template< class DataProjection >
         struct DataProjectionWrapper;
 
+        typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       public:
         /** \brief local interpolation type  */
-        using InterpolationType = DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType >;
+        using InterpolationImplType = DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType >;
+
+        /** \brief local interpolation type  */
+        using InterpolationType = LocalInterpolationWrapper< DiscreteFunctionSpaceType >;
 
         /** \name Construction
          *  \{
@@ -175,9 +180,31 @@ namespace Dune
          *
          *  \returns local interpolation
          */
-        InterpolationType interpolation ( const EntityType &entity ) const
+        InterpolationType interpolation () const
         {
-          return InterpolationType( basisFunctionSet( entity ) );
+          return InterpolationType( static_cast< const DiscreteFunctionSpaceType& > (*this) );
+        }
+
+        /** \brief return interpolation
+         *
+         *  \param[in]  entity  a grid part entity
+         *
+         *  \returns local interpolation
+         */
+        InterpolationImplType interpolation ( const EntityType &entity ) const
+        {
+          return InterpolationImplType( basisFunctionSet( entity ) );
+        }
+
+        /** \brief return interpolation
+         *
+         *  \param[in]  entity  a grid part entity
+         *
+         *  \returns local interpolation
+         */
+        InterpolationImplType localInterpolation ( const EntityType &entity ) const
+        {
+          return InterpolationImplType( basisFunctionSet( entity ) );
         }
 
         /** \} */
@@ -265,7 +292,6 @@ namespace Dune
         /** \} */
 
       protected:
-        //Dune::Fem::AllGeomTypes< typename BaseType::IndexSetType, typename BaseType::GridType > types_;
         BasisFunctionSetsType basisFunctionSets_;
         mutable BlockMapperType blockMapper_;
       };

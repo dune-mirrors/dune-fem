@@ -10,12 +10,14 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/common/hybrid.hh>
+
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/basisfunctionset/transformed.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/mapper/compile.hh>
 #include <dune/fem/space/mapper/indexsetdofmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
@@ -133,9 +135,9 @@ namespace Dune
       typedef typename Traits::LFEMapType LFEMapType;
 
     private:
-      typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
-      typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
-      typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
+      typedef typename LocalFiniteElementType::Traits::LocalBasisType           LocalBasisType;
+      typedef typename LocalFiniteElementType::Traits::LocalInterpolationType   LocalInterpolationType;
+      typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType    LocalCoefficientsType;
 
       typedef typename LFEMapType::KeyType KeyType;
 
@@ -178,7 +180,8 @@ namespace Dune
       typedef SingletonList< LFEMapType *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
-      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, Traits::isScalar > InterpolationType;
+      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, Traits::isScalar > InterpolationImplType;
+      typedef LocalFEInterpolationWrapper< ThisType > InterpolationType;
 
       using BaseType::order;
 
@@ -258,10 +261,31 @@ namespace Dune
        *
        *  \param[in]  entity  grid part entity
        **/
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation () const
+      {
+        return InterpolationType( *this );
+      }
+
+      /**
+       * \brief return local interpolation
+       *
+       *  \param[in]  entity  grid part entity
+       **/
+      [[deprecated("Use LocalInterpolation( space ) instead!")]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity );
+      }
+
+      /**
+       * \brief return local interpolation
+       *
+       *  \param[in]  entity  grid part entity
+       **/
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
       {
         auto lfe = (*lfeMap_)( entity );
-        return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
+        return InterpolationImplType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
       typedef typename LFEMapType::LocalCoefficientsType QuadratureType;

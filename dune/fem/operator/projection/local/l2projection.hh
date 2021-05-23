@@ -172,6 +172,9 @@ namespace Dune
        *  \{
        */
 
+      /** unbind */
+      void unbind() {}
+
       /** \copydoc Dune::Fem::LocalL2Projection::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet () const
       {

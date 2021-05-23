@@ -8,10 +8,13 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/misc/threads/threadsafevalue.hh>
+
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/space/basisfunctionset/transformed.hh>
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/combinedspace/interpolation.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 namespace Dune
 {
@@ -126,11 +129,29 @@ namespace Dune
       using LocalFunctionWrapper = Impl::LocalFunctionWrapper< LocalFunction, BasisFunctionSetType >;
 
     public:
+      LocalFiniteElementInterpolation()
+        : basisFunctionSet_()
+        , localInterpolation_()
+      {
+      }
+
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
       : basisFunctionSet_( basisFunctionSet ),
         localInterpolation_( localInterpolation )
       {}
+
+      ThisType& operator=( const ThisType& other )
+      {
+        basisFunctionSet_ = other.basisFunctionSet_;
+        localInterpolation_.emplace( other.localInterpolation() );
+        return *this;
+      }
+
+      void unbind()
+      {
+        // basisFunctionSet_ = BasisFunctionSetType();
+      }
 
       template< class LocalFunction, class Dof >
       void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
@@ -152,11 +173,15 @@ namespace Dune
       }
 
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
-      const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
+      const LocalInterpolationType &localInterpolation () const
+      {
+        assert( localInterpolation_.has_value() );
+        return *localInterpolation_;
+      }
 
     private:
-      BasisFunctionSetType basisFunctionSet_;
-      LocalInterpolationType localInterpolation_;
+      BasisFunctionSetType    basisFunctionSet_;
+      std::optional< LocalInterpolationType > localInterpolation_;
     };
 
     namespace Impl
@@ -227,12 +252,36 @@ namespace Dune
       typedef VerticalDofAlignment< BasisFunctionSetType, RangeType> DofAlignmentType;
 
     public:
+      LocalFiniteElementInterpolation ()
+        : basisFunctionSet_(),
+          localInterpolation_(),
+          dofAlignment_()
+      {}
+
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
       : basisFunctionSet_( basisFunctionSet ),
         localInterpolation_( localInterpolation ),
         dofAlignment_( basisFunctionSet_ )
       {}
+
+      LocalFiniteElementInterpolation ( const ThisType& other )
+      : basisFunctionSet_( other.basisFunctionSet_ ),
+        localInterpolation_( other.localInterpolation_ ),
+        dofAlignment_( basisFunctionSet_ )
+      {}
+
+      ThisType& operator=( const ThisType& other )
+      {
+        basisFunctionSet_ = other.basisFunctionSet_;
+        localInterpolation_.emplace( other.localInterpolation() );
+        return *this;
+      }
+
+      void unbind()
+      {
+        // basisFunctionSet_ = BasisFunctionSetType();
+      }
 
       template< class LocalFunction, class Vector>
       void operator() ( const LocalFunction &localFunction, Vector &localDofVector ) const
@@ -250,6 +299,12 @@ namespace Dune
         }
       }
 
+      template< class LocalFunction, class Dof, class Allocator >
+      void operator() ( const LocalFunction &localFunction, Dune::DynamicVector< Dof, Allocator > &localDofVector ) const
+      {
+        (*this)(localFunction,localDofVector.container() );
+      }
+
       template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
       void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
       {
@@ -257,7 +312,11 @@ namespace Dune
       }
 
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
-      const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
+      const LocalInterpolationType &localInterpolation () const
+      {
+        assert( localInterpolation_.has_value() );
+        return *localInterpolation_;
+      }
 
     private:
       template< class LocalFunction, class Vector>
@@ -277,8 +336,67 @@ namespace Dune
           localDofVector[i] = tmp[i];
       }
       BasisFunctionSetType basisFunctionSet_;
-      LocalInterpolationType localInterpolation_;
+      std::optional< LocalInterpolationType > localInterpolation_;
       DofAlignmentType dofAlignment_;
+    };
+
+    template <class DiscreteFunctionSpace >
+    class LocalFEInterpolationWrapper
+      : public LocalInterpolationWrapper< DiscreteFunctionSpace >
+    {
+      typedef LocalInterpolationWrapper< DiscreteFunctionSpace > BaseType;
+    protected:
+      using BaseType :: interpolation_;
+      typedef std::vector< typename DiscreteFunctionSpace::RangeFieldType >
+        TemporarayDofVectorType;
+      mutable ThreadSafeValue< TemporarayDofVectorType > tmpDofs_;
+
+      using BaseType::interpolation;
+    public:
+      LocalFEInterpolationWrapper( const DiscreteFunctionSpace& space )
+        : BaseType( space )
+      {}
+
+      using BaseType :: bind;
+      using BaseType :: unbind;
+
+      template< class LocalFunction, class Dof >
+      void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
+      {
+        // interpolation only works for std::vector storage
+        interpolation()( localFunction, localDofVector );
+      }
+
+      template< class LocalFunction, class Dof, class Allocator >
+      void operator() ( const LocalFunction &localFunction, Dune::DynamicVector< Dof, Allocator > &localDofVector ) const
+      {
+        // DynamicVector internally stores a std::vector
+        (*this)(localFunction, localDofVector.container() );
+      }
+
+
+      template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
+      void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
+      {
+        // LocalContribution internally stores a std::vector
+        (*this)(localFunction, localContribution.localDofVector());
+      }
+
+      /** \brief general interpolation, needs to copy from std::vector to dofs */
+      template< class LocalFunction, class LocalDofVector >
+      void operator () ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
+      {
+        const int size = dofs.size();
+        TemporarayDofVectorType& tmpDofs = *tmpDofs_;
+        tmpDofs.resize( size );
+        (*this)(localFunction, tmpDofs );
+
+        // copy to dof vector
+        for( int i=0; i<size; ++i )
+        {
+          dofs[ i ] = tmpDofs[ i ];
+        }
+      }
     };
 
   } // namespace Fem

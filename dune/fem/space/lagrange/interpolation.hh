@@ -35,15 +35,21 @@ namespace Dune
        *  \{
        */
 
+      LagrangeLocalInterpolation ()
+        : pointSet_( nullptr )
+        , basisFunctionSet_()
+      {
+      }
+
       LagrangeLocalInterpolation ( const LagrangePointSetType &pointSet,
                                    const BasisFunctionSetType &basisFunctionSet )
-        : pointSet_( pointSet ),
+        : pointSet_( &pointSet ),
           basisFunctionSet_( basisFunctionSet )
       {}
 
       LagrangeLocalInterpolation ( const LagrangePointSetType &pointSet,
                                    BasisFunctionSetType &&basisFunctionSet )
-        : pointSet_( pointSet ),
+        : pointSet_( &pointSet ),
           basisFunctionSet_( std::forward< BasisFunctionSetType >( basisFunctionSet ) )
       {}
 
@@ -68,7 +74,7 @@ namespace Dune
       /** \brief move assignment operator */
       LagrangeLocalInterpolation &operator= ( ThisType &&other )
       {
-        pointSet_ = std::move( other.pointSet_ );
+        pointSet_ = other.pointSet_ ;
         basisFunctionSet_ = std::move( other.basisFunctionSet_ );
         return *this;
       }
@@ -111,10 +117,20 @@ namespace Dune
 
       /** \} */
 
-    private:
-      const LagrangePointSetType &pointSet () const { return pointSet_.get(); }
+      void unbind()
+      {
+        pointSet_ = nullptr;
+        // basisFunctionSet_ = BasisFunctionSetType();
+      }
 
-      std::reference_wrapper< const LagrangePointSetType > pointSet_;
+    protected:
+      const LagrangePointSetType &pointSet () const
+      {
+        assert( pointSet_ );
+        return *pointSet_;
+      }
+
+      const LagrangePointSetType* pointSet_ = nullptr;
       BasisFunctionSetType basisFunctionSet_;
     };
 

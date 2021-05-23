@@ -3,7 +3,10 @@
 // to write out the data, set WRITE_DATA to 1
 #define WRITE_DATA 0
 
+#ifndef USE_LFE
 #define USE_LFE 0
+#endif
+
 #define USE_PSPACE 0
 
 // polynomial order of base functions
@@ -156,6 +159,7 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, 2 > FunctionS
 
 //! type of the discrete function space our unkown belongs to
 #if USE_LFE
+#warning "Using LocalFiniteElement based LagrangeSpace!"
 typedef LagrangeSpace< FunctionSpaceType, GridPartType >
   DiscreteFunctionSpaceType;
 #elif USE_PSPACE
