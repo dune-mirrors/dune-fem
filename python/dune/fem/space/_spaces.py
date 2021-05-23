@@ -262,7 +262,12 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " + storageType(codegen) + ">"
 
-    spc = module(field, includes, typeName, storage=storage,
+    ## constructor taking vector with orders
+    constructor = Constructor(['pybind11::object gridView', 'std::vector<int> orders'],
+                              ['return new DuneType( Dune::FemPy::gridPart< typename DuneType::GridPartType::GridViewType >( gridView ), orders );'],
+                              ['"gridView"_a', '"orders"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
+
+    spc = module(field, includes, typeName, constructor, storage=storage,
                  scalar=scalar, codegen=codegen,
                  ctorArgs = [gridView, order] if isAniso else [gridView])
     return spc.as_ufl()
