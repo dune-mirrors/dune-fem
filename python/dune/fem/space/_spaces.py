@@ -269,7 +269,7 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
     return spc.as_ufl()
 
 def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
-               scalar=False, dimrange=None, pointType=None, codegen=True):
+               scalar=False, dimrange=None, codegen=True, pointType=None):
     """create a discontinuous galerkin space with elementwise lagrange basis function
 
     Args:
@@ -339,6 +339,17 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
             ctorArgs=ctorArgs)
     return spc.as_ufl()
 
+def dglagrangelobatto(*args, **kwargs):
+    """create a discontinuous galerkin space with elementwise lagrange basis function
+       and Legendre-Gauss-Lobatto interpolation points.
+
+    Args:
+        same as dglagrange
+
+    Returns:
+        Space: the constructed Space, same as dglagrange(pointType='lobatto')
+    """
+    return dglagrange(*args, **kwargs, pointType='lobatto')
 
 def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
              scalar=False, dimrange=None, codegen=True):
