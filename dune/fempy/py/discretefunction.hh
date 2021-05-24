@@ -348,7 +348,7 @@ namespace Dune
 
         registerRestrictProlong< DF >( module );
 
-        cls.def_property_readonly( "space", [] ( pybind11::object self ) { return getSpace( self.cast< const DF & >(), self ); } );
+        cls.def_property_readonly( "space", [] ( DF &self ) -> auto& { return self.space(); } );
         cls.def_property_readonly( "size", [] ( DF &self ) { return self.size(); } );
         cls.def_property_readonly( "dofsValid", [] ( DF &self ) { return self.dofsValid(); } );
 

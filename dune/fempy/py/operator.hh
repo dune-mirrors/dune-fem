@@ -139,29 +139,12 @@ namespace Dune
         registerOperatorQuadratureOrders( cls, PriorityTag< 42 >() );
       }
 
-      // registerOperatorSpaces
-      template< class Object >
-      pybind11::object getDomainSpace ( pybind11::handle self, pybind11::handle parent = pybind11::handle() )
-      {
-        const Object &obj = self.cast< const Object & >();
-        typedef std::decay_t< decltype( std::declval< const Object & >().domainSpace() ) > Space;
-        const Space &space = obj.domainSpace();
-        return getSpaceObject(obj, parent, space);
-      }
-      template< class Object >
-      pybind11::object getRangeSpace ( pybind11::handle self, pybind11::handle parent = pybind11::handle() )
-      {
-        const Object &obj = self.cast< const Object & >();
-        typedef std::decay_t< decltype( std::declval< const Object & >().rangeSpace() ) > Space;
-        const Space &space = obj.rangeSpace();
-        return getSpaceObject(obj, parent, space);
-      }
       template< class Operator, class... options,
         decltype( std::declval< const Operator & >().domainSpace(), 0 ) = 0 >
       inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<1> )
       {
-        cls.def_property_readonly( "domainSpace", [] ( pybind11::object self ) { return getDomainSpace<Operator>( self, self ); } );
-        cls.def_property_readonly( "rangeSpace", [] ( pybind11::object self ) { return getRangeSpace<Operator>( self, self ); } );
+        cls.def_property_readonly( "domainSpace", [] ( Operator &self ) -> auto& { return self.domainSpace(); } );
+        cls.def_property_readonly( "rangeSpace", [] ( Operator &self) -> auto& { return self.rangeSpace(); } );
       }
       template< class Operator, class... options >
       inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<0> )

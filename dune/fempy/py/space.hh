@@ -37,7 +37,7 @@ namespace Dune
 
         cls.def( pybind11::init( [] ( const GridView &gridView ) {
             return new Space( gridPart< GridView >( gridView ) );
-          } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
+          }), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
       template< class Space, class... options >
       void registerSpaceConstructorWithOrder ( pybind11::class_< Space, options... > cls, std::false_type )
@@ -120,10 +120,9 @@ namespace Dune
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
 
-        cls.def( "as_ufl", [] ( pybind11::object self ) {
+        cls.def( "as_ufl", [] ( pybind11::object &self ) -> auto {
               return Dune::FemPy::getSpaceWrapper()(self);
-            }, pybind11::keep_alive< 0, 1 >() );
-
+            });
         cls.def( "_generateQuadratureCode", []( Space &self,
                  const std::vector<unsigned int> &interiorOrders,
                  const std::vector<unsigned int> &skeletonOrders,
@@ -135,31 +134,6 @@ namespace Dune
             #endif
               Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
-      }
-
-
-
-      // getSpace
-      // --------
-
-      template< class T, class Space >
-      pybind11::object getSpaceObject ( const T &obj, pybind11::handle parent, const Space &space )
-      {
-        pybind11::object pySpace = pybind11::reinterpret_borrow< pybind11::object >( pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) ) );
-        if( !pySpace )
-        {
-          if( !parent )
-            parent = pybind11::detail::get_object_handle( &obj, pybind11::detail::get_type_info( typeid( T ) ) );
-          pySpace = pybind11::cast( space, pybind11::return_value_policy::reference_internal, parent );
-        }
-        return pySpace.attr("as_ufl")();
-      }
-      template< class T >
-      pybind11::object getSpace ( const T &obj, pybind11::handle parent = pybind11::handle() )
-      {
-        typedef std::decay_t< decltype( std::declval< const T & >().space() ) > Space;
-        const Space &space = obj.space();
-        return getSpaceObject(obj, parent, space);
       }
 
     } // namespace detail

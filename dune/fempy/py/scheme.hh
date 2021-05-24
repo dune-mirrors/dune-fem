@@ -153,9 +153,9 @@ namespace Dune
                  pybind11::keep_alive<1,2>() );
 
         cls.def_property_readonly( "dimRange", [] ( Scheme & ) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
-        cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
-        cls.def_property_readonly( "domainSpace", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
-        cls.def_property_readonly( "rangeSpace", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
+        cls.def_property_readonly( "space", [] ( Scheme &self ) -> auto& { return self.space(); } );
+        cls.def_property_readonly( "domainSpace", [] ( Scheme &self ) -> auto& { return self.space(); } );
+        cls.def_property_readonly( "rangeSpace", [] ( Scheme &self ) -> auto& { return self.space(); } );
 
         auto clsInvOp = Dune::Python::insertClass< typename Scheme::LinearInverseOperatorType >
               ( cls, "LinearInverseOperator", Dune::Python::GenerateTypeName(cls,"LinearInverseOperatorType"));
