@@ -29,11 +29,6 @@ from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
 def compute(space,epsilon,weakBnd):
-    try:
-        gridView = space.grid
-    except AttributeError:
-        gridView = newGridView()
-        space    = space(gridView, order=2, storage=storage)
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -85,12 +80,10 @@ def compute(space,epsilon,weakBnd):
     # <codecell>
 
     uh = space.interpolate([0],name="solution")
-    # uh = uh_.copy()
     eoc = []
     info = scheme.solve(target=uh)
     error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
-    return
-    for i in range(1):
+    for i in range(3):
         uh.interpolate(0)
         scheme.solve(target=uh)
         error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
@@ -99,6 +92,10 @@ def compute(space,epsilon,weakBnd):
         error0 = error1
         gridView.hierarchicalGrid.globalRefine(1)
 
+    # print(space.order,epsilon,eoc)
+    if (eoc[-1]-(space.order+1)) < -0.1:
+        print("ERROR:",space.order,epsilon,eoc)
+    assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
 storage = "fem"
@@ -106,65 +103,22 @@ storage = "fem"
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
-from dune.fem.view import adaptiveLeafGridView as adapt
-from memory_profiler import profile
-import gc
-@profile
-def run():
-  gridView = newGridView()
-  space    = dgSpace(gridView, order=2, storage=storage) # , codegen=False)
-  eoc      = compute(space,1e-5,True)
-  view     = adapt(gridView)
-  space    = dgSpace(view, order=2, storage=storage) # , codegen=False)
-  eoc      = compute(space,1e-5,True)
-@profile
-def runDebug():
-  print("     start run")
-  gridView = newGridView()
-  print("     AdaptiveGV")
-  view  = adapt(gridView)
-  print()
-  print("references view: ",len(gc.get_referrers(view)))
-  for r in gc.get_referrers(view):
-      print(r)
-  print()
-  print("     space")
-  space    = dgSpace(gridView, order=2, storage=storage) # , codegen=False)
-  print("references space: ",len(gc.get_referrers(space)),type(space))
-  for r in gc.get_referrers(space):
-      print(type(r),dir(r),r)
-      try:
-          print(r.cell_contents)
-      except:
-          pass
-  print()
-  eoc      = compute(space,1e-5,True)
-  print()
-  print("references view: ",len(gc.get_referrers(view)))
-  for r in gc.get_referrers(view):
-      print(type(r),dir(r),r)
-  print()
-  print("references space: ",len(gc.get_referrers(space)),type(space))
-  for r in gc.get_referrers(space):
-      print(type(r),dir(r),r)
-      try:
-          print(r.cell_contents)
-      except:
-          pass
-  print()
-  print("     end run")
+gridView = newGridView()
+space    = dgSpace(gridView, order=2, storage=storage)
+eoc = compute(space,1e-5,True)
 
-  view  = adapt(gridView)
-  viewA = adapt(gridView)
-  space = dgSpace(viewA, order=2, storage=storage)
-  eoc   = compute(space,1e-5,True)
-  space = dgSpace(view, order=2, storage=storage)
-  eoc   = compute(space,1e-5,True)
-  gc.collect()
+gridView = newGridView()
+space    = dgSpace(gridView, order=2, storage=storage)
+eoc = compute(space,1,True)
 
-for i in range(15):
-  runDebug()
-  gc.collect()
-for i in range(15):
-  run()
-  gc.collect()
+#gridView = newGridView()
+#space    = dgSpace(gridView, order=3, storage=storage)
+#eoc = compute(space,1e-5,True)
+
+gridView = newGridView()
+space    = lagrange(gridView, order=2, storage=storage)
+eoc = compute(space,1,True)
+
+gridView = newGridView()
+space    = lagrange(gridView, order=2, storage=storage)
+eoc = compute(space,1,False)
