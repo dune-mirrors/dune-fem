@@ -68,6 +68,7 @@ dune_add_test( SOURCES test-auxiliarydofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 
 
 dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
+dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 )
 if( ${FEM_TORTURE_TESTS} )
   # test adaptation of combinedspaces
   dune_add_test( NAME adapt_combinedspace_pointbased SOURCES adapt.cc
@@ -83,7 +84,6 @@ if( ${FEM_TORTURE_TESTS} )
   dune_add_test( SOURCES test-fvadaptation.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem MPI_RANKS 1 2 3 4 TIMEOUT 9999999 )
   dune_add_test( SOURCES test-globalrefine.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem )
 
-  dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 2 4 TIMEOUT 300 )
 
   dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 

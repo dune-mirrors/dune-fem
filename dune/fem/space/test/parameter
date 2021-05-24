@@ -3,7 +3,11 @@ fem.verboserank: 0
 # max level for test
 lagrangeadapt.maxlevel: 2
 # adaptation method:  none | generic | callback
-fem.adaptation.method: generic
+#fem.adaptation.method: generic
+fem.adaptation.method: callback
+
+# add rank information to output
+fem.io.partitioning: rank
 
 # Parameters for lagrangeglobalrefine
 # -----------------------------------
