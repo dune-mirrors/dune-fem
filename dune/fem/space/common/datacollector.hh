@@ -691,6 +691,8 @@ namespace Dune
       typedef LocalInterface<ParamType> LocalInterfaceType;
 
       typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
+      // we cannot use ConstLocalFunction here, since DiscreteFunctionType could
+      // be the FemPy::DiscreteFunctionList which only takes dofs vectors
       typedef Dune::DynamicVector< DofType > LocalDofVectorType;
 
       //! constructor
@@ -781,6 +783,8 @@ namespace Dune
       typedef typename Traits::LocalInterfaceType LocalInterfaceType;
 
       typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
+      // we cannot use ConstLocalFunction here, since DiscreteFunctionType could
+      // be the FemPy::DiscreteFunctionList which only takes dofs vectors
       typedef Dune::DynamicVector< DofType >  LocalDofVectorType;
 
       //! constructor
