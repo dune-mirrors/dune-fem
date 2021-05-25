@@ -9,8 +9,6 @@
 
 #include <dune/fem/space/localfiniteelement/space.hh>
 
-#include <dune/fem/space/rannacherturek/space.hh>
-
 namespace Dune
 {
   namespace Fem
@@ -76,11 +74,71 @@ namespace Dune
 
     template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
     using RannacherTurekSpace
-    = LocalFiniteElementSpace<
-    RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage >;
+    = LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage >;
 
-  }
-}
+    // deprecated old name
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
+    using RannacherTurekDiscreteFunctionSpace
+    = LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage >;
+
+
+    namespace Capabilities
+    {
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct hasFixedPolynomialOrder< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct hasStaticPolynomialOrder< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = true;
+        static const int order = 1;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct isContinuous< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = false;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct isLocalized< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct isAdaptive< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = true;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct threadSafe< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = false;
+      };
+
+
+      template< class FunctionSpace, class GridPart, class Storage >
+      struct viewThreadSafe< LocalFiniteElementSpace< RannacherTurekLocalFiniteElementMap< FunctionSpace, GridPart >, FunctionSpace, Storage > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
+
+
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif // HAVE_DUNE_LOCALFUNCTIONS
 #endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
