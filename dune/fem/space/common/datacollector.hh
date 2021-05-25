@@ -691,21 +691,23 @@ namespace Dune
       typedef LocalInterface<ParamType> LocalInterfaceType;
 
       typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
-      typedef Dune::DynamicVector< DofType, typename DiscreteFunctionTraits< DiscreteFunctionType >::LocalDofVectorAllocatorType::template rebind< DofType >::other > LocalDofVectorType;
+      typedef Dune::DynamicVector< DofType > LocalDofVectorType;
 
       //! constructor
       LocalDataInliner ( const DiscreteFunctionType & df,
                          const ContainsCheck& containsCheck )
         : df_ (df),
           dm_( DofManagerType::instance( df.gridPart().grid() ) ),
-          containsCheck_( containsCheck )
+          containsCheck_( containsCheck ),
+          ldv_()
       {}
 
       //! copy constructor
       LocalDataInliner ( const LocalDataInliner & other  )
         : df_ (other.df_),
           dm_( other.dm_ ),
-          containsCheck_( other.containsCheck_ )
+          containsCheck_( other.containsCheck_ ),
+          ldv_()
       {}
 
       //! store data to stream
@@ -728,9 +730,9 @@ namespace Dune
 
         assert( df_.space().indexSet().contains( entity ) );
 
-        LocalDofVectorType ldv( df_.space().basisFunctionSet( entity ).size(), df_.localDofVectorAllocator() );
-        df_.getLocalDofs( entity, ldv );
-        for( const DofType &dof : ldv )
+        ldv_.resize( df_.space().basisFunctionSet( entity ).size() );
+        df_.getLocalDofs( entity, ldv_ );
+        for( const DofType &dof : ldv_ )
           str.write( dof );
       }
 
@@ -738,6 +740,7 @@ namespace Dune
       const DiscreteFunctionType & df_;
       DofManagerType& dm_ ;
       const ContainsCheck containsCheck_;
+      mutable LocalDofVectorType ldv_;
     };
 
 
@@ -778,21 +781,23 @@ namespace Dune
       typedef typename Traits::LocalInterfaceType LocalInterfaceType;
 
       typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
-      typedef Dune::DynamicVector< DofType, typename DiscreteFunctionTraits< DiscreteFunctionType >::LocalDofVectorAllocatorType::template rebind< DofType >::other > LocalDofVectorType;
+      typedef Dune::DynamicVector< DofType >  LocalDofVectorType;
 
       //! constructor
       LocalDataXtractor ( DiscreteFunctionType & df,
                           const ContainsCheck& containsCheck )
         : df_ (df),
           dm_( DofManagerType :: instance( df.gridPart().grid() ) ),
-          containsCheck_( containsCheck )
+          containsCheck_( containsCheck ),
+          ldv_()
         {}
 
       //! copy constructor
       LocalDataXtractor ( const LocalDataXtractor & other )
         : df_( other.df_ ),
           dm_( other.dm_ ),
-          containsCheck_( other.containsCheck_ )
+          containsCheck_( other.containsCheck_ ),
+          ldv_()
       {}
 
       //! store data to stream
@@ -816,16 +821,17 @@ namespace Dune
         // make sure entity is contained in set
         assert( df_.space().indexSet().contains( entity ) );
 
-        LocalDofVectorType ldv( df_.space().basisFunctionSet( entity ).size(), df_.localDofVectorAllocator() );
-        for( DofType &dof : ldv )
+        ldv_.resize( df_.space().basisFunctionSet( entity ).size() );
+        for( DofType &dof : ldv_ )
           str.read( dof );
-        df_.setLocalDofs( entity, ldv );
+        df_.setLocalDofs( entity, ldv_ );
       }
 
     protected:
       DiscreteFunctionType &df_;
       DofManagerType &dm_;
       const ContainsCheck containsCheck_;
+      mutable LocalDofVectorType ldv_;
     };
 
     /** @} end documentation group */
