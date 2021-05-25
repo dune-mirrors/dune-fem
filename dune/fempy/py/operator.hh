@@ -102,7 +102,7 @@ namespace Dune
           cls.def( "subConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.subConstraints( u,v ); } );
           using DirichletBlockVector = typename Operator::DirichletBlockVector;
           pybind11::bind_vector<DirichletBlockVector>(cls, "DirichletBlockVector");
-          cls.def_property_readonly( "dirichletBlocks",  [] ( Operator &self ) { return self.dirichletBlocks(); } );
+          cls.def_property_readonly( "dirichletBlocks",  [] ( Operator &self ) -> auto& { return self.dirichletBlocks(); } );
         }
       }
 
@@ -201,7 +201,7 @@ namespace Dune
             Mat mat = self.exportMatrix();
             pybind11::handle petsc_mat(PyPetscMat_New(mat));
             return petsc_mat;
-          });
+          }, pybind11::keep_alive<0,1>());
       }
 #endif
 #if HAVE_DUNE_ISTL
@@ -222,7 +222,7 @@ namespace Dune
 
         cls.def_property_readonly( "_backend", [] ( Operator &self ) {
             return getBCRSMatrix( self.exportMatrix() );
-          });
+          }, pybind11::keep_alive<0,1>() );
       }
 #endif
 
@@ -246,7 +246,7 @@ namespace Dune
                 std::make_pair(mat.rows(), mat.cols())
             );
             return scipy_mat;
-          } );
+          }, pybind11::keep_alive<0,1>() );
       }
 
       // registerLinearOperator

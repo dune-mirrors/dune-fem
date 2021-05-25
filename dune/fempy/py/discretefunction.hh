@@ -59,7 +59,7 @@ namespace Dune
                 { self.array().size() },                                /* Buffer dimensions */
                 { sizeof( Field ) }                                     /* Strides (in bytes) for each index */
             );
-          } ); // , pybind11::keep_alive< 0, 1 >() );
+          }); //, pybind11::keep_alive< 0, 1 >() );
 
 
         cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> Field {
@@ -123,7 +123,7 @@ namespace Dune
           Vec vec = self.dofVector().array();
           pybind11::handle petsc_vec(PyPetscVec_New(vec));
           return petsc_vec;
-        });
+        }, pybind11::keep_alive<0,1>());
       }
 #endif
       template< class DF , class ... options>
@@ -141,7 +141,7 @@ namespace Dune
         }
 #endif
         cls.def_property_readonly( "_backend", [] ( DF &self )
-        -> decltype( getBlockVector(std::declval<DF&>().dofVector().array()) )
+        -> decltype( getBlockVector(std::declval<DF&>().dofVector().array()) )&
         {
           return self.dofVector().array();
         });
@@ -164,7 +164,7 @@ namespace Dune
           clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
           clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
         }
-        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        cls.def_property_readonly( "dofVector", [] ( DF &self ) -> DofVector&
         {
           return self.dofVector();
         });
