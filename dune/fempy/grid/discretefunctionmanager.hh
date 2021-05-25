@@ -136,6 +136,11 @@ namespace Dune
     // DiscreteFunctionList
     // --------------------
 
+    // This class is a list wrapper class that is added to the LoadBalancer and
+    // internally holds a list with discrete functions that have been passed to
+    // the fem.adapt or fem.loadBalance functions. This list is cleared after
+    // the adapt or loadBalance is finished, however the DiscreteFunctionList
+    // remains added to the LoadBalancer.
     template< class Grid, class D = double >
     struct DiscreteFunctionList
       : public Fem::IsDiscreteFunction
@@ -214,6 +219,8 @@ namespace Dune
       const GridPartType &gridPart () const { return space_.gridPart(); }
 
       const DiscreteFunctionSpaceType &space () const { return space_; }
+
+      std::string name () const { return std::string("FemPy::DiscreteFunctionList"); }
 
       void enableDofCompression ()
       {
