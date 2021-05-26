@@ -41,6 +41,8 @@ namespace Dune
         GridModificationListener ( const Grid &grid )
           : dofManager_( DofManager::instance( grid ) )
         {}
+        virtual ~GridModificationListener ( )
+        {}
 
         virtual void postModification ( const Grid &grid )
         {
@@ -63,12 +65,13 @@ namespace Dune
         typedef GridModificationListener< Grid > Listener;
         for( const auto &listener : Python::detail::gridModificationListeners( grid ) )
         {
-          if( dynamic_cast< Listener * >( listener.second ) )
+          if( dynamic_cast< Listener * >( listener ) )
             return;
         }
-
+        // get python handle for the given grid (must exist)
         pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
-        Python::detail::addGridModificationListener( grid, new Listener( grid ), nurse );
+        assert(nurse);
+        Python::detail::addGridModificationListener( grid, new Listener(grid), nurse );
       }
 
 
@@ -194,7 +197,11 @@ namespace Dune
       // obtain Python object for grid view
       pybind11::handle nurse = pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) );
       if( !nurse )
+      {
         return gridView;
+      }
+      std::cout << "have a nurse in constructGridPart - didn't think we ever got here...!";
+      abort();
 
       // create Python guard object, removing the grid part once the grid view dies
       pybind11::cpp_function remove_gridpart( [ gridPart ] ( pybind11::handle weakref ) {
