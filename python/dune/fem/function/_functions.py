@@ -83,8 +83,6 @@ def _assertSizesMatch(space, dofVector):
     assert len(dofVector.shape) == 1, "dofVector should be a simple array, i.e. len(shape) == 1"
 
     # check that sizes and data size match
-    print(len(dofVector.shape))
-    print(len(dofVector))
     assert space.size == len(dofVector), f"space (size={space.size}) and vector (size={len(dofVector)}) do not match!"
     if hasattr(dofVector, "dtype"):
         dtype = dofVector.dtype
