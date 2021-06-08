@@ -32,6 +32,8 @@ namespace Dune
       typedef SimpleLocalFunction< GridPart, LocalEvaluator > This;
 
     public:
+      typedef GridPart GridPartType;
+
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
       typedef std::decay_t< std::result_of_t< LocalEvaluator( EntityType, LocalCoordinateType ) > > Value_;
