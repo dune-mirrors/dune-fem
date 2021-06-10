@@ -84,7 +84,7 @@ namespace Dune
         }
 
         //! return whether we have a fixed size
-        bool fixedsize ( int dim, int codim ) const
+        bool fixedSize ( int dim, int codim ) const
         {
           return true;
         }
