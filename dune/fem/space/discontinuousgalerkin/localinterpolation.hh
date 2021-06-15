@@ -60,6 +60,9 @@ namespace Dune
       DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = default;
       DiscontinuousGalerkinLocalInterpolation ( ThisType &&other ) = default;
 
+      void bind( const EntityType& ) {}
+      void unbind() {}
+
       ThisType &operator= ( const ThisType &other ) = delete;
 
       template< class LocalFunction, class LocalDofVector >

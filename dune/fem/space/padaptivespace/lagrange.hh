@@ -132,7 +132,8 @@ namespace Dune
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
 
-      typedef LagrangeLocalInterpolation< GridPartType, maxPolOrder, BasisFunctionSetType > InterpolationType;
+      typedef LagrangeLocalInterpolation< GridPartType, maxPolOrder, BasisFunctionSetType > InterpolationImplType;
+      typedef LocalInterpolationWrapper< ThisType > InterpolationType;
 
     public:
       using BaseType::blockMapper;
@@ -207,10 +208,22 @@ namespace Dune
         return compiledLocalKey( entity.type(), blockMapper().polynomOrder( entity ) );
       }
 
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation () const
       {
-        return InterpolationType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
+        return InterpolationType( *this );
       }
+
+      [[deprecated]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity );
+      }
+
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
+      {
+        return InterpolationImplType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
+      }
+
     };
 
   } // namespace Fem

@@ -5,6 +5,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
 namespace Dune
@@ -137,7 +138,9 @@ namespace Dune
         typedef typename EntityType::EntitySeed EntitySeedType;
 
         DefaultLocalRestrictProlongLFE (const DiscreteFunctionSpaceType &space)
-        : space_( space ), childSeeds_(0), childDofs_(0)
+        : space_( space ),
+          interpolation_( space_ ),
+          childSeeds_(0), childDofs_(0)
         {}
 
         /** \brief explicit set volume ratio of son and father
@@ -183,20 +186,15 @@ namespace Dune
             childBasisSets[i] = space_.basisFunctionSet( childEntities[i] );
           }
 
-          const unsigned int numDofs = lfFather.size();
 
-          // interpolate methods in dune-localfunctions expect std::vector< T >
-          tmpDofs_.resize( numDofs );
+          // bind interpolation object to father
+          auto guard = bindGuard( interpolation_, lfFather.entity() );
+
+          typedef Impl::SonsWrapper<BasisFunctionSetType, LFFather> SonsWrapperType;
+          SonsWrapperType sonsWrapper( lfFather, childEntities, childBasisSets, childDofs_ );
 
           // call interpolation
-          space_.interpolation(lfFather.entity())
-            ( Impl::SonsWrapper<BasisFunctionSetType, LFFather>(
-              lfFather, childEntities, childBasisSets, childDofs_ ),
-              tmpDofs_ );
-
-          // copy back
-          for (unsigned int i=0; i<numDofs; ++i)
-            lfFather[ i ] = tmpDofs_[ i ];
+          interpolation_( sonsWrapper, lfFather );
         }
 
         //! prolong data to children
@@ -207,19 +205,14 @@ namespace Dune
           const int numDofs = lfFather.numDofs();
           assert( lfFather.numDofs() == lfSon.numDofs() );
 
-          const auto& interpol = space_.interpolation(lfSon.entity());
-
           typedef Impl::FatherWrapper<LocalGeometry,LFFather> FatherWrapperType;
-          FatherWrapperType fatherWraper(geometryInFather,lfFather);
+          FatherWrapperType fatherWrapper(geometryInFather,lfFather);
 
-          // interpolate methods in dune-localfunctions expect std::vector< T >
-          tmpDofs_.resize( numDofs );
+          // bind interpolation object to father
+          auto guard = bindGuard( interpolation_, lfSon.entity() );
 
-          interpol( fatherWraper, tmpDofs_ );
-
-          // copy back
-          for (int i=0; i<numDofs; ++i)
-            lfSon[ i ] = tmpDofs_[ i ];
+          // call interpolation
+          interpolation_( fatherWrapper, lfSon );
         }
 
         //! do discrete functions need a communication after restriction / prolongation?
@@ -232,6 +225,8 @@ namespace Dune
           return son.geometry().volume() / father.geometry().volume();
         }
         const DiscreteFunctionSpaceType &space_;
+        mutable LocalInterpolation< DiscreteFunctionSpaceType > interpolation_;
+
         mutable std::vector< EntitySeedType > childSeeds_;
         mutable std::vector< std::vector<double> > childDofs_;
 

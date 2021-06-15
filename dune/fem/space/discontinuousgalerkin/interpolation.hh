@@ -222,6 +222,8 @@ namespace Dune
         impl_( localFunction, localDofVector );
       }
 
+      void unbind() {}
+
       /** \} */
 
     private:

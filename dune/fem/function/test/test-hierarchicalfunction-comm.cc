@@ -103,16 +103,20 @@ void interpolateOnly ( const GridFunction &u, DiscreteFunction &v )
 
   Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
   Dune::Fem::TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > vLocal( v.space() );
+  Dune::Fem::LocalInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType > interpolation( v.space() );
 
   // iterate over selected partition
   for( const auto entity : elements( v.gridPart(), Dune::Partitions::all ) )
   {
     // initialize u, v to entity
-    uLocal.init( entity );
-    vLocal.init( entity );
+    auto uGuard = bindGuard( uLocal, entity );
+    auto vGuard = bindGuard( vLocal, entity );
+
+    // bind interpolation to entity
+    auto iGuard = bindGuard( interpolation, entity );
 
     // perform local interpolation
-    v.space().interpolation( entity )( uLocal, vLocal.localDofVector() );
+    interpolation( uLocal, vLocal.localDofVector() );
 
     // write interpolation into global DoF vector
     v.setLocalDofs( entity, vLocal.localDofVector() );

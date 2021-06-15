@@ -119,8 +119,8 @@ namespace Dune
 
       typedef Impl::BDMLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, polOrder > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
-      typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
-      typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
+      typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType   LocalCoefficientsType;
+      typedef typename LocalFiniteElementType::Traits::LocalInterpolationType  LocalInterpolationType;
 
       template< class ... Args >
       BrezziDouglasMariniLocalFiniteElementMap ( const GridPart &gridPart, Args ... args )

@@ -658,21 +658,14 @@ def bdm(gridView, order=1, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if dimRange is None:
-        dimRange = 1
-        scalar = True
-
-    if dimRange > 1 and scalar:
-        raise KeyError(\
-                "trying to set up a scalar space with dimRange = " +\
-                str(dimRange) + ">1")
     if order < 1:
         raise KeyError(\
             "Parameter error in BDMSpace with "+
             "order=" + str(order) + ": " +\
             "order has to be equal to 1 or 2")
-    if field == "complex":
-        field = "std::complex<double>"
+
+    # check requirements on parameters
+    dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
     includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + gridView._includes
     dimw = gridView.dimWorld
@@ -692,21 +685,14 @@ def raviartThomas(gridView, order=1, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if dimRange is None:
-        dimRange = 1
-        scalar = True
-
-    if dimRange > 1 and scalar:
-        raise KeyError(\
-                "trying to set up a scalar space with dimRange = " +\
-                str(dimRange) + ">1")
     if order > 2:
         raise KeyError(\
             "Parameter error in RTSpace with "+
             "order=" + str(order) + ": " +\
             "order has to be equal to 0,1 or 2")
-    if field == "complex":
-        field = "std::complex<double>"
+
+    # check requirements on parameters
+    dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
     includes = [ "dune/fem/space/raviartthomas.hh" ] + gridView._includes
     dimw = gridView.dimWorld
@@ -726,25 +712,17 @@ def rannacherTurek(gridView, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if dimRange is None:
-        dimRange = 1
-        scalar = True
-
-    if dimRange > 1 and scalar:
-        raise KeyError(\
-                "trying to set up a scalar space with dimRange = " +\
-                str(dimRange) + ">1")
     if dimRange < 1:
         raise KeyError("invalid dimRange: " + str(dimRange) + " (must be >= 1)")
-    if field == "complex":
-        field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/second.hh" ] + gridView._includes
+    # check requirements on parameters
+    dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, 1, field)
+
+    includes = [ "dune/fem/space/rannacherturek.hh" ] + gridView._includes
     dimw = gridView.dimWorld
-    typeName = "Dune::Fem::RannacherTurekDiscreteFunctionSpace< " +\
+    typeName = "Dune::Fem::RannacherTurekSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " > ," +\
-      storageType(codegen) + ">"
+      "Dune::FemPy::GridPart< " + gridView._typeName + " > ," + storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,

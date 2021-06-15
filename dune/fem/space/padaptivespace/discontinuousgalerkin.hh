@@ -90,7 +90,8 @@ namespace Dune
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
 
-      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationImplType;
+      typedef LocalInterpolationWrapper< ThisType > InterpolationType;
 
     public:
       using BaseType::continuous;
@@ -147,9 +148,20 @@ namespace Dune
         return compiledLocalKey( type, order );
       }
 
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation() const
       {
-        return InterpolationType( basisFunctionSet( entity ) );
+        return InterpolationType( *this );
+      }
+
+      [[deprecated]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity );
+      }
+
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
+      {
+        return InterpolationImplType( basisFunctionSet( entity ) );
       }
 
     };

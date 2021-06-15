@@ -66,7 +66,7 @@ namespace Dune
       typedef typename Space::EntityType EntityType;
 
       PowerSpaceInterpolation ( const Space &space, const EntityType &entity )
-        : interpolation_( space.containedSpace().interpolation( entity ) ),
+        : interpolation_( space.containedSpace().localInterpolation( entity ) ),
           dofAlignment_( space.basisFunctionSet( entity ).dofAlignment() )
       {}
 
@@ -90,7 +90,7 @@ namespace Dune
       }
 
     protected:
-      typename Space::ContainedDiscreteFunctionSpaceType::InterpolationType interpolation_;
+      typename Space::ContainedDiscreteFunctionSpaceType::InterpolationImplType interpolation_;
       DofAlignmentType dofAlignment_;
     };
 
@@ -105,7 +105,7 @@ namespace Dune
     class TupleSpaceInterpolation
     {
       typedef TupleSpaceInterpolation< CombineOp, Spaces ... > ThisType;
-      typedef std::tuple< typename Spaces::InterpolationType ... > InterpolationTupleType;
+      typedef std::tuple< typename Spaces::InterpolationImplType ... > InterpolationTupleType;
 
       static const int setSize = sizeof ... ( Spaces ) -1;
 
@@ -142,7 +142,7 @@ namespace Dune
       {}
 
       TupleSpaceInterpolation ( const Spaces & ... spaces, const EntityType &entity )
-        : interpolation_( std::make_tuple( spaces.interpolation( entity ) ... ) ),
+        : interpolation_( std::make_tuple( spaces.localInterpolation( entity ) ... ) ),
           basisFunctionSet_( std::make_tuple( spaces.basisFunctionSet( entity ) ... )  )
       {}
 
@@ -151,6 +151,8 @@ namespace Dune
       {
         Fem::ForLoop< Apply, 0, setSize >::apply( interpolation_, basisFunctionSet_, lf, ldv );
       }
+
+      void unbind() {}
 
     protected:
       InterpolationTupleType interpolation_;

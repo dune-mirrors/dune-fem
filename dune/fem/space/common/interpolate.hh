@@ -11,11 +11,13 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/common/bindguard.hh>
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/space/common/capabilities.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 namespace Dune
 {
@@ -73,19 +75,23 @@ namespace Dune
     {
       ConstLocalFunction< GridFunction > uLocal( u );
       LocalContribution< DiscreteFunction, Assembly::Set > vLocal( v );
+      LocalInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >
+        interpolation( v.space() );
 
       // iterate over selected partition
       for( const auto entity : elements( v.gridPart(), ps ) )
       {
         // initialize u to entity
-        // uLocal.init( entity );
         auto uGuard = bindGuard( uLocal, entity );
 
         // bind v to entity
         auto vGuard = bindGuard( vLocal, entity );
 
+        // bind interpolation to entity
+        auto iGuard = bindGuard( interpolation, entity );
+
         // perform local interpolation
-        v.space().interpolation( entity )( uLocal, vLocal );
+        interpolation( uLocal, vLocal );
       }
     }
 
@@ -175,9 +181,11 @@ namespace Dune
 
       const auto &space = w.space();
       Impl::WeightLocalFunction< EntityType, std::remove_reference_t< typename DiscreteFunction::FunctionSpaceType >, Weight > localWeight( weight, w.order() );
-      interpolate( u, v, [ &space, &localWeight ] ( const EntityType &entity, AddLocalContribution< DiscreteFunction > &w ) {
+      LocalInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType > interpolation( space );
+      interpolate( u, v, [ &interpolation, &localWeight ] ( const EntityType &entity, AddLocalContribution< DiscreteFunction > &w ) {
           auto weightGuard = bindGuard( localWeight, entity );
-          space.interpolation( entity )( localWeight, w );
+          auto iGuard = bindGuard( interpolation, entity );
+          interpolation( localWeight, w );
         }, w );
     }
 
@@ -194,15 +202,18 @@ namespace Dune
       {
         ConstLocalFunction< GridFunction > uLocal( u );
         AddLocalContribution< DiscreteFunction > vLocal( v ), wLocal( w );
+        LocalInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >
+          interpolation( v.space() );
 
         for( const auto &entity : v.space() )
         {
           auto uGuard = bindGuard( uLocal, entity );
           auto vGuard = bindGuard( vLocal, entity );
           auto wGuard = bindGuard( wLocal, entity );
+          auto iGuard = bindGuard( interpolation, entity );
 
-          // interpolate u
-          v.space().interpolation( entity )( uLocal, vLocal );
+          // interpolate u and store in v
+          interpolation( uLocal, vLocal );
 
           // evaluate DoF-wise weight
           weight( entity, wLocal );

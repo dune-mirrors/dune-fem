@@ -6,6 +6,7 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/common/hybrid.hh>
+
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/operator/projection/local/l2projection.hh>
 #include <dune/fem/operator/projection/local/riesz.hh>
@@ -14,6 +15,7 @@
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/lagrange/genericbasefunctions.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -101,22 +103,34 @@ namespace Dune
       typedef DenseLocalRieszProjection< BasisFunctionSetType, QuadratureType > LocalRieszProjectionType;
 
     public:
-      typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationType;
-      //typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
+      typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationImplType;
+      typedef LocalInterpolationWrapper< ThisType > InterpolationType;
 
       explicit LagrangeDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                     const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
-          // , interpolation_( *this )
       {}
 
       static DFSpaceIdentifier type () { return LagrangeDGSpace_id; }
 
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation () const
       {
-        return InterpolationType( basisFunctionSet( entity ) );
+        return InterpolationType( *this );
       }
+
+      [[deprecated]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationImplType( basisFunctionSet( entity ) );
+      }
+
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
+      {
+        return InterpolationImplType( basisFunctionSet( entity ) );
+      }
+
+
       //const InterpolationType& interpolation ( const EntityType &entity ) const
       //{
       //  return interpolation_;

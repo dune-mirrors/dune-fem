@@ -34,9 +34,16 @@ namespace Dune
        * \{
        */
 
+      FiniteVolumeLocalInterpolation () {}
+
+      void bind( const EntityType &entity ) {}
+      void unbind() {}
+
+      /*
       explicit FiniteVolumeLocalInterpolation ( const EntityType &entity )
         : entity_( entity )
       {}
+      */
 
       /** \} */
 
@@ -55,10 +62,12 @@ namespace Dune
        */
 
       /** \brief return basis function set */
+      /*
       BasisFunctionSetType basisFunctionSet () const
       {
         return BasisFunctionSetType( entity() );
       }
+      */
 
       /** \brief interpolate local function */
       template< class LocalFunction, class LocalDofVector >
@@ -80,9 +89,9 @@ namespace Dune
       /** \} */
 
     private:
-      const EntityType &entity () const { return entity_.get(); }
+      //const EntityType &entity () const { return entity_.get(); }
 
-      std::reference_wrapper< const EntityType > entity_;
+      //std::reference_wrapper< const EntityType > entity_;
     };
 
   } // namespace Fem

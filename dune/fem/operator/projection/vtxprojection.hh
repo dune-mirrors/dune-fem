@@ -141,6 +141,8 @@ namespace Dune
 
         typedef typename GridPartType::IntersectionType IntersectionType;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+        typedef typename DiscreteFunction::DiscreteFunctionSpaceType
+          DiscreteFunctionSpaceType;
 
         if( GridPartType::Traits::conforming || !Fem::GridPartCapabilities::hasGrid< GridPartType >::v )
           return;
@@ -148,7 +150,7 @@ namespace Dune
         const auto &blockMapper = u.space().blockMapper();
 
         std::vector< typename DiscreteFunction::DofType > ldu, ldw;
-        const std::size_t localBlockSize = DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize;
+        const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
         const std::size_t maxNumBlocks = blockMapper.maxNumDofs();
         ldu.reserve( maxNumBlocks * localBlockSize );
         ldw.reserve( maxNumBlocks * localBlockSize );
@@ -157,6 +159,8 @@ namespace Dune
         onSubEntity.reserve( maxNumBlocks );
 
         OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );
+
+        LocalInterpolation< DiscreteFunctionSpaceType > interpolation( u.space() );
 
         for( const EntityType &inside : u.space() )
         {
@@ -182,7 +186,7 @@ namespace Dune
             ldw.resize( numBlocks * localBlockSize );
 
             // interpolate "outside" values
-            const auto interpolation = u.space().interpolation( inside );
+            auto guard = bindGuard( interpolation, inside );
             interpolation( uOutside, ldw );
 
             // fetch inside local DoFs

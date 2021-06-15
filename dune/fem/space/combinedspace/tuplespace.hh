@@ -20,6 +20,7 @@
 #include <dune/fem/space/combinedspace/tuplemapper.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 namespace Dune
 {
@@ -105,7 +106,7 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      typedef TupleSpaceInterpolation< CombineOp, DiscreteFunctionSpaces ... > InterpolationType;
+      typedef TupleSpaceInterpolation< CombineOp, DiscreteFunctionSpaces ... > InterpolationImplType;
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
@@ -198,7 +199,9 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
 
-      typedef typename Traits::InterpolationType InterpolationType;
+      typedef typename Traits::InterpolationImplType InterpolationImplType;
+
+      typedef LocalInterpolationWrapper< ThisType > InterpolationType;
       typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
 
       /** \brief constructor
@@ -267,9 +270,20 @@ namespace Dune
         return spaceTuple( std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
-      InterpolationType interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation() const
       {
-        return interpolation( entity, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return InterpolationType( *this );
+      }
+
+      [[deprecated]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity );
+      }
+
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:
@@ -280,9 +294,9 @@ namespace Dune
       }
 
       template< std::size_t ... i >
-      InterpolationType interpolation ( const EntityType &entity, std::index_sequence< i ... > ) const
+      InterpolationImplType localInterpolation ( const EntityType &entity, std::index_sequence< i ... > ) const
       {
-        return InterpolationType( std::get< i >( spaceTuple() ) ..., entity );
+        return InterpolationImplType( std::get< i >( spaceTuple() ) ..., entity );
       }
     };
 

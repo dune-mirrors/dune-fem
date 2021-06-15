@@ -12,6 +12,7 @@
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 #include "dataprojection.hh"
 
@@ -54,6 +55,7 @@ namespace Dune
         using LocalFunctionType = Dune::Fem::LocalFunction< BasisFunctionSetType, LocalDofVectorType >;
 
         static const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
+        typedef LocalInterpolation< DiscreteFunctionSpaceType > LocalInterpolationType;
 
       public:
         /** \name Construction
@@ -93,8 +95,9 @@ namespace Dune
           assert( present.size() == space().basisFunctionSet( entity ).size() );
           LocalDofVectorType localDofVector( present.size() );
 
-          const auto interpolation = space().interpolation( entity );
-          interpolation( localFunc, localDofVector );
+          LocalInterpolationType& ip = this->interpolation();
+          auto guard = bindGuard( ip, entity );
+          ip( localFunc, localDofVector );
 
           write( destination, localDofVector );
         }
@@ -116,6 +119,7 @@ namespace Dune
 
           ConstLocalFunction< TemporaryStorage > tmpLF( tmp );
           MutableLocalFunction< DiscreteFunction > lf( df );
+          LocalInterpolationType interpolation( df.space() );
 
           // interpolate to new space, this can be a
           // Lagrange interpolation or a L2 projection, both locally
@@ -134,8 +138,9 @@ namespace Dune
             }
             else
             {
+              auto iguard = bindGuard( interpolation, entity );
               // otherwise a local interpolation is needed
-              df.space().interpolation( entity )( tmpLF, lf );
+              interpolation( tmpLF, lf );
             }
           }
         }
@@ -181,8 +186,16 @@ namespace Dune
         const DiscreteFunction &discreteFunction () const { return discreteFunction_.get(); }
 
         const DiscreteFunctionSpaceType &space () const { return discreteFunction().space(); }
+        LocalInterpolationType& interpolation ()
+        {
+          if( ! interpolation_ )
+            interpolation_.reset( new LocalInterpolationType( space() ) );
+          return *interpolation_;
+        }
+
 
         std::reference_wrapper< DiscreteFunction > discreteFunction_;
+        std::shared_ptr< LocalInterpolationType > interpolation_;
       };
 
     } // namespace hpDG

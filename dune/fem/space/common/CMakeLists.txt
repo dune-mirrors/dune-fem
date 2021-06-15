@@ -20,6 +20,7 @@ dune_install(
   functionspaceinterface.hh
   interpolate.hh
   loadbalancer.hh
+  localinterpolation.hh
   localrestrictprolong.hh
   restrictprolongfunction.hh
   restrictprolonginterface.hh
