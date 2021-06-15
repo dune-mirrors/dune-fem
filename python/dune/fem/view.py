@@ -110,6 +110,13 @@ def geometryGridView(coordFunction):
     Returns:
         GridView: the constructed grid view
     """
+    assert not coordFunction._typeName.startswith("Dune::Python::SimpleGridFunction"),\
+"""at the moment the 'gridFunction' decorator does
+not work with the 'geometryGridView'.
+Interpolate into a discrete function space or use a
+'uflFunction' if the function can be written as a ufl expression.
+"""
+
     includes = coordFunction._includes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction._typeName + " >"
     typeName = gridPartName + "::GridViewType"
