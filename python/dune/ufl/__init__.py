@@ -105,11 +105,8 @@ class Space(ufl.FunctionSpace):
 
 class FemSpace(Space):
     def __init__(self, space, scalar=None):
-        try:
-            space = space.femSpace
-        except:
-            pass
-        self.femSpace = space
+        # we shouldn't get into the situation of double wrapping
+        assert not isinstance(space,FemSpace)
         if scalar is None:
             self.scalar = space.scalar
         else:
@@ -120,10 +117,10 @@ class FemSpace(Space):
         self.FemSpaceClass = space.__class__
 
     def toVectorSpace(self):
-        if not self.femSpace.scalar:
+        if not self.__impl__.scalar:
             return self
         else:
-            return FemSpace(self.femSpace,scalar=False)
+            return FemSpace(self.__impl__, scalar=False)
     def as_ufl(self):
         return self
 
@@ -351,6 +348,8 @@ class GridFunction(ufl.Coefficient):
         - help(self.Coefficient)
     """
     def __init__(self, gf, scalar=None):
+        # we shouldn't get into the situation of double wrapping
+        assert not isinstance(gf,GridFunction)
         try:
             gf = gf.gf
         except:
@@ -375,7 +374,7 @@ class GridFunction(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
         try:
-            return FemSpace(self.gf.space)
+            return self.gf.space # as_ufl()
         except TypeError or AttributeError:
             return Space(self.gf.grid,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
@@ -385,9 +384,9 @@ class GridFunction(ufl.Coefficient):
         return self
     def copy(self,name=None):
         if name is None:
-            return self.gf.copy()
+            return self.gf.copy().as_ufl()
         else:
-            return self.gf.copy(name)
+            return self.gf.copy(name).as_ufl()
 
     # the following methods should be implemented here to avoid using the
     # ufl versions since they can be implemented in-place.

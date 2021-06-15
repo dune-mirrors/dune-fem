@@ -208,6 +208,14 @@ namespace Dune
         static_assert( std::is_convertible< DiscreteFunctionType, IsDiscreteFunction >::value,
                        "Only valid for discrete functions" );
 
+        //////////////////////////////////////////////////////////
+        //
+        //  Note: DiscreteFunctionType here can also be
+        //        FemPy::DiscreteFunctionList for
+        //        python adaptation and load balance
+        //
+        //////////////////////////////////////////////////////////
+
         const IsDiscreteFunction * fct = &df;
 
         // if discrete functions is not in list already

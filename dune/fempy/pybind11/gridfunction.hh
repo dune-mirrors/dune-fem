@@ -65,12 +65,14 @@ namespace pybind11
           return Base::load( src, convert );
       }
 
+/*
       template< class V >
       static handle cast ( V &&v, return_value_policy policy, handle parent )
       {
         pybind11::handle obj = Base::cast( std::forward< V >( v ), policy, parent );
         if( obj )
         {
+          return Dune::FemPy::getGridFunctionWrapper()(obj);
           tuple args( 1 );
           args[ 0 ] = reinterpret_steal< object >( obj );
           assert( args.ptr() );
@@ -79,6 +81,7 @@ namespace pybind11
         else
           return obj;
       }
+*/
     };
 
   } // namespace detail

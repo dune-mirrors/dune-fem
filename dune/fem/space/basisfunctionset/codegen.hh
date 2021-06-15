@@ -106,7 +106,9 @@ namespace Dune
         if( savedBaseSets_.find( ptr ) == savedBaseSets_.end() )
         {
           savedBaseSets_.insert( ptr );
+#ifndef NDEBUG
           std::cout << "Add dimRange " << dimRange << std::endl;
+#endif
           dimRanges_.insert( dimRange ) ;
         }
       }
@@ -1302,7 +1304,9 @@ namespace Dune
 
       if( written )
       {
+#ifndef NDEBUG
         std::cout << "Written code to " << filename << std::endl;
+#endif
         //////////////////////////////////////////////////
         //  write include header
         //////////////////////////////////////////////////
@@ -1331,7 +1335,9 @@ namespace Dune
       }
       else
       {
+#ifndef NDEBUG
         std::cout << "No changes written to " << filename << std::endl << std::endl;
+#endif
       }
     }
 

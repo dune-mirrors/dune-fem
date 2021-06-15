@@ -1229,7 +1229,7 @@ namespace Dune
           if constexpr (addDirichletBC)
             fullOperator().subConstraints( u, v );
         }
-        const auto dirichletBlocks() const
+        const auto& dirichletBlocks() const
         {
           if constexpr (addDirichletBC)
             return fullOperator().dirichletBlocks();
