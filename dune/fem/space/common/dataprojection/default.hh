@@ -95,9 +95,9 @@ namespace Dune
           assert( present.size() == space().basisFunctionSet( entity ).size() );
           LocalDofVectorType localDofVector( present.size() );
 
-          LocalInterpolationType& interpolation = interpolation();
-          auto guard = bindGuard( interpolation, entity );
-          interpolation( localFunc, localDofVector );
+          LocalInterpolationType& ip = this->interpolation();
+          auto guard = bindGuard( ip, entity );
+          ip( localFunc, localDofVector );
 
           write( destination, localDofVector );
         }
