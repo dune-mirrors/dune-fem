@@ -180,7 +180,10 @@ namespace Dune
       typedef SingletonList< LFEMapType *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
+      //- internal implementation
       typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, Traits::isScalar > InterpolationImplType;
+
+      /** \brief Interpolation object */
       typedef LocalFEInterpolationWrapper< ThisType > InterpolationType;
 
       using BaseType::order;
@@ -257,9 +260,8 @@ namespace Dune
       BlockMapperType &blockMapper () const { assert( blockMapper_ ); return *blockMapper_; }
 
       /**
-       * \brief return local interpolation
+       * \brief return local interpolation object (uninitialized)
        *
-       *  \param[in]  entity  grid part entity
        **/
       InterpolationType interpolation () const
       {

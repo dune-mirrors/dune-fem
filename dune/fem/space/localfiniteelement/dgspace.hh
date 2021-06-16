@@ -202,7 +202,11 @@ namespace Dune
       typedef SingletonList< LFEMapType *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
-      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, LocalBasisType::dimRange==1 > InterpolationType;
+      //- internal implementation
+      typedef LocalFiniteElementInterpolation< ThisType, LocalInterpolationType, LocalBasisType::dimRange==1 > InterpolationImplType;
+
+      /** \brief Interpolation object */
+      typedef LocalFEInterpolationWrapper< ThisType > InterpolationType;
 
       using BaseType::order;
 
@@ -269,14 +273,34 @@ namespace Dune
       BlockMapperType &blockMapper () const { assert( blockMapper_ ); return *blockMapper_; }
 
       /**
+       * \brief return local interpolation object (uninitialized)
+       *
+       **/
+      InterpolationType interpolation () const
+      {
+        return InterpolationType( *this );
+      }
+
+      /**
        * \brief return local interpolation
        *
        *  \param[in]  entity  grid part entity
        **/
-      InterpolationType interpolation ( const EntityType &entity ) const
+      [[deprecated("Use LocalInterpolation( space ) instead!")]]
+      InterpolationImplType interpolation ( const EntityType &entity ) const
+      {
+        return localInterpolation( entity );
+      }
+
+      /**
+       * \brief return local interpolation
+       *
+       *  \param[in]  entity  grid part entity
+       **/
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
       {
         auto lfe = (*lfeMap_)( entity );
-        return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
+        return InterpolationImplType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
       typedef typename LFEMapType::LocalCoefficientsType QuadratureType;
