@@ -218,6 +218,16 @@ namespace Dune
 
       typedef DefaultLocalRestrictProlong< DiscreteFunctionSpaceType > LocalRestrictProlongType;
 
+      RestrictProlongDefault ( const RestrictProlongDefault& other )
+        : discreteFunction_( const_cast< RestrictProlongDefault& > (other).discreteFunction_ ),
+          constLf_( discreteFunction_ ),
+          targetLf_( discreteFunction_ ),
+          localRP_( discreteFunction_.space() )
+      {
+        // enable dof compression for this discrete function
+        discreteFunction_.enableDofCompression();
+      }
+
       explicit RestrictProlongDefault ( DiscreteFunctionType &discreteFunction )
       : discreteFunction_( discreteFunction ),
         constLf_( discreteFunction ),
