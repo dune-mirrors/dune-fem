@@ -57,6 +57,9 @@ namespace Dune {
       //! \brief return reference to private value for given thread number
       ValueType& operator [] ( const unsigned int thread ) {
         assert( thread < size() );
+#ifdef USE_SMP_PARALLEL
+        assert( thread < value_.size() );
+#endif
         return value_
 #ifdef USE_SMP_PARALLEL
           [ thread ]
@@ -67,6 +70,9 @@ namespace Dune {
       //! \brief return reference to private value for given thread number
       const ValueType& operator [] ( const unsigned int thread ) const {
         assert( thread < size() );
+#ifdef USE_SMP_PARALLEL
+        assert( thread < value_.size() );
+#endif
         return value_
 #ifdef USE_SMP_PARALLEL
           [ thread ]

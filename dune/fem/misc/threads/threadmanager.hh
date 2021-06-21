@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <thread>
 
 #ifdef USE_PTHREADS
 #if HAVE_PTHREAD == 0
@@ -111,6 +112,11 @@ namespace Dune
         omp_set_num_threads( numThreads );
       }
 
+      static inline void initMultiThreadMode( const int numThreads )
+      {
+        omp_set_num_threads( numThreads );
+      }
+
       //! returns true if program is operating on one thread currently
       static inline bool singleThreadMode()
       {
@@ -136,7 +142,7 @@ namespace Dune
         }
         DUNE_EXPORT int &maxThreads_()
         {
-          static int maxThreads = 1;
+          static int maxThreads = std::max(1u, std::thread::hardware_concurrency());
           return maxThreads;
         }
 

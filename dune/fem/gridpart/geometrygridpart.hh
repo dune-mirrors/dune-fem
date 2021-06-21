@@ -5,6 +5,8 @@
 
 #include <dune/common/version.hh>
 
+#include <dune/fem/function/localfunction/const.hh>
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
