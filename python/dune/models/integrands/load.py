@@ -103,6 +103,9 @@ class Source(object):
         self.args = args
         self.form = form
 
+        assert integrands.checkGridViews(gridType),\
+          "GridViews of coefficients need to be identical to grid view of for ufl model"
+
     def signature(self):
         return uflSignature(self.form,
                 *self.integrands._coefficients,

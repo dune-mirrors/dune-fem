@@ -175,9 +175,10 @@ namespace Dune
     // ----------------
 
     template< class GridFunction >
-    struct GeometryGridPart
+    class GeometryGridPart
       : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
     {
+    public:
       typedef GridFunction GridFunctionType;
 
     private:

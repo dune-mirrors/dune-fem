@@ -459,6 +459,11 @@ class ModelClass():
                         if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
                         else c._typeName \
                     for c in self.coefficientList]
+                # VirtualizedGF need GridParts but they have to be the same for all coefficients
+                # Do we want this to work in some way? Then we can add
+                # includes here - but '.bind(entity)' will fail.
+                # for c in self.coefficientList:
+                #     self.includeFiles += c.grid._includes
             else:
                 self.coefficientCppTypes = [c._typeName for c in self.coefficientList]
         else:
@@ -505,6 +510,9 @@ class ModelClass():
     @property
     def coefficientNames(self):
         return ["coeff" + n[0] + n[1:] for n in self._coefficientNames]
+
+    def checkGridViews(self,grid):
+      return all( [c.grid == grid for c in self.coefficientList] )
 
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
@@ -553,7 +561,6 @@ class ModelClass():
 
     def facetGeometry(self):
         return UnformattedExpression('auto', 'intersection_.geometry()')
-
 
     def code(self, name=None, targs=None):
         # self.name = "Integrands"

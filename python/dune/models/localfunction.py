@@ -38,8 +38,12 @@ class UFLFunctionSource(codegen.ModelClass):
             expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
         predefined = {} if predefined is None else predefined
-        codegen.ModelClass.__init__(self,"UFLLocalFunction", [expr],
+        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],
           virtualize,dimRange=dimRange, predefined=predefined)
+
+        assert self.checkGridViews(gridType),\
+          "GridViews of coefficients need to be identical to grid view of local function"
+
         self.evalCode = []
         self.jacCode = []
         self.hessCode = []

@@ -107,6 +107,10 @@ def dfInterpolate(self, f):
         raise AttributeError("trying to interpolate an expression"\
             " of size "+str(dimExpr)+" into a space with range dimension = "\
             + str(self.space.dimRange))
+
+    assert func.grid == self.grid,\
+       "can only interpolate with same grid views"
+
     return self._interpolate(func)
 
 def dfProject(self, f):
