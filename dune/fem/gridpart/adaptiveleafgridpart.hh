@@ -95,6 +95,9 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef std::integral_constant< bool, false > NoIndexSetType;
+
+      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
+
     protected:
       // key type for singleton list is grid pointer
       typedef SingletonList < const GridType*, IndexSetType > IndexSetProviderType;
@@ -110,19 +113,23 @@ namespace Dune
 
       using BaseType::grid_;
 
+      const GridViewType* gridViewWrapper_;
+
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( &IndexSetProviderType::getObject( &grid ) )
+        indexSet_( &IndexSetProviderType::getObject( &grid ) ),
+        gridViewWrapper_(nullptr)
       {}
 
       //! Copy Constructor
       AdaptiveGridPartBase ( const ThisType &other )
       : BaseType( other ),
         leafGridView_( other.leafGridView_ ),
-        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
+        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) ),
+        gridViewWrapper_(nullptr)
       {}
 
     protected:
@@ -130,7 +137,8 @@ namespace Dune
       AdaptiveGridPartBase ( GridType& grid, const NoIndexSetType& noIndexSet )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( nullptr ) // not created because noIndexSet was passed
+        indexSet_( nullptr ), // not created because noIndexSet was passed
+        gridViewWrapper_(nullptr)
       {}
 
     public:
@@ -143,6 +151,16 @@ namespace Dune
           IndexSetProviderType::removeObject( indexSet() );
           indexSet_ = nullptr;
         }
+      }
+
+      const GridViewType &gridView() const
+      {
+        assert( gridViewWrapper_ );
+        return *gridViewWrapper_;
+      }
+      void setGridViewWrapper(GridViewType *gridViewWrapper)
+      {
+        gridViewWrapper_ = gridViewWrapper;
       }
 
       using BaseType::grid;

@@ -27,8 +27,9 @@ namespace Dune
 
       explicit GridPartAdapter ( const GridView &gridView ) : Base( gridView ) {}
 
-      const GridType &grid () const { return static_cast< GridView >( *this ).grid(); }
-      GridType &grid () { return const_cast< GridType & >( static_cast< GridView >( *this ).grid() ); }
+      // const GridType &grid () const { this->grid(); }
+      // const GridType &grid () const { return static_cast< GridView >( *this ).grid(); }
+      // GridType &grid () { return const_cast< GridType & >( static_cast< GridView >( *this ).grid() ); }
 
       int level () const { DUNE_THROW( NotImplemented, "GridPartAdapter cannot provide level information" ); return -1; }
     };

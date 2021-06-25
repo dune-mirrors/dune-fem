@@ -141,6 +141,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       const GridType &grid () const { return gridView_.grid(); }
+      GridType &grid () { return const_cast< GridType & >( gridView_.grid() ); }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { return indexSet_; }
@@ -215,7 +216,8 @@ namespace Dune
       }
 
       /** \brief cast to underlying grid view */
-      explicit operator GridView () const { return gridView_; }
+      // explicit operator const GridView& () const { return gridView_; }
+      const GridView& gridView() const { return gridView_; }
 
       /** \} */
 
@@ -227,7 +229,7 @@ namespace Dune
         return entity;
       }
 
-      GridView gridView_;
+      const GridView &gridView_;
       IndexSetType indexSet_;
       DofManagerType &dofManager_;
     };

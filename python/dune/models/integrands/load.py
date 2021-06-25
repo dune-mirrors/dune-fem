@@ -89,8 +89,10 @@ def setConstant(integrands, index, value):
 
 class Source(object):
     version = "v1_1"
-    def __init__(self, integrands, gridType, gridIncludes, modelIncludes, form, *args,
+    def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
+        gridType = grid._typeName
+        gridIncludes = grid._includes
         self.gridType = gridType
         self.gridIncludes = gridIncludes
         if modelIncludes is not None:
@@ -103,7 +105,7 @@ class Source(object):
         self.args = args
         self.form = form
 
-        assert integrands.checkGridViews(gridType),\
+        assert integrands.checkGridViews(grid),\
           "GridViews of coefficients need to be identical to grid view of for ufl model"
 
     def signature(self):
@@ -266,7 +268,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         modelPatch[0](integrands)
 
     # set up the source class
-    source = Source(integrands, grid._typeName, grid._includes, includes, form, *args,
+    source = Source(integrands, grid, includes, form, *args,
              tempVars=tempVars,virtualize=virtualize)
 
     # ufl coefficient and constants only have numbers which depend on the

@@ -92,8 +92,19 @@ namespace Dune
       enum { dimensionworld = GridPartType::dimensionworld };
 
       explicit GridPart2GridViewImpl ( const GridPartType &gridPart )
-        : gridPart_( &gridPart )
-      {}
+        : gridPartStorage_(nullptr)
+        , gridPart_( &gridPart )
+      {
+        gridPart_->setGridViewWrapper(this);
+      }
+      template< class... Args,
+         std::enable_if_t< std::is_constructible< GridPartType, Args... >::value, int > = 0 >
+      GridPart2GridViewImpl( Args &&... args )
+      : gridPartStorage_(new GridPartType( std::forward< Args >( args )...) )
+      , gridPart_(gridPartStorage_.get())
+      {
+        gridPart_->setGridViewWrapper(this);
+      }
 
       const Grid &grid () const
       {
@@ -178,10 +189,14 @@ namespace Dune
         gridPart().communicate( data, iftype, dir );
       }
 
-      const GridPartType &gridPart () const { assert( gridPart_ ); return *gridPart_; }
+      const GridPartType &gridPart () const {
+        assert( gridPart_ );
+        return *gridPart_;
+      }
 
     private:
-      const GridPartType *gridPart_;
+      std::shared_ptr<GridPartType> gridPartStorage_;
+      GridPartType *gridPart_;
     };
 
 

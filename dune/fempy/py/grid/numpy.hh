@@ -41,7 +41,7 @@ namespace Dune
 
       std::vector< Range > values;
       Dune::Fem::ConstLocalFunction<GridFunction> localFunction(gridFunction);
-      for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
+      for( const auto &element : elements( gridFunction.gridPart(), ps ) )
       {
         localFunction.bind(element);
         const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
@@ -88,7 +88,7 @@ namespace Dune
 
       std::vector< Range > values;
       Dune::Fem::ConstLocalFunction<GridFunction> localFunction(gridFunction);
-      for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
+      for( const auto &element : elements( gridFunction.gridPart(), ps ) )
       {
         localFunction.bind( element );
         const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
