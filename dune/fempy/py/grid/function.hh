@@ -310,7 +310,7 @@ namespace Dune
             Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
               adapt,
               "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
-              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fempy/grid/gridpartadapter.hh"}
+              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fem/gridpart/common/gridpartadapter.hh"}
               );
         if (gfClass.second)
         {
@@ -350,7 +350,7 @@ namespace Dune
             Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
               adapt,
               "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
-              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fempy/grid/gridpartadapter.hh"}
+              Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fem/gridpart/common/gridpartadapter.hh"}
               );
 
         if (gfClass.second)

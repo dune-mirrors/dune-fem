@@ -133,6 +133,9 @@ namespace Dune
           dofManager_( DofManagerType::instance( rhs.grid() ) )
       {}
 
+      ~GridView2GridPart()
+      {}
+
       /** \} */
 
       /** \name Public member methods

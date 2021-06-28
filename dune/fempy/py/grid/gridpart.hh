@@ -11,13 +11,13 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/misc/l2norm.hh>
-#include <dune/fem/gridpart/common/gridpart2gridview.hh>
+// #include <dune/fem/gridpart/common/gridpart2gridview.hh>
+#include <dune/fem/gridpart/common/gridpartadapter.hh>
 #include <dune/fem/storage/singleton.hh>
 
 #include <dune/python/grid/hierarchical.hh>
 #include <dune/python/grid/vtk.hh>
 
-#include <dune/fempy/grid/gridpartadapter.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
@@ -47,7 +47,6 @@ namespace Dune
 
         virtual void postModification ( const Grid &grid )
         {
-          std::cout << "dofManager resize\n";
           dofManager_.resize();
           dofManager_.compress();
         }
@@ -85,28 +84,23 @@ namespace Dune
       struct GridPartConverter
       {
         typedef GV GridView;
-        typedef GridPartAdapter< GV > GridPart;
+        typedef Fem::GridPartAdapter< GV > GridPart;
 
         GridPart &operator() ( pybind11::handle gridView )
         {
           auto result = instances_.emplace( gridView.ptr(), nullptr );
           auto pos = result.first;
-          std::cout << "Converter " << gridView.ptr() << ": " << result.second << "\n";
           if( result.second )
           {
             GridView* view = gridView.template cast< GridView* >();
 
-            std::cout << "    Listener: " << &(view->grid()) << std::endl;
+            // create new gridpart object
+            pos->second = new GridPart( *view );
             // add grid modification listener (if not registered)
             addGridModificationListener( view->grid() );
 
-            // create new gridpart object
-            pos->second = new GridPart( *view );
-            std::cout << "    GridPart: " << pos->second << std::endl;
-
             // create Python guard object, removing the grid part once the grid view dies
             pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
-                std::cout << "remove gridpart: " << pos->second << std::endl;
                 delete pos->second;
                 instances_.erase( pos );
                 weakref.dec_ref();
@@ -114,7 +108,6 @@ namespace Dune
             pybind11::weakref weakref( gridView, remove_gridpart );
             weakref.release();
           }
-          std::cout << "    GridPart: " << pos->second << std::endl;
           assert( pos->second );
           return *pos->second;
         }
@@ -184,13 +177,10 @@ namespace Dune
 
     // constructGridPart (returns a gridView)
     // --------------------------------------
-
     template< class GridPart, class... Args >
     inline static auto constructGridPart ( Args &&... args )
     {
-      typedef typename GridPart::GridViewType GridView;
-      GridView *gridView = new GridView( std::forward< Args >( args )... );
-      return gridView;
+      return new typename GridPart::GridViewType( Fem::GridPart2GridViewImpl< GridPart >( std::forward< Args >( args )... ) );
     }
   } // namespace FemPy
 

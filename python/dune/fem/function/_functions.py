@@ -40,7 +40,7 @@ def gridFunction(view,name,order):
     def gridFunction_decorator(func):
         gf = dune.grid.gridFunction(view,name=name,order=order)(func)
         setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
-        setattr(gf.__class__,"integrate", lambda self: integrate(view,gf,order))
+        setattr(gf.__class__,"integrate", lambda self: 0) # uflFunction(view,"tmp",order,self).integrate())
         return gf.as_ufl()
     return gridFunction_decorator
 # this is not going to work - needs fixing

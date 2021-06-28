@@ -177,9 +177,11 @@ namespace Dune
     template< class GridFunction >
     class GeometryGridPart
       : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
+      , public AddGridView< GeometryGridPartTraits< GridFunction > >
     {
     public:
       typedef GridFunction GridFunctionType;
+      typedef AddGridView< GeometryGridPartTraits< GridFunction > > AddGridViewType;
 
     private:
       typedef GeometryGridPart< GridFunctionType > ThisType;
@@ -193,7 +195,7 @@ namespace Dune
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
       typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
-      typedef GridPart2GridViewImpl< ThisType > GridViewType;
+      typedef typename BaseType::GridViewType GridViewType;
 
       // the interface takes this from the grid
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
@@ -204,9 +206,18 @@ namespace Dune
       {};
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
-        : gridFunction_( gridFunction ),
-          indexSet_( hostGridPart().indexSet() ),
-          gridViewWrapper_( nullptr )
+        : AddGridViewType( this ),
+          gridFunction_( gridFunction ),
+          indexSet_( hostGridPart().indexSet() )
+      {}
+
+      GeometryGridPart ( const GridFunctionType &gridFunction, const GridViewType* gridView  )
+        : AddGridViewType( gridView ),
+          gridFunction_( gridFunction ),
+          indexSet_( hostGridPart().indexSet() )
+      {}
+
+      ~GeometryGridPart()
       {}
 
       const GridType &grid () const
@@ -217,16 +228,6 @@ namespace Dune
       GridType &grid ()
       {
         return const_cast< GridType & >( hostGridPart().grid() ); //! correct?
-      }
-
-      const GridViewType &gridView() const
-      {
-        assert( gridViewWrapper_ );
-        return *gridViewWrapper_;
-      }
-      void setGridViewWrapper(GridViewType *gridViewWrapper)
-      {
-        gridViewWrapper_ = gridViewWrapper;
       }
 
       const IndexSetType &indexSet () const
@@ -320,7 +321,6 @@ namespace Dune
     private:
       const GridFunctionType &gridFunction_;
       IndexSetType indexSet_;
-      GridViewType *gridViewWrapper_;
     };
 
 

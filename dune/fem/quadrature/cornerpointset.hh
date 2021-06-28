@@ -82,7 +82,7 @@ namespace Dune
       CornerPointSet ( const GeometryType &type )
       : BaseType( type, 1 )
       {
-        assert( ! type.isNone() );
+        // assert( ! type.isNone() );
       }
 
       CornerPointSet ( const typename GridPart::template Codim< 0 >::EntityType &entity )

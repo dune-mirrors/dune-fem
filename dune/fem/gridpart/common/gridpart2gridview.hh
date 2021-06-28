@@ -11,6 +11,17 @@
 namespace Dune
 {
 
+#ifdef USING_DUNE_PYTHON
+  namespace FemPy
+  {
+    // #include <dune/fempy/py/grid/gridpart.hh>
+    namespace detail
+    {
+      template< class Grid >
+      inline static void addGridModificationListener ( const Grid &grid );
+    }
+  }
+#endif
   namespace Fem
   {
 
@@ -94,17 +105,21 @@ namespace Dune
       explicit GridPart2GridViewImpl ( const GridPartType &gridPart )
         : gridPartStorage_(nullptr)
         , gridPart_( &gridPart )
-      {
-        gridPart_->setGridViewWrapper(this);
-      }
+      {}
       template< class... Args,
-         std::enable_if_t< std::is_constructible< GridPartType, Args... >::value, int > = 0 >
+          std::enable_if_t< std::is_constructible< GridPartType, Args... >::value, int > = 0 >
       GridPart2GridViewImpl( Args &&... args )
-      : gridPartStorage_(new GridPartType( std::forward< Args >( args )...) )
+      : gridPartStorage_(new GridPartType( std::forward< Args >( args )..., this) )
       , gridPart_(gridPartStorage_.get())
       {
-        gridPart_->setGridViewWrapper(this);
+#ifdef USING_DUNE_PYTHON
+        // add grid modification listener (if not registered)
+        FemPy::detail::addGridModificationListener( gridPart().grid() );
+#endif
       }
+
+      ~GridPart2GridViewImpl()
+      {}
 
       const Grid &grid () const
       {
@@ -196,7 +211,7 @@ namespace Dune
 
     private:
       std::shared_ptr<GridPartType> gridPartStorage_;
-      GridPartType *gridPart_;
+      const GridPartType *gridPart_;
     };
 
 

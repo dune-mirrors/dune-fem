@@ -8,7 +8,7 @@
 #include <dune/fempy/quadrature/fempyquadratures.hh>
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fem/function/localfunction/const.hh>
-#include <dune/fempy/grid/gridpartadapter.hh>
+#include <dune/fem/gridpart/common/gridpartadapter.hh>
 
 template< class GridView, class Rules, class GF >
 double l2norm2 ( const GridView &gridView, const Rules &rules, const GF& gf )

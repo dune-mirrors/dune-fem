@@ -113,23 +113,19 @@ namespace Dune
 
       using BaseType::grid_;
 
-      const GridViewType* gridViewWrapper_;
-
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( &IndexSetProviderType::getObject( &grid ) ),
-        gridViewWrapper_(nullptr)
+        indexSet_( &IndexSetProviderType::getObject( &grid ) )
       {}
 
       //! Copy Constructor
       AdaptiveGridPartBase ( const ThisType &other )
       : BaseType( other ),
         leafGridView_( other.leafGridView_ ),
-        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) ),
-        gridViewWrapper_(nullptr)
+        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
       {}
 
     protected:
@@ -137,8 +133,7 @@ namespace Dune
       AdaptiveGridPartBase ( GridType& grid, const NoIndexSetType& noIndexSet )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( nullptr ), // not created because noIndexSet was passed
-        gridViewWrapper_(nullptr)
+        indexSet_( nullptr ) // not created because noIndexSet was passed
       {}
 
     public:
@@ -151,16 +146,6 @@ namespace Dune
           IndexSetProviderType::removeObject( indexSet() );
           indexSet_ = nullptr;
         }
-      }
-
-      const GridViewType &gridView() const
-      {
-        assert( gridViewWrapper_ );
-        return *gridViewWrapper_;
-      }
-      void setGridViewWrapper(GridViewType *gridViewWrapper)
-      {
-        gridViewWrapper_ = gridViewWrapper;
       }
 
       using BaseType::grid;
@@ -324,25 +309,35 @@ namespace Dune
     template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero >
     class AdaptiveLeafGridPart
       : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
+      , public AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > BaseType;
+      typedef AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > AddGridViewType;
     public:
       typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
       typedef typename BaseType :: GridType GridType;
+      typedef typename BaseType :: GridViewType GridViewType;
       //! Constructor
       explicit AdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
-      {
-      }
+      , AddGridViewType( this )
+      {}
+      AdaptiveLeafGridPart ( GridType &grid, const GridViewType* gridView )
+      : BaseType( grid )
+      , AddGridViewType( gridView )
+      {}
 
       //! copy constructor (for construction from IndexSet, no public use)
       AdaptiveLeafGridPart ( GridType& grid, const NoIndexSetType& dummy )
       : BaseType( grid, dummy )
-      {
-      }
+      // , AddGridViewType( this ) this is used for the IndexSet and translating to GV not needed
+      {}
 
       //! copy constructor
       AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other ) = default;
+
+      ~AdaptiveLeafGridPart()
+      {}
     };
 
     /** @ingroup AdaptiveLeafGP
