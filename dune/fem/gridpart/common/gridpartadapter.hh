@@ -16,10 +16,10 @@ namespace Dune
 
     template< class GridView >
     class GridPartAdapter
-      : public Fem::GridView2GridPart< GridView, GridPartAdapter< GridView > >
+      : public Fem::GridView2GridPart< GridView, GridPartAdapter< GridView >, false >
     {
       typedef GridPartAdapter< GridView > This;
-      typedef Fem::GridView2GridPart< GridView, GridPartAdapter< GridView > > Base;
+      typedef Fem::GridView2GridPart< GridView, GridPartAdapter< GridView >, false > Base;
 
     public:
       typedef GridView GridViewType;

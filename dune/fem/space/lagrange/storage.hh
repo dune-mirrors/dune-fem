@@ -60,6 +60,7 @@ namespace Dune
       const GridPartType &gridPart_;
       const LagrangePointSetContainerType &pointSet_;
       const int polOrd_;
+      const typename GridPartType::IndexSetType *indexSetPtr_;
     };
 
 

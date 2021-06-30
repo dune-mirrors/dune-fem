@@ -28,7 +28,6 @@ namespace Dune
       /** \name Construction
        *  \{
        */
-
       explicit LeafGridPart ( GridType &grid )
         : BaseType( grid.leafGridView() ),
           grid_( grid )

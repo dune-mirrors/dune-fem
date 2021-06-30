@@ -21,7 +21,7 @@ namespace Dune
     // Internal forward declaration
     // ----------------------------
 
-    template< class GridView, class Implementation >
+    template< class GridView, class Implementation, bool storeCopy=true >
     class GridView2GridPart;
 
 
@@ -31,7 +31,7 @@ namespace Dune
     // GridView2GridPartTraits
     // -----------------------
 
-    template< class GridView, class Implementation >
+    template< class GridView, class Implementation, bool storeCopy >
     struct GridView2GridPartTraits
     {
       typedef Implementation GridPartType;
@@ -75,12 +75,12 @@ namespace Dune
     // GridView2GridPart
     // -----------------
 
-    template< class GridView, class Implementation >
+    template< class GridView, class Implementation, bool storeCopy >
     class GridView2GridPart
-      : public GridPartInterface< GridView2GridPartTraits< GridView, Implementation > >
+      : public GridPartInterface< GridView2GridPartTraits< GridView, Implementation, storeCopy > >
     {
-      typedef GridView2GridPart< GridView, Implementation > ThisType;
-      typedef GridView2GridPartTraits< GridView, Implementation > TraitsType;
+      typedef GridView2GridPart< GridView, Implementation, storeCopy > ThisType;
+      typedef GridView2GridPartTraits< GridView, Implementation, storeCopy > TraitsType;
       typedef GridPartInterface< TraitsType > BaseType;
 
     public:
@@ -232,7 +232,7 @@ namespace Dune
         return entity;
       }
 
-      const GridView &gridView_;
+      std::conditional_t<storeCopy,const GridView,const GridView &> gridView_;
       IndexSetType indexSet_;
       DofManagerType &dofManager_;
     };
