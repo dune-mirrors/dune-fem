@@ -188,11 +188,6 @@ namespace Dune
         return indexSet_;
       }
 
-      const IndexSetType *indexSet () const
-      {
-        return &indexSet_;
-      }
-
       template< int codim >
       typename Codim< codim >::IteratorType
       begin () const

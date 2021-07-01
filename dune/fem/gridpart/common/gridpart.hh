@@ -419,8 +419,8 @@ namespace Dune
     {
       typedef typename TraitsImp :: GridPartType GridPartType;
       typedef GridPart2GridViewImpl< GridPartType > GridViewType;
-      const GridViewType* gridView_;
       std::shared_ptr<GridViewType> gridViewStorage_;
+      const GridViewType* gridView_;
       AddGridView ( const GridPartType *gridPart )
       : gridViewStorage_(new GridViewType(*gridPart))
       , gridView_(gridViewStorage_.get())

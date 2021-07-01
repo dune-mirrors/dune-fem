@@ -11,7 +11,6 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/misc/l2norm.hh>
-// #include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/gridpartadapter.hh>
 #include <dune/fem/storage/singleton.hh>
 

@@ -312,11 +312,6 @@ namespace Dune
       {
         return IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
       }
-      const IndexSetType *indexSetPtr() const
-      {
-        return &IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
-      }
-
 
       //! \brief Begin iterator on the leaf level
       template< int codim >
