@@ -414,6 +414,37 @@ namespace Dune
       return GridEntityAccess< Entity >::gridEntity( entity );
     }
 
+    template< class TraitsImp >
+    struct AddGridView
+    {
+      typedef typename TraitsImp :: GridPartType GridPartType;
+      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
+      std::shared_ptr<GridViewType> gridViewStorage_;
+      const GridViewType* gridView_;
+      AddGridView ( const GridPartType *gridPart )
+      : gridViewStorage_(new GridViewType(*gridPart))
+      , gridView_(gridViewStorage_.get())
+      {}
+      AddGridView ( const GridViewType *gridView)
+      : gridViewStorage_(nullptr)
+      , gridView_(gridView)
+      {}
+      AddGridView( const AddGridView& other)
+      : gridViewStorage_(other.gridViewStorage_)
+      , gridView_(other.gridView_)
+      {}
+      // use this constructor if it is guaranteed that no gridview is needed
+      AddGridView ()
+      : gridViewStorage_(nullptr)
+      , gridView_(nullptr)
+      {}
+      const GridViewType &gridView() const
+      {
+        assert( gridView_ );
+        return *gridView_;
+      }
+    };
+
   } // namespace Fem
 
 } // namespace Dune

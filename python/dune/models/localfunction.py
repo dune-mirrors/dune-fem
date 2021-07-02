@@ -30,16 +30,22 @@ from dune.ufl import codegen
 
 class UFLFunctionSource(codegen.ModelClass):
     version = "v1_1"
-    def __init__(self, gridType, gridIncludes, expr,
+    def __init__(self, grid, expr,
             name,order,
             tempVars=True, virtualize=True,
             predefined=None):
+        gridType = grid._typeName
+        gridIncludes = grid._includes
         if len(expr.ufl_shape) == 0:
             expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
         predefined = {} if predefined is None else predefined
-        codegen.ModelClass.__init__(self,"UFLLocalFunction", [expr],
+        codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],
           virtualize,dimRange=dimRange, predefined=predefined)
+
+        assert self.checkGridViews(grid),\
+          "GridViews of coefficients need to be identical to grid view of local function"
+
         self.evalCode = []
         self.jacCode = []
         self.hessCode = []
@@ -281,7 +287,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
         raise AttributeError("can only generate grid functions from vector values UFL expressions not from expressions with shape=",expr.ufl_shape)
 
     # set up the source class
-    source = UFLFunctionSource(grid._typeName, grid._includes, expr,
+    source = UFLFunctionSource(grid, expr,
             name,order,
             tempVars=tempVars,virtualize=virtualize,
             predefined=predefined)

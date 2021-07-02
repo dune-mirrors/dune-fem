@@ -224,9 +224,11 @@ namespace Dune
     template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
     class FilteredGridPart
     : public GridPartInterface< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
+    , public AddGridView< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
     {
       // type of this
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > ThisType;
+      typedef AddGridView< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > > AddGridViewType;
 
     public:
       //- Public typedefs and enums
@@ -253,6 +255,8 @@ namespace Dune
 
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
+      typedef typename AddGridViewType::GridViewType GridViewType;
+
       //! \brief grid part typedefs, use those of traits
       template< int codim >
       struct Codim : public Traits :: template Codim< codim >
@@ -267,7 +271,16 @@ namespace Dune
       //- Public methods
       //! \brief constructor
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter )
-      : hostGridPart_( hostGridPart ),
+      : AddGridViewType( this ),
+        hostGridPart_( hostGridPart ),
+        filter_( filter ),
+        indexSetPtr_( IndexSetSelectorType::create( *this ) )
+      {
+      }
+
+      FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter, const GridViewType *gridView)
+      : AddGridViewType( gridView ),
+        hostGridPart_( hostGridPart ),
         filter_( filter ),
         indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
@@ -275,7 +288,8 @@ namespace Dune
 
       //! \brief copy constructor
       FilteredGridPart ( const FilteredGridPart &other )
-      : hostGridPart_( other.hostGridPart_ ),
+      : AddGridViewType( other ),
+        hostGridPart_( other.hostGridPart_ ),
         filter_( other.filter_ ),
         indexSetPtr_ ( IndexSetSelectorType::create( *this ) )
       { }

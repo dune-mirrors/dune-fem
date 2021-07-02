@@ -95,6 +95,9 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef std::integral_constant< bool, false > NoIndexSetType;
+
+      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
+
     protected:
       // key type for singleton list is grid pointer
       typedef SingletonList < const GridType*, IndexSetType > IndexSetProviderType;
@@ -306,25 +309,35 @@ namespace Dune
     template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero >
     class AdaptiveLeafGridPart
       : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
+      , public AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > BaseType;
+      typedef AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > AddGridViewType;
     public:
       typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
       typedef typename BaseType :: GridType GridType;
+      typedef typename BaseType :: GridViewType GridViewType;
       //! Constructor
       explicit AdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
-      {
-      }
+      , AddGridViewType( this )
+      {}
+      AdaptiveLeafGridPart ( GridType &grid, const GridViewType* gridView )
+      : BaseType( grid )
+      , AddGridViewType( gridView )
+      {}
 
       //! copy constructor (for construction from IndexSet, no public use)
       AdaptiveLeafGridPart ( GridType& grid, const NoIndexSetType& dummy )
       : BaseType( grid, dummy )
-      {
-      }
+      // , AddGridViewType( this ) this is used for the IndexSet and translating to GV not needed
+      {}
 
       //! copy constructor
       AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other ) = default;
+
+      ~AdaptiveLeafGridPart()
+      {}
     };
 
     /** @ingroup AdaptiveLeafGP

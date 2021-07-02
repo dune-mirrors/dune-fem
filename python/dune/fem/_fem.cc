@@ -18,17 +18,27 @@ PYBIND11_MODULE( _fem, module )
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
 
-    int numThreads = 1;
 #ifdef USE_SMP_PARALLEL
     {
-      const char* nThreads = getenv("OMP_NUM_THREADS");
+      // use environment variable (for both openmp or pthreads) if set
+      // otherwise use system default
+      const char* nThreads = getenv("DUNE_NUM_THREADS");
       if( nThreads )
       {
-        numThreads = std::max( int(1), atoi( nThreads ) );
+        int numThreads = std::max( int(1), atoi( nThreads ) );
+        Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
+      }
+      else
+      {
+        const char* nThreads = getenv("OMP_NUM_THREADS");
+        if( nThreads )
+        {
+          int numThreads = std::max( int(1), atoi( nThreads ) );
+          Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
+        }
       }
     }
 #endif
-    Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
 
     if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
       DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );

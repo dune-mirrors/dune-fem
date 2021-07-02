@@ -202,7 +202,6 @@ namespace Dune
         void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                             const LocalGeometry &geometryInFather, bool initialize ) const
         {
-          const int numDofs = lfFather.numDofs();
           assert( lfFather.numDofs() == lfSon.numDofs() );
 
           typedef Impl::FatherWrapper<LocalGeometry,LFFather> FatherWrapperType;

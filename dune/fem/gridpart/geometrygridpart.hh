@@ -5,6 +5,8 @@
 
 #include <dune/common/version.hh>
 
+#include <dune/fem/function/localfunction/const.hh>
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
@@ -173,10 +175,13 @@ namespace Dune
     // ----------------
 
     template< class GridFunction >
-    struct GeometryGridPart
+    class GeometryGridPart
       : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
+      , public AddGridView< GeometryGridPartTraits< GridFunction > >
     {
+    public:
       typedef GridFunction GridFunctionType;
+      typedef AddGridView< GeometryGridPartTraits< GridFunction > > AddGridViewType;
 
     private:
       typedef GeometryGridPart< GridFunctionType > ThisType;
@@ -190,6 +195,7 @@ namespace Dune
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
       typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename BaseType::GridViewType GridViewType;
 
       // the interface takes this from the grid
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
@@ -200,8 +206,18 @@ namespace Dune
       {};
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
-        : gridFunction_( gridFunction ),
+        : AddGridViewType( this ),
+          gridFunction_( gridFunction ),
           indexSet_( hostGridPart().indexSet() )
+      {}
+
+      GeometryGridPart ( const GridFunctionType &gridFunction, const GridViewType* gridView  )
+        : AddGridViewType( gridView ),
+          gridFunction_( gridFunction ),
+          indexSet_( hostGridPart().indexSet() )
+      {}
+
+      ~GeometryGridPart()
       {}
 
       const GridType &grid () const

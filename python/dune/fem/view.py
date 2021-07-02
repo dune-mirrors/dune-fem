@@ -56,16 +56,16 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     typeName = gridPartName + "::GridViewType"
     includes = grid._includes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
 
-    # constructor = Constructor([grid._typeName + " &grid"],
-    #                           ["Dune::FemPy::detail::addGridModificationListener( grid );",
-    #                            "return Dune::FemPy::makeGridPart< " + typeName + " >( grid );"],
-    #                           ["pybind11::keep_alive< 1, 2 >()"])
-    constructor = Constructor([grid._typeName + " &grid"],
-                 ["Dune::FemPy::detail::addGridModificationListener( grid );",
+    # Note: AGP are constructed from the hierarchical grid like other grid
+    # views so the default ctor can be used
+    '''
+    constructor = Constructor([grid._typeName + " &grid","int"],
+                 ["std::cout << 'hallo\\n';",
+                  "Dune::FemPy::detail::addGridModificationListener( grid );",
                   "return Dune::FemPy::constructGridPart<"+gridPartName+">( grid );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-
-    GridView = load(includes, typeName, constructor).GridView
+    '''
+    GridView = load(includes, typeName).GridView
     # setattr(GridView,"canAdapt",True)
     return GridView(grid)
 
@@ -89,7 +89,6 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     filterType = "Dune::Fem::SimpleFilter< " + hostGridPartType + " >"
     gridPartName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >"
     typeName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >::GridViewType"
-
     constructor = Constructor(["pybind11::handle hostGridView", "pybind11::function contains", "int domainId"],
                               ["auto containsCpp = [ contains ] ( const " + hostGridPartType + "::Codim< 0 >::EntityType &e ) {",
                                "    return contains( e ).template cast< int >();",
@@ -97,8 +96,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
                                hostGridPartType + " &hostGridPart = Dune::FemPy::gridPart< " + hostGridViewType + " >( hostGridView );",
                                "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                               ["pybind11::keep_alive< 1, 2 >()"])
-
-    return load(includes, typeName, constructor).GridView(hostGridView, contains, domainId)
+    return load(includes,typeName,constructor).GridView(hostGridView, contains, domainId)
 
 
 def geometryGridView(coordFunction):
@@ -121,13 +119,9 @@ Interpolate into a discrete function space or use a
     gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction._typeName + " >"
     typeName = gridPartName + "::GridViewType"
 
-    # constructor = Constructor([coordFunction._typeName + " &coordFunction"],
-    #                           ["return Dune::FemPy::makeGridPart< " + typeName + " >( coordFunction );"],
-    #                           ["pybind11::keep_alive< 1, 2 >()"])
     constructor = Constructor([coordFunction._typeName + " &coordFunction"],
                  ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-
     return load(includes, typeName, constructor).GridView(coordFunction)
 
 

@@ -14,6 +14,21 @@ from dune.generator import builder
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
+def integrate(grid,expression,order):
+    try:
+        return expression.integrate()
+    except AttributeError:
+        return uflFunction(grid,"tmp",order,expression).integrate()
+    # return dune.ufl.expression2GF(grid,expression,order).integrate()
+# perhaps a general
+#    def assemble(grid/space, expression, order):
+# would be better. If expression is a function this would return a
+# fieldvector with the integral of this function, if expression is a
+# functional a discreteFunctional and for a bilinear form a matrix is
+# returned. This could also include a "piecewise" option that (at least in
+# the case of a function) returns the integral on each element.
+
+
 def globalFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
@@ -24,7 +39,9 @@ def localFunction(gridView, name, order, value):
 def gridFunction(view,name,order):
     def gridFunction_decorator(func):
         gf = dune.grid.gridFunction(view,name=name,order=order)(func)
-        return dune.ufl.GridFunction(gf)
+        setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
+        setattr(gf.__class__,"integrate", lambda self: 0) # uflFunction(view,"tmp",order,self).integrate())
+        return gf.as_ufl()
     return gridFunction_decorator
 # this is not going to work - needs fixing
 # def GridFunction(view, name=None):

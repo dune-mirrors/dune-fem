@@ -62,10 +62,10 @@ namespace Dune
 
       template< class Contains >
       SimpleFilter ( const GridPart &gridPart, Contains contains, int domainId )
-        : mapper_( static_cast< typename GridPart::GridViewType >( gridPart ),
+        : mapper_( gridPart.gridView(),
             [](Dune::GeometryType,int ) {return true;} ),
           contains_( mapper_.size(), false ),
-          mapper0_( static_cast< typename GridPart::GridViewType >( gridPart ),
+          mapper0_( gridPart.gridView(),
             [](Dune::GeometryType gt,int dim) {return gt.dim()==dim;} ),
           domainIds_( mapper0_.size(), -1 )
       {

@@ -45,7 +45,6 @@ def interpolate(space, expr, name=None, **kwargs):
             name = expr.name
         except AttributeError:
             raise ValueError("interpolation requires a name for the resulting discrete function - either the expression needs a name attribute or 'name' needs to be provided as second argument.")
-    # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=expr, **kwargs)
 
 def project(space, func, name=None, **kwargs):
@@ -107,6 +106,12 @@ def dfInterpolate(self, f):
         raise AttributeError("trying to interpolate an expression"\
             " of size "+str(dimExpr)+" into a space with range dimension = "\
             + str(self.space.dimRange))
+
+    try:
+        assert func.grid == self.grid, "can only interpolate with same grid views"
+        assert func.dimRange == self.dimRange, "range dimension mismatch"
+    except AttributeError:
+        pass
     return self._interpolate(func)
 
 def dfProject(self, f):
@@ -183,9 +188,10 @@ def localContribution(self, assembly):
     else:
         raise ValueError("assembly can only be `set` or `add`")
 
-def addDFAttr(module, cls, storage):
+def addDFAttr(module, cls, spc, storage):
     setattr(cls, "_module", module)
     setattr(cls, "_storage", storage)
+    cls.space = property( lambda self: spc.as_ufl() )
     setattr(cls, "interpolate", dfInterpolate )
     setattr(cls, "assign", dfAssign )
     if hasattr(cls,"_project"):
@@ -335,7 +341,7 @@ def module(field, includes, typeName, *args,
     spc = module.Space(*ctorArgs)
     addAttr(module, spc, field, scalar, codegen)
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
-    addDFAttr(module, module.DiscreteFunction, addStorage(spc,storage))
+    addDFAttr(module, module.DiscreteFunction, spc, addStorage(spc,storage))
     if not backend is None:
         addBackend(module.DiscreteFunction, backend)
     return spc

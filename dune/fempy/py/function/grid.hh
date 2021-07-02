@@ -80,8 +80,8 @@ namespace Dune
       }
 
       template <class Entity>
-      void bind(const Entity &entity) { lf_.bind(entity); }
-      void unbind() { lf_.unbind(); }
+      void bind(const Entity &entity) { Base::bind(entity); lf_.bind(entity); }
+      void unbind() { Base::unbind(); lf_.unbind(); }
     protected:
       const GridFunction *impl_;
       pybind11::object pyObj_;

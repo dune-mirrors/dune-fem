@@ -30,7 +30,7 @@
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/py/space.hh>
-
+#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {
@@ -348,7 +348,6 @@ namespace Dune
 
         registerRestrictProlong< DF >( module );
 
-        cls.def_property_readonly( "space", [] ( DF &self ) -> auto& { return self.space(); } );
         cls.def_property_readonly( "size", [] ( DF &self ) { return self.size(); } );
         cls.def_property_readonly( "dofsValid", [] ( DF &self ) { return self.dofsValid(); } );
 

@@ -9,9 +9,11 @@
 #include <dune/python/common/dynvector.hh>
 #include <dune/python/common/fmatrix.hh>
 #include <dune/python/common/fvector.hh>
+#include <dune/python/grid/object.hh>
+
+#include <dune/fempy/py/grid/gridpart.hh>
 
 #include <dune/fempy/pybind11/pybind11.hh>
-#include <dune/fempy/py/grid/gridpart.hh>
 
 namespace Dune
 {
@@ -91,6 +93,7 @@ namespace Dune
       {
         registerSubSpace( cls, PriorityTag< 42 >() );
       }
+
       // registerSpace
       // -------------
 
@@ -101,8 +104,11 @@ namespace Dune
         typedef typename GridPart::GridViewType GridView;
         cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );
         cls.def_property_readonly( "dimDomain", [] ( Space & ) -> int { return Space::FunctionSpaceType::dimDomain; } );
-        cls.def_property_readonly( "grid", [] ( Space &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
+        cls.def_property_readonly( "grid", [] ( Space &self ) -> const GridView& { return self.gridPart().gridView(); } );
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
+        cls.def( "as_ufl", [] ( pybind11::object &self ) -> auto {
+              return Dune::FemPy::getSpaceWrapper()(self);
+            });
       }
 
       template< class Space, class... options >
@@ -122,9 +128,6 @@ namespace Dune
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
 
-        cls.def( "as_ufl", [] ( pybind11::object &self ) -> auto {
-              return Dune::FemPy::getSpaceWrapper()(self);
-            });
         cls.def( "_generateQuadratureCode", []( Space &self,
                  const std::vector<unsigned int> &interiorOrders,
                  const std::vector<unsigned int> &skeletonOrders,

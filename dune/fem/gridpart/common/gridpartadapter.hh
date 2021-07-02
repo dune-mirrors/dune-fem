@@ -16,19 +16,16 @@ namespace Dune
 
     template< class GridView >
     class GridPartAdapter
-      : public Fem::GridView2GridPart< GridView, GridPartAdapter< GridView > >
+      : public Fem::GridView2GridPart< GridView, GridPartAdapter< GridView >, false >
     {
       typedef GridPartAdapter< GridView > This;
-      typedef Fem::GridView2GridPart< GridView, GridPartAdapter< GridView > > Base;
+      typedef Fem::GridView2GridPart< GridView, GridPartAdapter< GridView >, false > Base;
 
     public:
       typedef GridView GridViewType;
       typedef typename Base::GridType GridType;
 
       explicit GridPartAdapter ( const GridView &gridView ) : Base( gridView ) {}
-
-      const GridType &grid () const { return static_cast< GridView >( *this ).grid(); }
-      GridType &grid () { return const_cast< GridType & >( static_cast< GridView >( *this ).grid() ); }
 
       int level () const { DUNE_THROW( NotImplemented, "GridPartAdapter cannot provide level information" ); return -1; }
     };

@@ -162,7 +162,7 @@ namespace Dune
       {
         // when type is none then entity has to be passed in order to create
         // the sub triangulation etc.
-        assert( ! type.isNone() );
+        // assert( ! type.isNone() );
       }
 
       /** \brief copy constructor
