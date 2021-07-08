@@ -114,6 +114,24 @@ namespace Dune
       DiscreteFunctionSpaceType space_;
       const std::string name_;
     };
+
+    namespace detail
+    {
+      template <class,class,class>
+      struct canBind
+         : std::false_type {};
+      template <class GP,class LF>
+      struct canBind<GP,LF,
+             std::void_t< decltype( std::declval<LF>().
+                            bind(std::declval<const typename GP::template Codim<0>::EntityType&>())) >>
+        : std::true_type {};
+      template <class GP,class LF>
+      using canBind_t = canBind<GP,LF,void>;
+    }
+
+    template <class GP,class LF>
+    constexpr detail::canBind_t<GP,LF> checkGridPartValid() { return {}; }
+
   } // namespace Fem
 } // namespace Dune
 #endif // DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH

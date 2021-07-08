@@ -7,7 +7,7 @@ from ufl.equation import Equation
 
 from dune.common.utility import isString
 
-from dune.source.cplusplus import Include, NameSpace, TypeAlias
+from dune.source.cplusplus import Include, NameSpace, TypeAlias, IfStatement
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
@@ -105,9 +105,6 @@ class Source(object):
         self.args = args
         self.form = form
 
-        assert integrands.checkGridViews(grid),\
-          "GridViews of coefficients need to be identical to grid view of for ufl model"
-
     def signature(self):
         return uflSignature(self.form,
                 *self.integrands._coefficients,
@@ -169,29 +166,30 @@ class Source(object):
         writer.emit(code)
 
         name = self.name()
-        writer.openPythonModule(name)
-
         coefficients = integrands.coefficientCppTypes
         integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
-        writer.emit(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        writer.emit(TypeAlias('Integrands', integrandsName))
-        writer.emit('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
-        writer.emit('Dune::FemPy::registerIntegrands< Integrands >( module, cls );')
+
+        register = []
+        register.append('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        register.append('Dune::FemPy::registerIntegrands< Integrands >( module, cls );')
         if coefficients:
             coefficientNames = integrands.coefficientNames
             initArgs = ', '.join('const ' + t + ' &' + n for t, n in zip(coefficients, coefficientNames))
             keepAlive = ', '.join('pybind11::keep_alive< 1, ' + str(i+2) + ' >()' for i in range(len(coefficientNames)))
-            writer.emit('cls.def( pybind11::init( [] ( ' + initArgs + ' ) { return new Integrands( ' + ', '.join(coefficientNames) +  ' ); } ), ' + keepAlive + ' );')
+            register.append('cls.def( pybind11::init( [] ( ' + initArgs + ' ) { return new Integrands( ' + ', '.join(coefficientNames) +  ' ); } ), ' + keepAlive + ' );')
         else:
-            writer.emit('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
-
+            register.append('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
         for t, n, ns in zip(integrands.constantTypes, integrands.constantNames, integrands.constantShortNames):
             te = "Integrands::" + t
-            writer.emit('cls.def_property( "' + ns + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
-        writer.emit('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')
+            register.append('cls.def_property( "' + ns + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        register.append('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')
         hasDirichletBC = 'true' if integrands.hasDirichletBoundary else 'false'
-        writer.emit('cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return '+hasDirichletBC+';});')
+        register.append('cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return '+hasDirichletBC+';});')
 
+        writer.openPythonModule(name)
+        writer.emit(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
+        writer.emit(TypeAlias('Integrands', integrandsName))
+        writer.emit(IfStatement('Integrands::gridPartValid',register,constexpr=True))
         writer.closePythonModule(name)
         writer.emit("#endif // GuardIntegrands_" + self.signature())
 
@@ -289,6 +287,9 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
     # call code generator
     from dune.generator import builder
     module = builder.load(source.name(), source, "Integrands")
+
+    assert hasattr(module,"Integrands"),\
+          "GridViews of coefficients need to be compatible with the grid view of the ufl model"
 
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)

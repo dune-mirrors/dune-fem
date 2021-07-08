@@ -10,7 +10,8 @@ import types
 from dune.common.hashit import hashIt
 from dune.generator import builder
 
-from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_
+from dune.source.cplusplus import Include, Method, UnformattedExpression,\
+     UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_, IfStatement
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
 from dune.source import BaseModel
@@ -42,9 +43,6 @@ class UFLFunctionSource(codegen.ModelClass):
         predefined = {} if predefined is None else predefined
         codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],
           virtualize,dimRange=dimRange, predefined=predefined)
-
-        assert self.checkGridViews(grid),\
-          "GridViews of coefficients need to be identical to grid view of local function"
 
         self.evalCode = []
         self.jacCode = []
@@ -160,16 +158,11 @@ class UFLFunctionSource(codegen.ModelClass):
         code.append(nameSpace)
         gridPartName = 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'
         localFunctionName = nameSpace.name+'::UFLLocalFunction< ' + ', '.join([gridPartName] + self.coefficientCppTypes) + ' >'
-
         name = self.name()
-        writer = SourceWriter()
-        writer.emit(code)
-        writer.openPythonModule(name)
-        # writer.emit(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
-        # writer.emit(TypeAlias('GridPart', gridPartName))
-        writer.emit(TypeAlias('LocalFunctionType', localFunctionName))
-        writer.emit('auto cls = Dune::Python::insertClass<LocalFunctionType>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
-        writer.emit('Dune::FemPy::registerUFLLocalFunction( module, cls );')
+
+        register = []
+        register.append('auto cls = Dune::Python::insertClass<LocalFunctionType>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        register.append('Dune::FemPy::registerUFLLocalFunction( module, cls );')
 
         initArgs = 'pybind11::object gridView, const std::string &name, int order'
         keepAlive = 'pybind11::keep_alive< 1, 2 >()'
@@ -179,15 +172,19 @@ class UFLFunctionSource(codegen.ModelClass):
             initArgs += ', ' + ', '.join('const ' + t + ' &' + n for t, n in zip(coefficients, coefficientNames))
             keepAlive += ', ' + ', '.join('pybind11::keep_alive< 1, ' + str(i+3) + ' >()' for i in range(len(coefficientNames)))
             initCall += ', ' + ', '.join(coefficientNames)
-        writer.emit('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
+        register.append('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
                 + 'return new '+localFunctionName+' ( ' + initCall
                 + '); } ), ' + keepAlive + ' );')
-
         for t, n, sn in zip(self.constantTypes, self.constantNames, self.constantShortNames):
             te = localFunctionName+"::" + t
-            writer.emit('cls.def_property( "' + sn + '", [] ( '+localFunctionName+' &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( '+localFunctionName+' &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
-        writer.emit('cls.def_property_readonly( "virtualized", [] ( '+localFunctionName+'& ) -> bool { return '+str(self.virtualize).lower()+';});')
+            register.append('cls.def_property( "' + sn + '", [] ( '+localFunctionName+' &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( '+localFunctionName+' &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        register.append('cls.def_property_readonly( "virtualized", [] ( '+localFunctionName+'& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
+        writer = SourceWriter()
+        writer.emit(code)
+        writer.openPythonModule(name)
+        writer.emit(TypeAlias('LocalFunctionType', localFunctionName))
+        writer.emit(IfStatement('LocalFunctionType::gridPartValid',register,constexpr=True))
         writer.closePythonModule(name)
         source = writer.writer.getvalue()
         writer.close()
@@ -303,6 +300,9 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     # call code generator
     from dune.generator import builder
     module = builder.load(source.name(), source, "UFLLocalFunction")
+
+    assert hasattr(module,"UFLLocalFunction"),\
+          "GridViews of coefficients need to be compatible with the grid view of the ufl local functions"
 
     class LocalFunction(module.UFLLocalFunction):
         def __init__(self, gridView, name, order, *args, **kwargs):

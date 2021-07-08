@@ -511,9 +511,6 @@ class ModelClass():
     def coefficientNames(self):
         return ["coeff" + n[0] + n[1:] for n in self._coefficientNames]
 
-    def checkGridViews(self,grid):
-      return all( [c.grid == grid for c in self.coefficientList] )
-
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
 
@@ -610,8 +607,16 @@ class ModelClass():
             code.append(TypeAlias("CoefficientFunctionSpaceType", "std::tuple_element_t< i, CoefficientFunctionSpaceTupleType >", targs=["std::size_t i"]))
             for s in ["RangeType", "JacobianRangeType"]:
                 code.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
+            code.append(Declaration(Variable("bool", "gridPartValid"),
+                initializer=UnformattedExpression("bool"," && ".join(["Dune::Fem::checkGridPartValid<GridPartType,"+
+                             "Dune::Fem::ConstLocalFunction<"+c+">>()"
+                        for c in self.coefficientTypes])),
+                        static=True, constexpr=True))
         else:
             code.append(TypeAlias("CoefficientTupleType", "std::tuple<>"))
+            code.append(Declaration(Variable("bool", "gridPartValid"),
+                        initializer="true",
+                        static=True, constexpr=True))
 
         code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, CoefficientTupleType >', targs=['std::size_t i']))
         code.append(TypeAlias('ConstantType', 'typename std::tuple_element_t< i, ConstantTupleType >::element_type', targs=['std::size_t i']))

@@ -95,12 +95,13 @@ class TypeAlias:
 # -----------
 
 class Declaration:
-    def __init__(self, obj, initializer=None, static=False, mutable=False):
+    def __init__(self, obj, initializer=None, static=False, mutable=False, constexpr=False):
         if not isinstance(obj, Variable):
             raise Exception('Only variables can be declared for now.')
         self.obj = obj
         self.initializer = None if initializer is None else makeExpression(initializer)
         self.static = static
+        self.constexpr = constexpr
         self.mutable = mutable
 
     def __repr__(self):
@@ -209,7 +210,20 @@ class SwitchStatement(Statement):
         block = self.branches.setdefault(case, Block())
         block.append(code)
 
+# IfStatement
+# ---------------
 
+class IfStatement(Statement):
+    def __init__(self, condition, thenBranch, elseBranch=None, constexpr=False):
+        self.condition = condition
+        self.thenBranch = Block()
+        self.thenBranch.append(thenBranch)
+        if elseBranch is not None:
+            self.elseBranch = Block()
+            self.elseBranch.append(elseBranch)
+        else:
+            self.elseBranch = None
+        self.constexpr = constexpr
 
 # ReturnStatement
 # ---------------
@@ -242,6 +256,7 @@ class SourceWriter:
             self.writer = writer
         self.blocks = []
         self.begin = True
+        self.context = None
 
     def close(self):
         if self.blocks:
@@ -359,7 +374,9 @@ class SourceWriter:
         elif isinstance(src, Declaration):
             if not isinstance(src.obj, Variable):
                 raise Exception('Only variables can be declared for now.')
-            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src.obj)
+            declaration = ('static ' if src.static else '') +\
+                          ('constexpr ' if src.constexpr else '') +\
+                          ('mutable ' if src.mutable else '') + self.typedName(src.obj)
             if src.initializer is not None:
                 expr = formatExpression(src.initializer)
                 expr[len(expr)-1] += ';'
@@ -374,7 +391,8 @@ class SourceWriter:
         elif isinstance(src, Using):
             self.emit(str(src), indent)
         elif isinstance(src, Statement):
-            if not isinstance(context, (Constructor, Function, Method)):
+            if not isinstance(context, (Constructor, Function, Method)) and\
+               not self.context in ["PythonModule"]:
                 raise Exception('Statements can only occur in constructors, functions and methods')
             if isinstance(src, Expression):
                 expr = formatExpression(src)
@@ -413,6 +431,13 @@ class SourceWriter:
                     self.emit(src.default.content, indent+2, context)
                     self.emit('}', indent+1)
                 self.emit('}', indent)
+            elif isinstance(src, IfStatement):
+                self.emit(('if constexpr' if src.constexpr else 'if') +
+                          '( ' + src.condition + ' )', indent)
+                self.emit(src.thenBranch,indent)
+                if src.elseBranch is not None:
+                    self.emit('else', indent)
+                    self.emit(src.elseBranch,indent)
             else:
                 raise Exception('Unknown statement type.')
         elif isinstance(src, Block):
@@ -455,6 +480,8 @@ class SourceWriter:
                 raise Exception("Arguments cannot be static.")
             if arg.mutable:
                 raise Exception("Argumenta cannot be mutable.")
+            if arg.constexpr:
+                raise Exception("Argumenta cannot be constexpr.")
             declaration = self.typedName(arg.obj)
             if arg.initializer is not None:
                 declaration += ' = ' + ' '.join(formatExpression(arg.initializer))
@@ -512,10 +539,12 @@ class SourceWriter:
         self.emit('PYBIND11_MODULE( ' + moduleName.strip() + ', module )')
         self.emit('{')
         self.pushBlock('pybind11 module', moduleName)
+        self.context = "PythonModule"
 
     def closePythonModule(self, moduleName=None):
         self.popBlock('pybind11 module', moduleName)
         self.emit('}')
+        self.context = None
 
     @staticmethod
     def cpp_fields(field):
