@@ -145,7 +145,7 @@ namespace Dune
       {
 
         template< class DFS >
-        std::true_type hasInterpolation ( const DFS &, decltype( std::declval< const DFS & >().interpolation( std::declval< typename DFS::EntityType >() ) ) * = nullptr );
+        std::true_type hasInterpolation ( const DFS &, decltype( std::declval< const DFS & >().interpolation() ) * = nullptr );
 
         std::false_type hasInterpolation ( ... );
 
