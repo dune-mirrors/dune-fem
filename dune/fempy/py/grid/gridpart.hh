@@ -62,16 +62,19 @@ namespace Dune
       template< class Grid >
       inline static void addGridModificationListener ( const Grid &grid )
       {
+        // get python handle for the given grid (must exist)
+        pybind11::handle pygrid = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
+        if (!pygrid)
+          return;
+
         typedef GridModificationListener< Grid > Listener;
         for( const auto &listener : Python::detail::gridModificationListeners( grid ) )
         {
           if( dynamic_cast< Listener * >( listener ) )
             return;
         }
-        // get python handle for the given grid (must exist)
-        pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
-        assert(nurse);
-        Python::detail::addGridModificationListener( grid, new Listener(grid), nurse );
+
+        Python::detail::addGridModificationListener( grid, new Listener(grid), pygrid );
       }
 
 
