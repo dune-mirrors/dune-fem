@@ -60,23 +60,25 @@ namespace Dune
       // ---------------------------
 
       template< class Grid >
-      inline static void addGridModificationListener ( const Grid &grid )
+      inline static void addGridModificationListener ( const Grid &grid, pybind11::handle gridView )
       {
-        // get python handle for the given grid (must exist)
-        pybind11::handle pygrid = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
-        if (!pygrid)
-          return;
-
         typedef GridModificationListener< Grid > Listener;
-        for( const auto &listener : Python::detail::gridModificationListeners( grid ) )
+        for( const auto &listener : Python::detail::gridModificationListeners( grid, gridView ) )
         {
           if( dynamic_cast< Listener * >( listener ) )
             return;
         }
-
-        Python::detail::addGridModificationListener( grid, new Listener(grid), pygrid );
+        // get python handle for the given grid (must exist)
+        pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
+        assert(nurse);
+        Python::detail::addGridModificationListener( grid, gridView, new Listener(grid), nurse );
       }
 
+      template< class Grid >
+      inline static void addGridModificationListener ( const Grid &grid )
+      {
+        addGridModificationListener(grid, pybind11::handle());
+      }
 
 
       // GridPartConverter
@@ -99,7 +101,7 @@ namespace Dune
             // create new gridpart object
             pos->second = new GridPart( *view );
             // add grid modification listener (if not registered)
-            addGridModificationListener( view->grid() );
+            addGridModificationListener( view->grid(), gridView );
 
             // create Python guard object, removing the grid part once the grid view dies
             pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
