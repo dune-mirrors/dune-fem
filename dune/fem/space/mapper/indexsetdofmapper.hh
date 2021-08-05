@@ -243,9 +243,9 @@ namespace Dune
         template< class Entity >
         const SubEntityInfo &subEntityInfo ( const Entity &entity ) const;
 
-        const IndexSetType &indexSet () const { return gridPart_.indexSet(); }
+        const IndexSetType &indexSet () const { return indexSet_; }
 
-        const GridPartType &gridPart_;
+        const IndexSetType &indexSet_;
         LocalDofMapping localDofMapping_;
         std::vector< DofMapperCode > code_;
         unsigned int maxNumDofs_;
@@ -295,7 +295,10 @@ namespace Dune
       template< class CodeFactory >
       inline DofMapper< GridPart, LocalDofMapping >
         ::DofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
-      : gridPart_( gridPart ),
+      // NOTE: Don't store gridPart in this class since the lifetime of gridPart
+      // might be shorter than the lifetime of this class. The lifetime of
+      // indexSet is guaranteed to be longer, so storage of that class is fine
+      : indexSet_( gridPart.indexSet() ),
         localDofMapping_( std::move( localDofMapping ) ),
         code_( LocalGeometryTypeIndex::size( dimension ) ),
         maxNumDofs_( 0 ),
@@ -368,11 +371,11 @@ namespace Dune
       inline void DofMapper< GridPart, LocalDofMapping >
         ::mapEach ( const ElementType &element, Functor f ) const
       {
-        const auto &indexSet = gridPart_.indexSet();
+        const auto &idxSet = indexSet();
 
-        code( element )( [ this, &indexSet, &element, f ] ( unsigned int gtIndex, unsigned int subEntity, auto begin, auto end ) {
+        code( element )( [ this, &idxSet, &element, f ] ( unsigned int gtIndex, unsigned int subEntity, auto begin, auto end ) {
             const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
-            const SizeType subIndex = indexSet.subIndex( element, subEntity, info.codim );
+            const SizeType subIndex = idxSet.subIndex( element, subEntity, info.codim );
             SizeType index = info.offset + SizeType( info.numDofs ) * subIndex;
             localDofMapping_( element, subEntity, info.codim )( index, info.numDofs, begin, end, f );
           } );
@@ -446,7 +449,7 @@ namespace Dune
         }
 
         // submit request for codimension to indexSet
-        gridPart_.indexSet().requestCodimensions( codimensions );
+        indexSet().requestCodimensions( codimensions );
       }
 
       template< class GridPart, class LocalDofMapping >
@@ -493,6 +496,7 @@ namespace Dune
 
       protected:
         typedef typename BaseType::SubEntityInfo SubEntityInfo;
+        typedef typename BaseType::GridPartType::GridType GridType;
 
       public:
         typedef typename BaseType::GridPartType GridPartType;
@@ -501,16 +505,18 @@ namespace Dune
 
         template< class CodeFactory >
         AdaptiveDofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
-          : BaseType( gridPart, std::move( localDofMapping ), codeFactory )
+          : BaseType( gridPart, std::move( localDofMapping ), codeFactory ),
+            // store grid (which is a unique object) for later removal of object
+            grid_( gridPart.grid() )
         {
-          DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).addIndexSet( *this );
+          DofManager< typename GridPartType::GridType >::instance( grid_ ).addIndexSet( *this );
         }
 
         AdaptiveDofMapper ( const ThisType & ) = delete;
 
         ~AdaptiveDofMapper ()
         {
-          DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).removeIndexSet( *this );
+          DofManager< typename GridPartType::GridType >::instance( grid_ ).removeIndexSet( *this );
         }
 
         ThisType &operator= ( const ThisType & ) = delete;
@@ -559,8 +565,9 @@ namespace Dune
         using BaseType::indexSet;
 
         using BaseType::blockMap_;
-        using BaseType::gridPart_;
         using BaseType::subEntityInfo_;
+
+        const GridType& grid_;
       };
 
 
