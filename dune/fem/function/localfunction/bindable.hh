@@ -31,14 +31,16 @@ namespace Dune
 
       void bind(const EntityType &entity)
       {
-        entity_ = &entity;
-        geometry_.reset();
+        unbind();
+
+        entity_.emplace( entity );
         geometry_.emplace( this->entity().geometry() );
       }
 
       void unbind()
       {
         geometry_.reset();
+        entity_.reset();
       }
 
       void bind(const IntersectionType &intersection, IntersectionSide side)
@@ -70,11 +72,11 @@ namespace Dune
       }
 
       const GridPart& gridPart() const { return gridPart_; }
-      const EntityType &entity() const { return *entity_; }
+      const EntityType &entity() const { return entity_.value(); }
       const Geometry& geometry() const { return geometry_.value(); }
 
     protected:
-      const EntityType *entity_;
+      std::optional< EntityType > entity_;
       std::optional< Geometry > geometry_;
       const GridPart &gridPart_;
     };
