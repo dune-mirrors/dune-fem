@@ -22,7 +22,7 @@ from dune.grid import structuredGrid as leafGridView
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
-from dune.fem.function import integrate
+from dune.fem.function import integrate, uflFunction
 from dune.ufl import Constant, DirichletBC
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
@@ -36,7 +36,8 @@ def compute(space,epsilon,weakBnd):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    exact = sin(x[0]*x[1]) # atan(1*x[1])
+    #exact = sin(x[0]*x[1]) # atan(1*x[1])
+    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
 
     # diffusion factor
     eps = Constant(epsilon,"eps")
