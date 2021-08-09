@@ -52,6 +52,8 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
     protected:
+      typedef SingletonList< const typename GridPartType::IndexSetType*, BlockMapperType > BlockMapperProdiverType;
+
       typedef CachingQuadrature<GridPartType, EntityType::codimension> VolumeQuadratureType;
 
     public:
@@ -74,7 +76,8 @@ namespace Dune
                                                    const CommunicationDirection commDirection = ForwardCommunication )
       : BaseType( gridPart, commInterface, commDirection ),
         basisFunctionSets_( std::move( basisFunctionSets ) ),
-        blockMapper_( gridPart )
+        // block mapper is a singleton so that the communication can be cached efficiently
+        blockMapper_( &BlockMapperProdiverType::getObject( &(gridPart.indexSet() )))
       {}
 
       /** \} */
@@ -118,7 +121,7 @@ namespace Dune
       int order ( const EntityType &entity ) const { return basisFunctionSets().order( entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
-      BlockMapperType &blockMapper () const { return blockMapper_; }
+      BlockMapperType &blockMapper () const { assert( blockMapper_ ); return *blockMapper_; }
 
       /** \} */
 
@@ -138,7 +141,7 @@ namespace Dune
 
     private:
       BasisFunctionSetsType basisFunctionSets_;
-      mutable BlockMapperType blockMapper_;
+      std::unique_ptr< BlockMapperType, typename BlockMapperProdiverType::Deleter > blockMapper_;
 
       mutable ThreadSafeValue< std::shared_ptr< LocalMassMatrixStorageType > > localMassMatrixStorage_;
     };
