@@ -672,14 +672,8 @@ namespace Dune
        \param parameter  Parameter class holding parameters
     **/
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
-      : BaseType(grid,rpOp, parameter)
-      , Base2Type( grid, rpOp )
-      , referenceCounter_( ProviderType :: getObject( &grid ) )
-      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", 1 ) )
-      , balanceCounter_( 0 )
+      : AdaptationManager( grid, rpOp, 0, parameter )
     {
-      if( ++referenceCounter_ > 1 )
-        DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
     }
 
     //! destructor decreasing reference counter
