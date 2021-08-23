@@ -984,6 +984,7 @@ namespace Dune
       typedef Integrands ModelType;
       typedef Integrands DirichletModelType;
       ModelType &model() const { return impl_.model(); }
+      const auto& impl() const { return impl_; }
 
     protected:
       Impl::GalerkinOperator< Integrands > impl_;
