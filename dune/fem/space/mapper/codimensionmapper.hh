@@ -335,56 +335,13 @@ namespace Dune
         : BaseType( gridPart )
       {}
 
+      explicit CodimensionMapper ( const typename BaseType::IndexSetType *indexSet )
+        : BaseType( *indexSet )
+      {}
+
       explicit CodimensionMapper ( const typename BaseType::IndexSetType &indexSet )
         : BaseType( indexSet )
       {}
-    };
-
-
-
-    // CodimensionMapperSingletonFactory
-    // ---------------------------------
-
-    template< class GridPart, int codim >
-    class CodimensionMapperSingletonFactory
-    {
-    public:
-      typedef CodimensionMapper< GridPart, codim > Object;
-
-      struct Key
-      {
-        Key ( const GridPart &gridPart )
-          : gridPart_( gridPart )
-        {}
-
-        bool operator== ( const Key &rhs )
-        {
-          return &gridPart_.indexSet() == &rhs.gridPart_.indexSet();
-        }
-
-        bool operator!= ( const Key &rhs )
-        {
-          return !(*this == rhs);
-        }
-
-        explicit operator const GridPart & () const
-        {
-          return gridPart_;
-        }
-
-      private:
-        const GridPart &gridPart_;
-      };
-
-      static Object *createObject ( const Key &key )
-      {
-        return new Object( static_cast< const GridPart & >( key ) );
-      }
-
-      static void deleteObject ( Object *object )
-      {
-        delete object;
-      }
     };
 
 

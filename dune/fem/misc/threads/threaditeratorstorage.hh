@@ -74,62 +74,58 @@ namespace Dune {
              ThreadIteratorType, IteratorFactory > IteratorProviderType;
 
     protected:
-      ThreadIteratorType& iterators_;
+      std::unique_ptr< ThreadIteratorType, typename IteratorProviderType::Deleter> iterators_;
 
     public:
       //! contructor creating thread iterators
       explicit ThreadIteratorStorageBase( const GridPartType& gridPart )
-        : iterators_( IteratorProviderType::getObject( KeyType( gridPart ) ) )
+        : iterators_( &IteratorProviderType::getObject( KeyType( gridPart ) ) )
       {
         update();
       }
 
-      //! destructor removing instance of thread iterators
-      ~ThreadIteratorStorageBase()
-      {
-        IteratorProviderType::removeObject( iterators_ );
-      }
+      ThreadIteratorType& iterators () const { assert( iterators_ ); return *iterators_; }
 
       //! return filter for given thread
       const FilterType& filter( const int thread ) const
       {
-        return iterators_.filter( thread );
+        return iterators().filter( thread );
       }
 
       //! update internal list of iterators
       void update()
       {
-        iterators_.update();
+        iterators().update();
       }
 
       //! set ratio between master thread and other threads in comp time
       void setMasterRatio( const double ratio )
       {
-        iterators_.setMasterRatio( ratio );
+        iterators().setMasterRatio( ratio );
       }
 
       //! return begin iterator for current thread
       IteratorType begin() const
       {
-        return iterators_.begin();
+        return iterators().begin();
       }
 
       //! return end iterator for current thread
       IteratorType end() const
       {
-        return iterators_.end();
+        return iterators().end();
       }
 
       //! return thread number this entity belongs to
       int index(const EntityType& entity ) const
       {
-        return iterators_.index( entity );
+        return iterators().index( entity );
       }
 
       //! return thread number this entity belongs to
       int thread(const EntityType& entity ) const
       {
-        return iterators_.thread( entity );
+        return iterators().thread( entity );
       }
     };
   } // end namespace Fem

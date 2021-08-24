@@ -223,7 +223,7 @@ namespace Dune
                                                const InterfaceType commInterface = defaultInterface,
                                                const CommunicationDirection commDirection = defaultDirection )
       : BaseType( gridPart, commInterface, commDirection ),
-        blockMapper_( nullptr ),
+        blockMapper_(),
         lagrangePointSetContainer_( gridPart ),
         // when min == max polynomial order the dynamic choice is off
         polynomialOrder_( ( minPolynomialOrder == maxPolynomialOrder ) ? minPolynomialOrder : polOrder )
@@ -241,13 +241,8 @@ namespace Dune
         }
 
         MapperSingletonKeyType key( gridPart, lagrangePointSetContainer_.compiledLocalKeys( polynomialOrder_ ), polynomialOrder_ );
-        blockMapper_ = &BlockMapperProviderType::getObject( key );
+        blockMapper_.reset( &BlockMapperProviderType::getObject( key ) );
         assert( blockMapper_ );
-      }
-
-      ~LagrangeDiscreteFunctionSpace ()
-      {
-        BlockMapperProviderType::removeObject( *blockMapper_ );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
@@ -344,8 +339,8 @@ namespace Dune
       LagrangeDiscreteFunctionSpace ( const ThisType & ) = delete;
       ThisType &operator= ( const ThisType & ) = delete;
 
-    private:
-      BlockMapperType *blockMapper_;
+    protected:
+      std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter> blockMapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;
       const int polynomialOrder_;
