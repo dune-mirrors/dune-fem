@@ -304,8 +304,9 @@ namespace Dune
       typedef AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > AddGridViewType;
     public:
       typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
-      typedef typename BaseType :: GridType GridType;
-      typedef typename BaseType :: GridViewType GridViewType;
+      typedef typename BaseType :: GridType        GridType;
+      typedef typename BaseType :: GridViewType    GridViewType;
+      typedef typename BaseType :: GridPartType    GridPartType;
       //! Constructor
       explicit AdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
