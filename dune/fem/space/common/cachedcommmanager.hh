@@ -58,27 +58,26 @@ namespace Dune
 // if HAVE_DUNE_ALUGRID is not defined, ALU3DGRID_PARALLEL shouldn't be either
 #if ALU3DGRID_PARALLEL
 
-    //! class to build up a map of all dofs of entities to be exchanged
-    //! during a communication procedure. This speeds up the communication
-    //! procedure, because no grid traversal is necessary to exchange data.
-    //! this class is singleton for different discrete function space,
-    //! because the dof mapping is always the same.
-    template< class Space >
+    /** \brief DependencyCache is a convenience class to build up a map
+     * of all dofs of entities to be exchanged during a communication procedure.
+     * This speeds up the communication procedure, because no grid traversal is
+     * necessary anymore to exchange data. This class is singleton for different
+     * discrete function spaces, depending on the BlockMapper.
+     */
+    template< class BlockMapper >
     class DependencyCache
     {
     public:
-      //! type of discrete function space
-      typedef Space SpaceType;
-
-       //! type of grid part
-      typedef typename SpaceType :: GridPartType GridPartType;
+      //! type of block mapper of discrete function space (may be the same for
+      //! different space (i.e. various DG spaces)
+      typedef BlockMapper BlockMapperType;
 
     protected:
       // type of communication indices
       typedef CommunicationIndexMap IndexMapType;
 
       // type of IndexMapVector
-      typedef IndexMapType *IndexMapVectorType;
+      typedef std::vector< IndexMapType >  IndexMapVectorType;
 
       // type of set of links
       typedef std :: set< int > LinkStorageType;
@@ -95,22 +94,16 @@ namespace Dune
       typedef std :: vector< ObjectStreamType > ObjectStreamVectorType;
 
     protected:
-      const SpaceType &space_;
-      const GridPartType &gridPart_;
-
       const InterfaceType interface_;
       const CommunicationDirection dir_;
 
-      const int myRank_;
-      const int mySize_;
-
       LinkStorageType linkStorage_;
 
-      IndexMapType *recvIndexMap_;
-      IndexMapType *sendIndexMap_;
+      IndexMapVectorType  recvIndexMap_;
+      IndexMapVectorType  sendIndexMap_;
 
-      // ALUGrid communicatior Class
-      MPAccessInterfaceType *mpAccess_;
+      // ALUGrid communicator Class
+      std::unique_ptr< MPAccessInterfaceType > mpAccess_;
 
       // exchange time
       double exchangeTime_;
@@ -123,7 +116,8 @@ namespace Dune
       int nonBlockingObjects_ ;
 
     protected:
-      template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
+      template< class Communication, class LinkStorage,
+                class IndexMapVector, InterfaceType CommInterface >
       class LinkBuilder;
 
       /////////////////////////////////////////////////////////////////
@@ -132,7 +126,7 @@ namespace Dune
 
       class NonBlockingCommunication
       {
-        typedef DependencyCache < Space > DependencyCacheType;
+        typedef DependencyCache < BlockMapper > DependencyCacheType;
 
 #if HAVE_DUNE_ALUGRID
         typedef MPAccessInterfaceType :: NonBlockingExchange NonBlockingExchange;
@@ -207,15 +201,17 @@ namespace Dune
         }
 
       public:
-        NonBlockingCommunication( DependencyCacheType& dependencyCache, const int mySize )
+        template <class Space>
+        NonBlockingCommunication( const Space& space,
+                                  DependencyCacheType& dependencyCache )
           : dependencyCache_( dependencyCache ),
             nonBlockingExchange_(),
             buffer_(),
             exchangeTime_( 0.0 ),
-            mySize_( mySize )
+            mySize_( space.gridPart().comm().size() )
         {
-          // update cache ( if necessary )
-          dependencyCache_.rebuild();
+          // make sure cache is up2date
+          dependencyCache_.rebuild( space );
 
           // notify dependency cache of open communication
           dependencyCache_.attachComm();
@@ -229,9 +225,6 @@ namespace Dune
             exchangeTime_( 0.0 ),
             mySize_( other.mySize_ )
         {
-          // update cache ( if necessary )
-          dependencyCache_.rebuild();
-
           // notify dependency cache of open communication
           dependencyCache_.attachComm();
         }
@@ -380,47 +373,42 @@ namespace Dune
       typedef NonBlockingCommunication NonBlockingCommunicationType;
 
       //! return object for non-blocking communication
-      NonBlockingCommunicationType nonBlockingCommunication()
+      template <class Space>
+      NonBlockingCommunicationType nonBlockingCommunication( const Space& space )
       {
         // create non-blocking communication object
-        return NonBlockingCommunicationType( *this, mySize_ );
+        return NonBlockingCommunicationType( space, *this );
       }
       /////////////////////////////////////////////////////////////////
       //  end NonBlockingCommunication
       /////////////////////////////////////////////////////////////////
 
-      //! constructor taking space
-      DependencyCache( const SpaceType &space, const InterfaceType interface, const CommunicationDirection dir )
-      : space_( space ),
-        gridPart_( space_.gridPart() ),
-        interface_( interface ),
-        dir_(dir),
-        myRank_( gridPart_.comm().rank() ),
-        mySize_( gridPart_.comm().size() ),
+      //! constructor taking communicator object
+      DependencyCache( const int nProcs, const InterfaceType interface, const CommunicationDirection dir )
+      : interface_( interface ),
+        dir_( dir ),
         linkStorage_(),
-        recvIndexMap_( new IndexMapType[ mySize_ ] ),
-        sendIndexMap_( new IndexMapType[ mySize_ ] ),
-        mpAccess_( new MPAccessImplType( gridPart_.comm() ) ),
+        recvIndexMap_( nProcs ),
+        sendIndexMap_( nProcs ),
+        mpAccess_(),
         exchangeTime_( 0.0 ),
         buildTime_( 0.0 ),
         sequence_( -1 ),
         nonBlockingObjects_( 0 )
-      {}
-
-      DependencyCache( const DependencyCache & ) = delete;
-
-      //! destrcutor removeing mpAccess
-      ~DependencyCache()
       {
-        delete mpAccess_;
-        mpAccess_ = 0;
-
-        delete [] sendIndexMap_;
-        sendIndexMap_ = 0;
-
-        delete [] recvIndexMap_;
-        recvIndexMap_ = 0;
       }
+
+      template <class Communication>
+      void init( const Communication& comm )
+      {
+        if( ! mpAccess_ )
+        {
+          mpAccess_.reset( new MPAccessImplType( comm ) );
+        }
+      }
+
+      // no copying
+      DependencyCache( const DependencyCache & ) = delete;
 
       //! return communication interface
       InterfaceType communicationInterface() const
@@ -428,7 +416,7 @@ namespace Dune
         return interface_;
       }
 
-      //! return communcation direction
+      //! return communication direction
       CommunicationDirection communicationDirection() const
       {
         return dir_;
@@ -446,13 +434,10 @@ namespace Dune
         return exchangeTime_;
       }
 
-      // build linkage and index maps
-      inline void buildMaps();
-
       // notify for open non-blocking communications
       void attachComm()
       {
-        ++ nonBlockingObjects_;
+        ++nonBlockingObjects_;
       }
 
       // notify for finished non-blocking communication
@@ -466,12 +451,17 @@ namespace Dune
       {
         return true ;
       }
+
     protected:
+      // build linkage and index maps
+      template < class Space >
+      inline void buildMaps( const Space& space );
+
       // check consistency of maps
       inline void checkConsistency();
 
-      template< class LS, class IMV, InterfaceType CI >
-      inline void buildMaps( LinkBuilder< LS, IMV, CI > &handle );
+      template< class Space, class Comm, class LS, class IMV, InterfaceType CI >
+      inline void buildMaps( const Space& space, LinkBuilder< Comm, LS, IMV, CI > &handle );
 
     public:
       //! return MPI rank of link
@@ -486,34 +476,42 @@ namespace Dune
         return mpAccess().nlinks();
       }
 
-      //! check if grid has changed and rebuild cache if necessary
-      inline void rebuild()
+      /** \brief Rebuild underlying exchange dof mapping.
+       *  \note: Different spaces may have the same exchange dof mapping!
+       */
+      template <class Space>
+      inline void rebuild( const Space& space )
       {
+        const auto& comm = space.gridPart().comm();
+        const int spcSequence = space.sequence();
+
         // only in parallel we have to do something
-        if( mySize_ <= 1 ) return;
+        if( comm.size() <= 1 ) return;
 
         // make sure all non-blocking communications have been finished by now
         assert( noOpenCommunications() );
 #ifndef NDEBUG
         // make sure buildMaps is called on every process
         // otherwise the programs wait here until forever
-        int willRebuild = (sequence_ != space_.sequence()) ? 1 : 0;
+        int willRebuild = (sequence_ != spcSequence) ? 1 : 0;
         const int myRebuild = willRebuild;
 
         // send willRebuild from rank 0 to all
-        gridPart_.comm().broadcast( &willRebuild, 1 , 0);
+        comm.broadcast( &willRebuild, 1 , 0);
 
         assert( willRebuild == myRebuild );
 #endif
 
         // check whether grid has changed.
-        if( sequence_ != space_.sequence() )
+        if( sequence_ != spcSequence )
         {
           // take timer needed for rebuild
           Dune::Timer buildTime;
 
-          buildMaps();
-          sequence_ = space_.sequence();
+          // rebuild maps holding exchange dof information
+          buildMaps( space );
+          // update sequence number
+          sequence_ = spcSequence;
 
           // store time needed
           buildTime_ = buildTime.elapsed();
@@ -565,7 +563,7 @@ namespace Dune
                                ObjectStreamType &str,
                                const DiscreteFunction &discreteFunction ) const
       {
-        assert( sequence_ == space_.sequence() );
+        assert( sequence_ == discreteFunction.space().sequence() );
         const auto &indexMap = sendIndexMap_[ dest( link ) ];
         const int size = indexMap.size();
 
@@ -603,7 +601,7 @@ namespace Dune
         static_assert( ! std::is_pointer< Operation > :: value,
                        "DependencyCache::readBuffer: Operation needs to be a reference!");
 
-        assert( sequence_ == space_.sequence() );
+        assert( sequence_ == discreteFunction.space().sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
 
         // get index map of rank belonging to link
@@ -631,24 +629,28 @@ namespace Dune
     };
 
     // --LinkBuilder
-    template< class Space >
-    template< class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
-    class DependencyCache< Space > :: LinkBuilder
+    template< class BlockMapper >
+    template< class Communication, class LinkStorage, class IndexMapVector, InterfaceType CommInterface >
+    class DependencyCache< BlockMapper > :: LinkBuilder
     : public CommDataHandleIF
-      < LinkBuilder< LinkStorage, IndexMapVector, CommInterface >,
-                     typename SpaceType :: BlockMapperType :: GlobalKeyType >
+      < LinkBuilder< Communication, LinkStorage, IndexMapVector, CommInterface >,
+                     typename BlockMapper :: GlobalKeyType >
     {
     public:
-      typedef LinkStorage LinkStorageType;
+      typedef Communication  CommunicationType;
+      typedef BlockMapper    BlockMapperType;
 
-      typedef IndexMapVector IndexMapVectorType;
-
-      typedef typename SpaceType :: BlockMapperType BlockMapperType;
       typedef typename BlockMapperType :: GlobalKeyType  GlobalKeyType;
+
+      typedef LinkStorage LinkStorageType;
+      typedef IndexMapVector IndexMapVectorType;
 
       typedef GlobalKeyType DataType;
 
     protected:
+      const CommunicationType& comm_;
+      const BlockMapperType &blockMapper_;
+
       const GlobalKeyType myRank_;
       const GlobalKeyType mySize_;
 
@@ -657,28 +659,27 @@ namespace Dune
       IndexMapVectorType &sendIndexMap_;
       IndexMapVectorType &recvIndexMap_;
 
-      const SpaceType &space_;
-      const BlockMapperType &blockMapper_;
 
     public:
-      LinkBuilder( LinkStorageType &linkStorage,
+      LinkBuilder( const CommunicationType& comm,
+                   const BlockMapperType& blockMapper,
+                   LinkStorageType &linkStorage,
                    IndexMapVectorType &sendIdxMap,
-                   IndexMapVectorType &recvIdxMap,
-                   const SpaceType &space )
-      : myRank_( space.gridPart().comm().rank() ),
-        mySize_( space.gridPart().comm().size() ),
+                   IndexMapVectorType &recvIdxMap )
+      : comm_( comm ),
+        blockMapper_( blockMapper ),
+        myRank_( comm.rank() ),
+        mySize_( comm.size() ),
         linkStorage_( linkStorage ),
         sendIndexMap_( sendIdxMap ),
-        recvIndexMap_( recvIdxMap ),
-        space_( space ),
-        blockMapper_( space.blockMapper() )
+        recvIndexMap_( recvIdxMap )
       {}
 
     protected:
       void sendBackSendMaps()
       {
         // create ALU communicator
-        MPAccessImplType mpAccess( space_.gridPart().comm() );
+        MPAccessImplType mpAccess( comm_ );
 
         // build linkage
         mpAccess.removeLinkage();
@@ -712,7 +713,7 @@ namespace Dune
       }
 
     public:
-      //! desctructor
+      //! destructor
       ~LinkBuilder()
       {
         sendBackSendMaps();
@@ -721,7 +722,7 @@ namespace Dune
       //! returns true if combination is contained
       bool contains( int dim, int codim ) const
       {
-        return space_.blockMapper().contains( codim );
+        return blockMapper_.contains( codim );
       }
 
       //! return whether we have a fixed size
@@ -746,7 +747,6 @@ namespace Dune
 
           const int numDofs = blockMapper_.numEntityDofs( entity );
 
-          // int should be GlobalKey !!!!
           typedef std::vector< GlobalKeyType >  IndicesType ;
           IndicesType indices( numDofs );
 
@@ -824,28 +824,36 @@ namespace Dune
 
 
 
+    template< class BlockMapper >
     template< class Space >
-    inline void DependencyCache< Space > :: buildMaps()
+    inline void DependencyCache< BlockMapper > :: buildMaps( const Space& space )
     {
+      typedef typename Space::GridPartType::CollectiveCommunicationType CommunicationType;
       if( interface_ == InteriorBorder_All_Interface )
       {
-        LinkBuilder< LinkStorageType, IndexMapVectorType,
+        LinkBuilder< CommunicationType, LinkStorageType, IndexMapVectorType,
                      InteriorBorder_All_Interface >
-          handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
-        buildMaps( handle );
+          handle( space.gridPart().comm(),
+                  space.blockMapper(),
+                  linkStorage_, sendIndexMap_, recvIndexMap_ );
+        buildMaps( space, handle );
       }
       else if( interface_ == InteriorBorder_InteriorBorder_Interface )
       {
-        LinkBuilder< LinkStorageType, IndexMapVectorType,
+        LinkBuilder< CommunicationType, LinkStorageType, IndexMapVectorType,
                      InteriorBorder_InteriorBorder_Interface >
-          handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
-        buildMaps( handle );
+          handle( space.gridPart().comm(),
+                  space.blockMapper(),
+                  linkStorage_, sendIndexMap_, recvIndexMap_ );
+        buildMaps( space, handle );
       }
       else if( interface_ == All_All_Interface )
       {
-        LinkBuilder< LinkStorageType, IndexMapVectorType, All_All_Interface >
-          handle( linkStorage_, sendIndexMap_, recvIndexMap_, space_ );
-        buildMaps( handle );
+        LinkBuilder< CommunicationType, LinkStorageType, IndexMapVectorType, All_All_Interface >
+          handle( space.gridPart().comm(),
+                  space.blockMapper(),
+                  linkStorage_, sendIndexMap_, recvIndexMap_ );
+        buildMaps( space, handle );
       }
       else
         DUNE_THROW( NotImplemented, "DependencyCache for the given interface has not been implemented, yet." );
@@ -856,19 +864,21 @@ namespace Dune
     }
 
 
-    template< class Space >
-    template< class LS, class IMV, InterfaceType CI >
-    inline void DependencyCache< Space > :: buildMaps( LinkBuilder< LS, IMV, CI > &handle )
+    template< class BlockMapper >
+    template< class Space, class Comm, class LS, class IMV, InterfaceType CI >
+    inline void DependencyCache< BlockMapper >
+    :: buildMaps( const Space& space, LinkBuilder< Comm, LS, IMV, CI > &handle )
     {
       linkStorage_.clear();
-      for( int i = 0; i < mySize_; ++i )
+      const size_t size = recvIndexMap_.size();
+      for( size_t i = 0; i < size; ++i )
       {
         recvIndexMap_[ i ].clear();
         sendIndexMap_[ i ].clear();
       }
 
       // make one all to all communication to build up communication pattern
-      gridPart_.communicate( handle, All_All_Interface , ForwardCommunication );
+      space.gridPart().communicate( handle, All_All_Interface , ForwardCommunication );
 
       // remove old linkage
       mpAccess().removeLinkage();
@@ -876,8 +886,8 @@ namespace Dune
       mpAccess().insertRequestSymetric( linkStorage_ );
     }
 
-    template< class Space >
-    inline void DependencyCache< Space > :: checkConsistency()
+    template< class BlockMapper >
+    inline void DependencyCache< BlockMapper > :: checkConsistency()
     {
       const int nLinks = nlinks();
 
@@ -923,15 +933,18 @@ namespace Dune
       }
     }
 
-    template< class Space >
+    template< class BlockMapper >
     template< class DiscreteFunction, class Operation >
-    inline void DependencyCache< Space > :: exchange( DiscreteFunction &discreteFunction, const Operation& operation )
+    inline void DependencyCache< BlockMapper >
+    :: exchange( DiscreteFunction &discreteFunction, const Operation& operation )
     {
+      const auto& space = discreteFunction.space();
+
       // on serial runs: do nothing
-      if( mySize_ <= 1 ) return;
+      if( space.gridPart().comm().size() <= 1 ) return;
 
       // create non-blocking communication object
-      NonBlockingCommunicationType nbc( *this, mySize_ );
+      NonBlockingCommunicationType nbc( space, *this );
 
       // perform send operation
       nbc.send( discreteFunction );
@@ -940,20 +953,23 @@ namespace Dune
       exchangeTime_ = nbc.receive( discreteFunction, operation );
     }
 
-    template< class Space >
+    template< class BlockMapper >
     template< class DiscreteFunction >
-    inline void DependencyCache< Space > :: writeBuffer( ObjectStreamVectorType &osv,
-                                                         const DiscreteFunction &discreteFunction ) const
+    inline void DependencyCache< BlockMapper >
+    :: writeBuffer( ObjectStreamVectorType &osv,
+                    const DiscreteFunction &discreteFunction ) const
     {
       const int numLinks = nlinks();
       for( int link = 0; link < numLinks; ++link )
         writeBuffer( link, osv[ link ], discreteFunction );
     }
 
-    template< class Space >
+    template< class BlockMapper >
     template< class DiscreteFunction, class Operation >
-    inline void DependencyCache< Space > :: readBuffer( ObjectStreamVectorType &osv, DiscreteFunction &discreteFunction,
-                                                        const Operation& operation ) const
+    inline void DependencyCache< BlockMapper >
+    :: readBuffer( ObjectStreamVectorType &osv,
+                   DiscreteFunction &discreteFunction,
+                   const Operation& operation ) const
     {
       const int numLinks = nlinks();
       for( int link = 0; link < numLinks; ++link )
@@ -961,36 +977,31 @@ namespace Dune
     }
 
     //! Key for CommManager singleton list
-    template <class SpaceImp>
+    template < class BlockMapper >
     class CommManagerSingletonKey
     {
-      const SpaceImp & space_;
+      const BlockMapper& blockMapper_;
       const InterfaceType interface_;
       const CommunicationDirection dir_;
+      const int pSize_;
     public:
       //! constructor taking space
-      CommManagerSingletonKey(const SpaceImp & space,
+      CommManagerSingletonKey(const int pSize,
+                              const BlockMapper& blockMapper,
                               const InterfaceType interface,
                               const CommunicationDirection dir)
-        : space_(space), interface_(interface), dir_(dir)
+        : blockMapper_( blockMapper ),
+          interface_(interface), dir_(dir), pSize_( pSize )
       {}
 
       //! copy constructor
-      CommManagerSingletonKey(const CommManagerSingletonKey & org)
-        : space_(org.space_), interface_(org.interface_), dir_(org.dir_)
-      {}
+      CommManagerSingletonKey(const CommManagerSingletonKey & org) = default;
 
       //! returns true if indexSet pointer and numDofs are equal
       bool operator == (const CommManagerSingletonKey & otherKey) const
       {
-        // mapper of space is singleton
-        return (&(space_.blockMapper()) == & (otherKey.space_.blockMapper()) );
-      }
-
-      //! return reference to index set
-      const SpaceImp & space() const
-      {
-        return space_;
+        // block mapper of space is either singleton or the pointers differ anyway
+        return (&(blockMapper_) == &(otherKey.blockMapper_) );
       }
 
       //! return communication interface
@@ -1004,6 +1015,9 @@ namespace Dune
       {
         return dir_;
       }
+
+      //! return number of processes
+      int pSize () const { return pSize_; }
     };
 
     //! Factory class for SingletonList to tell how objects are created and
@@ -1011,11 +1025,11 @@ namespace Dune
     template <class KeyImp, class ObjectImp>
     class CommManagerFactory
     {
-      public:
+    public:
       //! create new communiaction manager
       static ObjectImp * createObject( const KeyImp & key )
       {
-        return new ObjectImp(key.space(), key.interface(), key.direction());
+        return new ObjectImp(key.pSize(), key.interface(), key.direction());
       }
 
       //! delete comm manager
@@ -1031,87 +1045,85 @@ namespace Dune
     {
       typedef CommunicationManager<SpaceImp> ThisType;
 
-      // type of communication manager object which does communication
-      typedef DependencyCache<SpaceImp> DependencyCacheType;
+      typedef typename SpaceImp::BlockMapperType                  BlockMapperType;
 
-      typedef CommManagerSingletonKey<SpaceImp> KeyType;
+      // type of communication manager object which does communication
+      typedef DependencyCache< BlockMapperType > DependencyCacheType;
+
+      typedef CommManagerSingletonKey< BlockMapperType > KeyType;
       typedef CommManagerFactory<KeyType, DependencyCacheType> FactoryType;
 
       typedef SingletonList< KeyType , DependencyCacheType , FactoryType > CommunicationProviderType;
 
       typedef SpaceImp SpaceType;
-      const SpaceType & space_;
-
-      const KeyType key_;
-
-      const int mySize_;
+      const SpaceType& space_;
 
       typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType;
 
-      // is singleton per space
-      DependencyCacheType &cache_;
-      CommunicationManager(const ThisType& org);
+      // is singleton per block mapper (spaces can differ)
+      std::unique_ptr< DependencyCacheType, typename CommunicationProviderType::Deleter > cache_;
+
+      // copy constructor
+      CommunicationManager(const ThisType& org) = delete;
     public:
       // type of non-blocking communication object
       typedef typename DependencyCacheType :: NonBlockingCommunicationType  NonBlockingCommunicationType;
 
       //! constructor taking space and communication interface/direction
-      CommunicationManager(const SpaceType & space,
+      CommunicationManager(const SpaceType& space,
                            const InterfaceType interface,
                            const CommunicationDirection dir)
-        : space_(space)
-        , key_(space_,interface,dir)
-        , mySize_(space_.gridPart().comm().size())
-        , cache_(CommunicationProviderType::getObject(key_))
-      {}
+        : space_( space ) // my space which should have a longer life time than
+        // this communicator since the communicator is created inside the space
+        , cache_( &CommunicationProviderType::getObject(
+              KeyType( space.gridPart().comm().size(), space_.blockMapper(), interface,dir) ) )
+      {
+        // pass communication on to dependency cache
+        cache().init( space.gridPart().comm() );
+
+        //std::cout << "P["<< space.gridPart().comm().rank() <<"] CommunicationManager: created and got cache " << &cache_ << std::endl;
+      }
 
       //! constructor taking space and communication interface/direction
-      CommunicationManager(const SpaceType & space)
-        : space_(space)
-        , key_(space_, space.communicationInterface(), space.communicationDirection())
-        , mySize_(space_.gridPart().comm().size())
-        , cache_(CommunicationProviderType::getObject(key_))
+      CommunicationManager(const SpaceType& space)
+        : CommunicationManager( space, space.communicationInterface(), space.communicationDirection() )
       {}
 
-      //! remove object comm
-      ~CommunicationManager()
-      {
-        CommunicationProviderType::removeObject(cache_);
-      }
+      DependencyCacheType& cache () const { assert( cache_ ); return *cache_; }
 
       //! return communication interface
       InterfaceType communicationInterface() const
       {
-        return cache_.communicationInterface();
+        return cache().communicationInterface();
       }
 
       //! return communcation direction
       CommunicationDirection communicationDirection() const
       {
-        return cache_.communicationDirection();
+        return cache().communicationDirection();
       }
 
       //! return time needed for last build
       double buildTime() const
       {
-        return cache_.buildTime();
+        return cache().buildTime();
       }
 
       //! return time needed for last exchange
       double exchangeTime() const
       {
-        return cache_.exchangeTime();
+        return cache().exchangeTime();
       }
 
       MPAccessInterfaceType& mpAccess()
       {
-        return cache_.mpAccess();
+        return cache().mpAccess();
       }
 
       //! return object for non-blocking communication
       NonBlockingCommunicationType nonBlockingCommunication() const
       {
-        return cache_.nonBlockingCommunication();
+        return cache().nonBlockingCommunication( space_ );
       }
 
       //! exchange discrete function to all procs we share data
@@ -1134,14 +1146,14 @@ namespace Dune
       template <class DiscreteFunctionType, class Operation>
       void exchange(DiscreteFunctionType & df, const Operation& operation ) const
       {
-        cache_.exchange( df, operation );
+        cache().exchange( df, operation );
       }
 
       //! write given df to given buffer
       template <class ObjectStreamVectorType, class DiscreteFunctionType>
       void writeBuffer(ObjectStreamVectorType& osv, const DiscreteFunctionType & df) const
       {
-        cache_.writeBuffer( osv, df );
+        cache().writeBuffer( osv, df );
       }
 
       // read given df from given buffer
@@ -1161,13 +1173,13 @@ namespace Dune
       template <class ObjectStreamVectorType, class DiscreteFunctionType, class OperationType>
       void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df, const OperationType& operation) const
       {
-        cache_.readBuffer( osv, df , operation);
+        cache().readBuffer( osv, df , operation);
       }
 
       //! rebuild underlying cache if necessary
       void rebuildCache()
       {
-        cache_.rebuild();
+        cache().rebuild( space_ );
       }
     };
 
