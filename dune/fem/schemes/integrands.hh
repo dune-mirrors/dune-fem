@@ -601,11 +601,11 @@ namespace Dune
 
 
 
-    // DiffusionModelIntegrands
-    // ------------------------
+    // ConservationLawModelIntegrands
+    // ------------------------------
 
     template< class Model >
-    struct DiffusionModelIntegrands
+    struct ConservationLawModelIntegrands
     {
       typedef Model ModelType;
       typedef typename Model::GridPartType GridPartType;
@@ -619,7 +619,7 @@ namespace Dune
       typedef std::tuple< RangeType, JacobianRangeType > DomainValueType;
       typedef std::tuple< RangeType, JacobianRangeType > RangeValueType;
 
-      explicit DiffusionModelIntegrands ( const Model &model ) : model_( &model ) {}
+      explicit ConservationLawModelIntegrands ( const Model &model ) : model_( &model ) {}
 
       bool init ( const EntityType &entity ) { return model().init( entity ); }
 
@@ -634,7 +634,7 @@ namespace Dune
         RangeType source( 0 );
         model().source( x, std::get< 0 >( u ), std::get< 1 >( u ), source );
         JacobianRangeType dFlux( 0 );
-        model().diffusiveFlux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
+        model().flux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
         return std::make_tuple( source, dFlux );
       }
 
@@ -645,7 +645,7 @@ namespace Dune
             RangeType source( 0 );
             model().linSource( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), source );
             JacobianRangeType dFlux( 0 );
-            model().linDiffusiveFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
+            model().linFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
             return std::make_tuple( source, dFlux );
           };
       }
@@ -671,16 +671,16 @@ namespace Dune
       const Model &model () const { return *model_; }
 
     private:
-      const Model *model_;
+      const Model *model_ = nullptr;
     };
 
 
 
-    // DGDiffusionModelIntegrands
-    // --------------------------
+    // DGConservationLawModelIntegrands
+    // --------------------------------
 
     template< class Model >
-    struct DGDiffusionModelIntegrands
+    struct DGConservationLawModelIntegrands
     {
       typedef Model ModelType;
       typedef typename Model::GridPartType GridPartType;
@@ -696,7 +696,7 @@ namespace Dune
       typedef std::tuple< RangeType, JacobianRangeType > DomainValueType;
       typedef std::tuple< RangeType, JacobianRangeType > RangeValueType;
 
-      DGDiffusionModelIntegrands ( const Model &model, RangeFieldType penalty )
+      DGConservationLawModelIntegrands ( const Model &model, RangeFieldType penalty )
         : model_( &model ), penalty_( penalty )
       {}
 
@@ -730,7 +730,7 @@ namespace Dune
         RangeType source( 0 );
         model().source( x, std::get< 0 >( u ), std::get< 1 >( u ), source );
         JacobianRangeType dFlux( 0 );
-        model().diffusiveFlux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
+        model().flux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
         return RangeValueType( source, dFlux );
       }
 
@@ -741,7 +741,7 @@ namespace Dune
             RangeType source( 0 );
             model().linSource( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), source );
             JacobianRangeType dFlux( 0 );
-            model().linDiffusiveFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
+            model().linFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
             return RangeValueType( source, dFlux );
           };
       }
@@ -780,19 +780,19 @@ namespace Dune
 
         model().init( outside );
         JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
-        model().diffusiveFlux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uJump ), dFluxPrimeOut );
-        model().diffusiveFlux( xOut, std::get< 0 >( uOut ), 0, dFluxOut );
+        model().flux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uJump ), dFluxPrimeOut );
+        model().flux( xOut, std::get< 0 >( uOut ), 0, dFluxOut );
         dFluxPrimeOut -= dFluxOut;
         dFluxOut = 0;
-        model().diffusiveFlux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uOut ), dFluxOut );
+        model().flux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uOut ), dFluxOut );
 
         model().init( inside );
         JacobianRangeType dFluxIn( 0 ), dFluxPrimeIn( 0 );
-        model().diffusiveFlux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uJump ), dFluxPrimeIn );
-        model().diffusiveFlux( xIn, std::get< 0 >( uIn ), 0, dFluxIn );
+        model().flux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uJump ), dFluxPrimeIn );
+        model().flux( xIn, std::get< 0 >( uIn ), 0, dFluxIn );
         dFluxPrimeIn -= dFluxIn;
         dFluxIn = 0;
-        model().diffusiveFlux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uIn ), dFluxIn );
+        model().flux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uIn ), dFluxIn );
 
         RangeType int0 = std::get< 0 >( uJump );
         int0 *= beta_;
@@ -828,15 +828,15 @@ namespace Dune
 
           model().init( outside );
           JacobianRangeType dFluxPrimeOut( 0 );
-          model().linDiffusiveFlux( std::get< 0 >( uOut ), std::get< 1 >( uJump ), xOut, 0, std::get< 1 >( phiJump ), dFluxPrimeOut );
+          model().linFlux( std::get< 0 >( uOut ), std::get< 1 >( uJump ), xOut, 0, std::get< 1 >( phiJump ), dFluxPrimeOut );
 
           model().init( inside );
           JacobianRangeType dFluxIn( 0 ), dFluxPrimeIn( 0 );
-          model().linDiffusiveFlux( std::get< 0 >( uIn ), std::get< 1 >( uJump ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiJump ), dFluxPrimeIn );
-          model().linDiffusiveFlux( std::get< 0 >( uIn ), 0, xIn, std::get< 0 >( phiIn ), 0, dFluxIn );
+          model().linFlux( std::get< 0 >( uIn ), std::get< 1 >( uJump ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiJump ), dFluxPrimeIn );
+          model().linFlux( std::get< 0 >( uIn ), 0, xIn, std::get< 0 >( phiIn ), 0, dFluxIn );
           dFluxPrimeIn -= dFluxIn;
           dFluxIn = 0;
-          model().linDiffusiveFlux( std::get< 0 >( uIn ), std::get< 1 >( uIn ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), dFluxIn );
+          model().linFlux( std::get< 0 >( uIn ), std::get< 1 >( uIn ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), dFluxIn );
 
           RangeType int0 = std::get< 0 >( phiJump );
           int0 *= beta_;
@@ -861,15 +861,15 @@ namespace Dune
 
           model().init( outside );
           JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
-          model().linDiffusiveFlux( std::get< 0 >( uOut ), std::get< 1 >( uJump ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiJump ), dFluxPrimeOut );
-          model().linDiffusiveFlux( std::get< 0 >( uOut ), 0, xOut, std::get< 0 >( phiOut ), 0, dFluxOut );
+          model().linFlux( std::get< 0 >( uOut ), std::get< 1 >( uJump ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiJump ), dFluxPrimeOut );
+          model().linFlux( std::get< 0 >( uOut ), 0, xOut, std::get< 0 >( phiOut ), 0, dFluxOut );
           dFluxPrimeOut -= dFluxOut;
           dFluxOut = 0;
-          model().linDiffusiveFlux( std::get< 0 >( uOut ), std::get< 1 >( uOut ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), dFluxOut );
+          model().linFlux( std::get< 0 >( uOut ), std::get< 1 >( uOut ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), dFluxOut );
 
           model().init( inside );
           JacobianRangeType dFluxPrimeIn( 0 );
-          model().linDiffusiveFlux( std::get< 0 >( uIn ), std::get< 1 >( uJump ), xIn, 0, std::get< 1 >( phiJump ), dFluxPrimeIn );
+          model().linFlux( std::get< 0 >( uIn ), std::get< 1 >( uJump ), xIn, 0, std::get< 1 >( phiJump ), dFluxPrimeIn );
 
           RangeType int0 = std::get< 0 >( phiJump );
           int0 *= beta_;
@@ -889,7 +889,7 @@ namespace Dune
     private:
       const IntersectionType &intersection () const { assert( intersection_ ); return *intersection_; }
 
-      const Model *model_;
+      const Model *model_ = nullptr;
       RangeFieldType penalty_;
       const IntersectionType *intersection_ = nullptr;
       RangeFieldType beta_;

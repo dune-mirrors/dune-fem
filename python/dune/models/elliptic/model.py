@@ -51,8 +51,8 @@ class EllipticModel:
 
         self.source = [assign(self.arg_r, construct("RRangeType", 0))]
         self.linSource = [assign(self.arg_r, construct("RRangeType", 0))]
-        self.diffusiveFlux = [assign(self.arg_dr, construct("RJacobianRangeType", 0))]
-        self.linDiffusiveFlux = [assign(self.arg_dr, construct("RJacobianRangeType", 0))]
+        self.flux = [assign(self.arg_dr, construct("RJacobianRangeType", 0))]
+        self.linFlux = [assign(self.arg_dr, construct("RJacobianRangeType", 0))]
         self.fluxDivergence = [assign(self.arg_r, construct("RRangeType", 0))]
         self.alpha = [assign(self.arg_r, construct("RRangeType", 0))]
         self.linAlpha = [assign(self.arg_r, construct("RRangeType", 0))]
@@ -64,7 +64,7 @@ class EllipticModel:
         self.symmetric = False
 
         self.baseName = "elliptic"
-        self.modelWrapper = "DiffusionModelWrapper< Model >"
+        self.modelWrapper = "ConservationLawModelWrapper< Model >"
 
     def predefineCoefficients(self,predefined,x):
         for coefficient, idx in self.coefficients.items():
@@ -190,10 +190,13 @@ class EllipticModel:
         code.append(Method('void', 'source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.source, const=True))
         code.append(Method('void', 'linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.linSource, const=True))
 
-        code.append(Method('void', 'diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.diffusiveFlux, const=True))
-        code.append(Method('void', 'linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.linDiffusiveFlux, const=True))
-
+        code.append(Method('void', 'flux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.flux, const=True))
+        code.append(Method('void', 'linFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.linFlux, const=True))
         code.append(Method('void', 'fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r], code=self.fluxDivergence, const=True))
+
+        # deprecated methods
+        code.append(Method('[[deprecated]] void', 'diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code='flux(x, u, du, result );', const=True))
+        code.append(Method('[[deprecated]] void', 'linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code='linFlux( ubar, dubar, x, u, du, result );', const=True))
 
         code.append(Method('void', 'alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r], code=self.alpha, const=True))
         code.append(Method('void', 'linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r], code=self.linAlpha, const=True))

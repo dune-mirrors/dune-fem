@@ -1,4 +1,5 @@
 set(HEADERS
+  conservationlawmodel.hh
   dgelliptic.hh
   dgfemscheme.hh
   diffusionmodel.hh

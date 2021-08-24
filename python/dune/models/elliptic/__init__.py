@@ -128,7 +128,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     if 'virtualModel' in kwargs:
         virtualModel = kwargs.pop('virtualModel')
     else:
-        virtualModel = 'dune/fem/schemes/diffusionmodel.hh'
+        virtualModel = 'dune/fem/schemes/conservationlawmodel.hh'
     writer.emit('#include <' + virtualModel + '>')
 
     nameSpace = NameSpace("ModelImpl_" + signature)
