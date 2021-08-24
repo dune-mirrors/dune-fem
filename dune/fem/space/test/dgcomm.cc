@@ -71,6 +71,13 @@ typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
 typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
   polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
+typedef FunctionSpace < double , double, GRIDDIM , 3 > FuncSpace2;
+typedef DiscontinuousGalerkinSpace<FuncSpace2, GridPartType,
+  polOrd,CachingStorage> DiscreteFunctionSpaceType2;
+
+typedef LegendreDiscontinuousGalerkinSpace<FuncSpace2, GridPartType,
+  polOrd,CachingStorage> DiscreteFunctionSpaceType3;
+
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
@@ -223,6 +230,37 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   return error;
 }
 
+std::shared_ptr< GridPartType > gpPtr;
+std::shared_ptr< DiscreteFunctionSpaceType > spcPtr;
+
+std::shared_ptr< DiscreteFunctionType > createSolution(MyGridType& grid)
+{
+  {
+    std::shared_ptr< GridPartType > gp1( new GridPartType(grid) );
+    std::shared_ptr< DiscreteFunctionSpaceType > spc1( new DiscreteFunctionSpaceType(*gp1) );
+    std::shared_ptr< DiscreteFunctionType > sol1( new DiscreteFunctionType("sol1", *spc1) );
+
+    sol1->communicate();
+
+    std::shared_ptr< GridPartType > gp2( new GridPartType(grid) );
+    std::shared_ptr< DiscreteFunctionSpaceType > spc2( new DiscreteFunctionSpaceType(*gp2) );
+    std::shared_ptr< DiscreteFunctionType > sol2( new DiscreteFunctionType("sol2", *spc2) );
+
+    sol2->communicate();
+
+    std::shared_ptr< DiscreteFunctionSpaceType2 > spc3( new DiscreteFunctionSpaceType2(*gp2) );
+    typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType2 > DiscreteFunctionType2;
+    std::shared_ptr< DiscreteFunctionType2 > sol3( new DiscreteFunctionType2("sol3", *spc3) );
+
+    sol3->communicate();
+    sol2->communicate();
+  }
+
+  gpPtr.reset( new GridPartType( grid ) );
+  spcPtr.reset( new DiscreteFunctionSpaceType( *gpPtr ) );
+  std::shared_ptr< DiscreteFunctionType > sol( new DiscreteFunctionType("sol", *spcPtr));
+  return sol;
+}
 
 //**************************************************
 //
@@ -260,17 +298,21 @@ try {
   MyGridType &grid = Dune::Fem::TestGrid::grid();
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
-  GridPartType part ( grid );
-  DiscreteFunctionSpaceType space( part );
-  DiscreteFunctionType solution ( "sol", space );
+  std::shared_ptr< DiscreteFunctionType > solution = createSolution( grid );
+
   for(int i=0; i<ml; ++i )
   {
     if( grid.comm().rank() == 0)
       std::cout << std::endl << "**** Start communication cycle " << i << "  ****" << std::endl;
 
     GlobalRefine :: apply( grid, step );
-    error[ i ] = algorithm ( grid , solution, step, (i==ml-1));
+    error[ i ] = algorithm ( grid , *solution, step, (i==ml-1));
   }
+
+  solution.reset();
+  spcPtr.reset();
+  gpPtr.reset();
+
   return 0;
 }
 catch( const Dune :: Exception &exception )

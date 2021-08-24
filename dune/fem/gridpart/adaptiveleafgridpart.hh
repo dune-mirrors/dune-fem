@@ -109,7 +109,7 @@ namespace Dune
       LeafGridView leafGridView_ ;
 
       // reference to index set
-      const IndexSetType* indexSet_;
+      std::unique_ptr< IndexSetType, typename IndexSetProviderType::Deleter > indexSet_;
 
       using BaseType::grid_;
 
@@ -133,21 +133,10 @@ namespace Dune
       AdaptiveGridPartBase ( GridType& grid, const NoIndexSetType& noIndexSet )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( nullptr ) // not created because noIndexSet was passed
+        indexSet_() // not created because noIndexSet was passed
       {}
 
     public:
-      /** \brief Destructor removing index set, if only one reference left, index set
-          removed.  */
-      ~AdaptiveGridPartBase ()
-      {
-        if( indexSet_ )
-        {
-          IndexSetProviderType::removeObject( indexSet() );
-          indexSet_ = nullptr;
-        }
-      }
-
       using BaseType::grid;
 
       //! Returns reference to index set of the underlying grid
