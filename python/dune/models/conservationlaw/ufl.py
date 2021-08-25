@@ -24,7 +24,7 @@ from dune.source.cplusplus import UnformattedExpression, Block
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, return_
 
-from .model import EllipticModel
+from .model import ConservationLawModel
 
 def generateDirichletCode(predefined, tensor, tempVars=True):
     keys = tensor.keys()
@@ -132,7 +132,7 @@ def compileUFL(form, patch, *args, **kwargs):
     if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
-        raise Exception("Elliptic model requires form with at least two arguments.")
+        raise Exception("ConservationLaw model requires form with at least two arguments.")
 
     phi_, u_ = form.arguments()
 
@@ -149,7 +149,7 @@ def compileUFL(form, patch, *args, **kwargs):
     _, coeff_ = extract_arguments_and_coefficients(form)
     coeff_ = set(coeff_)
 
-    # added for dirichlet treatment same as elliptic model
+    # added for dirichlet treatment same as conservationlaw model
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
     # remove the dirichletBCs
     arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
@@ -206,9 +206,9 @@ def compileUFL(form, patch, *args, **kwargs):
     # linSource = linSources[0] + linSources[1]
 
     if patch is not None:
-        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
     else:
-        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
     model._replaceCoeff = coeff
 
     model.hasNeumanBoundary = not boundarySource.is_zero()

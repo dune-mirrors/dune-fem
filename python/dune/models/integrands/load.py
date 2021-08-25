@@ -235,7 +235,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         _, coeff_ = extract_arguments_and_coefficients(form)
         coeff_ = set(coeff_)
 
-        # added for dirichlet treatment same as elliptic model
+        # added for dirichlet treatment same as conservationlaw model
         dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
         # remove the dirichletBCs
         arg = [arg for arg in args if not isinstance(arg, DirichletBC)]

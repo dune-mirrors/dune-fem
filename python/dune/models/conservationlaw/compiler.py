@@ -35,7 +35,7 @@ def version(package_name):
 
 
 def main():
-    description = 'dune-fempy elliptic model compiler'
+    description = 'dune-fempy conservationlaw model compiler'
 
     parser = ArgumentParser(description=description)
     parser.add_argument('input', help='name of input .ufl file')

@@ -59,7 +59,7 @@ def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
 
     return preamble, values
 
-# used for Dirichlet conditions - taken from elliptic
+# used for Dirichlet conditions - taken from conservationlaw
 def generateDirichletCode(predefined, tensor, tempVars=True):
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
@@ -197,7 +197,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     if not isinstance(form, Form):
         raise ValueError("ufl.Form or ufl.Equation expected.")
 
-    # added for dirichlet treatment same as elliptic model
+    # added for dirichlet treatment same as conservationlaw model
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
 
     uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
@@ -419,7 +419,7 @@ def compileUFL(form, *args, tempVars=True, virtualize=True):
     if not isinstance(form, Form):
         raise ValueError("ufl.Form or ufl.Equation expected.")
 
-    # added for dirichlet treatment same as elliptic model
+    # added for dirichlet treatment same as conservationlaw model
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
 
     uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
