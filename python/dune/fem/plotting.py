@@ -172,7 +172,11 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         try:
             subPlot = figure[1]
             figure = figure[0]
-            pyplot.sca(subPlot)
+
+            if isinstance(subPlot, pyplot.Axes):
+                pyplot.sca(subPlot)
+            else:
+                pyplot.subplot(subPlot)
         except:
             pass
         newFig = False
