@@ -18,13 +18,18 @@ def triangulationOfNetwork(grid, level=0, linewidth=0.01):
     for i in range(m):
         i0 = n+2*i
         t[i][2] = i0
-        t[m+i] = [t[i][1], i0, i0+1]
-        xs = [x[t[i][0]], x[t[i][1]]]
-        d = (xs[1] - xs[0])
-        d *= 0.5 * linewidth / linalg.norm(d)
-        d = [d[1], -d[0]]
-        x[i0], x[i0+1] = xs[0] + d, xs[1] + d
-        x[t[i][0]], x[t[i][1]] = xs[0] - d, xs[1] - d
+        t[m+i][0] = t[i][1]
+        t[m+i][1] = i0
+        t[m+i][2] = i0+1
+        x0 = x[t[i][0]]
+        x1 = x[t[i][1]]
+        d = x1 - x0
+        d *= 0.5 * linewidth / (d[0]**2+d[1]**2)**(1/2)
+        d = [d[1],-d[0]]
+        x[i0] = x0 + d
+        x[i0+1] = x1 + d
+        x[t[i][0]] -= d
+        x[t[i][1]] -= d
     return Triangulation(x[:,0], x[:,1], t)
 
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
@@ -46,7 +51,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
     if not solution == None:
         data = solution.pointData(level)
 
-        if grid.dimGrid == 1 and grid.dimWorld == 1:
+        if grid.dimGrid == 1 and grid.dimension == 1:
             if solution.dimRange > 1:
                 data = linalg.norm(solution.pointData(level),axis=1)
             else:
@@ -172,7 +177,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         try:
             subPlot = figure[1]
             figure = figure[0]
-            pyplot.sca(subPlot)
+            pyplot.subplot(subPlot)
         except:
             pass
         newFig = False
