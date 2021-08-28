@@ -6,14 +6,14 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def elliptic(view, equation, *args, **kwargs):
+def conservationlaw(view, equation, *args, **kwargs):
     import ufl
     import dune.ufl
-    import dune.models.elliptic as elliptic
+    import dune.models.conservationlaw as conservationlaw
 
     coefficients = kwargs.pop('coefficients', dict())
 
-    Model = elliptic.load(view, equation, *args, **kwargs).Model
+    Model = conservationlaw.load(view, equation, *args, **kwargs).Model
     # the following needs to be done for the linearized problem:
     # if isinstance(equation, ufl.equation.Equation):
     #     lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
@@ -23,6 +23,10 @@ def elliptic(view, equation, *args, **kwargs):
     #        setattr(Model, 'symmetric', 'false')
 
     return Model(coefficients=coefficients)
+
+# deprecated, use conservationlaw instead
+def elliptic(view, equation, *args, **kwargs):
+    return conservationlaw( view, equation, *args, **kwargs)
 
 def integrands(view, form, *args, **kwargs):
     import ufl

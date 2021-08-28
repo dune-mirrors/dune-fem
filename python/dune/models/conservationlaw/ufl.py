@@ -24,7 +24,7 @@ from dune.source.cplusplus import UnformattedExpression, Block
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, return_
 
-from .model import EllipticModel
+from .model import ConservationLawModel
 
 def generateDirichletCode(predefined, tensor, tempVars=True):
     keys = tensor.keys()
@@ -46,7 +46,7 @@ def splitUFLForm(form):
     dphi = Grad(phi)
 
     source = ExprTensor(phi.ufl_shape)
-    diffusiveFlux = ExprTensor(dphi.ufl_shape)
+    flux = ExprTensor(dphi.ufl_shape)
     boundarySource = ExprTensor(phi.ufl_shape)
 
     form = expand_indices(expand_derivatives(expand_compounds(form)))
@@ -57,7 +57,7 @@ def splitUFLForm(form):
                 if op[0] == phi:
                     source = source + fluxExprs[op]
                 elif op[0] == dphi:
-                    diffusiveFlux = diffusiveFlux + fluxExprs[op]
+                    flux = flux + fluxExprs[op]
                 else:
                     raise Exception('Invalid derivative encountered in bulk integral: ' + str(op[0]))
         elif integral.integral_type() == 'exterior_facet':
@@ -70,7 +70,7 @@ def splitUFLForm(form):
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
-    return source, diffusiveFlux, boundarySource
+    return source, flux, boundarySource
 
 
 #def splitUFL2(u,du,d2u,tree):
@@ -132,7 +132,7 @@ def compileUFL(form, patch, *args, **kwargs):
     if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
-        raise Exception("Elliptic model requires form with at least two arguments.")
+        raise Exception("ConservationLaw model requires form with at least two arguments.")
 
     phi_, u_ = form.arguments()
 
@@ -149,7 +149,7 @@ def compileUFL(form, patch, *args, **kwargs):
     _, coeff_ = extract_arguments_and_coefficients(form)
     coeff_ = set(coeff_)
 
-    # added for dirichlet treatment same as elliptic model
+    # added for dirichlet treatment same as conservationlaw model
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
     # remove the dirichletBCs
     arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
@@ -196,9 +196,9 @@ def compileUFL(form, patch, *args, **kwargs):
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
 
-    source, diffusiveFlux, boundarySource = splitUFLForm(form)
-    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm(dform)
-    fluxDivergence, _, _ = splitUFLForm(inner(source.as_ufl() - div(diffusiveFlux.as_ufl()), phi) * dx(0))
+    source, flux, boundarySource = splitUFLForm(form)
+    linSource, linFlux, linBoundarySource = splitUFLForm(dform)
+    fluxDivergence, _, _ = splitUFLForm(inner(source.as_ufl() - div(flux.as_ufl()), phi) * dx(0))
 
     # split linNVSource off linSource
     # linSources = splitUFL2(u, du, d2u, linSource)
@@ -206,9 +206,9 @@ def compileUFL(form, patch, *args, **kwargs):
     # linSource = linSources[0] + linSources[1]
 
     if patch is not None:
-        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
     else:
-        model = EllipticModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
     model._replaceCoeff = coeff
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
@@ -275,10 +275,10 @@ def compileUFL(form, patch, *args, **kwargs):
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
     model.predefineCoefficients(predefined,'x')
     model.source = generateCode(predefined, source, tempVars=tempVars)
-    model.diffusiveFlux = generateCode(predefined, diffusiveFlux, tempVars=tempVars)
+    model.flux = generateCode(predefined, flux, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar, d2ubar: model.arg_d2ubar})
     model.linSource = generateCode(predefined, linSource, tempVars=tempVars)
-    model.linDiffusiveFlux = generateCode(predefined, linDiffusiveFlux, tempVars=tempVars)
+    model.linFlux = generateCode(predefined, linFlux, tempVars=tempVars)
 
     # model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
 

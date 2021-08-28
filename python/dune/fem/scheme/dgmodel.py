@@ -59,7 +59,7 @@ def transform(space,penalty):
         model.space = space
         model.penalty = penalty
         model.baseName = "modelDG"
-        model.modelWrapper = "DGDiffusionModelWrapper< Model >"
+        model.modelWrapper = "DGConservationLawModelWrapper< Model >"
         # model.baseSignature = []
         # if penalty is not None:
         #     model.baseSignature += [penalty]

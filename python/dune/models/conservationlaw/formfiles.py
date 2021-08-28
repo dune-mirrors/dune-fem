@@ -89,7 +89,7 @@ def compileUFLFile(filename, tempVars=True):
     return [compileUFL(model.form, *model.constraints, tempVars=tempVars)[0].code(model.name) for model in models]
 
 def loadModels(view,filename, *args, **kwargs):
-    from dune.fem.model import elliptic
+    from dune.fem.model import conservationlaw
     models = loadUFLFile(filename)
-    return [ elliptic(view, model.form,
+    return [ conservationlaw(view, model.form,
              *model.constraints, *args, **kwargs) for model in models]

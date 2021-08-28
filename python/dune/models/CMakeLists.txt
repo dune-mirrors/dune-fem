@@ -1,4 +1,4 @@
-add_subdirectory(elliptic)
+add_subdirectory(conservationlaw)
 add_subdirectory(integrands)
 
 add_python_targets(models
