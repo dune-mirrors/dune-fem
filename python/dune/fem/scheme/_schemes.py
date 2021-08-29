@@ -33,7 +33,7 @@ def femscheme(includes, space, solver, operator, modelType):
     spaceType = space._typeName
     if modelType is None:
         includes += ["dune/fem/schemes/diffusionmodel.hh"]
-        modelType = "DiffusionModel< " +\
+        modelType = "ConservationLawModel< " +\
               "typename " + spaceType + "::GridPartType, " +\
               spaceType + "::dimRange, " +\
               spaceType + "::dimRange, " +\
@@ -76,7 +76,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
     vspaceType = vspace._module._typeName
     pspaceType = pspace._module._typeName
     typeName = "BurgersSchemeWrapper<PRPScheme< " + vspaceType + ", " + pspaceType + ", " +\
-        "DiffusionModel< " +\
+        "ConservationLawModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\
           vspaceType + "::dimRange+1 " +\
           vspaceType + "::dimRange+1 " +\
@@ -138,8 +138,8 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
                                    ",".join([linOp,model,penaltyClass]) + ">"
     parameters["penalty"] = parameters.get("penalty",penalty)
 
-    includes += ["dune/fem/schemes/diffusionmodel.hh"]
-    modelType = "DGDiffusionModel< " +\
+    includes += ["dune/fem/schemes/conservationlawmodel.hh"]
+    modelType = "DGConservationLawModel< " +\
           "typename " + spaceType + "::GridPartType, " +\
           spaceType + "::dimRange, " +\
           spaceType + "::dimRange, " +\
@@ -151,7 +151,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     includes = ["dune/fem/schemes/galerkin.hh"]
 
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
-            ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
+            ",".join([linOp,"Dune::Fem::DGConservationLawModelIntegrands<"+model+">"]) + ">"
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
@@ -298,7 +298,7 @@ def h1Galerkin(space, model, solver=None, parameters={}):
 
     includes = [ "dune/fem/schemes/galerkin.hh" ]
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableGalerkinOperator< " +\
-            ",".join([linOp,"Dune::Fem::DiffusionModelIntegrands<"+model+">"]) + ">"
+            ",".join([linOp,"Dune::Fem::ConservationLawModelIntegrands<"+model+">"]) + ">"
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
@@ -344,7 +344,7 @@ def stokes(space, model, name, viscosity, timestep, **kwargs):
     vspaceType = vspace._module._typeName
     pspaceType = pspace._module._typeName
     typeName = "StokesSchemeWrapper<UzawaScheme< " + vspaceType + ", " + pspaceType + ", " +\
-        "DiffusionModel< " +\
+        "ConservationLawModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\
           vspaceType + "::dimRange+1 " +\
           vspaceType + "::dimRange+1 " +\

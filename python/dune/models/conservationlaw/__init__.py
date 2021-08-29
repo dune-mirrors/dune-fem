@@ -92,7 +92,6 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
         endPos = name.find('_')
         modelName = name[0:endPos]
         module = builder.load(name, data, modelName)
-        # module = builder.load(name, data, "ellipticModel")
         renumbering = {}
         if renumbering is not None:
             setattr(module.Model, '_renumbering', renumbering)
@@ -128,7 +127,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     if 'virtualModel' in kwargs:
         virtualModel = kwargs.pop('virtualModel')
     else:
-        virtualModel = 'dune/fem/schemes/diffusionmodel.hh'
+        virtualModel = 'dune/fem/schemes/conservationlawmodel.hh'
     writer.emit('#include <' + virtualModel + '>')
 
     nameSpace = NameSpace("ModelImpl_" + signature)
@@ -210,7 +209,6 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     endPos = name.find('_')
     modelName = name[0:endPos]
     module = builder.load(name, source, modelName)
-    # module = builder.load(name, source, "ellipticModel")
     if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)
         setattr(module.Model, '_coefficientNames', {c['name']: i for i, c in enumerate(model._coefficients)})

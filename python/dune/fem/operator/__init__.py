@@ -190,12 +190,12 @@ def h1(model, domainSpace=None, rangeSpace=None):
     includes = ["dune/fem/schemes/elliptic.hh", "dune/fem/schemes/dirichletwrapper.hh", "dune/fempy/py/grid/gridpart.hh"]
     includes += domainSpace._includes + domainFunctionIncludes
     includes += rangeSpace._includes + rangeFunctionIncludes
-    includes += ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
+    includes += ["dune/fem/schemes/conservationlawmodel.hh", "dune/fempy/parameter.hh"]
 
     import dune.create as create
     linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
 
-    modelType = "DiffusionModel< " +\
+    modelType = "ConservationLawModel< " +\
           "typename " + domainSpaceType + "::GridPartType, " +\
           domainSpaceType + "::dimRange, " +\
           rangeSpaceType + "::dimRange, " +\

@@ -50,7 +50,7 @@ class Integrands(codegen.ModelClass):
         self.skeleton = None
         self.linearizedSkeleton = None
 
-        # Added for dirichlet treatment (same as elliptic model)
+        # Added for dirichlet treatment (same as conservationlaw model)
         self.hasDirichletBoundary = False
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = None # [return_(False)]
@@ -82,7 +82,7 @@ class Integrands(codegen.ModelClass):
             code.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
             code.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
-        # added for dirichlet treatment - same as elliptic model
+        # added for dirichlet treatment - same as conservationlaw model
         if self.hasDirichletBoundary is not None:
             code.append(TypeAlias("RRangeType",'Dune::FieldVector< double, '+ str(self.dimRange) + ' > '))
             code.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
