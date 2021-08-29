@@ -111,6 +111,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
 
     writer.emit("#ifndef GuardModelImpl_" + signature)
     writer.emit("#define GuardModelImpl_" + signature)
+    writer.emit("#define USING_DUNE_PYTHON 1")
 
     writer.emit('#include <config.h>')
     writer.emit(["#include <" + i + ">" for i in grid._includes])

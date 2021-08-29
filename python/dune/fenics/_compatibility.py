@@ -87,10 +87,10 @@ def SpatialCoordinate(cell,**unused):
 # solve given equation using galerkin scheme and integrands model
 def solve( equation, target, bc = None, solver=None, **kwargs):
     from dune.fem.scheme import galerkin
-    from dune.common.checkconfiguration import assertHave, ConfigurationError
+    from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
     if solver is None:
         try:
-            assertHave("HAVE_UMFPACK")
+            assertCMakeHave("HAVE_UMFPACK")
             solver = ("suitesparse","umfpack")
         except ConfigurationError:
             solver = "gmres"

@@ -3,11 +3,18 @@ variables:
   # temporarily disable warning of deprecated declarionss since these cause
   # huge issues with the deprecation of the Topologies in dune-geometry
   # Also ci fails occasionally. This might happen when running on the Dresden runner
-  # which has TBB installed - Stuttgart runner doesn't. 
+  # which has TBB installed - Stuttgart runner doesn't.
   # Need to investigate if there is an issue with dune-fem and activated TBB
-  GLOBAL_CMAKE_FLAGS: '-DDUNE_RUNNING_IN_CI=TRUE -DUSE_PTHREADS=ON -DCMAKE_DISABLE_FIND_PACKAGE_TBB=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations" -DDUNE_ENABLE_PYTHONBINDINGS=ON -DALLOW_CXXFLAGS_OVERWRITE=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON'
-  DUNECI_CMAKE_FLAGS: '$GLOBAL_CMAKE_FLAGS'
-  DUNE_LOG_LEVEL:     DEBUG
+  GLOBAL_CMAKE_FLAGS: "-DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE \
+    -DALLOW_CXXFLAGS_OVERWRITE=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON \
+    "
+    # -DCMAKE_CXX_FLAGS='-Wall -fdiagnostics-color=always -std=c++2a -rdynamic' \
+    # -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE \
+    # -DBUILD_SHARED_LIBS=TRUE"
+  DUNECI_CMAKE_FLAGS: "$GLOBAL_CMAKE_FLAGS"
+  DUNE_CMAKE_FLAGS: "$GLOBAL_CMAKE_FLAGS"
+  DUNE_LOG_LEVEL:  WARNING
+  OMP_NUM_THREADS: 1
 
 before_script:
   - source /duneci/bin/duneci-init-job
@@ -15,18 +22,30 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-grid.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-localfunctions.git
+  # avoid issue with python bindings caused by dune-alugrid/istl being a
+  # dependency for the python package but not for dune-fem itself
+  - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
+  - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 ubuntu-20.04-gcc-9-17:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
   script:
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-    - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
     - duneci-standard-test
   variables:
     DUNECI_TOOLCHAIN: gcc-9-17
-    DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
-    DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DDUNE_PYTHON_INSTALL_LOCATION=none -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
-    DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
+    # DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
+    # DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=FALSE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
+    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
+  tags: [duneci]
+
+debian-11-gcc-9-20:
+  image: registry.dune-project.org/docker/ci/debian:11
+  script:
+    - duneci-standard-test
+  variables:
+    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
+    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
+    DUNECI_TOOLCHAIN: gcc-9-20
   tags: [duneci]
 
 debian-11-gcc-9-20-minimal-no-petsc:
@@ -38,25 +57,14 @@ debian-11-gcc-9-20-minimal-no-petsc:
     DUNECI_TOOLCHAIN: gcc-9-20
   tags: [stuttgart1]
 
-debian-11-gcc-9-20:
-  image: registry.dune-project.org/docker/ci/debian:11
-  script:
-    - duneci-standard-test
-  variables:
-    # DUNECI_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
-    # DUNECI_CMAKE_FLAGS: '$GLOBAL_CMAKE_FLAGS'
-    DUNECI_TOOLCHAIN: gcc-9-20
-  tags: [dresden]
 ubuntu:20.04-clang-10-17:
   image: registry.dune-project.org/docker/ci/ubuntu:20.04
   script:
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
-    - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
     - duneci-standard-test
   variables:
-    # Note: there is a singleton error on ubuntu in with clang and the
-    # MPIManger which requires that shared libs are turned ona
-    DUNECI_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
+    # it seems necesarry to build all libraries shared not only # 'libdunefem'
+    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
+    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
     # bug in CI clang-10-17 and clang-10-20 are mixed up
     DUNECI_TOOLCHAIN: clang-10-20
   tags: [duneci]
@@ -64,8 +72,7 @@ ubuntu:20.04-clang-10-17:
 debian:11--gcc-9-17:headercheck:
   image: registry.dune-project.org/docker/ci/debian:11
   script:
-    - DUNECI_CMAKE_FLAGS="-DDUNE_ENABLE_PYTHONBINDINGS=ON -DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
-    - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
+    - DUNECI_CMAKE_FLAGS="-DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
     - make headercheck

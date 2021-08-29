@@ -80,9 +80,7 @@ namespace Dune
       //! type of the DoF manager
       typedef DofManager< GridType > DofManagerType;
 
-      enum { minOrder = 1 };
-      enum { maxOrder = polynomialOrder };
-      enum { numOrders = maxOrder - minOrder + 1 };
+      enum { minOrder = 1, maxOrder = polynomialOrder, numOrders = maxOrder - minOrder + 1 };
 
       struct EntityDofStorage
       {

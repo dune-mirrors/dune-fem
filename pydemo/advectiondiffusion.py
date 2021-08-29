@@ -37,7 +37,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     # characteristic function for left/right boundary
     dD   = conditional((1+x[0])*(1-x[0])<1e-10,1,0)
     # penalty parameter
-    beta = Constant( 20*space.order**2 if space.order > 0 else 1,"beta")
+    beta = Constant( 20*space.order**2,"beta")
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
@@ -64,7 +64,12 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
         strongBC = DirichletBC(space,exact,dD)
 
     if space.storage[0] == "numpy":
-        solver={"solver":("suitesparse","umfpack")}
+        solver={"solver":("suitesparse","umfpack"),
+                "parameters":{"newton.verbose": True,
+                              "newton.linear.verbose": False,
+                              "newton.linear.tolerance":1e-5,
+                }
+               }
     else:
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
@@ -98,8 +103,8 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     return eoc
 
 
-storage = "numpy"
-threading.use = 8
+storage = "istl"
+threading.use = 4
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])

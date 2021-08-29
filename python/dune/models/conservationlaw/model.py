@@ -19,7 +19,7 @@ from dune.ufl.codegen import generateMethod
 from ufl.differentiation import Grad
 
 class ConservationLawModel:
-    version = "v1_2"
+    version = "v1_3"
     def __init__(self, dimDomain, dimRange, u, signature):
         assert isInteger(dimRange)
         self.dimDomain = dimDomain

@@ -4,6 +4,7 @@ import sys,os
 import logging
 logger = logging.getLogger(__name__)
 
+from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
 import dune.common.checkconfiguration as checkconfiguration
 import dune.generator
 from dune.deprecate import deprecated
@@ -90,10 +91,9 @@ def istl():
         "as_istl"
     ]
 
-from dune.common.checkconfiguration import assertHave, ConfigurationError
-try:
-    assertHave("HAVE_PETSC")
-    def petsc():
+def petsc():
+    try:
+        assertCMakeHave("HAVE_PETSC")
         dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
         rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
         def equalSpaces(space,rspace):
@@ -122,8 +122,11 @@ try:
                 solvers.petscsolver,\
                 "as_petsc"
             ]
-
-    def petscadapt():
+    except ConfigurationError:
+        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")
+def petscadapt():
+    try:
+        assertCMakeHave("HAVE_PETSC")
         dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
         rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
         def equalSpaces(space,rspace):
@@ -139,8 +142,5 @@ try:
             solvers.petscsolver,\
             "as_numpy"
         ]
-except ConfigurationError:
-    def petsc():
-        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")
-    def petscadapt():
+    except ConfigurationError:
         raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")

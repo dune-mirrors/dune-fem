@@ -599,7 +599,7 @@ namespace Dune
      */
     template< class Traits >
     inline bool operator== ( const DiscreteFunctionSpaceInterface< Traits > &X,
-                             const DiscreteFunctionSpaceInterface< Traits > &Y ) const
+                             const DiscreteFunctionSpaceInterface< Traits > &Y )
     {
       return &(X.blockMapper()) == &(Y.blockMapper());
     }

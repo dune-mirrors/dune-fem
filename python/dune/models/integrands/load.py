@@ -88,7 +88,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    version = "v1_2"
+    version = "v1_3"
     def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
         gridType = grid._typeName
@@ -163,6 +163,7 @@ class Source(object):
         writer = SourceWriter()
         writer.emit("#ifndef GuardIntegrands_" + self.signature())
         writer.emit("#define GuardIntegrands_" + self.signature())
+        writer.emit("#define USING_DUNE_PYTHON 1")
         writer.emit(code)
 
         name = self.name()
