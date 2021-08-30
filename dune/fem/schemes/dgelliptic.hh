@@ -275,7 +275,7 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
 
         JacobianRangeType adu( 0 );
         // apply diffusive flux
-        model().diffusiveFlux( quadrature[ pt ], vu, du, adu );
+        model().flux( quadrature[ pt ], vu, du, adu );
         adu *= weight;
 
         // add to local function
@@ -333,12 +333,12 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
                 dvalue[r][d] = -0.5 * normal[d] * jump[r];
             JacobianRangeType aduIn,aduOut;
             model().init( outside );
-            model().diffusiveFlux( quadOutside[ pt ], vuOut, duOut, aduOut );
+            model().flux( quadOutside[ pt ], vuOut, duOut, aduOut );
             auto pFactor = model().penalty( quadOutside[ pt ], vuOut );
             model().init( entity );
-            model().diffusiveFlux( quadInside[ pt ], vuIn, duIn, aduIn );
+            model().flux( quadInside[ pt ], vuIn, duIn, aduIn );
             JacobianRangeType affine;
-            model().diffusiveFlux( quadInside[ pt ], RangeType(0), JacobianRangeType(0), affine);
+            model().flux( quadInside[ pt ], RangeType(0), JacobianRangeType(0), affine);
             pFactor += model().penalty( quadInside[ pt ], vuIn );
             //! [Compute skeleton terms: obtain required values on the intersection]
 
@@ -356,7 +356,7 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
             //  [ u ] * { {A} grad phi_en } = -normal(u+ - u-) * 0.5 {A}    grad phi_en
             //  we actually need  G(u)tau with G(x,u) = d/sigma_j D_i(x,u,sigma)
             //  - we might need to assume D(x,u,sigma) = G(x,u)sigma + affine(x)
-            model().diffusiveFlux( quadInside[ pt ], vuIn, dvalue, advalue );
+            model().flux( quadInside[ pt ], vuIn, dvalue, advalue );
             // advalue -= affine;
 
             value *= weight;
@@ -412,11 +412,11 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
               for (int d=0;d<dimDomain;++d)
                 dvalue[r][d] = -0.5 * normal[d] * jump[r];
 
-            model().diffusiveFlux( quadInside[ pt ], jump, dvalue, advalue );
+            model().flux( quadInside[ pt ], jump, dvalue, advalue );
 
             // consistency term
             // {A grad u}.[phi] = {A grad u}.phi+ n_+ = 0.5*(grad u+ + grad u-).n_+ phi+
-            model().diffusiveFlux( quadInside[ pt ], vuIn, duIn, aduIn );
+            model().flux( quadInside[ pt ], vuIn, duIn, aduIn );
             aduIn.mmv(normal,value);
 
             for (int r=0;r<dimRange;++r)
@@ -516,7 +516,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
         model().linSource( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[ localCol ], aphi );
 
         // if gradient term is present
-        model().linDiffusiveFlux( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[ localCol ], adphi );
+        model().linFlux( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[ localCol ], adphi );
 
         // get column object and call axpy method
         jLocal.column( localCol ).axpy( phi, dphi, aphi, adphi, weight );
@@ -597,14 +597,14 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
           for( unsigned int i = 0; i < numBaseFunctions; ++i )
           {
             JacobianRangeType adphiEn = dphi[ i ];
-            model().linDiffusiveFlux( u0En, u0EnJac,   faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
+            model().linFlux( u0En, u0EnJac,   faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
           }
           auto pFactor = model().penalty( faceQuadInside[ pt ], u0En );
           model().init( neighbor );
           for( unsigned int i = 0; i < numBaseFunctions; ++i )
           {
             JacobianRangeType adphiNb = dphiNb[ i ];
-            model().linDiffusiveFlux( u0En, u0EnJac,   faceQuadOutside[ pt ], phiNb[i], adphiNb, dphiNb[ i ] );
+            model().linFlux( u0En, u0EnJac,   faceQuadOutside[ pt ], phiNb[i], adphiNb, dphiNb[ i ] );
           }
           pFactor += model().penalty( faceQuadOutside[ pt ], u0En );
           model().init( entity );
@@ -691,7 +691,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
           for( unsigned int i = 0; i < numBaseFunctions; ++i )
           {
             JacobianRangeType adphiEn = dphi[ i ];
-            model().linDiffusiveFlux( u0En, u0EnJac, faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
+            model().linFlux( u0En, u0EnJac, faceQuadInside[ pt ], phi[i], adphiEn, dphi[ i ] );
           }
 
           auto pFactor = model().penalty( faceQuadInside[ pt ], u0En );

@@ -40,6 +40,14 @@
                          const DRangeType &value,\
                          const DJacobianRangeType &gradient,\
                          RJacobianRangeType &flux ) const = 0;\
+  [[deprecated]]\
+  virtual void linDiffusiveFlux ( const DRangeType& uBar,\
+                                  const DJacobianRangeType& gradientBar,\
+                                  const POINT &x,\
+                                  const DRangeType &value,\
+                                  const DJacobianRangeType &gradient,\
+                                  RJacobianRangeType &flux ) const \
+  { linFlux(uBar, gradientBar, x, value, gradient, flux ); } \
   virtual void fluxDivergence( const POINT &x,\
                          const DRangeType &value,\
                          const DJacobianRangeType &jacobian,\
