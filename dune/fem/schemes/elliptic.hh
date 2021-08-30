@@ -274,7 +274,7 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model >
 
         RangeJacobianRangeType adu( 0 );
         // apply diffusive flux
-        model().diffusiveFlux( quadrature[ pt ], vu, du, adu );
+        model().flux( quadrature[ pt ], vu, du, adu );
         adu *= weight;
 
         // add to local function
@@ -400,7 +400,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
         model().linSource( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[localCol], aphi );
 
         // if gradient term is present
-        model().linDiffusiveFlux( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[ localCol ], adphi );
+        model().linFlux( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[ localCol ], adphi );
 
         // get column object and call axpy method
         jLocal.column( localCol ).axpy( rphi, rdphi, aphi, adphi, weight );
