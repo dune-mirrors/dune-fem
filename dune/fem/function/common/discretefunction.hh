@@ -818,7 +818,13 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
       void communicate()
       {
-        assert( Fem :: ThreadManager :: singleThreadMode() );
+        // only call in single thread mode
+        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        {
+          assert( Fem :: ThreadManager :: singleThreadMode() );
+          DUNE_THROW(InvalidStateException,"DiscreteFunctionInterface::communicate: only call in single thread mode!");
+        }
+
         this->space().communicate( asImp() );
       }
 

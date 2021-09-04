@@ -98,6 +98,14 @@ namespace Dune
           auto it = storage_.find( key );
           if( it == storage_.end() )
           {
+            // make sure we work in single thread mode
+            // when quadrature is created for the first time
+            if( ! Fem :: ThreadManager :: singleThreadMode() )
+            {
+              assert( Fem :: ThreadManager :: singleThreadMode() );
+              DUNE_THROW(InvalidStateException,"QuadratureStorage::getQuadrature: only call in single thread mode!");
+            }
+
             // make sure we work in single thread mode when quadrature is created
             assert( Fem :: ThreadManager:: singleThreadMode() );
             quadPtr = new QuadImp( geometry, key, IdProvider :: instance().newId() );
@@ -149,8 +157,13 @@ namespace Dune
           auto& quadPtr = storage_[ order ];
           if( ! quadPtr )
           {
-            // make sure we work in single thread mode when quadrature is created
-            assert( Fem :: ThreadManager:: singleThreadMode() );
+            // make sure we work in single thread mode
+            // when quadrature is created for the first time
+            if( ! Fem :: ThreadManager :: singleThreadMode() )
+            {
+              assert( Fem :: ThreadManager :: singleThreadMode() );
+              DUNE_THROW(InvalidStateException,"QuadratureStorage::getQuadrature: only call in single thread mode!");
+            }
             quadPtr.reset( new QuadImp( geometry, int(order), IdProvider :: instance().newId() ) );
           }
 

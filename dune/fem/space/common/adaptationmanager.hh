@@ -319,8 +319,12 @@ namespace Dune
     */
     virtual void adapt ()
     {
-      // make sure this is only called in single thread mode
-      assert( Fem :: ThreadManager :: singleThreadMode() );
+      // only call in single thread mode
+      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      {
+        assert( Fem :: ThreadManager :: singleThreadMode() );
+        DUNE_THROW(InvalidStateException,"AdaptationManagerBase::adapt: only call in single thread mode!");
+      }
 
       // get stopwatch
       Dune::Timer timer;
@@ -832,7 +836,12 @@ namespace Dune
       /** \brief perform adaptation */
       void adapt ()
       {
-        assert( Dune::Fem::ThreadManager::singleThreadMode() );
+        // only call in single thread mode
+        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        {
+          assert( Fem :: ThreadManager :: singleThreadMode() );
+          DUNE_THROW(InvalidStateException,"AdaptationManager::adapt: only call in single thread mode!");
+        }
 
         Dune::Timer timer;
 
