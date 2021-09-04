@@ -156,7 +156,11 @@ namespace Dune
           return changed;
 
         // make sure this is only called in single thread mode
-        assert( Fem :: ThreadManager :: singleThreadMode() );
+        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        {
+          assert( Fem :: ThreadManager :: singleThreadMode() );
+          DUNE_THROW(InvalidStateException,"LoadBalancer::loadBalance::adapt: only call in single thread mode!");
+        }
 
         // get stopwatch
         Dune::Timer timer ;
