@@ -282,6 +282,12 @@ namespace Dune
         return SubVector< const LocalMatrixEntriesType, ColIndexMapper >( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
       }
 
+      // this method behaves different to column
+      typename BaseType::MatrixColumnType matrixColumn( SizeType j )
+      {
+        return BaseType::column( j );
+      }
+
       // inherited from DenseMatrix
       using BaseType :: axpy;
 
