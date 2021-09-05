@@ -3,6 +3,8 @@
 
 // fem includes
 #include <dune/fem/schemes/galerkin.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 
 namespace Dune
 {
@@ -24,6 +26,11 @@ namespace Dune
       static_assert( std::is_same< typename DomainFunctionType::GridPartType, typename RangeFunctionType::GridPartType >::value, "DomainFunction and RangeFunction must be defined on the same grid part." );
 
       typedef typename RangeFunctionType::GridPartType GridPartType;
+      typedef typename GridPartType :: GridType  GridType;
+
+      typedef AdaptiveLeafGridPart< GridType > GP;
+
+      typedef ThreadIterator< GP > ThreadIteratorType;
 
       typedef Impl::GalerkinOperator< Integrands > GalerkinOperatorImplType;
       typedef typename RangeFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
@@ -35,16 +42,25 @@ namespace Dune
 
       template< class... Args >
       explicit MOLGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-        : impl_( gridPart, std::forward< Args >( args )... ),
+        : gridPart_( const_cast< GridType& > (gridPart.grid()) ),
+          impl_( gridPart, std::forward< Args >( args )... ),
+          iterators_( gridPart_ ),
           communicate_( true )
       {
         // disable communicate in Impl::GalerkinOperator
         // since applyInverseMass has to be applied first
-        impl_.setCommunicate( false );
+        size_t size = impl_.size();
+        for( size_t i=0; i<size; ++i )
+          impl_[ i ].setCommunicate( false );
       }
 
       void setCommunicate( const bool communicate ) { communicate_ = communicate; }
-      void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
+      void setQuadratureOrders(unsigned int interior, unsigned int surface)
+      {
+        size_t size = impl_.size();
+        for( size_t i=0; i<size; ++i )
+          impl_[ i ].setQuadratureOrders(interior,surface);
+      }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
@@ -57,24 +73,25 @@ namespace Dune
         evaluate( u, w );
       }
 
-      const GridPartType &gridPart () const { return impl_.gridPart(); }
+      const GridPartType &gridPart () const { return impl().gridPart(); }
 
       typedef Integrands ModelType;
       typedef Integrands DirichletModelType;
-      ModelType &model() const { return impl_.model(); }
+      ModelType &model() const { return impl().model(); }
 
     protected:
-      void applyInverseMass( RangeFunctionType& w ) const
+      template <class Iterators>
+      void applyInverseMass( const Iterators& iterators, RangeFunctionType& w ) const
       {
-        // get-set local contribution
-        Dune::Fem::SetSelectedLocalContribution< RangeFunctionType > wLocal( w );
+        // mutable local function
+        MutableLocalFunction< RangeFunctionType > wLocal( w );
+        LocalMassMatrixType localMassMatrix( w.space(), impl().interiorQuadratureOrder( w.space().order() ) );
 
-        LocalMassMatrixType localMassMatrix( w.space(), impl_.interiorQuadratureOrder( w.space().order() ) );
-
-        // iterate over all elements
-        for( const auto& entity : elements( gridPart(), Partitions::interiorBorder ) )
+        // iterate over all elements (in the grid or per thread)
+        // thread safety is guaranteed through discontinuous data (spaces)
+        for( const auto& entity : iterators )
         {
-          // fill local contribution
+          // obtain local function
           auto guard = bindGuard( wLocal, entity );
 
           // apply inverse mass matrix
@@ -86,19 +103,73 @@ namespace Dune
       template< class GridFunction >
       void evaluate( const GridFunction &u, RangeFunctionType &w ) const
       {
-        // Impl::GalerkinOperator::evaluate without communicate
-        impl_.evaluate( u, w );
+        iterators_.update();
+        w.clear();
+
+        std::mutex mutex;
+
+        auto doEval = [this, &u, &w, &mutex] ()
+        {
+          // version with locking
+          this->impl().evaluate( u, w, this->iterators_, mutex );
+
+          // version without locking
+          //RangeFunctionType wTmp( w );
+          //this->impl().evaluate( u, wTmp, this->iterators_ );
+          //std::lock_guard guard ( mutex );
+          //w += wTmp;
+        };
+
+        bool singleThreadModeError = false ;
+
+        try {
+          // execute in parallel
+          ThreadPool :: run ( doEval );
+        }
+        catch ( const SingleThreadModeError& e )
+        {
+          singleThreadModeError = true;
+        }
 
         // method of lines
-        applyInverseMass( w );
+        auto doInvMass = [this, &w] ()
+        {
+          this->applyInverseMass( this->iterators_, w );
+        };
+
+        if( ! singleThreadModeError )
+        {
+          try {
+            // execute in parallel
+            ThreadPool :: run ( doInvMass );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            singleThreadModeError = true;
+          }
+        }
+
+        // if error occurred, redo the whole evaluation
+        if( singleThreadModeError )
+        {
+          // reset w from previous entries
+          w.clear();
+          // re-run in single thread mode if previous attempt failed
+          impl().evaluate( u, w, iterators_ );
+          applyInverseMass( iterators_, w );
+        }
 
         // synchronize data
         if( communicate_ )
           w.communicate();
       }
 
+      const GalerkinOperatorImplType& impl() const { return (*impl_); }
+
+      GP gridPart_;
       // GalerkinOperator implementation (see galerkin.hh)
-      GalerkinOperatorImplType impl_;
+      ThreadSafeValue< GalerkinOperatorImplType > impl_;
+      mutable ThreadIteratorType iterators_;
       bool communicate_;
     };
 
@@ -136,18 +207,13 @@ namespace Dune
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
       {
         // assemble Jacobian, same as GalerkinOperator
-        impl_.assemble( u, jOp );
-        // apply inverse mass
-        applyInverseMass( jOp, impl_.model().hasSkeleton() );
+        assemble( u, jOp );
       }
 
       template< class GridFunction >
       void jacobian ( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
-        // assemble Jacobian, same as GalerkinOperator
-        impl_.assemble( u, jOp );
-        // apply inverse mass
-        applyInverseMass( jOp, impl_.model().hasSkeleton() );
+        assemble( u, jOp );
       }
 
       const DomainDiscreteFunctionSpaceType& domainSpace() const
@@ -162,11 +228,50 @@ namespace Dune
       using BaseType::gridPart;
 
     protected:
+      using BaseType::impl;
+      using BaseType::iterators_;
+
+      template < class GridFunction >
+      void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
+      {
+        iterators_.update();
+
+        // reserve memory and clear entries
+        impl().prepare( jOp );
+
+        std::mutex mutex;
+
+        auto doAssemble = [this, &u, &jOp, &mutex] ()
+        {
+          // assemble Jacobian, same as GalerkinOperator
+          this->impl().assemble( u, jOp, this->iterators_, mutex );
+        };
+
+        try {
+          // execute in parallel
+          ThreadPool :: run ( doAssemble );
+        }
+        catch ( const SingleThreadModeError& e )
+        {
+          // redo matrix assembly since it failed
+          jOp.clear();
+          impl().assemble( u, jOp, iterators_ );
+        }
+
+        // apply inverse mass
+        applyInverseMass( jOp, impl().model().hasSkeleton() );
+
+        // note: assembly done without local contributions so need
+        // to call flush assembly
+        jOp.flushAssembly();
+      }
+
+
       void applyInverseMass ( JacobianOperatorType &jOp, const bool hasSkeleton ) const
       {
         typedef typename BaseType::LocalMassMatrixType  LocalMassMatrixType;
 
-        LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), impl_.interiorQuadratureOrder( jOp.rangeSpace().order() ) );
+        LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), impl().interiorQuadratureOrder( jOp.rangeSpace().order() ) );
 
         Dune::Fem::SetSelectedLocalContribution< JacobianOperatorType > jOpLocal( jOp );
 
@@ -195,7 +300,6 @@ namespace Dune
         }
       }
 
-      using BaseType::impl_;
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;
     };

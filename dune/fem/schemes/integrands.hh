@@ -262,8 +262,10 @@ namespace Dune
     public:
       template< class... Args >
       explicit FullIntegrands ( Args &&... args )
-        : integrands_( std::forward< Args >( args )... )
-      {}
+        : integrands_( std::forward< Args >( args )... ),
+          rInt_( std::ref( integrands_ ).get() )
+      {
+      }
 
       bool init ( const EntityType &entity ) { return integrands().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return integrands().init( intersection ); }
@@ -311,26 +313,32 @@ namespace Dune
       }
 
     protected:
-      decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
-      decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+      typedef typename Integrands::type RealIntegrands;
+      //decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
+      //decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+      RealIntegrands& integrands () { return rInt_; }
+      const RealIntegrands& integrands () const { return rInt_; }
+
+
 
       Integrands integrands_;
+      RealIntegrands rInt_;
 
     public:
       typedef typename IntegrandsTraits< Integrands >::RRangeType RRangeType;
       typedef typename IntegrandsTraits< Integrands >::DirichletComponentType DirichletComponentType;
       bool hasDirichletBoundary () const
       {
-        return integrands_.get().hasDirichletBoundary();
+        return integrands().hasDirichletBoundary();
       }
       bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const
       {
-        return integrands_.get().isDirichletIntersection(inter,dirichletComponent);
+        return integrands().isDirichletIntersection(inter,dirichletComponent);
       }
       template <class Point>
       void dirichlet( int bndId, const Point &x, RRangeType &value) const
       {
-        return integrands_.get().dirichlet(bndId,x,value);
+        return integrands().dirichlet(bndId,x,value);
       }
     };
 
@@ -435,7 +443,9 @@ namespace Dune
       struct Implementation final
         : public Interface
       {
-        Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+        Implementation ( Impl impl ) : impl_( std::move( impl ) )
+        {
+        }
         virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual bool init ( const EntityType &entity ) override { return impl().init( entity ); }
