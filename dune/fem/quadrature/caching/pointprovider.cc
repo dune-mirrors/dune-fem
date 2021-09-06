@@ -29,8 +29,7 @@ namespace Dune
         // only register when in single thread mode
         if( ! Fem :: ThreadManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
-          DUNE_THROW(InvalidStateException,"PointProvider::registerQuadrature: only call in single thread mode!");
+          DUNE_THROW(SingleThreadModeError, "PointProvider::registerQuadrature: only call in single thread mode!");
         }
 
         PointIteratorType it =
@@ -78,7 +77,8 @@ namespace Dune
       MapperContainerType& mappers_ = mappers();
 
       MapperIteratorType it = mappers_.find( key );
-      if (it == mappers_.end()) {
+      if (it == mappers_.end())
+      {
         std::vector<LocalPointType> pts(quad.nop());
         for (size_t i = 0; i < quad.nop(); ++i)
         {
@@ -128,8 +128,7 @@ namespace Dune
       // only addEntry when in single thread mode
       if( ! Fem :: ThreadManager :: singleThreadMode() )
       {
-        assert( Fem :: ThreadManager :: singleThreadMode() );
-        DUNE_THROW(InvalidStateException,"PointProvider::addEntry: only call in single thread mode!");
+        DUNE_THROW(SingleThreadModeError, "PointProvider::addEntry: only call in single thread mode!");
       }
 
       // generate key

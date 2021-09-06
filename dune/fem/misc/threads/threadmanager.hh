@@ -27,6 +27,8 @@
 #include <omp.h>
 #endif
 
+//- dune-common includes
+#include <dune/common/exceptions.hh>
 #include <dune/common/visibility.hh>
 
 namespace Dune
@@ -38,6 +40,7 @@ namespace Dune
      *         single thread mode is accessed in multi thread mode. For example,
      *         creation of quadratures or basis function caching cannot work in
      *         multi thread mode.
+     *  \note  This exception is not derived from Dune::Exception because there static variables are used.
      */
     class SingleThreadModeError : public std::exception
     {

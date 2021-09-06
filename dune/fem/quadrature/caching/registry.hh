@@ -71,8 +71,7 @@ namespace Dune
         // when shape function sets are created
         if( ! Fem :: ThreadManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
-          DUNE_THROW(InvalidStateException,"QuadratureStorageRegistry::registerStorage: only call in single thread mode!");
+          DUNE_THROW(SingleThreadModeError, "QuadratureStorageRegistry::registerStorage: only call in single thread mode!");
         }
 
         storageList().push_back( &storage );
@@ -92,8 +91,7 @@ namespace Dune
         // when shape function sets are removed
         if( ! Fem :: ThreadManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
-          DUNE_THROW(InvalidStateException,"QuadratureStorageRegistry::unregisterStorage: only call in single thread mode!");
+          DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::unregisterStorage: only call in single thread mode!");
         }
 
         const StorageListType::iterator pos
@@ -116,8 +114,7 @@ namespace Dune
         // when quadratures are registered
         if( ! Fem :: ThreadManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
-          DUNE_THROW(InvalidStateException,"QuadratureStorageRegistry::registerQuadrature: only call in single thread mode!");
+          DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::registerQuadrature: only call in single thread mode!");
         }
 
         QuadratureInfo quadInfo = { quadrature.id(), codim, std::size_t( quadrature.nop() ), type };

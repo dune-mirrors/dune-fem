@@ -9,6 +9,12 @@ namespace Dune
                                              GeometryType elementGeometry,
                                              std::integral_constant< bool, true > )
     {
+      // make sure we work in single thread mode
+      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      {
+        DUNE_THROW(SingleThreadModeError, "CacheProvider::createMapper: only call in single thread mode!");
+      }
+
       typedef TwistProvider<ct, dim-codim> TwistProviderType;
       typedef typename TwistProviderType::TwistStorageType TwistStorageType;
 
@@ -53,6 +59,12 @@ namespace Dune
                                              GeometryType elementGeometry,
                                              std::integral_constant< bool, false > )
     {
+      // make sure we work in single thread mode
+      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      {
+        DUNE_THROW(SingleThreadModeError, "CacheProvider::createMapper: only call in single thread mode!");
+      }
+
       const auto pointMappers =
         PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);
 

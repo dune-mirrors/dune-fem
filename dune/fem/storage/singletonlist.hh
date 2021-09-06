@@ -94,9 +94,6 @@ namespace Dune
       static auto getObject( const KeyType &key, Args &&... args )
         -> std::enable_if_t< std::is_same< decltype( FactoryType::createObject( key, std::forward< Args >( args )... ) ), ObjectType * >::value, ObjectType & >
       {
-        // make sure this method is only called in single thread mode
-        assert( Fem :: ThreadManager :: singleThreadMode() );
-
         ValueType objValue = getObjFromList( key );
 
         // if object exists, increase reference count and return it
@@ -104,6 +101,12 @@ namespace Dune
         {
           ++( *(objValue.second) );
           return *(objValue.first);
+        }
+
+        // make sure this part is only called in single thread mode
+        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        {
+          DUNE_THROW(SingleThreadModeError, "SingletonList::getObject: only call in single thread mode!");
         }
 
         // object does not exist. Create it with reference count of 1
@@ -120,7 +123,10 @@ namespace Dune
       inline static void removeObject ( const ObjectType &object )
       {
         // make sure this method is only called in single thread mode
-        assert( Fem :: ThreadManager :: singleThreadMode() );
+        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        {
+          DUNE_THROW(SingleThreadModeError, "SingletonList::removeObject: only call in single thread mode!");
+        }
 
         ListIteratorType end = singletonList().end();
         for( ListIteratorType it = singletonList().begin(); it != end; ++it )

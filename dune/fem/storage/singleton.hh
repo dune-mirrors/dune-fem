@@ -5,6 +5,7 @@
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -28,7 +29,20 @@ namespace Dune
         typedef std::unique_ptr< Item > PointerType;
         typedef std::type_index         KeyType;
 
-        typedef std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >  StorageType;
+        //typedef std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >  StorageType;
+
+        struct Storage :
+          public std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >
+        {
+          Storage() :
+            std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> > (),
+            mutex_()
+          {}
+
+          std::mutex mutex_;
+        };
+
+        typedef Storage StorageType;
 
         // delete for singletons deleting each singleton object
         // in reverse order of creation
@@ -56,6 +70,8 @@ namespace Dune
         {
           if(! storage_ )
           {
+            // this should happen during the creation of MPIManager
+            // which is the first static variable to accessed
             storage_.reset( new StorageType() );
           }
 
@@ -100,8 +116,9 @@ namespace Dune
       template <class... Args>
       static Object& instance(Args &&... args)
       {
-        // capture reference as static variable to avoid map search later on
-        static Object& inst = getObject(std::forward< Args >( args )...);
+        // capture thread_local reference as static variable to avoid
+        // map search later on, object creation is protected by a mutex lock
+        static thread_local Object& inst = getObject(std::forward< Args >( args )...);
         return inst;
       }
 
@@ -123,15 +140,19 @@ namespace Dune
         else
         {
           // get storage reference (see base class)
+          // this should exists since we initialize some static
+          // variables inside the MPIManager at program start
           StorageType& storage = getStorage();
+
+          // this section needs locking to avoid race conditions
+          // unlock is done on destruction of lock_guard
+          std::lock_guard guard( storage.mutex_ );
 
           // get pointer of singleton objects belonging to hash id
           auto& ptr = storage.first[ std::type_index(typeid(Object)) ];
           // if pointer has not been set, create object and set pointer
           if( ! ptr )
           {
-            assert( Fem::ThreadManager::singleThreadMode() );
-
             // create object in vector for later correct deletion order
             storage.second.emplace_back( PointerType(new ItemWrapperType(std::forward< Args >( args )...) ) );
 
