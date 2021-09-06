@@ -25,7 +25,7 @@ namespace Fem
       ObjectIF() {}
     public:
       virtual ~ObjectIF() {}
-      virtual void run() = 0;
+      virtual bool run() = 0;
     };
 
     template <class Object>
@@ -35,20 +35,34 @@ namespace Fem
       std::mutex* mutex_;
     public:
       ObjectWrapper( Object& obj, std::mutex* mtx = nullptr )
-        : obj_( obj ), mutex_( mtx ) {}
+        : obj_( obj ), mutex_( mtx )
+      {}
 
-      void run ()
+      bool run ()
       {
-        // if mutex was setm lock here
+        // will be set to true if exception is caught
+        bool singleThreadModeError = false ;
+
+        // if mutex was set lock here
         if( mutex_ )
           mutex_->lock();
 
-        // call obj to execute code
-        obj_();
+        try
+        {
+          // call obj to execute code
+          obj_();
+        }
+        catch ( const Dune::Fem::SingleThreadModeError& e )
+        {
+          // indicate that this exception was caught be returning true
+          singleThreadModeError = true ;
+        }
 
         // if mutex exists then unlock
         if( mutex_ )
           mutex_->unlock();
+
+        return singleThreadModeError;
       }
     };
 
@@ -65,34 +79,38 @@ namespace Fem
       int maxThreads_ ;
       int threadNumber_ ;
 
-      bool isSlave () const { return threadNumber_ > 0; }
+      std::atomic< bool > singleThreadModeError_;
+
+      bool isNotMainThread () const { return threadNumber_ > 0; }
 
     public:
       // constructor creating thread with given thread number
       ThreadPoolObject(pthread_barrier_t* barrierBegin,
-                         pthread_barrier_t* barrierEnd,
-                         const int maxThreads,
-                         const int threadNumber )
+                       pthread_barrier_t* barrierEnd,
+                       const int maxThreads,
+                       const int threadNumber )
         : objPtr_( nullptr ),
           barrierBegin_ ( barrierBegin ),
           barrierEnd_ ( barrierEnd ),
           threadId_( 0 ),
           maxThreads_( maxThreads ),
-          threadNumber_( threadNumber )
+          threadNumber_( threadNumber ),
+          singleThreadModeError_( false )
       {
         assert( threadNumber > 0 );
       }
 
       // constructor creating master thread
       explicit ThreadPoolObject(pthread_barrier_t* barrierBegin,
-                                  pthread_barrier_t* barrierEnd,
-                                  const int maxThreads)
+                                pthread_barrier_t* barrierEnd,
+                                const int maxThreads)
         : objPtr_( nullptr ),
           barrierBegin_ ( barrierBegin ),
           barrierEnd_ ( barrierEnd ),
           threadId_( pthread_self() ),
           maxThreads_( maxThreads ),
-          threadNumber_( 0 )
+          threadNumber_( 0 ),
+          singleThreadModeError_( false )
       {
       }
 
@@ -103,7 +121,8 @@ namespace Fem
           barrierEnd_( other.barrierEnd_ ),
           threadId_( other.threadId_ ),
           maxThreads_( other.maxThreads_ ),
-          threadNumber_( other.threadNumber_ )
+          threadNumber_( other.threadNumber_ ),
+          singleThreadModeError_( false )
       {}
 
       // assignment operator
@@ -115,6 +134,7 @@ namespace Fem
         threadId_     = other.threadId_;
         maxThreads_   = other.maxThreads_;
         threadNumber_ = other.threadNumber_;
+        singleThreadModeError_ = false;
         return *this;
       }
 
@@ -124,7 +144,7 @@ namespace Fem
         // init object
         objPtr_ = obj;
 
-        if( isSlave() )
+        if( isNotMainThread() )
         {
           // if thread has not been initialized
           if( threadId_ == 0 )
@@ -146,6 +166,12 @@ namespace Fem
         return ( objPtr_ == nullptr ) ? 1 : 0 ;
       }
 
+      //! return true if SingleThreadModeError was caught during run
+      int singleThreadModeError() const
+      {
+        return singleThreadModeError_ ? 1 : 0;
+      }
+
       // do the work
       void run()
       {
@@ -155,10 +181,12 @@ namespace Fem
         // wait for all threads
         pthread_barrier_wait( barrierBegin_ );
 
+        singleThreadModeError_ = false ;
+
         // when object pointer is set call run, else terminate
         if( objPtr_ )
         {
-          objPtr_->run();
+          singleThreadModeError_ = objPtr_->run();
         }
         else
         {
@@ -174,7 +202,7 @@ namespace Fem
 
         // when thread is not master then
         // just call run and wait at barrier
-        if( isSlave() )
+        if( isNotMainThread() )
         {
           run();
         }
@@ -183,7 +211,7 @@ namespace Fem
       //! destroy thread by calling pthread_join
       void destroy()
       {
-        if( isSlave() )
+        if( isNotMainThread() )
           pthread_join(threadId_, 0);
       }
 
@@ -192,7 +220,7 @@ namespace Fem
       // C style function pointer for the pthread_create call
       static void* startThread(void *obj)
       {
-        // set maxThreads and threadNumber for slave thread
+        // set maxThreads and threadNumber for secondary thread
         ThreadManager :: initThread( ((ThreadPoolObject *) obj)->maxThreads_, ((ThreadPoolObject *) obj)->threadNumber_ );
 
         // do the work
@@ -241,7 +269,7 @@ namespace Fem
 
   protected:
     //! start all threads to do the job
-    void startThreads( ObjectIF* obj = 0 )
+    bool startThreads( ObjectIF* obj = 0 )
     {
       // set number of active threads
       ThreadManager :: initMultiThreadMode( maxThreads_ );
@@ -266,25 +294,32 @@ namespace Fem
 
       // activate initSingleThreadMode again
       Fem :: ThreadManager :: initSingleThreadMode();
+
+      int singleError = 0 ;
+      // check whether a SingleThreadModeError occurred in one of the threads
+      for(int i=0; i<maxThreads_; ++i)
+      {
+        singleError += int(threads_[ i ].singleThreadModeError());
+      }
+
+      return singleError > 0 ;
     }
 
     //! run all threads
     template <class Functor>
-    void runThreads( Functor& functor, std::mutex* mtx = nullptr )
+    bool runThreads( Functor& functor, std::mutex* mtx = nullptr )
     {
       // create object wrapper
       ObjectWrapper< Functor > objPtr( functor, mtx );
 
       // start parallel execution
-      startThreads( &objPtr ) ;
+      return startThreads( &objPtr ) ;
     }
 
     // return instance of ThreadPool
     static ThreadPool& instance()
     {
       return Singleton< ThreadPool > :: instance();
-      //static Singleton< std::unique_ptr< ThreadPool > handle( new ThreadPool() );
-      //return *handle;
     }
 
   public:
@@ -323,24 +358,43 @@ namespace Fem
       // this routine should not be called in multiThreadMode, since
       // this routine is actually starting the multiThreadMode
       if( ! ThreadManager :: singleThreadMode() )
-        DUNE_THROW(InvalidStateException,"ThreadPool :: run called from thread parallel region!");
+        DUNE_THROW(InvalidStateException,"ThreadPool::run called from thread parallel region!");
 
 #ifdef USE_PTHREADS
       if( ThreadManager :: pthreads )
       {
-        // pthread version
-        instance().runThreads( functor );
+        bool singleThreadError = instance().runThreads( functor );
+        if( singleThreadError )
+        {
+          DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!" );
+        }
       }
       else
 #endif
       {
+        std::atomic< bool > singleThreadModeError( false );
+
         // OpenMP parallel region
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
         {
           // execute code in parallel
-          functor();
+          try
+          {
+            // execute code in parallel
+            functor();
+          }
+          catch (const Dune::Fem::SingleThreadModeError& e)
+          {
+            singleThreadModeError = true ;
+          }
+        } // end parallel region
+
+        // only throw one exception to the outside world
+        if( singleThreadModeError )
+        {
+          DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!");
         }
       }
     }
@@ -359,7 +413,7 @@ namespace Fem
       // this routine should not be called in multiThreadMode, since
       // this routine is actually starting the multiThreadMode
       if( ! ThreadManager :: singleThreadMode() )
-        DUNE_THROW(InvalidStateException,"ThreadPool :: run called from thread parallel region!");
+        DUNE_THROW(InvalidStateException,"ThreadPool::runLocked called from thread parallel region!");
 
       // run threads in blocking mode
       std::mutex mtx;
@@ -368,7 +422,11 @@ namespace Fem
       if( ThreadManager :: pthreads )
       {
         // pthread version
-        instance().runThreads( functor, &mtx );
+        bool singleThreadError = instance().runThreads( functor, &mtx );
+        if( singleThreadError )
+        {
+          DUNE_THROW(SingleThreadModeError, "ThreadPool::runLocked: single thread mode violation occurred!" );
+        }
       }
       else
 #endif
@@ -376,15 +434,27 @@ namespace Fem
         // create object wrapper with mutex which executed a locked run
         ObjectWrapper< Functor > obj( functor, &mtx );
 
+        std::atomic< bool > singleThreadModeError ( false );
         // OpenMP parallel region
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
         {
+          try
           {
             // execute code in parallel
             obj.run();
           }
+          catch (const Dune::Fem::SingleThreadModeError& e)
+          {
+            singleThreadModeError = true;
+          }
+        } // end parallel region
+
+        // only throw one exception to the outside world
+        if( singleThreadModeError )
+        {
+          DUNE_THROW(SingleThreadModeError, "ThreadPool::runLocked: single thread mode violation occurred!");
         }
       }
     }

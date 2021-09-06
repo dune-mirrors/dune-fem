@@ -45,7 +45,15 @@ namespace Dune
                                                     const GeometryType& elementGeo);
 
     private:
-      typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
+      // derive from map to make type unique to this class
+      class PointContainer
+        : public std::map<const QuadratureKeyType, GlobalPointVectorType>
+      {
+        enum { cd = 0 };
+      };
+
+      typedef PointContainer PointContainerType;
+
       typedef typename PointContainerType::iterator PointIteratorType;
 
     private:
@@ -87,8 +95,22 @@ namespace Dune
                                                     const GeometryType& elementGeo);
 
     private:
-      typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
-      typedef std::map<const QuadratureKeyType, MapperVectorPairType > MapperContainerType;
+      // derive from map to make type unique to this class
+      class PointContainer
+        : public std::map<const QuadratureKeyType, GlobalPointVectorType>
+      {
+        enum { cd = codim };
+      };
+
+      typedef PointContainer PointContainerType;
+
+      // derive from map to make type unique to this class
+      class MapperContainer
+        : public std::map<const QuadratureKeyType, MapperVectorPairType >
+      {
+        enum { cd = codim };
+      };
+      typedef MapperContainer MapperContainerType;
 
       typedef typename PointContainerType::iterator PointIteratorType;
       typedef typename MapperContainerType::iterator MapperIteratorType;

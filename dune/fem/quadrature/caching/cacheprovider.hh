@@ -222,7 +222,14 @@ namespace Dune
       typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType;
 
       typedef typename Traits::MapperVectorType MapperVectorType;
-      typedef std::map<const QuadratureKeyType, CacheStorageType> MapperContainerType;
+
+      // derive from map to make type unique to this class
+      class MapperContainer : public std::map<const QuadratureKeyType, CacheStorageType>
+      {
+        enum { cd = codim };
+      };
+      typedef MapperContainer MapperContainerType;
+
       typedef typename MapperContainerType::iterator MapperIteratorType;
 
     private:
