@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_OMPMANAGER_HH
 #define DUNE_FEM_OMPMANAGER_HH
 
+#include <atomic>
 #include <cassert>
 #include <cstdlib>
 #include <thread>
@@ -33,6 +34,20 @@ namespace Dune
 
   namespace Fem
   {
+    /*! \brief Exception thrown when a code segment that is supposed to be only accessed in
+     *         single thread mode is accessed in multi thread mode. For example,
+     *         creation of quadratures or basis function caching cannot work in
+     *         multi thread mode.
+     */
+    class SingleThreadModeError : public std::exception
+    {
+    public:
+      void message(const std::string &msg){}
+      const char* what() const noexcept override
+      {
+        return "SingleThreadModeError";
+      }
+    };
 
     /** \class ThreadManager
      *  \ingroup Utility
@@ -140,31 +155,43 @@ namespace Dune
           static thread_local Manager mg ;
           return mg ;
         }
-        DUNE_EXPORT int &maxThreads_()
+
+      private:
+        // use atomic to make read/write access thread safe
+        using atomic_int = std::atomic< int >;
+
+        DUNE_EXPORT static atomic_int& maxThreads_()
         {
-          static int maxThreads = std::max(1u, std::thread::hardware_concurrency());
-          return maxThreads;
+          static atomic_int maxThds( std::max(1u, std::thread::hardware_concurrency()) );
+          return maxThds;
         }
 
+        DUNE_EXPORT static atomic_int& activeThreads_()
+        {
+          static atomic_int actThds( 1 );
+          return actThds;
+        }
+
+      public:
         inline void initThread( const int maxThreads, const int threadNum )
         {
-          // thread number 0 is reserved for the master thread
+          // thread number 0 is reserved for the main thread
           maxThreads_() = maxThreads;
           threadNum_  = threadNum ;
         }
 
         inline void singleThreadMode()
         {
-          activeThreads_ = 1;
+          activeThreads_() = 1;
         }
 
         inline void multiThreadMode(const int nThreads )
         {
-          activeThreads_ = nThreads;
+          activeThreads_() = nThreads;
         }
 
-        inline int maxThreads() { return maxThreads_(); }
-        inline int currentThreads() const { return activeThreads_; }
+        inline int maxThreads() const { return maxThreads_(); }
+        inline int currentThreads() const { return activeThreads_(); }
         inline int thread()
         {
           assert( threadNum_ >= 0 );
@@ -173,10 +200,9 @@ namespace Dune
 
       private:
         int threadNum_;
-        int activeThreads_;
 
         Manager()
-          : threadNum_( 0 ), activeThreads_( 1 )
+          : threadNum_( 0 )
         {}
       };
 
