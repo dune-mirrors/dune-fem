@@ -183,9 +183,15 @@ namespace Fem
 
         singleThreadModeError_ = false ;
 
+        // we should be in single thread mode here
+        assert( ThreadManager::singleThreadMode() );
+
         // when object pointer is set call run, else terminate
         if( objPtr_ )
         {
+          // update thread_local currentThreads number
+          ThreadManager::initMultiThreadMode();
+
           singleThreadModeError_ = objPtr_->run();
         }
         else
@@ -199,6 +205,9 @@ namespace Fem
 
         // wait for all threads
         pthread_barrier_wait( barrierEnd_ );
+
+        // reset to single thread
+        ThreadManager::initSingleThreadMode();
 
         // when thread is not master then
         // just call run and wait at barrier
@@ -271,10 +280,8 @@ namespace Fem
     //! start all threads to do the job
     bool startThreads( ObjectIF* obj = 0 )
     {
-      // set number of active threads
-      ThreadManager :: initMultiThreadMode( maxThreads_ );
-
       // start threads, this will call the runThread method
+      // and call initMultiThreadMode on ThreadManager
       for(int i=0; i<maxThreads_; ++i)
       {
         threads_[ i ].start( obj );
@@ -292,8 +299,7 @@ namespace Fem
         }
       }
 
-      // activate initSingleThreadMode again
-      Fem :: ThreadManager :: initSingleThreadMode();
+      // activate initSingleThreadMode is called on each thread after obj was run
 
       int singleError = 0 ;
       // check whether a SingleThreadModeError occurred in one of the threads
