@@ -159,42 +159,25 @@ namespace Dune
           return mg ;
         }
 
-      private:
-        // use atomic to make read/write access thread safe
-        using atomic_int = std::atomic< int >;
-
-        DUNE_EXPORT static atomic_int& maxThreads_()
-        {
-          static atomic_int maxThds( std::max(1u, std::thread::hardware_concurrency()) );
-          return maxThds;
-        }
-
-        DUNE_EXPORT static atomic_int& activeThreads_()
-        {
-          static atomic_int actThds( 1 );
-          return actThds;
-        }
-
       public:
         inline void initThread( const int maxThreads, const int threadNum )
         {
-          // thread number 0 is reserved for the main thread
-          maxThreads_() = maxThreads;
+          maxThreads_ = maxThreads;
           threadNum_  = threadNum ;
         }
 
         inline void singleThreadMode()
         {
-          activeThreads_() = 1;
+          activeThreads_ = 1;
         }
 
         inline void multiThreadMode(const int nThreads )
         {
-          activeThreads_() = nThreads;
+          activeThreads_ = nThreads;
         }
 
-        inline int maxThreads() const { return maxThreads_(); }
-        inline int currentThreads() const { return activeThreads_(); }
+        inline int maxThreads() const { return maxThreads_; }
+        inline int currentThreads() const { return activeThreads_; }
         inline int thread()
         {
           assert( threadNum_ >= 0 );
@@ -202,10 +185,13 @@ namespace Dune
         }
 
       private:
+        int maxThreads_;
+        int activeThreads_;
         int threadNum_;
 
         Manager()
-          : threadNum_( 0 )
+          : maxThreads_( std::max(1u, std::thread::hardware_concurrency()) ),
+            activeThreads_( 1 ), threadNum_( 0 )
         {}
       };
 
@@ -258,10 +244,11 @@ namespace Dune
       }
 
       //! set maximal number of threads available during run
-      static inline void setMaxNumberThreads( const int numThreads )
+      static inline void setMaxNumberThreads( const int maxThreads )
       {
         // this call also initiates the master thread
-        manager().initThread( numThreads, 0 );
+        // (other threads are set in ThreadPool)
+        manager().initThread( maxThreads, 0 );
       }
 
       //! return true if the current thread is the master thread (i.e. thread 0)
