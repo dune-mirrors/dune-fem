@@ -220,24 +220,34 @@ namespace Dune {
       IteratorType begin() const
       {
 #ifdef USE_THREADPARTITIONER
-        const int thread = ThreadManager :: thread() ;
-        if( communicationThread_ && thread == 0 )
-          return filteredGridParts_[ thread ]->template end< 0 > ();
+        if( ! ThreadManager :: singleThreadMode () )
+        {
+          const int thread = ThreadManager :: thread() ;
+          if( communicationThread_ && thread == 0 )
+            return filteredGridParts_[ thread ]->template end< 0 > ();
+          else
+            return filteredGridParts_[ thread ]->template begin< 0 > ();
+        }
         else
-          return filteredGridParts_[ thread ]->template begin< 0 > ();
-#else
-        return gridPart_.template begin< 0 > ();
 #endif
+        {
+          return gridPart_.template begin< 0 > ();
+        }
       }
 
       //! return end iterator for current thread
       IteratorType end() const
       {
 #ifdef USE_THREADPARTITIONER
-        return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
-#else
-        return gridPart_.template end< 0 > ();
+        if( ! ThreadManager :: singleThreadMode () )
+        {
+          return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
+        }
+        else
 #endif
+        {
+          return gridPart_.template end< 0 > ();
+        }
       }
 
       //! return thread number this entity belongs to

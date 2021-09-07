@@ -42,13 +42,11 @@ namespace Dune
       const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
-#ifdef USE_SMP_PARALLEL
       int sequence_;
       std::vector< IteratorType > iterators_;
       DynamicArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_;
-      std::vector< FilterType* > filters_;
-#endif
+      std::vector< std::unique_ptr< FilterType > > filters_;
 
       // if true, thread 0 does only communication and no computation
       const bool communicationThread_;
@@ -60,34 +58,21 @@ namespace Dune
         : gridPart_( gridPart )
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
-#ifdef USE_SMP_PARALLEL
         , sequence_( -1 )
         , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
         , threadId_( ThreadManager::maxThreads() )
-#endif
+        , filters_( ThreadManager::maxThreads() )
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
-#ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 );
-        filters_.resize( Fem :: ThreadManager :: maxThreads(), (FilterType *) 0 );
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
         {
-          filters_[ thread ] = new FilterType( gridPart_, threadNum_, thread );
+          filters_[ thread ].reset( new FilterType( gridPart_, threadNum_, thread ) );
         }
-#endif
         update();
-      }
-
-#ifdef USE_SMP_PARALLEL
-      ~ThreadIterator()
-      {
-        for(size_t i = 0; i<filters_.size(); ++i )
-        {
-          delete filters_[ i ];
-        }
       }
 
       //! return filter for given thread
@@ -96,12 +81,10 @@ namespace Dune
         assert( thread < filters_.size() );
         return *(filters_[ thread ]);
       }
-#endif
 
       //! update internal list of iterators
       void update()
       {
-#ifdef USE_SMP_PARALLEL
         const int sequence = gridPart_.sequence();
         // if grid got updated also update iterators
         if( sequence_ != sequence )
@@ -194,27 +177,34 @@ namespace Dune
           //for(size_t i = 0; i<size; ++i )
           //  std::cout << threadNum_[ i ] << std::endl;
         }
-#endif
       }
 
       //! return begin iterator for current thread
       IteratorType begin() const
       {
-#ifdef USE_SMP_PARALLEL
-        return iterators_[ ThreadManager :: thread() ];
-#else
-        return gridPart_.template begin< 0, pitype >();
-#endif
+        if( ThreadManager :: singleThreadMode() )
+        {
+          return gridPart_.template begin< 0, pitype >();
+        }
+        // in multi thread mode return iterators for each thread
+        else
+        {
+          return iterators_[ ThreadManager :: thread() ];
+        }
       }
 
       //! return end iterator for current thread
       IteratorType end() const
       {
-#ifdef USE_SMP_PARALLEL
-        return iterators_[ ThreadManager :: thread() + 1 ];
-#else
-        return gridPart_.template end< 0, pitype >();
-#endif
+        if( ThreadManager :: singleThreadMode() )
+        {
+          return gridPart_.template end< 0, pitype >();
+        }
+        // in multi thread mode return iterators for each thread
+        else
+        {
+          return iterators_[ ThreadManager :: thread() + 1 ];
+        }
       }
 
       //! return thread number this entity belongs to
@@ -226,14 +216,17 @@ namespace Dune
       //! return thread number this entity belongs to
       int thread( const EntityType& entity ) const
       {
-#ifdef USE_SMP_PARALLEL
-        assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
-        // NOTE: this number can also be negative for ghost elements or elements
-        // that do not belong to the set covered by the space iterators
-        return threadNum_[ indexSet_.index( entity ) ];
-#else
-        return 0;
-#endif
+        if( ThreadManager::singleThreadMode() )
+        {
+          return 0;
+        }
+        else
+        {
+          assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
+          // NOTE: this number can also be negative for ghost elements or elements
+          // that do not belong to the set covered by the space iterators
+          return threadNum_[ indexSet_.index( entity ) ];
+        }
       }
 
       //! set ratio between master thread and other threads in comp time
@@ -251,7 +244,6 @@ namespace Dune
         return count ;
       }
 
-#ifdef USE_SMP_PARALLEL
       // check that we have a non-overlapping iterator decomposition
       void checkConsistency( const size_t totalElements )
       {
@@ -271,7 +263,6 @@ namespace Dune
         assert( indices.size() == totalElements );
 #endif
       }
-#endif
     };
 
     /** \brief Storage of thread iterators */
