@@ -13,6 +13,7 @@
 #endif
 
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 namespace Dune
 {
@@ -129,6 +130,9 @@ namespace Dune
         // if already initialized, do nothing further
         if( helper && comm )
           return ;
+
+        // initialize treading environment
+        ThreadManager::initialize();
 
         // this will just initialize the static variables inside MPIHelper but
         // not call MPI_Init again

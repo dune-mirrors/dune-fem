@@ -190,7 +190,7 @@ namespace Fem
         if( objPtr_ )
         {
           // update thread_local currentThreads number
-          ThreadManager::initMultiThreadMode( maxThreads_ );
+          ThreadManager::initMultiThreadMode();
 
           singleThreadModeError_ = objPtr_->run();
         }

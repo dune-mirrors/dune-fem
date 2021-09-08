@@ -43,6 +43,8 @@ namespace Dune
       const IndexSetType& indexSet_;
 
       int sequence_;
+      int numThreads_;
+
       std::vector< IteratorType > iterators_;
       DynamicArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_;
@@ -59,6 +61,7 @@ namespace Dune
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
         , sequence_( -1 )
+        , numThreads_( ThreadManager::maxThreads() )
         , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
         , threadId_( ThreadManager::maxThreads() )
         , filters_( ThreadManager::maxThreads() )
@@ -87,7 +90,7 @@ namespace Dune
       {
         const int sequence = gridPart_.sequence();
         // if grid got updated also update iterators
-        if( sequence_ != sequence )
+        if( sequence_ != sequence || numThreads_ != ThreadManager :: numThreads() )
         {
           if( ! ThreadManager :: singleThreadMode() )
           {
@@ -96,15 +99,19 @@ namespace Dune
             abort();
           }
 
-          const size_t maxThreads = ThreadManager :: maxThreads() ;
+          // update currently used thread numbers
+          numThreads_  = ThreadManager :: numThreads() ;
+
+          iterators_.resize( numThreads_ );
 
           // get end iterator
           const IteratorType endit = gridPart_.template end< 0, pitype >();
+
           IteratorType it = gridPart_.template begin< 0, pitype >();
           if( it == endit )
           {
             // set all iterators to end iterators
-            for( size_t thread = 0; thread <= maxThreads; ++thread )
+            for( size_t thread = 0; thread <= numThreads_; ++thread )
               iterators_[ thread ] = endit ;
 
             // free memory here
@@ -130,13 +137,13 @@ namespace Dune
 
           // here use iterator to count
           size_t checkSize = 0;
-          const size_t roundOff = (iterSize % maxThreads);
-          const size_t counterBase = ((size_t) iterSize / maxThreads );
+          const size_t roundOff = (iterSize % numThreads_);
+          const size_t counterBase = ((size_t) iterSize / numThreads_ );
 
           // just for diagnostics
-          std::vector< int > nElems( maxThreads, 0 );
+          std::vector< int > nElems( numThreads_, 0 );
 
-          for( size_t thread = 1; thread <= maxThreads; ++thread )
+          for( size_t thread = 1; thread <= numThreads_; ++thread )
           {
             size_t i = 0;
             const size_t counter = counterBase + (( (thread-1) < roundOff ) ? 1 : 0);
@@ -153,7 +160,7 @@ namespace Dune
             }
             iterators_[ thread ] = it ;
           }
-          iterators_[ maxThreads ] = endit ;
+          iterators_[ numThreads_ ] = endit ;
 
           if( checkSize != iterSize )
           {
@@ -189,6 +196,7 @@ namespace Dune
         // in multi thread mode return iterators for each thread
         else
         {
+          assert( ThreadManager :: thread() < numThreads_ );
           return iterators_[ ThreadManager :: thread() ];
         }
       }
@@ -203,6 +211,7 @@ namespace Dune
         // in multi thread mode return iterators for each thread
         else
         {
+          assert( ThreadManager :: thread() < numThreads_ );
           return iterators_[ ThreadManager :: thread() + 1 ];
         }
       }
@@ -248,9 +257,9 @@ namespace Dune
       void checkConsistency( const size_t totalElements )
       {
 #ifndef NDEBUG
-        const int maxThreads = ThreadManager :: maxThreads() ;
+        const int numThreads = ThreadManager :: numThreads() ;
         std::set< int > indices ;
-        for( int thread = 0; thread < maxThreads; ++ thread )
+        for( int thread = 0; thread < numThreads; ++ thread )
         {
           const IteratorType end = iterators_[ thread+1 ];
           for( IteratorType it = iterators_[ thread ]; it != end; ++it )
