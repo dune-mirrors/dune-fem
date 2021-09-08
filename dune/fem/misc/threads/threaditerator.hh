@@ -61,7 +61,7 @@ namespace Dune
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
         , sequence_( -1 )
-        , numThreads_( ThreadManager::maxThreads() )
+        , numThreads_( ThreadManager::numThreads() )
         , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
         , threadId_( ThreadManager::maxThreads() )
         , filters_( ThreadManager::maxThreads() )
@@ -101,8 +101,9 @@ namespace Dune
 
           // update currently used thread numbers
           numThreads_  = ThreadManager :: numThreads() ;
+          const size_t numThreads = numThreads_;
 
-          iterators_.resize( numThreads_ );
+          iterators_.resize( numThreads+1 );
 
           // get end iterator
           const IteratorType endit = gridPart_.template end< 0, pitype >();
@@ -111,7 +112,7 @@ namespace Dune
           if( it == endit )
           {
             // set all iterators to end iterators
-            for( size_t thread = 0; thread <= numThreads_; ++thread )
+            for( size_t thread = 0; thread <= numThreads; ++thread )
               iterators_[ thread ] = endit ;
 
             // free memory here
@@ -137,13 +138,13 @@ namespace Dune
 
           // here use iterator to count
           size_t checkSize = 0;
-          const size_t roundOff = (iterSize % numThreads_);
-          const size_t counterBase = ((size_t) iterSize / numThreads_ );
+          const size_t roundOff = (iterSize % numThreads);
+          const size_t counterBase = ((size_t) iterSize / numThreads );
 
           // just for diagnostics
-          std::vector< int > nElems( numThreads_, 0 );
+          std::vector< int > nElems( numThreads, 0 );
 
-          for( size_t thread = 1; thread <= numThreads_; ++thread )
+          for( size_t thread = 1; thread <= numThreads; ++thread )
           {
             size_t i = 0;
             const size_t counter = counterBase + (( (thread-1) < roundOff ) ? 1 : 0);
@@ -160,7 +161,7 @@ namespace Dune
             }
             iterators_[ thread ] = it ;
           }
-          iterators_[ numThreads_ ] = endit ;
+          iterators_[ numThreads ] = endit ;
 
           if( checkSize != iterSize )
           {

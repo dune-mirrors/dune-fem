@@ -90,7 +90,7 @@ namespace Dune
       std::size_t gatherGridSizeInterior () const
       {
         std::size_t gridSizeInterior = 0;
-        const size_t size = impl_.size();
+        const size_t size = ThreadManager::numThreads();
         for( size_t i=0; i<size; ++i )
           gridSizeInterior += impl_[ i ].gridSizeInterior();
         return gridSizeInterior;

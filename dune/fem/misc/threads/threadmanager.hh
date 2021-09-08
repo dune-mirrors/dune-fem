@@ -88,10 +88,8 @@ namespace Dune
       //! \brief return true if the current thread is the master thread (i.e. thread 0)
       static inline bool isMaster() { return true ; }
 
-      /*
       //! \brief set number of threads available during next run
       static inline void setNumThreads( const int numThreads ) { }
-      */
 
       //! \brief set maximal number of threads available during entire run
       static inline void setMaxNumberThreads( const int maxThreads ) { }
@@ -104,10 +102,9 @@ namespace Dune
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
        */
-      static inline const int getMaxNumberThreads ()
+      static inline const int getEnvNumberThreads ()
       {
-        // initialize with the system default, change with env vars
-        int maxThreads = std::max(1u, std::thread::hardware_concurrency());
+        int maxThreads = 1;
 #ifdef USE_SMP_PARALLEL
         // use environment variable (for both openmp or pthreads) if set
         {
@@ -134,6 +131,14 @@ namespace Dune
 #ifdef _OPENMP
     struct OpenMPThreadManager : public EmptyThreadManager
     {
+    private:
+      static int& maxThreads_()
+      {
+        // initialize with the system default, change with env vars
+        static int m = std::max(1u, std::thread::hardware_concurrency());;
+        return m;
+      }
+    public:
       //! true if pthreads are used
       static constexpr bool pthreads = false ;
 
@@ -143,21 +148,23 @@ namespace Dune
        */
       static inline void initialize()
       {
+        // call maxThreads to initialize the variable
+        maxThreads_();
+
         // set max threads (if set by DUNE_NUM_THREADS )
-        omp_set_num_threads( detail::getMaxNumberThreads() );
-        omp_set_num_threads( 1 ); // by default run on 1 thread unless changed by user
+        omp_set_num_threads( detail::getEnvNumberThreads() );
       }
 
       /** return maximal number of threads possible during operation */
       static inline int maxThreads()
       {
-        return omp_get_max_threads();
+        return maxThreads_();
       }
 
       //! return number of threads set by user
       static inline int numThreads()
       {
-        return omp_get_num_threads();
+        return omp_get_max_threads();
       }
 
       //! return thread number
@@ -172,17 +179,16 @@ namespace Dune
         return thread() == 0 ;
       }
 
-      /*
       //! set number of threads available during next parallel section
       static inline void setNumThreads( const int numThreads )
       {
         omp_set_num_threads( numThreads );
       }
-      */
 
+      //! set maximal number of threads usable
       static inline void setMaxNumberThreads( const int numThreads )
       {
-        omp_set_num_threads( numThreads );
+        setNumThreads( numThreads );
       }
 
       [[deprecated("Use initMultiThreadMode();")]]
@@ -198,7 +204,7 @@ namespace Dune
       //! returns true if program is operating on one thread currently
       static inline bool singleThreadMode()
       {
-        return numThreads() == 1 ;
+        return omp_get_num_threads() == 1 ;
       }
     }; // end class ThreadManager
 #endif
@@ -226,6 +232,12 @@ namespace Dune
           threadNum_  = threadNum ;
         }
 
+        inline void setNumThreads( const int nThreads )
+        {
+          assert( nThreads <= maxThreads_ );
+          numThreads_ = nThreads;
+        }
+
         inline void initSingleThreadMode()
         {
           activeThreads_ = 1;
@@ -233,14 +245,13 @@ namespace Dune
 
         inline void initMultiThreadMode( )
         {
-          // currently only numThreads == maxThreads works
-          activeThreads_ = maxThreads_;
+          activeThreads_ = numThreads_;
         }
 
         bool singleThreadMode() const { return activeThreads_ == 1; }
 
         inline int maxThreads() const { return maxThreads_; }
-        inline int numThreads() const { return maxThreads(); }
+        inline int numThreads() const { return numThreads_; }
         inline int thread()
         {
           assert( threadNum_ >= 0 );
@@ -249,12 +260,13 @@ namespace Dune
 
       private:
         int maxThreads_;
+        int numThreads_;
         int activeThreads_;
         int threadNum_;
 
         Manager()
-          : maxThreads_( detail::getMaxNumberThreads() ),
-            activeThreads_( 1 ), threadNum_( 0 )
+          : maxThreads_( std::max(1u, std::thread::hardware_concurrency() ) ),
+            numThreads_( detail::getEnvNumberThreads() ), activeThreads_( 1 ), threadNum_( 0 )
         {}
       };
 
@@ -269,7 +281,7 @@ namespace Dune
       {
         // this call also initiates the master thread
         // (other threads are set in ThreadPool)
-        initThread( detail::getMaxNumberThreads(), 0 );
+        initThread( maxThreads(), 0 );
       }
 
       ///////////////////////////////////////////////////////
@@ -321,13 +333,11 @@ namespace Dune
         return manager().thread();
       }
 
-      /*
       //! set maximal number of threads available during run
       static inline void setNumThreads( const int nThreads )
       {
         manager().setNumThreads( nThreads );
       }
-      */
 
       //! set maximal number of threads available during run
       static inline void setMaxNumberThreads( const int maxThreads )
