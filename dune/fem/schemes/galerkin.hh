@@ -121,7 +121,7 @@ namespace Dune
             defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
             defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
             interiorQuadOrder_(0), surfaceQuadOrder_(0),
-            communicate_( true )
+            gridSizeInterior_( 0 )
         {
         }
 
@@ -626,15 +626,6 @@ namespace Dune
             addLinearizedSkeletonIntegral< false >( intersection, uIn, uOut, phiIn, phiOut, j... );
         }
 
-        void setCommunicate( const bool communicate )
-        {
-          communicate_ = communicate;
-          if( ! communicate_ && Dune::Fem::Parameter::verbose() )
-          {
-            std::cout << "Impl::GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
-          }
-        }
-
         void setQuadratureOrders(unsigned int interior, unsigned int surface)
         {
           interiorQuadOrder_ = interior;
@@ -659,11 +650,15 @@ namespace Dune
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( w.space() );
 
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
+          gridSizeInterior_ = 0;
 
           // for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
+            // increase counter for interior elements
+            ++gridSizeInterior_;
+
             const EntityType entity = *it ;
 
             auto uGuard = bindGuard( uLocal, entity );
@@ -697,12 +692,17 @@ namespace Dune
           typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
 
+          gridSizeInterior_ = 0;
+
           const auto &indexSet = gridPart().indexSet();
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
             assert( iterators.thread( *it ) == ThreadManager::thread() );
             const EntityType inside = *it ;
+
+            // increase counter for interior elements
+            ++gridSizeInterior_;
 
             auto uGuard = bindGuard( uInside, inside );
             auto wGuard = bindGuard( wInside, inside );
@@ -852,10 +852,14 @@ namespace Dune
           TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
 
+          gridSizeInterior_ = 0;
           // possible threaded grid walk here
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
+            // increase counter for interior elements
+            ++gridSizeInterior_;
+
             const EntityType entity = *it;
 
             auto guard = bindGuard( uLocal, entity );
@@ -896,11 +900,16 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
 
+          gridSizeInterior_ = 0;
+
           const auto &indexSet = gridPart().indexSet();
           // threaded iterators provide from outside
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
+            // increase counter for interior elements
+            ++gridSizeInterior_;
+
             const EntityType inside = *it;
 
             auto uiGuard = bindGuard( uIn, inside );
@@ -991,6 +1000,8 @@ namespace Dune
         unsigned int interiorQuadratureOrder(unsigned int order) const { return interiorQuadOrder_ == 0 ? defaultInteriorOrder_(order) : interiorQuadOrder_; }
         unsigned int surfaceQuadratureOrder(unsigned int order)  const { return surfaceQuadOrder_  == 0 ? defaultSurfaceOrder_ (order) : surfaceQuadOrder_;  }
 
+        std::size_t gridSizeInterior() const { return gridSizeInterior_; }
+
       protected:
         template <class U>
         int maxOrder( const U& u ) const
@@ -1032,7 +1043,7 @@ namespace Dune
         mutable DomainValueVectorType  basisValues_;
         mutable DomainValueVectorType  domainValues_;
 
-        bool communicate_;
+        mutable std::size_t gridSizeInterior_;
       };
 
     } // namespace Impl
@@ -1060,18 +1071,19 @@ namespace Dune
       template< class... Args >
       explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
         : iterators_( gridPart ),
-          impl_( gridPart, std::forward< Args >( args )... )
+          impl_( gridPart, std::forward< Args >( args )... ),
+          gridSizeInterior_( 0 ),
+          communicate_( true )
       {
-        // disable communicate for impl because in threaded mode is has to be
-        // done here
-        size_t size = impl_.size();
-        for( size_t i=0; i<size; ++i )
-          impl_[ i ].setCommunicate( false );
       }
 
       void setCommunicate( const bool communicate )
       {
         communicate_ = communicate;
+        if( ! communicate_ && Dune::Fem::Parameter::verbose() )
+        {
+          std::cout << "GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
+        }
       }
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface)
@@ -1099,7 +1111,19 @@ namespace Dune
       ModelType &model() const { return impl().model(); }
       const GalerkinOperatorImplType& impl() const { return *impl_; }
 
+      std::size_t gridSizeInterior () const { return gridSizeInterior_; }
+
     protected:
+      // update number of interior elements as sum over threads
+      std::size_t gatherGridSizeInterior () const
+      {
+        std::size_t gridSizeInterior = 0;
+        const size_t size = impl_.size();
+        for( size_t i=0; i<size; ++i )
+          gridSizeInterior += impl_[ i ].gridSizeInterior();
+        return gridSizeInterior;
+      }
+
       template < class GridFunction >
       void evaluate( const GridFunction &u, RangeFunctionType &w ) const
       {
@@ -1116,6 +1140,9 @@ namespace Dune
         try {
           // execute in parallel
           ThreadPool :: run ( doEval );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
         }
         catch ( const SingleThreadModeError& e )
         {
@@ -1123,6 +1150,8 @@ namespace Dune
           w.clear();
           // re-run in single thread mode if previous attempt failed
           impl().evaluate( u, w, iterators_ );
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
         }
 
         // synchronize result
@@ -1133,6 +1162,7 @@ namespace Dune
       mutable ThreadIteratorType iterators_;
       ThreadSafeValue< GalerkinOperatorImplType > impl_;
 
+      mutable std::size_t gridSizeInterior_;
       bool communicate_;
     };
 
@@ -1205,12 +1235,18 @@ namespace Dune
         try {
           // execute in parallel
           ThreadPool :: run ( doAssemble );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
         }
         catch ( const SingleThreadModeError& e )
         {
           // redo assemble since it failed previously
           jOp.clear();
           impl().assemble( u, jOp, iterators_ );
+
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
         }
 
         // note: assembly done without local contributions so need
@@ -1219,7 +1255,9 @@ namespace Dune
       }
 
       using BaseType::impl;
+      using BaseType::gatherGridSizeInterior;
       using BaseType::iterators_;
+      using BaseType::gridSizeInterior_;
 
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;

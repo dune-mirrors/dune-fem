@@ -45,16 +45,20 @@ namespace Dune
         : gridPart_( const_cast< GridType& > (gridPart.grid()) ),
           impl_( gridPart, std::forward< Args >( args )... ),
           iterators_( gridPart_ ),
+          gridSizeInterior_( 0 ),
           communicate_( true )
       {
-        // disable communicate in Impl::GalerkinOperator
-        // since applyInverseMass has to be applied first
-        size_t size = impl_.size();
-        for( size_t i=0; i<size; ++i )
-          impl_[ i ].setCommunicate( false );
       }
 
-      void setCommunicate( const bool communicate ) { communicate_ = communicate; }
+      void setCommunicate( const bool communicate )
+      {
+        communicate_ = communicate;
+        if( ! communicate_ && Dune::Fem::Parameter::verbose() )
+        {
+          std::cout << "MOLGalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
+        }
+      }
+
       void setQuadratureOrders(unsigned int interior, unsigned int surface)
       {
         size_t size = impl_.size();
@@ -79,7 +83,19 @@ namespace Dune
       typedef Integrands DirichletModelType;
       ModelType &model() const { return impl().model(); }
 
+      std::size_t gridSizeInterior () const { return gridSizeInterior_; }
+
     protected:
+      // update number of interior elements as sum over threads
+      std::size_t gatherGridSizeInterior () const
+      {
+        std::size_t gridSizeInterior = 0;
+        const size_t size = impl_.size();
+        for( size_t i=0; i<size; ++i )
+          gridSizeInterior += impl_[ i ].gridSizeInterior();
+        return gridSizeInterior;
+      }
+
       template <class Iterators>
       void applyInverseMass( const Iterators& iterators, RangeFunctionType& w ) const
       {
@@ -125,6 +141,9 @@ namespace Dune
         try {
           // execute in parallel
           ThreadPool :: run ( doEval );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
         }
         catch ( const SingleThreadModeError& e )
         {
@@ -157,6 +176,9 @@ namespace Dune
           // re-run in single thread mode if previous attempt failed
           impl().evaluate( u, w, iterators_ );
           applyInverseMass( iterators_, w );
+
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
         }
 
         // synchronize data
@@ -170,6 +192,8 @@ namespace Dune
       // GalerkinOperator implementation (see galerkin.hh)
       ThreadSafeValue< GalerkinOperatorImplType > impl_;
       mutable ThreadIteratorType iterators_;
+
+      mutable std::size_t gridSizeInterior_;
       bool communicate_;
     };
 
@@ -229,7 +253,9 @@ namespace Dune
 
     protected:
       using BaseType::impl;
+      using BaseType::gatherGridSizeInterior;
       using BaseType::iterators_;
+      using BaseType::gridSizeInterior_;
 
       template < class GridFunction >
       void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
@@ -250,12 +276,18 @@ namespace Dune
         try {
           // execute in parallel
           ThreadPool :: run ( doAssemble );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
         }
         catch ( const SingleThreadModeError& e )
         {
           // redo matrix assembly since it failed
           jOp.clear();
           impl().assemble( u, jOp, iterators_ );
+
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
         }
 
         // apply inverse mass
