@@ -28,6 +28,13 @@ namespace Fem
       virtual bool run() = 0;
     };
 
+    class EmptyObject : public ObjectIF
+    {
+    public:
+      virtual ~EmptyObject() {}
+      virtual bool run() { return false; }
+    };
+
     template <class Object>
     class ObjectWrapper : public ObjectIF
     {
@@ -72,11 +79,13 @@ namespace Fem
     ////////////////////////////////////////////
     class ThreadPoolObject
     {
+      EmptyObject empty_;
       ObjectIF* objPtr_;
       pthread_barrier_t* barrierBegin_ ;
       pthread_barrier_t* barrierEnd_ ;
       pthread_t threadId_ ;
       int maxThreads_ ;
+      int numThreads_ ;
       int threadNumber_ ;
 
       std::atomic< bool > singleThreadModeError_;
@@ -94,6 +103,7 @@ namespace Fem
           barrierEnd_ ( barrierEnd ),
           threadId_( 0 ),
           maxThreads_( maxThreads ),
+          numThreads_( 1 ),
           threadNumber_( threadNumber ),
           singleThreadModeError_( false )
       {
@@ -109,6 +119,7 @@ namespace Fem
           barrierEnd_ ( barrierEnd ),
           threadId_( pthread_self() ),
           maxThreads_( maxThreads ),
+          numThreads_( 1 ),
           threadNumber_( 0 ),
           singleThreadModeError_( false )
       {
@@ -121,6 +132,7 @@ namespace Fem
           barrierEnd_( other.barrierEnd_ ),
           threadId_( other.threadId_ ),
           maxThreads_( other.maxThreads_ ),
+          numThreads_( other.numThreads_ ),
           threadNumber_( other.threadNumber_ ),
           singleThreadModeError_( false )
       {}
@@ -132,17 +144,25 @@ namespace Fem
         barrierBegin_ = other.barrierBegin_ ;
         barrierEnd_   = other.barrierEnd_ ;
         threadId_     = other.threadId_;
-        maxThreads_   = other.maxThreads_;
+        assert( maxThreads_ == other.maxThreads_ );
+        numThreads_   = other.numThreads_;
         threadNumber_ = other.threadNumber_;
         singleThreadModeError_ = false;
         return *this;
       }
 
       // Create the thread and start work
-      void start( ObjectIF* obj )
+      void startEmpty( const int nThreads )
+      {
+        start( nThreads, &empty_ );
+      }
+
+      // Create the thread and start work
+      void start( const int nThreads, ObjectIF* obj )
       {
         // init object
         objPtr_ = obj;
+        numThreads_ = nThreads;
 
         if( isNotMainThread() )
         {
@@ -185,6 +205,8 @@ namespace Fem
 
         // we should be in single thread mode here
         assert( ThreadManager::singleThreadMode() );
+        // communicate numThreads to thread_local variable in ThreadManager
+        ThreadManager::setNumThreads( numThreads_ );
 
         // when object pointer is set call run, else terminate
         if( objPtr_ )
@@ -278,14 +300,24 @@ namespace Fem
 
   protected:
     //! start all threads to do the job
-    bool startThreads( ObjectIF* obj = 0 )
+    bool startThreads( const int numThreads, ObjectIF* obj = 0 )
     {
       // start threads, this will call the runThread method
       // and call initMultiThreadMode on ThreadManager
-      for(int i=0; i<maxThreads_; ++i)
+      // Start thread 1,...,numThreads-1
+      for(int i=0; i<numThreads-1; ++i)
       {
-        threads_[ i ].start( obj );
+        threads_[ i ].start( numThreads, obj );
       }
+
+      // ommit threads with number >= numThreads
+      for( int i=numThreads-1; i<maxThreads_-1; ++i )
+      {
+        threads_[ i ].startEmpty( numThreads );
+      }
+
+      // start master thread as last thread
+      threads_[ maxThreads_-1 ].start( numThreads, obj );
 
       // wait until all threads are done
       int count = 0;
@@ -319,7 +351,7 @@ namespace Fem
       ObjectWrapper< Functor > objPtr( functor, mtx );
 
       // start parallel execution
-      return startThreads( &objPtr ) ;
+      return startThreads( ThreadManager::numThreads(), &objPtr ) ;
     }
 
     // return instance of ThreadPool
@@ -333,7 +365,7 @@ namespace Fem
     ~ThreadPool()
     {
       // start threads with null object which will terminate each sub thread
-      startThreads () ;
+      startThreads ( maxThreads_ ) ;
 
       // call thread join
       for(int i=0; i<maxThreads_; ++i)

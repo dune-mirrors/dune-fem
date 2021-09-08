@@ -59,7 +59,8 @@ namespace Dune {
 
 #ifdef USE_THREADPARTITIONER
       int sequence_;
-      std::vector< FilteredGridPartType* > filteredGridParts_;
+      int numThreads_;
+      std::vector< std::unique_ptr< FilteredGridPartType > > filteredGridParts_;
 
       typedef typename FilterType :: DomainArrayType ThreadArrayType;
       ThreadArrayType threadNum_;
@@ -93,6 +94,7 @@ namespace Dune {
           indexSet_( gridPart_.indexSet() )
 #ifdef USE_THREADPARTITIONER
         , sequence_( -1 )
+        , numThreads_( Fem :: ThreadManager :: numThreads() )
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
         , masterRatio_( 1.0 )
@@ -108,9 +110,9 @@ namespace Dune {
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
         {
           // thread is the thread number of this filter
-          filteredGridParts_[ thread ]
-            = new FilteredGridPartType( const_cast<GridPartType &> (gridPart_),
-                                        FilterType( gridPart_, threadNum_, thread ) );
+          filteredGridParts_[ thread ].reset(
+              new FilteredGridPartType( const_cast<GridPartType &> (gridPart_),
+                                        FilterType( gridPart_, threadNum_, thread ) ) );
         }
 
         threadNum_.setMemoryFactor( 1.1 );
@@ -119,17 +121,6 @@ namespace Dune {
       }
 
 #ifdef USE_THREADPARTITIONER
-      //! destructor
-      ~DomainDecomposedIterator()
-      {
-        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
-        {
-          // i is the thread number of this filter
-          delete filteredGridParts_[ thread ] ;
-          filteredGridParts_[ thread ] = 0 ;
-        }
-      }
-
       //! return filter for given thread
       const FilterType& filter( const int thread ) const
       {
@@ -143,7 +134,7 @@ namespace Dune {
 #ifdef USE_THREADPARTITIONER
         const int sequence = gridPart_.sequence() ;
         // if grid got updated also update iterators
-        if( sequence_ != sequence )
+        if( sequence_ != sequence || numThreads_ != ThreadManager :: numThreads() )
         {
           if( ! ThreadManager :: singleThreadMode() )
           {
@@ -154,7 +145,7 @@ namespace Dune {
 
           const int commThread = communicationThread_ ? 1 : 0;
           // get number of partitions possible
-          const size_t partitions = ThreadManager :: maxThreads() - commThread ;
+          const size_t partitions = ThreadManager :: numThreads() - commThread ;
 
           // create partitioner
           ThreadPartitionerType db( gridPart_, partitions, masterRatio_ );
@@ -191,6 +182,9 @@ namespace Dune {
 
             // update sequence number
             sequence_ = sequence;
+
+            // update numThreads_
+            numThreads_ = ThreadManager :: numThreads();
 
             if( verbose_ )
             {
