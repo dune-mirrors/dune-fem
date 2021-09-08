@@ -102,10 +102,9 @@ namespace Dune
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
        */
-      static inline const int getMaxNumberThreads ()
+      static inline const int getEnvNumberThreads ()
       {
-        // initialize with the system default, change with env vars
-        int maxThreads = std::max(1u, std::thread::hardware_concurrency());
+        int maxThreads = 1;
 #ifdef USE_SMP_PARALLEL
         // use environment variable (for both openmp or pthreads) if set
         {
@@ -135,7 +134,8 @@ namespace Dune
     private:
       static int& maxThreads_()
       {
-        static int m = detail::getMaxNumberThreads();
+        // initialize with the system default, change with env vars
+        static int m = std::max(1u, std::thread::hardware_concurrency());;
         return m;
       }
     public:
@@ -148,10 +148,11 @@ namespace Dune
        */
       static inline void initialize()
       {
-        // set max threads (if set by DUNE_NUM_THREADS )
+        // call maxThreads to initialize the variable
         maxThreads_();
-        omp_set_num_threads( maxThreads_() );
-        omp_set_num_threads( 1 ); // by default run on 1 thread unless changed by user
+
+        // set max threads (if set by DUNE_NUM_THREADS )
+        omp_set_num_threads( detail::getEnvNumberThreads() );
       }
 
       /** return maximal number of threads possible during operation */
@@ -264,8 +265,8 @@ namespace Dune
         int threadNum_;
 
         Manager()
-          : maxThreads_( detail::getMaxNumberThreads() ),
-            numThreads_( 1 ), activeThreads_( 1 ), threadNum_( 0 )
+          : maxThreads_( std::max(1u, std::thread::hardware_concurrency() ) ),
+            numThreads_( detail::getEnvNumberThreads() ), activeThreads_( 1 ), threadNum_( 0 )
         {}
       };
 
@@ -280,7 +281,7 @@ namespace Dune
       {
         // this call also initiates the master thread
         // (other threads are set in ThreadPool)
-        initThread( detail::getMaxNumberThreads(), 0 );
+        initThread( maxThreads(), 0 );
       }
 
       ///////////////////////////////////////////////////////

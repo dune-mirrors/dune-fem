@@ -83,6 +83,9 @@ namespace Dune
         MPIHelper *&helper = instance().helper_;
         std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
+        // initialize treading environment
+        ThreadManager::initialize();
+
         // the following initialization overrides the MPI_Init in dune-common
         // to avoid a call to MPI_Finalize before all singletons have been deleted
 #if HAVE_MPI
@@ -130,9 +133,6 @@ namespace Dune
         // if already initialized, do nothing further
         if( helper && comm )
           return ;
-
-        // initialize treading environment
-        ThreadManager::initialize();
 
         // this will just initialize the static variables inside MPIHelper but
         // not call MPI_Init again
