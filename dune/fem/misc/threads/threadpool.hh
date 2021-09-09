@@ -304,16 +304,19 @@ namespace Fem
     //! start all threads to do the job
     bool startThreads( const int numThreads, ObjectIF* obj = 0 )
     {
+      assert( numThreads <= maxThreads_ );
+
       // start threads, this will call the runThread method
       // and call initMultiThreadMode on ThreadManager
-      // Start first numThreads-1 empty (reverse ordering)
-      for(int i=0; i<numThreads; ++i)
+      // Start first the emptyThreads (reverse ordering)
+      const int emptyThreads = maxThreads_ - numThreads;
+      for(int i=0; i<emptyThreads; ++i)
       {
         threads_[ i ].startEmpty( numThreads );
       }
 
       // start threads with threadNumber < numThreads
-      for( int i=numThreads; i<maxThreads_; ++i )
+      for( int i=emptyThreads; i<maxThreads_; ++i )
       {
         threads_[ i ].start( numThreads, obj );
       }
