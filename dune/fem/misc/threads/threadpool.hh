@@ -25,6 +25,7 @@ namespace Fem
       ObjectIF() {}
     public:
       virtual ~ObjectIF() {}
+      // return true if SingleThreadModeError was caught
       virtual bool run() = 0;
     };
 
@@ -84,7 +85,7 @@ namespace Fem
       pthread_barrier_t* barrierBegin_ ;
       pthread_barrier_t* barrierEnd_ ;
       pthread_t threadId_ ;
-      int maxThreads_ ;
+      const int maxThreads_ ;
       int numThreads_ ;
       int threadNumber_ ;
 
@@ -110,7 +111,7 @@ namespace Fem
         assert( threadNumber > 0 );
       }
 
-      // constructor creating master thread
+      // constructor creating main thread
       explicit ThreadPoolObject(pthread_barrier_t* barrierBegin,
                                 pthread_barrier_t* barrierEnd,
                                 const int maxThreads)
@@ -175,7 +176,7 @@ namespace Fem
         }
         else
         {
-          // on master thread there is no need to start an extra thread
+          // on main thread there is no need to start an extra thread
           run();
         }
       }
@@ -231,7 +232,7 @@ namespace Fem
         // reset to single thread
         ThreadManager::initSingleThreadMode();
 
-        // when thread is not master then
+        // when thread is not main then
         // just call run and wait at barrier
         if( isNotMainThread() )
         {
@@ -286,14 +287,15 @@ namespace Fem
       // initialize barrier
       pthread_barrier_init( &waitEnd_, 0, maxThreads_ );
 
-      // initialize slave threads
-      for(int i=1; i<maxThreads_; ++i)
+      // initialize worker threads in reverse order
+      const int m1 = maxThreads_ - 1;
+      for(int i=0; i<m1; ++i)
       {
         // create thread handles for pthreads
-        threads_.push_back( ThreadPoolObject( &waitBegin_, &waitEnd_, maxThreads_, i ) );
+        threads_.push_back( ThreadPoolObject( &waitBegin_, &waitEnd_, maxThreads_, m1 - i ) );
       }
 
-      // insert master thread at last because this thread creates
+      // insert main thread at last because this thread creates
       // all other threads before it start its calculations
       threads_.push_back( ThreadPoolObject( &waitBegin_, &waitEnd_, maxThreads_ ) );
     } // end constructor
@@ -304,20 +306,17 @@ namespace Fem
     {
       // start threads, this will call the runThread method
       // and call initMultiThreadMode on ThreadManager
-      // Start thread 1,...,numThreads-1
-      for(int i=0; i<numThreads-1; ++i)
-      {
-        threads_[ i ].start( numThreads, obj );
-      }
-
-      // ommit threads with number >= numThreads
-      for( int i=numThreads-1; i<maxThreads_-1; ++i )
+      // Start first numThreads-1 empty (reverse ordering)
+      for(int i=0; i<numThreads; ++i)
       {
         threads_[ i ].startEmpty( numThreads );
       }
 
-      // start master thread as last thread
-      threads_[ maxThreads_-1 ].start( numThreads, obj );
+      // start threads with threadNumber < numThreads
+      for( int i=numThreads; i<maxThreads_; ++i )
+      {
+        threads_[ i ].start( numThreads, obj );
+      }
 
       // wait until all threads are done
       int count = 0;
