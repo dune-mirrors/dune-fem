@@ -179,6 +179,8 @@ namespace Dune
     template <class GridPart>
     class CacheProvider<GridPart, 1>
     {
+      typedef CacheProvider<GridPart, 1> ThisType;
+
       static const int codim = 1;
       static const int dim = GridPart::dimension;
       typedef typename GridPart::ctype ct;
@@ -220,16 +222,9 @@ namespace Dune
 
     private:
       typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType;
-
       typedef typename Traits::MapperVectorType MapperVectorType;
 
-      // derive from map to make type unique to this class
-      class MapperContainer : public std::map<const QuadratureKeyType, CacheStorageType>
-      {
-        enum { cd = codim };
-      };
-      typedef MapperContainer MapperContainerType;
-
+      typedef std::map<const QuadratureKeyType, CacheStorageType> MapperContainerType;
       typedef typename MapperContainerType::iterator MapperIteratorType;
 
     private:
@@ -239,10 +234,18 @@ namespace Dune
       static MapperIteratorType
       createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
 
+      // mapper container holding mappings for different quads
+      MapperContainerType mappers_;
+
     private:
       static MapperContainerType& mappers()
       {
-        return Singleton< MapperContainerType >::instance();
+        return instance().mappers_;
+      }
+
+      static ThisType& instance()
+      {
+        return Singleton< ThisType >::instance();
       }
     };
 

@@ -29,6 +29,8 @@ namespace Dune
     template <class ct, int dim>
     class PointProvider<ct, dim, 0>
     {
+      typedef PointProvider<ct, dim, 0> ThisType;
+
       typedef CachingTraits<ct, dim> Traits;
 
     public:
@@ -45,21 +47,20 @@ namespace Dune
                                                     const GeometryType& elementGeo);
 
     private:
-      // derive from map to make type unique to this class
-      class PointContainer
-        : public std::map<const QuadratureKeyType, GlobalPointVectorType>
-      {
-        enum { cd = 0 };
-      };
-
-      typedef PointContainer PointContainerType;
-
+      typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
       typedef typename PointContainerType::iterator PointIteratorType;
 
-    private:
+      // points container holding quadrature points
+      PointContainerType points_;
+
       static PointContainerType& points()
       {
-        return Singleton< PointContainerType > :: instance();
+        return instance().points_;
+      }
+
+      static ThisType& instance()
+      {
+        return Singleton< ThisType > :: instance();
       }
     };
 
@@ -67,6 +68,8 @@ namespace Dune
     template <class ct, int dim>
     class PointProvider<ct, dim, 1>
     {
+      typedef PointProvider<ct, dim, 1> ThisType;
+
       enum { codim = 1 };
       typedef CachingTraits<ct, dim-codim> Traits;
 
@@ -95,22 +98,8 @@ namespace Dune
                                                     const GeometryType& elementGeo);
 
     private:
-      // derive from map to make type unique to this class
-      class PointContainer
-        : public std::map<const QuadratureKeyType, GlobalPointVectorType>
-      {
-        enum { cd = codim };
-      };
-
-      typedef PointContainer PointContainerType;
-
-      // derive from map to make type unique to this class
-      class MapperContainer
-        : public std::map<const QuadratureKeyType, MapperVectorPairType >
-      {
-        enum { cd = codim };
-      };
-      typedef MapperContainer MapperContainerType;
+      typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
+      typedef std::map<const QuadratureKeyType, MapperVectorPairType > MapperContainerType;
 
       typedef typename PointContainerType::iterator PointIteratorType;
       typedef typename MapperContainerType::iterator MapperIteratorType;
@@ -122,14 +111,17 @@ namespace Dune
                                          GeometryType elementGeo);
 
     private:
-      static PointContainerType& points()
-      {
-        return Singleton< PointContainerType > :: instance();
-      }
+      // points container holding quadrature points
+      PointContainerType   points_;
+      // mapper container holding mapping info
+      MapperContainerType  mappers_;
 
-      static MapperContainerType& mappers()
+      static PointContainerType& points() { return instance().points_; }
+      static MapperContainerType& mappers() { return instance().mappers_; }
+
+      static ThisType& instance()
       {
-        return Singleton< MapperContainerType > :: instance();
+        return Singleton< ThisType > :: instance();
       }
     };
 
