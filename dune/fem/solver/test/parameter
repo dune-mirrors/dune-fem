@@ -39,6 +39,7 @@ fem.solver.newton.linear.maxiterations: 100
 # parameter used to test istl solver passing in istl parameter
 istlparam.method: cg
 istlparam.verbose: false
+istlparam.preconditioning.method: ssor
 
 # what are these for?
 fem.solver.row.maxlineariterations: 1000
