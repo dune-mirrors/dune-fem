@@ -11,6 +11,7 @@
 
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/schwarz.hh>
 
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
@@ -129,12 +130,6 @@ namespace Dune
       //! \brief The field type of the preconditioner.
       typedef typename X::field_type field_type;
 
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {
-        //! \brief The category the precondtioner is part of.
-        category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       //! default constructor
       IdentityPreconditionerWrapper(){}
 
@@ -150,10 +145,113 @@ namespace Dune
       //! \copydoc Preconditioner
       void post (X& x) override {}
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
+
+    namespace detail
+    {
+
+
+      class SolverCommunicationIF
+      {
+      public:
+        virtual ~SolverCommunicationIF() {}
+      };
+
+      // Fem Communication Wrapper for ISTL
+      // ----------------------------------
+
+      template< class DiscreteFunctionSpace >
+      class FemISTLCommunication : public SolverCommunicationIF
+      {
+        typedef FemISTLCommunication< DiscreteFunctionSpace > ThisType;
+
+      public:
+        virtual ~FemISTLCommunication () {}
+
+        typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
+        typedef typename DiscreteFunctionSpace::GridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+
+        typedef int GlobalLookupIndexSet;
+
+        explicit FemISTLCommunication ( const DiscreteFunctionSpaceType &dfSpace,
+            Dune::SolverCategory::Category solverCategory = Dune::SolverCategory::sequential )
+          : dfSpace_( dfSpace ), solverCategory_( solverCategory )
+        {}
+
+        const CollectiveCommunicationType& communicator () const { return dfSpace_.gridPart().comm(); }
+
+        template< class T >
+        void copyOwnerToAll ( const T &x, T &y ) const
+        {
+          y = x;
+          if( communicator().size() > 1 )
+          {
+            typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType, typename T::block_type > DiscreteFunctionType;
+            DiscreteFunctionType z( "FemISTLComm::z", dfSpace_, y );
+            z.communicate();
+          }
+        }
+
+        template< class T >
+        void project ( T &x ) const
+        {
+          typedef typename T::field_type field_type;
+
+          // clear auxiliary DoFs
+          const auto &auxiliaryDofs = dfSpace_.auxiliaryDofs();
+          for( int i : auxiliaryDofs )
+            x[ i ] = field_type( 0 );
+        }
+
+        template< class T, class F >
+        void dot ( const T &x, const T &y, F &scp ) const
+        {
+          const auto &auxiliaryDofs = dfSpace_.auxiliaryDofs();
+
+          const int numAuxiliarys = auxiliaryDofs.size();
+          for( int auxiliary = 0, i = 0; auxiliary < numAuxiliarys; ++auxiliary, ++i )
+          {
+            const int nextAuxiliary = auxiliaryDofs[ auxiliary ];
+            for( ; i < nextAuxiliary; ++i )
+              scp += x[ i ] * y[ i ];
+          }
+
+          scp = communicator().sum( scp );
+        }
+
+
+        template< class T >
+        typename Dune::FieldTraits< typename T::field_type >::real_type norm ( const T &x ) const
+        {
+          using std::sqrt;
+          typename Dune::FieldTraits< typename T::field_type >::real_type norm2( 0 );
+          dot( x, x, norm2 );
+          return sqrt( norm2 );
+        }
+
+        Dune::SolverCategory::Category getSolverCategory () const { return solverCategory_; }
+
+      private:
+        const DiscreteFunctionSpaceType &dfSpace_;
+        Dune::SolverCategory::Category solverCategory_;
+      };
+
+      template <class M, class X, class Y, class SolverComm>
+      class FemParSSOR : public Dune::ParSSOR< M, X, Y, SolverComm>
+      {
+        typedef Dune::ParSSOR< M, X, Y, SolverComm> BaseType;
+
+      public:
+        FemParSSOR (const M& A, int n, typename BaseType::field_type w,
+                    const SolverComm& c)
+          : BaseType( A, n, w, c )
+        {}
+
+        SolverCategory::Category category () const override { return SolverCategory::sequential; }
+      };
+
+    } // end namespace detail
 
 
     //! wrapper class to store perconditioner
@@ -186,6 +284,8 @@ namespace Dune
       // auto pointer to preconditioning object
       typedef Preconditioner<X,Y> PreconditionerInterfaceType;
       mutable std::shared_ptr<PreconditionerInterfaceType> preconder_;
+      // FemISTLCommunication
+      mutable std::shared_ptr< const detail::SolverCommunicationIF > solverCommStorage_;
 
       // flag whether we have preconditioning, and if yes if it is AMG
       const int preEx_;
@@ -202,7 +302,7 @@ namespace Dune
         inline static void copy(XImp& v, const YImp& d)
         {
         }
-     };
+      };
 
       template <class XImp>
       struct Apply<XImp,XImp>
@@ -261,6 +361,23 @@ namespace Dune
         , preEx_( 1 )
         , verbose_( verbose )
       {
+      }
+
+      //! create preconditioner of given type
+      template <class PreconditionerType, class SolverCommunicationType >
+      PreconditionerWrapper(MatrixType & matrix,
+                            const SolverCommunicationType* solverComm,
+                            int iter,
+                            field_type relax,
+                            bool verbose,
+                            const PreconditionerType* p)
+        : op_()
+        , preconder_( new PreconditionerType( matrix, iter, relax, *solverComm ) )
+        , preEx_( 1 )
+        , verbose_( verbose )
+      {
+        // store object here
+        solverCommStorage_.reset( solverComm );
       }
 
 
@@ -458,6 +575,23 @@ namespace Dune
       typedef Fem::PreconditionerWrapper< MatrixType >             PreconditionAdapterType;
 
     protected:
+      template <class MatrixAdapterType, class PreconditionerType, class SolverCommunicationType>
+      static MatrixAdapterType*
+      createMatrixAdapter(const MatrixAdapterType*,
+                          const PreconditionerType* preconditioning,
+                          MatrixType& matrix,
+                          const SolverCommunicationType* solverComm,
+                          const DomainSpaceType& domainSpace,
+                          const RangeSpaceType& rangeSpace,
+                          const double relaxFactor,
+                          std::size_t numIterations,
+                          bool verbose)
+      {
+        typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+        PreConType preconAdapter(matrix, solverComm, numIterations, relaxFactor, verbose, preconditioning );
+        return new MatrixAdapterType(matrix, domainSpace, rangeSpace, preconAdapter );
+      }
+
       template <class MatrixAdapterType, class PreconditionerType>
       static MatrixAdapterType*
       createMatrixAdapter(const MatrixAdapterType*,
@@ -531,13 +665,12 @@ namespace Dune
         // SSOR
         else if( preconditioning == SolverParameter::ssor )
         {
-          if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
-
-          typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef detail::FemISTLCommunication< RangeSpaceType >  SolverCommunicationType;
+          SolverCommunicationType* solverComm = new SolverCommunicationType(rangeSpace);
+          typedef detail::FemParSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType, SolverCommunicationType> PreconditionerType;
           return createMatrixAdapter( (MatrixAdapterType *)nullptr,
                                       (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
+                                      matrix, solverComm, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
         }
         // SOR
         else if(preconditioning == SolverParameter::sor )
