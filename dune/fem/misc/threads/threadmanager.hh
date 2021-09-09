@@ -64,6 +64,9 @@ namespace Dune
       //! true if pthreads are used
       static constexpr bool pthreads = false ;
 
+      /** \brief initialize ThreadManager */
+      static inline void initialize() {}
+
       //! \brief initialize single thread mode (when in multithread mode)
       static inline void initSingleThreadMode() {}
 
