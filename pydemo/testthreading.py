@@ -68,11 +68,9 @@ def model(space,epsilon,weakBnd):
     return scheme, linear(scheme), uh
 
 def compute(scheme, linear, uh):
-    print("apply:",flush=True)
     start = time.time()
     scheme(uh.copy(),uh)
     runTime = [time.time()-start]
-    print("assemble:",flush=True)
     start = time.time()
     scheme.jacobian(uh,linear)
     runTime += [time.time()-start]
@@ -83,32 +81,40 @@ storage = "fem"
 def newGridView(N=4):
     return leafGridView([-1, -1], [1, 1], [N, N])
 
-# run once to make sure caches is setup
-gridView = newGridView()
-space    = dgSpace(gridView, order=2, storage=storage)
-scheme, A, uh = model(space,1,True)
-compute(scheme,A,uh)
+def test(spaceCtor):
+    # run once to make sure caches is setup
+    gridView = newGridView()
+    space    = spaceCtor(gridView, order=2, storage=storage)
+    scheme, A, uh = model(space,1,True)
+    compute(scheme,A,uh)
 
-gridView = newGridView(N=400)
-space    = dgSpace(gridView, order=2, storage=storage)
-scheme, A, uh = model(space,1,True)
+    gridView = newGridView(N=400)
+    space    = spaceCtor(gridView, order=2, storage=storage)
+    scheme, A, uh = model(space,1,True)
 
-# time with the default number of threads (1 if no environment variable is set)
+    # time with the default number of threads (1 if no environment variable is set)
+    defaultThreads = dune.fem.threading.use
+    runTime = compute(scheme,A,uh)
+    print(dune.fem.threading.use," thread used: ",runTime,flush=True)
 
-runTime = compute(scheme,A,uh)
-print(dune.fem.threading.use," thread used: ",runTime,flush=True)
+    # time with 2 threads
+    dune.fem.threading.use = 2
+    runTime = compute(scheme,A,uh)
+    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
-# time with 2 threads
-dune.fem.threading.use = 2
-runTime = compute(scheme,A,uh)
-print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    # time with 4 threads
+    dune.fem.threading.use = 4
+    runTime = compute(scheme,A,uh)
+    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
-# time with 4 threads
-dune.fem.threading.use = 4
-runTime = compute(scheme,A,uh)
-print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    # time with max number of threads
+    dune.fem.threading.useMax()
+    runTime = compute(scheme,A,uh)
+    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
-# time with max number of threads
-dune.fem.threading.useMax()
-runTime = compute(scheme,A,uh)
-print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    dune.fem.threading.use = defaultThreads
+
+print("DGSpace:")
+test(dgSpace)
+print("Lagrange:")
+test(lagrange)

@@ -201,6 +201,10 @@ namespace Dune
           return iterators_[ ThreadManager :: thread() ];
         }
       }
+      IteratorType begin(int thread) const
+      {
+        return iterators_[ thread ];
+      }
 
       //! return end iterator for current thread
       IteratorType end() const
@@ -215,6 +219,10 @@ namespace Dune
           assert( ThreadManager :: thread() < numThreads_ );
           return iterators_[ ThreadManager :: thread() + 1 ];
         }
+      }
+      IteratorType end(int thread) const
+      {
+        return iterators_[ thread + 1 ];
       }
 
       //! return thread number this entity belongs to

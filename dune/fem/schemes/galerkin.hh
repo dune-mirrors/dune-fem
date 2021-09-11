@@ -777,7 +777,11 @@ namespace Dune
         struct AddLocalLocked : public AddLocal
         {
           std::mutex& mutex_;
-          AddLocalLocked( std::mutex& mtx ) : mutex_( mtx ) {}
+          const std::vector<int> &domainDofShared_;
+          const std::vector<int> &rangeDofShared_;
+          AddLocalLocked( std::mutex& mtx,
+                        const std::vector<int> &domainDofShared={}, const std::vector<int> &rangeDofShared={} )
+          : mutex_(mtx), domainDofShared_(domainDofShared), rangeDofShared_(rangeDofShared) {}
 
           template <class LocalDofs, class DiscreteFunction>
           void operator () (const EntityType& entity, const LocalDofs& wLocal, DiscreteFunction& w ) const
@@ -802,10 +806,25 @@ namespace Dune
           void operator () ( std::vector<LocalMatrix*> jOpLocal, std::size_t size,
                              JacobianOperator& jOp ) const
           {
-            // lock mutex (unlock on destruction)
-            std::lock_guard guard( mutex_ );
-            // call addLocalMatrix on jOp
-            AddLocal::operator()( jOpLocal, size, jOp);
+            for ( std::size_t i=0;i<size;++i)
+            {
+              LocalMatrix &lop = *(jOpLocal[i]);
+              bool needsLocking = false;
+              const auto& rangeMapper = jOp.rangeSpace().blockMapper();
+              const auto& domainMapper = jOp.domainSpace().blockMapper();
+              domainMapper.mapEach(lop.domainEntity(), [ this, &needsLocking ] ( int localRow, auto globalRow )
+                  {if (domainDofShared_[globalRow]==-2) needsLocking=true; });
+              if (!needsLocking)
+                rangeMapper.mapEach(lop.rangeEntity(), [ this, &needsLocking ] ( int localRow, auto globalRow )
+                    {if (rangeDofShared_[globalRow]==-2) needsLocking=true; });
+              if (needsLocking)
+              {
+                std::lock_guard guard( mutex_ );
+                AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
+              }
+              else
+                AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
+            }
           }
 
         };
@@ -1034,9 +1053,11 @@ namespace Dune
 
       public:
         template< class GridFunction, class JacobianOperator, class Iterators >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::mutex& mtx ) const
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+                        std::mutex& mtx,
+                        const std::vector<int> &domainDofShared, const std::vector<int> &rangeDofShared ) const
         {
-          assemble( u, jOp, iterators, AddLocalLocked( mtx ) );
+          assemble( u, jOp, iterators, AddLocalLocked( mtx, domainDofShared, rangeDofShared ) );
         }
 
         template< class GridFunction, class JacobianOperator, class Iterators >
@@ -1173,8 +1194,7 @@ namespace Dune
         const size_t size = ThreadManager::numThreads();
         for( size_t i=0; i<size; ++i )
         {
-          // std::cout << "thread " << i
-          //           << " worked on " << impl_[ i ].gridSizeInterior() << " elements\n";
+          // std::cout << "thread " << i << " worked on " << impl_[ i ].gridSizeInterior() << " elements\n";
           gridSizeInterior += impl_[ i ].gridSizeInterior();
         }
         return gridSizeInterior;
@@ -1276,16 +1296,33 @@ namespace Dune
       template < class GridFunction >
       void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
-        iterators_.update();
-
         // reserve memory and clear entries
         impl().prepare( jOp );
 
+        const auto& domainMapper = jOp.domainSpace().blockMapper();
+        const auto& rangeMapper = jOp.rangeSpace().blockMapper();
+        std::vector<int> domainDofShared(jOp.domainSpace().size(),-1);
+        std::vector<int> rangeDofShared(jOp.rangeSpace().size(),-1);
+        iterators_.update();
+        for (int t=0; t<ThreadManager::numThreads(); ++t)
+        {
+          for (auto it=iterators_.begin(t); it!=iterators_.end(t);++it)
+          {
+            const auto& entity = *it;
+            rangeMapper.mapEach(entity, [ &rangeDofShared,t ] ( int localRow, auto globalRow )
+              { rangeDofShared[globalRow] = rangeDofShared[globalRow]==t || rangeDofShared[globalRow]==-1?
+                        t : -2 ; } );
+            domainMapper.mapEach(entity, [ &domainDofShared,t ] ( int localRow, auto globalRow )
+              { domainDofShared[globalRow] = domainDofShared[globalRow]==t || domainDofShared[globalRow]==-1?
+                        t : -2 ; } );
+          }
+        }
+
         std::mutex mutex;
 
-        auto doAssemble = [this, &u, &jOp, &mutex] ()
+        auto doAssemble = [this, &u, &jOp, &mutex, &domainDofShared, &rangeDofShared] ()
         {
-          this->impl().assemble( u, jOp, this->iterators_, mutex );
+          this->impl().assemble( u, jOp, this->iterators_, mutex, domainDofShared, rangeDofShared );
         };
 
         try {
