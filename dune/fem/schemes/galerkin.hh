@@ -760,6 +760,18 @@ namespace Dune
           {
             jOp.addLocalMatrix( domainEntity, rangeEntity, jOpLocal );
           }
+
+          template < class LocalMatrix, class JacobianOperator >
+          void operator () ( std::vector<LocalMatrix*> jOpLocal, std::size_t size,
+                             JacobianOperator& jOp ) const
+          {
+            for ( std::size_t i=0;i<size;++i)
+            {
+              LocalMatrix &lop = *(jOpLocal[i]);
+              AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
+              lop.unbind();
+            }
+          }
         };
 
         struct AddLocalLocked : public AddLocal
@@ -785,6 +797,17 @@ namespace Dune
             // call addLocalMatrix on jOp
             AddLocal::operator()( domainEntity, rangeEntity, jOpLocal, jOp );
           }
+
+          template < class LocalMatrix, class JacobianOperator >
+          void operator () ( std::vector<LocalMatrix*> jOpLocal, std::size_t size,
+                             JacobianOperator& jOp ) const
+          {
+            // lock mutex (unlock on destruction)
+            std::lock_guard guard( mutex_ );
+            // call addLocalMatrix on jOp
+            AddLocal::operator()( jOpLocal, size, jOp);
+          }
+
         };
 
         template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
@@ -895,8 +918,40 @@ namespace Dune
           DomainValueVectorType phiIn = makeDomainValueVector( maxNumLocalDofs );
           DomainValueVectorType phiOut = makeDomainValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrixType jOpInIn( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutIn( jOp.domainSpace(), jOp.rangeSpace() );
-          TemporaryLocalMatrixType jOpInOut( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutOut( jOp.domainSpace(), jOp.rangeSpace() );
+          // need 4 local matrices for each step in the element iteration jOpInIn, jOpOutIn, jOpInOut, jOpOutOut
+          std::vector< TemporaryLocalMatrixType > jOpLocal(4*10,
+                       TemporaryLocalMatrixType(jOp.domainSpace(), jOp.rangeSpace()) );
+          std::vector< TemporaryLocalMatrixType* > jOpLocalFinalized(jOpLocal.size(),0);
+          std::vector< TemporaryLocalMatrixType* > jOpLocalFree(jOpLocal.size(),0);
+          for (uint i=0;i<jOpLocal.size();++i)
+            jOpLocalFree[i] = &(jOpLocal[i]);
+          uint currentFree = jOpLocal.size();
+          uint currentFinalized = 0;
+          auto bindLOp = [&](const auto& dE, const auto& rE) -> TemporaryLocalMatrixType&
+            {
+              if (currentFree==0)
+              {
+                addLocalMatrix( jOpLocalFinalized, currentFinalized, jOp );
+                for (uint i=0;i<currentFinalized;++i,++currentFree)
+                {
+                  jOpLocalFree[currentFree] = jOpLocalFinalized[i];
+                  jOpLocalFinalized[i] = 0;
+                }
+                currentFinalized = 0;
+              }
+              assert(currentFree>0);
+              --currentFree;
+              TemporaryLocalMatrixType &lop = *(jOpLocalFree[currentFree]);
+              lop.bind(dE,rE);
+              lop.clear();
+              return lop;
+            };
+          auto unbindLOp = [&](TemporaryLocalMatrixType &lop)
+            {
+              jOpLocalFinalized[currentFinalized] = &lop;
+              ++currentFinalized;
+            };
+
           Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
 
@@ -914,8 +969,7 @@ namespace Dune
 
             auto uiGuard = bindGuard( uIn, inside );
 
-            jOpInIn.init( inside, inside );
-            jOpInIn.clear();
+            TemporaryLocalMatrixType& jOpInIn = bindLOp(inside, inside );
 
             if( integrands().hasInterior() )
               addLinearizedInteriorIntegral( uIn, phiIn, jOpInIn );
@@ -928,8 +982,7 @@ namespace Dune
               {
                 const EntityType &outside = intersection.outside();
 
-                jOpOutIn.init( outside, inside );
-                jOpOutIn.clear();
+                TemporaryLocalMatrixType &jOpOutIn = bindLOp( outside, inside );
 
                 auto uoGuard = bindGuard( uOut, outside );
 
@@ -937,18 +990,16 @@ namespace Dune
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
-                  jOpInOut.init( inside, outside );
-                  jOpInOut.clear();
-                  jOpOutOut.init( outside, outside );
-                  jOpOutOut.clear();
+                  TemporaryLocalMatrixType &jOpInOut = bindLOp( inside, outside );
+                  TemporaryLocalMatrixType &jOpOutOut = bindLOp( outside, outside );
 
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn, jOpInOut, jOpOutOut );
 
-                  addLocalMatrix( inside, outside, jOpInOut, jOp );
-                  addLocalMatrix( outside, outside, jOpOutOut, jOp );
+                  unbindLOp(jOpInOut);
+                  unbindLOp(jOpOutOut);
                 }
 
-                addLocalMatrix( outside, inside, jOpOutIn, jOp );
+                unbindLOp(jOpOutIn);
               }
               else if( intersection.boundary() )
               {
@@ -956,9 +1007,9 @@ namespace Dune
                   addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
               }
             }
-
-            addLocalMatrix( inside, inside, jOpInIn, jOp );
+            unbindLOp(jOpInIn);
           }
+          addLocalMatrix( jOpLocalFinalized, currentFinalized, jOp );
         }
 
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
