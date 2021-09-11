@@ -10,9 +10,6 @@
 #include <unordered_map>
 #include <vector>
 
-//- dune-fem includes
-#include <dune/fem/misc/threads/threadmanager.hh>
-
 namespace Dune
 {
   namespace Fem

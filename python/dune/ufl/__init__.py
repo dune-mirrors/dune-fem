@@ -347,7 +347,7 @@ class GridFunction(ufl.Coefficient):
         - help(self.GridFunction)
         - help(self.Coefficient)
     """
-    def __init__(self, gf, scalar=None):
+    def __init__(self, gf, scalar=None, count=None):
         # we shouldn't get into the situation of double wrapping
         assert not isinstance(gf,GridFunction)
         try:
@@ -371,14 +371,14 @@ class GridFunction(ufl.Coefficient):
                     # print(scalar,"not set")
                     # raise AttributeError()
         uflSpace = Space((gf.grid.dimGrid, gf.grid.dimWorld), gf.dimRange, scalar=scalar)
-        ufl.Coefficient.__init__(self, uflSpace)
+        ufl.Coefficient.__init__(self, uflSpace, count=count)
     def ufl_function_space(self):
         try:
             return self.gf.space # as_ufl()
         except TypeError or AttributeError:
             return Space(self.gf.grid,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
-        return GridFunction(self.gf,scalar=False)
+        return GridFunction(self.gf,scalar=False,count=-self.count() if self.scalar else self.count())
 
     def as_ufl(self):
         return self

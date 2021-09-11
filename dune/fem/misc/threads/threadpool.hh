@@ -416,7 +416,7 @@ namespace Fem
 
         // OpenMP parallel region
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel num_threads(ThreadManager::numThreads())
 #endif
         {
           // execute code in parallel
@@ -477,7 +477,7 @@ namespace Fem
         std::atomic< bool > singleThreadModeError ( false );
         // OpenMP parallel region
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel num_threads(ThreadManager::numThreads())
 #endif
         {
           try
