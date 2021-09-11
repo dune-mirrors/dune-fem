@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <thread>
+#include <iostream>
 
 #ifdef USE_PTHREADS
 #if HAVE_PTHREAD == 0
@@ -30,6 +31,7 @@
 //- dune-common includes
 #include <dune/common/exceptions.hh>
 #include <dune/common/visibility.hh>
+#include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {
@@ -105,69 +107,76 @@ namespace Dune
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
        */
-      static inline const int getEnvNumberThreads ()
+      static inline const uint getEnvNumberThreads (uint defaultValue)
       {
-        int maxThreads = 1;
 #ifdef USE_SMP_PARALLEL
+        int maxThreads = defaultValue;
         // use environment variable (for both openmp or pthreads) if set
         {
-          const char* mThreads = getenv("DUNE_NUM_THREADS");
+          const char* mThreads = std::getenv("DUNE_NUM_THREADS");
           if( mThreads )
-          {
             maxThreads = std::max( int(1), atoi( mThreads ) );
-            return maxThreads;
-          }
         }
         {
-          const char* mThreads = getenv("OMP_NUM_THREADS");
+          const char* mThreads = std::getenv("OMP_NUM_THREADS");
           if( mThreads )
-          {
             maxThreads = std::max( int(1), atoi( mThreads ) );
-            return maxThreads;
-          }
         }
+#else
+        int maxThreads = 1;
 #endif
-        return maxThreads;
+        return uint(maxThreads);
       }
     } // end namespace detail
 
 #ifdef _OPENMP
-    struct OpenMPThreadManager : public EmptyThreadManager
+    class OpenMPThreadManager : public EmptyThreadManager
     {
-    private:
-      static int& maxThreads_()
+      uint maxThreads__;
+      uint numThreads__;
+      inline void setNumThreads_( const int nThreads )
       {
-        // initialize with the system default, change with env vars
-        static int m = std::max(1u, std::thread::hardware_concurrency());;
-        return m;
+        assert( nThreads <= maxThreads__ );
+        if (nThreads > maxThreads__)
+          DUNE_THROW( InvalidStateException, "requested number of threads exceeds allowed maximum of "+
+                         std::to_string(maxThreads__)+
+                         " which is fixed at simulation start. Set 'DUNE_NUM_THREADS' environment variable to increase the maximum");
+        numThreads__ = nThreads;
       }
+      inline void setMaxThreads_( const int maxThreads )
+      {
+        maxThreads__ = maxThreads;
+      }
+      inline int maxThreads_() const { return maxThreads__; }
+      inline int numThreads_() const { return numThreads__; }
+
     public:
+
+      static inline OpenMPThreadManager& manager()
+      {
+        return Singleton<OpenMPThreadManager> :: instance();
+      }
+
       //! true if pthreads are used
       static constexpr bool pthreads = false ;
 
-      /** \brief initialize ThreadManager with maximal number of threads available.
-       *  \note  Can be set by the DUNE_NUM_THREADS or OMP_NUM_THREADS environment variable
-       *         from outside of the code.
-       */
-      static inline void initialize()
-      {
-        // call maxThreads to initialize the variable
-        maxThreads_();
+      OpenMPThreadManager()
+      : maxThreads__( std::max(1u,
+                              detail::getEnvNumberThreads( std::thread::hardware_concurrency() )
+                             ) ),
+        numThreads__( detail::getEnvNumberThreads(1) )
+      {}
 
-        // set max threads (if set by DUNE_NUM_THREADS )
-        omp_set_num_threads( detail::getEnvNumberThreads() );
-      }
-
-      /** return maximal number of threads possible during operation */
+      //! return maximal number of threads possbile in the current run
       static inline int maxThreads()
       {
-        return maxThreads_();
+        return manager().maxThreads_();
       }
 
-      //! return number of threads set by user
+      //! return number of current threads
       static inline int numThreads()
       {
-        return omp_get_max_threads();
+        return manager().numThreads_();
       }
 
       //! return thread number
@@ -176,29 +185,28 @@ namespace Dune
         return omp_get_thread_num();
       }
 
+      //! set maximal number of threads available during run
+      static inline void setNumThreads( const int nThreads )
+      {
+        manager().setNumThreads_( nThreads );
+      }
+
+      //! set maximal number of threads available during run
+      static inline void setMaxNumberThreads( const int maxThreads )
+      {
+        manager().setMaxThreads_( maxThreads );
+      }
+
       //! return true if the current thread is the master thread (i.e. thread 0)
       static inline bool isMaster()
       {
-        return thread() == 0 ;
-      }
-
-      //! set number of threads available during next parallel section
-      static inline void setNumThreads( const int numThreads )
-      {
-        omp_set_num_threads( numThreads );
-      }
-
-      //! set maximal number of threads usable
-      static inline void setMaxNumberThreads( const int numThreads )
-      {
-        setNumThreads( numThreads );
+        return thread() == 0;
       }
 
       [[deprecated("Use initMultiThreadMode();")]]
-      static inline void initMultiThreadMode( const int nThreads )
-      {
-      }
+      static inline void initMultiThreadMode( const int ) {}
 
+      //! \brief initialize multi thread mode (when in single thread mode)
       static inline void initMultiThreadMode()
       {
         // nothing to do here, this is done automatically in the parallel section
@@ -209,9 +217,8 @@ namespace Dune
       {
         return omp_get_num_threads() == 1 ;
       }
-    }; // end class ThreadManager
+    }; // end class ThreadManager (pthreads)
 #endif
-
 
 #if HAVE_PTHREAD
     struct PThreadsManager
@@ -268,8 +275,10 @@ namespace Dune
         int threadNum_;
 
         Manager()
-          : maxThreads_( std::max(1u, std::thread::hardware_concurrency() ) ),
-            numThreads_( detail::getEnvNumberThreads() ), activeThreads_( 1 ), threadNum_( 0 )
+          : maxThreads_( std::max(1u,
+                                  detail::getEnvNumberThreads( std::thread::hardware_concurrency() )
+                                 ) ),
+            numThreads_( detail::getEnvNumberThreads(1) ), activeThreads_( 1 ), threadNum_( 0 )
         {}
       };
 

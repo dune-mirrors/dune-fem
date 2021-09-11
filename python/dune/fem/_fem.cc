@@ -135,5 +135,15 @@ PYBIND11_MODULE( _fem, module )
 
     module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container(),
            pybind11::return_value_policy::reference );
+
+    auto threadCls = pybind11::class_<Dune::Fem::ThreadManager>(module, "threading");
+
+    threadCls.def_property_readonly_static("max",
+                        [](pybind11::object){ return Dune::Fem::ThreadManager::maxThreads(); });
+    threadCls.def_property_static("use",
+                        [](pybind11::object){ return Dune::Fem::ThreadManager::numThreads(); },
+                        [](pybind11::object,uint threads){ Dune::Fem::ThreadManager::setNumThreads(threads); });
+    threadCls.def_static("useMax",
+                        [](){ Dune::Fem::ThreadManager::setNumThreads(Dune::Fem::ThreadManager::maxThreads()); });
   }
 }

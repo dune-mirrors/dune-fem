@@ -1,34 +1,22 @@
-#!/usr/bin/env python3
-
-# <markdowncell>
-# # Advection-Diffusion: Discontinuous Galerkin Method with Upwinding
-# So far we have been using Lagrange spaces of different order to solve our
-# PDE. In the following we show how to use Discontinuous Galerkin method to
-# solve an advection dominated advection-diffusion probllem:
-# \begin{align*}
-# -\varepsilon\triangle u + b\cdot\nabla u &= f
-# \end{align*}
-# with Dirichlet boundary conditions. Here $\varepsilon$ is a small
-# constant and $b$ a given vector.
-# <codecell>
-
 from mpi4py import MPI
 
-import numpy, math
+import numpy, math, time
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
 from dune.grid import structuredGrid as leafGridView
+import dune.fem
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
 from dune.fem.function import integrate, uflFunction
+from dune.fem.operator import linear
 from dune.ufl import Constant, DirichletBC
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def compute(space,epsilon,weakBnd):
+def model(space,epsilon,weakBnd):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -47,7 +35,7 @@ def compute(space,epsilon,weakBnd):
     # characteristic function for left/right boundary
     dD   = conditional((1+x[0])*(1-x[0])<1e-10,1,0)
     # penalty parameter
-    beta = Constant( 20*space.order**2 if space.order > 0 else 1,"beta")
+    beta = Constant( 10*space.order**2 if space.order > 0 else 1,"beta")
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
@@ -76,51 +64,51 @@ def compute(space,epsilon,weakBnd):
                               "newton.linear.tolerance":1e-13}
                }
     scheme = solutionScheme([form==rhs,strongBC], **solver)
-
-    # <markdowncell>
-    # <codecell>
-
     uh = space.interpolate([0],name="solution")
-    eoc = []
-    info = scheme.solve(target=uh)
-    error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
-    print(error0," # output",flush=True)
-    for i in range(3):
-        uh.interpolate(0)
-        scheme.solve(target=uh)
-        error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
-        eoc   += [ math.log(error1/error0) / math.log(0.5) ]
-        print(i,error0,error1,eoc," # output",flush=True)
-        error0 = error1
-        gridView.hierarchicalGrid.globalRefine(1)
+    return scheme, linear(scheme), uh
 
-    # print(space.order,epsilon,eoc)
-    if (eoc[-1]-(space.order+1)) < -0.1:
-        print("ERROR:",space.order,epsilon,eoc)
-    assert (eoc[-1]-(space.order+1)) > -0.1
-    return eoc
+def compute(scheme, linear, uh):
+    print("apply:",flush=True)
+    start = time.time()
+    scheme(uh.copy(),uh)
+    runTime = [time.time()-start]
+    print("assemble:",flush=True)
+    start = time.time()
+    scheme.jacobian(uh,linear)
+    runTime += [time.time()-start]
+    return runTime
 
 storage = "fem"
 
-def newGridView():
-    return leafGridView([-1, -1], [1, 1], [4, 4])
+def newGridView(N=4):
+    return leafGridView([-1, -1], [1, 1], [N, N])
 
+# run once to make sure caches is setup
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True)
+scheme, A, uh = model(space,1,True)
+compute(scheme,A,uh)
 
-gridView = newGridView()
+gridView = newGridView(N=400)
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+scheme, A, uh = model(space,1,True)
 
-#gridView = newGridView()
-#space    = dgSpace(gridView, order=3, storage=storage)
-#eoc = compute(space,1e-5,True)
+# time with the default number of threads (1 if no environment variable is set)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+runTime = compute(scheme,A,uh)
+print(dune.fem.threading.use," thread used: ",runTime,flush=True)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,False)
+# time with 2 threads
+dune.fem.threading.use = 2
+runTime = compute(scheme,A,uh)
+print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+
+# time with 4 threads
+dune.fem.threading.use = 4
+runTime = compute(scheme,A,uh)
+print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+
+# time with max number of threads
+dune.fem.threading.useMax()
+runTime = compute(scheme,A,uh)
+print(dune.fem.threading.use," threads used: ",runTime,flush=True)

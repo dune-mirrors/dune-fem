@@ -1121,7 +1121,11 @@ namespace Dune
         // use current thread number to obtain correct sizes
         const size_t size = ThreadManager::numThreads();
         for( size_t i=0; i<size; ++i )
+        {
+          // std::cout << "thread " << i
+          //           << " worked on " << impl_[ i ].gridSizeInterior() << " elements\n";
           gridSizeInterior += impl_[ i ].gridSizeInterior();
+        }
         return gridSizeInterior;
       }
 
