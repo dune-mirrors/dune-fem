@@ -112,11 +112,10 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
         int maxThreads = defaultValue;
         // use environment variable (for both openmp or pthreads) if set
-        {
-          const char* mThreads = std::getenv("DUNE_NUM_THREADS");
-          if( mThreads )
-            maxThreads = std::max( int(1), atoi( mThreads ) );
-        }
+        const char* mThreads = std::getenv("DUNE_NUM_THREADS");
+        if( mThreads )
+          maxThreads = std::max( int(1), atoi( mThreads ) );
+        else
         {
           const char* mThreads = std::getenv("OMP_NUM_THREADS");
           if( mThreads )
