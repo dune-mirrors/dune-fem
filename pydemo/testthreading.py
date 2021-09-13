@@ -86,7 +86,10 @@ def newGridView(N=4):
     return leafGridView([-1, -1], [1, 1], [N, N])
 
 def test(spaceCtor,skeleton):
+    defaultThreads = dune.fem.threading.use
     # the operator is run once when setting up the linear operator in the 'model'
+
+    dune.fem.threading.useMax()
     gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
     scheme, A, uh = model(space,1,True,skeleton)
@@ -98,7 +101,7 @@ def test(spaceCtor,skeleton):
     scheme, A, uh = model(space,1,True,skeleton)
 
     # time with the default number of threads (1 if no environment variable is set)
-    defaultThreads = dune.fem.threading.use
+    dune.fem.threading.use = 1
     runTime = compute(scheme,A,uh)
     print(dune.fem.threading.use," thread used: ",runTime,flush=True)
 

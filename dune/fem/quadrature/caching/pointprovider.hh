@@ -9,6 +9,7 @@
 #include <dune/common/math.hh>
 
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 //- Local includes
 #include "pointmapper.hh"
@@ -60,7 +61,11 @@ namespace Dune
 
       static ThisType& instance()
       {
-        return Singleton< ThisType > :: instance();
+        static ThreadSafeValue<ThisType> instance_;
+        return *instance_;
+        // static thread_local ThisType instance;
+        // return instance;
+        // return Singleton< ThisType > :: instance();
       }
     };
 
@@ -121,7 +126,11 @@ namespace Dune
 
       static ThisType& instance()
       {
-        return Singleton< ThisType > :: instance();
+        static ThreadSafeValue<ThisType> instance_;
+        return *instance_;
+        // static thread_local ThisType instance;
+        // return instance;
+        // return Singleton< ThisType > :: instance();
       }
     };
 

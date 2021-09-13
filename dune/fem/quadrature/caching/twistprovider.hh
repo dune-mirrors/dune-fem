@@ -14,6 +14,7 @@
 #include <dune/fem/quadrature/quadrature.hh>
 
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 //- Local includes
 #include "pointmapper.hh"
@@ -150,7 +151,11 @@ namespace Dune
         //! return reference to mappers
         static MapperContainerType& instance()
         {
-          return Singleton< MapperContainer > :: instance().mappers_;
+          static ThreadSafeValue<MapperContainerType> instance;
+          return *instance;
+          // static thread_local MapperContainer instance;
+          // return instance;
+          // return Singleton< MapperContainer > :: instance().mappers_;
         }
       };
     };

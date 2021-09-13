@@ -26,11 +26,13 @@ namespace Dune
 
       if (points_.find( key ) == points_.end() )
       {
+      /*
         // only register when in single thread mode
         if( ! Fem :: ThreadManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "PointProvider::registerQuadrature: only call in single thread mode!");
         }
+      */
 
         PointIteratorType it =
           points_.insert(std::make_pair
@@ -125,11 +127,13 @@ namespace Dune
                                         const LocalPointVectorType& pts,
                                         GeometryType elementGeo)
     {
+      /*
       // only addEntry when in single thread mode
       if( ! Fem :: ThreadManager :: singleThreadMode() )
       {
         DUNE_THROW(SingleThreadModeError, "PointProvider::addEntry: only call in single thread mode!");
       }
+      */
 
       // generate key
       QuadratureKeyType key ( elementGeo, quad.id() );

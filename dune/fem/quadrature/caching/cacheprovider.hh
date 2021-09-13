@@ -9,6 +9,7 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #include "pointmapper.hh"
 #include "twistprovider.hh"
@@ -245,7 +246,11 @@ namespace Dune
 
       static ThisType& instance()
       {
-        return Singleton< ThisType >::instance();
+        ThreadSafeValue<ThisType> instance_;
+        return *instance_;
+        // static thread_local ThisType instance_;
+        // return instance_;
+        // return Singleton< ThisType >::instance();
       }
     };
 
