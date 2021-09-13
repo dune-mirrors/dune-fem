@@ -16,7 +16,7 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def model(space,epsilon,weakBnd):
+def model(space,epsilon,weakBnd,skeleton):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -49,9 +49,13 @@ def model(space,epsilon,weakBnd):
     advSkeleton   = jump(hatb*u)*jump(v)*dS
     if weakBnd:
         advSkeleton  += ( hatb*u + (dot(b,n)-hatb)*exact )*v*dD*ds
-    form          = aInternal + diffSkeleton + advSkeleton
 
-    if weakBnd:
+    if skeleton:
+        form          = aInternal + diffSkeleton + advSkeleton
+    else:
+        form          = aInternal
+
+    if weakBnd and skeleton:
         strongBC = None
     else:
         strongBC = DirichletBC(space,exact,dD)
@@ -81,16 +85,17 @@ storage = "fem"
 def newGridView(N=4):
     return leafGridView([-1, -1], [1, 1], [N, N])
 
-def test(spaceCtor):
-    # run once to make sure caches is setup
-    gridView = newGridView()
+def test(spaceCtor,skeleton):
+    # the operator is run once when setting up the linear operator in the 'model'
+    gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, A, uh = model(space,1,True)
-    compute(scheme,A,uh)
+    scheme, A, uh = model(space,1,True,skeleton)
+
+    print("---------------------")
 
     gridView = newGridView(N=400)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, A, uh = model(space,1,True)
+    scheme, A, uh = model(space,1,True,skeleton)
 
     # time with the default number of threads (1 if no environment variable is set)
     defaultThreads = dune.fem.threading.use
@@ -107,14 +112,18 @@ def test(spaceCtor):
     runTime = compute(scheme,A,uh)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
+    '''
     # time with max number of threads
     dune.fem.threading.useMax()
     runTime = compute(scheme,A,uh)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    '''
 
     dune.fem.threading.use = defaultThreads
 
 print("DGSpace:")
-test(dgSpace)
-print("Lagrange:")
-test(lagrange)
+test(dgSpace,True)
+print("Lagrange (with skeleton):")
+test(lagrange,True)
+print("Lagrange (no skeleton):")
+test(lagrange,False)

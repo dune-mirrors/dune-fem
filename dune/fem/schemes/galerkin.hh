@@ -644,7 +644,8 @@ namespace Dune
         }
 
         template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, const Functor& addLocalDofs, std::false_type ) const
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs, std::false_type ) const
         {
           typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( w.space() );
@@ -684,7 +685,8 @@ namespace Dune
         }
 
         template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, const Functor& addLocalDofs, std::true_type ) const
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs, std::true_type ) const
         {
           Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
@@ -746,42 +748,20 @@ namespace Dune
           }
         }
 
-        struct AddLocal
+        struct AddLocalEvaluate
         {
           template <class LocalDofs, class DiscreteFunction>
           void operator () (const EntityType& entity, const LocalDofs& wLocal, DiscreteFunction& w ) const
           {
             w.addLocalDofs( entity, wLocal.localDofVector() );
           }
-
-          template < class LocalMatrix, class JacobianOperator >
-          void operator () ( const EntityType& domainEntity, const EntityType& rangeEntity,
-                             const LocalMatrix& jOpLocal, JacobianOperator& jOp ) const
-          {
-            jOp.addLocalMatrix( domainEntity, rangeEntity, jOpLocal );
-          }
-
-          template < class LocalMatrix, class JacobianOperator >
-          void operator () ( std::vector<LocalMatrix*> jOpLocal, std::size_t size,
-                             JacobianOperator& jOp ) const
-          {
-            for ( std::size_t i=0;i<size;++i)
-            {
-              LocalMatrix &lop = *(jOpLocal[i]);
-              AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
-              lop.unbind();
-            }
-          }
         };
 
-        struct AddLocalLocked : public AddLocal
+        struct AddLocalEvaluateLocked : public AddLocalEvaluate
         {
           std::mutex& mutex_;
-          const std::vector<int> &domainDofShared_;
-          const std::vector<int> &rangeDofShared_;
-          AddLocalLocked( std::mutex& mtx,
-                        const std::vector<int> &domainDofShared={}, const std::vector<int> &rangeDofShared={} )
-          : mutex_(mtx), domainDofShared_(domainDofShared), rangeDofShared_(rangeDofShared) {}
+          AddLocalEvaluateLocked(std::mutex& mtx)
+          : AddLocalEvaluate(), mutex_(mtx) {}
 
           template <class LocalDofs, class DiscreteFunction>
           void operator () (const EntityType& entity, const LocalDofs& wLocal, DiscreteFunction& w ) const
@@ -789,48 +769,148 @@ namespace Dune
             // lock mutex (unlock on destruction)
             std::lock_guard guard ( mutex_ );
             // call addLocalDofs on w
-            AddLocal::operator()( entity, wLocal, w );
+            AddLocalEvaluate::operator()( entity, wLocal, w );
+          }
+        };
+
+        template <class JacobianOperator>
+        struct AddLocalAssemble
+        {
+          typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
+          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
+          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+          JacobianOperator &jOp_;
+          std::vector< TemporaryLocalMatrixType > jOpLocal_;
+          std::vector< TemporaryLocalMatrixType* > jOpLocalFinalized_;
+          std::vector< TemporaryLocalMatrixType* > jOpLocalFree_;
+          std::size_t currentFree_, currentFinalized_;
+          std::size_t locked, notLocked, timesLocked;
+          AddLocalAssemble(JacobianOperator& jOp)
+          : jOp_(jOp)
+          , jOpLocal_(40, TemporaryLocalMatrixType(jOp_.domainSpace(), jOp_.rangeSpace()))
+          , jOpLocalFinalized_(), jOpLocalFree_()
+          , currentFree_(0), currentFinalized_(0)
+          , locked(0), notLocked(0), timesLocked(0)
+          {}
+
+          void initialize(std::size_t n)
+          {
+            // jOpLocal_.resize(n, TemporaryLocalMatrixType(jOp_.domainSpace(), jOp_.rangeSpace()) );
+            jOpLocalFree_.resize(jOpLocal_.size(),nullptr);
+            jOpLocalFinalized_.resize(jOpLocal_.size(),nullptr);
+            for (std::size_t i=0;i<jOpLocal_.size();++i)
+              jOpLocalFree_[i] = &(jOpLocal_[i]);
+            currentFree_ = jOpLocal_.size();
+            currentFinalized_ = 0;
           }
 
-          template < class LocalMatrix, class JacobianOperator >
-          void operator () ( const EntityType& domainEntity, const EntityType& rangeEntity,
-                             const LocalMatrix& jOpLocal, JacobianOperator& jOp ) const
+          TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
           {
-            // lock mutex (unlock on destruction)
-            std::lock_guard guard( mutex_ );
-            // call addLocalMatrix on jOp
-            AddLocal::operator()( domainEntity, rangeEntity, jOpLocal, jOp );
+            assert(currentFree_>0);
+            --currentFree_;
+            TemporaryLocalMatrixType &lop = *(jOpLocalFree_[currentFree_]);
+            lop.bind(dE,rE);
+            lop.clear();
+            return lop;
           }
 
-          template < class LocalMatrix, class JacobianOperator >
-          void operator () ( std::vector<LocalMatrix*> jOpLocal, std::size_t size,
-                             JacobianOperator& jOp ) const
+          void unbind(TemporaryLocalMatrixType &lop)
           {
-            for ( std::size_t i=0;i<size;++i)
+            notLocked += 1;
+            jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
+            lop.unbind();
+            jOpLocalFree_[currentFree_] = &lop;
+            ++currentFree_;
+          }
+
+          void finalize()
+          {
+            locked += currentFinalized_;
+            for (std::size_t i=0;i<currentFinalized_;++i,++currentFree_)
             {
-              LocalMatrix &lop = *(jOpLocal[i]);
-              bool needsLocking = false;
-              const auto& rangeMapper = jOp.rangeSpace().blockMapper();
-              const auto& domainMapper = jOp.domainSpace().blockMapper();
-              domainMapper.mapEach(lop.domainEntity(), [ this, &needsLocking ] ( int localRow, auto globalRow )
-                  {if (domainDofShared_[globalRow]==-2) needsLocking=true; });
-              if (!needsLocking)
-                rangeMapper.mapEach(lop.rangeEntity(), [ this, &needsLocking ] ( int localRow, auto globalRow )
-                    {if (rangeDofShared_[globalRow]==-2) needsLocking=true; });
-              if (needsLocking)
-              {
-                std::lock_guard guard( mutex_ );
-                AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
-              }
-              else
-                AddLocal::operator()( lop.domainEntity(), lop.rangeEntity(), lop, jOp);
+              TemporaryLocalMatrixType &lop = *(jOpLocalFinalized_[i]);
+              jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
+              lop.unbind();
+              jOpLocalFree_[currentFree_] = &lop;
+              jOpLocalFinalized_[i] = nullptr;
             }
           }
+        };
+
+        template <class JacobianOperator>
+        struct AddLocalAssembleLocked : public AddLocalAssemble<JacobianOperator>
+        {
+          typedef AddLocalAssemble<JacobianOperator> BaseType;
+          typedef typename BaseType::TemporaryLocalMatrixType TemporaryLocalMatrixType;
+          using BaseType::currentFree_;
+          using BaseType::currentFinalized_;
+          using BaseType::jOpLocalFinalized_;
+
+          std::mutex& mutex_;
+          const std::vector<int> &domainDofShared_;
+          const std::vector<int> &rangeDofShared_;
+          AddLocalAssembleLocked(JacobianOperator &jOp, std::mutex &mtx,
+                                 const std::vector<int> &domainDofShared={}, const std::vector<int> &rangeDofShared={} )
+          : BaseType(jOp)
+          , mutex_(mtx), domainDofShared_(domainDofShared), rangeDofShared_(rangeDofShared)
+          {}
+
+          void finalize()
+          {
+            // lock mutex (unlock on destruction)
+            ++BaseType::timesLocked;
+            std::lock_guard guard ( mutex_ );
+            BaseType::finalize();
+          }
+
+          TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
+          {
+            if (currentFree_==0)
+            {
+              finalize();
+              assert(currentFree_ == BaseType::jOpLocal_.size());
+              currentFinalized_ = 0;
+            }
+            return BaseType::bind(dE,rE);
+          }
+
+          void unbind(TemporaryLocalMatrixType &lop)
+          {
+            if ( boundaryDomainEntity(lop.domainEntity()) ||
+                 boundaryRangeEntity(lop.rangeEntity()) )
+            {
+              assert(currentFinalized_<jOpLocalFinalized_.size());
+              jOpLocalFinalized_[currentFinalized_] = &lop;
+              ++currentFinalized_;
+            }
+            else
+              BaseType::unbind(lop);
+          }
+
+      private:
+          bool boundaryRangeEntity(const EntityType &rangeEntity) const
+          {
+            bool needsLocking = false;
+            BaseType::jOp_.rangeSpace().blockMapper().mapEach(rangeEntity,
+                [ this, &needsLocking ] ( int local, auto global )
+                { needsLocking = (needsLocking || rangeDofShared_[global]==-2); });
+            return needsLocking;
+          }
+          bool boundaryDomainEntity(const EntityType &domainEntity) const
+          {
+            bool needsLocking = false;
+            BaseType::jOp_.domainSpace().blockMapper().mapEach(domainEntity,
+                [ this, &needsLocking ] ( int local, auto global )
+                {needsLocking = (needsLocking || domainDofShared_[global]==-2); });
+            return needsLocking;
+          }
+
 
         };
 
         template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, const Functor& addLocalDofs ) const
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs ) const
         {
           static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
@@ -849,13 +929,15 @@ namespace Dune
         template< class GridFunction, class DiscreteFunction, class Iterators >
         void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::mutex& mtx ) const
         {
-          evaluate( u, w, iterators, AddLocalLocked( mtx ) );
+          AddLocalEvaluateLocked addLocalEvaluate(mtx);
+          evaluate( u, w, iterators, addLocalEvaluate );
         }
 
         template< class GridFunction, class DiscreteFunction, class Iterators >
         void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators ) const
         {
-          evaluate( u, w, iterators, AddLocal() );
+          AddLocalEvaluate addLocalEvaluate;
+          evaluate( u, w, iterators, addLocalEvaluate );
         }
 
         template <class JacobianOperator>
@@ -881,7 +963,7 @@ namespace Dune
       private:
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
-                        const Functor& addLocalMatrix, std::false_type ) const
+                        Functor& addLocalMatrix, std::false_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
           typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
@@ -891,7 +973,8 @@ namespace Dune
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
           DomainValueVectorType phi = makeDomainValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
+          addLocalMatrix.initialize(40);
+
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
 
           gridSizeInterior_ = 0;
@@ -906,8 +989,7 @@ namespace Dune
 
             auto guard = bindGuard( uLocal, entity );
 
-            jOpLocal.init( entity, entity );
-            jOpLocal.clear();
+            TemporaryLocalMatrixType& jOpLocal = addLocalMatrix.bind(entity, entity );
 
             if( integrands().hasInterior() )
               addLinearizedInteriorIntegral( uLocal, phi, jOpLocal );
@@ -921,12 +1003,14 @@ namespace Dune
               }
             }
 
-            addLocalMatrix( entity, entity, jOpLocal, jOp );
+            addLocalMatrix.unbind(jOpLocal);
           }
+          addLocalMatrix.finalize();
         }
 
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, const Functor& addLocalMatrix, std::true_type ) const
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+                        Functor& addLocalMatrix, std::true_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
           typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
@@ -937,39 +1021,7 @@ namespace Dune
           DomainValueVectorType phiIn = makeDomainValueVector( maxNumLocalDofs );
           DomainValueVectorType phiOut = makeDomainValueVector( maxNumLocalDofs );
 
-          // need 4 local matrices for each step in the element iteration jOpInIn, jOpOutIn, jOpInOut, jOpOutOut
-          std::vector< TemporaryLocalMatrixType > jOpLocal(4*10,
-                       TemporaryLocalMatrixType(jOp.domainSpace(), jOp.rangeSpace()) );
-          std::vector< TemporaryLocalMatrixType* > jOpLocalFinalized(jOpLocal.size(),0);
-          std::vector< TemporaryLocalMatrixType* > jOpLocalFree(jOpLocal.size(),0);
-          for (uint i=0;i<jOpLocal.size();++i)
-            jOpLocalFree[i] = &(jOpLocal[i]);
-          uint currentFree = jOpLocal.size();
-          uint currentFinalized = 0;
-          auto bindLOp = [&](const auto& dE, const auto& rE) -> TemporaryLocalMatrixType&
-            {
-              if (currentFree==0)
-              {
-                addLocalMatrix( jOpLocalFinalized, currentFinalized, jOp );
-                for (uint i=0;i<currentFinalized;++i,++currentFree)
-                {
-                  jOpLocalFree[currentFree] = jOpLocalFinalized[i];
-                  jOpLocalFinalized[i] = 0;
-                }
-                currentFinalized = 0;
-              }
-              assert(currentFree>0);
-              --currentFree;
-              TemporaryLocalMatrixType &lop = *(jOpLocalFree[currentFree]);
-              lop.bind(dE,rE);
-              lop.clear();
-              return lop;
-            };
-          auto unbindLOp = [&](TemporaryLocalMatrixType &lop)
-            {
-              jOpLocalFinalized[currentFinalized] = &lop;
-              ++currentFinalized;
-            };
+          addLocalMatrix.initialize(40);
 
           Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
@@ -988,7 +1040,7 @@ namespace Dune
 
             auto uiGuard = bindGuard( uIn, inside );
 
-            TemporaryLocalMatrixType& jOpInIn = bindLOp(inside, inside );
+            TemporaryLocalMatrixType& jOpInIn = addLocalMatrix.bind(inside, inside );
 
             if( integrands().hasInterior() )
               addLinearizedInteriorIntegral( uIn, phiIn, jOpInIn );
@@ -1001,7 +1053,7 @@ namespace Dune
               {
                 const EntityType &outside = intersection.outside();
 
-                TemporaryLocalMatrixType &jOpOutIn = bindLOp( outside, inside );
+                TemporaryLocalMatrixType &jOpOutIn = addLocalMatrix.bind( outside, inside );
 
                 auto uoGuard = bindGuard( uOut, outside );
 
@@ -1009,16 +1061,16 @@ namespace Dune
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
-                  TemporaryLocalMatrixType &jOpInOut = bindLOp( inside, outside );
-                  TemporaryLocalMatrixType &jOpOutOut = bindLOp( outside, outside );
+                  TemporaryLocalMatrixType &jOpInOut = addLocalMatrix.bind( inside, outside );
+                  TemporaryLocalMatrixType &jOpOutOut = addLocalMatrix.bind( outside, outside );
 
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn, jOpInOut, jOpOutOut );
 
-                  unbindLOp(jOpInOut);
-                  unbindLOp(jOpOutOut);
+                  addLocalMatrix.unbind(jOpInOut);
+                  addLocalMatrix.unbind(jOpOutOut);
                 }
 
-                unbindLOp(jOpOutIn);
+                addLocalMatrix.unbind(jOpOutIn);
               }
               else if( intersection.boundary() )
               {
@@ -1026,14 +1078,14 @@ namespace Dune
                   addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
               }
             }
-            unbindLOp(jOpInIn);
+            addLocalMatrix.unbind(jOpInIn);
           }
-          addLocalMatrix( jOpLocalFinalized, currentFinalized, jOp );
+          addLocalMatrix.finalize();
         }
 
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
-                        const Functor& addLocalMatrix ) const
+                        Functor& addLocalMatrix ) const
         {
           typedef typename JacobianOperator::RangeSpaceType RangeSpaceType;
 
@@ -1057,13 +1109,22 @@ namespace Dune
                         std::mutex& mtx,
                         const std::vector<int> &domainDofShared, const std::vector<int> &rangeDofShared ) const
         {
-          assemble( u, jOp, iterators, AddLocalLocked( mtx, domainDofShared, rangeDofShared ) );
+          AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, domainDofShared, rangeDofShared );
+          // AddLocalAssemble<JacobianOperator> addLocalAssemble(jOp);
+          assemble( u, jOp, iterators, addLocalAssemble );
+          /*
+          std::lock_guard guard ( mtx );
+          std::cout << ThreadManager::thread() << " : "
+                    << addLocalAssemble.locked << " " << addLocalAssemble.notLocked << " "
+                    << addLocalAssemble.timesLocked << std::endl;
+          */
         }
 
         template< class GridFunction, class JacobianOperator, class Iterators >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators ) const
         {
-          assemble( u, jOp, iterators, AddLocal() );
+          AddLocalAssemble<JacobianOperator> addLocalAssemble(jOp);
+          assemble( u, jOp, iterators, addLocalAssemble );
         }
 
         // accessors
@@ -1298,25 +1359,23 @@ namespace Dune
       {
         // reserve memory and clear entries
         impl().prepare( jOp );
+        iterators_.update();
 
         const auto& domainMapper = jOp.domainSpace().blockMapper();
         const auto& rangeMapper = jOp.rangeSpace().blockMapper();
         std::vector<int> domainDofShared(jOp.domainSpace().size(),-1);
         std::vector<int> rangeDofShared(jOp.rangeSpace().size(),-1);
-        iterators_.update();
-        for (int t=0; t<ThreadManager::numThreads(); ++t)
+        for (const auto &entity : jOp.domainSpace())
         {
-          for (auto it=iterators_.begin(t); it!=iterators_.end(t);++it)
-          {
-            const auto& entity = *it;
-            rangeMapper.mapEach(entity, [ &rangeDofShared,t ] ( int localRow, auto globalRow )
-              { rangeDofShared[globalRow] = rangeDofShared[globalRow]==t || rangeDofShared[globalRow]==-1?
-                        t : -2 ; } );
-            domainMapper.mapEach(entity, [ &domainDofShared,t ] ( int localRow, auto globalRow )
-              { domainDofShared[globalRow] = domainDofShared[globalRow]==t || domainDofShared[globalRow]==-1?
-                        t : -2 ; } );
-          }
+          size_t t=iterators_.threadParallel(entity);
+          rangeMapper.mapEach(entity, [ &rangeDofShared, t ] ( int local, auto global )
+            { rangeDofShared[global] = (rangeDofShared[global]==t || rangeDofShared[global]==-1)?
+                                       t : -2 ; } ); // -2: shared dof
+          domainMapper.mapEach(entity, [ &domainDofShared, t ] ( int local, auto global )
+            { domainDofShared[global] = (domainDofShared[global]==t || domainDofShared[global]==-1)?
+                                        t : -2 ; } );
         }
+        // Idea: fill a entity specific bool vector with shared/not-shared to avoid later mapper calls in AddLocalMatrixLocked
 
         std::mutex mutex;
 
