@@ -231,20 +231,20 @@ namespace Dune
         return indexSet_.index( entity );
       }
 
+      int threadParallel( const EntityType& entity ) const
+      {
+        assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
+        // NOTE: this number can also be negative for ghost elements or elements
+        // that do not belong to the set covered by the space iterators
+        return threadNum_[ indexSet_.index( entity ) ];
+      }
       //! return thread number this entity belongs to
       int thread( const EntityType& entity ) const
       {
         if( ThreadManager::singleThreadMode() )
-        {
           return 0;
-        }
         else
-        {
-          assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
-          // NOTE: this number can also be negative for ghost elements or elements
-          // that do not belong to the set covered by the space iterators
-          return threadNum_[ indexSet_.index( entity ) ];
-        }
+          return threadParallel(entity);
       }
 
       //! set ratio between master thread and other threads in comp time

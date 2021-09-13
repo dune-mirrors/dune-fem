@@ -1,17 +1,3 @@
-#!/usr/bin/env python3
-
-# <markdowncell>
-# # Advection-Diffusion: Discontinuous Galerkin Method with Upwinding
-# So far we have been using Lagrange spaces of different order to solve our
-# PDE. In the following we show how to use Discontinuous Galerkin method to
-# solve an advection dominated advection-diffusion probllem:
-# \begin{align*}
-# -\varepsilon\triangle u + b\cdot\nabla u &= f
-# \end{align*}
-# with Dirichlet boundary conditions. Here $\varepsilon$ is a small
-# constant and $b$ a given vector.
-# <codecell>
-
 from mpi4py import MPI
 
 import numpy, math
@@ -28,7 +14,7 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def compute(space,epsilon,weakBnd):
+def compute(space,epsilon,weakBnd,skeleton):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -51,19 +37,24 @@ def compute(space,epsilon,weakBnd):
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
+    aInternal    -= eps*dot(grad(exact),n)*v*(1-dD)*ds
+
     diffSkeleton  = eps*beta/he*jump(u)*jump(v)*dS -\
                     eps*dot(avg(grad(u)),n('+'))*jump(v)*dS -\
                     eps*jump(u)*dot(avg(grad(v)),n('+'))*dS
-    diffSkeleton -= eps*dot(grad(exact),n)*v*(1-dD)*ds
     if weakBnd:
         diffSkeleton += eps*beta/hbnd*(u-exact)*v*dD*ds -\
                         eps*dot(grad(exact),n)*v*dD*ds
     advSkeleton   = jump(hatb*u)*jump(v)*dS
     if weakBnd:
         advSkeleton  += ( hatb*u + (dot(b,n)-hatb)*exact )*v*dD*ds
-    form          = aInternal + diffSkeleton + advSkeleton
 
-    if weakBnd:
+    if skeleton:
+        form          = aInternal + diffSkeleton + advSkeleton
+    else:
+        form          = aInternal
+
+    if weakBnd and skeleton:
         strongBC = None
     else:
         strongBC = DirichletBC(space,exact,dD)
@@ -76,9 +67,6 @@ def compute(space,epsilon,weakBnd):
                               "newton.linear.tolerance":1e-13}
                }
     scheme = solutionScheme([form==rhs,strongBC], **solver)
-
-    # <markdowncell>
-    # <codecell>
 
     uh = space.interpolate([0],name="solution")
     eoc = []
@@ -107,20 +95,24 @@ def newGridView():
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True)
+eoc = compute(space,1e-5,True,True)
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+eoc = compute(space,1,True,True)
 
 #gridView = newGridView()
 #space    = dgSpace(gridView, order=3, storage=storage)
-#eoc = compute(space,1e-5,True)
+#eoc = compute(space,1e-5,True,True)
 
 gridView = newGridView()
 space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+eoc = compute(space,1,True,True)
 
 gridView = newGridView()
 space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,False)
+eoc = compute(space,1,False,True)
+
+gridView = newGridView()
+space    = lagrange(gridView, order=2, storage=storage)
+eoc = compute(space,1,False,False)

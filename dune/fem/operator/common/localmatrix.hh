@@ -304,7 +304,7 @@ namespace Dune
 
       DomainBasisFunctionSetType domainBaseSet_;
       RangeBasisFunctionSetType rangeBaseSet_;
-      // needed?
+
       std::optional< DomainEntityType > domainEntity_;
       std::optional< RangeEntityType > rangeEntity_;
 
