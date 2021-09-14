@@ -76,6 +76,7 @@ namespace Dune
 
       static CodegenInfo& instance()
       {
+        assert(0);
         return Singleton< CodegenInfo > :: instance();
       }
 

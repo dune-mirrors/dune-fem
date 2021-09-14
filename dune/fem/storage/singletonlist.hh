@@ -12,7 +12,7 @@
 
 //- dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
-#include <dune/fem/storage/singleton.hh>
+// #include <dune/fem/storage/singleton.hh>
 
 namespace Dune
 {

@@ -9,6 +9,7 @@
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune
 {
@@ -190,7 +191,7 @@ namespace Dune
                                          const QuadratureKey& key )
       {
         typedef QuadratureStorage< QuadImp, QuadratureKey, dummy > Storage;
-        return (Singleton< Storage > :: instance()).getQuadrature( geometry, key );
+        return (*Singleton< ThreadSafeValue<Storage> > :: instance()).getQuadrature( geometry, key );
       }
 
       /*! \brief provide quadrature
@@ -224,7 +225,7 @@ namespace Dune
       {
         assert( geometry.isNone() );
         typedef QuadratureStorage< QuadImp, int, dummy > Storage;
-        return (Singleton< Storage > :: instance()).getQuadrature( geometry, defaultOrder );
+        return (*Singleton< ThreadSafeValue<Storage> > :: instance()).getQuadrature( geometry, defaultOrder );
       }
     };
 
@@ -318,7 +319,8 @@ namespace Dune
                                                             const QuadratureKeyType& quadKey )
       {
         assert( geometry.isCube() || geometry.isSimplex() );
-        return Singleton< PointQuadratureType > :: instance( geometry, quadKey, IdProvider ::instance().newId() );
+        return *( Singleton< ThreadSafeValue<PointQuadratureType> > ::
+                  instance( geometry, quadKey, IdProvider ::instance().newId() ) );
       }
 
       //! Access to the quadrature implementations.

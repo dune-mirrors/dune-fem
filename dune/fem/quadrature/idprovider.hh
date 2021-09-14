@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune
 {
@@ -20,7 +21,7 @@ namespace Dune
       //! Access to the singleton object.
       static IdProvider& instance()
       {
-        return Singleton< IdProvider >::instance();
+        return *(Singleton< ThreadSafeValue<IdProvider> >::instance());
       }
 
       //! Return a new identifier.
