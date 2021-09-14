@@ -5,7 +5,9 @@ import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
 from dune.grid import structuredGrid as leafGridView
+# from dune.alugrid import aluCubeGrid as leafGridView
 import dune.fem
+from dune.grid import cartesianDomain
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
@@ -28,7 +30,7 @@ def model(space,epsilon,weakBnd,skeleton):
     exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
 
     # diffusion factor
-    eps = Constant(epsilon,"eps")
+    eps = 1 # Constant(epsilon,"eps")
     # transport direction and upwind flux
     b    = as_vector([1,0])
     hatb = (dot(b, n) + abs(dot(b, n)))/2.0
@@ -37,8 +39,8 @@ def model(space,epsilon,weakBnd,skeleton):
     # penalty parameter
     beta = Constant( 10*space.order**2 if space.order > 0 else 1,"beta")
 
-    rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
-    aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
+    rhs           = ( -div(eps*grad(exact)-b*exact) + exact) * v  * dx
+    aInternal     = (dot(eps*grad(u) - b*u, grad(v)) + dot(u,v)) * dx
     diffSkeleton  = eps*beta/he*jump(u)*jump(v)*dS -\
                     eps*dot(avg(grad(u)),n('+'))*jump(v)*dS -\
                     eps*jump(u)*dot(avg(grad(v)),n('+'))*dS
@@ -58,7 +60,7 @@ def model(space,epsilon,weakBnd,skeleton):
     if weakBnd and skeleton:
         strongBC = None
     else:
-        strongBC = DirichletBC(space,exact,dD)
+        strongBC = None # DirichletBC(space,exact,dD)
 
     if space.storage[0] == "fem":
         solver={"solver":("suitesparse","umfpack")}
@@ -69,53 +71,57 @@ def model(space,epsilon,weakBnd,skeleton):
                }
     scheme = solutionScheme([form==rhs,strongBC], **solver)
     uh = space.interpolate([0],name="solution")
-    return scheme, linear(scheme), uh
+    A = linear(scheme)
+    return scheme, uh, A
 
-def compute(scheme, linear, uh):
+def compute(scheme, uh, A ):
     start = time.time()
     scheme(uh.copy(),uh)
     runTime = [time.time()-start]
     start = time.time()
-    scheme.jacobian(uh,linear)
+    scheme.jacobian(uh,A)
     runTime += [time.time()-start]
     return runTime
 
 storage = "fem"
 
 def newGridView(N=4):
-    return leafGridView([-1, -1], [1, 1], [N, N])
+    return leafGridView( [-1, -1], [1, 1], [N, N ])
+    ctor = cartesianDomain( [-1, -1], [1, 1], [N, N ])
+    return leafGridView(ctor)
 
 def test(spaceCtor,skeleton):
+    defaultThreads = dune.fem.threading.use
     # the operator is run once when setting up the linear operator in the 'model'
     gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, A, uh = model(space,1,True,skeleton)
-
-    print("---------------------")
+    scheme, uh, A = model(space,1,True,skeleton)
+    compute(scheme,uh,A)
 
     gridView = newGridView(N=400)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, A, uh = model(space,1,True,skeleton)
+    scheme, uh, A = model(space,1,True,skeleton)
+
+    print("---------------------")
 
     # time with the default number of threads (1 if no environment variable is set)
-    defaultThreads = dune.fem.threading.use
-    runTime = compute(scheme,A,uh)
+    runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," thread used: ",runTime,flush=True)
 
     # time with 2 threads
     dune.fem.threading.use = 2
-    runTime = compute(scheme,A,uh)
+    runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
     # time with 4 threads
     dune.fem.threading.use = 4
-    runTime = compute(scheme,A,uh)
+    runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
     '''
     # time with max number of threads
     dune.fem.threading.useMax()
-    runTime = compute(scheme,A,uh)
+    runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
     '''
 

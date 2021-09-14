@@ -61,9 +61,19 @@ namespace Dune
        *
        */
       Stencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
-        : domainBlockMapper_( dSpace.blockMapper() )
+        : domainSpace_(dSpace), rangeSpace_(rSpace)
+        , domainBlockMapper_( dSpace.blockMapper() )
         , rangeBlockMapper_( rSpace.blockMapper() )
       {
+      }
+
+      const DomainSpace &domainSpace() const
+      {
+        return domainSpace_;
+      }
+      const RangeSpace &rangeSpace() const
+      {
+        return rangeSpace_;
       }
 
       /** \brief Create stencil entries for (dEntity,rEntity) pair
@@ -127,6 +137,8 @@ namespace Dune
       };
 
     protected:
+      const DomainSpace &domainSpace_;
+      const RangeSpace &rangeSpace_;
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
@@ -317,6 +329,11 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
+        setup();
+      }
+      void setup()
+      {
+        const DomainSpace &dSpace = BaseType::domainSpace();
         for (const auto& entity : elements( dSpace.gridPart(), PartitionType{} ) )
           BaseType::fill(entity,entity);
       }
@@ -346,14 +363,21 @@ namespace Dune
 
       DiagonalAndNeighborStencil(const DomainSpace &dSpace, const RangeSpace &rSpace,
                                  bool onlyNonContinuousNeighbors = false)
-        : BaseType( dSpace, rSpace )
+        : BaseType( dSpace, rSpace ),
+          onlyNonContinuousNeighbors_(onlyNonContinuousNeighbors)
       {
+        setup();
+      }
+      void setup()
+      {
+        const DomainSpace &dSpace = BaseType::domainSpace();
+        const RangeSpace  &rSpace = BaseType::rangeSpace();
         for (const auto & entity: elements( dSpace.gridPart(), PartitionType{} ) )
         {
           BaseType::fill(entity,entity);
           for (const auto & intersection: intersections(dSpace.gridPart(), entity) )
           {
-            if ( onlyNonContinuousNeighbors
+            if ( onlyNonContinuousNeighbors_
                 && rSpace.continuous(intersection) && dSpace.continuous(intersection) )
               continue;
             if( intersection.neighbor() )
@@ -364,6 +388,7 @@ namespace Dune
           }
         }
       }
+      bool onlyNonContinuousNeighbors_;
     };
 
   } // namespace Fem
