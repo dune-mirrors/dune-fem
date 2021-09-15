@@ -36,7 +36,7 @@ namespace Dune
             mutex_()
           {}
 
-          std::mutex mutex_;
+          std::recursive_mutex mutex_;
         };
 
         typedef Storage StorageType;
