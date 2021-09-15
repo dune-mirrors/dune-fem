@@ -378,7 +378,12 @@ class GridFunction(ufl.Coefficient):
         except TypeError or AttributeError:
             return Space(self.gf.grid,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
-        return GridFunction(self.gf,scalar=False,count=-self.count() if self.scalar else self.count())
+        if not self.scalar:
+            return self
+        else:
+            return GridFunction(self.gf,scalar=False, count=-self.count())
+            # if self.scalar else self.count())
+
 
     def as_ufl(self):
         return self
