@@ -428,9 +428,6 @@ namespace Dune
       {
         if( verbose() )
           std::cerr << std::endl;
-        if ( (finished_(w, dw, delta_)) || !converged())
-          break;
-
         // evaluate operator's jacobian
         (*op_).jacobian( w, jOp );
 
@@ -459,6 +456,13 @@ namespace Dune
         ++iterations_;
         if( verbose() )
           std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
+        // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
+        if ( (finished_(w, dw, delta_)) || !converged())
+        {
+          if( verbose() )
+            std::cerr << std::endl;
+          break;
+        }
       }
       if( verbose() )
         std::cerr << std::endl;
