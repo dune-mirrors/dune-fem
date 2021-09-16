@@ -107,10 +107,10 @@ namespace Dune
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
        */
-      static inline const uint getEnvNumberThreads (uint defaultValue)
+      static inline const unsigned int getEnvNumberThreads (unsigned int defaultValue)
       {
 #ifdef USE_SMP_PARALLEL
-        int maxThreads = defaultValue;
+        unsigned int maxThreads = defaultValue;
         // use environment variable (for both openmp or pthreads) if set
         const char* mThreads = std::getenv("DUNE_NUM_THREADS");
         if( mThreads )
@@ -122,18 +122,18 @@ namespace Dune
             maxThreads = std::max( int(1), atoi( mThreads ) );
         }
 #else
-        int maxThreads = 1;
+        unsigned int maxThreads = 1;
 #endif
-        return uint(maxThreads);
+        return maxThreads;
       }
     } // end namespace detail
 
 #ifdef _OPENMP
     class OpenMPThreadManager : public EmptyThreadManager
     {
-      uint maxThreads__;
-      uint numThreads__;
-      inline void setNumThreads_( const int nThreads )
+      unsigned int maxThreads__;
+      unsigned int numThreads__;
+      inline void setNumThreads_( const unsigned int nThreads )
       {
         assert( nThreads <= maxThreads__ );
         if (nThreads > maxThreads__)
@@ -142,7 +142,7 @@ namespace Dune
                          " which is fixed at simulation start. Set 'DUNE_NUM_THREADS' environment variable to increase the maximum");
         numThreads__ = nThreads;
       }
-      inline void setMaxThreads_( const int maxThreads )
+      inline void setMaxThreads_( const unsigned int maxThreads )
       {
         maxThreads__ = maxThreads;
       }
