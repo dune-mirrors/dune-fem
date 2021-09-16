@@ -8,13 +8,14 @@ from dune.grid import structuredGrid as leafGridView
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
+from dune.fem.scheme import molGalerkin as molSolutionScheme
 from dune.fem.function import integrate, uflFunction
 from dune.ufl import Constant, DirichletBC
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def compute(space,epsilon,weakBnd,skeleton):
+def compute(space,epsilon,weakBnd,skeleton, mol=None):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -66,11 +67,15 @@ def compute(space,epsilon,weakBnd,skeleton):
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
                               "newton.linear.tolerance":1e-13}
                }
-    scheme = solutionScheme([form==rhs,strongBC], **solver)
+    if mol == 'mol':
+        scheme = molSolutionScheme([form==rhs,strongBC], **solver)
+    else:
+        scheme = solutionScheme([form==rhs,strongBC], **solver)
 
     uh = space.interpolate([0],name="solution")
     eoc = []
     info = scheme.solve(target=uh)
+
     error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
     print(error0," # output",flush=True)
     for i in range(3):
@@ -95,7 +100,7 @@ def newGridView():
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True,True)
+eoc = compute(space,1e-5,True,True, 'mol')
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
