@@ -1371,7 +1371,7 @@ namespace Dune
         const auto& rangeMapper = jOp.rangeSpace().blockMapper();
         for (const auto &entity : jOp.domainSpace())
         {
-          size_t t=iterators_.threadParallel(entity);
+          int t=iterators_.threadParallel(entity);
           rangeMapper.mapEach(entity, [ &rangeDofShared, t ] ( int local, auto global )
             { rangeDofShared[global] = (rangeDofShared[global]==t || rangeDofShared[global]==-1)?
                                        t : -2 ; } ); // -2: shared dof
