@@ -1380,7 +1380,6 @@ namespace Dune
                                         t : -2 ; } );
         }
         // Idea: fill a entity specific bool vector with shared/not-shared to avoid later mapper calls in AddLocalMatrixLocked
-
         }
         std::mutex mutex;
 

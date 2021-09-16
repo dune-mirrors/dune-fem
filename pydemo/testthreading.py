@@ -10,7 +10,8 @@ import dune.fem
 from dune.grid import cartesianDomain
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
-from dune.fem.scheme import galerkin as solutionScheme
+# from dune.fem.scheme import galerkin as solutionScheme
+from dune.fem.scheme import molGalerkin as solutionScheme
 from dune.fem.function import integrate, uflFunction
 from dune.fem.operator import linear
 from dune.ufl import Constant, DirichletBC
@@ -118,12 +119,15 @@ def test(spaceCtor,skeleton):
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
-    '''
     # time with max number of threads
-    dune.fem.threading.useMax()
+    dune.fem.threading.use = 8
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
-    '''
+
+    # time with max number of threads
+    dune.fem.threading.use = 16
+    runTime = compute(scheme,uh,A)
+    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
     dune.fem.threading.use = defaultThreads
 

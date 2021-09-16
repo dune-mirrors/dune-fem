@@ -225,7 +225,10 @@ namespace Dune
                                                    Args &&... args )
         : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace),
-          rSpace_(rSpace)
+          rSpace_(rSpace),
+          stencilDAN_(dSpace,rSpace), stencilD_(dSpace,rSpace),
+          domainSpaceSequence_(dSpace.sequence()),
+          rangeSpaceSequence_(rSpace.sequence())
       {}
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
@@ -257,20 +260,54 @@ namespace Dune
       using BaseType::iterators_;
       using BaseType::gridSizeInterior_;
 
+      void prepare( JacobianOperatorType& jOp ) const
+      {
+        if ( domainSpaceSequence_ != domainSpace().sequence()
+             || rangeSpaceSequence_ != rangeSpace().sequence() )
+        {
+          domainSpaceSequence_ = domainSpace().sequence();
+          rangeSpaceSequence_ = rangeSpace().sequence();
+          if( impl().model().hasSkeleton() )
+            stencilDAN_.setup();
+          else
+            stencilD_.setup();
+        }
+        if( impl().model().hasSkeleton() )
+          jOp.reserve( stencilDAN_ );
+        else
+          jOp.reserve( stencilD_ );
+        // set all entries to zero
+        jOp.clear();
+      }
+
       template < class GridFunction >
       void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
+        prepare( jOp );
         iterators_.update();
 
         // reserve memory and clear entries
-        impl().prepare( jOp );
+        std::vector<int> domainDofShared(jOp.domainSpace().size(),-1);
+        std::vector<int> rangeDofShared(jOp.rangeSpace().size(),-1);
+        const auto& domainMapper = jOp.domainSpace().blockMapper();
+        const auto& rangeMapper = jOp.rangeSpace().blockMapper();
+        for (const auto &entity : jOp.domainSpace())
+        {
+          int t=iterators_.threadParallel(entity);
+          rangeMapper.mapEach(entity, [ &rangeDofShared, t ] ( int local, auto global )
+            { rangeDofShared[global] = (rangeDofShared[global]==t || rangeDofShared[global]==-1)?
+                                       t : -2 ; } ); // -2: shared dof
+          domainMapper.mapEach(entity, [ &domainDofShared, t ] ( int local, auto global )
+            { domainDofShared[global] = (domainDofShared[global]==t || domainDofShared[global]==-1)?
+                                        t : -2 ; } );
+        }
 
         std::mutex mutex;
 
-        auto doAssemble = [this, &u, &jOp, &mutex] ()
+        auto doAssemble = [this, &u, &jOp, &mutex, &domainDofShared, &rangeDofShared] ()
         {
           // assemble Jacobian, same as GalerkinOperator
-          this->impl().assemble( u, jOp, this->iterators_, mutex );
+          this->impl().assemble( u, jOp, this->iterators_, mutex, domainDofShared, rangeDofShared );
         };
 
         try {
@@ -334,6 +371,10 @@ namespace Dune
 
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;
+
+      mutable DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilDAN_;
+      mutable DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilD_;
+      mutable int domainSpaceSequence_, rangeSpaceSequence_;
     };
 
 

@@ -382,7 +382,6 @@ class GridFunction(ufl.Coefficient):
             return self
         else:
             return GridFunction(self.gf,scalar=False, count=-self.count())
-            # if self.scalar else self.count())
 
 
     def as_ufl(self):
