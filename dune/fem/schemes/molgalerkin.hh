@@ -375,7 +375,9 @@ namespace Dune
         {
           // scale diagonal
           {
+            auto guard = bindGuard( lop, inside,inside );
             lop.bind(inside,inside);
+            jOp.getLocalMatrix( inside, inside, lop );
             localMassMatrix.leftMultiplyInverse( lop );
             jOp.setLocalMatrix( inside, inside, lop );
           }
@@ -388,7 +390,8 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 const auto& outside = intersection.outside();
-                lop.bind(outside,inside);
+                auto guard = bindGuard( lop, outside,inside );
+                jOp.getLocalMatrix( outside, inside, lop );
                 localMassMatrix.leftMultiplyInverse( lop );
                 jOp.setLocalMatrix( outside, inside, lop );
               }
