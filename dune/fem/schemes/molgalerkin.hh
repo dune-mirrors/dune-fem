@@ -367,15 +367,17 @@ namespace Dune
 
         LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), impl().interiorQuadratureOrder( jOp.rangeSpace().order() ) );
 
-        Dune::Fem::SetSelectedLocalContribution< JacobianOperatorType > jOpLocal( jOp );
+        TemporaryLocalMatrix< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >
+                  lop(jOp.domainSpace(), jOp.rangeSpace());
 
         // multiply with inverse mass matrix
-        for( const auto& inside : elements( gridPart(), Partitions::interiorBorder ) )
+        for( const auto& inside : iterators )
         {
           // scale diagonal
           {
-            auto guard = bindGuard( jOpLocal, inside, inside );
-            localMassMatrix.leftMultiplyInverse( jOpLocal );
+            lop.bind(inside,inside);
+            localMassMatrix.leftMultiplyInverse( lop );
+            jOp.setLocalMatrix( inside, inside, lop );
           }
 
           if( hasSkeleton )
@@ -386,8 +388,9 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 const auto& outside = intersection.outside();
-                auto guard = bindGuard( jOpLocal, outside, inside );
-                localMassMatrix.leftMultiplyInverse( jOpLocal );
+                lop.bind(outside,inside);
+                localMassMatrix.leftMultiplyInverse( lop );
+                jOp.setLocalMatrix( outside, inside, lop );
               }
             }
           }

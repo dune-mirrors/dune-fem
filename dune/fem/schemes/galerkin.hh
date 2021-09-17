@@ -895,7 +895,7 @@ namespace Dune
             bool needsLocking = false;
             BaseType::jOp_.rangeSpace().blockMapper().mapEach(rangeEntity,
                 [ this, &needsLocking ] ( int local, auto global )
-                { needsLocking = (needsLocking || rangeDofShared_[global]==-2); });
+                { needsLocking = (needsLocking || rangeDofShared_[global]!=ThreadManager::thread()); });
             return needsLocking;
           }
           bool boundaryDomainEntity(const EntityType &domainEntity) const
@@ -903,7 +903,7 @@ namespace Dune
             bool needsLocking = false;
             BaseType::jOp_.domainSpace().blockMapper().mapEach(domainEntity,
                 [ this, &needsLocking ] ( int local, auto global )
-                {needsLocking = (needsLocking || domainDofShared_[global]==-2); });
+                {needsLocking = (needsLocking || domainDofShared_[global]!=ThreadManager::thread()); });
             return needsLocking;
           }
 
@@ -1089,7 +1089,7 @@ namespace Dune
         {
           AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, domainDofShared, rangeDofShared );
           assemble( u, jOp, iterators, addLocalAssemble );
-          #if 0
+          #if 0 // print information about how many times a lock was used during assemble
           std::lock_guard guard ( mtx );
           std::cout << ThreadManager::thread() << " : "
                     << addLocalAssemble.locked << " " << addLocalAssemble.notLocked << " "

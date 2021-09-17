@@ -112,8 +112,6 @@ def test(spaceCtor,skeleton,useMol):
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," thread used: ",runTime,flush=True)
 
-    return
-
     # time with 2 threads
     dune.fem.threading.use = 2
     runTime = compute(scheme,uh,A)
@@ -129,10 +127,12 @@ def test(spaceCtor,skeleton,useMol):
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
 
+    '''
     # time with max number of threads
     dune.fem.threading.use = 16
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    '''
 
     dune.fem.threading.use = defaultThreads
 
