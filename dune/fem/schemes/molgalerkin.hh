@@ -286,29 +286,13 @@ namespace Dune
         prepare( jOp );
         iterators_.update();
 
-        // reserve memory and clear entries
-        std::vector<int> domainDofShared(jOp.domainSpace().size(),-1);
-        std::vector<int> rangeDofShared(jOp.rangeSpace().size(),-1);
-        const auto& domainMapper = jOp.domainSpace().blockMapper();
-        const auto& rangeMapper = jOp.rangeSpace().blockMapper();
-        for (const auto &entity : jOp.domainSpace())
-        {
-          int t=iterators_.threadParallel(entity);
-          rangeMapper.mapEach(entity, [ &rangeDofShared, t ] ( int local, auto global )
-            { rangeDofShared[global] = (rangeDofShared[global]==t || rangeDofShared[global]==-1)?
-                                       t : -2 ; } ); // -2: shared dof
-          domainMapper.mapEach(entity, [ &domainDofShared, t ] ( int local, auto global )
-            { domainDofShared[global] = (domainDofShared[global]==t || domainDofShared[global]==-1)?
-                                        t : -2 ; } );
-        }
-
         bool singleThreadModeError = false;
         std::mutex mutex;
 
-        auto doAssemble = [this, &u, &jOp, &mutex, &domainDofShared, &rangeDofShared] ()
+        auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
           // assemble Jacobian, same as GalerkinOperator
-          this->impl().assemble( u, jOp, this->iterators_, mutex, domainDofShared, rangeDofShared );
+          this->impl().assemble( u, jOp, this->iterators_, mutex );
         };
 
         try {

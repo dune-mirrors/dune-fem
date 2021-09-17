@@ -93,14 +93,14 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
-storage = "fem"
+storage = "istl"
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True,True, 'mol')
+eoc = compute(space,1e-5,True,True) # , 'mol')
 
 gridView = newGridView()
 space    = dgSpace(gridView, order=2, storage=storage)

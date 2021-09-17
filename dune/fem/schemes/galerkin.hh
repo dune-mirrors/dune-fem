@@ -681,7 +681,7 @@ namespace Dune
 
             // addLocalDofs calls w.addLocalDofs but also
             // prevents race condition for thread parallel runs
-            addLocalDofs( entity, wLocal, w );
+            addLocalDofs( entity, wLocal );
           }
         }
 
@@ -733,8 +733,7 @@ namespace Dune
 
                   // addLocalDofs calls w.addLocalDofs but also
                   // prevents race condition for thread parallel runs
-                  addLocalDofs( outside, wOutside, w );
-                  //w.addLocalDofs( outside, wOutside.localDofVector() );
+                  addLocalDofs( outside, wOutside );
                 }
               }
               else if( intersection.boundary() )
@@ -744,36 +743,110 @@ namespace Dune
               }
             }
 
-            addLocalDofs( inside, wInside, w );
-            //w.addLocalDofs( inside, wInside.localDofVector() );
+            addLocalDofs( inside, wInside );
           }
         }
 
+        template <class Space>
+        struct InsideEntity
+        {
+          typedef typename Space::EntityType EntityType;
+          std::vector<int> dofThread_;
+          template <class Iterators>
+          InsideEntity(const Space &space, const Iterators& iterators)
+          : space_(space), dofThread_(space.size(),-1)
+          {
+            const auto& mapper = space_.blockMapper();
+            for (const auto &entity : space_)
+            {
+              int t=iterators.threadParallel(entity);
+              mapper.mapEach(entity, [ this, t ] ( int local, auto global )
+                { dofThread_[global] = (dofThread_[global]==t || dofThread_[global]==-1)?
+                                       t : -2 ; } ); // -2: shared dof
+            }
+          }
+          bool operator()(const EntityType &entity) const
+          {
+            bool needsLocking = false;
+            space_.blockMapper().mapEach(entity,
+                [ this, &needsLocking ] ( int local, auto global )
+                { needsLocking = (needsLocking || dofThread_[global]!=ThreadManager::thread()); });
+            return !needsLocking;
+          }
+          const Space &space_;
+        };
+
+        template <class DiscreteFunction>
         struct AddLocalEvaluate
         {
-          template <class LocalDofs, class DiscreteFunction>
-          void operator () (const EntityType& entity, const LocalDofs& wLocal, DiscreteFunction& w ) const
+          AddLocalEvaluate(DiscreteFunction &w)
+          : w_(w) {}
+          template <class LocalDofs>
+          void operator () (const EntityType& entity, const LocalDofs& wLocal ) const
           {
-            w.addLocalDofs( entity, wLocal.localDofVector() );
+            w_.addLocalDofs( entity, wLocal.localDofVector() );
           }
+          DiscreteFunction &w_;
         };
 
-        struct AddLocalEvaluateLocked : public AddLocalEvaluate
+        template <class DiscreteFunction>
+        struct AddLocalEvaluateLocked : public AddLocalEvaluate<DiscreteFunction>
         {
+          typedef AddLocalEvaluate<DiscreteFunction> BaseType;
+          InsideEntity<typename DiscreteFunction::DiscreteFunctionSpaceType> inside_;
           std::mutex& mutex_;
-          AddLocalEvaluateLocked(std::mutex& mtx)
-          : AddLocalEvaluate(), mutex_(mtx) {}
+          template <class Iterators>
+          AddLocalEvaluateLocked(DiscreteFunction &w, std::mutex& mtx, const Iterators &iterators)
+          : BaseType(w), mutex_(mtx), inside_(w.space(),iterators) {}
 
-          template <class LocalDofs, class DiscreteFunction>
-          void operator () (const EntityType& entity, const LocalDofs& wLocal, DiscreteFunction& w ) const
+          template <class LocalDofs>
+          void operator () (const EntityType& entity, const LocalDofs& wLocal ) const
           {
-            // lock mutex (unlock on destruction)
-            std::lock_guard guard ( mutex_ );
             // call addLocalDofs on w
-            AddLocalEvaluate::operator()( entity, wLocal, w );
+            if (inside_(entity))
+              BaseType::operator()( entity, wLocal );
+            else
+            {
+              // lock mutex (unlock on destruction)
+              std::lock_guard guard ( mutex_ );
+              BaseType::operator()( entity, wLocal );
+            }
           }
         };
 
+        template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs ) const
+        {
+          static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
+          static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
+
+          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
+
+          if( integrands().hasSkeleton() )
+            evaluate( u, w, iterators, addLocalDofs, std::true_type() );
+          else
+            evaluate( u, w, iterators, addLocalDofs, std::false_type() );
+        }
+
+      public:
+        template< class GridFunction, class DiscreteFunction, class Iterators >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::mutex& mtx ) const
+        {
+          AddLocalEvaluateLocked<DiscreteFunction> addLocalEvaluate(w,mtx,iterators);
+          evaluate( u, w, iterators, addLocalEvaluate );
+        }
+
+        template< class GridFunction, class DiscreteFunction, class Iterators >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators ) const
+        {
+          AddLocalEvaluate<DiscreteFunction> addLocalEvaluate(w);
+          evaluate( u, w, iterators, addLocalEvaluate );
+        }
+
+      private:
         template <class JacobianOperator>
         struct AddLocalAssemble
         {
@@ -842,13 +915,16 @@ namespace Dune
           using BaseType::currentFinalized_;
           using BaseType::jOpLocalFinalized_;
 
+          InsideEntity<typename JacobianOperator::DomainSpaceType> insideDomain_;
+          InsideEntity<typename JacobianOperator::RangeSpaceType> insideRange_;
+
           std::mutex& mutex_;
-          const std::vector<int> &domainDofShared_;
-          const std::vector<int> &rangeDofShared_;
-          AddLocalAssembleLocked(JacobianOperator &jOp, std::mutex &mtx,
-                                 const std::vector<int> &domainDofShared={}, const std::vector<int> &rangeDofShared={} )
+          template <class Iterators>
+          AddLocalAssembleLocked(JacobianOperator &jOp, std::mutex &mtx, const Iterators &iterators)
           : BaseType(jOp)
-          , mutex_(mtx), domainDofShared_(domainDofShared), rangeDofShared_(rangeDofShared)
+          , mutex_(mtx)
+          , insideDomain_(jOp.domainSpace(),iterators)
+          , insideRange_(jOp.rangeSpace(),iterators)
           {}
 
           void finalize()
@@ -878,71 +954,18 @@ namespace Dune
               BaseType::unbind(lop);
               return;
             */
-            if ( boundaryDomainEntity(lop.domainEntity()) ||
-                 boundaryRangeEntity(lop.rangeEntity()) )
+            if ( insideDomain_(lop.domainEntity()) &&
+                 insideRange_(lop.rangeEntity()) )
+              BaseType::unbind(lop);
+            else
             {
               assert(currentFinalized_<jOpLocalFinalized_.size());
               jOpLocalFinalized_[currentFinalized_] = &lop;
               ++currentFinalized_;
             }
-            else
-              BaseType::unbind(lop);
           }
-
-      private:
-          bool boundaryRangeEntity(const EntityType &rangeEntity) const
-          {
-            bool needsLocking = false;
-            BaseType::jOp_.rangeSpace().blockMapper().mapEach(rangeEntity,
-                [ this, &needsLocking ] ( int local, auto global )
-                { needsLocking = (needsLocking || rangeDofShared_[global]!=ThreadManager::thread()); });
-            return needsLocking;
-          }
-          bool boundaryDomainEntity(const EntityType &domainEntity) const
-          {
-            bool needsLocking = false;
-            BaseType::jOp_.domainSpace().blockMapper().mapEach(domainEntity,
-                [ this, &needsLocking ] ( int local, auto global )
-                {needsLocking = (needsLocking || domainDofShared_[global]!=ThreadManager::thread()); });
-            return needsLocking;
-          }
-
-
         };
 
-        template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
-                        Functor& addLocalDofs ) const
-        {
-          static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
-          static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
-
-          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
-          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
-          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
-
-          if( integrands().hasSkeleton() )
-            evaluate( u, w, iterators, addLocalDofs, std::true_type() );
-          else
-            evaluate( u, w, iterators, addLocalDofs, std::false_type() );
-        }
-
-      public:
-        template< class GridFunction, class DiscreteFunction, class Iterators >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::mutex& mtx ) const
-        {
-          AddLocalEvaluateLocked addLocalEvaluate(mtx);
-          evaluate( u, w, iterators, addLocalEvaluate );
-        }
-
-        template< class GridFunction, class DiscreteFunction, class Iterators >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators ) const
-        {
-          AddLocalEvaluate addLocalEvaluate;
-          evaluate( u, w, iterators, addLocalEvaluate );
-        }
-
-      private:
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
                         Functor& addLocalMatrix, std::false_type ) const
@@ -1063,7 +1086,7 @@ namespace Dune
 
         template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
-                        Functor& addLocalMatrix ) const
+                        Functor& addLocalMatrix, int ) const
         {
           typedef typename JacobianOperator::RangeSpaceType RangeSpaceType;
 
@@ -1083,12 +1106,10 @@ namespace Dune
 
       public:
         template< class GridFunction, class JacobianOperator, class Iterators >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
-                        std::mutex& mtx,
-                        const std::vector<int> &domainDofShared, const std::vector<int> &rangeDofShared ) const
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::mutex& mtx) const
         {
-          AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, domainDofShared, rangeDofShared );
-          assemble( u, jOp, iterators, addLocalAssemble );
+          AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, iterators);
+          assemble( u, jOp, iterators, addLocalAssemble, 10 );
           #if 0 // print information about how many times a lock was used during assemble
           std::lock_guard guard ( mtx );
           std::cout << ThreadManager::thread() << " : "
@@ -1101,7 +1122,7 @@ namespace Dune
         void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators ) const
         {
           AddLocalAssemble<JacobianOperator> addLocalAssemble(jOp);
-          assemble( u, jOp, iterators, addLocalAssemble );
+          assemble( u, jOp, iterators, addLocalAssemble, 10 );
         }
 
         // accessors
@@ -1360,34 +1381,19 @@ namespace Dune
       void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
         // reserve memory and clear entries
-        std::vector<int> domainDofShared(jOp.domainSpace().size(),-1);
-        std::vector<int> rangeDofShared(jOp.rangeSpace().size(),-1);
         {
-        Timer timer;
-        prepare( jOp );
-        iterators_.update();
-        // std::cout << "prepare=  " << timer.elapsed() << std::endl;;
-        const auto& domainMapper = jOp.domainSpace().blockMapper();
-        const auto& rangeMapper = jOp.rangeSpace().blockMapper();
-        for (const auto &entity : jOp.domainSpace())
-        {
-          int t=iterators_.threadParallel(entity);
-          rangeMapper.mapEach(entity, [ &rangeDofShared, t ] ( int local, auto global )
-            { rangeDofShared[global] = (rangeDofShared[global]==t || rangeDofShared[global]==-1)?
-                                       t : -2 ; } ); // -2: shared dof
-          domainMapper.mapEach(entity, [ &domainDofShared, t ] ( int local, auto global )
-            { domainDofShared[global] = (domainDofShared[global]==t || domainDofShared[global]==-1)?
-                                        t : -2 ; } );
-        }
-        // Idea: fill a entity specific bool vector with shared/not-shared to avoid later mapper calls in AddLocalMatrixLocked
+          Timer timer;
+          prepare( jOp );
+          iterators_.update();
+          // std::cout << "prepare=  " << timer.elapsed() << std::endl;;
         }
         std::mutex mutex;
 
         Timer timer;
 
-        auto doAssemble = [this, &u, &jOp, &mutex, &domainDofShared, &rangeDofShared] ()
+        auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
-          this->impl().assemble( u, jOp, this->iterators_, mutex, domainDofShared, rangeDofShared );
+          this->impl().assemble( u, jOp, this->iterators_, mutex );
         };
 
         try {

@@ -87,7 +87,7 @@ def compute(scheme, uh, A ):
     runTime += [time.time()-start]
     return runTime
 
-storage = "fem"
+storage = "istl"
 
 def newGridView(N=4):
     return leafGridView( [-1, -1], [1, 1], [N, N ])
@@ -96,6 +96,7 @@ def newGridView(N=4):
 
 def test(spaceCtor,skeleton,useMol):
     defaultThreads = dune.fem.threading.use
+    runtimes = []
     # the operator is run once when setting up the linear operator in the 'model'
     gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
@@ -111,22 +112,40 @@ def test(spaceCtor,skeleton,useMol):
     # time with the default number of threads (1 if no environment variable is set)
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," thread used: ",runTime,flush=True)
+    runtimes += [[1,runTime]]
 
     # time with 2 threads
     dune.fem.threading.use = 2
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runtimes += [[2,runTime]]
 
     # time with 4 threads
     dune.fem.threading.use = 4
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runtimes += [[4,runTime]]
 
     # time with max number of threads
     dune.fem.threading.use = 8
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runtimes += [[8,runTime]]
 
+    # Efficienzy:
+    # T(q)/T(p) * q/p approx T0/q / T0/p * p/q = 1
+    def rnd2(x):
+       x = str(round(x,2))
+       if len(x)<4: x = x+"0"
+       return x
+    for i in range(2):
+        print("Evaluate" if i==0 else "Assemble")
+        for x in runtimes:
+            for y in runtimes:
+                if x[0]<y[0]:
+                    print( x[0],"->",y[0]," : ",
+                       rnd2(x[1][i]/y[1][i] * x[0]/y[0]), end=" \t ")
+            print()
     '''
     # time with max number of threads
     dune.fem.threading.use = 16
