@@ -10,8 +10,8 @@ import dune.fem
 from dune.grid import cartesianDomain
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
-# from dune.fem.scheme import galerkin as solutionScheme
-from dune.fem.scheme import molGalerkin as solutionScheme
+from dune.fem.scheme import galerkin as solutionScheme
+from dune.fem.scheme import molGalerkin as solutionMolScheme
 from dune.fem.function import integrate, uflFunction
 from dune.fem.operator import linear
 from dune.ufl import Constant, DirichletBC
@@ -19,7 +19,7 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def model(space,epsilon,weakBnd,skeleton):
+def model(space,epsilon,weakBnd,skeleton,useMol):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -70,7 +70,10 @@ def model(space,epsilon,weakBnd,skeleton):
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
                               "newton.linear.tolerance":1e-13}
                }
-    scheme = solutionScheme([form==rhs,strongBC], **solver)
+    if useMol:
+        scheme = solutionMolScheme([form==rhs,strongBC], **solver)
+    else:
+        scheme = solutionScheme([form==rhs,strongBC], **solver)
     uh = space.interpolate([0],name="solution")
     A = linear(scheme)
     return scheme, uh, A
@@ -91,23 +94,25 @@ def newGridView(N=4):
     ctor = cartesianDomain( [-1, -1], [1, 1], [N, N ])
     return leafGridView(ctor)
 
-def test(spaceCtor,skeleton):
+def test(spaceCtor,skeleton,useMol):
     defaultThreads = dune.fem.threading.use
     # the operator is run once when setting up the linear operator in the 'model'
     gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, uh, A = model(space,1,True,skeleton)
+    scheme, uh, A = model(space,1,True,skeleton,useMol)
     compute(scheme,uh,A)
 
     gridView = newGridView(N=400)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, uh, A = model(space,1,True,skeleton)
+    scheme, uh, A = model(space,1,True,skeleton,useMol)
 
     print("---------------------")
 
     # time with the default number of threads (1 if no environment variable is set)
     runTime = compute(scheme,uh,A)
     print(dune.fem.threading.use," thread used: ",runTime,flush=True)
+
+    return
 
     # time with 2 threads
     dune.fem.threading.use = 2
@@ -131,9 +136,11 @@ def test(spaceCtor,skeleton):
 
     dune.fem.threading.use = defaultThreads
 
+print("DGSpace-MOL:")
+test(dgSpace,True,True)
 print("DGSpace:")
-test(dgSpace,True)
+test(dgSpace,True,False)
 print("Lagrange (with skeleton):")
-test(lagrange,True)
+test(lagrange,True,False)
 print("Lagrange (no skeleton):")
-test(lagrange,False)
+test(lagrange,False,False)

@@ -302,6 +302,7 @@ namespace Dune
                                         t : -2 ; } );
         }
 
+        bool singleThreadModeError = false;
         std::mutex mutex;
 
         auto doAssemble = [this, &u, &jOp, &mutex, &domainDofShared, &rangeDofShared] ()
@@ -319,16 +320,39 @@ namespace Dune
         }
         catch ( const SingleThreadModeError& e )
         {
+          singleThreadModeError = true;
+        }
+
+        if (!singleThreadModeError)
+        {
+          // method of lines
+          auto doInvMass = [this, &jOp] ()
+          {
+            applyInverseMass( this->iterators_, jOp, this->impl().model().hasSkeleton() );
+          };
+
+          try {
+            // execute in parallel
+            ThreadPool :: run ( doInvMass );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            singleThreadModeError = true;
+          }
+        }
+
+        if (singleThreadModeError)
+        {
           // redo matrix assembly since it failed
           jOp.clear();
           impl().assemble( u, jOp, iterators_ );
 
           // update number of interior elements
           gridSizeInterior_ = impl().gridSizeInterior();
-        }
 
-        // apply inverse mass
-        applyInverseMass( jOp, impl().model().hasSkeleton() );
+          // apply inverse mass
+          applyInverseMass( iterators_, jOp, impl().model().hasSkeleton() );
+        }
 
         // note: assembly done without local contributions so need
         // to call flush assembly
@@ -336,7 +360,8 @@ namespace Dune
       }
 
 
-      void applyInverseMass ( JacobianOperatorType &jOp, const bool hasSkeleton ) const
+      template <class Iterators>
+      void applyInverseMass ( const Iterators& iterators, JacobianOperatorType &jOp, const bool hasSkeleton ) const
       {
         typedef typename BaseType::LocalMassMatrixType  LocalMassMatrixType;
 
