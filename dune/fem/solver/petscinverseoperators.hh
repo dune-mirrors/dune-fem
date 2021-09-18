@@ -124,6 +124,7 @@ namespace Dune
         // Create linear solver context
         ksp_.reset( new KSP() );
         const auto& comm = assembledOperator_->domainSpace().gridPart().comm();
+
         ::Dune::Petsc::KSPCreate( comm, &ksp() );
 
         // attach Matrix to linear solver context
@@ -397,8 +398,9 @@ namespace Dune
             DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid preconditioner choosen." );
         }
 
-        // set monitor in verbose mode
-        if( parameter.verbose() && Parameter::verbose() )
+        // set monitor in verbose mode for all cores
+        // (and then check Parameter::verbose locally inside monitor)
+        if( parameter.verbose() )
         {
           ::Dune::Petsc::KSPView( comm, ksp() );
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
