@@ -184,7 +184,7 @@ namespace Dune
     };
 
     // Integral
-    // ------
+    // --------
 
     template< class GridPart >
     class Integral : public IntegralBase< GridPart, Integral< GridPart > >

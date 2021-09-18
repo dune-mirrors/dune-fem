@@ -751,7 +751,6 @@ namespace Dune
         struct InsideEntity
         {
           typedef typename Space::EntityType EntityType;
-          std::vector<int> dofThread_;
           template <class Iterators>
           InsideEntity(const Space &space, const Iterators& iterators)
           : space_(space), dofThread_(space.size(),-1)
@@ -774,6 +773,7 @@ namespace Dune
             return !needsLocking;
           }
           const Space &space_;
+          std::vector<int> dofThread_;
         };
 
         template <class DiscreteFunction>
@@ -793,8 +793,10 @@ namespace Dune
         struct AddLocalEvaluateLocked : public AddLocalEvaluate<DiscreteFunction>
         {
           typedef AddLocalEvaluate<DiscreteFunction> BaseType;
-          InsideEntity<typename DiscreteFunction::DiscreteFunctionSpaceType> inside_;
+
           std::mutex& mutex_;
+          InsideEntity<typename DiscreteFunction::DiscreteFunctionSpaceType> inside_;
+
           template <class Iterators>
           AddLocalEvaluateLocked(DiscreteFunction &w, std::mutex& mtx, const Iterators &iterators)
           : BaseType(w), mutex_(mtx), inside_(w.space(),iterators) {}
@@ -915,10 +917,10 @@ namespace Dune
           using BaseType::currentFinalized_;
           using BaseType::jOpLocalFinalized_;
 
+          std::mutex& mutex_;
           InsideEntity<typename JacobianOperator::DomainSpaceType> insideDomain_;
           InsideEntity<typename JacobianOperator::RangeSpaceType> insideRange_;
 
-          std::mutex& mutex_;
           template <class Iterators>
           AddLocalAssembleLocked(JacobianOperator &jOp, std::mutex &mtx, const Iterators &iterators)
           : BaseType(jOp)
@@ -1365,9 +1367,9 @@ namespace Dune
           domainSpaceSequence_ = domainSpace().sequence();
           rangeSpaceSequence_ = rangeSpace().sequence();
           if( impl().model().hasSkeleton() )
-            stencilDAN_.setup();
+            stencilDAN_.update();
           else
-            stencilD_.setup();
+            stencilD_.update();
         }
         if( impl().model().hasSkeleton() )
           jOp.reserve( stencilDAN_ );

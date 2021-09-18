@@ -4,7 +4,8 @@
 // fem includes
 #include <dune/fem/schemes/galerkin.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/function/localfunction/mutable.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/common/bindguard.hh>
 
 namespace Dune
 {
@@ -82,6 +83,7 @@ namespace Dune
       typedef Integrands ModelType;
       typedef Integrands DirichletModelType;
       ModelType &model() const { return impl().model(); }
+      const GalerkinOperatorImplType& impl() const { return (*impl_); }
 
       std::size_t gridSizeInterior () const { return gridSizeInterior_; }
 
@@ -99,8 +101,9 @@ namespace Dune
       template <class Iterators>
       void applyInverseMass( const Iterators& iterators, RangeFunctionType& w ) const
       {
-        // mutable local function
-        MutableLocalFunction< RangeFunctionType > wLocal( w );
+        // temporary local function
+        typedef TemporaryLocalFunction< typename RangeFunctionType::DiscreteFunctionSpaceType > TemporaryLocalFunctionType;
+        TemporaryLocalFunctionType wLocal( w.space() );
         LocalMassMatrixType localMassMatrix( w.space(), impl().interiorQuadratureOrder( w.space().order() ) );
 
         // iterate over all elements (in the grid or per thread)
@@ -109,10 +112,15 @@ namespace Dune
         {
           // obtain local function
           auto guard = bindGuard( wLocal, entity );
+          // obtain local dofs
+          w.getLocalDofs( entity, wLocal.localDofVector() );
 
           // apply inverse mass matrix
           // TODO: add mass term if needed (from ufl expression)
           localMassMatrix.applyInverse( entity, wLocal );
+
+          // overwrite dofs in discrete function
+          w.setLocalDofs( entity, wLocal.localDofVector() );
         }
       }
 
@@ -185,8 +193,6 @@ namespace Dune
         if( communicate_ )
           w.communicate();
       }
-
-      const GalerkinOperatorImplType& impl() const { return (*impl_); }
 
       GP gridPart_;
       // GalerkinOperator implementation (see galerkin.hh)
@@ -268,9 +274,9 @@ namespace Dune
           domainSpaceSequence_ = domainSpace().sequence();
           rangeSpaceSequence_ = rangeSpace().sequence();
           if( impl().model().hasSkeleton() )
-            stencilDAN_.setup();
+            stencilDAN_.update();
           else
-            stencilD_.setup();
+            stencilD_.update();
         }
         if( impl().model().hasSkeleton() )
           jOp.reserve( stencilDAN_ );
