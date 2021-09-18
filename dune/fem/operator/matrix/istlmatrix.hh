@@ -140,17 +140,19 @@ namespace Dune
         {
           // not insert map of indices into matrix
           auto endcreate = this->createend();
-          const auto endsp = sparsityPattern.end();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
-            const auto row = sparsityPattern.find( create.index() );
-            if ( row == endsp )
-              continue;
-            const auto& localIndices = ( *row ).second;
-            const auto end = localIndices.end();
-            // insert all indices for this row
-            for (auto it = localIndices.begin(); it != end; ++it)
-              create.insert( *it );
+            try {
+              const auto row = sparsityPattern.at( create.index() );
+              // insert all indices for this row
+              for ( const auto& col : row )
+                create.insert( col );
+            }
+            catch ( const std::out_of_range& e )
+            {
+              // if a row is empty then do nothing
+              continue ;
+            }
           }
         }
 

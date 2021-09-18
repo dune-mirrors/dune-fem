@@ -42,16 +42,22 @@ namespace Dune
       typedef typename RangeSpace::BlockMapperType      RangeBlockMapper;
 
     public:
-      typedef typename DomainIteratorType::Entity       DomainEntityType;
-      typedef typename RangeIteratorType::Entity        RangeEntityType;
-      typedef typename DomainBlockMapper::GlobalKeyType DomainGlobalKeyType;
-      typedef typename RangeBlockMapper::GlobalKeyType  RangeGlobalKeyType;
+      typedef typename DomainIteratorType::Entity        DomainEntityType;
+      typedef typename RangeIteratorType::Entity         RangeEntityType;
+      typedef typename DomainBlockMapper::GlobalKeyType  DomainGlobalKeyType;
+      typedef typename RangeBlockMapper::GlobalKeyType   RangeGlobalKeyType;
 
       //! type for storing the stencil of one row
-      typedef std::set<DomainGlobalKeyType>                   LocalStencilType;
+      typedef std::set<DomainGlobalKeyType>       LocalStencilType;
 
-      //! type for storing the full stencil
-      typedef std::map<RangeGlobalKeyType,LocalStencilType> GlobalStencilType;
+      //! type of std::vector for indexing
+      typedef typename std::vector< std::size_t > :: size_type IndexType;
+
+      static const bool stencilIsVector = std::is_convertible< RangeGlobalKeyType, IndexType >::value;
+      //static const bool stencilIsVector = false ;//std::is_convertible< RangeGlobalKeyType, IndexType >::value;
+      typedef typename std::conditional< stencilIsVector,
+                            std::vector< LocalStencilType >,
+                            std::map< RangeGlobalKeyType, LocalStencilType > > :: type  GlobalStencilType;
 
     public:
       /** \brief Constructor
@@ -65,6 +71,10 @@ namespace Dune
         , domainBlockMapper_( dSpace.blockMapper() )
         , rangeBlockMapper_( rSpace.blockMapper() )
       {
+        if constexpr ( stencilIsVector )
+        {
+          globalStencil_.resize( rows() );
+        }
       }
 
       const DomainSpace &domainSpace() const
@@ -84,7 +94,7 @@ namespace Dune
        *
        */
       void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
-                  bool fillGhost=true )
+                  bool fillGhost=true ) const
       {
         if( (dEntity.partitionType() == GhostEntity) && !fillGhost )
           return;
@@ -101,24 +111,54 @@ namespace Dune
        */
       const LocalStencilType &localStencil(const RangeGlobalKeyType &key) const
       {
-        return globalStencil_[key];
+        return globalStencil()[ key ];
       }
+
       /** \brief Return the full stencil
        */
       const GlobalStencilType &globalStencil() const
       {
         return globalStencil_;
       }
-      /** \brief Return an upper bound for the maximum number of non-zero entries in all row
+
+      /** \brief Return an upper bound for the maximum number of non-zero entries in all rows
        */
       int maxNonZerosEstimate() const
       {
-        return std::accumulate( globalStencil().begin(), globalStencil().end(), 0,
-         []( int ret, const auto& entry ){ return std::max( ret, static_cast<int>( entry.second.size() ) ); } );
+        int maxNZ = 0;
+        for( const auto& entry : globalStencil_ )
+        {
+          if constexpr ( stencilIsVector )
+            maxNZ = std::max( maxNZ, static_cast<int>( entry.size() ) );
+          else
+            maxNZ = std::max( maxNZ, static_cast<int>( entry.second.size() ) );
+        }
+        return maxNZ;
       }
 
       int rows () const { return rangeBlockMapper_.size(); }
       int cols () const { return domainBlockMapper_.size(); }
+
+      /** \brief clear previously computed entries such that a re-compute happens when used again */
+      void update()
+      {
+        globalStencil_.clear();
+        if constexpr ( stencilIsVector )
+        {
+          globalStencil_.resize( rangeBlockMapper_.size() );
+        }
+        // compute stencil based on overloaded implementation
+        setupStencil();
+      }
+
+      [[deprecated("Use Stencil::update instead()")]]
+      void setup() {
+        update();
+      }
+
+    protected:
+      /** \brief method to setup stencil depending on entity set defined in derived class */
+      virtual void setupStencil() const = 0;
 
     private:
       struct RowFillFunctor
@@ -141,7 +181,8 @@ namespace Dune
       const RangeSpace &rangeSpace_;
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
-      GlobalStencilType globalStencil_;
+
+      mutable GlobalStencilType globalStencil_;
     };
 
     /** \class SimpleStencil
@@ -250,7 +291,7 @@ namespace Dune
 
       StencilWrapper(const GlobalStencilType& stencil)
         : stencil_( stencil )
-        , maxNZ_( computeNNZ() )
+        , maxNZ_( computeMaxNZ() )
       {
       }
 
@@ -290,14 +331,14 @@ namespace Dune
       }
 
     protected:
-      int computeNNZ() const
+      int computeMaxNZ() const
       {
-        int maxNNZ = 0;
+        int maxNZ = 0;
         for( const auto& row : stencil_ )
         {
-          maxNNZ = std::max( maxNNZ, int(row.size()) );
+          maxNZ = std::max( maxNZ, int(row.size()) );
         }
-        return maxNNZ;
+        return maxNZ;
       }
 
       const GlobalStencilType& stencil_;
@@ -329,9 +370,11 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
-        setup();
+        setupStencil();
       }
-      void setup()
+
+    protected:
+      virtual void setupStencil () const override
       {
         const DomainSpace &dSpace = BaseType::domainSpace();
         for (const auto& entity : elements( dSpace.gridPart(), PartitionType{} ) )
@@ -366,9 +409,11 @@ namespace Dune
         : BaseType( dSpace, rSpace ),
           onlyNonContinuousNeighbors_(onlyNonContinuousNeighbors)
       {
-        setup();
+        setupStencil();
       }
-      void setup()
+
+    protected:
+      virtual void setupStencil() const override
       {
         const DomainSpace &dSpace = BaseType::domainSpace();
         const RangeSpace  &rSpace = BaseType::rangeSpace();
@@ -388,6 +433,7 @@ namespace Dune
           }
         }
       }
+
       bool onlyNonContinuousNeighbors_;
     };
 
