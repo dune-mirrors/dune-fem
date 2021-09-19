@@ -46,11 +46,12 @@ namespace Dune
      */
     class SingleThreadModeError : public std::exception
     {
+      std::string msg_;
     public:
-      void message(const std::string &msg){}
+      void message(const std::string &msg){ msg_ = msg; }
       const char* what() const noexcept override
       {
-        return "SingleThreadModeError";
+        return msg_.c_str();
       }
     };
 
