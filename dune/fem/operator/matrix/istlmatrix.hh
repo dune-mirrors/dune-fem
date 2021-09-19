@@ -37,6 +37,8 @@
 #include <dune/fem/operator/matrix/istlpreconditioner.hh>
 #include <dune/fem/operator/matrix/functor.hh>
 
+#include <dune/fem/misc/threads/threadmanager.hh>
+
 namespace Dune
 {
 
@@ -143,7 +145,7 @@ namespace Dune
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
             try {
-              const auto row = sparsityPattern.at( create.index() );
+              const auto& row = sparsityPattern.at( create.index() );
               // insert all indices for this row
               for ( const auto& col : row )
                 create.insert( col );
@@ -884,13 +886,15 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil, const bool implicit = true )
+      void reserve(const Stencil &stencil, const bool proposeImplicit = true )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
           removeObj();
 
+          // do not use implicit build mode when multi threading is enabled
+          const bool implicit = proposeImplicit && ThreadManager::numThreads() == 1;
           if( implicit )
           {
             auto nnz = stencil.maxNonZerosEstimate();
