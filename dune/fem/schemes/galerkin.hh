@@ -945,10 +945,7 @@ namespace Dune
           TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
           {
             if (currentFree_==0)
-            {
               finalize();
-              assert(currentFree_ == BaseType::jOpLocal_.size());
-            }
             return BaseType::bind(dE,rE);
           }
 
