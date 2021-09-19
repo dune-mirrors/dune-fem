@@ -130,7 +130,7 @@ namespace Dune
         iterators_.update();
         w.clear();
 
-        std::mutex mutex;
+        std::shared_mutex mutex;
 
         auto doEval = [this, &u, &w, &mutex] ()
         {
@@ -293,7 +293,7 @@ namespace Dune
         iterators_.update();
 
         bool singleThreadModeError = false;
-        std::mutex mutex;
+        std::shared_mutex mutex;
 
         auto doAssemble = [this, &u, &jOp, &mutex] ()
         {

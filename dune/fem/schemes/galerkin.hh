@@ -6,6 +6,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <shared_mutex>
 #include <vector>
 
 #include <dune/common/hybridutilities.hh>
@@ -794,11 +795,11 @@ namespace Dune
         {
           typedef AddLocalEvaluate<DiscreteFunction> BaseType;
 
-          std::mutex& mutex_;
+          std::shared_mutex& mutex_;
           InsideEntity<typename DiscreteFunction::DiscreteFunctionSpaceType> inside_;
 
           template <class Iterators>
-          AddLocalEvaluateLocked(DiscreteFunction &w, std::mutex& mtx, const Iterators &iterators)
+          AddLocalEvaluateLocked(DiscreteFunction &w, std::shared_mutex& mtx, const Iterators &iterators)
           : BaseType(w), mutex_(mtx), inside_(w.space(),iterators) {}
 
           template <class LocalDofs>
@@ -806,11 +807,15 @@ namespace Dune
           {
             // call addLocalDofs on w
             if (inside_(entity))
+            {
+              // we do not need to share lock since the vector is dense
+              // std::shared_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::operator()( entity, wLocal );
+            }
             else
             {
               // lock mutex (unlock on destruction)
-              std::lock_guard guard ( mutex_ );
+              std::unique_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::operator()( entity, wLocal );
             }
           }
@@ -835,7 +840,7 @@ namespace Dune
 
       public:
         template< class GridFunction, class DiscreteFunction, class Iterators >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::mutex& mtx ) const
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::shared_mutex& mtx ) const
         {
           AddLocalEvaluateLocked<DiscreteFunction> addLocalEvaluate(w,mtx,iterators);
           evaluate( u, w, iterators, addLocalEvaluate );
@@ -917,12 +922,12 @@ namespace Dune
           using BaseType::currentFinalized_;
           using BaseType::jOpLocalFinalized_;
 
-          std::mutex& mutex_;
+          std::shared_mutex& mutex_;
           InsideEntity<typename JacobianOperator::DomainSpaceType> insideDomain_;
           InsideEntity<typename JacobianOperator::RangeSpaceType> insideRange_;
 
           template <class Iterators>
-          AddLocalAssembleLocked(JacobianOperator &jOp, std::mutex &mtx, const Iterators &iterators)
+          AddLocalAssembleLocked(JacobianOperator &jOp, std::shared_mutex &mtx, const Iterators &iterators)
           : BaseType(jOp)
           , mutex_(mtx)
           , insideDomain_(jOp.domainSpace(),iterators)
@@ -933,7 +938,7 @@ namespace Dune
           {
             // lock mutex (unlock on destruction)
             ++BaseType::timesLocked;
-            std::lock_guard guard ( mutex_ );
+            std::unique_lock<std::shared_mutex> guard ( mutex_ );
             BaseType::finalize();
           }
 
@@ -958,7 +963,10 @@ namespace Dune
             */
             if ( insideDomain_(lop.domainEntity()) &&
                  insideRange_(lop.rangeEntity()) )
+            {
+              std::shared_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::unbind(lop);
+            }
             else
             {
               assert(currentFinalized_<jOpLocalFinalized_.size());
@@ -1108,7 +1116,7 @@ namespace Dune
 
       public:
         template< class GridFunction, class JacobianOperator, class Iterators >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::mutex& mtx) const
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::shared_mutex& mtx) const
         {
           AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, iterators);
           assemble( u, jOp, iterators, addLocalAssemble, 10 );
@@ -1267,7 +1275,7 @@ namespace Dune
         iterators_.update();
         w.clear();
 
-        std::mutex mutex;
+        std::shared_mutex mutex;
 
         auto doEval = [this, &u, &w, &mutex] ()
         {
@@ -1389,7 +1397,7 @@ namespace Dune
           iterators_.update();
           // std::cout << "prepare=  " << timer.elapsed() << std::endl;;
         }
-        std::mutex mutex;
+        std::shared_mutex mutex;
 
         Timer timer;
 
