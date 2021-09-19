@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_INTEGRAL_HH
 #define DUNE_FEM_INTEGRAL_HH
 
+#include <numeric>
 #include <type_traits>
 
 #include <dune/grid/common/rangegenerators.hh>
@@ -12,6 +13,9 @@
 
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+
+#include <dune/fem/misc/threads/threaditerator.hh>
+#include <dune/fem/misc/threads/threadpool.hh>
 
 namespace Dune
 {
@@ -41,29 +45,67 @@ namespace Dune
       template <bool uDiscrete, bool vDiscrete>
       struct ForEachCaller
       {
+      private:
+        template <class IteratorRange, class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType>
+        static ReturnType forEachLocal ( const ThisType &norm, const IteratorRange& iterators,
+                                         const UDiscreteFunctionType &u, const VDiscreteFunctionType &v,
+                                         const ReturnType &initialValue,
+                                         unsigned int order )
+        {
+          static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
+
+          ReturnType sum( 0 );
+
+          {
+            ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
+            ConstLocalFunction< VDiscreteFunctionType > vLocal( v );
+            for( const EntityType &entity : iterators )
+            {
+              uLocal.bind( entity );
+              vLocal.bind( entity );
+              const unsigned int uOrder = uLocal.order();
+              const unsigned int vOrder = vLocal.order();
+              const unsigned int orderLocal = (order == 0 ? 2*std::max( uOrder, vOrder ) : order);
+              norm.distanceLocal( entity, orderLocal, uLocal, vLocal, sum );
+              uLocal.unbind();
+              vLocal.unbind();
+            }
+          }
+          return sum;
+        }
+
+      public:
         template <class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType, class PartitionSet>
         static ReturnType forEach ( const ThisType &norm, const UDiscreteFunctionType &u, const VDiscreteFunctionType &v,
                                     const ReturnType &initialValue,
                                     const PartitionSet& partitionSet,
                                     unsigned int order )
         {
-          static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
+          const int nThreads = ThreadManager::numThreads();
+          if( nThreads == 1 )
+            return forEachLocal( norm, elements( norm.gridPart_, partitionSet ), u, v, initialValue, order );
 
-          ReturnType sum( 0 );
-          ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
-          ConstLocalFunction< VDiscreteFunctionType > vLocal( v );
-          for( const EntityType &entity : elements( norm.gridPart_, partitionSet ) )
+          std::vector< ReturnType > sums( nThreads, ReturnType(0) );
+
+          ThreadIterator< GridPartType, PartitionSet::partitionIterator() >
+            iterators( norm.gridPart_ );
+
+          auto doIntegrate = [ &norm, &iterators, &sums, &u, &v, &initialValue, &order ] ()
           {
-            uLocal.bind( entity );
-            vLocal.bind( entity );
-            const unsigned int uOrder = uLocal.order();
-            const unsigned int vOrder = vLocal.order();
-            const unsigned int orderLocal = (order == 0 ? 2*std::max( uOrder, vOrder ) : order);
-            norm.distanceLocal( entity, orderLocal, uLocal, vLocal, sum );
-            uLocal.unbind();
-            vLocal.unbind();
+            sums[ ThreadManager::thread() ] = forEachLocal( norm, iterators, u, v, initialValue, order );
+          };
+
+          try {
+            // run threaded
+            ThreadPool::run( doIntegrate );
           }
-          return sum;
+          catch ( const SingleThreadModeError& e )
+          {
+            // return single threaded variant in this case
+            return forEachLocal( norm, elements( norm.gridPart_, partitionSet ), u, v, initialValue, order );
+          }
+
+          return std::accumulate( sums.begin(), sums.end(), ReturnType(0) );
         }
       };
 
@@ -181,6 +223,7 @@ namespace Dune
 
     private:
       const GridPartType &gridPart_;
+
     };
 
     // Integral
@@ -215,8 +258,8 @@ namespace Dune
        *    \param communicate  if true global (over all ranks) norm is computed (default = true)
        */
       explicit Integral ( const GridPartType &gridPart,
-                        const unsigned int order = 0,
-                        const bool communicate = true );
+                          const unsigned int order = 0,
+                          const bool communicate = true );
 
 
       //! || u ||_L1 on given set of entities (partition set)
