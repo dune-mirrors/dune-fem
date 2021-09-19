@@ -103,10 +103,11 @@ namespace Dune
           numThreads_  = ThreadManager :: numThreads() ;
           const size_t numThreads = numThreads_;
 
-          iterators_.resize( numThreads+1 );
-
           // get end iterator
           const IteratorType endit = gridPart_.template end< 0, pitype >();
+
+          // pass default value to resize to initialize all iterators
+          iterators_.resize( numThreads+1, endit );
 
           IteratorType it = gridPart_.template begin< 0, pitype >();
           if( it == endit )
