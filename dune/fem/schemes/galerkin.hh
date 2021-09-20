@@ -853,6 +853,52 @@ namespace Dune
           evaluate( u, w, iterators, addLocalEvaluate );
         }
 
+        template<class T, int length>
+        class FiniteStack
+        {
+        public :
+          // Makes empty stack
+          FiniteStack () : _f(0) {}
+
+          // Returns true if the stack is empty
+          bool empty () const { return _f <= 0; }
+
+          // Returns true if the stack is full
+          bool full () const { return (_f >= length); }
+
+          // clear stack
+          void clear() { _f = 0; }
+
+          // Puts a new object onto the stack
+          void push (const T& t)
+          {
+            assert ( _f < length );
+            _s[_f++] = t;
+          }
+
+          // Removes and returns the uppermost object from the stack
+          T pop () {
+            assert ( _f > 0 );
+            return _s[--_f];
+          }
+
+          // Returns the uppermost object on the stack
+          T top () const {
+            assert ( _f > 0 );
+            return _s[_f-1];
+          }
+
+          // stacksize
+          int size () const { return _f; }
+
+        private:
+          T   _s[length]; // the stack
+          int _f;         // actual position in stack
+        };
+
+
+
+
       private:
         template <class JacobianOperator>
         struct AddLocalAssemble
@@ -862,28 +908,26 @@ namespace Dune
           typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
           JacobianOperator &jOp_;
           std::vector< TemporaryLocalMatrixType > jOpLocal_;
-          std::vector< TemporaryLocalMatrixType* > jOpLocalFinalized_;
-          std::vector< TemporaryLocalMatrixType* > jOpLocalFree_;
-          std::size_t currentFree_, currentFinalized_;
+
+          FiniteStack< TemporaryLocalMatrixType*, 12 > jOpLocalFinalized_;
+          FiniteStack< TemporaryLocalMatrixType*, 12 > jOpLocalFree_;
+
           std::size_t locked, notLocked, timesLocked;
           AddLocalAssemble(JacobianOperator& jOp)
           : jOp_(jOp)
           , jOpLocal_(12, TemporaryLocalMatrixType(jOp_.domainSpace(), jOp_.rangeSpace()))
-          , jOpLocalFinalized_(jOpLocal_.size(),nullptr)
-          , jOpLocalFree_(jOpLocal_.size(),nullptr)
-          , currentFree_(jOpLocal_.size())
-          , currentFinalized_(0)
+          , jOpLocalFinalized_()
+          , jOpLocalFree_()
           , locked(0), notLocked(0), timesLocked(0)
           {
-            for (std::size_t i=0;i<jOpLocal_.size();++i)
-              jOpLocalFree_[i] = &(jOpLocal_[i]);
+            for( auto& jOpLocal : jOpLocal_ )
+              jOpLocalFree_.push( &jOpLocal );
           }
 
           TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
           {
-            assert(currentFree_>0);
-            --currentFree_;
-            TemporaryLocalMatrixType &lop = *(jOpLocalFree_[currentFree_]);
+            assert( ! jOpLocalFree_.empty() );
+            TemporaryLocalMatrixType& lop = *(jOpLocalFree_.pop());
             lop.bind(dE,rE);
             lop.clear();
             return lop;
@@ -894,22 +938,19 @@ namespace Dune
             notLocked += 1;
             jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
             lop.unbind();
-            jOpLocalFree_[currentFree_] = &lop;
-            ++currentFree_;
+            jOpLocalFree_.push( &lop );
           }
 
           void finalize()
           {
-            locked += currentFinalized_;
-            for (std::size_t i=0;i<currentFinalized_;++i,++currentFree_)
+            locked += jOpLocalFinalized_.size();
+            while ( ! jOpLocalFinalized_.empty() )
             {
-              TemporaryLocalMatrixType &lop = *(jOpLocalFinalized_[i]);
+              TemporaryLocalMatrixType &lop = *(jOpLocalFinalized_.pop());
               jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
               lop.unbind();
-              jOpLocalFree_[currentFree_] = &lop;
-              jOpLocalFinalized_[i] = nullptr;
+              jOpLocalFree_.push( &lop );
             }
-            currentFinalized_ = 0;
           }
         };
 
@@ -918,13 +959,12 @@ namespace Dune
         {
           typedef AddLocalAssemble<JacobianOperator> BaseType;
           typedef typename BaseType::TemporaryLocalMatrixType TemporaryLocalMatrixType;
-          using BaseType::currentFree_;
-          using BaseType::currentFinalized_;
           using BaseType::jOpLocalFinalized_;
+          using BaseType::jOpLocalFree_;
 
           std::shared_mutex& mutex_;
           InsideEntity<typename JacobianOperator::DomainSpaceType> insideDomain_;
-          InsideEntity<typename JacobianOperator::RangeSpaceType> insideRange_;
+          InsideEntity<typename JacobianOperator::RangeSpaceType>  insideRange_;
 
           template <class Iterators>
           AddLocalAssembleLocked(JacobianOperator &jOp, std::shared_mutex &mtx, const Iterators &iterators)
@@ -944,8 +984,10 @@ namespace Dune
 
           TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
           {
-            if (currentFree_==0)
+            if ( jOpLocalFree_.empty() )
+            {
               finalize();
+            }
             return BaseType::bind(dE,rE);
           }
 
@@ -961,14 +1003,11 @@ namespace Dune
             if ( insideDomain_(lop.domainEntity()) &&
                  insideRange_(lop.rangeEntity()) )
             {
-              std::shared_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::unbind(lop);
             }
             else
             {
-              assert(currentFinalized_<jOpLocalFinalized_.size());
-              jOpLocalFinalized_[currentFinalized_] = &lop;
-              ++currentFinalized_;
+              jOpLocalFinalized_.push( &lop );
             }
           }
         };
@@ -1412,6 +1451,7 @@ namespace Dune
         }
         catch ( const SingleThreadModeError& e )
         {
+          std::cout << "Caught " << e.what() << std::endl;
           // redo assemble since it failed previously
           jOp.clear();
           impl().assemble( u, jOp, iterators_ );
