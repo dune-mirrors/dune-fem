@@ -253,6 +253,10 @@ namespace Dune
         inline void setNumThreads( const int nThreads )
         {
           assert( nThreads <= maxThreads_ );
+          if ( nThreads > maxThreads_ )
+            DUNE_THROW( InvalidStateException, "requested number of threads exceeds allowed maximum of "+
+                           std::to_string(maxThreads_)+
+                           " which is fixed at simulation start. Set 'DUNE_NUM_THREADS' environment variable to increase the maximum");
           numThreads_ = nThreads;
         }
 

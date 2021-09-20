@@ -406,6 +406,7 @@ namespace Fem
         std::atomic< bool > singleThreadModeError( false );
 
         // get max and num threads from main thread
+        // (should have been set before)
         const int numThreads = ThreadManager::numThreads();
         const int maxThreads = ThreadManager::maxThreads();
 
@@ -413,15 +414,14 @@ namespace Fem
 #pragma omp parallel num_threads(numThreads)
 #endif
         {
-          // set all variables for the thread_local variables
-          ThreadManager::setMaxNumberThreads( maxThreads );
-          ThreadManager::setNumThreads( numThreads );
-          // init thread number and multi thread mode
           int thread = 0;
 #ifdef _OPENMP
+          // get thread number from OpenMP
           thread = omp_get_thread_num();
 #endif
+          // set all variables for the thread_local variables
           ThreadManager::initThread( maxThreads, thread );
+          ThreadManager::setNumThreads( numThreads );
 
           // enter multi thread mode
           ThreadManager::initMultiThreadMode();
@@ -466,7 +466,8 @@ namespace Fem
         std::lock_guard< std::mutex > guard( mtx );
         functor();
       };
-      return run( lockedFunctor );
+
+      run( lockedFunctor );
     }
 
   };
