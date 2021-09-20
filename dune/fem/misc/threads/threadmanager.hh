@@ -46,13 +46,19 @@ namespace Dune
      */
     class SingleThreadModeError : public std::exception
     {
-      std::string msg_;
     public:
-      void message(const std::string &msg){ msg_ = msg; }
+#ifndef NDEBUG
+      // for performance reasons we only copy messages when in debug mode
+      std::string msg_;
+      void message(const std::string &msg) { msg_ = msg; }
+      const char* what() const noexcept override { return msg_.c_str(); }
+#else
+      void message(const std::string &msg) {}
       const char* what() const noexcept override
       {
-        return msg_.c_str();
+        return "SingleThreadModeError: remove -DNDEBUG to obtain a more detailed message!";
       }
+#endif
     };
 
     /** \class ThreadManager
