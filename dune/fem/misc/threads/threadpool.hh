@@ -338,10 +338,10 @@ namespace Fem
 
     //! run all threads
     template <class Functor>
-    bool runThreads( Functor& functor, std::mutex* mtx = nullptr )
+    bool runThreads( Functor& functor )
     {
       // create object wrapper
-      ObjectWrapper< Functor > objPtr( functor, mtx );
+      ObjectWrapper< Functor > objPtr( functor );
 
       // start parallel execution
       return startThreads( ThreadManager::numThreads(), &objPtr ) ;
