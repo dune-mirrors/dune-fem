@@ -36,7 +36,9 @@ namespace Dune
             mutex_()
           {}
 
-          std::recursive_mutex mutex_;
+          //typedef std::mutex mutex_t;
+          typedef std::recursive_mutex mutex_t;
+          mutex_t mutex_;
         };
 
         typedef Storage StorageType;
@@ -143,7 +145,7 @@ namespace Dune
 
           // this section needs locking to avoid race conditions
           // unlock is done on destruction of lock_guard
-          std::lock_guard guard( storage.mutex_ );
+          std::lock_guard< StorageType::mutex_t > guard( storage.mutex_ );
 
           // get pointer of singleton objects belonging to hash id
           auto& ptr = storage.first[ std::type_index(typeid(Object)) ];
