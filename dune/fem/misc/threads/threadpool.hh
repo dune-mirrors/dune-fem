@@ -40,20 +40,15 @@ namespace Fem
     class ObjectWrapper : public ObjectIF
     {
       Object& obj_;
-      std::mutex* mutex_;
     public:
-      ObjectWrapper( Object& obj, std::mutex* mtx = nullptr )
-        : obj_( obj ), mutex_( mtx )
+      ObjectWrapper( Object& obj )
+        : obj_( obj )
       {}
 
       bool run ()
       {
         // will be set to true if exception is caught
         bool singleThreadModeError = false ;
-
-        // if mutex was set lock here
-        if( mutex_ )
-          mutex_->lock();
 
         try
         {
@@ -65,10 +60,6 @@ namespace Fem
           // indicate that this exception was caught be returning true
           singleThreadModeError = true ;
         }
-
-        // if mutex exists then unlock
-        if( mutex_ )
-          mutex_->unlock();
 
         return singleThreadModeError;
       }
@@ -414,21 +405,40 @@ namespace Fem
       {
         std::atomic< bool > singleThreadModeError( false );
 
-        // OpenMP parallel region
+        // get max and num threads from main thread
+        const int numThreads = ThreadManager::numThreads();
+        const int maxThreads = ThreadManager::maxThreads();
+
 #ifdef _OPENMP
-#pragma omp parallel num_threads(ThreadManager::numThreads())
+#pragma omp parallel num_threads(numThreads)
 #endif
         {
-          // execute code in parallel
+          // set all variables for the thread_local variables
+          ThreadManager::setMaxNumberThreads( maxThreads );
+          ThreadManager::setNumThreads( numThreads );
+          // init thread number and multi thread mode
+          int thread = 0;
+#ifdef _OPENMP
+          thread = omp_get_thread_num();
+#endif
+          ThreadManager::initThread( maxThreads, thread );
+
+          // enter multi thread mode
+          ThreadManager::initMultiThreadMode();
+
+          // execute given code in parallel
           try
           {
-            // execute code in parallel
             functor();
           }
           catch (const Dune::Fem::SingleThreadModeError& e)
           {
             singleThreadModeError = true ;
           }
+
+          // enter single thread mode again
+          ThreadManager::initSingleThreadMode();
+
         } // end parallel region
 
         // only throw one exception to the outside world
@@ -450,53 +460,13 @@ namespace Fem
     template <class Functor>
     static void runLocked ( Functor& functor )
     {
-      // this routine should not be called in multiThreadMode, since
-      // this routine is actually starting the multiThreadMode
-      if( ! ThreadManager :: singleThreadMode() )
-        DUNE_THROW(InvalidStateException,"ThreadPool::runLocked called from thread parallel region!");
-
-      // run threads in blocking mode
       std::mutex mtx;
-
-#ifdef USE_PTHREADS
-      if( ThreadManager :: pthreads )
+      auto lockedFunctor = [&functor, &mtx] ()
       {
-        // pthread version
-        bool singleThreadError = instance().runThreads( functor, &mtx );
-        if( singleThreadError )
-        {
-          DUNE_THROW(SingleThreadModeError, "ThreadPool::runLocked: single thread mode violation occurred!" );
-        }
-      }
-      else
-#endif
-      {
-        // create object wrapper with mutex which executed a locked run
-        ObjectWrapper< Functor > obj( functor, &mtx );
-
-        std::atomic< bool > singleThreadModeError ( false );
-        // OpenMP parallel region
-#ifdef _OPENMP
-#pragma omp parallel num_threads(ThreadManager::numThreads())
-#endif
-        {
-          try
-          {
-            // execute code in parallel
-            obj.run();
-          }
-          catch (const Dune::Fem::SingleThreadModeError& e)
-          {
-            singleThreadModeError = true;
-          }
-        } // end parallel region
-
-        // only throw one exception to the outside world
-        if( singleThreadModeError )
-        {
-          DUNE_THROW(SingleThreadModeError, "ThreadPool::runLocked: single thread mode violation occurred!");
-        }
-      }
+        std::lock_guard< std::mutex > guard( mtx );
+        functor();
+      };
+      return run( lockedFunctor );
     }
 
   };

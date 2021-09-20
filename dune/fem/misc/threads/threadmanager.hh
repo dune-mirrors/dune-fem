@@ -135,6 +135,7 @@ namespace Dune
       }
     } // end namespace detail
 
+/*
 #ifdef _OPENMP
     class OpenMPThreadManager : public EmptyThreadManager
     {
@@ -225,12 +226,13 @@ namespace Dune
       }
     }; // end class ThreadManager (pthreads)
 #endif
+*/
 
-#if HAVE_PTHREAD
+    template <bool usePThreads>
     struct PThreadsManager
     {
       //! true if pthreads are used
-      static constexpr bool pthreads = true ;
+      static constexpr bool pthreads = usePThreads ;
 
     private:
       struct Manager
@@ -374,21 +376,21 @@ namespace Dune
       {
         return manager().singleThreadMode();
       }
-    }; // end class ThreadManager (pthreads)
-#endif
+    }; // end class ThreadManager (pthreads and OpenMP)
 
 #ifdef _OPENMP
 // in debug mode show which threading model is used
 #ifndef NDEBUG
 #warning "ThreadManager: using OpenMP"
 #endif
-    using ThreadManager = OpenMPThreadManager;
+    //using ThreadManager = OpenMPThreadManager;
+    using ThreadManager = PThreadsManager< false >;
 #elif defined(USE_PTHREADS)
 // in debug mode show which threading model is used
 #ifndef NDEBUG
 #warning "ThreadManager: using pthreads"
 #endif
-    using ThreadManager = PThreadsManager;
+    using ThreadManager = PThreadsManager< true >;
 #else
     using ThreadManager = EmptyThreadManager;
 #endif
