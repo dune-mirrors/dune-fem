@@ -392,7 +392,7 @@ namespace Fem
         DUNE_THROW(InvalidStateException,"ThreadPool::run called from thread parallel region!");
 
 #ifdef USE_PTHREADS
-      if( ThreadManager :: pthreads )
+      if constexpr ( ThreadManager :: pthreads )
       {
         bool singleThreadError = instance().runThreads( functor );
         if( singleThreadError )
