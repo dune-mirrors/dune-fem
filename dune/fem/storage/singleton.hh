@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <dune/common/visibility.hh>
+
 namespace Dune
 {
   namespace Fem
@@ -65,7 +67,7 @@ namespace Dune
         static StoragePointer storage_;
 
       protected:
-        static StorageType& getStorage()
+        DUNE_EXPORT static StorageType& getStorage()
         {
           if(! storage_ )
           {
@@ -113,7 +115,7 @@ namespace Dune
        *  \param args Possible constructor arguments for object when created for first time
        */
       template <class... Args>
-      static Object& instance(Args &&... args)
+      DUNE_EXPORT static Object& instance(Args &&... args)
       {
         // capture thread_local reference as static variable to avoid
         // map search later on, object creation is protected by a mutex lock
@@ -128,7 +130,7 @@ namespace Dune
       /** \brief return singleton instance of given Object type.
        */
       template <class... Args>
-      static Object& getObject(Args &&... args)
+      DUNE_EXPORT static Object& getObject(Args &&... args)
       {
         // this way of creating static variables only works with gcc, not with clang
         if constexpr ( placeStaticVariableInline )
