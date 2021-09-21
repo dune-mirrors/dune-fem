@@ -135,99 +135,6 @@ namespace Dune
       }
     } // end namespace detail
 
-/*
-#ifdef _OPENMP
-    class OpenMPThreadManager : public EmptyThreadManager
-    {
-      unsigned int maxThreads__;
-      unsigned int numThreads__;
-      inline void setNumThreads_( const unsigned int nThreads )
-      {
-        assert( nThreads <= maxThreads__ );
-        if (nThreads > maxThreads__)
-          DUNE_THROW( InvalidStateException, "requested number of threads exceeds allowed maximum of "+
-                         std::to_string(maxThreads__)+
-                         " which is fixed at simulation start. Set 'DUNE_NUM_THREADS' environment variable to increase the maximum");
-        numThreads__ = nThreads;
-      }
-      inline void setMaxThreads_( const unsigned int maxThreads )
-      {
-        maxThreads__ = maxThreads;
-      }
-      inline int maxThreads_() const { return maxThreads__; }
-      inline int numThreads_() const { return numThreads__; }
-
-    public:
-
-      static inline OpenMPThreadManager& manager()
-      {
-        return Singleton<OpenMPThreadManager> :: instance();
-      }
-
-      //! true if pthreads are used
-      static constexpr bool pthreads = false ;
-
-      OpenMPThreadManager()
-      : maxThreads__( std::max(1u,
-                              detail::getEnvNumberThreads( std::thread::hardware_concurrency() )
-                             ) ),
-        numThreads__( detail::getEnvNumberThreads(1) )
-      {}
-
-      //! return maximal number of threads possbile in the current run
-      static inline int maxThreads()
-      {
-        return manager().maxThreads_();
-      }
-
-      //! return number of current threads
-      static inline int numThreads()
-      {
-        return manager().numThreads_();
-      }
-
-      //! return thread number
-      static inline int thread()
-      {
-        return omp_get_thread_num();
-      }
-
-      //! set maximal number of threads available during run
-      static inline void setNumThreads( const int nThreads )
-      {
-        manager().setNumThreads_( nThreads );
-      }
-
-      //! set maximal number of threads available during run
-      static inline void setMaxNumberThreads( const int maxThreads )
-      {
-        manager().setMaxThreads_( maxThreads );
-      }
-
-      //! return true if the current thread is the master thread (i.e. thread 0)
-      static inline bool isMaster()
-      {
-        return thread() == 0;
-      }
-
-      [[deprecated("Use initMultiThreadMode();")]]
-      static inline void initMultiThreadMode( const int ) {}
-
-      //! \brief initialize multi thread mode (when in single thread mode)
-      static inline void initMultiThreadMode()
-      {
-        // nothing to do here, this is done automatically in the parallel section
-      }
-
-      //! returns true if program is operating on one thread currently
-      static inline bool singleThreadMode()
-      {
-        return omp_get_num_threads() == 1 ;
-      }
-    }; // end class ThreadManager (pthreads)
-#endif
-*/
-
     template <bool usePThreads>
     struct PThreadsManager
     {
@@ -387,7 +294,6 @@ namespace Dune
 #ifndef NDEBUG
 #warning "ThreadManager: using OpenMP"
 #endif
-    //using ThreadManager = OpenMPThreadManager;
     using ThreadManager = PThreadsManager< false >;
 #elif defined(USE_PTHREADS)
 // in debug mode show which threading model is used
