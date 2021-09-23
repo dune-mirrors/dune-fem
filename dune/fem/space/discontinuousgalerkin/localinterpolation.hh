@@ -53,8 +53,7 @@ namespace Dune
 
     public:
       DiscontinuousGalerkinLocalInterpolation ( const DiscreteFunctionSpaceType &space )
-      : space_( space ),
-        massStorage_( space_.localMassMatrixStorage() )
+      : space_( space )
       {}
 
       DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = default;
@@ -111,7 +110,8 @@ namespace Dune
       {
         const int nop = quadrature.nop();
 
-        auto& values = massStorage_.second;
+        auto& values = space_.localMassMatrixStorage().second;
+
         // adjust size of values
         values.resize( nop );
 
@@ -147,11 +147,10 @@ namespace Dune
 
       const LocalMassMatrixType &massMatrix () const
       {
-        return massStorage_.first;
+        return space_.localMassMatrixStorage().first;
       }
 
       const DiscreteFunctionSpaceType& space_;
-      typename DiscreteFunctionSpaceType::LocalMassMatrixStorageType& massStorage_;
     };
 
   } // namespace Fem

@@ -46,6 +46,7 @@
 #include <dune/fem/common/bindguard.hh>
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/common/localcontribution.hh>
+#include <dune/fem/space/common/localinterpolation.hh>
 
 namespace Dune {
 
@@ -82,8 +83,6 @@ public:
 
   class BoundaryWrapper
   {
-    const ModelType& impl_;
-    int bndId_;
     public:
     typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
     typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
@@ -91,9 +90,19 @@ public:
     typedef typename DiscreteFunctionSpace::RangeType RangeType;
     typedef typename DiscreteFunctionSpace::JacobianRangeType JacobianRangeType;
     typedef typename DiscreteFunctionSpace::HessianRangeType HessianRangeType;
+
+    private:
+    const ModelType& impl_;
+    const EntityType& entity_;
+    const int order_;
+    int bndId_;
+
+    public:
     static const int dimRange = RangeType::dimension;
-    BoundaryWrapper( const ModelType& impl, int bndId )
-    : impl_( impl ), bndId_(bndId) {}
+    BoundaryWrapper( const ModelType& impl, const EntityType& entity, const int order, int bndId )
+    : impl_( impl ), entity_(entity), order_(order), bndId_(bndId) {}
+    const EntityType& entity() const { return entity_; }
+    const int order () const { return order_; }
     template <class Point>
     void evaluate( const Point& x, RangeType& ret ) const
     { impl_.dirichlet(bndId_,Dune::Fem::coordinate(x),ret); }
@@ -203,13 +212,18 @@ public:
       typedef typename IteratorType :: Entity EntityType;
 
       Dune::Fem::SetSelectedLocalContribution< DiscreteFunctionType > wLocal( w );
+      Dune::Fem::LocalInterpolation< DiscreteFunctionSpaceType > interpolation( space_ );
       for( const EntityType &entity : space_ )
       {
         model_.init(entity);
+
+        // bind local contribution to entity
         auto wGuard = Dune::Fem::bindGuard( wLocal, entity );
+        // bind interpolation to entity
+        auto iGuard = bindGuard( interpolation, entity );
 
         // interpolate dirichlet dofs
-        dirichletDofTreatment( wLocal );
+        dirichletDofTreatment( interpolation, wLocal );
       }
     }
   }
@@ -224,15 +238,18 @@ public:
     {
       Dune::Fem::ConstLocalFunction< GridFunctionType > uLocal( u );
       Dune::Fem::SetSelectedLocalContribution< DiscreteFunctionType > wLocal( w );
+      Dune::Fem::LocalInterpolation< DiscreteFunctionSpaceType > interpolation( space_ );
 
       for( const auto &entity : space_ )
       {
         auto guard = Dune::Fem::bindGuard( std::tie(uLocal,wLocal), entity );
+        // bind interpolation to entity
+        auto iGuard = bindGuard( interpolation, entity );
 
         // interpolate dirichlet dofs
         if (op == Operation::sub)
           model_.init(entity);
-        dirichletDofTreatment( uLocal, wLocal, op );
+        dirichletDofTreatment( interpolation, uLocal, wLocal, op );
       }
     }
   }
@@ -329,9 +346,9 @@ protected:
     }
   }
 
-  //! set the dirichlet points to exact values
-  template< class LocalFunctionType >
-  void dirichletDofTreatment( LocalFunctionType &wLocal ) const
+  //! set the Dirichlet points to exact values
+  template< class LocalInterpolationType, class LocalFunctionType >
+  void dirichletDofTreatment( const LocalInterpolationType& interpolation, LocalFunctionType &wLocal ) const
   {
     // get entity
     const typename LocalFunctionType::EntityType &entity = wLocal.entity();
@@ -341,7 +358,7 @@ protected:
 
     // map local to global BlockDofs
     std::vector<std::size_t> globalBlockDofs(localBlocks);
-    space_.blockMapper().map(entity,globalBlockDofs);
+    space_.blockMapper().map( entity, globalBlockDofs );
     std::vector<typename LocalFunctionType::RangeFieldType> values( localBlocks*localBlockSize );
 
     int localDof = 0;
@@ -355,8 +372,7 @@ protected:
       {
         if( dirichletBlocks_[ global ][l] )
         {
-          space_.interpolation(entity)
-            (BoundaryWrapper(model_,dirichletBlocks_[global][l]), values);
+          interpolation( BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), values );
           // store result
           assert( (unsigned int)localDof < wLocal.size() );
           wLocal[ localDof ] = values[ localDof ];
@@ -364,8 +380,10 @@ protected:
       }
     }
   }
-  template< class GridLocalFunctionType, class LocalFunctionType >
-  void dirichletDofTreatment( const GridLocalFunctionType &uLocal,
+
+  template< class LocalInterpolationType, class GridLocalFunctionType, class LocalFunctionType >
+  void dirichletDofTreatment( const LocalInterpolationType& interpolation,
+                              const GridLocalFunctionType &uLocal,
                               LocalFunctionType &wLocal, Operation op ) const
   {
     // get entity
@@ -374,12 +392,15 @@ protected:
     // get number of Lagrange Points
     const int localBlocks = space_.blockMapper().numDofs( entity );
 
+    typedef typename DiscreteFunctionSpaceType::BlockMapperType::GlobalKeyType  GlobalKeyType;
+
     // map local to global BlockDofs
-    std::vector<std::size_t> globalBlockDofs(localBlocks);
+    std::vector< GlobalKeyType > globalBlockDofs(localBlocks);
     space_.blockMapper().map(entity,globalBlockDofs);
     std::vector<double> values( localBlocks*localBlockSize );
     std::vector<double> valuesModel( localBlocks*localBlockSize );
-    space_.interpolation(entity)(uLocal, values);
+
+    interpolation( uLocal, values );
 
     int localDof = 0;
 
@@ -394,8 +415,7 @@ protected:
         {
           if (op == Operation::sub)
           {
-            space_.interpolation(entity)
-              (BoundaryWrapper(model_,dirichletBlocks_[global][l]), valuesModel);
+            interpolation(BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), valuesModel);
             values[ localDof ] -= valuesModel[ localDof ];
           }
           // store result
