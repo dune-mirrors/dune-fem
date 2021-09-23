@@ -12,6 +12,7 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/gridpart/common/indexset.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
@@ -48,7 +49,8 @@ namespace Dune
         typedef typename GridPartType::IndexSetType IndexSetType;
 
         typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
-        typedef typename IndexSetType::IndexType SizeType;
+        //typedef typename IndexSetType::IndexType SizeType;
+        typedef std::size_t SizeType;
         typedef SizeType GlobalKeyType;
       };
 
@@ -123,6 +125,19 @@ namespace Dune
             for( SizeType i = 0; i < numDofs; ++i )
               function( i, indexSet().subIndex( element, i, codimension ) );
           }
+        }
+
+        void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          mapEach( element, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
+        }
+
+        template< class Entity >
+        void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numEntityDofs( entity ) );
+          mapEachEntityDof( entity, AssignFunctor< std::vector< GlobalKeyType > >( indices ) );
         }
 
         template< class Entity, class Function >
