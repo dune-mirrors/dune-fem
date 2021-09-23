@@ -83,8 +83,6 @@ public:
 
   class BoundaryWrapper
   {
-    const ModelType& impl_;
-    int bndId_;
     public:
     typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
     typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
@@ -92,9 +90,19 @@ public:
     typedef typename DiscreteFunctionSpace::RangeType RangeType;
     typedef typename DiscreteFunctionSpace::JacobianRangeType JacobianRangeType;
     typedef typename DiscreteFunctionSpace::HessianRangeType HessianRangeType;
+
+    private:
+    const ModelType& impl_;
+    const EntityType& entity_;
+    const int order_;
+    int bndId_;
+
+    public:
     static const int dimRange = RangeType::dimension;
-    BoundaryWrapper( const ModelType& impl, int bndId )
-    : impl_( impl ), bndId_(bndId) {}
+    BoundaryWrapper( const ModelType& impl, const EntityType& entity, const int order, int bndId )
+    : impl_( impl ), entity_(entity), order_(order), bndId_(bndId) {}
+    const EntityType& entity() const { return entity_; }
+    const int order () const { return order_; }
     template <class Point>
     void evaluate( const Point& x, RangeType& ret ) const
     { impl_.dirichlet(bndId_,Dune::Fem::coordinate(x),ret); }
@@ -364,7 +372,7 @@ protected:
       {
         if( dirichletBlocks_[ global ][l] )
         {
-          interpolation( BoundaryWrapper(model_,dirichletBlocks_[global][l]), values );
+          interpolation( BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), values );
           // store result
           assert( (unsigned int)localDof < wLocal.size() );
           wLocal[ localDof ] = values[ localDof ];
@@ -384,8 +392,10 @@ protected:
     // get number of Lagrange Points
     const int localBlocks = space_.blockMapper().numDofs( entity );
 
+    typedef typename DiscreteFunctionSpaceType::BlockMapperType::GlobalKeyType  GlobalKeyType;
+
     // map local to global BlockDofs
-    std::vector<std::size_t> globalBlockDofs(localBlocks);
+    std::vector< GlobalKeyType > globalBlockDofs(localBlocks);
     space_.blockMapper().map(entity,globalBlockDofs);
     std::vector<double> values( localBlocks*localBlockSize );
     std::vector<double> valuesModel( localBlocks*localBlockSize );
@@ -405,7 +415,7 @@ protected:
         {
           if (op == Operation::sub)
           {
-            interpolation(BoundaryWrapper(model_,dirichletBlocks_[global][l]), valuesModel);
+            interpolation(BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), valuesModel);
             values[ localDof ] -= valuesModel[ localDof ];
           }
           // store result
