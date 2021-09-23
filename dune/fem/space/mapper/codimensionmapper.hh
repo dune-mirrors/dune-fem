@@ -12,6 +12,7 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/gridpart/common/indexset.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
