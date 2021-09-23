@@ -140,25 +140,23 @@ namespace Dune
         template < class SparsityPattern >
         void createEntries(const SparsityPattern& sparsityPattern)
         {
-          // not insert map of indices into matrix
+          const auto spEnd = sparsityPattern.end();
+
+          // insert map of indices into matrix
           auto endcreate = this->createend();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
-            try {
-              const auto& row = sparsityPattern.at( create.index() );
-              // insert all indices for this row
-              for ( const auto& col : row )
-                create.insert( col );
-            }
-            catch ( const std::out_of_range& e )
-            {
-              // if a row is empty then do nothing
-              continue ;
-            }
+            const auto row = sparsityPattern.find( create.index() );
+            // if a row is empty then do nothing
+            if( row == spEnd ) continue;
+
+            // insert all indices for this row
+            for ( const auto& col : row->second )
+              create.insert( col );
           }
         }
 
-        //! clear Matrix, i.e. set all entires to 0
+        //! clear Matrix, i.e. set all entries to 0
         void clear()
         {
           for (auto& row : *this)
@@ -166,7 +164,7 @@ namespace Dune
               entry = 0;
         }
 
-        //! clear Matrix, i.e. set all entires to 0
+        //! clear Matrix, i.e. set all entries to 0
         void unitRow( const size_t row )
         {
           block_type idBlock( 0 );

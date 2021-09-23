@@ -75,6 +75,36 @@ namespace Dune
         clear();
       }
 
+      //! reserve memory for given rows, columns and number of non zeros
+      template <class Stencil>
+      void fillPattern(const Stencil& stencil,
+                       const size_type rowBlockSize,
+                       const size_type colBlockSize )
+      {
+        const auto& sparsityPattern = stencil.globalStencil();
+        for( const auto& entry : sparsityPattern )
+        {
+          const auto& blockRow = entry.first;
+          const auto& blockColumnSet = entry.second;
+
+          // blocking of rows
+          const size_type nextRow = (blockRow + 1) * rowBlockSize;
+          for( size_type row = blockRow * rowBlockSize; row < nextRow; ++row )
+          {
+            size_type column = startRow( row );
+            for( const auto& blockColEntry : blockColumnSet )
+            {
+              size_type col = blockColEntry * colBlockSize;
+              for( size_type c = 0; c<colBlockSize; ++c, ++col, ++column )
+              {
+                assert( column < endRow( row ) );
+                columns_[ column ] = col ;
+              }
+            }
+          }
+        }
+      }
+
       //! return number of rows
       size_type rows () const
       {

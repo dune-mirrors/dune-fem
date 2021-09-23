@@ -6,7 +6,7 @@
 #include <numeric>
 #include <set>
 #include <type_traits>
-#include <vector>
+#include <unordered_map>
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/rangegenerators.hh>
@@ -48,15 +48,15 @@ namespace Dune
       typedef typename RangeBlockMapper::GlobalKeyType   RangeGlobalKeyType;
 
       //! type for storing the stencil of one row
-      typedef std::set<DomainGlobalKeyType>       LocalStencilType;
+      typedef std::set< DomainGlobalKeyType >       LocalStencilType;
 
       //! type of std::vector for indexing
       typedef typename std::vector< std::size_t > :: size_type IndexType;
 
-      static const bool stencilIsVector = std::is_convertible< RangeGlobalKeyType, IndexType >::value;
-      //static const bool stencilIsVector = false ;//std::is_convertible< RangeGlobalKeyType, IndexType >::value;
-      typedef typename std::conditional< stencilIsVector,
-                            std::vector< LocalStencilType >,
+      static const bool indexIsSimple = std::is_convertible< RangeGlobalKeyType, IndexType >::value;
+      //static const bool indexIsPOD = false ;//std::is_convertible< RangeGlobalKeyType, IndexType >::value;
+      typedef typename std::conditional< indexIsSimple,
+                            std::unordered_map< RangeGlobalKeyType, LocalStencilType >,
                             std::map< RangeGlobalKeyType, LocalStencilType > > :: type  GlobalStencilType;
 
     public:
@@ -71,10 +71,6 @@ namespace Dune
         , domainBlockMapper_( dSpace.blockMapper() )
         , rangeBlockMapper_( rSpace.blockMapper() )
       {
-        if constexpr ( stencilIsVector )
-        {
-          globalStencil_.resize( rows() );
-        }
       }
 
       const DomainSpace &domainSpace() const
@@ -128,10 +124,7 @@ namespace Dune
         int maxNZ = 0;
         for( const auto& entry : globalStencil_ )
         {
-          if constexpr ( stencilIsVector )
-            maxNZ = std::max( maxNZ, static_cast<int>( entry.size() ) );
-          else
-            maxNZ = std::max( maxNZ, static_cast<int>( entry.second.size() ) );
+          maxNZ = std::max( maxNZ, static_cast<int>( entry.second.size() ) );
         }
         return maxNZ;
       }
@@ -143,10 +136,6 @@ namespace Dune
       void update()
       {
         globalStencil_.clear();
-        if constexpr ( stencilIsVector )
-        {
-          globalStencil_.resize( rangeBlockMapper_.size() );
-        }
         // compute stencil based on overloaded implementation
         setupStencil();
       }

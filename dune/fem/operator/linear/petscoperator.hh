@@ -348,7 +348,7 @@ namespace Dune
 
             std::vector< PetscInt > d_nnz( localRows / bs, 0 );
             std::vector< PetscInt > o_nnz( localRows / bs, 0 );
-            for( const auto entry : stencil.globalStencil() )
+            for( const auto& entry : stencil.globalStencil() )
             {
               const int petscIndex = rangeMappers_.ghostIndex( entry.first );
               if( rangeAuxiliaryDofs.contains( petscIndex ) )
