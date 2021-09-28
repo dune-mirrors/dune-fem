@@ -1,4 +1,5 @@
 from __future__ import print_function
+import atexit
 
 import dune.common
 from ._fem import *
@@ -12,6 +13,9 @@ from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
+
+# finalization of fem module (i.e. calling PETSc finalize etc)
+atexit.register( _fem.__finalizeFemModule__ )
 
 registry = {}
 

@@ -45,37 +45,34 @@ namespace Dune
         return finalized ;
       }
 
-#if HAVE_PETSC
-      struct PETSc
-      {
-        ~PETSc()
-        {
-          if( ! mpiFinalized() )
-          {
-            ::Dune::Petsc::finalize();
-          }
-        }
-
-        static void initialize( const bool verbose, int &argc, char **&argv )
-        {
-          // needed for later calling Petsc::finalize to the right time
-          Singleton< PETSc > :: instance();
-          ::Dune::Petsc::initialize( verbose, argc, argv );
-        }
-      };
-#endif // #if HAVE_PETSC
-
     public:
+      //! destructor calling finalize if this has not been done
       ~MPIManager()
       {
-#if HAVE_MPI
-        // if MPI_Init was called here and finalize has not been
-        // called yet, then this is the place to call it
-        if( wasInitializedHere_ && !mpiFinalized() )
+        _finalize();
+      }
+
+      void _finalize()
+      {
+        if( ! mpiFinalized() )
         {
-          MPI_Finalize();
-        }
+          if( petscWasInitializedHere_ )
+            ::Dune::Petsc::finalize();
+
+          // if MPI_Init was called here and finalize has not been
+          // called yet, then this is the place to call it
+          if( wasInitializedHere_ )
+          {
+#if HAVE_MPI
+            MPI_Finalize();
 #endif
+          }
+        }
+      }
+
+      static void finalize()
+      {
+        instance()._finalize();
       }
 
       static void initialize ( int &argc, char **&argv )
@@ -140,8 +137,10 @@ namespace Dune
         comm.reset( new CollectiveCommunication( helper->getCommunicator() ) );
 
 #if HAVE_PETSC
-        // initialize PETSc if pressent
-        PETSc::initialize( rank() == 0, argc, argv );
+        // initialize PETSc if present
+        // returns true if PETSc was initialized during this call
+        instance().petscWasInitializedHere_ =
+          ::Dune::Petsc::initialize( rank() == 0, argc, argv );
 #endif
 
         // initialize static variables of QuadratureStorageRegistry
@@ -170,6 +169,7 @@ namespace Dune
       MPIHelper *helper_ = nullptr;
       std::unique_ptr< CollectiveCommunication > comm_;
       bool wasInitializedHere_ = false ;
+      bool petscWasInitializedHere_ = false ;
     };
 
   } // namespace Fem

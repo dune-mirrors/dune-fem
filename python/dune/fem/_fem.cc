@@ -136,6 +136,9 @@ PYBIND11_MODULE( _fem, module )
     module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container(),
            pybind11::return_value_policy::reference );
 
+    // add finalize method for MPI and PETSc
+    module.def( "__finalizeFemModule__", [] () { Dune::Fem::MPIManager::finalize(); } );
+
     auto threadCls = pybind11::class_<Dune::Fem::ThreadManager>(module, "threading");
 
     threadCls.def_property_readonly_static("max",
