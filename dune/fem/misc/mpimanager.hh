@@ -298,16 +298,33 @@ namespace Dune
         return comm().size();
       }
 
+      //! \brief initialize single thread mode (when in multithread mode)
       static inline void initSingleThreadMode() { instance().pool_.initSingleThreadMode(); }
+
+      //! \brief initialize multi thread mode (when in single thread mode)
       static inline void initMultiThreadMode() { instance().pool_.initMultiThreadMode(); }
-      static bool singleThreadMode() { return instance().pool_.singleThreadMode(); }
-      static int numThreads() { return instance().pool_.numThreads(); }
+
+      //! \brief return maximal number of threads possible in the current run
       static int maxThreads() { return instance().pool_.maxThreads(); }
-      static void setNumThreads( int use ) { instance().pool_.setNumThreads(use); }
+
+      //! \brief return number of current threads
+      static int numThreads() { return instance().pool_.numThreads(); }
+
+      //! \brief return thread number
       static int thread() { return instance().pool_.threadNumber(); }
+
+      //! \brief return true if the current thread is the master thread (i.e. thread 0)
+      static bool isMaster() { return instance().pool_.isMaster(); }
+
+      //! \brief set number of threads available during next run
+      static void setNumThreads( int use ) { instance().pool_.setNumThreads(use); }
+
+      //! \brief returns true if program is operating on one thread currently
+      static bool singleThreadMode() { return instance().pool_.singleThreadMode(); }
+
+      //! \brief run functor f with given arguments args in threaded mode
       template<typename F, typename... Args>
       static void run(F&& f, Args&&... args) { instance().pool_.run(f,args...); }
-      static bool isMaster() { return instance().pool_.isMaster(); }
 
     private:
       MPIHelper *helper_ = nullptr;
@@ -318,6 +335,9 @@ namespace Dune
 #endif
       detail::ThreadPool pool_;
     };
+
+    using ThreadManager = MPIManager;
+    using ThreadPool = MPIManager;
 
   } // namespace Fem
 
