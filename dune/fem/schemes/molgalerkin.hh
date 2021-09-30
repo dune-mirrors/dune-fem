@@ -92,7 +92,7 @@ namespace Dune
       std::size_t gatherGridSizeInterior () const
       {
         std::size_t gridSizeInterior = 0;
-        const size_t size = ThreadManager::numThreads();
+        const size_t size = MPIManager::numThreads();
         for( size_t i=0; i<size; ++i )
           gridSizeInterior += impl_[ i ].gridSizeInterior();
         return gridSizeInterior;
@@ -148,7 +148,7 @@ namespace Dune
 
         try {
           // execute in parallel
-          ThreadPool :: run ( doEval );
+          MPIManager :: run ( doEval );
 
           // update number of interior elements as sum over threads
           gridSizeInterior_ = gatherGridSizeInterior();
@@ -168,7 +168,7 @@ namespace Dune
         {
           try {
             // execute in parallel
-            ThreadPool :: run ( doInvMass );
+            MPIManager :: run ( doInvMass );
           }
           catch ( const SingleThreadModeError& e )
           {
@@ -303,7 +303,7 @@ namespace Dune
 
         try {
           // execute in parallel
-          ThreadPool :: run ( doAssemble );
+          MPIManager :: run ( doAssemble );
 
           // update number of interior elements as sum over threads
           gridSizeInterior_ = gatherGridSizeInterior();
@@ -323,7 +323,7 @@ namespace Dune
 
           try {
             // execute in parallel
-            ThreadPool :: run ( doInvMass );
+            MPIManager :: run ( doInvMass );
           }
           catch ( const SingleThreadModeError& e )
           {

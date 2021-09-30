@@ -5,7 +5,6 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include <dune/python/pybind11/extensions.h>
 #include <dune/python/pybind11/pybind11.h>
@@ -32,6 +31,7 @@ PYBIND11_MODULE( _fem, module )
     using pybind11::operator""_a;
     using pybind11::str;
 
+    auto mpiManagerCls = pybind11::class_<Dune::Fem::MPIManager>(module, "threading");
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
 
     param.def( "write", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
@@ -139,14 +139,12 @@ PYBIND11_MODULE( _fem, module )
     // add finalize method for MPI and PETSc
     module.def( "__finalizeFemModule__", [] () { Dune::Fem::MPIManager::finalize(); } );
 
-    auto threadCls = pybind11::class_<Dune::Fem::ThreadManager>(module, "threading");
-
-    threadCls.def_property_readonly_static("max",
-                        [](pybind11::object){ return Dune::Fem::ThreadManager::maxThreads(); });
-    threadCls.def_property_static("use",
-                        [](pybind11::object){ return Dune::Fem::ThreadManager::numThreads(); },
-                        [](pybind11::object,uint threads){ Dune::Fem::ThreadManager::setNumThreads(threads); });
-    threadCls.def_static("useMax",
-                        [](){ Dune::Fem::ThreadManager::setNumThreads(Dune::Fem::ThreadManager::maxThreads()); });
+    mpiManagerCls.def_property_readonly_static("max",
+                        [](pybind11::object){ return Dune::Fem::MPIManager::maxThreads(); });
+    mpiManagerCls.def_property_static("use",
+                        [](pybind11::object){ return Dune::Fem::MPIManager::numThreads(); },
+                        [](pybind11::object,uint threads){ Dune::Fem::MPIManager::setNumThreads(threads); });
+    mpiManagerCls.def_static("useMax",
+                        [](){ Dune::Fem::MPIManager::setNumThreads(Dune::Fem::MPIManager::maxThreads()); });
   }
 }

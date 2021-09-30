@@ -11,7 +11,6 @@
 #include <dune/fem/version.hh>
 #include <dune/fem/io/parameter.hh>
 
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/domainthreaditerator.hh>
 
 namespace Dune
@@ -256,7 +255,7 @@ namespace Dune
           vtkWriter_->addCellData( volumePtr );
 
           const int rank = ( myRank < 0 ) ? gridPart_.comm().rank() : myRank ;
-          const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
+          const int nThreads = ( addPartition_ > 1 ) ? MPIManager::maxThreads() : 1 ;
           if( addPartition_ <= 2 )
           {
             std::shared_ptr<PartitioningData> dataRankPtr( std::make_shared<PartitioningData>(gridPart_, "rank", rank, nThreads) );

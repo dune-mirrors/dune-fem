@@ -29,7 +29,6 @@
 
 #include <dune/fem/misc/threads/threaditerator.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
-#include <dune/fem/misc/threads/threadpool.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
@@ -655,7 +654,6 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
           gridSizeInterior_ = 0;
 
-          // for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
@@ -699,10 +697,11 @@ namespace Dune
           gridSizeInterior_ = 0;
 
           const auto &indexSet = gridPart().indexSet();
+
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
-            assert( iterators.thread( *it ) == ThreadManager::thread() );
+            assert( iterators.thread( *it ) == thread );
             const EntityType inside = *it ;
 
             // increase counter for interior elements
@@ -755,6 +754,7 @@ namespace Dune
           template <class Iterators>
           InsideEntity(const Space &space, const Iterators& iterators)
           : space_(space), dofThread_(space.size(),-1)
+          , thread_(MPIManager::thread())
           {
             const auto& mapper = space_.blockMapper();
             for (const auto &entity : space_)
@@ -770,11 +770,12 @@ namespace Dune
             bool needsLocking = false;
             space_.blockMapper().mapEach(entity,
                 [ this, &needsLocking ] ( int local, auto global )
-                { needsLocking = (needsLocking || dofThread_[global]!=ThreadManager::thread()); });
+                { needsLocking = (needsLocking || dofThread_[global]!=thread_); });
             return !needsLocking;
           }
           const Space &space_;
           std::vector<int> dofThread_;
+          int thread_;
         };
 
         template <class DiscreteFunction>
@@ -1158,7 +1159,7 @@ namespace Dune
           assemble( u, jOp, iterators, addLocalAssemble, 10 );
           #if 0 // print information about how many times a lock was used during assemble
           std::lock_guard guard ( mtx );
-          std::cout << ThreadManager::thread() << " : "
+          std::cout << MPIManager::thread() << " : "
                     << addLocalAssemble.locked << " " << addLocalAssemble.notLocked << " "
                     << addLocalAssemble.timesLocked << std::endl;
           #endif
@@ -1296,7 +1297,7 @@ namespace Dune
       {
         std::size_t gridSizeInterior = 0;
         // use current thread number to obtain correct sizes
-        const size_t size = ThreadManager::numThreads();
+        const size_t size = MPIManager::numThreads();
         for( size_t i=0; i<size; ++i )
         {
           // std::cout << "thread " << i << " worked on " << impl_[ i ].gridSizeInterior() << " elements\n";
@@ -1320,13 +1321,14 @@ namespace Dune
 
         try {
           // execute in parallel
-          ThreadPool :: run ( doEval );
+          MPIManager :: run ( doEval );
 
           // update number of interior elements as sum over threads
           gridSizeInterior_ = gatherGridSizeInterior();
         }
         catch ( const SingleThreadModeError& e )
         {
+          std::cout << "Caught " << e.what() << std::endl;
           // reset w from previous entries
           w.clear();
           // re-run in single thread mode if previous attempt failed
@@ -1444,7 +1446,7 @@ namespace Dune
 
         try {
           // execute in parallel
-          ThreadPool :: run ( doAssemble );
+          MPIManager :: run ( doAssemble );
 
           // update number of interior elements as sum over threads
           gridSizeInterior_ = gatherGridSizeInterior();

@@ -11,7 +11,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/commoperations.hh>
@@ -156,9 +156,9 @@ namespace Dune
           return changed;
 
         // make sure this is only called in single thread mode
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
+          assert( Fem :: MPIManager :: singleThreadMode() );
           DUNE_THROW(InvalidStateException,"LoadBalancer::loadBalance::adapt: only call in single thread mode!");
         }
 

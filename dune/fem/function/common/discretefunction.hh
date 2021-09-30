@@ -21,7 +21,7 @@
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/functor.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/storage/referencevector.hh>
@@ -825,9 +825,9 @@ namespace Dune
       void communicate()
       {
         // only call in single thread mode
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
-          assert( Fem :: ThreadManager :: singleThreadMode() );
+          assert( Fem :: MPIManager :: singleThreadMode() );
           DUNE_THROW(InvalidStateException,"DiscreteFunctionInterface::communicate: only call in single thread mode!");
         }
 

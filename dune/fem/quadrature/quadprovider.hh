@@ -6,9 +6,9 @@
 #include <map>
 #include <vector>
 
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 
 namespace Dune
 {
@@ -103,7 +103,7 @@ namespace Dune
           {
             // make sure we work in single thread mode
             // when quadrature is created for the first time
-            if( ! Fem :: ThreadManager :: singleThreadMode() )
+            if( ! Fem :: MPIManager :: singleThreadMode() )
             {
               DUNE_THROW(SingleThreadModeError, "QuadratureStorage::getQuadrature: only call in single thread mode!");
             }
@@ -159,7 +159,7 @@ namespace Dune
           {
             // make sure we work in single thread mode
             // when quadrature is created for the first time
-            if( ! Fem :: ThreadManager :: singleThreadMode() )
+            if( ! Fem :: MPIManager :: singleThreadMode() )
             {
               DUNE_THROW(SingleThreadModeError, "QuadratureStorage::getQuadrature: only call in single thread mode!");
             }

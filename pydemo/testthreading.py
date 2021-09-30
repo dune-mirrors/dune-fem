@@ -155,8 +155,8 @@ def test(spaceCtor,skeleton,useMol):
 
     dune.fem.threading.use = defaultThreads
 
-print("DGSpace-MOL:")
-test(dgSpace,True,True)
+# print("DGSpace-MOL:")
+# test(dgSpace,True,True)
 print("DGSpace:")
 test(dgSpace,True,False)
 print("Lagrange (with skeleton):")

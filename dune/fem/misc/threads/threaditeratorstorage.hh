@@ -6,7 +6,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 
 #ifdef USE_SMP_PARALLEL

@@ -15,7 +15,6 @@
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #include <dune/fem/misc/threads/threaditerator.hh>
-#include <dune/fem/misc/threads/threadpool.hh>
 
 namespace Dune
 {
@@ -81,7 +80,7 @@ namespace Dune
                                     const PartitionSet& partitionSet,
                                     unsigned int order )
         {
-          const int nThreads = ThreadManager::numThreads();
+          const int nThreads = MPIManager::numThreads();
           if( nThreads == 1 )
             return forEachLocal( norm, elements( norm.gridPart_, partitionSet ), u, v, initialValue, order );
 
@@ -92,12 +91,12 @@ namespace Dune
 
           auto doIntegrate = [ &norm, &iterators, &sums, &u, &v, &initialValue, &order ] ()
           {
-            sums[ ThreadManager::thread() ] = forEachLocal( norm, iterators, u, v, initialValue, order );
+            sums[ MPIManager::thread() ] = forEachLocal( norm, iterators, u, v, initialValue, order );
           };
 
           try {
             // run threaded
-            ThreadPool::run( doIntegrate );
+            MPIManager::run( doIntegrate );
           }
           catch ( const SingleThreadModeError& e )
           {

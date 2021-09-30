@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_MISC_THREADS_THREADPOOL_HH
 #define DUNE_FEM_MISC_THREADS_THREADPOOL_HH
 
+#error DEPRECATED
+
 #include <cassert>
 #include <mutex>
 #include <vector>
@@ -196,15 +198,15 @@ namespace Fem
         singleThreadModeError_ = false ;
 
         // we should be in single thread mode here
-        assert( ThreadManager::singleThreadMode() );
-        // communicate numThreads to thread_local variable in ThreadManager
-        ThreadManager::setNumThreads( numThreads_ );
+        assert( MPIManager::singleThreadMode() );
+        // communicate numThreads to thread_local variable in MPIManager
+        MPIManager::setNumThreads( numThreads_ );
 
         // when object pointer is set call run, else terminate
         if( objPtr_ )
         {
           // update thread_local currentThreads number
-          ThreadManager::initMultiThreadMode();
+          MPIManager::initMultiThreadMode();
 
           singleThreadModeError_ = objPtr_->run();
         }
@@ -221,7 +223,7 @@ namespace Fem
         pthread_barrier_wait( barrierEnd_ );
 
         // reset to single thread
-        ThreadManager::initSingleThreadMode();
+        MPIManager::initSingleThreadMode();
 
         // when thread is not main then
         // just call run and wait at barrier
@@ -244,7 +246,7 @@ namespace Fem
       static void* startThread(void *obj)
       {
         // set maxThreads and threadNumber for secondary thread
-        ThreadManager :: initThread( ((ThreadPoolObject *) obj)->maxThreads_, ((ThreadPoolObject *) obj)->threadNumber_ );
+        MPIManager :: initThread( ((ThreadPoolObject *) obj)->maxThreads_, ((ThreadPoolObject *) obj)->threadNumber_ );
 
         // do the work
         ((ThreadPoolObject *) obj)->run();
@@ -270,7 +272,7 @@ namespace Fem
       : threads_()
       , waitBegin_()
       , waitEnd_()
-      , maxThreads_( ThreadManager :: maxThreads() )
+      , maxThreads_( MPIManager :: maxThreads() )
     {
       // initialize barrier
       pthread_barrier_init( &waitBegin_, 0, maxThreads_ );
@@ -298,7 +300,7 @@ namespace Fem
       assert( numThreads <= maxThreads_ );
 
       // start threads, this will call the runThread method
-      // and call initMultiThreadMode on ThreadManager
+      // and call initMultiThreadMode on MPIManager
       // Start first the emptyThreads (reverse ordering)
       const int emptyThreads = maxThreads_ - numThreads;
       for(int i=0; i<emptyThreads; ++i)
@@ -344,7 +346,7 @@ namespace Fem
       ObjectWrapper< Functor > objPtr( functor );
 
       // start parallel execution
-      return startThreads( ThreadManager::numThreads(), &objPtr ) ;
+      return startThreads( MPIManager::numThreads(), &objPtr ) ;
     }
 
     // return instance of ThreadPool
@@ -386,13 +388,14 @@ namespace Fem
     template <class Functor>
     static void run ( Functor& functor )
     {
+      std::cout << "ThreadPool::run\n";
       // this routine should not be called in multiThreadMode, since
       // this routine is actually starting the multiThreadMode
-      if( ! ThreadManager :: singleThreadMode() )
+      if( ! MPIManager :: singleThreadMode() )
         DUNE_THROW(InvalidStateException,"ThreadPool::run called from thread parallel region!");
 
 #ifdef USE_PTHREADS
-      if constexpr ( ThreadManager :: pthreads )
+      if constexpr ( MPIManager :: pthreads )
       {
         bool singleThreadError = instance().runThreads( functor );
         if( singleThreadError )
@@ -407,8 +410,10 @@ namespace Fem
 
         // get max and num threads from main thread
         // (should have been set before)
-        const int numThreads = ThreadManager::numThreads();
-        const int maxThreads = ThreadManager::maxThreads();
+        const int numThreads = MPIManager::numThreads();
+        const int maxThreads = MPIManager::maxThreads();
+        std::cout << " ThreadPool numThreads=" << numThreads
+                  << " ThreadPool maxThreads=" << maxThreads << std::endl;
 
 #ifdef _OPENMP
 #pragma omp parallel num_threads(numThreads)
@@ -420,11 +425,14 @@ namespace Fem
           thread = omp_get_thread_num();
 #endif
           // set all variables for the thread_local variables
-          ThreadManager::initThread( maxThreads, thread );
-          ThreadManager::setNumThreads( numThreads );
+          MPIManager::initThread( maxThreads, thread );
+          MPIManager::setNumThreads( numThreads );
+          std::cout << "RunPool thread: " << thread << " = "
+                    << MPIManager::thread()
+                    << std::endl;
 
           // enter multi thread mode
-          ThreadManager::initMultiThreadMode();
+          MPIManager::initMultiThreadMode();
 
           // execute given code in parallel
           try
@@ -437,9 +445,12 @@ namespace Fem
           }
 
           // enter single thread mode again
-          ThreadManager::initSingleThreadMode();
+          MPIManager::initSingleThreadMode();
 
         } // end parallel region
+        std::cout << "ThreadPool::end parallel region\n";
+        MPIManager::initThread( maxThreads, 0 );
+        MPIManager::setNumThreads( numThreads );
 
         // only throw one exception to the outside world
         if( singleThreadModeError )

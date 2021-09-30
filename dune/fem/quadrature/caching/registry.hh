@@ -10,8 +10,8 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -69,7 +69,7 @@ namespace Dune
       {
         // make sure we work in single thread mode
         // when shape function sets are created
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "QuadratureStorageRegistry::registerStorage: only call in single thread mode!");
         }
@@ -89,7 +89,7 @@ namespace Dune
       {
         // make sure we work in single thread mode
         // when shape function sets are removed
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::unregisterStorage: only call in single thread mode!");
         }
@@ -112,7 +112,7 @@ namespace Dune
       {
         // make sure we work in single thread mode
         // when quadratures are registered
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::registerQuadrature: only call in single thread mode!");
         }

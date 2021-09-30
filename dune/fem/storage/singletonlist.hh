@@ -11,7 +11,7 @@
 #include <utility>
 
 //- dune-fem includes
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/storage/singleton.hh>
 
 namespace Dune
@@ -104,7 +104,7 @@ namespace Dune
         }
 
         // make sure this part is only called in single thread mode
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "SingletonList::getObject: only call in single thread mode!");
         }
@@ -123,7 +123,7 @@ namespace Dune
       inline static void removeObject ( const ObjectType &object )
       {
         // make sure this method is only called in single thread mode
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "SingletonList::removeObject: only call in single thread mode!");
         }

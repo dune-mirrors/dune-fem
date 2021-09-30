@@ -6,7 +6,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
@@ -94,20 +93,20 @@ namespace Dune {
           indexSet_( gridPart_.indexSet() )
 #ifdef USE_THREADPARTITIONER
         , sequence_( -1 )
-        , numThreads_( Fem :: ThreadManager :: numThreads() )
-        , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
+        , numThreads_( Fem :: MPIManager :: numThreads() )
+        , filteredGridParts_( Fem :: MPIManager :: maxThreads() )
 #endif
         , masterRatio_( 1.0 )
 #ifdef USE_THREADPARTITIONER
         , method_( getMethod( parameter ) )
 #endif // #ifdef USE_SMP_PARALLEL
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
-                    &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
+                    &&  Fem :: MPIManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_THREADPARTITIONER
-        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
+        for(int thread=0; thread < Fem :: MPIManager :: maxThreads(); ++thread )
         {
           // thread is the thread number of this filter
           filteredGridParts_[ thread ].reset(
@@ -134,9 +133,9 @@ namespace Dune {
 #ifdef USE_THREADPARTITIONER
         const int sequence = gridPart_.sequence() ;
         // if grid got updated also update iterators
-        if( sequence_ != sequence || numThreads_ != ThreadManager :: numThreads() )
+        if( sequence_ != sequence || numThreads_ != MPIManager :: numThreads() )
         {
-          if( ! ThreadManager :: singleThreadMode() )
+          if( ! MPIManager :: singleThreadMode() )
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
@@ -145,7 +144,7 @@ namespace Dune {
 
           const int commThread = communicationThread_ ? 1 : 0;
           // get number of partitions possible
-          const size_t partitions = ThreadManager :: numThreads() - commThread ;
+          const size_t partitions = MPIManager :: numThreads() - commThread ;
 
           // create partitioner
           ThreadPartitionerType db( gridPart_, partitions, masterRatio_ );
@@ -184,7 +183,7 @@ namespace Dune {
             sequence_ = sequence;
 
             // update numThreads_
-            numThreads_ = ThreadManager :: numThreads();
+            numThreads_ = MPIManager :: numThreads();
 
             if( verbose_ )
             {
@@ -214,9 +213,9 @@ namespace Dune {
       IteratorType begin() const
       {
 #ifdef USE_THREADPARTITIONER
-        if( ! ThreadManager :: singleThreadMode () )
+        if( ! MPIManager :: singleThreadMode () )
         {
-          const int thread = ThreadManager :: thread() ;
+          const int thread = MPIManager :: thread() ;
           if( communicationThread_ && thread == 0 )
             return filteredGridParts_[ thread ]->template end< 0 > ();
           else
@@ -233,9 +232,9 @@ namespace Dune {
       IteratorType end() const
       {
 #ifdef USE_THREADPARTITIONER
-        if( ! ThreadManager :: singleThreadMode () )
+        if( ! MPIManager :: singleThreadMode () )
         {
-          return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
+          return filteredGridParts_[ MPIManager :: thread() ]->template end< 0 > ();
         }
         else
 #endif

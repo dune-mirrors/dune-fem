@@ -6,7 +6,7 @@
 
 // dune-fem includes
 #include <dune/fem/quadrature/caching/registry.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 #include <dune/fem/space/localfiniteelement/quadratureinterpolation.hh>
 
@@ -27,7 +27,7 @@ namespace Dune
       if (points_.find( key ) == points_.end() )
       {
         // only register when in single thread mode
-        if( ! Fem :: ThreadManager :: singleThreadMode() )
+        if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "PointProvider::registerQuadrature: only call in single thread mode!");
         }
@@ -126,7 +126,7 @@ namespace Dune
                                         GeometryType elementGeo)
     {
       // only addEntry when in single thread mode
-      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      if( ! Fem :: MPIManager :: singleThreadMode() )
       {
         DUNE_THROW(SingleThreadModeError, "PointProvider::addEntry: only call in single thread mode!");
       }

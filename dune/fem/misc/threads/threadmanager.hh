@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_OMPMANAGER_HH
 #define DUNE_FEM_OMPMANAGER_HH
 
+#error DEPRECATED
+
 #include <atomic>
 #include <cassert>
 #include <cstdlib>
@@ -32,6 +34,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/visibility.hh>
 #include <dune/fem/storage/singleton.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -61,19 +64,19 @@ namespace Dune
 #endif
     };
 
-    /** \class ThreadManager
+    /** \class MPIManager
      *  \ingroup Utility
-     *  \brief The ThreadManager wrapps basic shared memory functionality
+     *  \brief The MPIManager wrapps basic shared memory functionality
      *         provided by OpenMP or pthreads such as thread id, number of threads, etc.
      *
      *  \note All methods are static members.
      */
-    struct EmptyThreadManager
+    struct EmptyMPIManager
     {
       //! true if pthreads are used
       static constexpr bool pthreads = false ;
 
-      /** \brief initialize ThreadManager */
+      /** \brief initialize MPIManager */
       static inline void initialize() {}
 
       //! \brief initialize single thread mode (when in multithread mode)
@@ -108,32 +111,8 @@ namespace Dune
 
       //! \brief returns true if program is operating on one thread currently
       static inline bool singleThreadMode() { return true ; }
-    }; // end class ThreadManager
+    }; // end class MPIManager
 
-    namespace detail {
-      /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
-       * (in that order) to obtain the maximal available number of threads.
-       */
-      static inline const unsigned int getEnvNumberThreads (unsigned int defaultValue)
-      {
-#ifdef USE_SMP_PARALLEL
-        unsigned int maxThreads = defaultValue;
-        // use environment variable (for both openmp or pthreads) if set
-        const char* mThreads = std::getenv("DUNE_NUM_THREADS");
-        if( mThreads )
-          maxThreads = std::max( int(1), atoi( mThreads ) );
-        else
-        {
-          const char* mThreads = std::getenv("OMP_NUM_THREADS");
-          if( mThreads )
-            maxThreads = std::max( int(1), atoi( mThreads ) );
-        }
-#else
-        unsigned int maxThreads = 1;
-#endif
-        return maxThreads;
-      }
-    } // end namespace detail
 
     template <bool usePThreads>
     struct PThreadsManager
@@ -146,59 +125,58 @@ namespace Dune
       {
         DUNE_EXPORT static inline Manager& instance()
         {
-          static thread_local Manager mg ;
+          // return Singleton< Manager > :: instance();
+          static thread_local Manager mg; // = Singleton< Manager > :: instance();
           return mg ;
         }
+        // friend class Singleton< Manager >;
 
       public:
-        inline void initThread( const int maxThreads, const int threadNum )
+        inline void initThread( const int threadNum )
         {
-          maxThreads_ = maxThreads ;
+          maxThreads_ = MPIManager::maxThreads() ;
           threadNum_  = threadNum ;
+          std::cout << "Manager " << this << " init thread " << threadNum_ << std::endl;
         }
 
-        inline void setNumThreads( const int nThreads )
+        inline void setNumThreads( )
         {
+          uint nThreads = MPIManager::useThreads();
           assert( nThreads <= maxThreads_ );
           if ( nThreads > maxThreads_ )
             DUNE_THROW( InvalidStateException, "requested number of threads exceeds allowed maximum of "+
                            std::to_string(maxThreads_)+
                            " which is fixed at simulation start. Set 'DUNE_NUM_THREADS' environment variable to increase the maximum");
           numThreads_ = nThreads;
+          std::cout << "Manager " << this << " set " << numThreads_ << std::endl;
         }
-
-        inline void initSingleThreadMode()
-        {
-          activeThreads_ = 1;
-        }
-
-        inline void initMultiThreadMode( )
-        {
-          activeThreads_ = numThreads_;
-        }
-
-        bool singleThreadMode() const { return activeThreads_ == 1; }
 
         inline int maxThreads() const { return maxThreads_; }
-        inline int numThreads() const { return numThreads_; }
+        inline int numThreads() const
+        {
+          std::cout << "Manager " << this << " numThreads=" << numThreads_ << std::endl;
+          return numThreads_;
+        }
         inline int thread()
         {
           assert( threadNum_ >= 0 );
+          // std::cout << "Manager " << this << " threadNum=" << threadNum_ << std::endl;
           return threadNum_;
         }
 
       private:
         int maxThreads_;
         int numThreads_;
-        int activeThreads_;
         int threadNum_;
 
         Manager()
-          : maxThreads_( std::max(1u,
-                                  detail::getEnvNumberThreads( std::thread::hardware_concurrency() )
-                                 ) ),
-            numThreads_( detail::getEnvNumberThreads(1) ), activeThreads_( 1 ), threadNum_( 0 )
-        {}
+          : maxThreads_( MPIManager::maxThreads() )
+          , numThreads_( MPIManager::useThreads() )
+          , threadNum_ ( 0 )
+        {
+          std::cout << "Manager::Manager " << this << " = " << maxThreads_
+                    << " " << numThreads_ << std::endl;
+        }
       };
 
       static inline Manager& manager()
@@ -212,7 +190,7 @@ namespace Dune
       {
         // this call also initiates the master thread
         // (other threads are set in ThreadPool)
-        initThread( maxThreads(), 0 );
+        initThread( -1, 0 );
       }
 
       ///////////////////////////////////////////////////////
@@ -221,19 +199,19 @@ namespace Dune
       //! initialize single thread mode
       static inline void initSingleThreadMode()
       {
-        manager().initSingleThreadMode();
+        MPIManager::initSingleThreadMode();
       }
 
       //! initialize multi thread mode
       static inline void initMultiThreadMode( )
       {
-        manager().initMultiThreadMode( );
+        MPIManager::initMultiThreadMode( );
       }
 
       //! set max number of threads and thread number for this thread
       static inline void initThread( const int maxThreads, const int threadNum )
       {
-        manager().initThread( maxThreads, threadNum );
+        manager().initThread( threadNum );
       }
 
       //! initialize multi thread mode
@@ -267,7 +245,8 @@ namespace Dune
       //! set maximal number of threads available during run
       static inline void setNumThreads( const int nThreads )
       {
-        manager().setNumThreads( nThreads );
+        MPIManager::setUseThreads( nThreads );
+        manager().setNumThreads( );
       }
 
       //! set maximal number of threads available during run
@@ -285,24 +264,24 @@ namespace Dune
       //! returns true if program is operating on one thread currently
       static inline bool singleThreadMode()
       {
-        return manager().singleThreadMode();
+        return MPIManager::singleThreadMode();
       }
-    }; // end class ThreadManager (pthreads and OpenMP)
+    }; // end class MPIManager (pthreads and OpenMP)
 
 #ifdef _OPENMP
 // in debug mode show which threading model is used
 #ifndef NDEBUG
-#warning "ThreadManager: using OpenMP"
+#warning "MPIManager: using OpenMP"
 #endif
-    using ThreadManager = PThreadsManager< false >;
+    using MPIManager = PThreadsManager< false >;
 #elif defined(USE_PTHREADS)
 // in debug mode show which threading model is used
 #ifndef NDEBUG
-#warning "ThreadManager: using pthreads"
+#warning "MPIManager: using pthreads"
 #endif
-    using ThreadManager = PThreadsManager< true >;
+    using MPIManager = PThreadsManager< true >;
 #else
-    using ThreadManager = EmptyThreadManager;
+    using MPIManager = EmptyMPIManager;
 #endif
 
   } // namespace Fem

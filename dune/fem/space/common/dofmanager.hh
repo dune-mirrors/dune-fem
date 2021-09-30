@@ -17,7 +17,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
@@ -1256,9 +1256,9 @@ namespace Dune
     addIndexSet (const IndexSetType &iset )
     {
       // only call in single thread mode
-      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      if( ! Fem :: MPIManager :: singleThreadMode() )
       {
-        assert( Fem :: ThreadManager :: singleThreadMode() );
+        assert( Fem :: MPIManager :: singleThreadMode() );
         DUNE_THROW(InvalidStateException,"DofManager::addIndexSet: only call in single thread mode!");
       }
 
@@ -1291,9 +1291,9 @@ namespace Dune
     inline void DofManager<GridType>::removeIndexSet ( const IndexSetType &iset )
     {
       // only call in single thread mode
-      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      if( ! Fem :: MPIManager :: singleThreadMode() )
       {
-        assert( Fem :: ThreadManager :: singleThreadMode() );
+        assert( Fem :: MPIManager :: singleThreadMode() );
         DUNE_THROW(InvalidStateException,"DofManager::removeIndexSet: only call in single thread mode!");
       }
 

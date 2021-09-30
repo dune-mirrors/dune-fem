@@ -37,8 +37,6 @@
 #include <dune/fem/operator/matrix/istlpreconditioner.hh>
 #include <dune/fem/operator/matrix/functor.hh>
 
-#include <dune/fem/misc/threads/threadmanager.hh>
-
 namespace Dune
 {
 
@@ -892,7 +890,7 @@ namespace Dune
           removeObj();
 
           // do not use implicit build mode when multi threading is enabled
-          const bool implicit = proposeImplicit && ThreadManager::numThreads() == 1;
+          const bool implicit = proposeImplicit && MPIManager::numThreads() == 1;
           if( implicit )
           {
             auto nnz = stencil.maxNonZerosEstimate();

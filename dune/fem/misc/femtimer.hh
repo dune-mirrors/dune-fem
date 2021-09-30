@@ -13,7 +13,6 @@
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/singleton.hh>
 
 namespace Dune

@@ -10,7 +10,7 @@ namespace Dune
                                              std::integral_constant< bool, true > )
     {
       // make sure we work in single thread mode
-      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      if( ! Fem :: MPIManager :: singleThreadMode() )
       {
         DUNE_THROW(SingleThreadModeError, "CacheProvider::createMapper: only call in single thread mode!");
       }
@@ -60,7 +60,7 @@ namespace Dune
                                              std::integral_constant< bool, false > )
     {
       // make sure we work in single thread mode
-      if( ! Fem :: ThreadManager :: singleThreadMode() )
+      if( ! Fem :: MPIManager :: singleThreadMode() )
       {
         DUNE_THROW(SingleThreadModeError, "CacheProvider::createMapper: only call in single thread mode!");
       }
