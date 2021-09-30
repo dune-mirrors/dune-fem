@@ -74,18 +74,21 @@ def model(space,epsilon,weakBnd,skeleton,useMol):
         scheme = solutionMolScheme([form==rhs,strongBC], **solver)
     else:
         scheme = solutionScheme([form==rhs,strongBC], **solver)
-    uh = space.interpolate([0],name="solution")
+    uh = space.interpolate(exact,name="solution")
     A = linear(scheme)
-    return scheme, uh, A
+    return scheme, uh, A, exact
 
-def compute(scheme, uh, A ):
+def compute(scheme, uh, A, exact ):
     start = time.time()
-    scheme(uh.copy(),uh)
+    scheme(uh,uh.copy())
     runTime = [time.time()-start]
     start = time.time()
     scheme.jacobian(uh,A)
     runTime += [time.time()-start]
-    return runTime
+    start = time.time()
+    error = math.sqrt( integrate(uh.space.grid,dot(uh-exact,uh-exact),order=5) )
+    runTime += [time.time()-start]
+    return runTime, error
 
 storage = "istl"
 
@@ -95,41 +98,42 @@ def newGridView(N=4):
     return leafGridView(ctor)
 
 def test(spaceCtor,skeleton,useMol):
+    stages = ["evaluate","assemble","integrate"]
     defaultThreads = dune.fem.threading.use
     runtimes = []
     # the operator is run once when setting up the linear operator in the 'model'
     gridView = newGridView(4)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, uh, A = model(space,1,True,skeleton,useMol)
-    compute(scheme,uh,A)
+    scheme, uh, A, exact = model(space,1,True,skeleton,useMol)
+    compute(scheme,uh,A,exact)
 
     gridView = newGridView(N=400)
     space    = spaceCtor(gridView, order=2, storage=storage)
-    scheme, uh, A = model(space,1,True,skeleton,useMol)
+    scheme, uh, A, exact = model(space,1,True,skeleton,useMol)
 
     print("---------------------")
 
     # time with the default number of threads (1 if no environment variable is set)
-    runTime = compute(scheme,uh,A)
-    print(dune.fem.threading.use," thread used: ",runTime,flush=True)
+    runTime, error = compute(scheme,uh,A,exact)
+    print(dune.fem.threading.use," thread used: ",runTime,"error=",error,flush=True)
     runtimes += [[1,runTime]]
 
     # time with 2 threads
     dune.fem.threading.use = 2
-    runTime = compute(scheme,uh,A)
-    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runTime, error = compute(scheme,uh,A,exact)
+    print(dune.fem.threading.use," threads used: ",runTime,"error=",error,flush=True)
     runtimes += [[2,runTime]]
 
     # time with 4 threads
     dune.fem.threading.use = 4
-    runTime = compute(scheme,uh,A)
-    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runTime, error = compute(scheme,uh,A,exact)
+    print(dune.fem.threading.use," threads used: ",runTime,"error=",error,flush=True)
     runtimes += [[4,runTime]]
 
     # time with max number of threads
     dune.fem.threading.use = 8
-    runTime = compute(scheme,uh,A)
-    print(dune.fem.threading.use," threads used: ",runTime,flush=True)
+    runTime, error = compute(scheme,uh,A,exact)
+    print(dune.fem.threading.use," threads used: ",runTime,"error=",error,flush=True)
     runtimes += [[8,runTime]]
 
     # Efficienzy:
@@ -138,8 +142,8 @@ def test(spaceCtor,skeleton,useMol):
        x = str(round(x,2))
        if len(x)<4: x = x+"0"
        return x
-    for i in range(2):
-        print("Evaluate" if i==0 else "Assemble")
+    for i in range(3):
+        print(stages[i])
         for x in runtimes:
             for y in runtimes:
                 if x[0]<y[0]:
@@ -155,8 +159,8 @@ def test(spaceCtor,skeleton,useMol):
 
     dune.fem.threading.use = defaultThreads
 
-# print("DGSpace-MOL:")
-# test(dgSpace,True,True)
+print("DGSpace-MOL:")
+test(dgSpace,True,True)
 print("DGSpace:")
 test(dgSpace,True,False)
 print("Lagrange (with skeleton):")

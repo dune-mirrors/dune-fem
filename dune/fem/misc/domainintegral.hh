@@ -54,7 +54,6 @@ namespace Dune
           static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
 
           ReturnType sum( 0 );
-
           {
             ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
             ConstLocalFunction< VDiscreteFunctionType > vLocal( v );
@@ -152,6 +151,27 @@ namespace Dune
         }
       };
 
+      template <class IteratorRange, class UDiscreteFunctionType, class ReturnType>
+      ReturnType forEachLocal ( const IteratorRange& iterators,
+                                const UDiscreteFunctionType &u,
+                                const ReturnType &initialValue,
+                                unsigned int order ) const
+      {
+        ReturnType sum( 0 );
+        {
+          ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
+          for( const EntityType &entity : iterators )
+          {
+            uLocal.bind( entity );
+            const unsigned int uOrder = uLocal.order();
+            const unsigned int orderLocal = (order == 0 ? 2*uOrder : order);
+            normLocal( entity, orderLocal, uLocal, sum );
+            uLocal.unbind();
+          }
+        }
+        return sum;
+      }
+
       template< class DiscreteFunctionType, class ReturnType, class PartitionSet >
       ReturnType forEach ( const DiscreteFunctionType &u, const ReturnType &initialValue,
                            const PartitionSet& partitionSet,
@@ -159,17 +179,31 @@ namespace Dune
       {
         static_assert( (std::is_base_of<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
+        const int nThreads = MPIManager::numThreads();
+        if( nThreads == 1 )
+          return forEachLocal( elements( gridPart_, partitionSet ), u, initialValue, order );
 
-        ReturnType sum( 0 );
-        ConstLocalFunction< DiscreteFunctionType > uLocal( u );
-        for( const EntityType &entity : elements( gridPart_, partitionSet ) )
+        std::vector< ReturnType > sums( nThreads, ReturnType(0) );
+
+        ThreadIterator< GridPartType, PartitionSet::partitionIterator() >
+          iterators( gridPart_ );
+
+        auto doIntegrate = [ this, &iterators, &sums, &u, &initialValue, &order ] ()
         {
-          uLocal.bind( entity );
-          const unsigned int orderLocal = (order == 0 ? 2*uLocal.order() : order);
-          normLocal( entity, orderLocal, uLocal, sum );
-          uLocal.unbind();
+          sums[ MPIManager::thread() ] = forEachLocal( iterators, u, initialValue, order );
+        };
+
+        try {
+          // run threaded
+          MPIManager::run( doIntegrate );
         }
-        return sum;
+        catch ( const SingleThreadModeError& e )
+        {
+          // return single threaded variant in this case
+          return forEachLocal( elements( gridPart_, partitionSet ), u, initialValue, order );
+        }
+
+        return std::accumulate( sums.begin(), sums.end(), ReturnType(0) );
       }
 
       template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType, class PartitionSet >
