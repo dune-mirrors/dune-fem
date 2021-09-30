@@ -60,7 +60,7 @@ namespace Dune
         int activeThreads_;
 
         std::vector<std::thread> threads_;
-        std::unordered_map<std::thread::id,int> numbers_;
+        std::unordered_map<std::thread::id,int> numbers_; // still used for possible debugging can be removed if thread_local thread number works
         std::vector<bool> state_; // true means that thread has finished task
         // mutex and conditional for waiting before starting a task and after completing a task
         std::condition_variable start_;
@@ -72,11 +72,11 @@ namespace Dune
         // stop thread
         bool finalized_;
 
-#if 0 // this doesn't work as expected
+#if 1   // this doesn't work as expected
         // store a static thread local variable for the thread number
         static int& threadNumber_()
         {
-          static thread_local int number = 0;
+          static thread_local int number = -1;
           return number;
         }
 #endif
@@ -84,7 +84,7 @@ namespace Dune
         void wait(int t)
         {
           // set thread number (static thread local)
-          // ThreadPool::threadNumber_() = t;
+          ThreadPool::threadNumber_() = t;
           while (!finalized_)
           {
             // wait until a new task has been set or until threads are to be finalized
@@ -92,6 +92,16 @@ namespace Dune
               std::unique_lock<std::mutex> lk(startMutex_);
               start_.wait(lk, [this,t]{return (run_ && t<numThreads_) || finalized_;});
             }
+            /* debug: check that thread local variable for thread number is working
+            if (numbers_[std::this_thread::get_id()] != t || threadNumber() != t)
+              std::cout << "error with thread numbering: should be " << t
+                        << " map says " << numbers_[std::this_thread::get_id()]
+                        << " and thread local variable " << threadNumber()
+                        << std::endl;
+            assert(numbers_[std::this_thread::get_id()] == t);
+            assert(ThreadPool::threadNumber_() == t);
+            assert(threadNumber() == t);
+            */
             if (finalized_) break;
             assert(run_);
             run_();
@@ -116,6 +126,7 @@ namespace Dune
         , finalized_(false)
         {
           // spawn max number of threads to use
+          ThreadPool::threadNumber_() = 0;
           numbers_[std::this_thread::get_id()] = 0;
           for (int t=1;t<maxThreads_;++t)
           {
@@ -171,8 +182,13 @@ namespace Dune
 
         int numThreads() { return numThreads_; }
         int maxThreads() { return maxThreads_; }
-        // int threadNumber() { return ThreadPool::threadNumber_(); }
-        int threadNumber() { return numbers_.at(std::this_thread::get_id()); }
+        int threadNumber()
+        {
+          auto t = ThreadPool::threadNumber_();
+          assert( t>=0 );
+          return t;
+        }
+        // int threadNumber() { return numbers_.at(std::this_thread::get_id()); }
         void initSingleThreadMode() { activeThreads_ = 1; }
         void initMultiThreadMode() { activeThreads_ = numThreads_; }
         bool singleThreadMode() { return activeThreads_ == 1; }
