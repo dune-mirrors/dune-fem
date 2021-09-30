@@ -699,6 +699,7 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
 
           const auto end = iterators.end();
+          int thread = MPIManager::thread();
           for( auto it = iterators.begin(); it != end; ++it )
           {
             assert( iterators.thread( *it ) == thread );
