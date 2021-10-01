@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
 from dune.grid import structuredGrid as leafGridView
+from dune.fem import threading
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
@@ -78,20 +79,23 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
 
     error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
     print(error0," # output",flush=True)
+    threading.use = 4
     for i in range(3):
+        gridView.hierarchicalGrid.globalRefine(1)
+        print("size=",gridView.size(0))
         uh.interpolate(0)
         scheme.solve(target=uh)
         error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
         eoc   += [ math.log(error1/error0) / math.log(0.5) ]
         print(i,error0,error1,eoc," # output",flush=True)
         error0 = error1
-        gridView.hierarchicalGrid.globalRefine(1)
 
     # print(space.order,epsilon,eoc)
     if (eoc[-1]-(space.order+1)) < -0.1:
         print("ERROR:",space.order,epsilon,eoc)
     assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
+
 
 storage = "istl"
 

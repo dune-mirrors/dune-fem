@@ -110,12 +110,18 @@ namespace Dune
           {
             // wait until a new task has been set or until threads are to be finalized
             {
+              // obtain the lock if possible (shared mode) - this will fail if the master thread is changing 'run' or 'finalize'
               std::shared_lock<std::shared_mutex> lk(lock_);
               auto condition = [this]() { return run_ || finalized_; };
+              // unlock and wait until master thread either changed run_ or finalize
+              // reaquire the (shared) lock after that
               while (!condition()) // spurious wakeup can happen...
                 wait_.wait(lk, condition);
               if (finalized_) break;
               ThreadPool::threadNumber_() = t;
+              // run the code is required - note that the shared lock is
+              // still held so the main thread has to wait to reaquire the
+              // lock until 'run_' was finished by all threads
               if (t<numThreads()) run_();
             }
             // /* debug: check that thread local variable for thread number is working
@@ -129,6 +135,10 @@ namespace Dune
             assert(threadNumber() == t);
             // */
             {
+              // this is the same 'waiting' done above but in this case
+              // until 'run_' has been cleared again by the main thread
+              // (which happens only after all threads have left the previosu block)
+              // This is needed to make sure a thread doesn't execute the same 'run_' twice
               std::shared_lock<std::shared_mutex> lk(lock_);
               auto condition = [this]() { return !run_; };
               while (!condition())
@@ -148,15 +158,18 @@ namespace Dune
         {
           // spawn max number of threads to use
           ThreadPool::threadNumber_() = 0;
+#ifdef USE_SMP_PARALLEL
           numbers_[std::this_thread::get_id()] = 0;
           for (int t=1;t<maxThreads_;++t)
           {
             threads_.push_back( std::thread( [this,t]() { wait(t); } ) );
             numbers_[threads_[t-1].get_id()] = t;
           }
+#endif
         }
         ~ThreadPool()
         {
+#ifdef USE_SMP_PARALLEL
           // all threads should be in the 'start' waiting phase - notify of change of 'finalize variable
           {
             std::unique_lock<std::shared_mutex> lk(lock_);
@@ -165,36 +178,79 @@ namespace Dune
           wait_.notify_all();
           // join all threads
           std::for_each(threads_.begin(),threads_.end(), std::mem_fn(&std::thread::join));
+#endif
         }
 
         template<typename F, typename... Args>
-        void run(F&& f, Args&&... args)
+        void runConsec(F&& f, Args&&... args)
         {
           if ( numThreads_==1 )
             f(args...);
           else
           {
             initMultiThreadMode();
+            bool caughtException(false);
+            run_ = [&]() {
+                  try { f(args...);
+                        std::cout << "threading worked okay!\n";
+                  }
+                  catch (const SingleThreadModeError& e )
+                  { caughtException = true;
+                    std::cout << "threading issue occured\n";
+                  }
+            };
+            for (int t=0;t<numThreads();++t)
+            {
+              ThreadPool::threadNumber_() = t;
+              run_(args...);
+            }
+            ThreadPool::threadNumber_() = 0;
+            initSingleThreadMode();
+            if( caughtException )
+              DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!");
+          }
+        }
+
+        template<typename F, typename... Args>
+        void run(F&& f, Args&&... args)
+        {
+          // return runConsec(f,args...);
+          if ( numThreads_==1 )
+            f(args...);
+          else
+          {
+            // see explanation in 'wait' function
+            initMultiThreadMode();
             std::atomic<bool> caughtException(false);
             // notify all threads to new task
             {
+              // aquire lock and set 'run_'
               std::unique_lock<std::shared_mutex> lk(lock_);
               run_ = [&]() {
-                    try { f(args...); }
+                    try { f(args...);
+                          // std::cout << "threading worked okay!\n";
+                    }
                     catch (const SingleThreadModeError& e )
-                    { caughtException = true; }
+                    { caughtException = true;
+                      // std::cout << "threading issue occured\n";
+                    }
               };
             }
+            // notify all waiting threads - those will all aquire the lock (shared)
             wait_.notify_all();
             // execture task on master thread
             ThreadPool::threadNumber_() = 0;
             run_(args...);
             // notify all threads that task has been completed
             {
+              // try to aquire lock in non shared mode - this is only possible if all threads have
+              // finished the current task
               std::unique_lock<std::shared_mutex> lk(lock_);
               run_ = nullptr;
             }
+            // move all threads back to beginning of while loop in 'wait'
             wait_.notify_all();
+
             initSingleThreadMode();
             if( caughtException )
               DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!");
