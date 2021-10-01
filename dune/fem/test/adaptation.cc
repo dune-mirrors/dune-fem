@@ -261,7 +261,8 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // this test only seems to work in single thread mode
-  Dune::Fem::MPIManager::setMaxNumberThreads( 1 );
+  // not available at the moment: Dune::Fem::MPIManager::setMaxNumberThreads( 1 );
+  Dune::Fem::MPIManager::setNumThreads( 1 );
 
   // append overloaded parameters from the command line
   Dune::Fem::Parameter::append( argc, argv );
