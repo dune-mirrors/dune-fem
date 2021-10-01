@@ -24,6 +24,10 @@
 
 #include <dune/fem/storage/singleton.hh>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace Dune
 {
 
@@ -78,6 +82,11 @@ namespace Dune
 
       class ThreadPool
       {
+        static const bool useStdThreads = true ;
+#ifndef _OPENMP
+        static_assert( useStdThreads, "useStdThreads is disabled but OpenMP has not been found!");
+#endif
+
         // maximum number of threads spawned
         int maxThreads_;
         // number of threads to be used in next parallel region
@@ -150,18 +159,21 @@ namespace Dune
           // spawn max number of threads to use
           ThreadPool::threadNumber_() = 0;
 #ifdef USE_SMP_PARALLEL
-          numbers_[std::this_thread::get_id()] = 0;
-          for (int t=1;t<maxThreads_;++t)
+          if( useStdThreads )
           {
-            threads_.push_back( std::thread( [this,t]() { wait(t); } ) );
-            numbers_[threads_[t-1].get_id()] = t;
+            numbers_[std::this_thread::get_id()] = 0;
+            for (int t=1;t<maxThreads_;++t)
+            {
+              threads_.push_back( std::thread( [this,t]() { wait(t); } ) );
+              numbers_[threads_[t-1].get_id()] = t;
+            }
           }
 #endif
         }
         ~ThreadPool()
         {
 #ifdef USE_SMP_PARALLEL
-          // all threads should be in the 'start' waiting phase - notify of change of 'finalize variable
+          if( useStdThreads )
           {
             std::unique_lock<std::shared_mutex> lkA(lockA_);
             finalized_ = true;
@@ -175,6 +187,12 @@ namespace Dune
         template<typename F, typename... Args>
         void runConsec(F&& f, Args&&... args)
         {
+          if(! useStdThreads )
+          {
+            runOpenMP(f, args...);
+            return ;
+          }
+
           if ( numThreads_==1 )
             f(args...);
           else
@@ -199,8 +217,62 @@ namespace Dune
         }
 
         template<typename F, typename... Args>
+        void runOpenMP(F&& f, Args&&... args)
+        {
+#ifdef _OPENMP
+          const int nThreads = numThreads();
+          if( nThreads == 1 )
+          {
+            f(args...);
+            return ;
+          }
+
+          std::atomic< bool > singleThreadModeError( false );
+
+          initMultiThreadMode();
+#pragma omp parallel num_threads(nThreads)
+          {
+            // set thread number to thread_local variable
+            threadNumber_() = omp_get_thread_num();
+            // execute given code in parallel
+            try
+            {
+              f(args...);
+            }
+            catch (const Dune::Fem::SingleThreadModeError& e)
+            {
+//#ifndef NDEBUG
+//            std::cout << "thread[" << ThreadManager::thread() << "] " << e.what() << std::endl;
+//#endif
+              singleThreadModeError = true ;
+            }
+
+          } // end parallel region
+
+          // enter single thread mode again
+          initSingleThreadMode();
+
+          // only throw one exception to the outside world
+          if( singleThreadModeError )
+          {
+            DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!");
+          }
+#endif
+        }
+
+        template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
+<<<<<<< HEAD
+=======
+          if(! useStdThreads )
+          {
+            runOpenMP(f, args...);
+            return ;
+          }
+
+          // return runConsec(f,args...);
+>>>>>>> [feature][OpenMP] Re-enable OpenMP parallelism in MPIManager.
           if ( numThreads_==1 )
             f(args...);
           else
