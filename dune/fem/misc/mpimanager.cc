@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
 

@@ -12,6 +12,8 @@
 #include <thread>
 #include <chrono>
 #include <functional>
+#include <shared_mutex>
+#include <atomic>
 
 #include <dune/common/parallel/mpicommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -27,6 +29,29 @@ namespace Dune
 
   namespace Fem
   {
+    /*! \brief Exception thrown when a code segment that is supposed to be only accessed in
+     *         single thread mode is accessed in multi thread mode. For example,
+     *         creation of quadratures or basis function caching cannot work in
+     *         multi thread mode.
+     *  \note  This exception is not derived from Dune::Exception because there static variables are used.
+     */
+    class SingleThreadModeError : public std::exception
+    {
+    public:
+#ifndef NDEBUG
+      // for performance reasons we only copy messages when in debug mode
+      std::string msg_;
+      void message(const std::string &msg) { msg_ = msg; }
+      const char* what() const noexcept override { return msg_.c_str(); }
+#else
+      void message(const std::string &msg) {}
+      const char* what() const noexcept override
+      {
+        return "SingleThreadModeError: remove -DNDEBUG to obtain a more detailed message!";
+      }
+#endif
+    };
+
     namespace detail {
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
@@ -61,12 +86,8 @@ namespace Dune
 
         std::vector<std::thread> threads_;
         std::unordered_map<std::thread::id,int> numbers_; // still used for possible debugging can be removed if thread_local thread number works
-        std::vector<bool> state_; // true means that thread has finished task
-        // mutex and conditional for waiting before starting a task and after completing a task
-        std::condition_variable start_;
-        std::mutex startMutex_;
-        std::condition_variable end_;
-        std::mutex endMutex_;
+        std::condition_variable_any wait_;
+        std::shared_mutex lock_;
         // function to run
         std::function<void(void)> run_;
         // stop thread
@@ -83,16 +104,21 @@ namespace Dune
         // method executed by each thread
         void wait(int t)
         {
-          // set thread number (static thread local)
           ThreadPool::threadNumber_() = t;
+          // set thread number (static thread local)
           while (!finalized_)
           {
             // wait until a new task has been set or until threads are to be finalized
             {
-              std::unique_lock<std::mutex> lk(startMutex_);
-              start_.wait(lk, [this,t]{return (run_ && t<numThreads_) || finalized_;});
+              std::shared_lock<std::shared_mutex> lk(lock_);
+              auto condition = [this]() { return run_ || finalized_; };
+              while (!condition()) // spurious wakeup can happen...
+                wait_.wait(lk, condition);
+              if (finalized_) break;
+              ThreadPool::threadNumber_() = t;
+              if (t<numThreads()) run_();
             }
-            /* debug: check that thread local variable for thread number is working
+            // /* debug: check that thread local variable for thread number is working
             if (numbers_[std::this_thread::get_id()] != t || threadNumber() != t)
               std::cout << "error with thread numbering: should be " << t
                         << " map says " << numbers_[std::this_thread::get_id()]
@@ -101,16 +127,12 @@ namespace Dune
             assert(numbers_[std::this_thread::get_id()] == t);
             assert(ThreadPool::threadNumber_() == t);
             assert(threadNumber() == t);
-            */
-            if (finalized_) break;
-            assert(run_);
-            run_();
-            state_[t] = true;
-            // wait until task has been set to 0 so that 'run' is not called twice
+            // */
             {
-              std::unique_lock<std::mutex> lk(endMutex_);
-              end_.wait(lk, [this]{return !run_;});
-              state_[t] = false;
+              std::shared_lock<std::shared_mutex> lk(lock_);
+              auto condition = [this]() { return !run_; };
+              while (!condition())
+                wait_.wait(lk, condition);
             }
           }
         }
@@ -121,7 +143,6 @@ namespace Dune
         , numThreads_( detail::getEnvNumberThreads(1) )
         , activeThreads_(1)
         , threads_()
-        , state_(maxThreads_,false)
         , run_(nullptr)
         , finalized_(false)
         {
@@ -138,10 +159,10 @@ namespace Dune
         {
           // all threads should be in the 'start' waiting phase - notify of change of 'finalize variable
           {
-            std::lock_guard<std::mutex> lk(startMutex_);
+            std::unique_lock<std::shared_mutex> lk(lock_);
             finalized_ = true;
           }
-          start_.notify_all();
+          wait_.notify_all();
           // join all threads
           std::for_each(threads_.begin(),threads_.end(), std::mem_fn(&std::thread::join));
         }
@@ -149,46 +170,49 @@ namespace Dune
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
-          initMultiThreadMode();
-          if ( singleThreadMode() )
+          if ( numThreads_==1 )
             f(args...);
           else
           {
+            initMultiThreadMode();
+            std::atomic<bool> caughtException(false);
             // notify all threads to new task
             {
-              std::lock_guard<std::mutex> lk(startMutex_);
-              run_ = [=]() { f(args...); };
+              std::unique_lock<std::shared_mutex> lk(lock_);
+              run_ = [&]() {
+                    try { f(args...); }
+                    catch (const SingleThreadModeError& e )
+                    { caughtException = true; }
+              };
             }
-
-            start_.notify_all();
+            wait_.notify_all();
             // execture task on master thread
-            f(args...);
-            // make sure all threads have woken up
-            state_[0] = true;
-            while (std::any_of(state_.cbegin(), state_.cbegin()+numThreads_, [](bool v){ return !v; })) {}
-
+            ThreadPool::threadNumber_() = 0;
+            run_(args...);
             // notify all threads that task has been completed
             {
-              std::lock_guard<std::mutex> lk(endMutex_);
+              std::unique_lock<std::shared_mutex> lk(lock_);
               run_ = nullptr;
             }
-            end_.notify_all();
-            // make sure all threads are back to sleep (not needed?)
-            state_[0] = false;
-            while (!std::all_of(state_.cbegin(), state_.cend(), [](bool v){ return !v; })) {}
+            wait_.notify_all();
+            initSingleThreadMode();
+            if( caughtException )
+              DUNE_THROW(SingleThreadModeError, "ThreadPool::run: single thread mode violation occurred!");
           }
-          initSingleThreadMode();
         }
 
         int numThreads() { return numThreads_; }
         int maxThreads() { return maxThreads_; }
+#if 1
         int threadNumber()
         {
           auto t = ThreadPool::threadNumber_();
           assert( t>=0 );
           return t;
         }
-        // int threadNumber() { return numbers_.at(std::this_thread::get_id()); }
+#else
+        int threadNumber() { return numbers_.at(std::this_thread::get_id()); }
+#endif
         void initSingleThreadMode() { activeThreads_ = 1; }
         void initMultiThreadMode() { activeThreads_ = numThreads_; }
         bool singleThreadMode() { return activeThreads_ == 1; }
@@ -197,29 +221,6 @@ namespace Dune
       };
 
     } // end namespace detail
-
-    /*! \brief Exception thrown when a code segment that is supposed to be only accessed in
-     *         single thread mode is accessed in multi thread mode. For example,
-     *         creation of quadratures or basis function caching cannot work in
-     *         multi thread mode.
-     *  \note  This exception is not derived from Dune::Exception because there static variables are used.
-     */
-    class SingleThreadModeError : public std::exception
-    {
-    public:
-#ifndef NDEBUG
-      // for performance reasons we only copy messages when in debug mode
-      std::string msg_;
-      void message(const std::string &msg) { msg_ = msg; }
-      const char* what() const noexcept override { return msg_.c_str(); }
-#else
-      void message(const std::string &msg) {}
-      const char* what() const noexcept override
-      {
-        return "SingleThreadModeError: remove -DNDEBUG to obtain a more detailed message!";
-      }
-#endif
-    };
 
 
     struct MPIManager
