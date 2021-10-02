@@ -371,7 +371,11 @@ namespace Dune
             return omp_get_thread_num();
           else
 #endif
-          return numbers_.at(std::this_thread::get_id());
+          return numbers_[std::this_thread::get_id()];
+          // the following doens't work with clang since the current
+          // 'master' might not be the thread setting up this class and
+          // this method is also called without calling 'run'
+          // return numbers_.at(std::this_thread::get_id());
         }
 #endif
         void initSingleThreadMode() { activeThreads_ = 1; }
