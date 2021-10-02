@@ -86,6 +86,7 @@ namespace Dune
         static const bool useStdThreads = true ;
         static_assert( useStdThreads, "useStdThreads is disabled but OpenMP has not been found!");
 #else
+        // default to OMP
         static const bool useStdThreads = false ;
 #endif
 
@@ -360,7 +361,9 @@ namespace Dune
 #if 0
         int threadNumber()
         {
-          auto t = ThreadPool::threadNumber_();
+          if (singleThreadMode())
+            return 0;
+          int t = ThreadPool::threadNumber_();
           assert( t>=0 );
           return t;
         }
@@ -382,7 +385,14 @@ namespace Dune
         void initSingleThreadMode() { activeThreads_ = 1; }
         void initMultiThreadMode() { activeThreads_ = numThreads_; }
         bool singleThreadMode() { return activeThreads_ == 1; }
-        void setNumThreads( int use ) { assert( singleThreadMode() ); numThreads_ = use; }
+        void setNumThreads( int use )
+        {
+          if ( !singleThreadMode() )
+            DUNE_THROW(SingleThreadModeError, "ThreadPool: number of threads can only be changed in single thread mode!");
+          if ( use > maxThreads_ )
+            DUNE_THROW(InvalidStateException, "ThreadPool: trying to set number of threads above the fixed maximum number");
+          numThreads_ = use;
+        }
         bool isMaster() { return threadNumber() == 0; }
       };
 
