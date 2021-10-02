@@ -90,15 +90,11 @@ namespace Dune
         std::shared_mutex lockA_;
         std::condition_variable_any waitB_;
         std::shared_mutex lockB_;
+
         // function to run
         std::function<void(void)> run_;
         // stop thread
         bool finalized_;
-
-#ifndef NDEBUG
-        int counter_;
-        std::vector<int> task_;
-#endif
 
 #if 1   // this doesn't work as expected
         // store a static thread local variable for the thread number
@@ -111,10 +107,12 @@ namespace Dune
         // method executed by each thread
         void wait(int t)
         {
-          ThreadPool::threadNumber_() = t;
           // set thread number (static thread local)
+          ThreadPool::threadNumber_() = t;
+
           std::shared_lock<std::shared_mutex> lkA(lockA_);
           std::shared_lock<std::shared_mutex> lkB(lockB_);
+
           while (!finalized_)
           {
             // wait until a new task has been set or until threads are to be finalized
@@ -129,29 +127,7 @@ namespace Dune
             // held so the main thread has to wait to uniquely acquire
             // lock 'B' until 'run_' was finished by all threads
             if (t<numThreads())
-            {
-              // std::cout << "thread " << t << " on task " << counter_ << " start" << std::endl;
               run_();
-              // std::cout << "thread " << t << " on task " << counter_ << " end" << std::endl;
-#ifndef NDEBUG
-              task_[t] = counter_;
-#endif
-            }
-#ifndef NDEBUG
-            else
-              task_[t] = -counter_;
-#endif
-#ifndef NDEBUG
-            // debug: check that thread local variable for thread number is working
-            if (numbers_[std::this_thread::get_id()] != t || threadNumber() != t)
-              std::cout << "error with thread numbering: should be " << t
-                        << " map says " << numbers_[std::this_thread::get_id()]
-                        << " and thread local variable " << threadNumber()
-                        << std::endl;
-            assert(numbers_[std::this_thread::get_id()] == t);
-            assert(ThreadPool::threadNumber_() == t);
-            assert(threadNumber() == t);
-#endif
             // this is the same 'waiting' done above but on the 'B' lock. In this case
             // we wait until 'run_' has been cleared again by the main thread
             // which can only happen after all threads have enter the
@@ -170,10 +146,6 @@ namespace Dune
         , threads_()
         , run_(nullptr)
         , finalized_(false)
-#ifndef NDEBUG
-        , counter_(0)
-        , task_(maxThreads_,0)
-#endif
         {
           // spawn max number of threads to use
           ThreadPool::threadNumber_() = 0;
@@ -210,13 +182,9 @@ namespace Dune
             initMultiThreadMode();
             bool caughtException(false);
             run_ = [&]() {
-                  try { f(args...);
-                        // std::cout << "threading worked okay!\n";
-                  }
+                  try { f(args...); }
                   catch (const SingleThreadModeError& e )
-                  { caughtException = true;
-                    // std::cout << "threading issue occured\n";
-                  }
+                  { caughtException = true; }
             };
             for (int t=0;t<numThreads();++t)
             {
@@ -233,13 +201,11 @@ namespace Dune
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
-          // return runConsec(f,args...);
           if ( numThreads_==1 )
             f(args...);
           else
           {
             // see explanation in 'wait' function
-            counter_ = counter_+1;
             initMultiThreadMode();
             std::atomic<bool> caughtException(false);
             {
@@ -247,13 +213,9 @@ namespace Dune
               // threads are waiting at top of while loop
               std::lock_guard<std::shared_mutex> lkA(lockA_);
               run_ = [&]() {
-                    try { f(args...);
-                          // std::cout << "threading worked okay!\n";
-                    }
+                    try { f(args...); }
                     catch (const SingleThreadModeError& e )
-                    { caughtException = true;
-                      // std::cout << "threading issue occured\n";
-                    }
+                    { caughtException = true; }
               };
             }
             // notify all threads of new task - those will all acquire the lock (shared)
@@ -270,14 +232,6 @@ namespace Dune
             // notify all threads that task has been completed
             // this moves all threads back to beginning of while loop freeing 'A'
             waitB_.notify_all();
-
-#ifndef NDEBUG
-            // test that all thread have done the current task
-            for (int i=1;i<numThreads_;++i)
-            {  assert( task_[i]==counter_ ); }
-            for (int i=numThreads_;i<maxThreads_;++i)
-            {  assert( task_[i]==-counter_ ); }
-#endif
 
             initSingleThreadMode();
             if( caughtException )
