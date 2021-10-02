@@ -146,6 +146,7 @@ namespace Dune
               waitB_.wait(lkB);
           }
         }
+<<<<<<< HEAD
 
         public:
         ThreadPool()
@@ -216,6 +217,8 @@ namespace Dune
           }
         }
 
+=======
+>>>>>>> thread local variables simply don't work with clang so use std::unordered_map for thread numbers
         template<typename F, typename... Args>
         void runOpenMP(F&& f, Args&&... args)
         {
@@ -260,19 +263,55 @@ namespace Dune
 #endif
         }
 
+        public:
+        ThreadPool()
+        : maxThreads_( std::max(1u, detail::getEnvNumberThreads( std::thread::hardware_concurrency() )) )
+        , numThreads_( detail::getEnvNumberThreads(1) )
+        , activeThreads_(1)
+        , threads_()
+        , run_(nullptr)
+        , finalized_(false)
+        {
+          // spawn max number of threads to use
+          ThreadPool::threadNumber_() = 0;
+#ifdef USE_SMP_PARALLEL
+          if( useStdThreads )
+          {
+            numbers_[std::this_thread::get_id()] = 0;
+            for (int t=1;t<maxThreads_;++t)
+            {
+              threads_.push_back( std::thread( [this,t]() { wait(t); } ) );
+              numbers_[threads_[t-1].get_id()] = t;
+            }
+          }
+#endif
+        }
+        ~ThreadPool()
+        {
+#ifdef USE_SMP_PARALLEL
+          if( useStdThreads )
+          {
+            // all threads should be in the 'start' waiting phase - notify of change of 'finalize variable
+            {
+              std::unique_lock<std::shared_mutex> lk(lockA_);
+              finalized_ = true;
+            }
+            waitA_.notify_all();
+            // join all threads
+            std::for_each(threads_.begin(),threads_.end(), std::mem_fn(&std::thread::join));
+          }
+#endif
+        }
+
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
-<<<<<<< HEAD
-=======
           if(! useStdThreads )
           {
             runOpenMP(f, args...);
             return ;
           }
 
-          // return runConsec(f,args...);
->>>>>>> [feature][OpenMP] Re-enable OpenMP parallelism in MPIManager.
           if ( numThreads_==1 )
             f(args...);
           else
@@ -313,7 +352,7 @@ namespace Dune
 
         int numThreads() { return numThreads_; }
         int maxThreads() { return maxThreads_; }
-#if 1
+#if 0
         int threadNumber()
         {
           auto t = ThreadPool::threadNumber_();
@@ -321,7 +360,15 @@ namespace Dune
           return t;
         }
 #else
-        int threadNumber() { return numbers_.at(std::this_thread::get_id()); }
+        int threadNumber()
+        {
+#ifdef _OPENMP
+          if(! useStdThreads )
+            return omp_get_thread_num();
+          else
+#endif
+          return numbers_.at(std::this_thread::get_id());
+        }
 #endif
         void initSingleThreadMode() { activeThreads_ = 1; }
         void initMultiThreadMode() { activeThreads_ = numThreads_; }
