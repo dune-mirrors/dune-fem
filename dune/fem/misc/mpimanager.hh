@@ -82,7 +82,7 @@ namespace Dune
 
       class ThreadPool
       {
-        static const bool useStdThreads = true ;
+        static const bool useStdThreads = false ;
 #ifndef _OPENMP
         static_assert( useStdThreads, "useStdThreads is disabled but OpenMP has not been found!");
 #endif
