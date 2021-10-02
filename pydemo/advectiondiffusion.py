@@ -16,6 +16,8 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
+threading.use = 4
+
 def compute(space,epsilon,weakBnd,skeleton, mol=None):
     u    = TrialFunction(space)
     v    = TestFunction(space)
@@ -79,7 +81,6 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
 
     error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
     print(error0," # output",flush=True)
-    threading.use = 4
     for i in range(3):
         gridView.hierarchicalGrid.globalRefine(1)
         print("size=",gridView.size(0))
