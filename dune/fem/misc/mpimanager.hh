@@ -134,6 +134,7 @@ namespace Dune
             // check if to finalize
             if (finalized_) break;
             ThreadPool::threadNumber_() = t;
+            numbers_[std::this_thread::get_id()] = t;
             // run the code is required - note that both shared locks are
             // held so the main thread has to wait to uniquely acquire
             // lock 'B' until 'run_' was finished by all threads
