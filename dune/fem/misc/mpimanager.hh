@@ -318,6 +318,8 @@ namespace Dune
             f(args...);
           else
           {
+            // the current 'master' might not be the thread used to setup the thread pool
+            numbers_[std::this_thread::get_id()] = 0;
             // see explanation in 'wait' function
             initMultiThreadMode();
             std::atomic<bool> caughtException(false);
