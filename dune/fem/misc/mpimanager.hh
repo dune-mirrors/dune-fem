@@ -390,7 +390,13 @@ namespace Dune
           if ( !singleThreadMode() )
             DUNE_THROW(SingleThreadModeError, "ThreadPool: number of threads can only be changed in single thread mode!");
           if ( use > maxThreads_ )
-            DUNE_THROW(InvalidStateException, "ThreadPool: trying to set number of threads above the fixed maximum number");
+          {
+            std::cout << "Warning: requesting more threads then available."
+                      << " Maximum number of threads restricted to " << maxThreads_
+                      << " at startup. Using maximum number.\n";
+            use = maxThreads_;
+            // DUNE_THROW(InvalidStateException, "ThreadPool: trying to set number of threads above the fixed maximum number");
+          }
           numThreads_ = use;
         }
         bool isMaster() { return threadNumber() == 0; }
