@@ -28,22 +28,8 @@ mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 
 include(CheckCXXSourceCompiles)
 
-##############################################
-# check for phtreads or OpenMP
-#
-# Enable OpenMP by default unless
-# pthreads is enabled
-##############################################
-include(FindPThreads)
-
-set(DEFAULT_OPENMP ON)
-if(USE_PTHREADS)
-  set(DEFAULT_OPENMP OFF)
-endif(USE_PTHREADS)
-
 # check for OpenMP
-set(USE_OPENMP ${DEFAULT_OPENMP} CACHE BOOL "whether we are using OpenMP.")
-
+set(USE_OPENMP ON CACHE BOOL "whether we are using OpenMP.")
 # if open mp should be used perform cmake check
 if(USE_OPENMP)
   include(FindOpenMP)
@@ -52,9 +38,13 @@ if(USE_OPENMP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   endif(OPENMP_FOUND)
 endif(USE_OPENMP)
-##############################################
-# end pthreads and OpenMP
-##############################################
+
+# check for phtreads
+include(FindPThreads)
+
+###############################
+# end pthreads
+################################
 
 find_package(SIONlib)
 include(AddSIONlibFlags)

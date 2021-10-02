@@ -83,7 +83,6 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     print(error0," # output",flush=True)
     for i in range(3):
         gridView.hierarchicalGrid.globalRefine(1)
-        print("size=",gridView.size(0))
         uh.interpolate(0)
         scheme.solve(target=uh)
         error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
