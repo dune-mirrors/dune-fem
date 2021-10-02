@@ -6,9 +6,10 @@
 #include <map>
 #include <vector>
 
-#include <dune/fem/misc/mpimanager.hh>
+#include <dune/common/shared_ptr.hh>
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -89,37 +90,57 @@ namespace Dune
         typedef QuadImp QuadType;
 
       protected:
-        typedef std :: map< QuadratureKey, std::unique_ptr< QuadType > >  StorageType;
-        StorageType storage_;
+        struct Storage
+        {
+          typedef std :: map< QuadratureKey, std::unique_ptr< QuadType > >  StorageType;
+          std::mutex mutex_;
+          StorageType storage_;
+
+          static QuadImp* create( const GeometryType &geometry, const QuadratureKey& key )
+          {
+            return instance().createImpl( geometry, key );
+          }
+
+        private:
+          static Storage& instance()
+          {
+            return Singleton< Storage >::instance();
+          }
+
+          QuadImp* createImpl( const GeometryType &geometry, const QuadratureKey& key )
+          {
+            std::lock_guard< std::mutex > guard( mutex_ );
+
+            auto& quadPtr = storage_[ key ];
+            if( ! quadPtr )
+            {
+              quadPtr.reset( new QuadImp( geometry, key, IdProvider :: instance().newId() ) );
+            }
+
+            assert( quadPtr );
+            return quadPtr.operator->();
+          }
+        };
+
+        typedef std :: map< QuadratureKey, std::unique_ptr< QuadType, Dune::null_deleter<QuadType> > > PointerStorageType;
+        PointerStorageType quadPtrs_;
 
       public:
         QuadratureStorage () {}
 
-        QuadImp &getQuadrature( const GeometryType &geometry, const QuadratureKey& key )
+        QuadType &getQuadrature( const GeometryType &geometry, const QuadratureKey& key )
         {
-          QuadType* quadPtr = nullptr;
-          auto it = storage_.find( key );
-          if( it == storage_.end() )
+          auto& quadPtr = quadPtrs_[ key ];
+          if( ! quadPtr )
           {
-            // make sure we work in single thread mode
-            // when quadrature is created for the first time
-            if( ! Fem :: MPIManager :: singleThreadMode() )
-            {
-              DUNE_THROW(SingleThreadModeError, "QuadratureStorage::getQuadrature: only call in single thread mode!");
-            }
-
-            quadPtr = new QuadImp( geometry, key, IdProvider :: instance().newId() );
-            storage_[ key ].reset( quadPtr );
-          }
-          else
-          {
-            quadPtr = it->second.operator ->();
+            // create is mutex protected
+            quadPtr.reset( Storage::create( geometry, key ) );
           }
 
-          assert( quadPtr != nullptr );
+          assert( quadPtr );
           return *quadPtr;
         }
-      }; // end class QuadratureStorage
+      };
 
       //! class holding vector with pointer to quadrature objects
       template< class QuadImp>
@@ -129,17 +150,54 @@ namespace Dune
         typedef QuadImp QuadType;
 
       protected:
-        std::vector< std::unique_ptr< QuadType > > storage_;
+        struct Storage
+        {
+          std::mutex mutex_;
+
+          // vector storing the actual objects
+          std::vector< std::unique_ptr< QuadType > > storage_;
+          Storage() : storage_( QuadType :: maxOrder() + 1 )
+          {}
+
+          static QuadType* create( const GeometryType &geometry, int order )
+          {
+            return instance().createImpl( geometry, order );
+          }
+
+      private:
+          static Storage& instance()
+          {
+            return Singleton< Storage >::instance();
+          }
+
+          QuadType* createImpl( const GeometryType &geometry, int order )
+          {
+            std::lock_guard< std::mutex > guard( mutex_ );
+
+            auto& quadPtr = storage_[ order ];
+            if( ! quadPtr )
+            {
+              quadPtr.reset( new QuadImp( geometry, order, IdProvider :: instance().newId() ) );
+            }
+            assert( quadPtr );
+            return quadPtr.operator ->();
+          }
+        };
+
+        typedef std::vector< QuadType* > QuadPointerVecType;
+        // store all the pointers for all threads separately to avoid race conditions
+        QuadPointerVecType quadPtrs_;
 
       public:
         QuadratureStorage ()
-          : storage_( QuadType :: maxOrder() + 1 )
+          : quadPtrs_( QuadPointerVecType( QuadType :: maxOrder() + 1, nullptr ))
         {
         }
 
+      public:
         QuadImp &getQuadrature( const GeometryType &geometry, int order )
         {
-          if(order >= int(storage_.size()) )
+          if(order >= int(quadPtrs_.size()) )
           {
 #ifndef NDEBUG
             static thread_local bool showMessage = true ;
@@ -147,28 +205,22 @@ namespace Dune
             {
               std::cerr << "WARNING: QuadratureStorage::getQuadrature: A quadrature of order " << order
                         << " is not implemented!" << std::endl
-                        << "Choosing maximum order: " << storage_.size()-1 << std::endl << std::endl;
+                        << "Choosing maximum order: " << quadPtrs_.size()-1 << std::endl << std::endl;
               showMessage = false;
             }
 #endif
-            order = storage_.size() - 1;
+            order = quadPtrs_.size() - 1;
           }
 
-          auto& quadPtr = storage_[ order ];
+          auto& quadPtr = quadPtrs_[ order ];
           if( ! quadPtr )
           {
-            // make sure we work in single thread mode
-            // when quadrature is created for the first time
-            if( ! Fem :: MPIManager :: singleThreadMode() )
-            {
-              DUNE_THROW(SingleThreadModeError, "QuadratureStorage::getQuadrature: only call in single thread mode!");
-            }
-
-            quadPtr.reset( new QuadImp( geometry, order, IdProvider :: instance().newId() ) );
+            // create is mutex protected
+            quadPtr = Storage::create( geometry, order );
           }
 
           assert( quadPtr );
-          return *quadPtr;
+          return *( quadPtr );
         }
       }; // end class QuadratureStorage
 
@@ -189,8 +241,10 @@ namespace Dune
       static const QuadImp &provideQuad( const GeometryType&  geometry,
                                          const QuadratureKey& key )
       {
-        typedef QuadratureStorage< QuadImp, QuadratureKey, dummy > Storage;
-        return (Singleton< Storage > :: instance()).getQuadrature( geometry, key );
+        // QuadratureStorage stores only pointers to the quadratures that are
+        // created and stored by a singleton storage
+        static thread_local QuadratureStorage< QuadImp, QuadratureKey, dummy > storage;
+        return storage.getQuadrature( geometry, key );
       }
 
       /*! \brief provide quadrature
@@ -223,8 +277,10 @@ namespace Dune
                                          const int defaultOrder )
       {
         assert( geometry.isNone() );
-        typedef QuadratureStorage< QuadImp, int, dummy > Storage;
-        return (Singleton< Storage > :: instance()).getQuadrature( geometry, defaultOrder );
+        // QuadratureStorage stores only pointers to the quadratures that are
+        // created and stored by a singleton storage
+        static thread_local QuadratureStorage< QuadImp, int, dummy > storage;
+        return storage.getQuadrature( geometry, defaultOrder );
       }
     };
 
