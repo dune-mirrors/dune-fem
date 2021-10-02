@@ -16,7 +16,10 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-threading.use = 4
+try:
+    dune.fem.threading.use = 4
+except:
+    dune.fem.threading.useMax()
 
 def compute(space,epsilon,weakBnd,skeleton, mol=None):
     u    = TrialFunction(space)
