@@ -82,9 +82,11 @@ namespace Dune
 
       class ThreadPool
       {
-        static const bool useStdThreads = false ;
 #ifndef _OPENMP
+        static const bool useStdThreads = true ;
         static_assert( useStdThreads, "useStdThreads is disabled but OpenMP has not been found!");
+#else
+        static const bool useStdThreads = false ;
 #endif
 
         // maximum number of threads spawned
@@ -160,7 +162,7 @@ namespace Dune
           // spawn max number of threads to use
           ThreadPool::threadNumber_() = 0;
 #ifdef USE_SMP_PARALLEL
-          if( useStdThreads )
+          if constexpr( useStdThreads )
           {
             numbers_[std::this_thread::get_id()] = 0;
             for (int t=1;t<maxThreads_;++t)
@@ -289,7 +291,7 @@ namespace Dune
         ~ThreadPool()
         {
 #ifdef USE_SMP_PARALLEL
-          if( useStdThreads )
+          if constexpr( useStdThreads )
           {
             // all threads should be in the 'start' waiting phase - notify of change of 'finalize variable
             {
@@ -306,7 +308,7 @@ namespace Dune
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
-          if(! useStdThreads )
+          if constexpr(! useStdThreads )
           {
             runOpenMP(f, args...);
             return ;
@@ -363,7 +365,7 @@ namespace Dune
         int threadNumber()
         {
 #ifdef _OPENMP
-          if(! useStdThreads )
+          if constexpr(! useStdThreads )
             return omp_get_thread_num();
           else
 #endif
