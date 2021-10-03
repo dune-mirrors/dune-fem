@@ -112,7 +112,7 @@ namespace Dune
         // store a static thread local variable for the thread number
         static int& threadNumber_()
         {
-          static thread_local int number = -1;
+          static thread_local int number = 0;
           return number;
         }
 #endif
@@ -358,11 +358,11 @@ namespace Dune
 
         int numThreads() { return numThreads_; }
         int maxThreads() { return maxThreads_; }
-#if 0
+#if 1
         int threadNumber()
         {
-          if (singleThreadMode())
-            return 0;
+          // if (singleThreadMode())
+          //   return 0;
           int t = ThreadPool::threadNumber_();
           assert( t>=0 );
           return t;
@@ -391,9 +391,9 @@ namespace Dune
             DUNE_THROW(SingleThreadModeError, "ThreadPool: number of threads can only be changed in single thread mode!");
           if ( use > maxThreads_ )
           {
-            std::cout << "Warning: requesting more threads then available."
-                      << " Maximum number of threads restricted to " << maxThreads_
-                      << " at startup. Using maximum number.\n";
+            std::cout << "Warning: requesting more threads than available."
+                      << " Maximum number of threads was restricted to " << maxThreads_
+                      << " at startup. Setting to maximum number instead.\n";
             use = maxThreads_;
             // DUNE_THROW(InvalidStateException, "ThreadPool: trying to set number of threads above the fixed maximum number");
           }
