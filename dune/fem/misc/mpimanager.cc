@@ -1,4 +1,7 @@
-#include <config.h>
+#ifndef DUNE_FEM_MPIMANAGER_CC
+#define DUNE_FEM_MPIMANAGER_CC
+
+//#include <config.h>
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
@@ -7,7 +10,7 @@ namespace Dune
 {
   namespace Fem
   {
-    void MPIManager::initialize ( int &argc, char **&argv )
+    inline void MPIManager::initialize ( int &argc, char **&argv )
     {
       MPIHelper *&helper = instance().helper_;
       std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
@@ -77,3 +80,5 @@ namespace Dune
     }
   }
 }
+
+#endif // #ifndef DUNE_FEM_MPIMANAGER_CC

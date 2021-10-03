@@ -525,4 +525,6 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/fem/misc/mpimanager.cc>
+
 #endif // #ifndef DUNE_FEM_MPIMANAGER_HH
