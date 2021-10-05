@@ -166,7 +166,7 @@ namespace Dune
       {
         const unsigned int nop = quadrature.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-          hessiansAll( quadrature[ qp ], dofs, hessians[ qp ] );
+          hessians[qp] = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
       }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::hessianAll */
