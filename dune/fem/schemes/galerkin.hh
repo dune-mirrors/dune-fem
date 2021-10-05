@@ -1329,7 +1329,7 @@ namespace Dune
         }
         catch ( const SingleThreadModeError& e )
         {
-          std::cout << "Caught " << e.what() << std::endl;
+          //std::cout << "Caught " << e.what() << std::endl;
           // reset w from previous entries
           w.clear();
           // re-run in single thread mode if previous attempt failed
@@ -1431,14 +1431,11 @@ namespace Dune
       {
         // reserve memory and clear entries
         {
-          Timer timer;
           prepare( jOp );
           iterators_.update();
-          // std::cout << "prepare=  " << timer.elapsed() << std::endl;;
         }
-        std::shared_mutex mutex;
 
-        Timer timer;
+        std::shared_mutex mutex;
 
         auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
@@ -1454,7 +1451,6 @@ namespace Dune
         }
         catch ( const SingleThreadModeError& e )
         {
-          std::cout << "Caught " << e.what() << std::endl;
           // redo assemble since it failed previously
           jOp.clear();
           impl().assemble( u, jOp, iterators_ );
@@ -1462,7 +1458,6 @@ namespace Dune
           // update number of interior elements
           gridSizeInterior_ = impl().gridSizeInterior();
         }
-        // std::cout << "main assembly time=  " << timer.elapsed() << std::endl;;
 
         // note: assembly done without local contributions so need
         // to call flush assembly
