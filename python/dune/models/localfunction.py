@@ -173,12 +173,12 @@ class UFLFunctionSource(codegen.ModelClass):
             keepAlive += ', ' + ', '.join('pybind11::keep_alive< 1, ' + str(i+3) + ' >()' for i in range(len(coefficientNames)))
             initCall += ', ' + ', '.join(coefficientNames)
         register.append('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
-                + 'return new '+localFunctionName+' ( ' + initCall
+                + 'return new LocalFunctionType( ' + initCall
                 + '); } ), ' + keepAlive + ' );')
         for t, n, sn in zip(self.constantTypes, self.constantNames, self.constantShortNames):
             te = localFunctionName+"::" + t
-            register.append('cls.def_property( "' + sn + '", [] ( '+localFunctionName+' &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( '+localFunctionName+' &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
-        register.append('cls.def_property_readonly( "virtualized", [] ( '+localFunctionName+'& ) -> bool { return '+str(self.virtualize).lower()+';});')
+            register.append('cls.def_property( "' + sn + '", [] ( LocalFunctionType &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( LocalFunctionType &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        register.append('cls.def_property_readonly( "virtualized", [] ( LocalFunctionType& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
         writer = SourceWriter()
         writer.emit(code)
