@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
 from dune.grid import structuredGrid as leafGridView
-from dune.fem import threading
+from dune.fem import threading, parameter
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
@@ -16,10 +16,7 @@ from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetN
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-try:
-    threading.use = 4
-except:
-    threading.useMax()
+parameter.append({"fem.verboserank": 0})
 
 def compute(space,epsilon,weakBnd,skeleton, mol=None):
     u    = TrialFunction(space)
@@ -29,8 +26,9 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    #exact = sin(x[0]*x[1]) # atan(1*x[1])
-    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    exact = sin(x[0]*x[1]) # atan(1*x[1])
+    exact = uflFunction( space.grid, name="exact", order=3, ufl=exact)
+    uh = space.interpolate(exact,name="solution")
 
     # diffusion factor
     eps = Constant(epsilon,"eps")
@@ -67,28 +65,31 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
         strongBC = DirichletBC(space,exact,dD)
 
     if space.storage[0] == "fem":
-        solver={"solver":("suitesparse","umfpack")}
+        solver={"solver":("suitesparse","umfpack"),
+                "parameters":{"newton.verbose": True, "newton.linear.verbose": False}}
     else:
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
-                              "newton.linear.tolerance":1e-13}
+                              "newton.linear.tolerance":1e-13,
+                              "newton.verbose": True, "newton.linear.verbose": True}
                }
     if mol == 'mol':
         scheme = molSolutionScheme([form==rhs,strongBC], **solver)
     else:
         scheme = solutionScheme([form==rhs,strongBC], **solver)
 
-    uh = space.interpolate([0],name="solution")
     eoc = []
     info = scheme.solve(target=uh)
 
-    error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
+    error = dot(uh-exact,uh-exact)
+    error0 = math.sqrt( integrate(gridView,error,order=5) )
     print(error0," # output",flush=True)
     for i in range(3):
         gridView.hierarchicalGrid.globalRefine(1)
-        uh.interpolate(0)
+        uh.interpolate(exact)
         scheme.solve(target=uh)
-        error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
+        error = dot(uh-exact,uh-exact)
+        error1 = math.sqrt( integrate(gridView,error,order=5) )
         eoc   += [ math.log(error1/error0) / math.log(0.5) ]
         print(i,error0,error1,eoc," # output",flush=True)
         error0 = error1
@@ -100,31 +101,34 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     return eoc
 
 
-storage = "istl"
+storage = "fem"
+threading.use = 8
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
-gridView = newGridView()
-space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True,True) # , 'mol')
+for i in range(10):
+  print(i,"dgSpace, 1e-5, True, True")
+  gridView = newGridView()
+  space    = dgSpace(gridView, order=2, storage=storage)
+  eoc = compute(space,1e-5,True,True) # , 'mol')
 
-gridView = newGridView()
-space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1,True,True)
+  print(i,"dgSpace, 1, True, True")
+  gridView = newGridView()
+  space    = dgSpace(gridView, order=2, storage=storage)
+  eoc = compute(space,1,True,True)
 
-#gridView = newGridView()
-#space    = dgSpace(gridView, order=3, storage=storage)
-#eoc = compute(space,1e-5,True,True)
+  print(i,"lagrange, 1, True, True")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,True,True)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,True,True)
+  print(i,"lagrange, 1, False, True")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,False,True)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,False,True)
-
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,False,False)
+  print(i,"lagrange, 1, False, False")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,False,False)

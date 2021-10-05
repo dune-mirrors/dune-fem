@@ -48,8 +48,8 @@ namespace Dune
           std::cout << "BindableGF: bind called on object before unbind was called\n";
           std::abort();
         }
-#endif
         assert(!entity_ && !geometry_); // this will fail with dune-fem-dg
+#endif
         unbind();
 
         entity_.emplace( entity );
