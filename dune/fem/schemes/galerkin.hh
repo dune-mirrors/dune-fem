@@ -24,7 +24,6 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
-#include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/common/bindguard.hh>
 
 #include <dune/fem/misc/threads/threaditerator.hh>
@@ -337,6 +336,7 @@ namespace Dune
 
           // add to w for all quadrature points
           axpyQuadrature( w, quadrature, ranges );
+          integrands().unbind();
         }
 
         template< class U, class J >
@@ -386,6 +386,7 @@ namespace Dune
             LocalMatrixColumn< J > jCol( j, col );
             axpyQuadrature( jCol, quadrature, rangeValues[ col ] );
           }
+          integrands().unbind();
         }
 
         // boundary integral
@@ -410,6 +411,7 @@ namespace Dune
                 w.axpy( qp, std::get< i >( integrand ) );
               } );
           }
+          integrands().unbind();
         }
 
         template< class Intersection, class U, class J >
@@ -442,6 +444,7 @@ namespace Dune
                 } );
             }
           }
+          integrands().unbind();
         }
 
         // addSkeletonIntegral
@@ -613,6 +616,7 @@ namespace Dune
             addSkeletonIntegral< true >( intersection, uIn, uOut, w... );
           else
             addSkeletonIntegral< false >( intersection, uIn, uOut, w... );
+          integrands().unbind();
         }
 
         template< class Intersection, class U, class... J >
@@ -625,6 +629,7 @@ namespace Dune
             addLinearizedSkeletonIntegral< true >( intersection, uIn, uOut, phiIn, phiOut, j... );
           else
             addLinearizedSkeletonIntegral< false >( intersection, uIn, uOut, phiIn, phiOut, j... );
+          integrands().unbind();
         }
 
         void setQuadratureOrders(unsigned int interior, unsigned int surface)
@@ -699,10 +704,9 @@ namespace Dune
           const auto &indexSet = gridPart().indexSet();
 
           const auto end = iterators.end();
-          int thread = MPIManager::thread();
           for( auto it = iterators.begin(); it != end; ++it )
           {
-            assert( iterators.thread( *it ) == thread );
+            // assert( iterators.thread( *it ) == MPIManager::thread );
             const EntityType inside = *it ;
 
             // increase counter for interior elements
@@ -810,14 +814,13 @@ namespace Dune
             // call addLocalDofs on w
             if (inside_(entity))
             {
-              // we do not need to share lock since the vector is dense
-              // std::shared_lock<std::shared_mutex> guard ( mutex_ );
+              std::shared_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::operator()( entity, wLocal );
             }
             else
             {
               // lock mutex (unlock on destruction)
-              std::unique_lock<std::shared_mutex> guard ( mutex_ );
+              std::lock_guard<std::shared_mutex> guard ( mutex_ );
               BaseType::operator()( entity, wLocal );
             }
           }
@@ -980,7 +983,7 @@ namespace Dune
           {
             // lock mutex (unlock on destruction)
             ++BaseType::timesLocked;
-            std::unique_lock<std::shared_mutex> guard ( mutex_ );
+            std::lock_guard<std::shared_mutex> guard ( mutex_ );
             BaseType::finalize();
           }
 
@@ -1005,6 +1008,7 @@ namespace Dune
             if ( insideDomain_(lop.domainEntity()) &&
                  insideRange_(lop.rangeEntity()) )
             {
+              std::shared_lock<std::shared_mutex> guard ( mutex_ );
               BaseType::unbind(lop);
             }
             else

@@ -269,6 +269,7 @@ namespace Dune
 
       bool init ( const EntityType &entity ) { return integrands().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return integrands().init( intersection ); }
+      void unbind ( ) { integrands().unbind( ); }
 
       bool hasInterior () const { return hasInterior( integrands() ); }
 
@@ -415,6 +416,7 @@ namespace Dune
 
         virtual bool init ( const EntityType &entity ) = 0;
         virtual bool init ( const IntersectionType &intersection ) = 0;
+        virtual void unbind ( ) = 0;
 
         virtual bool hasInterior () const = 0;
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
@@ -450,6 +452,7 @@ namespace Dune
 
         virtual bool init ( const EntityType &entity ) override { return impl().init( entity ); }
         virtual bool init ( const IntersectionType &intersection ) override { return impl().init( intersection ); }
+        virtual void unbind ( ) override { impl().unbind( ); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
@@ -510,6 +513,7 @@ namespace Dune
 
       bool init ( const EntityType &entity ) { return impl().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return impl().init( intersection ); }
+      void unbind ( ) { impl().unbind( ); }
 
       bool hasInterior () const { return impl().hasInterior(); }
 
@@ -638,6 +642,8 @@ namespace Dune
         return (intersection.boundary() && model().hasNeumanBoundary() && model().init( intersection.inside() ));
       }
 
+      void unbind ( ) { model().unbind( ); }
+
       template< class Point >
       RangeValueType interior ( const Point &x, const DomainValueType &u ) const
       {
@@ -732,6 +738,11 @@ namespace Dune
           beta_ = penalty_ * intersection.geometry().volume() / std::min( volIn, volOut );
           return true;
         }
+      }
+
+      void unbind ( )
+      {
+        model().unbind( );
       }
 
       template< class Point >

@@ -683,22 +683,30 @@ class ModelClass():
         if self.bindable:
             initEntity = Method('void', 'bind', args=[entity])
             initEntity.append(self.bindableBase+'::bind(entity);')
+            uninitEntity = Method('void', 'unbind')
+            uninitEntity.append(self.bindableBase+'::unbind();')
             initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
             initIntersection.append(self.bindableBase+'::bind(intersection,side);')
             code.append(initIntersection)
         else:
             initEntity = Method('bool', 'init', args=[entity])
             initEntity.append(assign(insideEntity, entity))
+            uninitEntity = Method('void', 'unbind')
         if self.skeleton is None:
             for i, c in enumerate(self._coefficients):
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( entity )', uses=[entity, coefficients_]))
+                uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( )', uses=[coefficients_]))
         else:
             for i, c in enumerate(self._coefficients):
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity )', uses=[entity, coefficients_]))
+                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity )', uses=[entity, coefficients_]))
+                uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).unbind( )', uses=[coefficients_]))
+                uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).unbind( )', uses=[coefficients_]))
         initEntity.append(self.init)
         if not self.bindable:
             initEntity.append(return_(True))
         code.append(initEntity)
+        code.append(uninitEntity)
 
         if not self.bindable:
             initIntersection = Method('bool', 'init', args=[intersection])

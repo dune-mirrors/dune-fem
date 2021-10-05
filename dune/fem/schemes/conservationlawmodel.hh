@@ -169,6 +169,7 @@ public:
   virtual std::string name() const = 0;
 
   virtual bool init( const EntityType &entity) const = 0;
+  virtual void unbind( ) const = 0;
 
   // if the ModelImpl provides a time method (constant) then
   // it maybe be set using this method
@@ -325,6 +326,10 @@ struct ConservationLawModelWrapper
   {
     return impl().init(entity);
   }
+  virtual void unbind() const
+  {
+    return impl().unbind();
+  }
   const ModelImpl &impl() const
   {
     return impl_;
@@ -412,6 +417,7 @@ public:
   virtual std::string name() const = 0;
 
   virtual bool init( const EntityType &entity) const = 0;
+  virtual void unbind() const = 0;
 
   // if the ModelImpl provides a 'double& time()' method then
   // it maybe be set using this method
@@ -556,6 +562,10 @@ struct DGConservationLawModelWrapper
   virtual bool init( const EntityType &entity) const
   {
     return impl().init(entity);
+  }
+  virtual void unbind() const
+  {
+    return impl().unbind();
   }
   const ModelImpl &impl() const
   {

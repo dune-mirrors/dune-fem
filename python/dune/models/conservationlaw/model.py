@@ -181,6 +181,10 @@ class ConservationLawModel:
         init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').bind( entity );' for i, c in enumerate(self._coefficients)]
         init = [UnformattedBlock(init)] + self.init + [return_(True)]
         code.append(Method('bool', 'init', args=['const EntityType &entity'], code=init, const=True))
+        uninit = ['entity_ = nullptr;']
+        uninit += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( );' for i, c in enumerate(self._coefficients)]
+        uninit = [UnformattedBlock(uninit)]
+        code.append(Method('void', 'unbind', code=uninit, const=True))
 
         code.append(Method('const EntityType &', 'entity', code=return_(dereference(entity_)), const=True))
         code.append(Method('std::string', 'name', const=True, code=return_(UnformattedExpression('const char *', '"' + name + '"'))))
