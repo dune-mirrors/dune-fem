@@ -15,6 +15,7 @@
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
 #include <dune/fem/misc/threads/threaditerator.hh>
+#include <dune/fem/common/bindguard.hh>
 
 namespace Dune
 {
@@ -59,14 +60,13 @@ namespace Dune
             ConstLocalFunction< VDiscreteFunctionType > vLocal( v );
             for( const EntityType &entity : iterators )
             {
-              uLocal.bind( entity );
-              vLocal.bind( entity );
+              auto uGuard = bindGuard( uLocal, entity );
+              auto vGuard = bindGuard( vLocal, entity );
+
               const unsigned int uOrder = uLocal.order();
               const unsigned int vOrder = vLocal.order();
               const unsigned int orderLocal = (order == 0 ? 2*std::max( uOrder, vOrder ) : order);
               norm.distanceLocal( entity, orderLocal, uLocal, vLocal, sum );
-              uLocal.unbind();
-              vLocal.unbind();
             }
           }
           return sum;
@@ -162,11 +162,11 @@ namespace Dune
           ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
           for( const EntityType &entity : iterators )
           {
-            uLocal.bind( entity );
+            auto uGuard = bindGuard( uLocal, entity );
+
             const unsigned int uOrder = uLocal.order();
             const unsigned int orderLocal = (order == 0 ? 2*uOrder : order);
             normLocal( entity, orderLocal, uLocal, sum );
-            uLocal.unbind();
           }
         }
         return sum;
