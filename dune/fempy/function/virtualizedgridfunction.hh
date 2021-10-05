@@ -104,20 +104,18 @@ namespace Dune
 
         virtual void bind(const EntityType &entity) = 0;
         virtual void bind(const IntersectionType &intersection, Fem::IntersectionSide side) = 0;
+        virtual void unbind() = 0;
       };
 
       template< class GF >
       struct DUNE_PRIVATE Implementation final
         : public Interface
       {
-        typedef typename std::remove_reference<GF>::type GFType;
-
-        Implementation ( const GF& gf ) :
-          impl_( gf )
-        {
-        }
-
-        virtual Interface *clone () const override { return new Implementation( *this ); }
+        static_assert( !std::is_reference<Impl>::value );
+        Implementation ( const Impl &impl ) :
+          impl_( impl ) {}
+        virtual Interface *clone () const override
+        { return new Implementation( impl().gridFunction() ); }
 
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const override { impl().evaluate( x, value ); }
         virtual void evaluate ( const CachingPoint &x, RangeType &value ) const override { impl().evaluate( asQP( x ), value ); }
@@ -144,9 +142,10 @@ namespace Dune
         virtual void bind(const EntityType &entity) override { impl_.bind(entity); }
         void bind(const IntersectionType &intersection, Fem::IntersectionSide side) override
         { impl_.bind(intersection, side); }
+        virtual void unbind() override { impl_.unbind(); }
       private:
-        const auto &impl () const { return impl_; }
-        auto &impl () { return impl_; }
+        const auto &impl () const {return impl_;}// { using std::cref; return cref( impl_ ).get(); }
+        auto &impl () {return impl_;}// { using std::ref; return ref( impl_ ).get(); }
 
         Fem::ConstLocalFunction< GFType > impl_;
       };
@@ -187,6 +186,11 @@ namespace Dune
       {
         Base::bind(intersection, side);
         impl_->bind(intersection, side);
+      }
+      void unbind()
+      {
+        Base::unbind();
+        impl_->unbind();
       }
 
       template< class Point >
