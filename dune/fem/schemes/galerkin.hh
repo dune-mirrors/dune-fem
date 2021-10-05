@@ -706,7 +706,7 @@ namespace Dune
           const auto end = iterators.end();
           for( auto it = iterators.begin(); it != end; ++it )
           {
-            // assert( iterators.thread( *it ) == MPIManager::thread );
+            // assert( iterators.thread( *it ) == MPIManager::thread() );
             const EntityType inside = *it ;
 
             // increase counter for interior elements
