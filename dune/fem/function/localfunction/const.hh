@@ -11,6 +11,8 @@
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
 
+#include <dune/fem/misc/mpimanager.hh>
+
 namespace Dune
 {
 
@@ -257,12 +259,23 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction :: init */
       void init ( const EntityType &entity )
       {
+        // make sure that this local function is not bound by another thread
+        assert( thread_ >= 0 ? thread_ == ThreadManager::thread() : thread_ == -1 );
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
         discreteFunction().getLocalDofs( entity, localDofVector() );
+
+#ifndef NDEBUG
+        thread_ = ThreadManager::thread();
+#endif
       }
 
       void bind ( const EntityType &entity ) { init( entity ); }
-      void unbind () {}
+      void unbind ()
+      {
+#ifndef NDEBUG
+        thread_ = -1;
+#endif
+      }
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
         bind( side==IntersectionSide::in?
@@ -274,6 +287,9 @@ namespace Dune
 
     protected:
       const DiscreteFunctionType* discreteFunction_;
+#ifndef NDEBUG
+      int thread_ = -1;
+#endif
     };
 
 
@@ -447,11 +463,32 @@ namespace Dune
           void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians ) const
           { hessianQuadrature(quadrature,hessians, PriorityTag<42>() ); }
 
-          void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
-          void unbind () { gridFunction_.unbind(); }
+          void bind ( const EntityType &entity )
+          {
+            // make sure that this local function is not bound by another thread
+            assert( thread_ >= 0 ? thread_ == ThreadManager::thread() : thread_ == -1 );
+            gridFunction_.bind( entity );
+#ifndef NDEBUG
+            thread_ = ThreadManager::thread();
+#endif
+          }
+          void unbind ()
+          {
+            gridFunction_.unbind();
+#ifndef NDEBUG
+            thread_ = -1;
+#endif
+          }
           template <class IntersectionType>
           void bind(const IntersectionType &intersection, IntersectionSide side)
-          { defaultIntersectionBind(gridFunction_,intersection, side); }
+          {
+            // make sure that this local function is not bound by another thread
+            assert( thread_ >= 0 ? thread_ == ThreadManager::thread() : thread_ == -1 );
+            defaultIntersectionBind(gridFunction_,intersection, side);
+#ifndef NDEBUG
+            thread_ = ThreadManager::thread();
+#endif
+          }
 
           const EntityType& entity() const
           {
@@ -508,6 +545,9 @@ namespace Dune
           { hessianQuadrature(quad,v); }
 
           GridFunctionType gridFunction_;
+#ifndef NDEBUG
+          int thread_ = -1;
+#endif
         };
       };
     } // namespace Impl
