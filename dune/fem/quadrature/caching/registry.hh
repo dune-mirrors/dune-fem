@@ -11,7 +11,6 @@
 
 // dune-fem includes
 #include <dune/fem/storage/singleton.hh>
-#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -57,6 +56,9 @@ namespace Dune
         return Singleton< QuadratureInfoListType > :: instance();
       }
 
+    private:
+      static inline void assertSingleThreadMode ( const bool );
+
     public:
       /** \brief initialize static variables */
       static void initialize ()
@@ -67,12 +69,7 @@ namespace Dune
 
       static void registerStorage ( StorageInterface &storage )
       {
-        // make sure we work in single thread mode
-        // when shape function sets are created
-        if( ! Fem :: MPIManager :: singleThreadMode() )
-        {
-          DUNE_THROW(SingleThreadModeError, "QuadratureStorageRegistry::registerStorage: only call in single thread mode!");
-        }
+        assertSingleThreadMode( false );
 
         storageList().push_back( &storage );
 
@@ -87,12 +84,7 @@ namespace Dune
 
       static void unregisterStorage ( StorageInterface &storage )
       {
-        // make sure we work in single thread mode
-        // when shape function sets are removed
-        if( ! Fem :: MPIManager :: singleThreadMode() )
-        {
-          DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::unregisterStorage: only call in single thread mode!");
-        }
+        assertSingleThreadMode( false );
 
         const StorageListType::iterator pos
           = std::find( storageList().begin(), storageList().end(), &storage );
@@ -110,12 +102,7 @@ namespace Dune
       static void registerQuadrature ( const Quadrature &quadrature,
                                        const GeometryType &type, std::size_t codim )
       {
-        // make sure we work in single thread mode
-        // when quadratures are registered
-        if( ! Fem :: MPIManager :: singleThreadMode() )
-        {
-          DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry::registerQuadrature: only call in single thread mode!");
-        }
+        assertSingleThreadMode( true );
 
         QuadratureInfo quadInfo = { quadrature.id(), codim, std::size_t( quadrature.nop() ), type };
         quadratureInfoList().push_back( quadInfo );
@@ -133,4 +120,22 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/fem/misc/mpimanager.hh>
+
+namespace Dune
+{
+  namespace Fem
+  {
+    inline void QuadratureStorageRegistry::assertSingleThreadMode(const bool quad)
+    {
+      // make sure we work in single thread mode
+      // when quadratures are registered
+      if( ! MPIManager::singleThreadMode() )
+      {
+        const char* text = quad ? "registerQuadrature" : "registerStorage";
+        DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry" << text << ": only call in single thread mode!");
+      }
+    }
+  }
+}
 #endif // #ifndef DUNE_FEM_QUADRATURE_CACHING_REGISTRY_HH
