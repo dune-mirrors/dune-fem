@@ -27,10 +27,29 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType      JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType       HessianRangeType;
       BindableGridFunction(const GridPart &gridPart)
-      : gridPart_(gridPart) {}
+      : gridPart_(gridPart)
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
+      {}
 
       void bind(const EntityType &entity)
       {
+#ifdef TESTTHREADING
+        if (thread_==-1) thread_ = MPIManager::thread();
+        if (thread_ != MPIManager::thread())
+        {
+          std::cout << "wrong thread number\n";
+          assert(0);
+          std::abort();
+        }
+        if (entity_ || geometry_)
+        {
+          std::cout << "BindableGF: bind called on object before unbind was called\n";
+          std::abort();
+        }
+#endif
+        assert(!entity_ && !geometry_); // this will fail with dune-fem-dg
         unbind();
 
         entity_.emplace( entity );
@@ -39,6 +58,14 @@ namespace Dune
 
       void unbind()
       {
+#ifdef TESTTHREADING
+        if (thread_ != MPIManager::thread())
+        {
+          std::cout << "wrong thread number\n";
+          assert(0);
+          std::abort();
+        }
+#endif
         geometry_.reset();
         entity_.reset();
       }
@@ -79,6 +106,9 @@ namespace Dune
       std::optional< EntityType > entity_;
       std::optional< Geometry > geometry_;
       const GridPart &gridPart_;
+#ifdef TESTTHREADING
+      int thread_;
+#endif
     };
 
     template <class GridPart, class Range>
