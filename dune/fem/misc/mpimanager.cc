@@ -10,6 +10,8 @@ namespace Dune
 {
   namespace Fem
   {
+    class QuadratureStorageRegistry;
+
     inline void MPIManager::initialize ( int &argc, char **&argv )
     {
       MPIHelper *&helper = instance().helper_;
