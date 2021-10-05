@@ -112,7 +112,7 @@ namespace Dune
         // store a static thread local variable for the thread number
         static int& threadNumber_()
         {
-          static thread_local int number = 0;
+          static thread_local int number = -1;
           return number;
         }
 #endif
@@ -237,6 +237,8 @@ namespace Dune
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
+          if (!singleThreadMode())
+            DUNE_THROW(InvalidStateException, "ThreadPool: run is running run");
           if constexpr(! useStdThreads )
           {
             runOpenMP(f, args...);
@@ -285,7 +287,7 @@ namespace Dune
 
         int numThreads() { return numThreads_; }
         int maxThreads() { return maxThreads_; }
-#if 1
+#if 0
         int threadNumber()
         {
           // if (singleThreadMode())

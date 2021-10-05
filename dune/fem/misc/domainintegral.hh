@@ -14,6 +14,7 @@
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/misc/threads/threaditerator.hh>
 #include <dune/fem/common/bindguard.hh>
 
