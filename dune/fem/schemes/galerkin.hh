@@ -1333,7 +1333,6 @@ namespace Dune
         }
         catch ( const SingleThreadModeError& e )
         {
-          //std::cout << "Caught " << e.what() << std::endl;
           // reset w from previous entries
           w.clear();
           // re-run in single thread mode if previous attempt failed
