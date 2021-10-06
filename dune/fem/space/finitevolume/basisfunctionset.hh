@@ -164,6 +164,7 @@ namespace Dune
       template< class QuadratureType, class DofVector, class HessianArray >
       void hessianAll ( const QuadratureType &quadrature, const DofVector &dofs, HessianArray &hessians ) const
       {
+        assert( hessians.size() >= quadrature.nop() );
         const unsigned int nop = quadrature.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
           hessians[qp] = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
