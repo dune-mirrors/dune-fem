@@ -10,7 +10,7 @@ git remote add origin https://gitlab.dune-project.org/dune-fem/dune-fempy.git
 git config core.sparsecheckout true
 echo 'demos/' > .git/info/sparse-checkout
 echo 'doc/'  >> .git/info/sparse-checkout
-git pull origin master
+git pull origin v2.8.0.0
 cp doc/*.py doc/*.ipynb doc/*.hh doc/*.dgf doc/*.msh ..
 cd ..
 rm -rf tmp
