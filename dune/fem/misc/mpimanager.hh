@@ -328,7 +328,7 @@ namespace Dune
           }
           numThreads_ = use;
         }
-        bool isMaster() { return threadNumber() == 0; }
+        bool isMainThread() { return threadNumber() == 0; }
       };
 
     } // end namespace detail
@@ -424,8 +424,11 @@ namespace Dune
       //! \brief return thread number
       static int thread() { return instance().pool_.threadNumber(); }
 
-      //! \brief return true if the current thread is the master thread (i.e. thread 0)
-      static bool isMaster() { return instance().pool_.isMaster(); }
+      //! \brief return true if the current thread is the main thread (i.e. thread 0)
+      static bool isMainThread() { return instance().pool_.isMainThread(); }
+
+      [[deprecated("use isMainThread() instead!")]]
+      static bool isMaster() { return isMainThread(); }
 
       //! \brief set number of threads available during next run
       static void setNumThreads( int use ) { instance().pool_.setNumThreads(use); }
