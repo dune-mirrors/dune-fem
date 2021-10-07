@@ -720,6 +720,11 @@ namespace Dune
       {
         static const bool v = true;
       };
+      template< class GridPart, class LocalDofMapping >
+      struct isConsecutiveIndexSet< __IndexSetDofMapper::DofMapper< GridPart, LocalDofMapping > >
+      {
+        static const bool v = true;
+      };
 
     } // namespace Capabilities
 
