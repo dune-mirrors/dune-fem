@@ -114,11 +114,16 @@ namespace Dune
 
         typedef GridPart GridPartType;
         typedef LocalDofMapping LocalDofMappingType;
+        typedef typename GridPart::GridType GridType;
 
         typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
         template< class CodeFactory >
         DofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory );
+        ~DofMapper ()
+        {
+          DofManager< typename GridPartType::GridType >::instance( grid_ ).removeIndexSet( *this );
+        }
 
         // mapping for DoFs
         /** \brief map each local DoF number to a global one
@@ -229,6 +234,24 @@ namespace Dune
         }
 
         /* \} */
+        template< class Entity >
+        void insertEntity ( const Entity &entity )
+        {
+          DUNE_THROW( NotImplemented, "Method insertEntity(entity) called on non-adaptive block mapper" );
+        }
+        template< class Entity >
+        void removeEntity ( const Entity &entity )
+        {
+          DUNE_THROW( NotImplemented, "Method removeEntity(entity) called on non-adaptive block mapper" );
+        }
+        void resize () { update(); }
+        bool compress () { update(); return true;}
+        void backup () const {}
+        void restore () {}
+        template <class StreamTraits>
+        void write( OutStreamInterface< StreamTraits >& out ) const {}
+        template <class StreamTraits>
+        void read( InStreamInterface< StreamTraits >& in ) { update(); }
 
       protected:
         //! submit request for codimensions used to index set
@@ -253,6 +276,7 @@ namespace Dune
         std::vector< SubEntityInfo > subEntityInfo_;
         BlockMapType blockMap_;
         CodimType codimType_[ dimension+1 ];
+        const GridType& grid_;
       };
 
 
@@ -302,8 +326,10 @@ namespace Dune
         localDofMapping_( std::move( localDofMapping ) ),
         code_( LocalGeometryTypeIndex::size( dimension ) ),
         maxNumDofs_( 0 ),
-        subEntityInfo_( GlobalGeometryTypeIndex::size( dimension ) )
+        subEntityInfo_( GlobalGeometryTypeIndex::size( dimension ) ),
+        grid_(gridPart.grid())
       {
+        DofManager< typename GridPartType::GridType >::instance( grid_ ).addIndexSet( *this );
         std::vector< GeometryType > gt( GlobalGeometryTypeIndex::size( dimension ) );
 
         const typename RefElementsType::Iterator end = RefElementsType::end();
