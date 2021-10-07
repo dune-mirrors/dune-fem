@@ -122,6 +122,10 @@ namespace Dune
       public LocalInlinePlus < ManagedIndexSet<IndexSetType,EntityType> , EntityType >
     {
       typedef LocalInterface<EntityType> LocalIndexSetObjectsType;
+
+      static const bool isConsecutive =
+        Capabilities::isConsecutiveIndexSet<IndexSetType>::v;
+
     protected:
       // the dof set stores number of dofs on entity for each codim
       IndexSetType & indexSet_;
@@ -130,7 +134,6 @@ namespace Dune
       InsertIndicesToSet   <IndexSetType, EntityType> insertIdxObj_;
       RemoveIndicesFromSet <IndexSetType, EntityType> removeIdxObj_;
 
-      LocalIndexSetObjectsType & indexSetList_;
       LocalIndexSetObjectsType & insertList_;
       LocalIndexSetObjectsType & removeList_;
 
@@ -140,31 +143,27 @@ namespace Dune
 
       //! Constructor of MemObject, only to call from DofManager
       ManagedIndexSet ( const IndexSetType & iset,
-                        LocalIndexSetObjectsType & indexSetList,
                         LocalIndexSetObjectsType & insertList,
                         LocalIndexSetObjectsType & removeList )
        : BaseType( iset )
        , indexSet_ (const_cast<IndexSetType &> (iset))
        , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_)
-       , indexSetList_(indexSetList)
        , insertList_(insertList)
        , removeList_(removeList)
       {
         this->setPtr_ = (void *) &indexSet_;
 
-        indexSetList_ += *this;
-        if( Capabilities::isConsecutiveIndexSet<IndexSetType>::v )
+        if constexpr ( isConsecutive )
         {
           insertList_ += insertIdxObj_;
           removeList_ += removeIdxObj_;
         }
       }
 
-      //! desctructor
+      //! destructor
       ~ManagedIndexSet ()
       {
-        indexSetList_.remove( *this );
-        if( Capabilities::isConsecutiveIndexSet<IndexSetType>::v )
+        if constexpr ( isConsecutive )
         {
           insertList_.remove( insertIdxObj_ );
           removeList_.remove( removeIdxObj_ );
@@ -805,8 +804,6 @@ namespace Dune
       typedef const ElementType  ConstElementType;
       typedef LocalInterface< ConstElementType > LocalIndexSetObjectsType;
 
-      mutable LocalIndexSetObjectsType indexSets_;
-
       mutable LocalIndexSetObjectsType insertIndices_;
       mutable LocalIndexSetObjectsType removeIndices_;
 
@@ -1279,7 +1276,7 @@ namespace Dune
 
       if( !indexSet )
       {
-        indexSet = new ManagedIndexSetType ( iset, indexSets_ , insertIndices_ , removeIndices_  );
+        indexSet = new ManagedIndexSetType ( iset, insertIndices_ , removeIndices_  );
         indexList_.push_back( static_cast< ManagedIndexSetInterface * >( indexSet ) );
       }
     }
