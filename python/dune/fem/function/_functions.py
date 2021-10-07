@@ -92,15 +92,24 @@ def cppFunction(gridView, name, order, fctName, includes,
     return dune.ufl.GridFunction( gf )
 
 def _assertSizesMatch(space, dofVector):
-
     # only allow contiguous arrays as dof vectors
-    assert dofVector.data.contiguous, "dofVector needs to provide a contiguous data memory, sliced arrays are not supported!"
+    try:
+        assert dofVector.data.contiguous, "dofVector needs to provide a contiguous data memory, sliced arrays are not supported!"
+    except AttributeError:
+        pass
 
     # only allow arrays with one dimensional shapes
-    assert len(dofVector.shape) == 1, "dofVector should be a simple array, i.e. len(shape) == 1"
+    try:
+        assert len(dofVector.shape) == 1, "dofVector should be a simple array, i.e. len(shape) == 1"
+    except AttributeError:
+        pass
 
     # check that sizes and data size match
-    assert space.size == len(dofVector), f"space (size={space.size}) and vector (size={len(dofVector)}) do not match!"
+    try:
+        assert space.size == len(dofVector), f"space (size={space.size}) and vector (size={len(dofVector)}) do not match!"
+    except TypeError:
+        assert space.size == dofVector.size, f"space (size={space.size}) and vector (size={dofVector.size}) do not match!"
+
     if hasattr(dofVector, "dtype"):
         dtype = dofVector.dtype
         itemsize = np_dtype(dofVector.dtype).itemsize
