@@ -52,13 +52,13 @@ namespace Dune
     namespace __IndexSetDofMapper
     {
 
-      // DofMapper
-      // ---------
+      // DofMapperBase
+      // -------------
 
       template< class GridPart, class LocalDofMapping >
-      class DofMapper
+      class DofMapperBase
       {
-        typedef DofMapper< GridPart, LocalDofMapping > ThisType;
+        typedef DofMapperBase< GridPart, LocalDofMapping > ThisType;
 
       public:
         typedef std::size_t SizeType;
@@ -114,11 +114,12 @@ namespace Dune
 
         typedef GridPart GridPartType;
         typedef LocalDofMapping LocalDofMappingType;
+        typedef typename GridPart::GridType GridType;
 
         typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
         template< class CodeFactory >
-        DofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory );
+        DofMapperBase ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory );
 
         // mapping for DoFs
         /** \brief map each local DoF number to a global one
@@ -228,6 +229,26 @@ namespace Dune
           DUNE_THROW( NotImplemented, "Method offSet() called on non-adaptive block mapper" );
         }
 
+        template< class Entity >
+        void insertEntity ( const Entity &entity )
+        {
+          DUNE_THROW( NotImplemented, "Method insertEntity(entity) called on non-adaptive block mapper" );
+        }
+        template< class Entity >
+        void removeEntity ( const Entity &entity )
+        {
+          DUNE_THROW( NotImplemented, "Method removeEntity(entity) called on non-adaptive block mapper" );
+        }
+
+        void resize () { update(); }
+        bool compress () { update(); return true;}
+        void backup () const {}
+        void restore () {}
+        template <class StreamTraits>
+        void write( OutStreamInterface< StreamTraits >& out ) const {}
+        template <class StreamTraits>
+        void read( InStreamInterface< StreamTraits >& in ) { update(); }
+
         /* \} */
 
       protected:
@@ -261,7 +282,7 @@ namespace Dune
       // -----------------------
 
       template< class GridPart, class LocalDofMapping >
-      struct DofMapper< GridPart, LocalDofMapping >::BuildFunctor
+      struct DofMapperBase< GridPart, LocalDofMapping >::BuildFunctor
       {
         explicit BuildFunctor ( std::vector< SubEntityInfo > &subEntityInfo )
         : subEntityInfo_( subEntityInfo )
@@ -289,12 +310,12 @@ namespace Dune
       // ---------------------------
 
       template< class GridPart, class LocalDofMapping >
-      const int DofMapper< GridPart, LocalDofMapping >::dimension;
+      const int DofMapperBase< GridPart, LocalDofMapping >::dimension;
 
       template< class GridPart, class LocalDofMapping >
       template< class CodeFactory >
-      inline DofMapper< GridPart, LocalDofMapping >
-        ::DofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
+      inline DofMapperBase< GridPart, LocalDofMapping >
+        ::DofMapperBase ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
       // NOTE: Don't store gridPart in this class since the lifetime of gridPart
       // might be shorter than the lifetime of this class. The lifetime of
       // indexSet is guaranteed to be longer, so storage of that class is fine
@@ -368,7 +389,7 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       template< class Functor >
-      inline void DofMapper< GridPart, LocalDofMapping >
+      inline void DofMapperBase< GridPart, LocalDofMapping >
         ::mapEach ( const ElementType &element, Functor f ) const
       {
         const auto &idxSet = indexSet();
@@ -383,7 +404,7 @@ namespace Dune
 
 
       template< class GridPart, class LocalDofMapping >
-      inline void DofMapper< GridPart, LocalDofMapping >
+      inline void DofMapperBase< GridPart, LocalDofMapping >
         ::map ( const ElementType &element, std::vector< SizeType > &indices ) const
       {
         indices.resize( numDofs( element ) );
@@ -392,7 +413,7 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       template< class Entity, class Functor >
-      inline void DofMapper< GridPart, LocalDofMapping >
+      inline void DofMapperBase< GridPart, LocalDofMapping >
         ::mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
         const SubEntityInfo &info = subEntityInfo( entity );
@@ -405,7 +426,7 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       template< class Entity >
-      inline void DofMapper< GridPart, LocalDofMapping >
+      inline void DofMapperBase< GridPart, LocalDofMapping >
         ::mapEntityDofs ( const Entity &entity, std::vector< SizeType > &indices ) const
       {
         indices.resize( numEntityDofs( entity ) );
@@ -413,7 +434,7 @@ namespace Dune
       }
 
       template< class GridPart, class LocalDofMapping >
-      inline void DofMapper< GridPart, LocalDofMapping >
+      inline void DofMapperBase< GridPart, LocalDofMapping >
         ::onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
       {
         const SubEntityFilter filter( RefElementsType::general( element.type() ), i, c );
@@ -428,7 +449,7 @@ namespace Dune
       template< class GridPart, class LocalDofMapping >
       template< class Entity >
       inline unsigned int
-      DofMapper< GridPart, LocalDofMapping >
+      DofMapperBase< GridPart, LocalDofMapping >
         ::numEntityDofs ( const Entity &entity ) const
       {
         return subEntityInfo( entity ).numDofs;
@@ -436,7 +457,7 @@ namespace Dune
 
 
       template< class GridPart, class LocalDofMapping >
-      inline void DofMapper< GridPart, LocalDofMapping >::requestCodimensions ()
+      inline void DofMapperBase< GridPart, LocalDofMapping >::requestCodimensions ()
       {
         // collect all available codimensions
         std::vector< int > codimensions;
@@ -453,7 +474,7 @@ namespace Dune
       }
 
       template< class GridPart, class LocalDofMapping >
-      inline void DofMapper< GridPart, LocalDofMapping >::update ()
+      inline void DofMapperBase< GridPart, LocalDofMapping >::update ()
       {
         size_ = 0;
         for( const auto& geomType : blockMap_ )
@@ -467,7 +488,7 @@ namespace Dune
 
 
       template< class GridPart, class LocalDofMapping >
-      inline const DofMapperCode &DofMapper< GridPart, LocalDofMapping >
+      inline const DofMapperCode &DofMapperBase< GridPart, LocalDofMapping >
         ::code ( const GeometryType &gt ) const
       {
         return code_[ LocalGeometryTypeIndex::index( gt ) ];
@@ -476,12 +497,54 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       template< class Entity >
-      inline const typename DofMapper< GridPart, LocalDofMapping >::SubEntityInfo &
-      DofMapper< GridPart, LocalDofMapping >::subEntityInfo ( const Entity &entity ) const
+      inline const typename DofMapperBase< GridPart, LocalDofMapping >::SubEntityInfo &
+      DofMapperBase< GridPart, LocalDofMapping >::subEntityInfo ( const Entity &entity ) const
       {
         return subEntityInfo_[ GlobalGeometryTypeIndex::index( entity.type() ) ];
       }
 
+
+
+      // DofMapper
+      // ---------
+
+      template< class GridPart, class LocalDofMapping >
+      class DofMapper
+        : public DofMapperBase< GridPart, LocalDofMapping >
+      {
+        typedef DofMapper< GridPart, LocalDofMapping > ThisType;
+        typedef DofMapperBase< GridPart, LocalDofMapping > BaseType;
+
+      protected:
+        typedef typename BaseType::SubEntityInfo SubEntityInfo;
+        typedef typename BaseType::GridPartType::GridType GridType;
+        typedef DofManager< GridType > DofManagerType;
+
+      public:
+        typedef typename BaseType::GridPartType GridPartType;
+        typedef typename BaseType::LocalDofMappingType LocalDofMappingType;
+        typedef typename BaseType::SizeType SizeType;
+
+        template< class CodeFactory >
+        DofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
+          : BaseType( gridPart, std::move( localDofMapping ), codeFactory ),
+            dofManager_( DofManagerType::instance( gridPart.grid() ) )
+        {
+          dofManager_.addIndexSet( *this );
+        }
+
+        DofMapper ( const ThisType & ) = delete;
+
+        ~DofMapper ()
+        {
+          dofManager_.removeIndexSet( *this );
+        }
+
+        ThisType &operator= ( const ThisType & ) = delete;
+
+      protected:
+        DofManagerType& dofManager_;
+      };
 
 
       // AdaptiveDofMapper
@@ -489,14 +552,15 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       class AdaptiveDofMapper
-        : public DofMapper< GridPart, LocalDofMapping >
+        : public DofMapperBase< GridPart, LocalDofMapping >
       {
         typedef AdaptiveDofMapper< GridPart, LocalDofMapping > ThisType;
-        typedef DofMapper< GridPart, LocalDofMapping > BaseType;
+        typedef DofMapperBase< GridPart, LocalDofMapping > BaseType;
 
       protected:
         typedef typename BaseType::SubEntityInfo SubEntityInfo;
         typedef typename BaseType::GridPartType::GridType GridType;
+        typedef DofManager< GridType > DofManagerType;
 
       public:
         typedef typename BaseType::GridPartType GridPartType;
@@ -506,22 +570,22 @@ namespace Dune
         template< class CodeFactory >
         AdaptiveDofMapper ( const GridPartType &gridPart, LocalDofMappingType localDofMapping, const CodeFactory &codeFactory )
           : BaseType( gridPart, std::move( localDofMapping ), codeFactory ),
-            // store grid (which is a unique object) for later removal of object
-            grid_( gridPart.grid() )
+            dofManager_( DofManagerType::instance( gridPart.grid() ) )
         {
-          DofManager< typename GridPartType::GridType >::instance( grid_ ).addIndexSet( *this );
+          dofManager_.addIndexSet( *this );
         }
 
         AdaptiveDofMapper ( const ThisType & ) = delete;
 
         ~AdaptiveDofMapper ()
         {
-          DofManager< typename GridPartType::GridType >::instance( grid_ ).removeIndexSet( *this );
+          dofManager_.removeIndexSet( *this );
         }
 
         ThisType &operator= ( const ThisType & ) = delete;
 
         // Adaptive DoF mappers are always up to date, so this method does nothing.
+        // update is done several times during insertEntity
         void update () {}
 
         // adaptation interface
@@ -567,7 +631,7 @@ namespace Dune
         using BaseType::blockMap_;
         using BaseType::subEntityInfo_;
 
-        const GridType& grid_;
+        DofManagerType& dofManager_;
       };
 
 
