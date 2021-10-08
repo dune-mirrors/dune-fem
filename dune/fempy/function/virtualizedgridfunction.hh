@@ -111,11 +111,14 @@ namespace Dune
       struct DUNE_PRIVATE Implementation final
         : public Interface
       {
-        static_assert( !std::is_reference<Impl>::value );
-        Implementation ( const Impl &impl ) :
-          impl_( impl ) {}
-        virtual Interface *clone () const override
-        { return new Implementation( impl().gridFunction() ); }
+        typedef typename std::remove_reference<GF>::type GFType;
+
+        Implementation ( const GF& gf ) :
+          impl_( gf )
+        {
+        }
+
+        virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const override { impl().evaluate( x, value ); }
         virtual void evaluate ( const CachingPoint &x, RangeType &value ) const override { impl().evaluate( asQP( x ), value ); }
@@ -144,8 +147,8 @@ namespace Dune
         { impl_.bind(intersection, side); }
         virtual void unbind() override { impl_.unbind(); }
       private:
-        const auto &impl () const {return impl_;}// { using std::cref; return cref( impl_ ).get(); }
-        auto &impl () {return impl_;}// { using std::ref; return ref( impl_ ).get(); }
+        const auto &impl () const { return impl_; }
+        auto &impl () { return impl_; }
 
         Fem::ConstLocalFunction< GFType > impl_;
       };

@@ -12,8 +12,6 @@
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
 
-#include <dune/fem/misc/mpimanager.hh>
-
 namespace Dune
 {
 
@@ -288,10 +286,6 @@ namespace Dune
 #endif
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
         discreteFunction().getLocalDofs( entity, localDofVector() );
-
-#ifndef NDEBUG
-        thread_ = ThreadManager::thread();
-#endif
       }
 
       void bind ( const EntityType &entity ) { init( entity ); }
@@ -304,7 +298,6 @@ namespace Dune
           assert(0);
           std::abort();
         }
->>>>>>> added some thread testing to the bind/unbind methods of the const local function and bindable grid functions
 #endif
       }
       void bind(const IntersectionType &intersection, IntersectionSide side)
@@ -532,12 +525,16 @@ namespace Dune
           template <class IntersectionType>
           void bind(const IntersectionType &intersection, IntersectionSide side)
           {
-            // make sure that this local function is not bound by another thread
-            assert( thread_ >= 0 ? thread_ == ThreadManager::thread() : thread_ == -1 );
-            defaultIntersectionBind(gridFunction_,intersection, side);
-#ifndef NDEBUG
-            thread_ = ThreadManager::thread();
+#ifdef TESTTHREADING
+            if (thread_ == -1) thread_ = MPIManager::thread();
+            if (thread_ != MPIManager::thread())
+            {
+              std::cout << "wrong thread number\n";
+              assert(0);
+              std::abort();
+            }
 #endif
+            defaultIntersectionBind(gridFunction_,intersection, side);
           }
 
           const EntityType& entity() const

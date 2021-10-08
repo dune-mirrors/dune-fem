@@ -206,7 +206,7 @@ namespace Dune
           // spawn max number of threads to use
           ThreadPool::threadNumber_() = 0;
 #ifdef USE_SMP_PARALLEL
-          if( useStdThreads )
+          if constexpr( useStdThreads )
           {
             numbers_[std::this_thread::get_id()] = 0;
             for (int t=1;t<maxThreads_;++t)
@@ -244,7 +244,6 @@ namespace Dune
             runOpenMP(f, args...);
             return ;
           }
-
           if ( numThreads_==1 )
             f(args...);
           else

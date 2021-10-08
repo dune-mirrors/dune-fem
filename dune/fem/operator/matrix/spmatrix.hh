@@ -674,10 +674,12 @@ namespace Dune
               std::cout << "Max number of base functions = (" << rangeMapper_.maxNumDofs() << ","
                 << domainMapper_.maxNumDofs() << ")" << std::endl;
             }
+
             // reserve matrix
             const auto nonZeros = std::max( static_cast<size_type>(stencil.maxNonZerosEstimate()*DomainSpaceType::localBlockSize),
                                             matrix_.maxNzPerRow() );
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros );
+            matrix_.fillPattern( stencil, RangeSpaceType::localBlockSize, DomainSpaceType::localBlockSize );
           }
           sequence_ = domainSpace_.sequence();
         }
