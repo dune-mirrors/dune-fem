@@ -559,7 +559,7 @@ namespace Dune
                                     const LocalMatrix &localMat, const Operation& operation,
                                     const std::integral_constant< bool, T> scaled )
       {
-        std::vector< PetscScalar >& v = v_;
+        std::vector< PetscScalar >& v = *(v_);
         v.resize( rSize * cSize );
         for( unsigned int i = 0, ic = 0 ; i< rSize; ++i )
         {
@@ -577,8 +577,8 @@ namespace Dune
                               PetscOp petscOp,
                               const std::integral_constant<bool, T> scaled )
       {
-        std::vector< PetscInt >& r = r_;
-        std::vector< PetscInt >& c = c_;
+        std::vector< PetscInt >& r = *(r_);
+        std::vector< PetscInt >& c = *(c_);
 
         if( blockedMode_ )
         {
@@ -657,9 +657,9 @@ namespace Dune
 #endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = r_;
-        std::vector< PetscInt >&  c = c_;
-        std::vector< PetscScalar >& v = v_;
+        std::vector< PetscInt >&  r = *(r_);
+        std::vector< PetscInt >&  c = *(c_);
+        std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
         setupIndices( domainMappers_, domainEntity, c );
@@ -684,9 +684,9 @@ namespace Dune
 #endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = r_;
-        std::vector< PetscInt >&  c = c_;
-        std::vector< PetscScalar >& v = v_;
+        std::vector< PetscInt >&  r = *(r_);
+        std::vector< PetscInt >&  c = *(c_);
+        std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
         setupIndices( domainMappers_, domainEntity, c );
@@ -784,9 +784,9 @@ namespace Dune
       mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;
 
-      mutable std::vector< PetscScalar > v_;
-      mutable std::vector< PetscInt    > r_;
-      mutable std::vector< PetscInt    > c_;
+      mutable ThreadSafeValue< std::vector< PetscScalar > > v_;
+      mutable ThreadSafeValue< std::vector< PetscInt    > > r_;
+      mutable ThreadSafeValue< std::vector< PetscInt    > > c_;
 
       mutable std::vector< PetscInt    > unitRows_;
     };
