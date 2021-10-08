@@ -67,7 +67,7 @@ def model(space,epsilon,weakBnd,skeleton,useMol):
         solver={"solver":("suitesparse","umfpack")}
     else:
         solver={"solver":"bicgstab",
-                "parameters":{"newton.linear.preconditioning.method":"ilu",
+                "parameters":{"newton.linear.preconditioning.method":"jacobi",
                               "newton.linear.tolerance":1e-13}
                }
     if useMol:
@@ -86,6 +86,11 @@ def compute(scheme, uh, A, exact ):
     scheme.jacobian(uh,A)
     runTime += [time.time()-start]
     start = time.time()
+    for i in range(20):
+        scheme(uh,uh.copy())
+        scheme.jacobian(uh,A)
+    runTime += [time.time()-start]
+    start = time.time()
     error = math.sqrt( integrate(uh.space.grid,dot(uh-exact,uh-exact),order=5) )
     runTime += [time.time()-start]
     return runTime, error
@@ -98,7 +103,7 @@ def newGridView(N=4):
     return leafGridView(ctor)
 
 def test(spaceCtor,skeleton,useMol):
-    stages = ["evaluate","assemble","integrate"]
+    stages = ["evaluate","assemble","(eval+ass)x20","integrate"]
     defaultThreads = dune.fem.threading.use
     runtimes = []
     # the operator is run once when setting up the linear operator in the 'model'
@@ -142,7 +147,7 @@ def test(spaceCtor,skeleton,useMol):
        x = str(round(x,2))
        if len(x)<4: x = x+"0"
        return x
-    for i in range(3):
+    for i in range( len(stages) ):
         print(stages[i])
         for x in runtimes:
             for y in runtimes:

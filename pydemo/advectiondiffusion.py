@@ -71,7 +71,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
                               "newton.linear.tolerance":1e-13,
-                              "newton.verbose": True, "newton.linear.verbose": True}
+                              "newton.verbose": True, "newton.linear.verbose": False}
                }
     if mol == 'mol':
         scheme = molSolutionScheme([form==rhs,strongBC], **solver)

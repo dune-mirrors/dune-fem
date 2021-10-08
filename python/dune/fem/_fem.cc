@@ -137,7 +137,11 @@ PYBIND11_MODULE( _fem, module )
            pybind11::return_value_policy::reference );
 
     // add finalize method for MPI and PETSc
-    module.def( "__finalizeFemModule__", [] () { Dune::Fem::MPIManager::finalize(); } );
+    module.def( "__finalizeFemModule__", [] () {
+        pybind11::module gc = pybind11::module::import("gc");
+        gc.attr("collect")();
+        Dune::Fem::MPIManager::finalize();
+        } );
 
     mpiManagerCls.def_property_readonly_static("max",
                         [](pybind11::object){ return Dune::Fem::MPIManager::maxThreads(); });
