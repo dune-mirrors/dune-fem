@@ -113,10 +113,10 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
                 raise ValueError("no space provided and could not deduce from form provided")
         from dune.fem.model._models import elliptic
         if modelParam:
-            model = elliptic(space.grid,model,*modelParam,
+            model = elliptic(space.gridView,model,*modelParam,
                       modelPatch=transform(space,penalty))
         else:
-            model = elliptic(space.grid,model,
+            model = elliptic(space.gridView,model,
                       modelPatch=transform(space,penalty))
 
     spaceType = space._typeName
@@ -128,9 +128,9 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
     if isinstance(model,Equation):
         from dune.fem.model._models import elliptic
         if modelParam:
-            model = elliptic(space.grid,model,*modelParam)
+            model = elliptic(space.gridView,model,*modelParam)
         else:
-            model = elliptic(space.grid,model)
+            model = elliptic(space.gridView,model)
     if penaltyClass is None:
         penaltyClass = "DefaultPenalty<"+spaceType+">"
     includes = ["dune/fem/schemes/dgelliptic.hh"]
@@ -188,9 +188,9 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
                 pass
         from dune.fem.model._models import integrands as makeIntegrands
         if integrandsParam:
-            integrands = makeIntegrands(space.grid,integrands,*integrandsParam)
+            integrands = makeIntegrands(space.gridView,integrands,*integrandsParam)
         else:
-            integrands = makeIntegrands(space.grid,integrands)
+            integrands = makeIntegrands(space.gridView,integrands)
     elif not integrands._typeName.startswith("Integrands"):
         raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
     if not hasattr(space,"interpolate"):
@@ -277,9 +277,9 @@ def h1(model, space=None, solver=None, parameters={}):
                 raise ValueError("no space provided and could not deduce from form provided")
         from dune.fem.model._models import elliptic
         if modelParam:
-            model = elliptic(space.grid,model,*modelParam)
+            model = elliptic(space.gridView,model,*modelParam)
         else:
-            model = elliptic(space.grid,model)
+            model = elliptic(space.gridView,model)
 
     if not hasattr(space,"interpolate"):
         raise ValueError("wrong space given")

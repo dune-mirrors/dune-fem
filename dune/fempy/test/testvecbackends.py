@@ -21,7 +21,7 @@ f1 = s.function("tmp", [2,1], blockVector(s.size//s.localBlockSize,s.localBlockS
 f2 = s.function("tmp", [2,1], blockVector(s.size//s.localBlockSize,s.localBlockSize) )
 operator(f1,f2)
 
-s = create.space("lagrange",g,dimRange=2,storage="fem")
+s = create.space("lagrange",g,dimRange=2,storage="numpy")
 f1 = s.interpolate([2,1], name="tmp")
 dofs = numpy.ndarray(s.size)
 f2 = s.function("tmp", [2,1], dofs)

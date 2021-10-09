@@ -35,7 +35,7 @@ def evaluate(expression, grid=None, space=None, target=None, coordinate=None):
     elif isinstance(expression, ufl.Form):
         if check_form_arity(expression, arguments) == 0:
             assert grid or space
-            if not grid: grid = space.grid
+            if not grid: grid = space.gridView
             pass # integrate function
         if check_form_arity(expression, arguments) == 1:
             assert space

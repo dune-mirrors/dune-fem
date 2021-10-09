@@ -3,6 +3,7 @@ import inspect
 import sys
 import os
 
+from dune.deprecate import deprecated
 import dune.common.module
 from dune.common.utility import isString
 from dune.generator.generator import SimpleGenerator
@@ -39,7 +40,7 @@ def interpolate(space, expr, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
-    expr = _uflToExpr(space.grid,space.order,expr)
+    expr = _uflToExpr(space.gridView,space.order,expr)
     if name is None:
         try:
             name = expr.name
@@ -58,7 +59,7 @@ def project(space, func, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
-    expr = _uflToExpr(space.grid,space.order,func)
+    expr = _uflToExpr(space.gridView,space.order,func)
     if name is None:
         name = func.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
@@ -75,7 +76,7 @@ def dfInterpolate(self, f):
         func = f.gf
         dimExpr = func.dimRange
     elif isinstance(f, ufl.core.expr.Expr):
-        func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+        func = expression2GF(self.space.gridView,f,self.space.order).as_ufl()
         if func.ufl_shape == ():
             dimExpr = 1
         else:
@@ -92,11 +93,11 @@ def dfInterpolate(self, f):
                 dimExpr = len(func)
         if func is None:
             if gl == 1:   # global function
-                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f).gf
+                func = function.globalFunction(self.space.gridView, "tmp", self.space.order, f).gf
             elif gl == 2: # local function
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, f).gf
+                func = function.localFunction(self.space.gridView, "tmp", self.space.order, f).gf
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x)).gf
+                func = function.localFunction(self.space.gridView, "tmp", self.space.order, lambda en,x: f(en,x)).gf
             dimExpr = func.dimRange
 
     if dimExpr == 0:
@@ -108,7 +109,8 @@ def dfInterpolate(self, f):
             + str(self.space.dimRange))
 
     try:
-        assert func.grid == self.grid, "can only interpolate with same grid views"
+        # API GridView: assert func.gridView == self.gridView, "can only interpolate with same grid views"
+        assert func.grid == self.gridView, "can only interpolate with same grid views"
         assert func.dimRange == self.dimRange, "range dimension mismatch"
     except AttributeError:
         pass
@@ -123,7 +125,7 @@ def dfProject(self, f):
         func = f.gf
         dimExpr = func.dimRange
     elif isinstance(f, ufl.core.expr.Expr):
-        func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
+        func = expression2GF(self.space.gridView,f,self.space.order).as_ufl()
         if func.ufl_shape == ():
             dimExpr = 1
         else:
@@ -140,11 +142,11 @@ def dfProject(self, f):
                 dimExpr = len(func)
         if func is None:
             if gl == 1:   # global function
-                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f).gf
+                func = function.globalFunction(self.space.gridView, "tmp", self.space.order, f).gf
             elif gl == 2: # local function
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, f).gf
+                func = function.localFunction(self.space.gridView, "tmp", self.space.order, f).gf
             elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x)).gf
+                func = function.localFunction(self.space.gridView, "tmp", self.space.order, lambda en,x: f(en,x)).gf
             dimExpr = func.dimRange
 
     if dimExpr == 0:
@@ -218,12 +220,6 @@ def addBackend(Df,backend):
         return None
     setattr(Df,backend,property(backend_))
 
-def storageToSolver(storage):
-    if storage == "adaptive":
-        return "fem"
-    else:
-        return str(storage)
-
 generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
 def addAttr(module, self, field, scalar, codegen):
@@ -237,6 +233,12 @@ def addAttr(module, self, field, scalar, codegen):
             lambda moduleName,interiorQuadratureOrders, skeletonQuadratureOrders:
                   _codegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders)
            )
+
+    @deprecated(msg="Use 'gridView' instead",name="grid")
+    def grid(self):
+        return self.gridView
+    self.__class__.grid = property(grid)
+
     DF = module.DiscreteFunction
     if hasattr(DF,"_project"):
         setattr(self, "project",
@@ -247,11 +249,11 @@ def addAttr(module, self, field, scalar, codegen):
 
 def addStorage(obj, storage):
     if not storage:
-        storage = str("fem")
+        storage = str("numpy")
     if isString(storage):
         import dune.create as create
-        assert storageToSolver(storage), "wrong storage (" + storage + ") passed to space"
-        storage = create.discretefunction(storageToSolver(storage))(obj)
+        assert storage, "wrong storage (" + storage + ") passed to space"
+        storage = create.discretefunction(storage)(obj)
     else:
         storage = storage(obj)
     setattr(obj, "storage", storage)
@@ -291,7 +293,7 @@ def addDiscreteFunction(space, storage):
                      'return new DuneType(name,space);'],
                     ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
                    ]
-    elif storage == "fem":
+    elif storage == "numpy" or storage == "fem":
         ctor = [Constructor(['const std::string &name', 'const ' +
             spaceType + '&space', 'pybind11::array_t<double> dofVector'],
                 ['double *dof = static_cast< double* >( dofVector.request(false).ptr );',

@@ -88,7 +88,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    version = "v1_1"
+    version = "v1_2"
     def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
         gridType = grid._typeName
