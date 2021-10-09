@@ -16,6 +16,7 @@
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/fmatrixconverter.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
@@ -577,8 +578,9 @@ namespace Dune
                               PetscOp petscOp,
                               const std::integral_constant<bool, T> scaled )
       {
-        std::vector< PetscInt >& r = *(r_);
-        std::vector< PetscInt >& c = *(c_);
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
 
         if( blockedMode_ )
         {
@@ -657,8 +659,9 @@ namespace Dune
 #endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = *(r_);
-        std::vector< PetscInt >&  c = *(c_);
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
         std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
@@ -684,8 +687,9 @@ namespace Dune
 #endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = *(r_);
-        std::vector< PetscInt >&  c = *(c_);
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
         std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
@@ -785,8 +789,7 @@ namespace Dune
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;
 
       mutable ThreadSafeValue< std::vector< PetscScalar > > v_;
-      mutable ThreadSafeValue< std::vector< PetscInt    > > r_;
-      mutable ThreadSafeValue< std::vector< PetscInt    > > c_;
+      mutable ThreadSafeValue< std::pair< std::vector< PetscInt >, std::vector< PetscInt > > > rcTemp_;
 
       mutable std::vector< PetscInt    > unitRows_;
     };
