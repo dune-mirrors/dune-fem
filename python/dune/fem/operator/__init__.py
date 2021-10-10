@@ -78,9 +78,9 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
             except AttributeError:
                 raise ValueError("no domain space provided and could not deduce from form provided")
         if modelParam:
-            integrands = makeIntegrands(domainSpace.grid,integrands,*modelParam)
+            integrands = makeIntegrands(domainSpace.gridView,integrands,*modelParam)
         else:
-            integrands = makeIntegrands(domainSpace.grid,integrands)
+            integrands = makeIntegrands(domainSpace.gridView,integrands)
 
     if virtualize is None:
         virtualize = integrands.virtualized
@@ -170,9 +170,9 @@ def h1(model, domainSpace=None, rangeSpace=None):
             except AttributeError:
                 raise ValueError("no domain space provided and could not deduce from form provided")
         if modelParam:
-            model = makeElliptic(domainSpace.grid,model,*modelParam)
+            model = makeElliptic(domainSpace.gridView,model,*modelParam)
         else:
-            model = makeElliptic(domainSpace.grid,model)
+            model = makeElliptic(domainSpace.gridView,model)
 
     if not hasattr(rangeSpace,"interpolate"):
         raise ValueError("wrong range space")

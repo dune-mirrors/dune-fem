@@ -7,7 +7,7 @@ import dune.create as create
 
 grid = structuredGrid([0,0],[1,1],[10,10])
 
-fvspc = create.space("finitevolume", grid, dimRange=2, storage="fem")
+fvspc = create.space("finitevolume", grid, dimRange=2, storage="numpy")
 estimate = fvspc.interpolate([1,1], name="estimate")
 
 lf = estimate.localFunction(grid.elements.__next__())

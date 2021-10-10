@@ -346,9 +346,12 @@ def fieldVectorType(shape, field = None, useScalar = False):
 
 def gridPartType(gf):
     try:
-        gv = gf.space.grid._typeName
-    except:
-        gv = gf.grid._typeName
+        gv = gf.space.gridView._typeName
+    except AttributeError:
+        try:
+            gv = gf.gridView._typeName
+        except AttributeError:
+            gv = gf.grid._typeName
     gvType = re.split('::GridViewType$', gv)
     if len(gvType) == 2: # is a dune fem grid part
         return gvType[0]
