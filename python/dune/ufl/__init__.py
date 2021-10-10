@@ -81,7 +81,7 @@ class Space(ufl.FunctionSpace):
         if not dimRange:
             try:
                 dimRange = dimDomainOrGridOrSpace.dimRange
-                dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
+                dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.gridView
             except AttributeError:
                 dimRange = 1
                 scalar = True
@@ -280,7 +280,7 @@ class Constant(ufl.Coefficient):
 
 @deprecated("replace NamedConstant with Constant - the first argument can "\
             "now also be the initial value, e.g.,a float or list/tuple of floats")
-def NamedConstant(value, name=None, dimRange=None, count=None):
+def NamedConstant(value, name=None, dimRange=None,count=None):
     if not isinstance(value,tuple) and not isinstance(value,list) and not isNumber(value):
         try:
             domainCell = value.cell()
@@ -361,22 +361,18 @@ class GridFunction(ufl.Coefficient):
         if scalar is None and gf.dimRange == 1:
             try:
                 scalar = gf.scalar
-                # print(scalar,"set from gf attribute")
             except AttributeError:
                 try:
                     scalar = gf.space.scalar
-                    # print(scalar,"set from space attribute")
                 except:
                     scalar = True
-                    # print(scalar,"not set")
-                    # raise AttributeError()
-        uflSpace = Space((gf.grid.dimGrid, gf.grid.dimWorld), gf.dimRange, scalar=scalar)
-        ufl.Coefficient.__init__(self, uflSpace, count=count)
+        uflSpace = Space((gf.gridView.dimGrid, gf.gridView.dimWorld), gf.dimRange, scalar=scalar)
+        ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
         try:
             return self.gf.space # as_ufl()
         except TypeError or AttributeError:
-            return Space(self.gf.grid,self.gf.dimRange,scalar=False)
+            return Space(self.gf.gridView,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
         if not self.scalar:
             return self

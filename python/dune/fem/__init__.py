@@ -41,8 +41,9 @@ registry["space"] = {
          "rannacherTurek": space.rannacherTurek
      }
 registry["discretefunction"] = {
+         "numpy"      : discretefunction.numpy,
          "adaptive"   : discretefunction.adaptive,
-         "fem"        : discretefunction.adaptive,
+         "fem"        : discretefunction.fem,
          "istl"       : discretefunction.istl,
          "eigen"      : discretefunction.eigen,
          "petsc"      : discretefunction.petsc,

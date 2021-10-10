@@ -36,7 +36,7 @@ def module(grid):
 
 def _adaptArguments(first,*args):
     try: # first see if first argument is a discrete function (should be only method)
-        hgrid = first.grid.hierarchicalGrid
+        hgrid = first.space.gridView.hierarchicalGrid
         args = list([*args,first])
         return hgrid,args
     except AttributeError:
@@ -44,7 +44,7 @@ def _adaptArguments(first,*args):
     if isinstance(first,list) or isinstance(first,tuple):
         assert len(args)==0,\
                "only one list of discrete functions can be passed into the adaptation method"
-        hgrid = first[0].grid.hierarchicalGrid
+        hgrid = first[0].space.gridView.hierarchicalGrid
         args = first
     else: # okay apparently its a hgrid object (should be deprecated if args is not empty)
         hgrid = first
@@ -62,11 +62,11 @@ def adapt(first, *args):
     hgrid,args = _adaptArguments(first,*args)
 
     # make sure all args are over the same grid
-    assert all([a.grid.hierarchicalGrid==hgrid for a in args]),\
+    assert all([a.space.gridView.hierarchicalGrid==hgrid for a in args]),\
             "all discrete functions must be over the same hierarchical grid"
     # make sure all gridview can be adapted
     try:
-        adapt  = all([a.grid.canAdapt==True for a in args])
+        adapt  = all([a.space.gridView.canAdapt==True for a in args])
         # adapt &= not any([a.space.storage[0]=="petsc" for a in args])
     except AttributeError:
         adapt = False
@@ -87,19 +87,22 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
         if gridView is None:
             _, coeff_ = extract_arguments_and_coefficients(indicator)
             gridView = [c.grid for c in coeff_ if hasattr(c,"grid")]
-            # gridView += [c.space.grid for c in coeff_ if hasattr(c,"space")]
+            gridView += [c.gridView for c in coeff_ if hasattr(c,"gridView")]
             if len(gridView) == 0:
                 raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
             gridView = gridView[0]
         indicator = expression2GF(gridView,indicator,0)
+    if gridView is None:
+        # API GridView: gridView = indicator.gridView
+        gridView = indicator.grid
     try:
-        if not indicator.grid.canAdapt:
+        if not gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
-    except:
+    except AttributeError:
         raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return indicator.grid.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+    return gridView.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
 def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
                   minLevel=0, maxLevel=None, gridView=None):
@@ -108,41 +111,43 @@ def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
     if ufl and isinstance(indicator, ufl.core.expr.Expr):#
         if gridView is None:
             _, coeff_ = extract_arguments_and_coefficients(indicator)
-            gridView = [c.grid for c in coeff_ if hasattr(c,"grid")]
-            # gridView += [c.space.grid for c in coeff_ if hasattr(c,"space")]
+            gridView = [c.gridView for c in coeff_ if hasattr(c,"gridView")]
+            # gridView += [c.space.gridView for c in coeff_ if hasattr(c,"space")]
             if len(gridView) == 0:
                 raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
             gridView = gridView[0]
         indicator = expression2GF(gridView,indicator,0)
+    if gridView is None:
+        # API GridView: gridView = indicator.gridView
+        gridView = indicator.grid
     try:
-        if not indicator.grid.canAdapt:
+        if not gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
-    except:
+    except AttributeError:
         raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return indicator.grid.markNeighbors(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+    return gridView.markNeighbors(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
 def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
     try:
-        if not indicator.space.grid.canAdapt:
+        if not indicator.space.gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
     except:
         raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return indicator.space.grid.doerflerMark(indicator,theta,maxLevel,layered)
+    return indicator.space.gridView.doerflerMark(indicator,theta,maxLevel,layered)
 
 def globalRefine(level, first, *args):
     hgrid,args = _adaptArguments(first,*args)
 
     # make sure all args are over the same grid
-    assert all([a.grid.hierarchicalGrid==hgrid for a in args]),\
+    assert all([a.gridView.hierarchicalGrid==hgrid for a in args]),\
             "all discrete functions must be over the same hierarchical grid"
     # make sure all gridview can be adapted
     try:
-        adapt  = all([a.grid.canAdapt==True for a in args])
-        #adapt &= not any([a.space.storage[0]=="petsc" for a in args])
+        adapt  = all([a.gridView.canAdapt==True for a in args])
     except AttributeError:
         adapt = False
     assert adapt,\

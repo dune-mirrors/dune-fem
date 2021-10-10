@@ -26,8 +26,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    exact = sin(x[0]*x[1]) # atan(1*x[1])
-    exact = uflFunction( space.grid, name="exact", order=3, ufl=exact)
+    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
     uh = space.interpolate(exact,name="solution")
 
     # diffusion factor
@@ -64,9 +63,8 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     else:
         strongBC = DirichletBC(space,exact,dD)
 
-    if space.storage[0] == "fem":
-        solver={"solver":("suitesparse","umfpack"),
-                "parameters":{"newton.verbose": True, "newton.linear.verbose": False}}
+    if space.storage[0] == "numpy":
+        solver={"solver":("suitesparse","umfpack")}
     else:
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
@@ -101,7 +99,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     return eoc
 
 
-storage = "fem"
+storage = "numpy"
 threading.use = 8
 
 def newGridView():
