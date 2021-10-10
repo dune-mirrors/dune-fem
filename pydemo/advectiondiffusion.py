@@ -26,7 +26,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    exact = uflFunction( space.gridView, name="exact", order=3, ufl=sin(x[0]*x[1]))
     uh = space.interpolate(exact,name="solution")
 
     # diffusion factor
