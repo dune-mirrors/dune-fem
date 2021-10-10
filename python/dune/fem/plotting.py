@@ -151,6 +151,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         logscale=False, ticks=11):
     if disable: return
     try:
+        #API GridView: grid = solution.gridView
         grid = solution.grid
     except AttributeError:
         if isinstance(solution, list) or isinstance(solution,tuple):
@@ -195,6 +196,7 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         block=globalBlock, grid=None, colorbar=None):
     if disable: return
     try:
+        # API GridView: grid = solution.gridView
         grid = solution.grid
     except AttributeError:
         if isinstance(solution, Expr):

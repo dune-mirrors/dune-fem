@@ -144,6 +144,8 @@ namespace Dune
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
 
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
+        cls.def_property_readonly( "gridView", [] ( GridFunction &self ) -> const GridView& { return self.gridPart().gridView(); } );
+        // deprecate the following after 2.8 release
         cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> const GridView& { return self.gridPart().gridView(); } );
 
         registerGridFunctionName( cls );

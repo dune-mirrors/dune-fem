@@ -6,14 +6,44 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 import dune.generator
+from dune.deprecate import deprecated
 
 from . import _solvers as solvers
 
+@deprecated(name="storage=fem",msg="'storage=\"fem\" for the space is deprecated, use `storage=\"numpy\" instead")
+def fem():
+    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
+    return lambda space, rspace=None:[\
+        "fem",\
+        ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
+              space._includes,\
+        dfType(space),\
+        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
+        rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
+        solvers.femsolver,\
+        "as_numpy"
+    ]
+@deprecated(name="storage=fem",msg="'storage=\"adaptive\" for the space is deprecated, use `storage=\"numpy\" instead")
 def adaptive():
     dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space, rspace=None:[\
         "fem",\
+        ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
+              space._includes,\
+        dfType(space),\
+        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
+        rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
+        solvers.femsolver,\
+        "as_numpy"
+    ]
+
+def numpy():
+    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
+    return lambda space, rspace=None:[\
+        "numpy",\
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
               space._includes,\
         dfType(space),\

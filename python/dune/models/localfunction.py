@@ -30,7 +30,7 @@ from dune.ufl.codegen import uflSignature, TooHighDerivative
 from dune.ufl import codegen
 
 class UFLFunctionSource(codegen.ModelClass):
-    version = "v1_1"
+    version = "v1_2"
     def __init__(self, grid, expr,
             name,order,
             tempVars=True, virtualize=True,

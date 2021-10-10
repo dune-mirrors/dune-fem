@@ -3,7 +3,8 @@
 import pickle, numpy
 import dune.generator
 import ufl
-from dune.grid import structuredGrid, gridFunction
+from dune.grid import structuredGrid
+from dune.fem.function import gridFunction
 from dune.fem.space import lagrange
 
 class CheckPointer:
@@ -58,7 +59,7 @@ def run(restore=False):
 
     if not restore:
         print("interpolating grid function")
-        @gridFunction(grid)
+        @gridFunction(grid,name="gf",order=2)
         def gf(x): return x[0]*x[1]*(1-x[0])*(1-x[1])
         df.interpolate( gf )
     else:

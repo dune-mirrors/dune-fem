@@ -40,7 +40,8 @@ def gridFunction(view,name,order):
     def gridFunction_decorator(func):
         gf = dune.grid.gridFunction(view,name=name,order=order)(func)
         setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
-        setattr(gf.__class__,"integrate", lambda self: 0) # uflFunction(view,"tmp",order,self).integrate())
+        setattr(gf.__class__,"integrate", lambda self: uflFunction(view,"tmp",order,self).integrate())
+        gf.__class__.gridView = property(lambda self: self.grid)
         return gf.as_ufl()
     return gridFunction_decorator
 # this is not going to work - needs fixing
@@ -89,6 +90,7 @@ def cppFunction(gridView, name, order, fctName, includes,
                 *args,**kwargs):
     args = args + tuple(kwargs.get("args",()))
     gf = gridView.function(fctName,includes,*args,order=order,name=name)
+    gf.__class__.gridView = property(lambda self: self.grid)
     return dune.ufl.GridFunction( gf )
 
 def _assertSizesMatch(space, dofVector):
