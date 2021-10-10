@@ -36,8 +36,8 @@ def compute(space,epsilon,weakBnd):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    #exact = sin(x[0]*x[1]) # atan(1*x[1])
-    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    # exact = sin(x[0]*x[1]) # atan(1*x[1])
+    exact = uflFunction( space.gridView, name="exact", order=3, ufl=sin(x[0]*x[1]))
 
     # diffusion factor
     eps = Constant(epsilon,"eps")
@@ -68,7 +68,7 @@ def compute(space,epsilon,weakBnd):
     else:
         strongBC = DirichletBC(space,exact,dD)
 
-    if space.storage[0] == "fem":
+    if space.storage[0] == "numpy":
         solver={"solver":("suitesparse","umfpack")}
     else:
         solver={"solver":"bicgstab",
@@ -99,7 +99,7 @@ def compute(space,epsilon,weakBnd):
     assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
-storage = "fem"
+storage = "numpy"
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
