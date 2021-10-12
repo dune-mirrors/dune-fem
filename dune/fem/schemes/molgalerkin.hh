@@ -13,6 +13,12 @@ namespace Dune
   namespace Fem
   {
 
+#if HAVE_PETSC
+    //forward declaration of PetscLinearOperator
+    template <typename DomainFunction, typename RangeFunction >
+    class PetscLinearOperator ;
+#endif
+
     // GalerkinOperator
     // ----------------
 
@@ -315,10 +321,12 @@ namespace Dune
 
         if (!singleThreadModeError)
         {
+          GetSetLocalMatrix< JacobianOperatorType > getSet( jOp );
+
           // method of lines
-          auto doInvMass = [this, &jOp] ()
+          auto doInvMass = [this, &getSet] ()
           {
-            applyInverseMass( this->iterators_, jOp, this->impl().model().hasSkeleton() );
+            applyInverseMass( this->iterators_, getSet, this->impl().model().hasSkeleton() );
           };
 
           try {
@@ -340,8 +348,10 @@ namespace Dune
           // update number of interior elements
           gridSizeInterior_ = impl().gridSizeInterior();
 
+          GetSetLocalMatrixImpl getSet( jOp );
+
           // apply inverse mass
-          applyInverseMass( iterators_, jOp, impl().model().hasSkeleton() );
+          applyInverseMass( iterators_, getSet, impl().model().hasSkeleton() );
         }
 
         // note: assembly done without local contributions so need
@@ -350,10 +360,73 @@ namespace Dune
       }
 
 
-      template <class Iterators>
-      void applyInverseMass ( const Iterators& iterators, JacobianOperatorType &jOp, const bool hasSkeleton ) const
+      struct GetSetLocalMatrixImpl
+      {
+        JacobianOperatorType& jOp_;
+        GetSetLocalMatrixImpl( JacobianOperatorType& jOp ) : jOp_( jOp ) {}
+
+        template <class Entity, class LocalMatrix>
+        void getLocalMatrix( const Entity& domainEntity, const Entity& rangeEntity,
+                             LocalMatrix& lop ) const
+        {
+          jOp_.getLocalMatrix( domainEntity, rangeEntity, lop );
+        }
+
+        template <class Entity, class LocalMatrix>
+        void setLocalMatrix( const Entity& domainEntity, const Entity& rangeEntity,
+                             const LocalMatrix& lop )
+        {
+          jOp_.setLocalMatrix( domainEntity, rangeEntity, lop );
+        }
+      };
+
+      struct GetSetLocalMatrixImplLocked : public GetSetLocalMatrixImpl
+      {
+        typedef GetSetLocalMatrixImpl BaseType;
+        typedef std::shared_mutex mutex_t;
+        mutable mutex_t mutex_;
+
+        GetSetLocalMatrixImplLocked( JacobianOperatorType &jOp ) : BaseType( jOp ) {}
+
+        template <class Entity, class LocalMatrix>
+        void getLocalMatrix( const Entity& domainEntity, const Entity& rangeEntity,
+                             LocalMatrix& lop ) const
+        {
+          std::lock_guard< mutex_t > lock( mutex_ );
+          BaseType::getLocalMatrix( domainEntity, rangeEntity, lop );
+        }
+
+        template <class Entity, class LocalMatrix>
+        void setLocalMatrix( const Entity& domainEntity, const Entity& rangeEntity,
+                             const LocalMatrix& lop )
+        {
+          std::lock_guard< mutex_t > lock( mutex_ );
+          BaseType::setLocalMatrix( domainEntity, rangeEntity, lop );
+        }
+      };
+
+      template <class JacOp>
+      struct GetSetLocalMatrix : public GetSetLocalMatrixImpl
+      {
+        typedef GetSetLocalMatrixImpl BaseType;
+        GetSetLocalMatrix( JacobianOperatorType &jOp ) : BaseType( jOp ) {}
+      };
+
+#if HAVE_PETSC
+      template <class DomainFunction, class RangeFunction>
+      struct GetSetLocalMatrix< PetscLinearOperator< DomainFunction, RangeFunction > > : public GetSetLocalMatrixImplLocked
+      {
+        typedef GetSetLocalMatrixImplLocked BaseType;
+        GetSetLocalMatrix( JacobianOperatorType &jOp ) : BaseType( jOp ) {}
+      };
+#endif
+
+      template <class Iterators, class GetSetLocalMatrixOp >
+      void applyInverseMass ( const Iterators& iterators, GetSetLocalMatrixOp& getSet,
+                              const bool hasSkeleton ) const
       {
         typedef typename BaseType::LocalMassMatrixType  LocalMassMatrixType;
+        JacobianOperatorType& jOp = getSet.jOp_;
 
         LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), impl().interiorQuadratureOrder( jOp.rangeSpace().order() ) );
 
@@ -367,9 +440,9 @@ namespace Dune
           {
             auto guard = bindGuard( lop, inside,inside );
             lop.bind(inside,inside);
-            jOp.getLocalMatrix( inside, inside, lop );
+            getSet.getLocalMatrix( inside, inside, lop );
             localMassMatrix.leftMultiplyInverse( lop );
-            jOp.setLocalMatrix( inside, inside, lop );
+            getSet.setLocalMatrix( inside, inside, lop );
           }
 
           if( hasSkeleton )
@@ -381,9 +454,9 @@ namespace Dune
               {
                 const auto& outside = intersection.outside();
                 auto guard = bindGuard( lop, outside,inside );
-                jOp.getLocalMatrix( outside, inside, lop );
+                getSet.getLocalMatrix( outside, inside, lop );
                 localMassMatrix.leftMultiplyInverse( lop );
-                jOp.setLocalMatrix( outside, inside, lop );
+                getSet.setLocalMatrix( outside, inside, lop );
               }
             }
           }
