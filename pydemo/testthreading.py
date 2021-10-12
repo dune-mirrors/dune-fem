@@ -28,7 +28,7 @@ def model(space,epsilon,weakBnd,skeleton,useMol):
     x    = SpatialCoordinate(space)
 
     #exact = sin(x[0]*x[1]) # atan(1*x[1])
-    exact = uflFunction( space.grid, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    exact = uflFunction( space.gridView, name="exact", order=3, ufl=sin(x[0]*x[1]))
 
     # diffusion factor
     eps = 1 # Constant(epsilon,"eps")
@@ -91,11 +91,12 @@ def compute(scheme, uh, A, exact ):
         scheme.jacobian(uh,A)
     runTime += [time.time()-start]
     start = time.time()
-    error = math.sqrt( integrate(uh.space.grid,dot(uh-exact,uh-exact),order=5) )
+    error = math.sqrt( integrate(uh.space.gridView,dot(uh-exact,uh-exact),order=5) )
     runTime += [time.time()-start]
     return runTime, error
 
 storage = "istl"
+#storage = "petsc"
 
 def newGridView(N=4):
     return leafGridView( [-1, -1], [1, 1], [N, N ])
