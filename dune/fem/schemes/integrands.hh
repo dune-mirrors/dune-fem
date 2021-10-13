@@ -262,11 +262,14 @@ namespace Dune
     public:
       template< class... Args >
       explicit FullIntegrands ( Args &&... args )
-        : integrands_( std::forward< Args >( args )... )
-      {}
+        : integrands_( std::forward< Args >( args )... ),
+          rInt_( std::ref( integrands_ ).get() )
+      {
+      }
 
       bool init ( const EntityType &entity ) { return integrands().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return integrands().init( intersection ); }
+      void unbind ( ) { integrands().unbind( ); }
 
       bool hasInterior () const { return hasInterior( integrands() ); }
 
@@ -311,26 +314,32 @@ namespace Dune
       }
 
     protected:
-      decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
-      decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+      typedef typename Integrands::type RealIntegrands;
+      //decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
+      //decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+      RealIntegrands& integrands () { return rInt_; }
+      const RealIntegrands& integrands () const { return rInt_; }
+
+
 
       Integrands integrands_;
+      RealIntegrands rInt_;
 
     public:
       typedef typename IntegrandsTraits< Integrands >::RRangeType RRangeType;
       typedef typename IntegrandsTraits< Integrands >::DirichletComponentType DirichletComponentType;
       bool hasDirichletBoundary () const
       {
-        return integrands_.get().hasDirichletBoundary();
+        return integrands().hasDirichletBoundary();
       }
       bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const
       {
-        return integrands_.get().isDirichletIntersection(inter,dirichletComponent);
+        return integrands().isDirichletIntersection(inter,dirichletComponent);
       }
       template <class Point>
       void dirichlet( int bndId, const Point &x, RRangeType &value) const
       {
-        return integrands_.get().dirichlet(bndId,x,value);
+        return integrands().dirichlet(bndId,x,value);
       }
     };
 
@@ -407,6 +416,7 @@ namespace Dune
 
         virtual bool init ( const EntityType &entity ) = 0;
         virtual bool init ( const IntersectionType &intersection ) = 0;
+        virtual void unbind ( ) = 0;
 
         virtual bool hasInterior () const = 0;
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
@@ -435,11 +445,14 @@ namespace Dune
       struct Implementation final
         : public Interface
       {
-        Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+        Implementation ( Impl impl ) : impl_( std::move( impl ) )
+        {
+        }
         virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual bool init ( const EntityType &entity ) override { return impl().init( entity ); }
         virtual bool init ( const IntersectionType &intersection ) override { return impl().init( intersection ); }
+        virtual void unbind ( ) override { impl().unbind( ); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
@@ -500,6 +513,7 @@ namespace Dune
 
       bool init ( const EntityType &entity ) { return impl().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return impl().init( intersection ); }
+      void unbind ( ) { impl().unbind( ); }
 
       bool hasInterior () const { return impl().hasInterior(); }
 
@@ -628,6 +642,8 @@ namespace Dune
         return (intersection.boundary() && model().hasNeumanBoundary() && model().init( intersection.inside() ));
       }
 
+      void unbind ( ) { model().unbind( ); }
+
       template< class Point >
       RangeValueType interior ( const Point &x, const DomainValueType &u ) const
       {
@@ -722,6 +738,11 @@ namespace Dune
           beta_ = penalty_ * intersection.geometry().volume() / std::min( volIn, volOut );
           return true;
         }
+      }
+
+      void unbind ( )
+      {
+        model().unbind( );
       }
 
       template< class Point >

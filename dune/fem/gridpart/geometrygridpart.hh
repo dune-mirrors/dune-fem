@@ -283,6 +283,11 @@ namespace Dune
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
+      int sequence () const
+      {
+        return hostGridPart().sequence();
+      }
+
       const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >

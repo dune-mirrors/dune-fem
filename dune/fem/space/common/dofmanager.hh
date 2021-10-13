@@ -17,7 +17,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
@@ -1255,7 +1255,12 @@ namespace Dune
     inline void DofManager<GridType>::
     addIndexSet (const IndexSetType &iset )
     {
-      assert( Fem :: ThreadManager:: singleThreadMode() );
+      // only call in single thread mode
+      if( ! Fem :: MPIManager :: singleThreadMode() )
+      {
+        assert( Fem :: MPIManager :: singleThreadMode() );
+        DUNE_THROW(InvalidStateException,"DofManager::addIndexSet: only call in single thread mode!");
+      }
 
       typedef ManagedIndexSet< IndexSetType, ConstElementType > ManagedIndexSetType;
       ManagedIndexSetType * indexSet = 0;
@@ -1285,7 +1290,12 @@ namespace Dune
     template <class IndexSetType>
     inline void DofManager<GridType>::removeIndexSet ( const IndexSetType &iset )
     {
-      assert( Fem :: ThreadManager:: singleThreadMode() );
+      // only call in single thread mode
+      if( ! Fem :: MPIManager :: singleThreadMode() )
+      {
+        assert( Fem :: MPIManager :: singleThreadMode() );
+        DUNE_THROW(InvalidStateException,"DofManager::removeIndexSet: only call in single thread mode!");
+      }
 
       // search index set list in reverse order to find latest index sets faster
       auto endit = indexList_.rend();

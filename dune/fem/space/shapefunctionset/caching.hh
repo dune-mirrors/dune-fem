@@ -324,6 +324,11 @@ namespace Dune
     inline void CachingShapeFunctionSet< ShapeFunctionSet >
       ::cacheQuadrature( std::size_t id, std::size_t codim, std::size_t size )
     {
+      if( ! MPIManager::singleThreadMode () )
+      {
+        DUNE_THROW(SingleThreadModeError,"CachingShapeFunctionSet::cacheQuadrature: only call in single thread mode!");
+      }
+
       if( id >= rangeCaches_.size() )
       {
         rangeCaches_.resize( id+1, RangeVectorType() );

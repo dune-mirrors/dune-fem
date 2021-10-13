@@ -5,12 +5,12 @@
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
 
-//- dune-fem includes
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/common/visibility.hh>
 
 namespace Dune
 {
@@ -28,7 +28,22 @@ namespace Dune
         typedef std::unique_ptr< Item > PointerType;
         typedef std::type_index         KeyType;
 
-        typedef std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >  StorageType;
+        //typedef std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >  StorageType;
+
+        struct Storage :
+          public std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> >
+        {
+          Storage() :
+            std::pair< std::unordered_map< KeyType, std::shared_ptr< Item > >, std::vector<PointerType> > (),
+            mutex_()
+          {}
+
+          //typedef std::mutex mutex_t;
+          typedef std::recursive_mutex mutex_t;
+          mutex_t mutex_;
+        };
+
+        typedef Storage StorageType;
 
         // delete for singletons deleting each singleton object
         // in reverse order of creation
@@ -52,10 +67,12 @@ namespace Dune
         static StoragePointer storage_;
 
       protected:
-        static StorageType& getStorage()
+        DUNE_EXPORT static StorageType& getStorage()
         {
           if(! storage_ )
           {
+            // this should happen during the creation of MPIManager
+            // which is the first static variable to accessed
             storage_.reset( new StorageType() );
           }
 
@@ -98,10 +115,11 @@ namespace Dune
        *  \param args Possible constructor arguments for object when created for first time
        */
       template <class... Args>
-      static Object& instance(Args &&... args)
+      DUNE_EXPORT static Object& instance(Args &&... args)
       {
-        // capture reference as static variable to avoid map search later on
-        static Object& inst = getObject(std::forward< Args >( args )...);
+        // capture thread_local reference as static variable to avoid
+        // map search later on, object creation is protected by a mutex lock
+        static thread_local Object& inst = getObject(std::forward< Args >( args )...);
         return inst;
       }
 
@@ -112,7 +130,7 @@ namespace Dune
       /** \brief return singleton instance of given Object type.
        */
       template <class... Args>
-      static Object& getObject(Args &&... args)
+      DUNE_EXPORT static Object& getObject(Args &&... args)
       {
         // this way of creating static variables only works with gcc, not with clang
         if constexpr ( placeStaticVariableInline )
@@ -123,15 +141,19 @@ namespace Dune
         else
         {
           // get storage reference (see base class)
+          // this should exists since we initialize some static
+          // variables inside the MPIManager at program start
           StorageType& storage = getStorage();
+
+          // this section needs locking to avoid race conditions
+          // unlock is done on destruction of lock_guard
+          std::lock_guard< StorageType::mutex_t > guard( storage.mutex_ );
 
           // get pointer of singleton objects belonging to hash id
           auto& ptr = storage.first[ std::type_index(typeid(Object)) ];
           // if pointer has not been set, create object and set pointer
           if( ! ptr )
           {
-            assert( Fem::ThreadManager::singleThreadMode() );
-
             // create object in vector for later correct deletion order
             storage.second.emplace_back( PointerType(new ItemWrapperType(std::forward< Args >( args )...) ) );
 

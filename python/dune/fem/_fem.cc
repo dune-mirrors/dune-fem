@@ -5,7 +5,6 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include <dune/python/pybind11/extensions.h>
 #include <dune/python/pybind11/pybind11.h>
@@ -17,28 +16,6 @@ PYBIND11_MODULE( _fem, module )
     int argc = 0;
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
-
-#ifdef USE_SMP_PARALLEL
-    {
-      // use environment variable (for both openmp or pthreads) if set
-      // otherwise use system default
-      const char* nThreads = getenv("DUNE_NUM_THREADS");
-      if( nThreads )
-      {
-        int numThreads = std::max( int(1), atoi( nThreads ) );
-        Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
-      }
-      else
-      {
-        const char* nThreads = getenv("OMP_NUM_THREADS");
-        if( nThreads )
-        {
-          int numThreads = std::max( int(1), atoi( nThreads ) );
-          Dune::Fem::ThreadManager::setMaxNumberThreads( numThreads );
-        }
-      }
-    }
-#endif
 
     if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
       DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );
@@ -54,6 +31,7 @@ PYBIND11_MODULE( _fem, module )
     using pybind11::operator""_a;
     using pybind11::str;
 
+    auto mpiManagerCls = pybind11::class_<Dune::Fem::MPIManager>(module, "threading");
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
 
     param.def( "write", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
@@ -157,5 +135,20 @@ PYBIND11_MODULE( _fem, module )
 
     module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container(),
            pybind11::return_value_policy::reference );
+
+    // add finalize method for MPI and PETSc
+    module.def( "__finalizeFemModule__", [] () {
+        pybind11::module gc = pybind11::module::import("gc");
+        gc.attr("collect")();
+        Dune::Fem::MPIManager::finalize();
+        } );
+
+    mpiManagerCls.def_property_readonly_static("max",
+                        [](pybind11::object){ return Dune::Fem::MPIManager::maxThreads(); });
+    mpiManagerCls.def_property_static("use",
+                        [](pybind11::object){ return Dune::Fem::MPIManager::numThreads(); },
+                        [](pybind11::object,uint threads){ Dune::Fem::MPIManager::setNumThreads(threads); });
+    mpiManagerCls.def_static("useMax",
+                        [](){ Dune::Fem::MPIManager::setNumThreads(Dune::Fem::MPIManager::maxThreads()); });
   }
 }

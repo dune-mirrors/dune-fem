@@ -5,7 +5,6 @@
 
 #include <dune/common/typeutilities.hh>
 
-#include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
 #include <dune/fem/solver/parameter.hh>
 

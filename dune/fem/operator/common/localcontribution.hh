@@ -131,11 +131,11 @@ namespace Dune
 
 
 
-      // SetAndSeclectBaseImpl
+      // SetAndSelectBaseImpl
       // ---------------------
 
       template< class AssembledOperator, const bool getAndSet >
-      struct SetAndSeclectBaseImpl
+      struct SetAndSelectBaseImpl
       {
         typedef typename AssembledOperator::RangeFieldType value_type;
 
@@ -166,7 +166,7 @@ namespace Dune
       // -------
       template< class AssembledOperator >
       struct SetBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
-        : public SetAndSeclectBaseImpl< AssembledOperator, false > // set only
+        : public SetAndSelectBaseImpl< AssembledOperator, false > // set only
       {
       };
 
@@ -175,7 +175,7 @@ namespace Dune
 
       template< class AssembledOperator >
       struct SetSelectedBase< AssembledOperator, std::enable_if_t< Fem::IsAssembledOperator< AssembledOperator >::value > >
-        : public SetAndSeclectBaseImpl< AssembledOperator, true > // get and set
+        : public SetAndSelectBaseImpl< AssembledOperator, true > // get and set
       {
       };
 

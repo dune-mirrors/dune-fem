@@ -149,7 +149,7 @@ namespace Dune
       {
         // make sure this is only called in single thread mode
         // because the master thread is taking care of all object delete
-        assert( ThreadManager::singleThreadMode() );
+        assert( MPIManager::singleThreadMode() );
         const size_t threadSize = stackEntries_.size();
         for( size_t i=0; i<threadSize; ++i )
         {

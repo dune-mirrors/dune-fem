@@ -138,23 +138,23 @@ namespace Dune
         template < class SparsityPattern >
         void createEntries(const SparsityPattern& sparsityPattern)
         {
-          // not insert map of indices into matrix
+          const auto spEnd = sparsityPattern.end();
+
+          // insert map of indices into matrix
           auto endcreate = this->createend();
-          const auto endsp = sparsityPattern.end();
           for(auto create = this->createbegin(); create != endcreate; ++create)
           {
             const auto row = sparsityPattern.find( create.index() );
-            if ( row == endsp )
-              continue;
-            const auto& localIndices = ( *row ).second;
-            const auto end = localIndices.end();
+            // if a row is empty then do nothing
+            if( row == spEnd ) continue;
+
             // insert all indices for this row
-            for (auto it = localIndices.begin(); it != end; ++it)
-              create.insert( *it );
+            for ( const auto& col : row->second )
+              create.insert( col );
           }
         }
 
-        //! clear Matrix, i.e. set all entires to 0
+        //! clear Matrix, i.e. set all entries to 0
         void clear()
         {
           for (auto& row : *this)
@@ -162,7 +162,7 @@ namespace Dune
               entry = 0;
         }
 
-        //! clear Matrix, i.e. set all entires to 0
+        //! clear Matrix, i.e. set all entries to 0
         void unitRow( const size_t row )
         {
           block_type idBlock( 0 );
@@ -882,13 +882,15 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil, const bool implicit = true )
+      void reserve(const Stencil &stencil, const bool proposeImplicit = true )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
           removeObj();
 
+          // do not use implicit build mode when multi threading is enabled
+          const bool implicit = proposeImplicit && MPIManager::numThreads() == 1;
           if( implicit )
           {
             auto nnz = stencil.maxNonZerosEstimate();

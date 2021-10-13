@@ -2,7 +2,8 @@
 #define DUNE_FEM_THREADSAFEVALUES_HH
 
 #include <vector>
-#include <dune/fem/misc/threads/threadmanager.hh>
+
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune {
 
@@ -28,7 +29,7 @@ namespace Dune {
       template< class ...Args >
       ThreadSafeValue( Args&& ...args )
 #ifdef USE_SMP_PARALLEL
-        : value_( ThreadManager::maxThreads(), ValueType( std::forward< Args >( args )... ) )
+        : value_( MPIManager::maxThreads(), ValueType( std::forward< Args >( args )... ) )
 #else
         : value_( std::forward< Args >( args )... )
 #endif
@@ -38,21 +39,21 @@ namespace Dune {
       ThreadSafeValue()
         : value_(
 #ifdef USE_SMP_PARALLEL
-            ThreadManager::maxThreads()
+            MPIManager::maxThreads()
 #endif
              )
       {}
 
       //! \brief return number of threads
-      size_t size() const { return ThreadManager::maxThreads(); }
+      size_t size() const { return MPIManager::maxThreads(); }
 
       //! \brief return reference to thread private value
-      ValueType& operator * () { return this->operator[]( ThreadManager::thread() ); }
+      ValueType& operator * () { return this->operator[]( MPIManager::thread() ); }
       //! \brief return reference to thread private value
-      const ValueType& operator * () const { return this->operator[]( ThreadManager::thread() ); }
+      const ValueType& operator * () const { return this->operator[]( MPIManager::thread() ); }
 
-      operator const ValueType& () const { return this->operator[]( ThreadManager::thread() ); }
-      operator ValueType& () { return this->operator[]( ThreadManager::thread() ); }
+      operator const ValueType& () const { return this->operator[]( MPIManager::thread() ); }
+      operator ValueType& () { return this->operator[]( MPIManager::thread() ); }
 
       //! \brief return reference to private value for given thread number
       ValueType& operator [] ( const unsigned int thread ) {

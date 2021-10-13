@@ -347,7 +347,7 @@ class GridFunction(ufl.Coefficient):
         - help(self.GridFunction)
         - help(self.Coefficient)
     """
-    def __init__(self, gf, scalar=None):
+    def __init__(self, gf, scalar=None, count=None):
         # we shouldn't get into the situation of double wrapping
         assert not isinstance(gf,GridFunction)
         try:
@@ -374,7 +374,11 @@ class GridFunction(ufl.Coefficient):
         except TypeError or AttributeError:
             return Space(self.gf.gridView,self.gf.dimRange,scalar=False)
     def toVectorCoefficient(self):
-        return GridFunction(self.gf,scalar=False)
+        if not self.scalar:
+            return self
+        else:
+            return GridFunction(self.gf,scalar=False, count=-self.count())
+
 
     def as_ufl(self):
         return self
