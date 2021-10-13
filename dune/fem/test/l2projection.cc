@@ -39,8 +39,12 @@
 #endif
 #endif
 
+#include <dune/fem/space/common/interpolate.hh>
+
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 
 #include "massoperator.hh"
 #include "testgrid.hh"
@@ -53,6 +57,7 @@ typedef Dune::GridSelector :: GridType GridType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::FunctionSpace< typename GridType::ctype, typename GridType::ctype, GridType::dimensionworld, 1 > SpaceType;
 typedef Dune::Fem::DynamicLagrangeDiscreteFunctionSpace< SpaceType, GridPartType > DiscreteSpaceType;
+//typedef Dune::Fem::LagrangeSpace< SpaceType, GridPartType > DiscreteSpaceType;
 
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
@@ -102,6 +107,11 @@ struct Function : public Dune::Fem::BindableGridFunction< GridPart, RangeType >
         jacobian[0][j] *= (j == k ? cos( M_PI*x[k] ) : sin( M_PI*x[k] ));
     }
   }
+  template <class Point>
+  void hessian ( const Point &p, typename Base::HessianRangeType &h ) const
+  {
+  }
+
   unsigned int order() const { return 4; }
   std::string name() const { return "MyFunction"; } // needed for output
 };
@@ -113,6 +123,7 @@ struct Algorithm
 {
   typedef Dune::FieldVector< double, 2 > ErrorType;
   typedef Function< GridPartType, SpaceType::RangeType > FunctionType;
+  typedef Dune::FemPy::VirtualizedGridFunction< GridPartType, typename SpaceType::RangeType > VGridFunctionType;
 
   explicit Algorithm ( GridType &grid );
   ErrorType operator() ( int step, int polOrder );
@@ -151,7 +162,11 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step, int polOrder )
 
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
-  massOperator.assembleRHS( function_, rhs );
+
+  // create virtualized grid function to test this class
+  VGridFunctionType vF( function_ );
+
+  massOperator.assembleRHS( vF, rhs );
 
   unsigned long maxIter = space.size();
   maxIter = space.gridPart().comm().sum( maxIter );
@@ -179,8 +194,23 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
   Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
 
-  error[ 0 ] = l2norm.distance( function_, solution );
-  error[ 1 ] = h1norm.distance( function_, solution );
+  // create virtualized grid function to test this class
+  VGridFunctionType vF( function_ );
+
+  DiscreteFunctionType rhs( solution );
+
+  Dune::Fem::interpolate( vF, rhs );
+
+  {
+    // create virtualized grid function to test this class
+    // this is only for testing, error needs to be recomputed
+    VGridFunctionType vF2( rhs );
+    error[ 0 ] = l2norm.distance( vF2, solution );
+    error[ 1 ] = h1norm.distance( vF2, solution );
+  }
+
+  error[ 0 ] = l2norm.distance( vF, solution );
+  error[ 1 ] = h1norm.distance( vF, solution );
   std::cout << error <<std::endl;
   return error;
 }

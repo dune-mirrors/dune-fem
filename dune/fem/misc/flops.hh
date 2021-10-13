@@ -12,7 +12,6 @@
 
 //- dune-fem includes
 #include <dune/fem/misc/mpimanager.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/storage/singleton.hh>
 
@@ -60,13 +59,13 @@ namespace Dune {
 
       static unsigned long threadId ()
       {
-        return ThreadManager :: thread();
+        return MPIManager :: thread();
       }
 
       // initialize counters
       void startCounter()
       {
-        if( ! ThreadManager :: singleThreadMode() )
+        if( ! MPIManager :: singleThreadMode() )
         {
 #if HAVE_PAPI
           PAPI_thread_init( threadId );
@@ -100,10 +99,10 @@ namespace Dune {
       void printCounter( std::ostream& out ) const
       {
         // make sure this method is called in single thread mode only
-        assert( ThreadManager :: singleThreadMode () );
+        assert( MPIManager :: singleThreadMode () );
 
         int allStopped = 0 ;
-        const int threads = ThreadManager :: maxThreads ();
+        const int threads = MPIManager :: maxThreads ();
         for( int i=0; i<threads; ++i )
         {
           allStopped += stopped_[ i ];

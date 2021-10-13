@@ -10,7 +10,6 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/singleton.hh>
 
 namespace Dune
@@ -57,6 +56,9 @@ namespace Dune
         return Singleton< QuadratureInfoListType > :: instance();
       }
 
+    private:
+      static inline void assertSingleThreadMode ( const bool );
+
     public:
       /** \brief initialize static variables */
       static void initialize ()
@@ -67,7 +69,8 @@ namespace Dune
 
       static void registerStorage ( StorageInterface &storage )
       {
-        assert( ThreadManager::singleThreadMode() );
+        assertSingleThreadMode( false );
+
         storageList().push_back( &storage );
 
         const GeometryType type = storage.type();
@@ -81,7 +84,8 @@ namespace Dune
 
       static void unregisterStorage ( StorageInterface &storage )
       {
-        assert( ThreadManager::singleThreadMode() );
+        assertSingleThreadMode( false );
+
         const StorageListType::iterator pos
           = std::find( storageList().begin(), storageList().end(), &storage );
         if( pos != storageList().end() )
@@ -98,7 +102,8 @@ namespace Dune
       static void registerQuadrature ( const Quadrature &quadrature,
                                        const GeometryType &type, std::size_t codim )
       {
-        assert( ThreadManager::singleThreadMode() );
+        assertSingleThreadMode( true );
+
         QuadratureInfo quadInfo = { quadrature.id(), codim, std::size_t( quadrature.nop() ), type };
         quadratureInfoList().push_back( quadInfo );
 
@@ -115,4 +120,22 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/fem/misc/mpimanager.hh>
+
+namespace Dune
+{
+  namespace Fem
+  {
+    inline void QuadratureStorageRegistry::assertSingleThreadMode(const bool quad)
+    {
+      // make sure we work in single thread mode
+      // when quadratures are registered
+      if( ! MPIManager::singleThreadMode() )
+      {
+        const char* text = quad ? "registerQuadrature" : "registerStorage";
+        DUNE_THROW(SingleThreadModeError,"QuadratureStorageRegistry" << text << ": only call in single thread mode!");
+      }
+    }
+  }
+}
 #endif // #ifndef DUNE_FEM_QUADRATURE_CACHING_REGISTRY_HH

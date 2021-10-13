@@ -87,9 +87,19 @@ namespace Dune
      * This should be called right after the initialization of the MPI manager. It expects the same arguments
      * as PetscInitialize
      */
-    inline void initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true )
+    inline bool initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true )
     {
-      ::PetscInitialize( &argc, &args, file, help );
+      bool wasInitializedHere = false ;
+      PetscBool petscInitialized = PETSC_FALSE;
+
+      // check whether PETSc had been initialized elsewhere
+      ::PetscInitialized( &petscInitialized );
+
+      if( ! petscInitialized )
+      {
+        ::PetscInitialize( &argc, &args, file, help );
+        wasInitializedHere = true;
+      }
 
       if( ownHandler )
       {
@@ -101,6 +111,7 @@ namespace Dune
         }
         ::PetscPushErrorHandler( &ErrorHandler, 0 );
       }
+      return wasInitializedHere;
     }
 
     /*
@@ -110,8 +121,13 @@ namespace Dune
     {
       // TODO: test here if we are using our own handler
       ::PetscPopErrorHandler();
+      PetscBool finalized = PETSC_FALSE;
+      ErrorCheck( ::PetscFinalized( &finalized ) );
 
-      ::PetscFinalize();
+      if( ! finalized )
+      {
+        ::PetscFinalize();
+      }
     }
 
     template <class Comm>

@@ -93,6 +93,11 @@ namespace Dune
         for( const auto &entry : range )
           BaseType::fill( entry.first, entry.second );
       }
+
+      virtual void setupStencil() const
+      {
+        DUNE_THROW(NotImplemented,"This is done in the constructor");
+      }
     };
 
 

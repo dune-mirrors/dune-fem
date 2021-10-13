@@ -6,7 +6,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/gridpart/filter/domainfilter.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/storage/dynamicarray.hh>
@@ -42,13 +41,13 @@ namespace Dune
       const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
-#ifdef USE_SMP_PARALLEL
       int sequence_;
+      int numThreads_;
+
       std::vector< IteratorType > iterators_;
       DynamicArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_;
-      std::vector< FilterType* > filters_;
-#endif
+      std::vector< std::unique_ptr< FilterType > > filters_;
 
       // if true, thread 0 does only communication and no computation
       const bool communicationThread_;
@@ -60,34 +59,22 @@ namespace Dune
         : gridPart_( gridPart )
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
-#ifdef USE_SMP_PARALLEL
         , sequence_( -1 )
-        , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
-        , threadId_( ThreadManager::maxThreads() )
-#endif
+        , numThreads_( MPIManager::numThreads() )
+        , iterators_( MPIManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
+        , threadId_( MPIManager::maxThreads() )
+        , filters_( MPIManager::maxThreads() )
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
-                    &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
+                    &&  Fem :: MPIManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
-#ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 );
-        filters_.resize( Fem :: ThreadManager :: maxThreads(), (FilterType *) 0 );
-        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
+        for(int thread=0; thread < Fem :: MPIManager :: maxThreads(); ++thread )
         {
-          filters_[ thread ] = new FilterType( gridPart_, threadNum_, thread );
+          filters_[ thread ].reset( new FilterType( gridPart_, threadNum_, thread ) );
         }
-#endif
         update();
-      }
-
-#ifdef USE_SMP_PARALLEL
-      ~ThreadIterator()
-      {
-        for(size_t i = 0; i<filters_.size(); ++i )
-        {
-          delete filters_[ i ];
-        }
       }
 
       //! return filter for given thread
@@ -96,32 +83,36 @@ namespace Dune
         assert( thread < filters_.size() );
         return *(filters_[ thread ]);
       }
-#endif
 
       //! update internal list of iterators
       void update()
       {
-#ifdef USE_SMP_PARALLEL
         const int sequence = gridPart_.sequence();
         // if grid got updated also update iterators
-        if( sequence_ != sequence )
+        if( sequence_ != sequence || numThreads_ != MPIManager :: numThreads() )
         {
-          if( ! ThreadManager :: singleThreadMode() )
+          if( ! MPIManager :: singleThreadMode() )
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
             abort();
           }
 
-          const size_t maxThreads = ThreadManager :: maxThreads() ;
+          // update currently used thread numbers
+          numThreads_  = MPIManager :: numThreads() ;
+          const size_t numThreads = numThreads_;
 
           // get end iterator
           const IteratorType endit = gridPart_.template end< 0, pitype >();
+
+          // pass default value to resize to initialize all iterators
+          iterators_.resize( numThreads+1, endit );
+
           IteratorType it = gridPart_.template begin< 0, pitype >();
           if( it == endit )
           {
             // set all iterators to end iterators
-            for( size_t thread = 0; thread <= maxThreads; ++thread )
+            for( size_t thread = 0; thread <= numThreads; ++thread )
               iterators_[ thread ] = endit ;
 
             // free memory here
@@ -147,13 +138,13 @@ namespace Dune
 
           // here use iterator to count
           size_t checkSize = 0;
-          const size_t roundOff = (iterSize % maxThreads);
-          const size_t counterBase = ((size_t) iterSize / maxThreads );
+          const size_t roundOff = (iterSize % numThreads);
+          const size_t counterBase = ((size_t) iterSize / numThreads );
 
           // just for diagnostics
-          std::vector< int > nElems( maxThreads, 0 );
+          std::vector< int > nElems( numThreads, 0 );
 
-          for( size_t thread = 1; thread <= maxThreads; ++thread )
+          for( size_t thread = 1; thread <= numThreads; ++thread )
           {
             size_t i = 0;
             const size_t counter = counterBase + (( (thread-1) < roundOff ) ? 1 : 0);
@@ -170,7 +161,7 @@ namespace Dune
             }
             iterators_[ thread ] = it ;
           }
-          iterators_[ maxThreads ] = endit ;
+          iterators_[ numThreads ] = endit ;
 
           if( checkSize != iterSize )
           {
@@ -194,27 +185,44 @@ namespace Dune
           //for(size_t i = 0; i<size; ++i )
           //  std::cout << threadNum_[ i ] << std::endl;
         }
-#endif
       }
 
       //! return begin iterator for current thread
       IteratorType begin() const
       {
-#ifdef USE_SMP_PARALLEL
-        return iterators_[ ThreadManager :: thread() ];
-#else
-        return gridPart_.template begin< 0, pitype >();
-#endif
+        if( MPIManager :: singleThreadMode() )
+        {
+          return gridPart_.template begin< 0, pitype >();
+        }
+        // in multi thread mode return iterators for each thread
+        else
+        {
+          assert( MPIManager :: thread() < numThreads_ );
+          return iterators_[ MPIManager :: thread() ];
+        }
+      }
+      IteratorType begin(int thread) const
+      {
+        return iterators_[ thread ];
       }
 
       //! return end iterator for current thread
       IteratorType end() const
       {
-#ifdef USE_SMP_PARALLEL
-        return iterators_[ ThreadManager :: thread() + 1 ];
-#else
-        return gridPart_.template end< 0, pitype >();
-#endif
+        if( MPIManager :: singleThreadMode() )
+        {
+          return gridPart_.template end< 0, pitype >();
+        }
+        // in multi thread mode return iterators for each thread
+        else
+        {
+          assert( MPIManager :: thread() < numThreads_ );
+          return iterators_[ MPIManager :: thread() + 1 ];
+        }
+      }
+      IteratorType end(int thread) const
+      {
+        return iterators_[ thread + 1 ];
       }
 
       //! return thread number this entity belongs to
@@ -223,17 +231,20 @@ namespace Dune
         return indexSet_.index( entity );
       }
 
-      //! return thread number this entity belongs to
-      int thread( const EntityType& entity ) const
+      int threadParallel( const EntityType& entity ) const
       {
-#ifdef USE_SMP_PARALLEL
         assert( std::size_t( threadNum_.size() ) > std::size_t( indexSet_.index( entity ) ) );
         // NOTE: this number can also be negative for ghost elements or elements
         // that do not belong to the set covered by the space iterators
         return threadNum_[ indexSet_.index( entity ) ];
-#else
-        return 0;
-#endif
+      }
+      //! return thread number this entity belongs to
+      int thread( const EntityType& entity ) const
+      {
+        if( MPIManager::singleThreadMode() )
+          return 0;
+        else
+          return threadParallel(entity);
       }
 
       //! set ratio between master thread and other threads in comp time
@@ -251,14 +262,13 @@ namespace Dune
         return count ;
       }
 
-#ifdef USE_SMP_PARALLEL
       // check that we have a non-overlapping iterator decomposition
       void checkConsistency( const size_t totalElements )
       {
 #ifndef NDEBUG
-        const int maxThreads = ThreadManager :: maxThreads() ;
+        const int numThreads = MPIManager :: numThreads() ;
         std::set< int > indices ;
-        for( int thread = 0; thread < maxThreads; ++ thread )
+        for( int thread = 0; thread < numThreads; ++ thread )
         {
           const IteratorType end = iterators_[ thread+1 ];
           for( IteratorType it = iterators_[ thread ]; it != end; ++it )
@@ -271,7 +281,6 @@ namespace Dune
         assert( indices.size() == totalElements );
 #endif
       }
-#endif
     };
 
     /** \brief Storage of thread iterators */

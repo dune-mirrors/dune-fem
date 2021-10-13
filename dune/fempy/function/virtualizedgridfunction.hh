@@ -104,14 +104,20 @@ namespace Dune
 
         virtual void bind(const EntityType &entity) = 0;
         virtual void bind(const IntersectionType &intersection, Fem::IntersectionSide side) = 0;
+        virtual void unbind() = 0;
       };
 
-      template< class Impl >
+      template< class GF >
       struct DUNE_PRIVATE Implementation final
         : public Interface
       {
-        Implementation ( Impl impl ) :
-          impl_( std::move( impl ) ) {}
+        typedef typename std::remove_reference<GF>::type GFType;
+
+        Implementation ( const GF& gf ) :
+          impl_( gf )
+        {
+        }
+
         virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const override { impl().evaluate( x, value ); }
@@ -139,18 +145,19 @@ namespace Dune
         virtual void bind(const EntityType &entity) override { impl_.bind(entity); }
         void bind(const IntersectionType &intersection, Fem::IntersectionSide side) override
         { impl_.bind(intersection, side); }
+        virtual void unbind() override { impl_.unbind(); }
       private:
-        const auto &impl () const { using std::cref; return cref( impl_ ).get(); }
-        auto &impl () { using std::ref; return ref( impl_ ).get(); }
+        const auto &impl () const { return impl_; }
+        auto &impl () { return impl_; }
 
-        Fem::ConstLocalFunction<Impl> impl_;
+        Fem::ConstLocalFunction< GFType > impl_;
       };
 
     public:
       template <class Impl>
       VirtualizedGridFunction (const Impl &gf)
       : Base(gf.gridPart(),gf.name(),gf.order())
-      , impl_( new Implementation< Impl >( std::move( gf ) ) )
+      , impl_( new Implementation< Impl >( gf ) )
       {}
 
 #if 0
@@ -182,6 +189,11 @@ namespace Dune
       {
         Base::bind(intersection, side);
         impl_->bind(intersection, side);
+      }
+      void unbind()
+      {
+        Base::unbind();
+        impl_->unbind();
       }
 
       template< class Point >

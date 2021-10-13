@@ -47,7 +47,8 @@ namespace Dune
     SharedGeometry ( const This &other )
       : data_( other.data_ ), allocator_( other.allocator_ )
     {
-      ++data_->second;
+      if (data_)
+        ++data_->second;
     }
 
     SharedGeometry ( This &&other )

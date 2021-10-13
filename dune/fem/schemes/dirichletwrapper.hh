@@ -106,6 +106,11 @@ struct DirichletWrapperOperator
     return op_.rangeSpace();
   }
 
+  std::size_t gridSizeInterior () const
+  {
+    return op_.gridSizeInterior();
+  }
+
   template <typename O = Operator>
   auto setCommunicate ( const bool commuicate )
   -> Dune::void_t< decltype( std::declval< O >().setCommunicate(true) ) >

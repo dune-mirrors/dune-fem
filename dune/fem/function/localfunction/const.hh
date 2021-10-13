@@ -7,6 +7,7 @@
 
 #include <dune/common/dynvector.hh>
 
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
@@ -152,15 +153,20 @@ namespace Dune
           \param[in] df discrete function the local function shall belong to
        */
       explicit ConstLocalDiscreteFunction ( const DiscreteFunctionType &df )
-      : BaseType( LocalDofVectorType( df.localDofVectorAllocator() ) ),
-        discreteFunction_( &df )
-      {
-      }
+      : BaseType( LocalDofVectorType( df.localDofVectorAllocator() ) )
+      , discreteFunction_( &df )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
+      {}
 
       //! cast a MutableLocalFunction into this one !!! expensive !!!
       ConstLocalDiscreteFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
-      : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction().localDofVectorAllocator() ) ),
-        discreteFunction_( &localFunction.discreteFunction() )
+      : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction().localDofVectorAllocator() ) )
+      , discreteFunction_( &localFunction.discreteFunction() )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
       {
         std::copy( localFunction.localDofVector().begin(), localFunction.localDofVector().end(), localDofVector().begin() );
       }
@@ -179,28 +185,40 @@ namespace Dune
           \param[in] entity  entity for initialize the local function to
        */
       ConstLocalDiscreteFunction ( const DiscreteFunctionType &df, const EntityType &entity )
-      : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
-        discreteFunction_( &df )
+      : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  )
+      , discreteFunction_( &df )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
       {
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
       ConstLocalDiscreteFunction ( const EntityType &entity, const DiscreteFunctionType &df )
-      : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
-        discreteFunction_( &df )
+      : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  )
+      , discreteFunction_( &df )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
       {
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
       //! copy constructor
       ConstLocalDiscreteFunction ( const ThisType &other )
-      : BaseType( static_cast<const BaseType &>( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast<const BaseType &>( other ) )
+      , discreteFunction_( other.discreteFunction_ )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
       {}
 
       //! move constructor
       ConstLocalDiscreteFunction ( ThisType &&other )
-      : BaseType( static_cast< BaseType &&>( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast< BaseType &&>( other ) )
+      , discreteFunction_( other.discreteFunction_ )
+#ifdef TESTTHREADING
+      , thread_(-1)
+#endif
       {}
 
       using BaseType::localDofVector;
@@ -257,12 +275,31 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalFunction :: init */
       void init ( const EntityType &entity )
       {
+#ifdef TESTTHREADING
+        if (thread_ == -1) thread_ = MPIManager::thread();
+        if (thread_ != MPIManager::thread())
+        {
+          std::cout << "wrong thread number\n";
+          assert(0);
+          std::abort();
+        }
+#endif
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
       void bind ( const EntityType &entity ) { init( entity ); }
-      void unbind () {}
+      void unbind ()
+      {
+#ifdef TESTTHREADING
+        if (thread_ != MPIManager::thread())
+        {
+          std::cout << "wrong thread number\n";
+          assert(0);
+          std::abort();
+        }
+#endif
+      }
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
         bind( side==IntersectionSide::in?
@@ -274,6 +311,9 @@ namespace Dune
 
     protected:
       const DiscreteFunctionType* discreteFunction_;
+#ifdef TESTTHREADING
+      int thread_;
+#endif
     };
 
 
@@ -309,8 +349,7 @@ namespace Dune
 
           explicit Type ( const GridFunctionType &gridFunction )
             : GridFunctionType::LocalFunctionType( gridFunction ),
-              gridFunction_( gridFunction )
-          {}
+              gridFunction_( gridFunction ) {}
           explicit Type ( const EntityType &entity, const GridFunctionType &gridFunction )
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
@@ -368,6 +407,7 @@ namespace Dune
       template< class GF >
       struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction, std::decay_t<GF> >::value && !std::is_base_of< Fem::IsDiscreteFunction, std::decay_t<GF> >::value > >
       {
+        static_assert( !std::is_reference<GF>::value );
         struct Type
         {
           typedef GF GridFunctionType;
@@ -383,12 +423,22 @@ namespace Dune
 
           template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
           explicit Type ( Arg&& gridFunction )
-            :  gridFunction_( std::forward<Arg>(gridFunction) )
-          {}
+            : gridFunction_( std::forward<Arg>(gridFunction) )
+#ifdef TESTTHREADING
+            , thread_(-1)
+#endif
+          {
+            // if (MPIManager::thread()==0 || MPIManager::thread()==1) std::cout << "[" << MPIManager::thread() << "]: CLF " << &gridFunction_ << std::endl;
+          }
           template<class Arg, std::enable_if_t<std::is_constructible<GF, Arg>::value, int> = 0>
           explicit Type ( const EntityType &entity, Arg&& gridFunction )
             :  gridFunction_( std::forward<Arg>(gridFunction) )
-          { bind(entity); }
+#ifdef TESTTHREADING
+            ,  thread_(-1)
+#endif
+          {
+            bind(entity);
+          }
 
           template <class Point>
           void evaluate(const Point &x, RangeType &ret) const
@@ -447,11 +497,45 @@ namespace Dune
           void hessianQuadrature ( const Quadrature &quadrature, Hessians &hessians ) const
           { hessianQuadrature(quadrature,hessians, PriorityTag<42>() ); }
 
-          void bind ( const EntityType &entity ) { gridFunction_.bind( entity ); }
-          void unbind () { gridFunction_.unbind(); }
+          void bind ( const EntityType &entity )
+          {
+#ifdef TESTTHREADING
+            if (thread_ == -1) thread_ = MPIManager::thread();
+            if (thread_ != MPIManager::thread())
+            {
+              std::cout << "wrong thread number\n";
+              assert(0);
+              std::abort();
+            }
+#endif
+            gridFunction_.bind( entity );
+          }
+          void unbind ()
+          {
+#ifdef TESTTHREADING
+            if (thread_ != MPIManager::thread())
+            {
+              std::cout << "wrong thread number\n";
+              assert(0);
+              std::abort();
+            }
+#endif
+            gridFunction_.unbind();
+          }
           template <class IntersectionType>
           void bind(const IntersectionType &intersection, IntersectionSide side)
-          { defaultIntersectionBind(gridFunction_,intersection, side); }
+          {
+#ifdef TESTTHREADING
+            if (thread_ == -1) thread_ = MPIManager::thread();
+            if (thread_ != MPIManager::thread())
+            {
+              std::cout << "wrong thread number\n";
+              assert(0);
+              std::abort();
+            }
+#endif
+            defaultIntersectionBind(gridFunction_,intersection, side);
+          }
 
           const EntityType& entity() const
           {
@@ -508,6 +592,9 @@ namespace Dune
           { hessianQuadrature(quad,v); }
 
           GridFunctionType gridFunction_;
+#ifdef TESTTHREADING
+          int thread_;
+#endif
         };
       };
     } // namespace Impl

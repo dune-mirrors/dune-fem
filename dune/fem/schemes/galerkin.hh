@@ -6,9 +6,11 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <shared_mutex>
 #include <vector>
 
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/timer.hh>
 
 #include <dune/grid/common/rangegenerators.hh>
 
@@ -22,7 +24,10 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
-#include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/common/bindguard.hh>
+
+#include <dune/fem/misc/threads/threaditerator.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
@@ -97,6 +102,8 @@ namespace Dune
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+        typedef ThreadIterator< GridPartType > ThreadIteratorType;
+
         template <class Space>
         struct QuadratureSelector
         {
@@ -105,6 +112,18 @@ namespace Dune
         // typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
         // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
         };
+
+        // constructor
+        template< class... Args >
+        explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+          : gridPart_( gridPart ),
+            integrands_( std::forward< Args >( args )... ),
+            defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
+            defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
+            interiorQuadOrder_(0), surfaceQuadOrder_(0),
+            gridSizeInterior_( 0 )
+        {
+        }
 
       private:
         typedef typename IntegrandsType::DomainValueType DomainValueType;
@@ -293,13 +312,13 @@ namespace Dune
         template< class U, class W >
         void addInteriorIntegral ( const U &u, W &w ) const
         {
-          if( !integrands_.init( u.entity() ) )
+          if( !integrands().init( u.entity() ) )
             return;
 
           const auto geometry = u.entity().geometry();
 
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(maxOrder(u, w)) );
+          const InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(maxOrder(u, w)) );
 
           // evaluate u for all quadrature points
           DomainValueVectorType& domains = domainValues_;
@@ -312,17 +331,18 @@ namespace Dune
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
-            assignRange( ranges, qp.index(), integrands_.interior( qp, domainValue( qp.index(), domains ) ), weight );
+            assignRange( ranges, qp.index(), integrands().interior( qp, domainValue( qp.index(), domains ) ), weight );
           }
 
           // add to w for all quadrature points
           axpyQuadrature( w, quadrature, ranges );
+          integrands().unbind();
         }
 
         template< class U, class J >
         void addLinearizedInteriorIntegral ( const U &u, DomainValueVectorType &phi, J &j ) const
         {
-          if( !integrands_.init( u.entity() ) )
+          if( !integrands().init( u.entity() ) )
             return;
 
           const auto geometry = u.entity().geometry();
@@ -330,21 +350,22 @@ namespace Dune
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
-          InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder( maxOrder( u, domainBasis, rangeBasis )) );
+          const InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder( maxOrder( u, domainBasis, rangeBasis )) );
           const size_t domainSize = domainBasis.size();
           const size_t quadNop = quadrature.nop();
 
           auto& basisValues = basisValues_;
-          resizeDomainValueVector( basisValues_, domainSize );
+          resizeDomainValueVector( basisValues, domainSize );
 
           // evaluate u for all quadrature points
+          auto& rangeValues = rangeValues_;
           DomainValueVectorType& domains = domainValues_;
           domainValue( u, quadrature, domains );
 
-          rangeValues_.resize( domainSize );
+          rangeValues.resize( domainSize );
           for( std::size_t col = 0; col < domainSize; ++col )
           {
-            resizeRangeValueVector( rangeValues_[ col ], quadNop );
+            resizeRangeValueVector( rangeValues[ col ], quadNop );
           }
 
           // evaluate all basis functions and integrands
@@ -352,10 +373,10 @@ namespace Dune
           {
             values( domainBasis, qp, basisValues );
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
-            auto integrand = integrands_.linearizedInterior( qp, domainValue( qp.index(), domains ) );
+            auto integrand = integrands().linearizedInterior( qp, domainValue( qp.index(), domains ) );
             for( std::size_t col = 0; col < domainSize; ++col )
             {
-              assignRange( rangeValues_[ col ], qp.index(), integrand( value( basisValues, col ) ), weight );
+              assignRange( rangeValues[ col ], qp.index(), integrand( value( basisValues, col ) ), weight );
             }
           }
 
@@ -363,8 +384,9 @@ namespace Dune
           for( std::size_t col = 0; col < domainSize; ++col )
           {
             LocalMatrixColumn< J > jCol( j, col );
-            axpyQuadrature( jCol, quadrature, rangeValues_[ col ] );
+            axpyQuadrature( jCol, quadrature, rangeValues[ col ] );
           }
+          integrands().unbind();
         }
 
         // boundary integral
@@ -372,29 +394,30 @@ namespace Dune
         template< class Intersection, class U, class W >
         void addBoundaryIntegral ( const Intersection &intersection, const U &u, W &w ) const
         {
-          if( !integrands_.init( intersection ) )
+          if( !integrands().init( intersection ) )
             return;
 
           const auto geometry = intersection.geometry();
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
-          SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( u, w )), SurfaceQuadratureType::INSIDE );
+          const SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( u, w )), SurfaceQuadratureType::INSIDE );
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
-            RangeValueType integrand = integrands_.boundary( qp, domainValue( u, qp ) );
+            RangeValueType integrand = integrands().boundary( qp, domainValue( u, qp ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qp, &w, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand ) *= weight;
                 w.axpy( qp, std::get< i >( integrand ) );
               } );
           }
+          integrands().unbind();
         }
 
         template< class Intersection, class U, class J >
         void addLinearizedBoundaryIntegral ( const Intersection &intersection, const U &u, DomainValueVectorType &phi, J &j ) const
         {
-          if( !integrands_.init( intersection ) )
+          if( !integrands().init( intersection ) )
             return;
 
           const auto geometry = intersection.geometry();
@@ -402,13 +425,13 @@ namespace Dune
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
-          SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder(u, domainBasis, rangeBasis )), SurfaceQuadratureType::INSIDE );
+          const SurfaceQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder(u, domainBasis, rangeBasis )), SurfaceQuadratureType::INSIDE );
           for( const auto qp : quadrature )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
             values( domainBasis, qp, phi );
-            auto integrand = integrands_.linearizedBoundary( qp, domainValue( u, qp ) );
+            auto integrand = integrands().linearizedBoundary( qp, domainValue( u, qp ) );
 
             for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
             {
@@ -421,6 +444,7 @@ namespace Dune
                 } );
             }
           }
+          integrands().unbind();
         }
 
         // addSkeletonIntegral
@@ -440,7 +464,7 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -462,7 +486,7 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &qpOut, &wOut, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -499,7 +523,7 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -549,7 +573,7 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -585,47 +609,27 @@ namespace Dune
         template< class Intersection, class U, class... W >
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &... w ) const
         {
-          if( !integrands_.init( intersection ) )
+          if( !integrands().init( intersection ) )
             return;
 
           if( intersection.conforming() )
             addSkeletonIntegral< true >( intersection, uIn, uOut, w... );
           else
             addSkeletonIntegral< false >( intersection, uIn, uOut, w... );
+          integrands().unbind();
         }
 
         template< class Intersection, class U, class... J >
         void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &... j ) const
         {
-          if( !integrands_.init( intersection ) )
+          if( !integrands().init( intersection ) )
             return;
 
           if( intersection.conforming() )
             addLinearizedSkeletonIntegral< true >( intersection, uIn, uOut, phiIn, phiOut, j... );
           else
             addLinearizedSkeletonIntegral< false >( intersection, uIn, uOut, phiIn, phiOut, j... );
-        }
-
-        // constructor
-
-        template< class... Args >
-        explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-          : gridPart_( gridPart ),
-            integrands_( std::forward< Args >( args )... ),
-            defaultInteriorOrder_( [] (const int order) { return 2 * order; } ),
-            defaultSurfaceOrder_ ( [] (const int order) { return 2 * order + 1; } ),
-            interiorQuadOrder_(0), surfaceQuadOrder_(0),
-            communicate_( true )
-        {
-        }
-
-        void setCommunicate( const bool communicate )
-        {
-          communicate_ = communicate;
-          if( ! communicate_ && Dune::Fem::Parameter::verbose() )
-          {
-            std::cout << "Impl::GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
-          }
+          integrands().unbind();
         }
 
         void setQuadratureOrders(unsigned int interior, unsigned int surface)
@@ -634,35 +638,43 @@ namespace Dune
           surfaceQuadOrder_  = surface;
         }
 
-        IntegrandsType &model() const
+        IntegrandsType& model() const
+        {
+          return integrands();
+        }
+
+      private:
+        IntegrandsType& integrands() const
         {
           return integrands_;
         }
 
-      private:
-        template< class GridFunction, class DiscreteFunction >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, std::false_type ) const
+        template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs, std::false_type ) const
         {
-          w.clear();
-
           typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
-
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( w.space() );
 
-          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
-          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
-
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
-          for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
+          gridSizeInterior_ = 0;
+
+          const auto end = iterators.end();
+          for( auto it = iterators.begin(); it != end; ++it )
           {
-            uLocal.bind( entity );
-            wLocal.bind( entity );
+            // increase counter for interior elements
+            ++gridSizeInterior_;
+
+            const EntityType entity = *it ;
+
+            auto uGuard = bindGuard( uLocal, entity );
+            auto wGuard = bindGuard( wLocal, entity );
             wLocal.clear();
 
-            if( integrands_.hasInterior() )
+            if( integrands().hasInterior() )
               addInteriorIntegral( uLocal, wLocal );
 
-            if( integrands_.hasBoundary() && entity.hasBoundaryIntersections() )
+            if( integrands().hasBoundary() && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -671,32 +683,40 @@ namespace Dune
               }
             }
 
-            w.addLocalDofs( entity, wLocal.localDofVector() );
+            // addLocalDofs calls w.addLocalDofs but also
+            // prevents race condition for thread parallel runs
+            addLocalDofs( entity, wLocal );
           }
         }
 
-        template< class GridFunction, class DiscreteFunction >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w, std::true_type ) const
+        template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs, std::true_type ) const
         {
-          w.clear();
+          Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
+          Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
 
           typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
-
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
 
-          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
-          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
-
-          Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
+          gridSizeInterior_ = 0;
 
           const auto &indexSet = gridPart().indexSet();
-          for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
+
+          const auto end = iterators.end();
+          for( auto it = iterators.begin(); it != end; ++it )
           {
-            uInside.bind( inside );
-            wInside.bind( inside );
+            // assert( iterators.thread( *it ) == MPIManager::thread() );
+            const EntityType inside = *it ;
+
+            // increase counter for interior elements
+            ++gridSizeInterior_;
+
+            auto uGuard = bindGuard( uInside, inside );
+            auto wGuard = bindGuard( wInside, inside );
             wInside.clear();
 
-            if( integrands_.hasInterior() )
+            if( integrands().hasInterior() )
               addInteriorIntegral( uInside, wInside );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
@@ -705,84 +725,331 @@ namespace Dune
               // neighbor and boundary are true, so we treat neighbor first
               if( intersection.neighbor() )
               {
-                const EntityType &outside = intersection.outside();
+                const EntityType outside = intersection.outside();
 
-                Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
-                uOutside.bind( outside );
                 if( outside.partitionType() != InteriorEntity )
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
-                  wOutside.bind( outside );
+                  auto uOutGuard = bindGuard( uOutside, outside );
+                  auto wOutGuard = bindGuard( wOutside, outside );
                   wOutside.clear();
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside, wOutside );
-                  w.addLocalDofs( outside, wOutside.localDofVector() );
+
+                  // addLocalDofs calls w.addLocalDofs but also
+                  // prevents race condition for thread parallel runs
+                  addLocalDofs( outside, wOutside );
                 }
               }
               else if( intersection.boundary() )
               {
-                if( integrands_.hasBoundary() )
+                if( integrands().hasBoundary() )
                   addBoundaryIntegral( intersection, uInside, wInside );
               }
             }
 
-            w.addLocalDofs( inside, wInside.localDofVector() );
+            addLocalDofs( inside, wInside );
           }
         }
 
-      public:
-        template< class GridFunction, class DiscreteFunction >
-        void evaluate ( const GridFunction &u, DiscreteFunction &w ) const
+        template <class Space>
+        struct InsideEntity
+        {
+          typedef typename Space::EntityType EntityType;
+          template <class Iterators>
+          InsideEntity(const Space &space, const Iterators& iterators)
+          : space_(space), dofThread_(space.size(),-1)
+          , thread_(MPIManager::thread())
+          {
+            const auto& mapper = space_.blockMapper();
+            for (const auto &entity : space_)
+            {
+              int t=iterators.threadParallel(entity);
+              mapper.mapEach(entity, [ this, t ] ( int local, auto global )
+                { dofThread_[global] = (dofThread_[global]==t || dofThread_[global]==-1)?
+                                       t : -2 ; } ); // -2: shared dof
+            }
+          }
+          bool operator()(const EntityType &entity) const
+          {
+            bool needsLocking = false;
+            space_.blockMapper().mapEach(entity,
+                [ this, &needsLocking ] ( int local, auto global )
+                { needsLocking = (needsLocking || dofThread_[global]!=thread_); });
+            return !needsLocking;
+          }
+          const Space &space_;
+          std::vector<int> dofThread_;
+          int thread_;
+        };
+
+        template <class DiscreteFunction>
+        struct AddLocalEvaluate
+        {
+          AddLocalEvaluate(DiscreteFunction &w)
+          : w_(w) {}
+          template <class LocalDofs>
+          void operator () (const EntityType& entity, const LocalDofs& wLocal ) const
+          {
+            w_.addLocalDofs( entity, wLocal.localDofVector() );
+          }
+          DiscreteFunction &w_;
+        };
+
+        template <class DiscreteFunction>
+        struct AddLocalEvaluateLocked : public AddLocalEvaluate<DiscreteFunction>
+        {
+          typedef AddLocalEvaluate<DiscreteFunction> BaseType;
+
+          std::shared_mutex& mutex_;
+          InsideEntity<typename DiscreteFunction::DiscreteFunctionSpaceType> inside_;
+
+          template <class Iterators>
+          AddLocalEvaluateLocked(DiscreteFunction &w, std::shared_mutex& mtx, const Iterators &iterators)
+          : BaseType(w), mutex_(mtx), inside_(w.space(),iterators) {}
+
+          template <class LocalDofs>
+          void operator () (const EntityType& entity, const LocalDofs& wLocal ) const
+          {
+            // call addLocalDofs on w
+            if (inside_(entity))
+            {
+              std::shared_lock<std::shared_mutex> guard ( mutex_ );
+              BaseType::operator()( entity, wLocal );
+            }
+            else
+            {
+              // lock mutex (unlock on destruction)
+              std::lock_guard<std::shared_mutex> guard ( mutex_ );
+              BaseType::operator()( entity, wLocal );
+            }
+          }
+        };
+
+        template< class GridFunction, class DiscreteFunction, class Iterators, class Functor >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators,
+                        Functor& addLocalDofs ) const
         {
           static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
 
-          if( integrands_.hasSkeleton() )
-            evaluate( u, w, std::true_type() );
-          else
-            evaluate( u, w, std::false_type() );
+          typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< DiscreteFunctionSpaceType >::surfaceOrder(order); };
 
-          // synchronize result
-          if( communicate_ )
-            w.communicate();
+          if( integrands().hasSkeleton() )
+            evaluate( u, w, iterators, addLocalDofs, std::true_type() );
+          else
+            evaluate( u, w, iterators, addLocalDofs, std::false_type() );
         }
 
-        // assemble
+      public:
+        template< class GridFunction, class DiscreteFunction, class Iterators >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators, std::shared_mutex& mtx ) const
+        {
+          AddLocalEvaluateLocked<DiscreteFunction> addLocalEvaluate(w,mtx,iterators);
+          evaluate( u, w, iterators, addLocalEvaluate );
+        }
+
+        template< class GridFunction, class DiscreteFunction, class Iterators >
+        void evaluate ( const GridFunction &u, DiscreteFunction &w, const Iterators& iterators ) const
+        {
+          AddLocalEvaluate<DiscreteFunction> addLocalEvaluate(w);
+          evaluate( u, w, iterators, addLocalEvaluate );
+        }
+
+        template<class T, int length>
+        class FiniteStack
+        {
+        public :
+          // Makes empty stack
+          FiniteStack () : _f(0) {}
+
+          // Returns true if the stack is empty
+          bool empty () const { return _f <= 0; }
+
+          // Returns true if the stack is full
+          bool full () const { return (_f >= length); }
+
+          // clear stack
+          void clear() { _f = 0; }
+
+          // Puts a new object onto the stack
+          void push (const T& t)
+          {
+            assert ( _f < length );
+            _s[_f++] = t;
+          }
+
+          // Removes and returns the uppermost object from the stack
+          T pop () {
+            assert ( _f > 0 );
+            return _s[--_f];
+          }
+
+          // Returns the uppermost object on the stack
+          T top () const {
+            assert ( _f > 0 );
+            return _s[_f-1];
+          }
+
+          // stacksize
+          int size () const { return _f; }
+
+        private:
+          T   _s[length]; // the stack
+          int _f;         // actual position in stack
+        };
+
+
+
 
       private:
-        template< class GridFunction, class JacobianOperator >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, std::false_type ) const
+        template <class JacobianOperator>
+        struct AddLocalAssemble
+        {
+          typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
+          typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
+          typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
+          JacobianOperator &jOp_;
+          std::vector< TemporaryLocalMatrixType > jOpLocal_;
+
+          FiniteStack< TemporaryLocalMatrixType*, 12 > jOpLocalFinalized_;
+          FiniteStack< TemporaryLocalMatrixType*, 12 > jOpLocalFree_;
+
+          std::size_t locked, notLocked, timesLocked;
+          AddLocalAssemble(JacobianOperator& jOp)
+          : jOp_(jOp)
+          , jOpLocal_(12, TemporaryLocalMatrixType(jOp_.domainSpace(), jOp_.rangeSpace()))
+          , jOpLocalFinalized_()
+          , jOpLocalFree_()
+          , locked(0), notLocked(0), timesLocked(0)
+          {
+            for( auto& jOpLocal : jOpLocal_ )
+              jOpLocalFree_.push( &jOpLocal );
+          }
+
+          TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
+          {
+            assert( ! jOpLocalFree_.empty() );
+            TemporaryLocalMatrixType& lop = *(jOpLocalFree_.pop());
+            lop.bind(dE,rE);
+            lop.clear();
+            return lop;
+          }
+
+          void unbind(TemporaryLocalMatrixType &lop)
+          {
+            notLocked += 1;
+            jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
+            lop.unbind();
+            jOpLocalFree_.push( &lop );
+          }
+
+          void finalize()
+          {
+            locked += jOpLocalFinalized_.size();
+            while ( ! jOpLocalFinalized_.empty() )
+            {
+              TemporaryLocalMatrixType &lop = *(jOpLocalFinalized_.pop());
+              jOp_.addLocalMatrix( lop.domainEntity(), lop.rangeEntity(), lop );
+              lop.unbind();
+              jOpLocalFree_.push( &lop );
+            }
+          }
+        };
+
+        template <class JacobianOperator>
+        struct AddLocalAssembleLocked : public AddLocalAssemble<JacobianOperator>
+        {
+          typedef AddLocalAssemble<JacobianOperator> BaseType;
+          typedef typename BaseType::TemporaryLocalMatrixType TemporaryLocalMatrixType;
+          using BaseType::jOpLocalFinalized_;
+          using BaseType::jOpLocalFree_;
+
+          std::shared_mutex& mutex_;
+          InsideEntity<typename JacobianOperator::DomainSpaceType> insideDomain_;
+          InsideEntity<typename JacobianOperator::RangeSpaceType>  insideRange_;
+
+          template <class Iterators>
+          AddLocalAssembleLocked(JacobianOperator &jOp, std::shared_mutex &mtx, const Iterators &iterators)
+          : BaseType(jOp)
+          , mutex_(mtx)
+          , insideDomain_(jOp.domainSpace(),iterators)
+          , insideRange_(jOp.rangeSpace(),iterators)
+          {}
+
+          void finalize()
+          {
+            // lock mutex (unlock on destruction)
+            ++BaseType::timesLocked;
+            std::lock_guard<std::shared_mutex> guard ( mutex_ );
+            BaseType::finalize();
+          }
+
+          TemporaryLocalMatrixType& bind(const EntityType& dE, const EntityType& rE)
+          {
+            if ( jOpLocalFree_.empty() )
+            {
+              finalize();
+            }
+            return BaseType::bind(dE,rE);
+          }
+
+          void unbind(TemporaryLocalMatrixType &lop)
+          {
+            /* // always lock
+              ++BaseType::timesLocked;
+              ++BaseType::locked;
+              std::lock_guard guard ( mutex_ );
+              BaseType::unbind(lop);
+              return;
+            */
+            if ( insideDomain_(lop.domainEntity()) &&
+                 insideRange_(lop.rangeEntity()) )
+            {
+              std::shared_lock<std::shared_mutex> guard ( mutex_ );
+              BaseType::unbind(lop);
+            }
+            else
+            {
+              jOpLocalFinalized_.push( &lop );
+            }
+          }
+        };
+
+        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+                        Functor& addLocalMatrix, std::false_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
           typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
           typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
 
-          // select correct default quadrature orders
-          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::volumeOrder(order); };
-          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
-
-          DiagonalStencil< DomainSpaceType, RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
-          jOp.reserve( stencil );
-          jOp.clear();
-
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
           DomainValueVectorType phi = makeDomainValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
           Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
 
-          for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
+          gridSizeInterior_ = 0;
+          // possible threaded grid walk here
+          const auto end = iterators.end();
+          for( auto it = iterators.begin(); it != end; ++it )
           {
-            uLocal.bind( entity );
+            // increase counter for interior elements
+            ++gridSizeInterior_;
 
-            jOpLocal.init( entity, entity );
-            jOpLocal.clear();
+            const EntityType entity = *it;
 
-            if( integrands_.hasInterior() )
+            auto guard = bindGuard( uLocal, entity );
+
+            TemporaryLocalMatrixType& jOpLocal = addLocalMatrix.bind(entity, entity );
+
+            if( integrands().hasInterior() )
               addLinearizedInteriorIntegral( uLocal, phi, jOpLocal );
 
-            if( integrands_.hasBoundary() && entity.hasBoundaryIntersections() )
+            if( integrands().hasBoundary() && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -791,43 +1058,44 @@ namespace Dune
               }
             }
 
-            jOp.addLocalMatrix( entity, entity, jOpLocal );
+            addLocalMatrix.unbind(jOpLocal);
           }
+          addLocalMatrix.finalize();
         }
 
-        template< class GridFunction, class JacobianOperator >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, std::true_type ) const
+        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+                        Functor& addLocalMatrix, std::true_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
           typedef typename JacobianOperator::RangeSpaceType   RangeSpaceType;
 
           typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
 
-          // select correct default quadrature orders
-          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::volumeOrder(order); };
-          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
-
-          DiagonalAndNeighborStencil< DomainSpaceType, RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
-          jOp.reserve( stencil );
-          jOp.clear();
-
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
           DomainValueVectorType phiIn = makeDomainValueVector( maxNumLocalDofs );
           DomainValueVectorType phiOut = makeDomainValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrixType jOpInIn( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutIn( jOp.domainSpace(), jOp.rangeSpace() );
-          TemporaryLocalMatrixType jOpInOut( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutOut( jOp.domainSpace(), jOp.rangeSpace() );
           Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
+          Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
+
+          gridSizeInterior_ = 0;
 
           const auto &indexSet = gridPart().indexSet();
-          for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
+          // threaded iterators provide from outside
+          const auto end = iterators.end();
+          for( auto it = iterators.begin(); it != end; ++it )
           {
-            uIn.bind( inside );
+            // increase counter for interior elements
+            ++gridSizeInterior_;
 
-            jOpInIn.init( inside, inside );
-            jOpInIn.clear();
+            const EntityType inside = *it;
 
-            if( integrands_.hasInterior() )
+            auto uiGuard = bindGuard( uIn, inside );
+
+            TemporaryLocalMatrixType& jOpInIn = addLocalMatrix.bind(inside, inside );
+
+            if( integrands().hasInterior() )
               addLinearizedInteriorIntegral( uIn, phiIn, jOpInIn );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
@@ -838,64 +1106,84 @@ namespace Dune
               {
                 const EntityType &outside = intersection.outside();
 
-                jOpOutIn.init( outside, inside );
-                jOpOutIn.clear();
+                TemporaryLocalMatrixType &jOpOutIn = addLocalMatrix.bind( outside, inside );
 
-                Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
-                uOut.bind( outside );
+                auto uoGuard = bindGuard( uOut, outside );
 
                 if( outside.partitionType() != InteriorEntity )
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
-                  jOpInOut.init( inside, outside );
-                  jOpInOut.clear();
-                  jOpOutOut.init( outside, outside );
-                  jOpOutOut.clear();
+                  TemporaryLocalMatrixType &jOpInOut = addLocalMatrix.bind( inside, outside );
+                  TemporaryLocalMatrixType &jOpOutOut = addLocalMatrix.bind( outside, outside );
 
                   addLinearizedSkeletonIntegral( intersection, uIn, uOut, phiIn, phiOut, jOpInIn, jOpOutIn, jOpInOut, jOpOutOut );
 
-                  jOp.addLocalMatrix( inside, outside, jOpInOut );
-                  jOp.addLocalMatrix( outside, outside, jOpOutOut );
+                  addLocalMatrix.unbind(jOpInOut);
+                  addLocalMatrix.unbind(jOpOutOut);
                 }
 
-                jOp.addLocalMatrix( outside, inside, jOpOutIn );
+                addLocalMatrix.unbind(jOpOutIn);
               }
               else if( intersection.boundary() )
               {
-                if( integrands_.hasBoundary() )
+                if( integrands().hasBoundary() )
                   addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
               }
             }
-
-            jOp.addLocalMatrix( inside, inside, jOpInIn );
+            addLocalMatrix.unbind(jOpInIn);
           }
+          addLocalMatrix.finalize();
         }
 
-      public:
-        template< class GridFunction, class JacobianOperator >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp ) const
+        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+                        Functor& addLocalMatrix, int ) const
         {
+          typedef typename JacobianOperator::RangeSpaceType RangeSpaceType;
+
           static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename JacobianOperator::DomainSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename JacobianOperator::RangeSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
 
-          if( integrands_.hasSkeleton() )
-            assemble( u, jOp, std::true_type() );
-          else
-            assemble( u, jOp, std::false_type() );
+          // select correct default quadrature orders
+          defaultInteriorOrder_ = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::volumeOrder(order); };
+          defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
 
-          // note: assembly done without local contributions so need
-          // to call flush assembly
-          jOp.flushAssembly();
+          if( integrands().hasSkeleton() )
+            assemble( u, jOp, iterators, addLocalMatrix, std::true_type() );
+          else
+            assemble( u, jOp, iterators, addLocalMatrix, std::false_type() );
+        }
+
+      public:
+        template< class GridFunction, class JacobianOperator, class Iterators >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::shared_mutex& mtx) const
+        {
+          AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, iterators);
+          assemble( u, jOp, iterators, addLocalAssemble, 10 );
+          #if 0 // print information about how many times a lock was used during assemble
+          std::lock_guard guard ( mtx );
+          std::cout << MPIManager::thread() << " : "
+                    << addLocalAssemble.locked << " " << addLocalAssemble.notLocked << " "
+                    << addLocalAssemble.timesLocked << std::endl;
+          #endif
+        }
+
+        template< class GridFunction, class JacobianOperator, class Iterators >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators ) const
+        {
+          AddLocalAssemble<JacobianOperator> addLocalAssemble(jOp);
+          assemble( u, jOp, iterators, addLocalAssemble, 10 );
         }
 
         // accessors
-
         const GridPartType &gridPart () const { return gridPart_; }
 
         unsigned int interiorQuadratureOrder(unsigned int order) const { return interiorQuadOrder_ == 0 ? defaultInteriorOrder_(order) : interiorQuadOrder_; }
         unsigned int surfaceQuadratureOrder(unsigned int order)  const { return surfaceQuadOrder_  == 0 ? defaultSurfaceOrder_ (order) : surfaceQuadOrder_;  }
+
+        std::size_t gridSizeInterior() const { return gridSizeInterior_; }
 
       protected:
         template <class U>
@@ -924,6 +1212,7 @@ namespace Dune
 
       protected:
         const GridPartType &gridPart_;
+
         mutable IntegrandsType integrands_;
 
         mutable std::function<int(const int)> defaultInteriorOrder_;
@@ -933,11 +1222,11 @@ namespace Dune
         unsigned int surfaceQuadOrder_;
 
         mutable std::vector< RangeValueVectorType > rangeValues_;
-        mutable RangeValueVectorType  values_;
-        mutable DomainValueVectorType basisValues_;
-        mutable DomainValueVectorType domainValues_;
+        mutable RangeValueVectorType   values_;
+        mutable DomainValueVectorType  basisValues_;
+        mutable DomainValueVectorType  domainValues_;
 
-        bool communicate_;
+        mutable std::size_t gridSizeInterior_;
       };
 
     } // namespace Impl
@@ -955,39 +1244,113 @@ namespace Dune
       typedef DomainFunction DomainFunctionType;
       typedef RangeFunction RangeFunctionType;
 
+      typedef Impl::GalerkinOperator< Integrands >  GalerkinOperatorImplType;
+
       static_assert( std::is_same< typename DomainFunctionType::GridPartType, typename RangeFunctionType::GridPartType >::value, "DomainFunction and RangeFunction must be defined on the same grid part." );
 
       typedef typename RangeFunctionType::GridPartType GridPartType;
+      typedef ThreadIterator< GridPartType > ThreadIteratorType;
 
       template< class... Args >
       explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-        : impl_( gridPart, std::forward< Args >( args )... )
-      {}
+        : iterators_( gridPart ),
+          impl_( gridPart, std::forward< Args >( args )... ),
+          gridSizeInterior_( 0 ),
+          communicate_( true )
+      {
+      }
 
-      void setCommunicate( const bool communicate ) { impl_.setCommunicate( communicate ); }
+      void setCommunicate( const bool communicate )
+      {
+        communicate_ = communicate;
+        if( ! communicate_ && Dune::Fem::Parameter::verbose() )
+        {
+          std::cout << "GalerkinOperator::setCommunicate: communicate was disabled!" << std::endl;
+        }
+      }
 
-      void setQuadratureOrders(unsigned int interior, unsigned int surface) { impl_.setQuadratureOrders(interior,surface); }
+      void setQuadratureOrders(unsigned int interior, unsigned int surface)
+      {
+        size_t size = impl_.size();
+        for( size_t i=0; i<size; ++i )
+          impl_[ i ].setQuadratureOrders(interior,surface);
+      }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
-        impl_.evaluate( u, w );
+        evaluate( u, w );
       }
 
       template< class GridFunction >
       void operator() ( const GridFunction &u, RangeFunctionType &w ) const
       {
-        return impl_.evaluate( u, w );
+        evaluate( u, w );
       }
 
-      const GridPartType &gridPart () const { return impl_.gridPart(); }
+      const GridPartType &gridPart () const { return impl().gridPart(); }
 
       typedef Integrands ModelType;
       typedef Integrands DirichletModelType;
-      ModelType &model() const { return impl_.model(); }
-      const auto& impl() const { return impl_; }
+      ModelType &model() const { return impl().model(); }
+      const GalerkinOperatorImplType& impl() const { return *impl_; }
+
+      std::size_t gridSizeInterior () const { return gridSizeInterior_; }
 
     protected:
-      Impl::GalerkinOperator< Integrands > impl_;
+      // update number of interior elements as sum over threads
+      std::size_t gatherGridSizeInterior () const
+      {
+        std::size_t gridSizeInterior = 0;
+        // use current thread number to obtain correct sizes
+        const size_t size = MPIManager::numThreads();
+        for( size_t i=0; i<size; ++i )
+        {
+          // std::cout << "thread " << i << " worked on " << impl_[ i ].gridSizeInterior() << " elements\n";
+          gridSizeInterior += impl_[ i ].gridSizeInterior();
+        }
+        return gridSizeInterior;
+      }
+
+      template < class GridFunction >
+      void evaluate( const GridFunction &u, RangeFunctionType &w ) const
+      {
+        iterators_.update();
+        w.clear();
+
+        std::shared_mutex mutex;
+
+        auto doEval = [this, &u, &w, &mutex] ()
+        {
+          this->impl().evaluate( u, w, this->iterators_, mutex );
+        };
+
+        try {
+          // execute in parallel
+          MPIManager :: run ( doEval );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
+        }
+        catch ( const SingleThreadModeError& e )
+        {
+          // reset w from previous entries
+          w.clear();
+          // re-run in single thread mode if previous attempt failed
+          impl().evaluate( u, w, iterators_ );
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
+        }
+
+        // synchronize result
+        if( communicate_ )
+          w.communicate();
+      }
+
+      mutable ThreadIteratorType iterators_;
+      ThreadSafeValue< GalerkinOperatorImplType > impl_;
+
+      mutable std::size_t gridSizeInterior_;
+      bool communicate_;
     };
 
 
@@ -1017,18 +1380,21 @@ namespace Dune
                                                 const RangeDiscreteFunctionSpaceType &rSpace,
                                                 Args &&... args )
         : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
-          dSpace_(dSpace), rSpace_(rSpace)
+          dSpace_(dSpace), rSpace_(rSpace),
+          stencilDAN_(dSpace,rSpace), stencilD_(dSpace,rSpace),
+          domainSpaceSequence_(dSpace.sequence()),
+          rangeSpaceSequence_(rSpace.sequence())
       {}
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
       {
-        impl_.assemble( u, jOp );
+        assemble( u, jOp );
       }
 
       template< class GridFunction >
       void jacobian ( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
-        impl_.assemble( u, jOp );
+        assemble( u, jOp );
       }
 
       const DomainDiscreteFunctionSpaceType& domainSpace() const
@@ -1040,10 +1406,77 @@ namespace Dune
         return rSpace_;
       }
 
+      using BaseType::impl;
+
     protected:
-      using BaseType::impl_;
+      void prepare( JacobianOperatorType& jOp ) const
+      {
+        if ( domainSpaceSequence_ != domainSpace().sequence()
+             || rangeSpaceSequence_ != rangeSpace().sequence() )
+        {
+          domainSpaceSequence_ = domainSpace().sequence();
+          rangeSpaceSequence_ = rangeSpace().sequence();
+          if( impl().model().hasSkeleton() )
+            stencilDAN_.update();
+          else
+            stencilD_.update();
+        }
+        if( impl().model().hasSkeleton() )
+          jOp.reserve( stencilDAN_ );
+        else
+          jOp.reserve( stencilD_ );
+        // set all entries to zero
+        jOp.clear();
+      }
+
+      template < class GridFunction >
+      void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
+      {
+        // reserve memory and clear entries
+        {
+          prepare( jOp );
+          iterators_.update();
+        }
+
+        std::shared_mutex mutex;
+
+        auto doAssemble = [this, &u, &jOp, &mutex] ()
+        {
+          this->impl().assemble( u, jOp, this->iterators_, mutex );
+        };
+
+        try {
+          // execute in parallel
+          MPIManager :: run ( doAssemble );
+
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = gatherGridSizeInterior();
+        }
+        catch ( const SingleThreadModeError& e )
+        {
+          // redo assemble since it failed previously
+          jOp.clear();
+          impl().assemble( u, jOp, iterators_ );
+
+          // update number of interior elements
+          gridSizeInterior_ = impl().gridSizeInterior();
+        }
+
+        // note: assembly done without local contributions so need
+        // to call flush assembly
+        jOp.flushAssembly();
+      }
+
+      using BaseType::gatherGridSizeInterior;
+      using BaseType::iterators_;
+      using BaseType::gridSizeInterior_;
+
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;
+
+      mutable DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilDAN_;
+      mutable DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilD_;
+      mutable int domainSpaceSequence_, rangeSpaceSequence_;
     };
 
 

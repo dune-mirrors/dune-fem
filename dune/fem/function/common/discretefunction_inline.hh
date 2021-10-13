@@ -9,7 +9,6 @@
 #include <dune/fem/common/memory.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include "discretefunction.hh"
 

@@ -27,6 +27,8 @@ namespace Dune
       typedef CachingPoint< Coordinate, 0 > This;
 
     public:
+      static const int codimension = 0 ;
+
       typedef Coordinate CoordinateType;
       typedef typename FieldTraits< Coordinate >::real_type RealType;
       typedef Coordinate LocalCoordinateType;
@@ -47,6 +49,8 @@ namespace Dune
 
       std::size_t id () const { return id_; }
 
+      int nop() const { return 1; }
+
       const CoordinateType &point ( std::size_t qp ) const { return position_; }
       const LocalCoordinateType &localPoint ( std::size_t qp ) const { return position_; }
 
@@ -64,6 +68,8 @@ namespace Dune
       typedef CachingPoint< Coordinate, 1 > This;
 
     public:
+      static const int codimension = 1 ;
+
       typedef Coordinate CoordinateType;
       typedef typename FieldTraits< Coordinate >::real_type RealType;
       typedef FieldVector< typename FieldTraits< Coordinate >::field_type, Coordinate::dimension-1 > LocalCoordinateType;
@@ -84,6 +90,8 @@ namespace Dune
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
 
       std::size_t id () const { return id_; }
+
+      int nop() const { return 1; }
 
       const CoordinateType &point ( std::size_t qp ) const { return position_; }
       const LocalCoordinateType &localPoint ( std::size_t qp ) const { return localPosition_; }
