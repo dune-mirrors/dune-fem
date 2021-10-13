@@ -413,6 +413,9 @@ namespace Dune
       };
 
 #if HAVE_PETSC
+      //- PetscLinearOperator does not work with threaded applyInverseMass
+      //- because the mix of getLocalMatrix and setLocalMatrix seems to be
+      //- problematic. Therefore we used the locked version.
       template <class DomainFunction, class RangeFunction>
       struct GetSetLocalMatrix< PetscLinearOperator< DomainFunction, RangeFunction > > : public GetSetLocalMatrixImplLocked
       {
