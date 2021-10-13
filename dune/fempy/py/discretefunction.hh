@@ -329,7 +329,7 @@ namespace Dune
         detail::registerGridFunction< DF >( module, cls );
 
         detail::clsVirtualizedGridFunction< GridPart, Value >( module ).def( pybind11::init( [] ( DF &df ) {
-            return new VirtualizedGridFunction< GridPart, Value >( pyGridFunction( df ) );
+            return new VirtualizedGridFunction< GridPart, Value >( df );
           } ) );
         pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
 #if HAVE_DUNE_VTK

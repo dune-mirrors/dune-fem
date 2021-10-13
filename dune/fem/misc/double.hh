@@ -12,7 +12,7 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/storage/singleton.hh>
 
@@ -80,7 +80,7 @@ namespace Dune
 
     protected:
       inline FlOpCounter ()
-      : count_( 0 ), thread_( ThreadManager::thread() )
+      : count_( 0 ), thread_( MPIManager::thread() )
       {
         FlOpSummary< FloatImp > :: instance( FloatImp::typeName() ) ;
       }

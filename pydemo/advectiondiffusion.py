@@ -1,17 +1,3 @@
-#!/usr/bin/env python3
-
-# <markdowncell>
-# # Advection-Diffusion: Discontinuous Galerkin Method with Upwinding
-# So far we have been using Lagrange spaces of different order to solve our
-# PDE. In the following we show how to use Discontinuous Galerkin method to
-# solve an advection dominated advection-diffusion probllem:
-# \begin{align*}
-# -\varepsilon\triangle u + b\cdot\nabla u &= f
-# \end{align*}
-# with Dirichlet boundary conditions. Here $\varepsilon$ is a small
-# constant and $b$ a given vector.
-# <codecell>
-
 from mpi4py import MPI
 
 import numpy, math
@@ -19,16 +5,20 @@ import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
 from dune.grid import structuredGrid as leafGridView
+from dune.fem import threading, parameter
 from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
+from dune.fem.scheme import molGalerkin as molSolutionScheme
 from dune.fem.function import integrate, uflFunction
 from dune.ufl import Constant, DirichletBC
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
 from ufl import as_vector, avg, jump, dS, CellVolume, FacetArea, atan, tanh, sin
 
-def compute(space,epsilon,weakBnd):
+parameter.append({"fem.verboserank": 0})
+
+def compute(space,epsilon,weakBnd,skeleton, mol=None):
     u    = TrialFunction(space)
     v    = TestFunction(space)
     n    = FacetNormal(space)
@@ -36,8 +26,8 @@ def compute(space,epsilon,weakBnd):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    # exact = sin(x[0]*x[1]) # atan(1*x[1])
     exact = uflFunction( space.gridView, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    uh = space.interpolate(exact,name="solution")
 
     # diffusion factor
     eps = Constant(epsilon,"eps")
@@ -51,19 +41,24 @@ def compute(space,epsilon,weakBnd):
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
+    aInternal    -= eps*dot(grad(exact),n)*v*(1-dD)*ds
+
     diffSkeleton  = eps*beta/he*jump(u)*jump(v)*dS -\
                     eps*dot(avg(grad(u)),n('+'))*jump(v)*dS -\
                     eps*jump(u)*dot(avg(grad(v)),n('+'))*dS
-    diffSkeleton -= eps*dot(grad(exact),n)*v*(1-dD)*ds
     if weakBnd:
         diffSkeleton += eps*beta/hbnd*(u-exact)*v*dD*ds -\
                         eps*dot(grad(exact),n)*v*dD*ds
     advSkeleton   = jump(hatb*u)*jump(v)*dS
     if weakBnd:
         advSkeleton  += ( hatb*u + (dot(b,n)-hatb)*exact )*v*dD*ds
-    form          = aInternal + diffSkeleton + advSkeleton
 
-    if weakBnd:
+    if skeleton:
+        form          = aInternal + diffSkeleton + advSkeleton
+    else:
+        form          = aInternal
+
+    if weakBnd and skeleton:
         strongBC = None
     else:
         strongBC = DirichletBC(space,exact,dD)
@@ -73,25 +68,29 @@ def compute(space,epsilon,weakBnd):
     else:
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
-                              "newton.linear.tolerance":1e-13}
+                              "newton.linear.tolerance":1e-13,
+                              "newton.verbose": True, "newton.linear.verbose": False}
                }
-    scheme = solutionScheme([form==rhs,strongBC], **solver)
+    if mol == 'mol':
+        scheme = molSolutionScheme([form==rhs,strongBC], **solver)
+    else:
+        scheme = solutionScheme([form==rhs,strongBC], **solver)
 
-    # <markdowncell>
-    # <codecell>
-
-    uh = space.interpolate([0],name="solution")
     eoc = []
     info = scheme.solve(target=uh)
-    error0 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
+
+    error = dot(uh-exact,uh-exact)
+    error0 = math.sqrt( integrate(gridView,error,order=5) )
+    print(error0," # output",flush=True)
     for i in range(3):
-        uh.interpolate(0)
-        scheme.solve(target=uh)
-        error1 = math.sqrt( integrate(gridView,dot(uh-exact,uh-exact),order=5) )
-        eoc   += [ math.log(error1/error0) / math.log(0.5) ]
-        print(i,error0,error1,eoc)
-        error0 = error1
         gridView.hierarchicalGrid.globalRefine(1)
+        uh.interpolate(exact)
+        scheme.solve(target=uh)
+        error = dot(uh-exact,uh-exact)
+        error1 = math.sqrt( integrate(gridView,error,order=5) )
+        eoc   += [ math.log(error1/error0) / math.log(0.5) ]
+        print(i,error0,error1,eoc," # output",flush=True)
+        error0 = error1
 
     # print(space.order,epsilon,eoc)
     if (eoc[-1]-(space.order+1)) < -0.1:
@@ -99,27 +98,35 @@ def compute(space,epsilon,weakBnd):
     assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
+
 storage = "numpy"
+threading.use = 8
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
-gridView = newGridView()
-space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1e-5,True)
+for i in range(10):
+  print(i,"dgSpace, 1e-5, True, True")
+  gridView = newGridView()
+  space    = dgSpace(gridView, order=2, storage=storage)
+  eoc = compute(space,1e-5,True,True) # , 'mol')
 
-gridView = newGridView()
-space    = dgSpace(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+  print(i,"dgSpace, 1, True, True")
+  gridView = newGridView()
+  space    = dgSpace(gridView, order=2, storage=storage)
+  eoc = compute(space,1,True,True)
 
-#gridView = newGridView()
-#space    = dgSpace(gridView, order=3, storage=storage)
-#eoc = compute(space,1e-5,True)
+  print(i,"lagrange, 1, True, True")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,True,True)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,True)
+  print(i,"lagrange, 1, False, True")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,False,True)
 
-gridView = newGridView()
-space    = lagrange(gridView, order=2, storage=storage)
-eoc = compute(space,1,False)
+  print(i,"lagrange, 1, False, False")
+  gridView = newGridView()
+  space    = lagrange(gridView, order=2, storage=storage)
+  eoc = compute(space,1,False,False)

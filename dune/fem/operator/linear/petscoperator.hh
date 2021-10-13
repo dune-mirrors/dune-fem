@@ -16,6 +16,7 @@
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/fmatrixconverter.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
@@ -198,7 +199,8 @@ namespace Dune
       {
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FLUSH_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FLUSH_ASSEMBLY );
-        setStatus( statAssembled );
+        // set variable directly since setStatus might be disabled
+        status_ = statAssembled;
       }
 
       void finalize ()
@@ -347,7 +349,7 @@ namespace Dune
 
             std::vector< PetscInt > d_nnz( localRows / bs, 0 );
             std::vector< PetscInt > o_nnz( localRows / bs, 0 );
-            for( const auto entry : stencil.globalStencil() )
+            for( const auto& entry : stencil.globalStencil() )
             {
               const int petscIndex = rangeMappers_.ghostIndex( entry.first );
               if( rangeAuxiliaryDofs.contains( petscIndex ) )
@@ -380,6 +382,7 @@ namespace Dune
 
       void clear ()
       {
+        flushAssembly();
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
         flushAssembly();
       }
@@ -507,7 +510,7 @@ namespace Dune
       template< class LocalBlock >
       void setBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
-#ifndef _OPENMP
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statInsert );
 #endif
         assert( row < std::numeric_limits< int > :: max() );
@@ -520,7 +523,7 @@ namespace Dune
       template< class LocalBlock >
       void addBlock ( const size_t row, const size_t col, const LocalBlock& block )
       {
-#ifndef _OPENMP
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statInsert );
 #endif
         assert( row < std::numeric_limits< int > :: max() );
@@ -557,7 +560,7 @@ namespace Dune
                                     const LocalMatrix &localMat, const Operation& operation,
                                     const std::integral_constant< bool, T> scaled )
       {
-        std::vector< PetscScalar >& v = v_;
+        std::vector< PetscScalar >& v = *(v_);
         v.resize( rSize * cSize );
         for( unsigned int i = 0, ic = 0 ; i< rSize; ++i )
         {
@@ -575,8 +578,9 @@ namespace Dune
                               PetscOp petscOp,
                               const std::integral_constant<bool, T> scaled )
       {
-        std::vector< PetscInt >& r = r_;
-        std::vector< PetscInt >& c = c_;
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
 
         if( blockedMode_ )
         {
@@ -608,7 +612,9 @@ namespace Dune
       template< class LocalMatrix >
       void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statAdd );
+#endif
         setStatus( statAdd );
 
         auto operation = [] ( const PetscScalar& value ) -> PetscScalar { return value; };
@@ -619,7 +625,9 @@ namespace Dune
       template< class LocalMatrix, class Scalar >
       void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
       {
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statAdd );
+#endif
         setStatus( statAdd );
 
         auto operation = [ &s ] ( const PetscScalar& value ) -> PetscScalar { return s * value; };
@@ -630,7 +638,9 @@ namespace Dune
       template< class LocalMatrix >
       void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statInsert );
+#endif
         setStatus( statInsert );
 
         auto operation = [] ( const PetscScalar& value ) -> PetscScalar { return value; };
@@ -644,12 +654,15 @@ namespace Dune
         // make sure matrix is in correct state before using
         finalizeAssembly();
 
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statGet );
+#endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = r_;
-        std::vector< PetscInt >&  c = c_;
-        std::vector< PetscScalar >& v = v_;
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
+        std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
         setupIndices( domainMappers_, domainEntity, c );
@@ -669,12 +682,15 @@ namespace Dune
         // make sure matrix is in correct state before using
         finalizeAssembly();
 
+#ifndef USE_SMP_PARALLEL
         assert( status_==statAssembled || status_==statGet );
+#endif
         setStatus( statGet );
 
-        std::vector< PetscInt >&  r = r_;
-        std::vector< PetscInt >&  c = c_;
-        std::vector< PetscScalar >& v = v_;
+        auto& rcTemp = *(rcTemp_);
+        std::vector< PetscInt >& r = rcTemp.first;
+        std::vector< PetscInt >& c = rcTemp.second;
+        std::vector< PetscScalar >& v = *(v_);
 
         setupIndices( rangeMappers_, rangeEntity, r );
         setupIndices( domainMappers_, domainEntity, c );
@@ -736,7 +752,7 @@ namespace Dune
       void setStatus (const Status &newstatus) const
       {
         // in case OpenMP is used simply avoid status check
-#ifndef _OPENMP
+#ifndef USE_SMP_PARALLEL
         status_ = newstatus;
 #endif
       }
@@ -772,9 +788,8 @@ namespace Dune
       mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;
 
-      mutable std::vector< PetscScalar > v_;
-      mutable std::vector< PetscInt    > r_;
-      mutable std::vector< PetscInt    > c_;
+      mutable ThreadSafeValue< std::vector< PetscScalar > > v_;
+      mutable ThreadSafeValue< std::pair< std::vector< PetscInt >, std::vector< PetscInt > > > rcTemp_;
 
       mutable std::vector< PetscInt    > unitRows_;
     };
@@ -825,6 +840,7 @@ namespace Dune
       };
 
     public:
+      [[deprecated("Use TemporaryLocal Matrix and {add,set,get}LocalMatrix")]]
       LocalMatrix ( const PetscLinearOperatorType &petscLinOp,
                     const DomainSpaceType &domainSpace,
                     const RangeSpaceType &rangeSpace )

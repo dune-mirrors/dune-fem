@@ -162,15 +162,12 @@ namespace Dune
 
       /** \copydoc Dune::Fem::BasisFunctionSet::hessianAll */
       template< class QuadratureType, class DofVector, class HessianArray >
-      void hessianAll ( const QuadratureType &quad, const DofVector &dofs, HessianArray &hessians ) const
+      void hessianAll ( const QuadratureType &quadrature, const DofVector &dofs, HessianArray &hessians ) const
       {
-        assert( hessians.size() >= quad.nop() );
-        // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
-        const unsigned int nop = quad.nop();
+        assert( hessians.size() >= quadrature.nop() );
+        const unsigned int nop = quadrature.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-        {
-          hessianAll( quad[ qp ], dofs, hessians[ qp ] );
-        }
+          hessians[qp] = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
       }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::hessianAll */

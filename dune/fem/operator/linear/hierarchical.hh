@@ -288,12 +288,34 @@ namespace Dune
         matrix.setSize( stencil.rows(), stencil.cols() );
 
         // setup sparsity pattern (using random build mode)
-        for( const auto &row : stencil.globalStencil() )
-          matrix.setrowsize( row.first, row.second.size() );
+        const auto& globalStencil = stencil.globalStencil();
+        const std::size_t nRows = globalStencil.size();
+        for( std::size_t row = 0; row<nRows; ++row )
+        {
+          try {
+            const auto& columns = globalStencil.at( row );
+            matrix.setrowsize( row, columns.size() );
+          }
+          catch ( const std::out_of_range& e )
+          {
+            // if a row is empty then do nothing
+            continue ;
+          }
+        }
         matrix.endrowsizes();
 
-        for( const auto &row : stencil.globalStencil() )
-          matrix.setIndices( row.first, row.second.begin(), row.second.end() );
+        for( std::size_t row = 0; row<nRows; ++row )
+        {
+          try {
+            const auto& columns = globalStencil.at( row );
+            matrix.setIndices( row, columns.begin(), columns.end() );
+          }
+          catch ( const std::out_of_range& e )
+          {
+            // if a row is empty then do nothing
+            continue ;
+          }
+        }
         matrix.endindices();
       }
 #endif // #if HAVE_DUNE_ISTL

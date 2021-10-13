@@ -305,6 +305,9 @@ namespace Dune
       DomainBasisFunctionSetType domainBaseSet_;
       RangeBasisFunctionSetType rangeBaseSet_;
 
+      std::optional< DomainEntityType > domainEntity_;
+      std::optional< RangeEntityType > rangeEntity_;
+
     protected:
       LocalMatrixDefault ( const DomainSpaceType &domainSpace,
                            const RangeSpaceType &rangeSpace )
@@ -321,15 +324,19 @@ namespace Dune
                            const RangeEntityType &rangeEntity )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
-        domainBaseSet_( domainSpace.basisFunctionSet( domainEntity ) ),
-        rangeBaseSet_( rangeSpace.basisFunctionSet( rangeEntity ) )
-      {}
+        domainBaseSet_(),
+        rangeBaseSet_()
+      {
+        bind( domainEntity, rangeEntity );
+      }
 
       LocalMatrixDefault ( const LocalMatrixDefault& org )
       : domainSpace_( org.domainSpace_ ),
         rangeSpace_( org.rangeSpace_ ),
         domainBaseSet_( org.domainBaseSet_ ),
-        rangeBaseSet_( org.rangeBaseSet_ )
+        rangeBaseSet_( org.rangeBaseSet_ ),
+        domainEntity_( org.domainEntity_ ),
+        rangeEntity_( org.rangeEntity_ )
       {}
 
     public:
@@ -344,6 +351,8 @@ namespace Dune
       {
         domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
+        domainEntity_.emplace(domainEntity);
+        rangeEntity_.emplace(rangeEntity);
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::unbind */
@@ -351,6 +360,8 @@ namespace Dune
       {
         domainBaseSet_ = DomainBasisFunctionSetType();
         rangeBaseSet_  = RangeBasisFunctionSetType();
+        domainEntity_.reset();
+        rangeEntity_.reset();
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
@@ -383,8 +394,8 @@ namespace Dune
         return rangeBaseSet_;
       }
 
-      const DomainEntityType &domainEntity () const { return domainBasisFunctionSet().entity(); }
-      const RangeEntityType &rangeEntity () const { return rangeBasisFunctionSet().entity(); }
+      const DomainEntityType &domainEntity () const { return domainEntity_.value(); }
+      const RangeEntityType &rangeEntity () const { return rangeEntity_.value(); }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
       template <class DomainLocalFunctionType,

@@ -6,7 +6,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
@@ -59,7 +58,8 @@ namespace Dune {
 
 #ifdef USE_THREADPARTITIONER
       int sequence_;
-      std::vector< FilteredGridPartType* > filteredGridParts_;
+      int numThreads_;
+      std::vector< std::unique_ptr< FilteredGridPartType > > filteredGridParts_;
 
       typedef typename FilterType :: DomainArrayType ThreadArrayType;
       ThreadArrayType threadNum_;
@@ -93,24 +93,25 @@ namespace Dune {
           indexSet_( gridPart_.indexSet() )
 #ifdef USE_THREADPARTITIONER
         , sequence_( -1 )
-        , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
+        , numThreads_( Fem :: MPIManager :: numThreads() )
+        , filteredGridParts_( Fem :: MPIManager :: maxThreads() )
 #endif
         , masterRatio_( 1.0 )
 #ifdef USE_THREADPARTITIONER
         , method_( getMethod( parameter ) )
 #endif // #ifdef USE_SMP_PARALLEL
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
-                    &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
+                    &&  Fem :: MPIManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_THREADPARTITIONER
-        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
+        for(int thread=0; thread < Fem :: MPIManager :: maxThreads(); ++thread )
         {
           // thread is the thread number of this filter
-          filteredGridParts_[ thread ]
-            = new FilteredGridPartType( const_cast<GridPartType &> (gridPart_),
-                                        FilterType( gridPart_, threadNum_, thread ) );
+          filteredGridParts_[ thread ].reset(
+              new FilteredGridPartType( const_cast<GridPartType &> (gridPart_),
+                                        FilterType( gridPart_, threadNum_, thread ) ) );
         }
 
         threadNum_.setMemoryFactor( 1.1 );
@@ -119,17 +120,6 @@ namespace Dune {
       }
 
 #ifdef USE_THREADPARTITIONER
-      //! destructor
-      ~DomainDecomposedIterator()
-      {
-        for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
-        {
-          // i is the thread number of this filter
-          delete filteredGridParts_[ thread ] ;
-          filteredGridParts_[ thread ] = 0 ;
-        }
-      }
-
       //! return filter for given thread
       const FilterType& filter( const int thread ) const
       {
@@ -143,9 +133,9 @@ namespace Dune {
 #ifdef USE_THREADPARTITIONER
         const int sequence = gridPart_.sequence() ;
         // if grid got updated also update iterators
-        if( sequence_ != sequence )
+        if( sequence_ != sequence || numThreads_ != MPIManager :: numThreads() )
         {
-          if( ! ThreadManager :: singleThreadMode() )
+          if( ! MPIManager :: singleThreadMode() )
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
@@ -154,7 +144,7 @@ namespace Dune {
 
           const int commThread = communicationThread_ ? 1 : 0;
           // get number of partitions possible
-          const size_t partitions = ThreadManager :: maxThreads() - commThread ;
+          const size_t partitions = MPIManager :: numThreads() - commThread ;
 
           // create partitioner
           ThreadPartitionerType db( gridPart_, partitions, masterRatio_ );
@@ -192,6 +182,9 @@ namespace Dune {
             // update sequence number
             sequence_ = sequence;
 
+            // update numThreads_
+            numThreads_ = MPIManager :: numThreads();
+
             if( verbose_ )
             {
               std::cout << "DomainDecomposedIterator: sequence = " << sequence_ << " size = " << numInteriorElems << std::endl;
@@ -220,24 +213,34 @@ namespace Dune {
       IteratorType begin() const
       {
 #ifdef USE_THREADPARTITIONER
-        const int thread = ThreadManager :: thread() ;
-        if( communicationThread_ && thread == 0 )
-          return filteredGridParts_[ thread ]->template end< 0 > ();
+        if( ! MPIManager :: singleThreadMode () )
+        {
+          const int thread = MPIManager :: thread() ;
+          if( communicationThread_ && thread == 0 )
+            return filteredGridParts_[ thread ]->template end< 0 > ();
+          else
+            return filteredGridParts_[ thread ]->template begin< 0 > ();
+        }
         else
-          return filteredGridParts_[ thread ]->template begin< 0 > ();
-#else
-        return gridPart_.template begin< 0 > ();
 #endif
+        {
+          return gridPart_.template begin< 0 > ();
+        }
       }
 
       //! return end iterator for current thread
       IteratorType end() const
       {
 #ifdef USE_THREADPARTITIONER
-        return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
-#else
-        return gridPart_.template end< 0 > ();
+        if( ! MPIManager :: singleThreadMode () )
+        {
+          return filteredGridParts_[ MPIManager :: thread() ]->template end< 0 > ();
+        }
+        else
 #endif
+        {
+          return gridPart_.template end< 0 > ();
+        }
       }
 
       //! return thread number this entity belongs to

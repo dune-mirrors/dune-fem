@@ -18,7 +18,7 @@
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
-#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
 #include <dune/fem/space/common/dataprojection/dataprojection.hh>
 
@@ -149,7 +149,7 @@ namespace Dune
     AdaptationMethod ( const GridType &grid, const ParameterReader &parameter = Parameter::container() )
       : adaptationMethod_(generic)
     {
-      const bool output = ( Parameter :: verbose() && ThreadManager::isMaster() );
+      const bool output = ( Parameter :: verbose() && MPIManager::isMainThread() );
       int am = 1;
       const std::string methodNames [] = { "none", "generic", "callback" };
       am = parameter.getEnum("fem.adaptation.method", methodNames, am);
@@ -319,8 +319,12 @@ namespace Dune
     */
     virtual void adapt ()
     {
-      // make sure this is only called in single thread mode
-      assert( Fem :: ThreadManager :: singleThreadMode() );
+      // only call in single thread mode
+      if( ! Fem :: MPIManager :: singleThreadMode() )
+      {
+        assert( Fem :: MPIManager :: singleThreadMode() );
+        DUNE_THROW(InvalidStateException,"AdaptationManagerBase::adapt: only call in single thread mode!");
+      }
 
       // get stopwatch
       Dune::Timer timer;
@@ -832,7 +836,12 @@ namespace Dune
       /** \brief perform adaptation */
       void adapt ()
       {
-        assert( Dune::Fem::ThreadManager::singleThreadMode() );
+        // only call in single thread mode
+        if( ! Fem :: MPIManager :: singleThreadMode() )
+        {
+          assert( Fem :: MPIManager :: singleThreadMode() );
+          DUNE_THROW(InvalidStateException,"AdaptationManager::adapt: only call in single thread mode!");
+        }
 
         Dune::Timer timer;
 
