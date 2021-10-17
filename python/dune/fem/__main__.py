@@ -3,10 +3,10 @@ commands='''
 mkdir fem_tutorial
 cd fem_tutorial
 
-TMPNAME=`mktemp -d -p ./`
+TMPNAME=`mktemp -d ./tmptutorial.XXXXXX`
 
 # clone repo without history
-git clone --depth 1 https://gitlab.dune-project.org/dune-fem/dune-fempy.git $TMPNAME
+git clone --quiet --depth 1 https://gitlab.dune-project.org/dune-fem/dune-fempy.git $TMPNAME
 cd $TMPNAME
 
 cp doc/*.py doc/*.ipynb doc/*.hh doc/*.dgf doc/*.msh ..

@@ -7,6 +7,7 @@ variables:
   # Need to investigate if there is an issue with dune-fem and activated TBB
   GLOBAL_CMAKE_FLAGS: "-DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE \
     -DALLOW_CXXFLAGS_OVERWRITE=ON -DDUNE_GRID_GRIDTYPE_SELECTOR=ON \
+    -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE \
     "
     # -DCMAKE_CXX_FLAGS='-Wall -fdiagnostics-color=always -std=c++2a -rdynamic' \
     # -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE \
