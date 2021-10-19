@@ -91,8 +91,8 @@ class Source(object):
     version = "v1_3"
     def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
-        gridType = grid._typeName
-        gridIncludes = grid._includes
+        gridType = grid.cppTypeName
+        gridIncludes = grid.cppIncludes
         self.gridType = gridType
         self.gridIncludes = gridIncludes
         if modelIncludes is not None:
@@ -150,7 +150,7 @@ class Source(object):
                 code.append(Include('dune/fem/misc/gridfunctionview.hh'))
             else:
                 for c in integrands._coefficients:
-                    for i in c._includes:
+                    for i in c.cppIncludes:
                         code.append(Include(i))
         for i in self.modelIncludes:
             code.append(Include(i))

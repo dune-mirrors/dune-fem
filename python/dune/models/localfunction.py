@@ -35,8 +35,8 @@ class UFLFunctionSource(codegen.ModelClass):
             name,order,
             tempVars=True, virtualize=True,
             predefined=None):
-        gridType = grid._typeName
-        gridIncludes = grid._includes
+        gridType = grid.cppTypeName
+        gridIncludes = grid.cppIncludes
         if len(expr.ufl_shape) == 0:
             expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
@@ -148,7 +148,7 @@ class UFLFunctionSource(codegen.ModelClass):
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
             else:
                 for c in self.coefficientList:
-                    for i in c._includes:
+                    for i in c.cppIncludes:
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/ufllocalfunction.hh"))
 

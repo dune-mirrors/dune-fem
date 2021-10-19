@@ -12,8 +12,8 @@ def create(space, name="tmp", **unused):
         DiscreteFunction: the constructed discrete function
     """
 
-    includes = [ "dune/fem/function/adaptivefunction.hh" ] + space._module._includes
-    spaceType = space._module._typeName
+    includes = [ "dune/fem/function/adaptivefunction.hh" ] + space._module.cppIncludes
+    spaceType = space._module.cppTypeName
     typeName = "Dune::Fem::AdaptiveDiscreteFunction< " + spaceType + " >"
 
     return module("fem", includes, typeName).DiscreteFunction(space,name)

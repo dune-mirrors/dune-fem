@@ -28,9 +28,9 @@ def femscheme(includes, space, solver, operator, modelType):
     _, solverIncludes, solverTypeName,param = getSolver(solver,space.storage,defaultSolver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
-                space._includes + dfIncludes + solverIncludes +\
+                space.cppIncludes + dfIncludes + solverIncludes +\
                 ["dune/fempy/parameter.hh"]
-    spaceType = space._typeName
+    spaceType = space.cppTypeName
     if modelType is None:
         includes += ["dune/fem/schemes/diffusionmodel.hh"]
         modelType = "ConservationLawModel< " +\
@@ -72,9 +72,9 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
 
-    includes = [ "navierstokes/burgers.cc" ] + vspace._module._includes + pspace._module._includes
-    vspaceType = vspace._module._typeName
-    pspaceType = pspace._module._typeName
+    includes = [ "navierstokes/burgers.cc" ] + vspace._module.cppIncludes + pspace._module.cppIncludes
+    vspaceType = vspace._module.cppTypeName
+    pspaceType = pspace._module.cppTypeName
     typeName = "BurgersSchemeWrapper<PRPScheme< " + vspaceType + ", " + pspaceType + ", " +\
         "ConservationLawModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\
@@ -119,7 +119,7 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
             model = elliptic(space.gridView,model,
                       modelPatch=transform(space,penalty))
 
-    spaceType = space._typeName
+    spaceType = space.cppTypeName
     useDirichletBC = "true" if model.hasDirichletBoundary else "false"
     modelParam = None
     if isinstance(model, (list, tuple)):
@@ -191,7 +191,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
             integrands = makeIntegrands(space.gridView,integrands,*integrandsParam)
         else:
             integrands = makeIntegrands(space.gridView,integrands)
-    elif not integrands._typeName.startswith("Integrands"):
+    elif not integrands.cppTypeName.startswith("Integrands"):
         raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
     if not hasattr(space,"interpolate"):
         raise ValueError("wrong space given")
@@ -203,19 +203,19 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     if virtualize is None:
         virtualize = integrands.virtualized
 
-    includes = [] # integrands._includes
-    includes += space._includes + dfIncludes + solverIncludes
+    includes = [] # integrands.cppIncludes
+    includes += space.cppIncludes + dfIncludes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
     # molgalerkin includes galerkin.hh so it works for both
     includes += ["dune/fem/schemes/molgalerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
 
-    spaceType = space._typeName
+    spaceType = space.cppTypeName
     valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'
     if virtualize:
         integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
     else:
-        includes += integrands._includes
-        integrandsType = integrands._typeName
+        includes += integrands.cppIncludes
+        integrandsType = integrands.cppTypeName
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
     typeName = 'Dune::Fem::'+schemeName+'< ' + integrandsType + ', ' +\
@@ -305,9 +305,9 @@ def h1Galerkin(space, model, solver=None, parameters={}):
 
 def linearized(scheme, ubar=None, parameters={}):
     from . import module
-    schemeType = scheme._typeName
+    schemeType = scheme.cppTypeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
-    includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme._includes
+    includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme.cppIncludes
 
     constructor1 = Constructor(['typename DuneType::SchemeType &scheme', 'typename DuneType::DiscreteFunctionType &ubar', 'const pybind11::dict &parameters'],
                                ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
@@ -340,9 +340,9 @@ def stokes(space, model, name, viscosity, timestep, **kwargs):
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
 
-    includes = [ "navierstokes/stokes.cc" ] + vspace._module._includes + pspace._module._includes
-    vspaceType = vspace._module._typeName
-    pspaceType = pspace._module._typeName
+    includes = [ "navierstokes/stokes.cc" ] + vspace._module.cppIncludes + pspace._module.cppIncludes
+    vspaceType = vspace._module.cppTypeName
+    pspaceType = pspace._module.cppTypeName
     typeName = "StokesSchemeWrapper<UzawaScheme< " + vspaceType + ", " + pspaceType + ", " +\
         "ConservationLawModel< " +\
           "typename " + vspaceType + "::GridPartType, " +\

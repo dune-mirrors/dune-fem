@@ -301,7 +301,7 @@ class ConservationLawModel:
         """
         for name, value in coefficients.items():
             if not any(name == c['name'] for c in self._coefficients):
-                self.addCoefficient(value.dimRange,value._typeName, name)
+                self.addCoefficient(value.dimRange,value.cppTypeName, name)
         for name, dimRange in constants.items():
             if name not in self._constantNames:
                 self.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >', name)

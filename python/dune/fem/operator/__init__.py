@@ -90,8 +90,8 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     if not hasattr(domainSpace,"interpolate"):
         raise ValueError("given domain space has to be a discrete space")
 
-    domainSpaceType = domainSpace._typeName
-    rangeSpaceType  = rangeSpace._typeName
+    domainSpaceType = domainSpace.cppTypeName
+    rangeSpaceType  = rangeSpace.cppTypeName
 
     storage, domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
     rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
@@ -100,14 +100,14 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     if operatorPrefix == 'MOL':
         includes += ["dune/fem/schemes/molgalerkin.hh"]
 
-    includes += domainSpace._includes + domainFunctionIncludes
-    includes += rangeSpace._includes + rangeFunctionIncludes
+    includes += domainSpace.cppIncludes + domainFunctionIncludes
+    includes += rangeSpace.cppIncludes + rangeFunctionIncludes
 
     if virtualize:
         integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
     else:
-        includes += integrands._includes
-        integrandsType = integrands._typeName
+        includes += integrands.cppIncludes
+        integrandsType = integrands.cppTypeName
 
     if not rstorage == storage:
         typeName = 'Dune::Fem::' + operatorPrefix + 'GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
@@ -180,8 +180,8 @@ def h1(model, domainSpace=None, rangeSpace=None):
     if not hasattr(domainSpace,"interpolate"):
         raise ValueError("wrong domain space")
 
-    domainSpaceType = domainSpace._typeName
-    rangeSpaceType = rangeSpace._typeName
+    domainSpaceType = domainSpace.cppTypeName
+    rangeSpaceType = rangeSpace.cppTypeName
 
     storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
     rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
@@ -189,8 +189,8 @@ def h1(model, domainSpace=None, rangeSpace=None):
         raise ValueError("storage for both spaces must be identical to construct operator")
 
     includes = ["dune/fem/schemes/elliptic.hh", "dune/fem/schemes/dirichletwrapper.hh", "dune/fempy/py/grid/gridpart.hh"]
-    includes += domainSpace._includes + domainFunctionIncludes
-    includes += rangeSpace._includes + rangeFunctionIncludes
+    includes += domainSpace.cppIncludes + domainFunctionIncludes
+    includes += rangeSpace.cppIncludes + rangeFunctionIncludes
     includes += ["dune/fem/schemes/conservationlawmodel.hh", "dune/fempy/parameter.hh"]
 
     import dune.create as create
@@ -223,8 +223,8 @@ def linear(operator, ubar=None,parameters={}):
     rangeSpace  = operator.rangeSpace
     domainSpace = operator.domainSpace
 
-    domainSpaceType = domainSpace._typeName
-    rangeSpaceType = rangeSpace._typeName
+    domainSpaceType = domainSpace.cppTypeName
+    rangeSpaceType = rangeSpace.cppTypeName
 
     storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
     rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
@@ -232,8 +232,8 @@ def linear(operator, ubar=None,parameters={}):
         raise ValueError("storage for both spaces must be identical to construct operator")
 
     includes = ["dune/fempy/py/grid/gridpart.hh"]
-    includes += domainSpace._includes + domainFunctionIncludes
-    includes += rangeSpace._includes + rangeFunctionIncludes
+    includes += domainSpace.cppIncludes + domainFunctionIncludes
+    includes += rangeSpace.cppIncludes + rangeFunctionIncludes
 
     import dune.create as create
     typeName = create.discretefunction(storage)(domainSpace,rangeSpace)[3]

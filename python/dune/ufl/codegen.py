@@ -346,12 +346,12 @@ def fieldVectorType(shape, field = None, useScalar = False):
 
 def gridPartType(gf):
     try:
-        gv = gf.space.gridView._typeName
+        gv = gf.space.gridView.cppTypeName
     except AttributeError:
         try:
-            gv = gf.gridView._typeName
+            gv = gf.gridView.cppTypeName
         except AttributeError:
-            gv = gf.grid._typeName
+            gv = gf.grid.cppTypeName
     gvType = re.split('::GridViewType$', gv)
     if len(gvType) == 2: # is a dune fem grid part
         return gvType[0]
@@ -459,16 +459,16 @@ class ModelClass():
                 self.coefficientCppTypes = \
                     ['Dune::FemPy::VirtualizedGridFunction< ' +\
                      gridPartType(c) + ', ' + fieldVectorType(c) + ' >' \
-                        if not c._typeName.startswith("Dune::Python::SimpleGridFunction") \
-                        else c._typeName \
+                        if not c.cppTypeName.startswith("Dune::Python::SimpleGridFunction") \
+                        else c.cppTypeName \
                     for c in self.coefficientList]
                 # VirtualizedGF need GridParts but they have to be the same for all coefficients
                 # Do we want this to work in some way? Then we can add
                 # includes here - but '.bind(entity)' will fail.
                 # for c in self.coefficientList:
-                #     self.includeFiles += c.grid._includes
+                #     self.includeFiles += c.grid.cppIncludes
             else:
-                self.coefficientCppTypes = [c._typeName for c in self.coefficientList]
+                self.coefficientCppTypes = [c.cppTypeName for c in self.coefficientList]
         else:
             self.coefficientCppTypes = []
 
