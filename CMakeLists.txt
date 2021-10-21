@@ -25,7 +25,7 @@ include(DuneMacros)
 dune_project()
 dune_enable_all_packages()
 
-include(DuneMPI)
+include(AddMPIFlags)
 
 # if Python bindings are enabled, include necessary sub directories.
 if( DUNE_ENABLE_PYTHONBINDINGS )
