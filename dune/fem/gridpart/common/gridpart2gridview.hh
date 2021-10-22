@@ -107,7 +107,7 @@ namespace Dune
         , gridPart_( &gridPart )
       {}
       template< class... Args,
-          std::enable_if_t< std::is_constructible< GridPartType, Args... >::value, int > = 0 >
+          std::enable_if_t< std::is_constructible< GridPartType, Args..., ThisType*  >::value, int > = 0 >
       GridPart2GridViewImpl( Args &&... args )
       : gridPartStorage_(new GridPartType( std::forward< Args >( args )..., this) )
       , gridPart_(gridPartStorage_.get())
