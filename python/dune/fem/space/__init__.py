@@ -266,7 +266,7 @@ def addDiscreteFunction(space, storage):
     storage, dfIncludes, dfTypeName, _, _,backend = addStorage(space,storage)
 
     ctor = ()
-    spaceType = space._typeName
+    spaceType = space.cppTypeName
     if storage == "petsc":
         try:
             import petsc4py
@@ -323,8 +323,8 @@ def module(field, includes, typeName, *args,
     defines = []
 
     class DummySpace:
-        _typeName = typeName
-        _includes = includes
+        cppTypeName = typeName
+        cppIncludes = includes
     DummySpace.field     = field
     dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
 

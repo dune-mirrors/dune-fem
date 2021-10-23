@@ -30,13 +30,13 @@ from dune.ufl.codegen import uflSignature, TooHighDerivative
 from dune.ufl import codegen
 
 class UFLFunctionSource(codegen.ModelClass):
-    version = "v1_2"
+    version = "v1_3"
     def __init__(self, grid, expr,
             name,order,
             tempVars=True, virtualize=True,
             predefined=None):
-        gridType = grid._typeName
-        gridIncludes = grid._includes
+        gridType = grid.cppTypeName
+        gridIncludes = grid.cppIncludes
         if len(expr.ufl_shape) == 0:
             expr = as_vector( [ expr ] )
         dimRange = expr.ufl_shape[0]
@@ -148,7 +148,7 @@ class UFLFunctionSource(codegen.ModelClass):
                 code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
             else:
                 for c in self.coefficientList:
-                    for i in c._includes:
+                    for i in c.cppIncludes:
                         code.append(Include(i))
         code.append(Include("dune/fempy/py/ufllocalfunction.hh"))
 
@@ -191,6 +191,7 @@ class UFLFunctionSource(codegen.ModelClass):
 
         source = "#ifndef GUARD_"+self.signature()+\
                  "\n#define GUARD_"+self.signature()+"\n"+\
+                 "\n#define USING_DUNE_PYTHON 1"+"\n"+\
                  source+\
                  "\n#endif\n"
 

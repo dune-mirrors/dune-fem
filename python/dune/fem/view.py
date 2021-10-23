@@ -52,14 +52,14 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     if not isinstance(grid, getattr(gridModule, "HierarchicalGrid")):
         raise ValueError('Cannot only create an adaptiveLeafGridView from a DUNE grid.')
 
-    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid._typeName + " >"
+    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + " >"
     typeName = gridPartName + "::GridViewType"
-    includes = grid._includes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
 
     # Note: AGP are constructed from the hierarchical grid like other grid
     # views so the default ctor can be used
     '''
-    constructor = Constructor([grid._typeName + " &grid","int"],
+    constructor = Constructor([grid.cppTypeName + " &grid","int"],
                  ["std::cout << 'hallo\\n';",
                   "Dune::FemPy::detail::addGridModificationListener( grid );",
                   "return Dune::FemPy::constructGridPart<"+gridPartName+">( grid );"],
@@ -82,9 +82,9 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     Returns:
         GridView: the constructed grid view
     """
-    includes = hostGridView._includes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes = hostGridView.cppIncludes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
 
-    hostGridViewType = hostGridView._typeName
+    hostGridViewType = hostGridView.cppTypeName
     hostGridPartType = "Dune::FemPy::GridPart< " + hostGridViewType + " >"
     filterType = "Dune::Fem::SimpleFilter< " + hostGridPartType + " >"
     gridPartName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >"
@@ -108,18 +108,18 @@ def geometryGridView(coordFunction):
     Returns:
         GridView: the constructed grid view
     """
-    assert not coordFunction._typeName.startswith("Dune::Python::SimpleGridFunction"),\
+    assert not coordFunction.cppTypeName.startswith("Dune::Python::SimpleGridFunction"),\
 """at the moment the 'gridFunction' decorator does
 not work with the 'geometryGridView'.
 Interpolate into a discrete function space or use a
 'uflFunction' if the function can be written as a ufl expression.
 """
 
-    includes = coordFunction._includes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
-    gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction._typeName + " >"
+    includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction.cppTypeName + " >"
     typeName = gridPartName + "::GridViewType"
 
-    constructor = Constructor([coordFunction._typeName + " &coordFunction"],
+    constructor = Constructor([coordFunction.cppTypeName + " &coordFunction"],
                  ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
     return load(includes, typeName, constructor).GridView(coordFunction)

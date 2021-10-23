@@ -17,4 +17,6 @@ add_python_targets(fem
 
 dune_add_pybind11_module(NAME _fem)
 set_property(TARGET _fem PROPERTY LINK_LIBRARIES dunecommon dunegeometry dunegrid dunefem APPEND)
-install(TARGETS _fem LIBRARY DESTINATION python/dune/fem)
+if(SKBUILD)
+  install(TARGETS _fem LIBRARY DESTINATION python/dune/fem)
+endif()

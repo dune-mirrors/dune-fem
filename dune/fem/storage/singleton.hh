@@ -9,8 +9,12 @@
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
 #include <dune/common/visibility.hh>
+#ifdef USING_DUNE_PYTHON
+#include <dune/python/pybind11/pybind11.h>
+#endif
 
 namespace Dune
 {
@@ -20,7 +24,7 @@ namespace Dune
     {
       class SingletonStorage
       {
-      protected:
+      public:
         // item to be stored in storage list
         struct Item {  virtual ~Item() {} };
 
@@ -52,28 +56,29 @@ namespace Dune
           void operator()(StorageType* storage) const
           {
             // delete singletons in reverse order
-            std::for_each(storage->second.rbegin(), storage->second.rend(),
-                          [](PointerType& item) { item.reset(); });
+            std::for_each(storage->second.rbegin(), storage->second.rend(), [](PointerType& item) { item.reset(); });
 
             storage->second.clear();
             storage->first.clear();
           }
         };
 
-      public:
-        typedef std::unique_ptr<StorageType, SingletonDeleter> StoragePointer;
+        typedef std::shared_ptr<StorageType> StoragePointer;
 
-      private:
         static StoragePointer storage_;
 
-      protected:
         DUNE_EXPORT static StorageType& getStorage()
         {
           if(! storage_ )
           {
             // this should happen during the creation of MPIManager
             // which is the first static variable to accessed
-            storage_.reset( new StorageType() );
+#ifndef USING_DUNE_PYTHON
+            storage_.reset( new StorageType(), SingletonDeleter() );
+#else
+            storage_ = pybind11::cast< StoragePointer >(
+                       pybind11::module::import( "dune.fem._fem" ).attr( "_singleton" ) );
+#endif
           }
 
           return *storage_;

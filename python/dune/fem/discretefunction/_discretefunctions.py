@@ -4,6 +4,7 @@ import sys,os
 import logging
 logger = logging.getLogger(__name__)
 
+from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
 import dune.common.checkconfiguration as checkconfiguration
 import dune.generator
 from dune.deprecate import deprecated
@@ -12,12 +13,12 @@ from . import _solvers as solvers
 
 @deprecated(name="storage=fem",msg="'storage=\"fem\" for the space is deprecated, use `storage=\"numpy\" instead")
 def fem():
-    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space.cppTypeName + " >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space, rspace=None:[\
         "fem",\
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
-              space._includes,\
+              space.cppIncludes,\
         dfType(space),\
         "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
         rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
@@ -26,12 +27,12 @@ def fem():
     ]
 @deprecated(name="storage=fem",msg="'storage=\"adaptive\" for the space is deprecated, use `storage=\"numpy\" instead")
 def adaptive():
-    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space.cppTypeName + " >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space, rspace=None:[\
         "fem",\
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
-              space._includes,\
+              space.cppIncludes,\
         dfType(space),\
         "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
         rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
@@ -40,12 +41,12 @@ def adaptive():
     ]
 
 def numpy():
-    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space.cppTypeName + " >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space, rspace=None:[\
         "numpy",\
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
-              space._includes,\
+              space.cppIncludes,\
         dfType(space),\
         "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
         rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
@@ -63,14 +64,14 @@ def eigen():
         raise
 
     dfType = lambda space: "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
-                           space._typeName + ", Dune::Fem::EigenVector< " + space.field + " > > >"
+                           space.cppTypeName + ", Dune::Fem::EigenVector< " + space.field + " > > >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space,rspace=None:[\
         "eigen",\
         ["dune/fem/function/vectorfunction/managedvectorfunction.hh",\
                 "dune/fem/storage/eigenvector.hh",\
                 "dune/fem/operator/linear/eigenoperator.hh"] +\
-              space._includes,\
+              space.cppIncludes,\
         dfType(space),\
         "Dune::Fem::EigenLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">",\
         solvers.eigensolver,\
@@ -78,23 +79,22 @@ def eigen():
     ]
 
 def istl():
-    dfType = lambda space: "Dune::Fem::ISTLBlockVectorDiscreteFunction< " + space._typeName + " >"
+    dfType = lambda space: "Dune::Fem::ISTLBlockVectorDiscreteFunction< " + space.cppTypeName + " >"
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
     return lambda space,rspace=None:[\
         "istl",\
         ["dune/fem/function/blockvectorfunction.hh", "dune/fem/operator/linear/istloperator.hh"] +\
-              space._includes,\
+              space.cppIncludes,\
         dfType(space),\
         "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">",
         solvers.istlsolver,\
         "as_istl"
     ]
 
-from dune.common.checkconfiguration import assertHave, ConfigurationError
-try:
-    assertHave("HAVE_PETSC")
-    def petsc():
-        dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
+def petsc():
+    try:
+        assertCMakeHave("HAVE_PETSC")
+        dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space.cppTypeName + " >"
         rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
         def equalSpaces(space,rspace):
             # if not space==rspace and not rspace is None:
@@ -106,7 +106,7 @@ try:
                 "petsc",\
                 ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
                       [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"] +\
-                      space._includes,\
+                      space.cppIncludes,\
                 dfType(space),\
                 equalSpaces(space,rspace),\
                 solvers.petscsolver,\
@@ -116,15 +116,18 @@ try:
             return lambda space,rspace=None:[\
                 "petsc",\
                 ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
-                      space._includes,\
+                      space.cppIncludes,\
                 dfType(space),\
                 equalSpaces(space,rspace),\
                 solvers.petscsolver,\
                 "as_petsc"
             ]
-
-    def petscadapt():
-        dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
+    except ConfigurationError:
+        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")
+def petscadapt():
+    try:
+        assertCMakeHave("HAVE_PETSC")
+        dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space.cppTypeName + " >"
         rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
         def equalSpaces(space,rspace):
             if not space==rspace and not rspace is None:
@@ -133,14 +136,11 @@ try:
         return lambda space,rspace=None:[\
             "petscadapt",\
             ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
-                  space._includes,\
+                  space.cppIncludes,\
             dfType(space),\
             equalSpaces(space,rspace),\
             solvers.petscsolver,\
             "as_numpy"
         ]
-except ConfigurationError:
-    def petsc():
-        raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")
-    def petscadapt():
+    except ConfigurationError:
         raise ConfigurationError("petsc has not been found during configuration of dune - please add the path to petsc to the DUNE_CMAKE_FLAGS")

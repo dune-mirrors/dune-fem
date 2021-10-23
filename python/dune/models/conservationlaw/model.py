@@ -19,7 +19,7 @@ from dune.ufl.codegen import generateMethod
 from ufl.differentiation import Grad
 
 class ConservationLawModel:
-    version = "v1_2"
+    version = "v1_3"
     def __init__(self, dimDomain, dimRange, u, signature):
         assert isInteger(dimRange)
         self.dimDomain = dimDomain
@@ -301,7 +301,7 @@ class ConservationLawModel:
         """
         for name, value in coefficients.items():
             if not any(name == c['name'] for c in self._coefficients):
-                self.addCoefficient(value.dimRange,value._typeName, name)
+                self.addCoefficient(value.dimRange,value.cppTypeName, name)
         for name, dimRange in constants.items():
             if name not in self._constantNames:
                 self.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >', name)

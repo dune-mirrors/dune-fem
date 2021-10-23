@@ -1,6 +1,6 @@
 from mpi4py import MPI
 
-import numpy, math
+import numpy, math, sys
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 from matplotlib import pyplot
@@ -37,7 +37,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     # characteristic function for left/right boundary
     dD   = conditional((1+x[0])*(1-x[0])<1e-10,1,0)
     # penalty parameter
-    beta = Constant( 20*space.order**2 if space.order > 0 else 1,"beta")
+    beta = Constant( 20*space.order**2,"beta")
 
     rhs           = -( div(eps*grad(exact)-b*exact) ) * v  * dx
     aInternal     = dot(eps*grad(u) - b*u, grad(v)) * dx
@@ -64,7 +64,12 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
         strongBC = DirichletBC(space,exact,dD)
 
     if space.storage[0] == "numpy":
-        solver={"solver":("suitesparse","umfpack")}
+        solver={"solver":("suitesparse","umfpack"),
+                "parameters":{"newton.verbose": True,
+                              "newton.linear.verbose": False,
+                              "newton.linear.tolerance":1e-5,
+                }
+               }
     else:
         solver={"solver":"bicgstab",
                 "parameters":{"newton.linear.preconditioning.method":"ilu",
@@ -95,38 +100,48 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     # print(space.order,epsilon,eoc)
     if (eoc[-1]-(space.order+1)) < -0.1:
         print("ERROR:",space.order,epsilon,eoc)
-    assert (eoc[-1]-(space.order+1)) > -0.1
     return eoc
 
 
-storage = "numpy"
-threading.use = 8
+storage = "istl"
+threading.use = 4
 
 def newGridView():
     return leafGridView([-1, -1], [1, 1], [4, 4])
 
+test = True
 for i in range(10):
   print(i,"dgSpace, 1e-5, True, True")
   gridView = newGridView()
   space    = dgSpace(gridView, order=2, storage=storage)
   eoc = compute(space,1e-5,True,True) # , 'mol')
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"dgSpace, 1, True, True")
   gridView = newGridView()
   space    = dgSpace(gridView, order=2, storage=storage)
   eoc = compute(space,1,True,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, True, True")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,True,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, False, True")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,False,True)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"lagrange, 1, False, False")
   gridView = newGridView()
   space    = lagrange(gridView, order=2, storage=storage)
   eoc = compute(space,1,False,False)
+  test = test and (eoc[-1]-(space.order+1)) > -0.1
+
+  if not test: break
+
+print("-----------------------")
+sys.exit(0 if test else 1)

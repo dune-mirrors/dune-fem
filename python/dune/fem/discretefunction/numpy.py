@@ -12,8 +12,8 @@ def create(space, vec, name="tmp", **unused):
         DiscreteFunction: the constructed discrete function
     """
 
-    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._module._includes
-    spaceType = space._module._typeName
+    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._module.cppIncludes
+    spaceType = space._module.cppTypeName
     field = space.field
     # typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\

@@ -21,16 +21,16 @@ logger = logging.getLogger(__name__)
 
 def module(grid):
     try:
-        return modules[grid._typeName]
+        return modules[grid.cppTypeName]
     except KeyError:
         pass
 
-    typeName = "Dune::FemPy::GridAdaptation< " + grid._typeName + " >"
-    includes = grid._includes + ["dune/fempy/py/grid/adaptation.hh"]
+    typeName = "Dune::FemPy::GridAdaptation< " + grid.cppTypeName + " >"
+    includes = grid.cppIncludes + ["dune/fempy/py/grid/adaptation.hh"]
     moduleName = "adapt_" + hashlib.md5(typeName.encode('utf8')).hexdigest()
 
     module = generator.load(includes, typeName, moduleName)
-    modules[grid._typeName] = module
+    modules[grid.cppTypeName] = module
     return module
 
 

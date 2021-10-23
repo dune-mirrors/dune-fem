@@ -104,16 +104,17 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     else:
         modelPatch = None
 
-    signature = ("" if virtualize else "nv") + model.signature + "_" + hashIt(grid._typeName)
+    signature = ("" if virtualize else "nv") + model.signature + "_" + hashIt(grid.cppTypeName)
     name = model.baseName + '_' + signature
 
     writer = SourceWriter()
 
     writer.emit("#ifndef GuardModelImpl_" + signature)
     writer.emit("#define GuardModelImpl_" + signature)
+    writer.emit("#define USING_DUNE_PYTHON 1")
 
     writer.emit('#include <config.h>')
-    writer.emit(["#include <" + i + ">" for i in grid._includes])
+    writer.emit(["#include <" + i + ">" for i in grid.cppIncludes])
     writer.emit('')
     writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
     writer.emit('')
@@ -139,7 +140,7 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     writer.emit(nameSpace)
 
     writer.openNameSpace("ModelImpl_" + signature)
-    gridPartType = "typename Dune::FemPy::GridPart< " + grid._typeName + " >"
+    gridPartType = "typename Dune::FemPy::GridPart< " + grid.cppTypeName + " >"
     rangeTypes = ["Dune::FieldVector< " +
             SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " >"\
             for c in model._coefficients]

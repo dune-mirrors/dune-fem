@@ -13,6 +13,13 @@ PYBIND11_MODULE( _fem, module )
 {
   try
   {
+    {
+      typedef typename Dune::Fem::detail::SingletonStorage::StorageType Singleton;
+      typedef typename Dune::Fem::detail::SingletonStorage::SingletonDeleter Deleter;
+      pybind11::class_< Singleton, std::shared_ptr<Singleton> > cls( module, "_Singleton" );
+      Dune::Fem::detail::SingletonStorage::getStorage();
+      module.attr( "_singleton" ) = pybind11::cast( Dune::Fem::detail::SingletonStorage::storage_ );
+    }
     int argc = 0;
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
@@ -150,5 +157,6 @@ PYBIND11_MODULE( _fem, module )
                         [](pybind11::object,uint threads){ Dune::Fem::MPIManager::setNumThreads(threads); });
     mpiManagerCls.def_static("useMax",
                         [](){ Dune::Fem::MPIManager::setNumThreads(Dune::Fem::MPIManager::maxThreads()); });
+
   }
 }

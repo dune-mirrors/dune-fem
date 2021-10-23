@@ -90,11 +90,11 @@ def dgonb(gridView, order=1, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
+    includes = gridView.cppIncludes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " + storageType(codegen) + " >"
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + ", " + storageType(codegen) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
@@ -124,11 +124,11 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = [ "dune/fem/space/hpdg/orthogonal.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/hpdg/orthogonal.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," + storageType(codegen) + " >"
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," + storageType(codegen) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
@@ -164,14 +164,14 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
             "the `dglegendre' space can only be used with a fully "+
             "quadrilateral/hexahedral grid")
 
-    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     className = "Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace" \
                 if hierarchical else \
                 "Dune::Fem::LegendreDiscontinuousGalerkinSpace"
     typeName = className + "< "\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", "+\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + ", "+\
       storageType(codegen) + ">"
     ctorArgs = [gridView]
     spc = module(field, includes, typeName, storage=storage,
@@ -209,11 +209,11 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
             "the `dglegendrehp' space can only be used with a fully "+
             "quadrilateral grid")
 
-    includes = [ "dune/fem/space/hpdg/legendre.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/hpdg/legendre.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + ", " +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + ", " +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -256,11 +256,11 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, maxOrder, field)
 
-    includes = [ "dune/fem/space/hpdg/anisotropic.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/hpdg/anisotropic.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " + storageType(codegen) + ">"
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(maxOrder) + ", " + storageType(codegen) + ">"
 
     ## constructor taking vector with orders
     constructor = Constructor(['pybind11::object gridView', 'std::vector<int> orders'],
@@ -296,11 +296,11 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
 
     dimw = gridView.dimWorld
 
-    includes = gridView._includes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
+    includes = gridView.cppIncludes + [ "dune/fem/space/discontinuousgalerkin.hh" ]
     if pointType is None:
         typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
           "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-          "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," +\
+          "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
           storageType(codegen) + ">"
         ctorArgs=[gridView]
     else:
@@ -326,14 +326,14 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
         if False: # none fixed order version
             typeName = "Dune::Fem::DGLagrangeSpace< " +\
               "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-              "Dune::FemPy::GridPart< " + gridView._typeName + " >, "+\
+              "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, "+\
                   pointSet +\
               ", Dune::Fem::CachingStorage >"
             ctorArgs=[gridView,order]
         else: # fixed order version
             typeName = "Dune::Fem::FixedOrderDGLagrangeSpace< " +\
               "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-              "Dune::FemPy::GridPart< " + gridView._typeName + " >,"+\
+              "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >,"+\
               str(order) + ", " + pointSet + ", " +\
               storageType(codegen) + ">"
             ctorArgs=[gridView]
@@ -383,18 +383,18 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = gridView._includes + [ "dune/fem/space/lagrange.hh" ]
+    includes = gridView.cppIncludes + [ "dune/fem/space/lagrange.hh" ]
     dimw = gridView.dimWorld
     # for order equal or lesser than 6 we can use
     # DynamicLagrangeDiscreteFunctionSpace to avoid re-compilation
     if order <= 6:
         typeName = "Dune::Fem::DynamicLagrangeDiscreteFunctionSpace< " +\
                    "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-                   "Dune::FemPy::GridPart< " + gridView._typeName + " >"
+                   "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >"
     else:
         typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
                    "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-                   "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order)
+                   "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order)
 
     spcTypeName = typeName + ", " + storageType(codegen) + ">"
     spc = module(field, includes, spcTypeName, storage=storage,
@@ -436,11 +436,11 @@ def lagrangehp(gridView, order=1, dimRange=None, field="double", storage=None,
     # may be smaller, this way compilation time can be reduced
     maxOrder = 6 if order <= 6 else order
 
-    includes = gridView._includes + [ "dune/fem/space/padaptivespace/lagrange.hh" ]
+    includes = gridView.cppIncludes + [ "dune/fem/space/padaptivespace/lagrange.hh" ]
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::PAdaptiveLagrangeSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(maxOrder) + ", " +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(maxOrder) + ", " +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -473,10 +473,10 @@ def finiteVolume(gridView, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, 0, field)
 
-    includes = ["dune/fem/space/finitevolume.hh" ] + gridView._includes
+    includes = ["dune/fem/space/finitevolume.hh" ] + gridView.cppIncludes
     functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridView.dimWorld) + ", " + str(dimRange) + " >"
     typeName = "Dune::Fem::FiniteVolumeSpace< " + functionSpaceType +\
-               ", Dune::FemPy::GridPart< " + gridView._typeName + " >, 0 , " +\
+               ", Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, 0 , " +\
                storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -512,11 +512,11 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = [ "dune/fem/space/p1bubble.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/p1bubble.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::BubbleElementSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " > >, " +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " > >, " +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -558,8 +558,8 @@ def combined(*spaces, **kwargs):
 
     includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
     for space in spaces:
-        includes += space._includes
-    typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
+        includes += space.cppIncludes
+    typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space.cppTypeName for space in spaces]) + " >"
 
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
@@ -609,8 +609,8 @@ def product(*spaces, **kwargs):
 
     includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
     for space in spaces:
-        includes += space._includes
-    typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
+        includes += space.cppIncludes
+    typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space.cppTypeName for space in spaces]) + " >"
 
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
@@ -667,11 +667,11 @@ def bdm(gridView, order=1, dimRange=None,
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::BrezziDouglasMariniSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -694,11 +694,11 @@ def raviartThomas(gridView, order=1, dimRange=None,
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = [ "dune/fem/space/raviartthomas.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/raviartthomas.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::RaviartThomasSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " >, " + str(order) + " ," +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
@@ -718,11 +718,11 @@ def rannacherTurek(gridView, dimRange=None,
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, 1, field)
 
-    includes = [ "dune/fem/space/rannacherturek.hh" ] + gridView._includes
+    includes = [ "dune/fem/space/rannacherturek.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::RannacherTurekSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView._typeName + " > ," + storageType(codegen) + ">"
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " > ," + storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,

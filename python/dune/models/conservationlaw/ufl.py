@@ -257,13 +257,13 @@ def compileUFL(form, patch, *args, **kwargs):
             try:
                 coefficients[coefficient] = model.addCoefficient(
                         shape,
-                        coefficient._typeName,
+                        coefficient.cppTypeName,
                         name=name,
                         field=coefficient.ufl_function_space().field)
             except AttributeError:
                 coefficients[coefficient] = model.addCoefficient(
                         shape,
-                        coefficient._typeName,
+                        coefficient.cppTypeName,
                         name=name)
 
     model.coefficients = coefficients
