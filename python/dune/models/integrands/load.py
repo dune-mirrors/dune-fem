@@ -90,9 +90,8 @@ class Source(object):
     version = "v1_3"
     def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
-        gridType = grid.cppTypeName
+        self.gridType = grid.cppTypeName
         gridIncludes = grid.cppIncludes
-        self.gridType = gridType
         self.gridIncludes = gridIncludes
         if modelIncludes is not None:
             self.modelIncludes = modelIncludes
@@ -168,10 +167,12 @@ class Source(object):
 
         name = self.name()
         coefficients = integrands.coefficientCppTypes
-        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
+        gridPartName = 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'
+        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join([gridPartName] + coefficients) + ' >'
+        print(gridPartName,integrandsName)
 
         register = []
-        register.append('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        register.append('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+ integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         register.append('Dune::FemPy::registerIntegrands< Integrands >( module, cls );')
         if coefficients:
             coefficientNames = integrands.coefficientNames
