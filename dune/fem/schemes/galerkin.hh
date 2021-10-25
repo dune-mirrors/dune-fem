@@ -728,7 +728,10 @@ namespace Dune
                 const EntityType outside = intersection.outside();
 
                 if( outside.partitionType() != InteriorEntity )
+                {
+                  auto uOutGuard = bindGuard( uOutside, outside );
                   addSkeletonIntegral( intersection, uInside, uOutside, wInside );
+                }
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
                   auto uOutGuard = bindGuard( uOutside, outside );
