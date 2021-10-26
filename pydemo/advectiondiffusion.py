@@ -80,7 +80,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
                               }
                }
     if mol == 'mol':
-        scheme = molSolutionScheme([form==rhs,strongBC], **solver)
+        scheme = molSolutionScheme([form==rhs,strongBC], virtualize=False, **solver)
     else:
         scheme = solutionScheme([form==rhs,strongBC], **solver)
 
@@ -117,7 +117,7 @@ for i in range(10):
   print(i,"dgSpace, 1e-5, True, True")
   gridView = newGridView()
   space    = dgSpace(gridView, order=2, storage=storage)
-  eoc = compute(space,1e-5,True,True) # , 'mol')
+  eoc = compute(space,1e-5,True,True, 'mol')
   test = test and (eoc[-1]-(space.order+1)) > -0.1
 
   print(i,"dgSpace, 1, True, True")
