@@ -339,13 +339,18 @@ namespace Dune
       }
 
     protected:
-      typedef typename Integrands::type RealIntegrands;
-      //decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
-      //decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+      template <class T>
+      struct RemoveReferenceWrapper { typedef T type; };
+
+      template< class T >
+      struct RemoveReferenceWrapper< std::reference_wrapper< T > > { typedef T type; };
+
+      // do not store integrands as references since this will fail with thread
+      // parallel runs when each integrand is bound by a different thread
+      typedef typename RemoveReferenceWrapper< Integrands > :: type  RealIntegrands;
+
       RealIntegrands& integrands () { return rInt_; }
       const RealIntegrands& integrands () const { return rInt_; }
-
-
 
       Integrands integrands_;
       RealIntegrands rInt_;
