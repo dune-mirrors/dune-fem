@@ -169,7 +169,7 @@ class Source(object):
         coefficients = integrands.coefficientCppTypes
         gridPartName = 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'
         integrandsName = nameSpace.name + '::Integrands< ' + ', '.join([gridPartName] + coefficients) + ' >'
-        print(gridPartName,integrandsName)
+        # print(gridPartName,integrandsName)
 
         register = []
         register.append('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+ integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
