@@ -71,7 +71,7 @@ def model(space,epsilon,weakBnd,skeleton,useMol):
                               "newton.linear.tolerance":1e-13}
                }
     if useMol:
-        scheme = solutionMolScheme([form==rhs,strongBC], **solver)
+        scheme = solutionMolScheme([form==rhs,strongBC], virtualize=False, **solver)
     else:
         scheme = solutionScheme([form==rhs,strongBC], **solver)
     uh = space.interpolate(exact,name="solution")
