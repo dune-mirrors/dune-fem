@@ -236,7 +236,8 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        cls.def( pybind11::init( [] ( const typename DF::DiscreteFunctionSpaceType &space, std::string name ) {
+        cls.def( pybind11::init( [] ( const typename DF::DiscreteFunctionSpaceType &space, std::string name )
+          {
             return new DF( std::move( name ), space );
           } ), "space"_a, "name"_a, pybind11::keep_alive< 1, 2 >() );
       }
@@ -350,6 +351,10 @@ namespace Dune
 
         cls.def_property_readonly( "size", [] ( DF &self ) { return self.size(); } );
         cls.def_property_readonly( "dofsValid", [] ( DF &self ) { return self.dofsValid(); } );
+        {
+          typedef typename DF::DiscreteFunctionSpaceType DFSpaceType;
+          cls.def_property_readonly( "_space", [] ( DF &self ) -> const DFSpaceType& { return self.space(); } );
+        }
 
         registerDiscreteFunctionConstructor( cls );
 

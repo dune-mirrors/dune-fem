@@ -193,7 +193,7 @@ def localContribution(self, assembly):
 def addDFAttr(module, cls, spc, storage):
     setattr(cls, "_module", module)
     setattr(cls, "_storage", storage)
-    cls.space = property( lambda self: spc.as_ufl() )
+    cls.space = property( lambda self: self._space.as_ufl() )
     setattr(cls, "interpolate", dfInterpolate )
     setattr(cls, "assign", dfAssign )
     if hasattr(cls,"_project"):
