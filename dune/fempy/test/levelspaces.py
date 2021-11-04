@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from dune.fem.space import finiteVolume as solSpace
 from dune.grid import cartesianDomain
 from dune.grid import yaspGrid as leafGridView
