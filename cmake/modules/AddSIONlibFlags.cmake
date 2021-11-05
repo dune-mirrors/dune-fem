@@ -9,7 +9,7 @@
 function(add_dune_sionlib_flags _targets)
   if(SIONLIB_FOUND)
     foreach(_target ${_targets})
-      target_link_libraries(${_target} ${SIONLIB_LIBRARIES})
+      target_link_libraries(${_target} PUBLIC ${SIONLIB_LIBRARIES})
     endforeach(_target ${_targets})
     set_property(TARGET ${_targets}
       APPEND_STRING

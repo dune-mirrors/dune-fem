@@ -10,7 +10,7 @@ function(add_dune_papi_flags _targets)
   if(PAPI_FOUND)
     
     foreach(_target ${_targets})
-      target_link_libraries(${_target} ${PAPI_LIBRARIES})
+      target_link_libraries(${_target} PUBLIC ${PAPI_LIBRARIES})
     endforeach(_target ${_targets})
     set_property(TARGET ${_target}
       APPEND_STRING

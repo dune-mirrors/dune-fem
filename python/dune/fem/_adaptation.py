@@ -48,6 +48,7 @@ def _adaptArguments(first,*args):
         args = first
     else: # okay apparently its a hgrid object (should be deprecated if args is not empty)
         hgrid = first
+        assert hasattr(hgrid,"leafView"), "second argument is neither a discrete function nor a hierarchical grid"
         if len(args)==0:
             return hgrid,()
         if len(args)==1:
