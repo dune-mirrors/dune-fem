@@ -3,7 +3,6 @@
 
 // fem includes
 #include <dune/fem/schemes/galerkin.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/common/bindguard.hh>
 
@@ -33,11 +32,7 @@ namespace Dune
       static_assert( std::is_same< typename DomainFunctionType::GridPartType, typename RangeFunctionType::GridPartType >::value, "DomainFunction and RangeFunction must be defined on the same grid part." );
 
       typedef typename RangeFunctionType::GridPartType GridPartType;
-      typedef typename GridPartType :: GridType  GridType;
-
-      typedef AdaptiveLeafGridPart< GridType > GP;
-
-      typedef ThreadIterator< GP > ThreadIteratorType;
+      typedef ThreadIterator< GridPartType >  ThreadIteratorType;
 
       typedef Impl::GalerkinOperator< Integrands > GalerkinOperatorImplType;
       typedef typename RangeFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
@@ -49,9 +44,8 @@ namespace Dune
 
       template< class... Args >
       explicit MOLGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
-        : gridPart_( const_cast< GridType& > (gridPart.grid()) ),
+        : iterators_( gridPart ),
           impl_( gridPart, std::forward< Args >( args )... ),
-          iterators_( gridPart_ ),
           gridSizeInterior_( 0 ),
           communicate_( true )
       {
@@ -200,10 +194,9 @@ namespace Dune
           w.communicate();
       }
 
-      GP gridPart_;
       // GalerkinOperator implementation (see galerkin.hh)
-      ThreadSafeValue< GalerkinOperatorImplType > impl_;
       mutable ThreadIteratorType iterators_;
+      ThreadSafeValue< GalerkinOperatorImplType > impl_;
 
       mutable std::size_t gridSizeInterior_;
       bool communicate_;
