@@ -7,24 +7,24 @@ import importlib
 import dune.grid.grid_generator
 
 from dune.generator import Constructor, Method
-from dune.generator.generator import SimpleGenerator
-
-generator = SimpleGenerator("GridView", "Dune::FemPy")
+# from dune.generator.generator import SimpleGenerator
+# generator = SimpleGenerator("GridView", "Dune::FemPy")
 
 def cppBool(value):
     return "true" if value else "false"
 
-
 def load(includes, typeName, *args):
     # includes = includes + ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
-    pyIncludes = ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    # pyIncludes = ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    # holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
+
     moduleName = "view_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
-    # module = generator.load(includes, typeName, moduleName, *args, options=[holder])
-    module = generator.load([includes,pyIncludes], typeName, moduleName, *args)
+    # module = generator.load([includes,pyIncludes], typeName, moduleName, *args)
+    module = dune.grid.grid_generator.gvGenerator.load(
+                   includes+["dune/fempy/py/gridview.hh"],
+                   typeName, moduleName, *args)
     dune.grid.grid_generator.addAttr(module, module.GridView)
     return module
-
 
 def adaptiveLeafGridView(grid, *args, **kwargs):
     """create an adaptive view of the leaf grid
@@ -53,8 +53,8 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
         raise ValueError('Cannot only create an adaptiveLeafGridView from a DUNE grid.')
 
     gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + " >"
-    typeName = gridPartName + "::GridViewType"
-    includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    typeName = gridPartName # + "::GridViewType"
+    includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh"] # , "dune/fempy/py/grid/gridpart.hh"]
 
     # Note: AGP are constructed from the hierarchical grid like other grid
     # views so the default ctor can be used
@@ -66,7 +66,6 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
                  ["pybind11::keep_alive< 1, 2 >()"])
     '''
     GridView = load(includes, typeName).GridView
-    # setattr(GridView,"canAdapt",True)
     return GridView(grid)
 
 
@@ -88,13 +87,14 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     hostGridPartType = "Dune::FemPy::GridPart< " + hostGridViewType + " >"
     filterType = "Dune::Fem::SimpleFilter< " + hostGridPartType + " >"
     gridPartName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >"
-    typeName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >::GridViewType"
+    typeName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >" # ::GridViewType"
     constructor = Constructor(["pybind11::handle hostGridView", "pybind11::function contains", "int domainId"],
                               ["auto containsCpp = [ contains ] ( const " + hostGridPartType + "::Codim< 0 >::EntityType &e ) {",
                                "    return contains( e ).template cast< int >();",
                                "  };",
                                hostGridPartType + " &hostGridPart = Dune::FemPy::gridPart< " + hostGridViewType + " >( hostGridView );",
-                               "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
+                               "return " + gridPartName + " ( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
+                               # "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                               ["pybind11::keep_alive< 1, 2 >()"])
     return load(includes,typeName,constructor).GridView(hostGridView, contains, domainId)
 

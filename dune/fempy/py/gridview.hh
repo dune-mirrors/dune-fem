@@ -1,5 +1,8 @@
 #ifndef DUNE_FEMPY_PY_GRIDVIEW
 #define DUNE_FEMPY_PY_GRIDVIEW
+
+#include <type_traits>
+
 #include <dune/python/grid/gridview.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
@@ -9,20 +12,22 @@
 
 namespace Dune
 {
-  namespace FemPy
+  namespace Python
   {
-    template< class GridView, class... options >
+    template< class GridView, class... options,
+    std::enable_if_t<std::is_base_of_v<
+                Dune::Fem::GridPartInterface<typename GridView::TraitsType>, GridView>, int> = 0>
     inline static void registerGridView ( pybind11::handle scope, pybind11::class_< GridView, options... > cls )
     {
-      Dune::Python::registerGridView(scope,cls);
+      Dune::Python::registerGridView(scope,cls); // from dune-grid
 
-      typedef GridPart< GridView > GridPart;
+      typedef FemPy::GridPart< GridView > GridPart;
       cls.def_property_readonly("canAdapt",[](GridView &self){
        return Dune::Fem::Capabilities::isAdaptiveIndexSet<typename GridPart::IndexSetType>::v;
           });
       if (Dune::Fem::Capabilities::isAdaptiveIndexSet<typename GridPart::IndexSetType>::v)
       {
-        typedef VirtualizedGridFunction<GridPart,Dune::FieldVector<double,1>> Indicator;
+        typedef FemPy::VirtualizedGridFunction<GridPart,Dune::FieldVector<double,1>> Indicator;
         cls.def("mark",[](GridView &self,
                        Indicator &indicator,
                        double refineTolerance, double coarsenTolerance,
