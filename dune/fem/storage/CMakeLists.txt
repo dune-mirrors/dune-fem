@@ -11,4 +11,4 @@ dune_install(dynamicarray.hh
 
 dune_add_subdirs(test)
 
-dune_add_library(storage OBJECT singleton.cc)
+target_sources(dunefem PRIVATE singleton.cc)
