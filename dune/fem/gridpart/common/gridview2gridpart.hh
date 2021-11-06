@@ -8,7 +8,6 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/nonadaptiveindexset.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
@@ -42,7 +41,7 @@ namespace Dune
       typedef typename GridViewType::Grid GridType;
       typedef typename GridViewType::CollectiveCommunication CollectiveCommunicationType;
 
-      typedef NonAdaptiveIndexSet< typename GridView::IndexSet > IndexSetType;
+      typedef typename GridView::IndexSet IndexSetType;
 
       template< int codim >
       struct Codim
@@ -233,7 +232,7 @@ namespace Dune
       }
 
       std::conditional_t<storeCopy,const GridView,const GridView &> gridView_;
-      IndexSetType indexSet_;
+      const IndexSetType& indexSet_;
       DofManagerType &dofManager_;
     };
 
