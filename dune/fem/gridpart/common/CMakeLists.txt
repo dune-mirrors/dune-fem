@@ -9,7 +9,6 @@ dune_install(
   gridpartadapter.hh
   indexset.hh
   metatwistutility.hh
-  nonadaptiveindexset.hh
   persistentindexset.hh
   policies.hh
   compositegeometry.hh
