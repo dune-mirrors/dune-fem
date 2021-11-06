@@ -100,7 +100,7 @@ void testAll( GridPartType& gridPart )
 
   // note that for some grid this might fail
   // then uncomment this test
-  // Dune :: checkIndexSet( gridPart.grid(), gridPart, Dune :: dvverb );
+  Dune :: checkIndexSet( gridPart.grid(), gridPart, Dune :: dvverb );
 
   std::cout << std::endl << std::endl;
 }
