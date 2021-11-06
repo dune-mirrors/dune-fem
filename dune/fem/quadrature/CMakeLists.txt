@@ -10,7 +10,7 @@ dune_install(agglomerationquadrature.hh
 
 dune_add_subdirs(caching geometric test)
 
-dune_add_library(quadrature OBJECT
+target_sources(dunefem PRIVATE
     pardgsimplexquadrature0d.cc
     pardgsimplexquadrature1d.cc
     pardgsimplexquadrature2d.cc

@@ -8,7 +8,7 @@ dune_install(cginverseoperator.hh diagonalpreconditioner.hh
 
 dune_add_subdirs(communication linear rungekutta test)
 
-dune_add_library(solver OBJECT
+target_sources(dunefem PRIVATE
     rungekutta/butchertable.cc )
 
 # avoid deprecation warning.

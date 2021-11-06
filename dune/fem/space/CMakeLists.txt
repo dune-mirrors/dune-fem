@@ -27,7 +27,7 @@ dune_add_subdirs(
     shapefunctionset
     test)
 
-dune_add_library(space OBJECT
+target_sources(dunefem PRIVATE
     shapefunctionset/legendrepolynomials.cc
     shapefunctionset/orthonormal/orthonormalbase_1d.cc
     shapefunctionset/orthonormal/orthonormalbase_2d.cc
