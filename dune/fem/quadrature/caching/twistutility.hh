@@ -12,13 +12,34 @@
 // this also includes the forward declarations
 #include <dune/fem/misc/capabilities.hh>
 
-#include <dune/fem/gridpart/common/gridpart.hh>
-
 namespace Dune
 {
 
   namespace Fem
   {
+
+   template< class Intersection >
+    struct GridIntersectionAccess;
+
+    template< class Grid, class IntersectionImpl >
+    struct GridIntersectionAccess< Dune::Intersection< const Grid, IntersectionImpl > >
+    {
+      typedef Dune::Intersection< const Grid, IntersectionImpl > IntersectionType;
+      typedef IntersectionType GridIntersectionType;
+
+      static const GridIntersectionType &gridIntersection ( const IntersectionType &isec )
+      {
+        return isec;
+      }
+    };
+
+    template< class Intersection >
+    const typename GridIntersectionAccess< Intersection >::GridIntersectionType &
+    gridIntersection ( const Intersection &isec )
+    {
+      return GridIntersectionAccess< Intersection >::gridIntersection( isec );
+    }
+
 
     /** \brief TwistFreeTwistUtility provides the default implementation for twistfree grid
          such as Cartesian grids.
