@@ -179,6 +179,18 @@ namespace Dune
         return asImp().indexSet();
       }
 
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return asImp().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return asImp().size( type );
+      }
+
       /** \brief obtain begin iterator for the interior-border partition
        *
        *  \tparam  codim  codimension for which the iterator is requested
@@ -296,6 +308,16 @@ namespace Dune
         return asImp().convert( entity );
       }
 
+      int overlapSize ( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method overlapSize() not implemented yet" );
+      }
+
+      int ghostSize( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method ghostSize() not implemented yet" );
+      }
+
       /** \brief return sequence number to update structures depending on the grid part
        *  \note The default returns DofManager< Grid > :: sequence ()
        */
@@ -323,6 +345,7 @@ namespace Dune
     : public GridPartInterface< GridPartTraits >
     {
       typedef GridPartDefault< GridPartTraits > ThisType;
+      typedef GridPartInterface< GridPartTraits > BaseType;
 
     public:
       //! \brief Type of the Traits
@@ -368,6 +391,18 @@ namespace Dune
 
       //! Returns reference to the underlying grid
       GridType &grid () { return grid_; }
+
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return BaseType::indexSet().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return BaseType::indexSet().size( type );
+      }
 
       /** \brief obtain collective communication object */
       const CollectiveCommunicationType &comm () const

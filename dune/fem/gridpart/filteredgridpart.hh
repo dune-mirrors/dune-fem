@@ -307,6 +307,18 @@ namespace Dune
         return IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
       }
 
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return indexSet().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return indexSet().size( type );
+      }
+
       //! \brief Begin iterator on the leaf level
       template< int codim >
       typename Codim< codim >::IteratorType begin () const
