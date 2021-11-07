@@ -446,6 +446,9 @@ namespace Dune
     template< class Entity >
     struct GridEntityAccess;
 
+    template< class Intersection >
+    struct GridIntersectionAccess;
+
     template< int codim, int dim, class Grid, template< int, int, class > class EntityImpl >
     struct GridEntityAccess< Dune::Entity< codim, dim, Grid, EntityImpl > >
     {
@@ -463,6 +466,25 @@ namespace Dune
     gridEntity ( const Entity &entity )
     {
       return GridEntityAccess< Entity >::gridEntity( entity );
+    }
+
+    template< class Grid, class IntersectionImpl >
+    struct GridIntersectionAccess< Dune::Intersection< const Grid, IntersectionImpl > >
+    {
+      typedef Dune::Intersection< const Grid, IntersectionImpl > IntersectionType;
+      typedef IntersectionType GridIntersectionType;
+
+      static const GridIntersectionType &gridIntersection ( const IntersectionType &isec )
+      {
+        return isec;
+      }
+    };
+
+    template< class Intersection >
+    const typename GridIntersectionAccess< Intersection >::GridIntersectionType &
+    gridIntersection ( const Intersection &isec )
+    {
+      return GridIntersectionAccess< Intersection >::gridIntersection( isec );
     }
 
     template< class TraitsImp >

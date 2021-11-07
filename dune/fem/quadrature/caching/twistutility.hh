@@ -12,6 +12,8 @@
 // this also includes the forward declarations
 #include <dune/fem/misc/capabilities.hh>
 
+#include <dune/fem/gridpart/common/gridpart.hh>
+
 namespace Dune
 {
 
@@ -141,8 +143,9 @@ namespace Dune
     public:
       //! \brief return twist for inner face
       template< class Intersection >
-      static inline int twistInSelf(const GridType & grid, const Intersection& intersection)
+      static inline int twistInSelf(const GridType & grid, const Intersection& isec)
       {
+        const auto& intersection = gridIntersection( isec );
         assert( dim == 2 ? (intersection.impl().twistInInside() == 0 ||
                             intersection.impl().twistInInside() == 1 ) : true );
         return intersection.impl().twistInInside();
@@ -150,8 +153,9 @@ namespace Dune
 
       //! \brief return twist for outer face
       template< class Intersection >
-      static inline int twistInNeighbor(const GridType &grid, const Intersection& intersection )
+      static inline int twistInNeighbor(const GridType &grid, const Intersection& isec )
       {
+        const auto& intersection = gridIntersection( isec );
         assert( dim == 2 ? (intersection.impl().twistInOutside() == 0 ||
                             intersection.impl().twistInOutside() == 1 ) : true );
         return intersection.impl().twistInOutside();

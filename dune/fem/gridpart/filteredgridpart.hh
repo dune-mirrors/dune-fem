@@ -454,6 +454,19 @@ namespace Dune
       std::unique_ptr< IndexSetType > indexSetPtr_;
     };
 
+    template< class GridPartFamily >
+    struct GridIntersectionAccess< Dune::Intersection< const GridPartFamily, typename GridPartFamily::IntersectionImpl > >
+    {
+      typedef Dune::Intersection< const GridPartFamily, typename  GridPartFamily::IntersectionImpl > IntersectionType;
+      typedef GridIntersectionAccess< typename IntersectionType::Implementation::HostIntersectionType > HostAccessType;
+      typedef typename HostAccessType::GridIntersectionType GridIntersectionType;
+
+      static const HostAccessType::GridIntersectionType &gridIntersection ( const IntersectionType &intersection )
+      {
+        return HostAccessType::gridIntersection( intersection.impl().hostIntersection() );
+      }
+    };
+
   } // namespace Fem
 
 } // namespace Dune
