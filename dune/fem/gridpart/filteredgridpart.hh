@@ -461,7 +461,7 @@ namespace Dune
       typedef GridIntersectionAccess< typename IntersectionType::Implementation::HostIntersectionType > HostAccessType;
       typedef typename HostAccessType::GridIntersectionType GridIntersectionType;
 
-      static const HostAccessType::GridIntersectionType &gridIntersection ( const IntersectionType &intersection )
+      static const typename HostAccessType::GridIntersectionType &gridIntersection ( const IntersectionType &intersection )
       {
         return HostAccessType::gridIntersection( intersection.impl().hostIntersection() );
       }

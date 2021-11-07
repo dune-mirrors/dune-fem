@@ -79,7 +79,7 @@ namespace Dune
       // GridPartConverter
       // -----------------
 
-      template< class GV >
+      template< class GV, class A=void >
       struct GridPartConverter
       {
         typedef GV GridView;
@@ -116,6 +116,7 @@ namespace Dune
       };
 
 
+/*
       template< class GP >
       struct GridPartConverter< Dune::GridView< Fem::GridPart2GridViewTraits< GP > > >
       {
@@ -139,6 +140,21 @@ namespace Dune
         GridPart &operator() ( pybind11::handle gridView )
         {
           return const_cast< GridPart & >( gridView.template cast< GridView* >()->gridPart() );
+        }
+      };
+*/
+
+      template< class GP >
+      struct GridPartConverter< GP,
+              std::enable_if_t<std::is_base_of_v<
+                  Dune::Fem::GridPartInterface<typename GP::TraitsType>, GP>, int> >
+      {
+        typedef GP GridPart;
+        typedef GP GridView;
+
+        GridPart &operator() ( pybind11::handle gridView )
+        {
+          return const_cast< GridPart & >( gridView );
         }
       };
 
@@ -174,6 +190,7 @@ namespace Dune
       return gridPart< GridView >( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
     }
 
+/*
     // constructGridPart (returns a gridView)
     // --------------------------------------
     template< class GridPart, class... Args >
@@ -181,6 +198,7 @@ namespace Dune
     {
       return new typename GridPart::GridViewType( Fem::GridPart2GridViewImpl< GridPart >( std::forward< Args >( args )... ) );
     }
+*/
   } // namespace FemPy
 
 } // namespace Dune
