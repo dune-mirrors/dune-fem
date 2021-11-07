@@ -128,6 +128,16 @@ namespace Dune
         indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
       {}
 
+      AdaptiveGridPartBase& operator= ( const AdaptiveGridPartBase& other )
+      {
+        // otherwise make grid and dofManager pointers in GridPartDefault
+        assert( &grid() == &other.grid() );
+
+        leafGridView_ = other.leafGridView_;
+        assert( indexSet_ == other.indexSet_ );
+        return *this;
+      }
+
     protected:
       //! Constructor constructing object held by index set (for iterator access)
       AdaptiveGridPartBase ( GridType& grid, const NoIndexSetType& noIndexSet )
