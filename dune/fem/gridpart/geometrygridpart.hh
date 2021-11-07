@@ -152,7 +152,7 @@ namespace Dune
       template< int codim >
       struct Codim : public GridFamily::Traits::template Codim< codim >
       {
-        typedef GridFamily::Traits::template Codim< codim > BaseType;
+        typedef typename GridFamily::Traits::template Codim< codim > BaseType;
 
         typedef typename BaseType::Geometry       GeometryType;
         typedef typename BaseType::LocalGeometry  LocalGeometryType;
