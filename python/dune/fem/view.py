@@ -115,12 +115,14 @@ Interpolate into a discrete function space or use a
 'uflFunction' if the function can be written as a ufl expression.
 """
 
-    includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    # includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh"]
     gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction.cppTypeName + " >"
-    typeName = gridPartName + "::GridViewType"
+    typeName = gridPartName # + "::GridViewType"
 
     constructor = Constructor([coordFunction.cppTypeName + " &coordFunction"],
-                 ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
+                 # ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
+                 ["return " + gridPartName + "( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
     return load(includes, typeName, constructor).GridView(coordFunction)
 
