@@ -30,7 +30,12 @@ namespace Dune
        */
       explicit LeafGridPart ( GridType &grid )
         : BaseType( grid.leafGridView() ),
-          grid_( grid )
+          grid_( &grid )
+      {}
+
+      LeafGridPart ( const LeafGridPart& other )
+        : BaseType( other.grid_->leafGridView() ),
+          grid_( other.grid_ )
       {}
 
       /** \} */
@@ -42,12 +47,12 @@ namespace Dune
       using BaseType::grid;
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
-      GridType &grid () { return grid_; }
+      GridType &grid () { assert( grid_ ); return *grid_; }
 
       /** \} */
 
     private:
-      GridType &grid_;
+      GridType *grid_;
     };
 
 

@@ -161,6 +161,13 @@ namespace Dune
         hostGridPart_( grid ),
         indexSet_( hostGridPart_.indexSet() )
       {}
+
+      explicit IdGridPart ( const IdGridPart &other )
+      : AddGridViewType( this ),
+        hostGridPart_( other.hostGridPart() ),
+        indexSet_( hostGridPart_.indexSet() )
+      {}
+
       explicit IdGridPart ( const GridViewType *gridView )
       : AddGridViewType( gridView ),
         hostGridPart_( hostGridPart ),

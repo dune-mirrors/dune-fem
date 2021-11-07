@@ -226,13 +226,13 @@ namespace Dune
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
         : AddGridViewType( this ),
-          gridFunction_( gridFunction ),
+          gridFunction_( &gridFunction ),
           indexSet_( hostGridPart().indexSet() )
       {}
 
       GeometryGridPart ( const GridFunctionType &gridFunction, const GridViewType* gridView  )
         : AddGridViewType( gridView ),
-          gridFunction_( gridFunction ),
+          gridFunction_( &gridFunction ),
           indexSet_( hostGridPart().indexSet() )
       {}
 
@@ -265,7 +265,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       begin () const
       {
-        return IdIterator< codim, pitype, const GridFamily >( gridFunction_, hostGridPart().template begin< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridFamily >( gridFunction(), hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
@@ -279,7 +279,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       end () const
       {
-        return IdIterator< codim, pitype, const GridFamily >( gridFunction_, hostGridPart().template end< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridFamily >( gridFunction(), hostGridPart().template end< codim, pitype >() );
       }
 
       int level () const
@@ -314,7 +314,7 @@ namespace Dune
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
-        GeometryGridPartDataHandle< GridFamily, HostHandleType > handleWrapper( handle, gridFunction_ );
+        GeometryGridPartDataHandle< GridFamily, HostHandleType > handleWrapper( handle, gridFunction() );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
@@ -328,7 +328,7 @@ namespace Dune
         typedef typename EntityType::Implementation Implementation;
         typedef MakeableInterfaceObject< EntityType > EntityObj;
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( gridFunction_, entity ) );
+        return EntityObj( Implementation( gridFunction(), entity ) );
       }
       template < class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityType
@@ -339,11 +339,17 @@ namespace Dune
 
       const HostGridPartType &hostGridPart () const
       {
-        return gridFunction_.gridPart();
+        return gridFunction().gridPart();
       }
 
-    private:
-      const GridFunctionType &gridFunction_;
+      const GridFunctionType& gridFunction() const
+      {
+        assert( gridFunction_ );
+        return *gridFunction_;
+      }
+
+    protected:
+      const GridFunctionType *gridFunction_;
       IndexSetType indexSet_;
     };
 

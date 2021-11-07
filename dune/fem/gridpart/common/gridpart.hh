@@ -383,26 +383,33 @@ namespace Dune
       typedef BoundaryIdProvider< GridType > BoundaryIdProviderType;
 
     protected:
-      GridType       &grid_;
-      DofManagerType &dofManager_;
+      GridType       *grid_;
+      DofManagerType *dofManager_;
 
       //! constructor
       GridPartDefault ( GridType &grid )
-      : grid_( grid ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+      : grid_( &grid ),
+        dofManager_( &DofManagerType :: instance( this->grid() ) )
       {}
 
       GridPartDefault ( const ThisType &other )
       : grid_( other.grid_ ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+        dofManager_( &DofManagerType :: instance( this->grid() ) )
       {}
+
+      GridPartDefault& operator= ( const ThisType &other )
+      {
+        grid_ = other.grid_;
+        dofManager_ = &DofManagerType :: instance( grid() );
+        return *this;
+      }
 
     public:
       //! Returns const reference to the underlying grid
-      const GridType &grid () const { return grid_; }
+      const GridType &grid () const { assert( grid_ ); return *grid_; }
 
       //! Returns reference to the underlying grid
-      GridType &grid () { return grid_; }
+      GridType &grid () { assert( grid_ ); return *grid_; }
 
       /** \brief obtain number of entities in a given codimension */
       int size ( int codim ) const

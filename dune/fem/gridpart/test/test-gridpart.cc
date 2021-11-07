@@ -64,8 +64,17 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 };
 
 template <class GridPartType>
-void testAll( GridPartType& gridPart )
+void testAll( GridPartType& gp )
 {
+  // test copy constructor
+  GridPartType gridPart( gp );
+
+  // test assignment operator and destructor
+  {
+    GridPartType newGp( gp );
+    newGp = gridPart;
+  }
+
   // run tests
   std::cout << "Testing entities" << std::endl;
   testGridPart( gridPart );
@@ -173,7 +182,9 @@ try
     typedef Dune::GridSelector::GridType GridType;
     typedef Dune::Fem::GridPartAdapter< typename GridType::LeafGridView >  GridPartType;
 
-    GridPartType gridPart( grid.leafGridView() );
+    auto gv = grid.leafGridView();
+    // GridPartAdapter only stores a pointer
+    GridPartType gridPart( gv );
     testAll( gridPart );
   }
 
@@ -276,7 +287,6 @@ try
     std::cout << std::endl << "Testing FilteredGridPart with domain filter: allow non consecutive index set" << std::endl << std::endl;
     testFilteredGridPart< false, HostGridPartType, WrapperDomainFilterType >( hostGridPart, wrapperDomainFilter );
   }
-
 
   return 0;
 }

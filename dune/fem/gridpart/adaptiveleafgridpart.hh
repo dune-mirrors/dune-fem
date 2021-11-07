@@ -109,34 +109,21 @@ namespace Dune
       LeafGridView leafGridView_ ;
 
       // reference to index set
-      std::unique_ptr< IndexSetType, typename IndexSetProviderType::Deleter > indexSet_;
-
-      using BaseType::grid_;
+      std::shared_ptr< IndexSetType > indexSet_;
 
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( &IndexSetProviderType::getObject( &grid ) )
+        indexSet_( &IndexSetProviderType::getObject( &grid ),
+                   typename IndexSetProviderType::Deleter() )
       {}
 
       //! Copy Constructor
-      AdaptiveGridPartBase ( const ThisType &other )
-      : BaseType( other ),
-        leafGridView_( other.leafGridView_ ),
-        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
-      {}
+      AdaptiveGridPartBase ( const ThisType &other ) = default;
 
-      AdaptiveGridPartBase& operator= ( const AdaptiveGridPartBase& other )
-      {
-        // otherwise make grid and dofManager pointers in GridPartDefault
-        assert( &grid() == &other.grid() );
-
-        leafGridView_ = other.leafGridView_;
-        assert( indexSet_ == other.indexSet_ );
-        return *this;
-      }
+      AdaptiveGridPartBase& operator= ( const AdaptiveGridPartBase& other ) = default;
 
     protected:
       //! Constructor constructing object held by index set (for iterator access)
@@ -329,9 +316,6 @@ namespace Dune
 
       //! copy constructor
       AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other ) = default;
-
-      ~AdaptiveLeafGridPart()
-      {}
     };
 
     /** @ingroup AdaptiveLeafGP

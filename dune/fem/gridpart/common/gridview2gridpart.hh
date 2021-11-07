@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_COMMON_GRIDVIEW2GRIDPART_HH
 
 #include <utility>
+#include <functional>
 
 #include <dune/common/exceptions.hh>
 
@@ -106,6 +107,13 @@ namespace Dune
     private:
       typedef DofManager< GridType > DofManagerType;
 
+      auto initGv( const GridView &gridView )
+      {
+        if constexpr ( storeCopy )
+          return gridView;
+        else
+          return &gridView;
+      }
     public:
       using BaseType::grid;
       using BaseType::boundaryId;
@@ -115,24 +123,21 @@ namespace Dune
        */
 
       explicit GridView2GridPart ( const GridView &gridView )
-        : gridView_( gridView ),
-          indexSet_( gridView_.indexSet() ),
-          dofManager_( DofManagerType::instance( gridView_.grid() ) )
+        : gridView_( initGv( gridView ) ),
+          indexSet_( &this->gridView().indexSet() )
       {}
 
       explicit GridView2GridPart ( GridView &&gridView )
         : gridView_( std::move( gridView ) ),
-          indexSet_( gridView_.indexSet() ),
-          dofManager_( DofManagerType::instance( gridView_.grid() ) )
-      {}
+          indexSet_( &this->gridView().indexSet() )
+      {
+        // this should not be called if we only store a pointer
+        assert( storeCopy );
+      }
 
       GridView2GridPart ( const ThisType &rhs )
         : gridView_( rhs.gridView_ ),
-          indexSet_( gridView_.indexSet() ),
-          dofManager_( DofManagerType::instance( rhs.grid() ) )
-      {}
-
-      ~GridView2GridPart()
+          indexSet_( &gridView().indexSet() )
       {}
 
       /** \} */
@@ -142,11 +147,11 @@ namespace Dune
        */
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
-      const GridType &grid () const { return gridView_.grid(); }
-      GridType &grid () { return const_cast< GridType & >( gridView_.grid() ); }
+      const GridType &grid () const { return gridView().grid(); }
+      GridType &grid () { return const_cast< GridType & >( gridView().grid() ); }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
-      const IndexSetType &indexSet () const { return indexSet_; }
+      const IndexSetType &indexSet () const { assert( indexSet_ ); return *indexSet_; }
 
       /** \copydoc Dune::Fem::GridPartInterface::begin */
       template< int codim >
@@ -159,7 +164,7 @@ namespace Dune
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType begin () const
       {
-        return gridView_.template begin< codim, pitype >();
+        return gridView().template begin< codim, pitype >();
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::end */
@@ -173,34 +178,35 @@ namespace Dune
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType end () const
       {
-        return gridView_.template end< codim, pitype >();
+        return gridView().template end< codim, pitype >();
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::ibegin */
       IntersectionIteratorType ibegin ( const typename Codim< 0 >::EntityType &entity ) const
       {
-        return gridView_.ibegin( entity );
+        return gridView().ibegin( entity );
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::iend */
       IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const
       {
-        return gridView_.iend( entity );
+        return gridView().iend( entity );
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::comm */
-      const CollectiveCommunicationType &comm () const { return gridView_.comm(); }
+      const CollectiveCommunicationType &comm () const { return gridView().comm(); }
 
       /** \copydoc Dune::Fem::GridPartInterface::communicate */
       template< class DataHandle, class DataType >
       void communicate ( CommDataHandleIF< DataHandle, DataType > &dataHandle,
                          InterfaceType interface, CommunicationDirection direction ) const
       {
-        gridView_.communicate( dataHandle, interface, direction );
+        gridView().communicate( dataHandle, interface, direction );
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::sequence */
-      int sequence () const { return dofManager_.sequence(); }
+      [[deprecated("Use DofManager::sequence instead!")]]
+      int sequence () const { return -1; }
 
       /** \copydoc Dune::Fem::GridPartInterface::entity */
       template < class EntitySeed >
@@ -218,12 +224,25 @@ namespace Dune
       }
 
       /** \brief cast to underlying grid view */
-      // explicit operator const GridView& () const { return gridView_; }
-      const GridView& gridView() const { return gridView_; }
+      // explicit operator const GridView& () const { return gridView(); }
+
+      /** \brief return reference to internal grid view */
+      const GridView& gridView() const
+      {
+        if constexpr ( storeCopy )
+        {
+          return gridView_;
+        }
+        else
+        {
+          assert( gridView_ );
+          return *gridView_;
+        }
+      }
 
       /** \} */
 
-    private:
+    protected:
       template< int codim >
       const typename Codim< codim >::EntityType &
       convert( const typename Codim< codim >::EntityType &entity ) const
@@ -231,9 +250,8 @@ namespace Dune
         return entity;
       }
 
-      std::conditional_t<storeCopy,const GridView,const GridView &> gridView_;
-      const IndexSetType& indexSet_;
-      DofManagerType &dofManager_;
+      std::conditional_t<storeCopy, GridView, const GridView* > gridView_;
+      const IndexSetType* indexSet_;
     };
 
   } // namespace Fem

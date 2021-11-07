@@ -31,7 +31,7 @@ namespace Dune
 
       LevelGridPart ( GridType &grid, int level )
         : BaseType( grid.levelGridView( level ) ),
-          grid_( grid ),
+          grid_( &grid ),
           level_( level )
       {}
 
@@ -44,12 +44,12 @@ namespace Dune
       using BaseType::grid;
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
-      GridType &grid () { return grid_; }
+      GridType &grid () { assert( grid_ ); return *grid_; }
 
       /** \} */
 
     private:
-      GridType &grid_;
+      GridType *grid_;
       int level_;
     };
 
