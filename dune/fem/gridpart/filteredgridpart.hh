@@ -266,16 +266,16 @@ namespace Dune
       //! \brief constructor
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter )
       : AddGridViewType( this ),
-        hostGridPart_( hostGridPart ),
-        filter_( filter ),
+        hostGridPart_( &hostGridPart ),
+        filter_( new FilterType(filter) ),
         indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
       }
 
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter, const GridViewType *gridView)
       : AddGridViewType( gridView ),
-        hostGridPart_( hostGridPart ),
-        filter_( filter ),
+        hostGridPart_( &hostGridPart ),
+        filter_( new FilterType(filter) ),
         indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
       }
@@ -284,9 +284,18 @@ namespace Dune
       FilteredGridPart ( const FilteredGridPart &other )
       : AddGridViewType( other ),
         hostGridPart_( other.hostGridPart_ ),
-        filter_( other.filter_ ),
+        filter_( new FilterType( other.filter()) ),
         indexSetPtr_ ( IndexSetSelectorType::create( *this ) )
       { }
+
+      FilteredGridPart& operator = (const FilteredGridPart &other )
+      {
+        AddGridViewType::operator=(other);
+        hostGridPart_ = other.hostGridPart_;
+        filter_.reset( new FilterType( other.filter() ) );
+        indexSetPtr_.reset( IndexSetSelectorType::create( *this ) );
+        return *this;
+      }
 
       //! \brief return const reference to underlying grid
       const GridType &grid () const
@@ -377,7 +386,7 @@ namespace Dune
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
-      const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }
+      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >
@@ -400,13 +409,13 @@ namespace Dune
       //! \brief return reference to filter
       const FilterType &filter () const
       {
-        return filter_;
+        return *filter_;
       }
 
       //! \brief return reference to filter
       FilterType &filter ()
       {
-        return filter_;
+        return *filter_;
       }
 
       template< class Entity >
@@ -417,12 +426,14 @@ namespace Dune
 
       HostGridPartType &hostGridPart ()
       {
-        return hostGridPart_;
+        assert( hostGridPart_ );
+        return *hostGridPart_;
       }
 
       const HostGridPartType &hostGridPart () const
       {
-        return hostGridPart_;
+        assert( hostGridPart_ );
+        return *hostGridPart_;
       }
 
       int sequence () const
@@ -438,8 +449,8 @@ namespace Dune
       }
 
     private:
-      HostGridPartType &hostGridPart_;
-      FilterType filter_;
+      HostGridPartType *hostGridPart_;
+      std::unique_ptr< FilterType >   filter_;
       std::unique_ptr< IndexSetType > indexSetPtr_;
     };
 
