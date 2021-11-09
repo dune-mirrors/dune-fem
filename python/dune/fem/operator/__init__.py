@@ -50,6 +50,10 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None):
     except:
         pass
     if hasattr(LinearOperator,"_backend") and backend is not None:
+        # the as_numpy backend needs scipy.sparse.csr_matrix
+        # in the C++ code this will simply fail if scipy is not available
+        if backend == 'as_numpy':
+            from scipy.sparse import csr_matrix
         addBackend(LinearOperator,backend)
     return module
 
