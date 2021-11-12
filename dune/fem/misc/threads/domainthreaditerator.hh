@@ -131,7 +131,7 @@ namespace Dune {
       void update()
       {
 #ifdef USE_THREADPARTITIONER
-        const int sequence = gridPart_.sequence() ;
+        const int sequence = dofManager_.sequence() ;
         // if grid got updated also update iterators
         if( sequence_ != sequence || numThreads_ != MPIManager :: numThreads() )
         {

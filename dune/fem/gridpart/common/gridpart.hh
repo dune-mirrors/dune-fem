@@ -272,9 +272,7 @@ namespace Dune
         return asImp().convert( entity );
       }
 
-      /** \brief return sequence number to update structures depending on the grid part
-       *  \note The default returns DofManager< Grid > :: sequence ()
-       */
+      [[deprecated("Use DofManager::sequence instread!")]]
       int sequence () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
@@ -374,10 +372,7 @@ namespace Dune
         return entity;
       }
 
-      /** \brief \copydoc GridPartInterface::sequence
-       *
-       *  \note  The default returns DofManager< Grid > :: sequence
-       */
+      [[deprecated("Use DofManager::sequence instread!")]]
       int sequence () const
       {
         return dofManager_.sequence();
