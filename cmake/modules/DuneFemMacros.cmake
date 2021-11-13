@@ -1,3 +1,5 @@
+include(CheckIncludeFileCXX)
+
 #find endian headers
 set(ENDIAN_HEADER_ROOT "" CACHE STRING "path of endian header")
 check_include_file_cxx(endian.h HAVE_ENDIAN_HEADER_HH)
