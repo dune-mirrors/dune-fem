@@ -10,7 +10,7 @@ from dune.fem.operator import linear as linearOperator
 from dune.ufl import Space
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, ds, dx, inner, grad
 
-test_fem   = True
+test_numpy   = True
 try:
     import dune.istl
     test_istl  = True
@@ -47,22 +47,22 @@ b = rhs * dx + 10*rhs * ds
 model = create.model("integrands", grid, a==b)
 
 def test(space):
-    if test_fem:
-        femSpace  = create.space(space, grid, dimRange=1, order=1, storage='fem')
-        femScheme = create.scheme("galerkin", model, femSpace)
-        fem_h     = create.function("discrete", femSpace, name="fem")
-        fem_dofs  = fem_h.as_numpy
-        # femScheme.solve(target = fem_h)
+    if test_numpy:
+        numpySpace  = create.space(space, grid, dimRange=1, order=1, storage='numpy')
+        numpyScheme = create.scheme("galerkin", model, numpySpace)
+        numpy_h     = create.function("discrete", numpySpace, name="numpy")
+        numpy_dofs  = numpy_h.as_numpy
+        # numpyScheme.solve(target = numpy_h)
         start= time.time()
         for i in range(testLoop):
-            linOp   = linearOperator(femScheme)
-            femScheme.jacobian(fem_h,linOp)
-            fem_mat = linOp.as_numpy
+            linOp   = linearOperator(numpyScheme)
+            numpyScheme.jacobian(numpy_h,linOp)
+            numpy_mat = linOp.as_numpy
         end = time.time()
-        # print( "fem:", (end-start)/testLoop, flush=True )
+        # print( "numpy:", (end-start)/testLoop, flush=True )
         # sys.stdout.flush()
-        fem_coo   = fem_mat.tocoo()
-        # for i,j,v in zip(fem_coo.row,fem_coo.col,fem_coo.data):
+        numpy_coo   = numpy_mat.tocoo()
+        # for i,j,v in zip(numpy_coo.row,numpy_coo.col,numpy_coo.data):
         #     print(i,j,v)
         # print("****************************",flush=True)
 
@@ -136,19 +136,19 @@ def test(space):
 
     if test_istl:
         try: # istl_coo does not exist
-            assert (istl_coo.row == fem_coo.row).all()
-            assert (istl_coo.col == fem_coo.col).all()
-            assert np.allclose( istl_coo.data, fem_coo.data )
+            assert (istl_coo.row == numpy_coo.row).all()
+            assert (istl_coo.col == numpy_coo.col).all()
+            assert np.allclose( istl_coo.data, numpy_coo.data )
         except:
-            # print("issue between istl and fem matrices")
+            # print("issue between istl and numpy matrices")
             pass
     if test_petsc:
         try:
-            assert (petsc_coo.row == fem_coo.row).all()
-            assert (petsc_coo.col == fem_coo.col).all()
-            assert np.allclose( petsc_coo.data, fem_coo.data )
+            assert (petsc_coo.row == numpy_coo.row).all()
+            assert (petsc_coo.col == numpy_coo.col).all()
+            assert np.allclose( petsc_coo.data, numpy_coo.data )
         except:
-            # print("issue between petsc and fem matrices")
+            # print("issue between petsc and numpy matrices")
             pass
 
 test("lagrange")
