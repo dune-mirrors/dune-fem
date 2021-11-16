@@ -256,6 +256,11 @@ namespace Dune
       {
         return rSpace_;
       }
+      // needed for DGHelmholtz operator
+      const RangeDiscreteFunctionSpaceType& space() const
+      {
+        return rangeSpace();
+      }
 
       using BaseType::gridPart;
 
