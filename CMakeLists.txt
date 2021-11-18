@@ -25,6 +25,9 @@ include(DuneMacros)
 dune_project()
 dune_enable_all_packages()
 
+# Create the dune-fem library
+dune_add_library(dunefem)
+
 include(AddMPIFlags)
 
 # if Python bindings are enabled, include necessary sub directories.
