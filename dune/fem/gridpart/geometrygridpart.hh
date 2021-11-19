@@ -19,8 +19,8 @@
 #include <dune/fem/gridpart/common/localfunctiongeometry.hh>
 #include <dune/fem/gridpart/common/sharedgeometry.hh>
 #include <dune/fem/gridpart/geometrygridpart/capabilities.hh>
-#include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
 #include <dune/fem/gridpart/geometrygridpart/entity.hh>
+#include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersection.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersectioniterator.hh>
 
@@ -150,22 +150,26 @@ namespace Dune
       typedef IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
       template< int codim >
-      struct Codim
+      struct Codim : public GridFamily::Traits::template Codim< codim >
       {
-        typedef typename GridFamily::Traits::template Codim< codim >::Geometry GeometryType;
-        typedef typename GridFamily::Traits::template Codim< codim >::LocalGeometry LocalGeometryType;
+        typedef GridFamily::Traits::template Codim< codim > BaseType;
 
-        typedef typename GridFamily::Traits::template Codim< codim >::Entity EntityType;
-        typedef typename GridFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
+        typedef typename BaseType::Geometry       GeometryType;
+        typedef typename BaseType::LocalGeometry  LocalGeometryType;
+
+        typedef typename BaseType::Entity         EntityType;
+        typedef typename BaseType::EntitySeed     EntitySeedType;
 
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef EntityIterator< codim, const GridFamily, IdIterator< codim, pitype, const GridFamily > > IteratorType;
+          typedef IteratorType Iterator;
         };
       };
 
       typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef CollectiveCommunicationType CollectiveCommunication;
       static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
@@ -190,11 +194,26 @@ namespace Dune
 
     public:
       typedef typename GridFunctionType::GridPartType HostGridPartType;
+      //! \brief type of grid
       typedef typename BaseType::GridType GridType;
+      //! \brief type of grid
+      typedef typename BaseType::Grid     Grid;
+      //! \brief index set use in this gridpart
       typedef typename BaseType::IndexSetType IndexSetType;
+      //! \brief index set use in this gridpart
+      typedef typename BaseType::IndexSet     IndexSet;
+      //! \brief type of intersection iterator
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
+      //! \brief type of intersection iterator
+      typedef typename BaseType::IntersectionIterator     IntersectionIterator;
+      //! \brief type of intersection
       typedef typename BaseType::IntersectionType IntersectionType;
+      //! \brief type of intersection
+      typedef typename BaseType::Intersection Intersection;
+      //! \brief Collective communication
       typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
+      //! \brief Collective communication
+      typedef typename BaseType::CollectiveCommunication     CollectiveCommunication;
       typedef typename BaseType::GridViewType GridViewType;
 
       // the interface takes this from the grid

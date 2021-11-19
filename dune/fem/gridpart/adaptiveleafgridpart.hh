@@ -192,12 +192,6 @@ namespace Dune
         return leafGridView_.iend( entity );
       }
 
-      //! Returns maxlevel of the grid
-      int level () const
-      {
-        return grid().maxLevel();
-      }
-
       //! corresponding communication method for this grid part
       template< class DataHandle, class Data >
       decltype( auto ) communicate ( CommDataHandleIF< DataHandle, Data > &data, InterfaceType iftype, CommunicationDirection dir ) const

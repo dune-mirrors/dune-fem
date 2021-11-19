@@ -44,9 +44,6 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       GridType &grid () { return grid_; }
 
-      /** \copydoc Dune::Fem::GridPartInterface::level */
-      int level () const { return grid().maxLevel(); }
-
       /** \} */
 
     private:

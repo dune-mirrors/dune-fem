@@ -128,13 +128,8 @@ namespace Dune
         typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
 
         template< int codim >
-        struct Codim
+        struct Codim : public HostGridPart::template Codim< codim >
         {
-          typedef typename HostGridPart::template Codim< codim >::GeometryType Geometry;
-          typedef typename HostGridPart::template Codim< codim >::LocalGeometryType LocalGeometry;
-
-          typedef typename HostGridPart::template Codim< codim >::EntityType Entity;
-          typedef typename HostGridPart::template Codim< codim >::EntitySeedType EntitySeed;
         };
       };
 
@@ -143,6 +138,8 @@ namespace Dune
 
       //! \brief type of grid
       typedef typename HostGridPartType::GridType GridType;
+      //! \brief type of grid
+      typedef GridType Grid;
 
       /** \brief The type of the corresponding TwistUtility */
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType ;
@@ -170,24 +167,21 @@ namespace Dune
 
       //! \brief struct providing types of the iterators on codimension cd
       template< int codim >
-      struct Codim
+      struct Codim : public HostGridPartType::template Codim< codim >
       {
-        typedef typename HostGridPartType::template Codim< codim >::GeometryType GeometryType;
-        typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometryType;
-
-        typedef typename HostGridPartType::template Codim< codim >::EntityType EntityType;
-        typedef typename HostGridPartType::template Codim< codim >::EntitySeedType EntitySeedType;
-
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+          typedef IteratorType Iterator;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+        typedef IteratorType Iterator;
       };
 
       typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef CollectiveCommunicationType CollectiveCommunication;
 
       //! \brief maximum partition type, the index set provides indices for
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;

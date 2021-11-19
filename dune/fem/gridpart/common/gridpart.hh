@@ -3,6 +3,7 @@
 
 //- dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/exceptions.hh>
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
@@ -88,12 +89,18 @@ namespace Dune
 
       //! \brief type of Grid implementation
       typedef typename Traits::GridType GridType;
+      //! \brief type of Grid implementation
+      typedef GridType Grid;
 
       //! \brief Index set implementation
       typedef typename Traits::IndexSetType IndexSetType;
+      //! \brief Index set implementation
+      typedef IndexSetType IndexSet;
 
       //! \brief Collective communication
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+      //! \brief Collective communication
+      typedef CollectiveCommunicationType CollectiveCommunication;
 
       //! \brief Twist utility type
       typedef typename Traits::TwistUtilityType TwistUtilityType;
@@ -106,9 +113,13 @@ namespace Dune
 
       //! \brief type of IntersectionIterator
       typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
+      //! \brief type of IntersectionIterator
+      typedef IntersectionIteratorType IntersectionIterator;
 
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
+      //! \brief type of Intersection
+      typedef IntersectionType Intersection;
 
       typedef typename PoliciesType::GridViewType GridViewType;
 
@@ -116,6 +127,8 @@ namespace Dune
 
       static const int dimension = GridType::dimension;
       static const int dimensionworld = GridType::dimensionworld;
+
+      static const bool conforming = Traits::conforming ;
 
       template< int codim >
       struct Codim
@@ -126,14 +139,24 @@ namespace Dune
         typedef typename Traits::template Codim< codim >::EntityType         EntityType;
         typedef typename Traits::template Codim< codim >::EntitySeedType     EntitySeedType;
 
+        // GridView typedefs interface
+        typedef GeometryType       Geometry;
+        typedef LocalGeometryType  LocalGeometry;
+        typedef EntityType         Entity;
+        typedef EntitySeedType     EntitySeed;
+
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
             IteratorType;
+          // GridView typedef
+          typedef IteratorType Iterator;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+        // GridView typedef
+        typedef IteratorType Iterator;
       };
 
       //! \brief Returns const reference to the underlying grid
@@ -207,10 +230,11 @@ namespace Dune
       }
 
       //! \brief Level of the grid part
+      [[deprecated("Do not use this since it is no longer part of the interface")]]
       int level () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION((asImp().level()));
-        return asImp().level();
+        DUNE_THROW(NotImplemented,"GridPart::level has been removed!");
+        return -1;
       }
 
       //! \brief ibegin of corresponding intersection iterator for given entity
@@ -272,11 +296,14 @@ namespace Dune
         return asImp().convert( entity );
       }
 
-      [[deprecated("Use DofManager::sequence instread!")]]
+      /** \brief return sequence number to update structures depending on the grid part
+       *  \note The default returns DofManager< Grid > :: sequence ()
+       */
+      [[deprecated("Use DofManager::sequence instead!")]]
       int sequence () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
-        return asImp().sequence() ;
+        DUNE_THROW(NotImplemented,"GridPart::sequence is not part of the interface, use DofManager::sequence instead!");
+        return -1;
       }
 
     protected:
@@ -370,12 +397,6 @@ namespace Dune
       const Entity& convert( const Entity& entity ) const
       {
         return entity;
-      }
-
-      [[deprecated("Use DofManager::sequence instread!")]]
-      int sequence () const
-      {
-        return dofManager_.sequence();
       }
 
       //! \brief \copydoc GridPartInterface::entity

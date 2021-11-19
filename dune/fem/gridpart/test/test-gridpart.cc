@@ -8,6 +8,11 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/grid/test/gridcheck.hh>
+#include <dune/grid/test/checkgeometry.hh>
+#include <dune/grid/test/checkintersectionit.hh>
+#include <dune/grid/test/checkentityseed.hh>
+
 #include <dune/fem/function/common/common.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
@@ -21,6 +26,7 @@
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
+#include <dune/fem/gridpart/geometrygridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -81,6 +87,20 @@ void testAll( GridPartType& gridPart )
   Dune::Fem::CheckIndexSet< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   std::cout << "Testing intersections" << std::endl;
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+
+  // check geometries of macro level and leaf level
+  //Dune::GeometryChecker<typename GridPartType::GridType> checker;
+  //checker.checkGeometry( gridPart );
+  Dune::checkGeometryLifetime( gridPart );
+
+  // check entity seeds
+  // Dune::checkEntitySeed( gridPart, std::cerr );
+
+  checkViewIntersectionIterator( gridPart );
+
+  // note that for some grid this might fail
+  // then uncomment this test
+  // Dune :: checkIndexSet( gridPart.grid(), gridPart, Dune :: dvverb );
 
   std::cout << std::endl << std::endl;
 }
@@ -189,6 +209,27 @@ try
     Dune::Fem::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
     testExchangeGeometry( gridPart, tlf );
     std::cout << std::endl;
+  }
+
+  // GeometryGridPart
+  {
+    std::cout << "************************************" << std::endl;
+    std::cout << "***      GeometryGridPart        ***"<< std::endl;
+    std::cout << "************************************" << std::endl;
+
+    typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
+    typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
+    DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
+    typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
+    CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
+    typedef Dune::Fem::Identity< CoordFunctionSpaceType > IdentityType;
+    IdentityType identity;
+    Dune::Fem::GridFunctionAdapter< IdentityType, HostGridPartType > identitydDF( "identity", identity, hostGridPart );
+    Dune::Fem::interpolate( identitydDF, coordFunction );
+    typedef Dune::Fem::GeometryGridPart< CoordFunctionType > GridPartType;
+    GridPartType gridPart( coordFunction );
+
+    testAll( gridPart );
   }
 
   // FilteredGridPart
