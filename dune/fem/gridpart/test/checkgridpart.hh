@@ -132,6 +132,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
           continue;
         }
       }
+
       if( intersection.boundary() )
       {
         const int bndId = gridPart.boundaryId( intersection );

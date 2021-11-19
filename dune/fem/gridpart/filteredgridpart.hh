@@ -381,6 +381,7 @@ namespace Dune
       }
 
       //! \brief boundary id
+      [[deprecated("Use BoundnryIdProvider instead!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );

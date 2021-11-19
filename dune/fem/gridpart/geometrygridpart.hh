@@ -297,11 +297,13 @@ namespace Dune
         return GeometryGridPartIntersectionIterator< const GridFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
+      [[deprecated("Use BoundnryIdProvider instead!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
+      [[deprecated("Use DofManager::sequence instead!")]]
       int sequence () const
       {
         return hostGridPart().sequence();

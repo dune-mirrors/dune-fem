@@ -249,6 +249,7 @@ namespace Dune
         return GeoIntersectionIterator< const GridPartFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
+      [[deprecated("Use BoundnryIdProvider directly")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );

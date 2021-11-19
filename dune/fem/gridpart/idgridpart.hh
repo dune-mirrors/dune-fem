@@ -238,6 +238,7 @@ namespace Dune
         return IdIntersectionIterator< const GridFamily >( data(), hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
+      [[deprecated("Use BoundnryIdProvider instead!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );

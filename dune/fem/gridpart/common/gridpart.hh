@@ -265,6 +265,7 @@ namespace Dune
       }
 
       //! \brief return boundary if given an intersection
+      [[deprecated("Use BoundaryIdProvider::boundaryId directly!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryId( intersection ) );
@@ -460,6 +461,7 @@ namespace Dune
       }
 
       //! \brief \copydoc GridPartInterface::entity
+      [[deprecated("Use BoundaryIdProvider::boundaryId directly!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return BoundaryIdProviderType::boundaryId( intersection );
