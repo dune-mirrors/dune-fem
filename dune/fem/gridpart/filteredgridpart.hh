@@ -436,11 +436,6 @@ namespace Dune
         return *hostGridPart_;
       }
 
-      int sequence () const
-      {
-        return hostGridPart().sequence();
-      }
-
       /** \copydoc GridPartInterface::convert(const Entity &entity) const */
       template <class Entity>
       const Entity& convert ( const Entity &entity ) const
