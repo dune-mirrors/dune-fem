@@ -3,7 +3,6 @@
 
 #include <type_traits>
 
-#include <dune/python/grid/gridview.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 
@@ -12,15 +11,11 @@
 
 namespace Dune
 {
-  namespace Python
+  namespace FemPy
   {
-    template< class GridView, class... options,
-    std::enable_if_t<std::is_base_of_v<
-                Dune::Fem::GridPartInterface<typename GridView::TraitsType>, GridView>, int> = 0>
-    inline static void registerGridView ( pybind11::handle scope, pybind11::class_< GridView, options... > cls )
+    template< class GridView, class... options>
+    inline void registerGridView ( pybind11::class_< GridView, options... > cls)
     {
-      Dune::Python::registerGridView(scope,cls); // from dune-grid
-
       typedef FemPy::GridPart< GridView > GridPart;
       cls.def_property_readonly("canAdapt",[](GridView &self){
        return Dune::Fem::Capabilities::isAdaptiveIndexSet<typename GridPart::IndexSetType>::v;
@@ -53,6 +48,9 @@ namespace Dune
               return Dune::Fem::GridAdaptation::doerflerMarking( grid, indicator, tolerance, maxLevel );
           });
       }
+      cls.def("_register",[](GridView &self) {
+          detail::addGridModificationListener ( self.grid() );
+        });
     }
   }
 }

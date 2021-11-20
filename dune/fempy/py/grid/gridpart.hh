@@ -79,8 +79,11 @@ namespace Dune
       // GridPartConverter
       // -----------------
 
-      template< class GV, class A=void >
-      struct GridPartConverter
+      template< class GV, bool v>
+      struct GridPartConverter;
+
+      template< class GV >
+      struct GridPartConverter< GV, false >
       {
         typedef GV GridView;
         typedef Fem::GridPartAdapter< GV > GridPart;
@@ -115,56 +118,26 @@ namespace Dune
         std::map< PyObject *, GridPart * > instances_;
       };
 
-
-/*
-      template< class GP >
-      struct GridPartConverter< Dune::GridView< Fem::GridPart2GridViewTraits< GP > > >
-      {
-        typedef GP GridPart;
-        typedef Dune::GridView< Fem::GridPart2GridViewTraits< GP > > GridView;
-
-        GridPart &operator() ( pybind11::handle gridView )
-        {
-          return const_cast< GridPart & >( gridView.template cast< GridView* >()->impl().gridPart() );
-        }
-      };
-
-      // gridView is already a wrapped gridPart
-      // issue: need to be able to retrieve the gridView wrapper from a given gridPart
-      template< class GP >
-      struct GridPartConverter< Fem::GridPart2GridViewImpl< GP > >
-      {
-        typedef GP GridPart;
-        typedef Fem::GridPart2GridViewImpl< GP > GridView;
-
-        GridPart &operator() ( pybind11::handle gridView )
-        {
-          return const_cast< GridPart & >( gridView.template cast< GridView* >()->gridPart() );
-        }
-      };
-*/
-
-      template< class GP >
-      struct GridPartConverter< GP,
-              std::enable_if_t<std::is_base_of_v<
-                  Dune::Fem::GridPartInterface<typename GP::TraitsType>, GP>, int> >
+      template< class GP>
+      struct GridPartConverter< GP, true >
       {
         typedef GP GridPart;
         typedef GP GridView;
 
         GridPart &operator() ( pybind11::handle gridView )
         {
-          return const_cast< GridPart & >( gridView );
+          return gridView.cast<GridPart&>();
         }
       };
 
       // gridPartConverter singleton storage
       // -----------------------------------
 
-      template< class GridView >
-      inline GridPartConverter< GridView > &gridPartConverter ()
+      template< class GridView, bool v = std::is_base_of_v<
+                  Dune::Fem::GridPartInterface<typename GridView::Traits>, GridView> >
+      inline GridPartConverter< GridView, v > &gridPartConverter ()
       {
-        return Dune::Fem::Singleton< GridPartConverter<GridView> > :: instance();
+        return Dune::Fem::Singleton< GridPartConverter<GridView,v> > :: instance();
       }
 
     } // namespace detail
@@ -176,29 +149,21 @@ namespace Dune
     // --------
 
     template< class GridView >
-    using GridPart = typename detail::GridPartConverter< GridView >::GridPart;
+    using GridPart = typename detail::GridPartConverter< GridView, std::is_base_of_v<
+                  Dune::Fem::GridPartInterface<typename GridView::Traits>, GridView> >::GridPart;
 
     template< class GridView >
-    inline static GridPart< GridView > &gridPart ( pybind11::handle gridView )
+    inline static GridPart<GridView> &gridPart ( pybind11::handle gridView )
     {
       return detail::gridPartConverter< GridView >()( std::move( gridView ) );
     }
 
     template< class GridView >
-    inline static GridPart< GridView > &gridPart ( const GridView &gridView )
+    inline static GridPart<GridView> &gridPart ( GridView &gridView )
     {
-      return gridPart< GridView >( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
+      return detail::gridPartConverter< GridView >()( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
     }
 
-/*
-    // constructGridPart (returns a gridView)
-    // --------------------------------------
-    template< class GridPart, class... Args >
-    inline static auto constructGridPart ( Args &&... args )
-    {
-      return new typename GridPart::GridViewType( Fem::GridPart2GridViewImpl< GridPart >( std::forward< Args >( args )... ) );
-    }
-*/
   } // namespace FemPy
 
 } // namespace Dune

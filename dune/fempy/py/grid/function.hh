@@ -144,9 +144,12 @@ namespace Dune
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
 
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
-        cls.def_property_readonly( "gridView", [] ( GridFunction &self ) -> const GridView& { return self.gridPart().gridView(); } );
-        // deprecate the following after 2.8 release
-        cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> const GridView& { return self.gridPart().gridView(); } );
+        cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> const GridView&
+          {
+            PyErr_WarnEx(PyExc_DeprecationWarning, "attribute 'grid' is deprecated, use 'gridView' instead.", 2);
+            return self.gridPart();
+          } );
+        cls.def_property_readonly( "gridView", [] ( GridFunction &self ) -> const GridView& { return self.gridPart(); } );
 
         registerGridFunctionName( cls );
 

@@ -366,7 +366,11 @@ class GridFunction(ufl.Coefficient):
                     scalar = gf.space.scalar
                 except:
                     scalar = True
+
+        if not hasattr(gf, "gridView"):
+            gf.gridView = gf.grid # this is needed to patch dune-grid gf until the 'gridView' attribute is added there as well
         uflSpace = Space((gf.gridView.dimGrid, gf.gridView.dimWorld), gf.dimRange, scalar=scalar)
+
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
         try:

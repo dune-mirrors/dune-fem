@@ -132,11 +132,9 @@ namespace Dune
     template< class HostGridPartImp >
     class IdGridPart
     : public GridPartInterface< IdGridPartTraits< HostGridPartImp > >
-    , public AddGridView< IdGridPartTraits< HostGridPartImp > >
     {
       typedef IdGridPart< HostGridPartImp > ThisType;
       typedef GridPartInterface< IdGridPartTraits< HostGridPartImp > > BaseType;
-      typedef AddGridView< IdGridPartTraits< HostGridPartImp > > AddGridViewType;
 
       typedef typename IdGridPartTraits< HostGridPartImp >::GridFamily GridFamily;
 
@@ -149,34 +147,23 @@ namespace Dune
       typedef typename BaseType::IntersectionType IntersectionType;
       typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
 
-      typedef typename AddGridViewType::GridViewType GridViewType;
-
       template< int codim >
       struct Codim
       : public BaseType::template Codim< codim >
       {};
 
       explicit IdGridPart ( GridType &grid )
-      : AddGridViewType( this ),
-        hostGridPart_( grid ),
+      : hostGridPart_( grid ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       explicit IdGridPart ( const IdGridPart &other )
-      : AddGridViewType( this ),
-        hostGridPart_( other.hostGridPart() ),
-        indexSet_( hostGridPart_.indexSet() )
-      {}
-
-      explicit IdGridPart ( const GridViewType *gridView )
-      : AddGridViewType( gridView ),
-        hostGridPart_( hostGridPart ),
+      : hostGridPart_( other.hostGridPart() ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       explicit IdGridPart ( const HostGridPartType &hostGridPart )
-      : AddGridViewType( this ),
-        hostGridPart_( hostGridPart ),
+      : hostGridPart_( hostGridPart ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 

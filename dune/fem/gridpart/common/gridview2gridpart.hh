@@ -224,7 +224,7 @@ namespace Dune
       }
 
       /** \brief cast to underlying grid view */
-      // explicit operator const GridView& () const { return gridView(); }
+      operator const GridView& () const { return gridView(); }
 
       /** \brief return reference to internal grid view */
       const GridView& gridView() const

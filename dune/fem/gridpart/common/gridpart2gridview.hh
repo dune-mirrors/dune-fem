@@ -1,3 +1,5 @@
+#error NOT NEEDED?
+
 #ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 #define DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 
@@ -14,7 +16,6 @@ namespace Dune
 #ifdef USING_DUNE_PYTHON
   namespace FemPy
   {
-    // #include <dune/fempy/py/grid/gridpart.hh>
     namespace detail
     {
       template< class Grid >

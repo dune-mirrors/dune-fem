@@ -13,7 +13,6 @@
 //- dune-fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/misc/boundaryidprovider.hh>
 
@@ -74,11 +73,8 @@ namespace Dune
     //! GridParts are used to parametrize spaces (see DiscreteFunctionSpaceDefault [in dune-fem]).
     template< class GridPartTraits >
     class GridPartInterface
-      : public GridPartPolicies< GridPartTraits >
     {
       typedef GridPartInterface< GridPartTraits > ThisType;
-
-      typedef GridPartPolicies< GridPartTraits > PoliciesType;
 
     public:
       //! \brief Type of the Traits
@@ -121,7 +117,7 @@ namespace Dune
       //! \brief type of Intersection
       typedef IntersectionType Intersection;
 
-      typedef typename PoliciesType::GridViewType GridViewType;
+      typedef GridPartType GridViewType;
 
       typedef typename GridType::ctype ctype;
 
@@ -491,37 +487,6 @@ namespace Dune
     {
       return GridEntityAccess< Entity >::gridEntity( entity );
     }
-
-    template< class TraitsImp >
-    struct AddGridView
-    {
-      typedef typename TraitsImp :: GridPartType GridPartType;
-      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
-      std::shared_ptr<GridViewType> gridViewStorage_;
-      const GridViewType* gridView_;
-      AddGridView ( const GridPartType *gridPart )
-      : gridViewStorage_(new GridViewType(*gridPart))
-      , gridView_(gridViewStorage_.get())
-      {}
-      AddGridView ( const GridViewType *gridView)
-      : gridViewStorage_(nullptr)
-      , gridView_(gridView)
-      {}
-      AddGridView( const AddGridView& other)
-      : gridViewStorage_(other.gridViewStorage_)
-      , gridView_(other.gridView_)
-      {}
-      // use this constructor if it is guaranteed that no gridview is needed
-      AddGridView ()
-      : gridViewStorage_(nullptr)
-      , gridView_(nullptr)
-      {}
-      const GridViewType &gridView() const
-      {
-        assert( gridView_ );
-        return *gridView_;
-      }
-    };
 
   } // namespace Fem
 

@@ -10,7 +10,6 @@
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/indexset.hh>
 #include <dune/fem/gridpart/idgridpart/iterator.hh>
@@ -130,7 +129,7 @@ namespace Dune
       typedef GeometryGridPartFamily< GridFunction > GridPartFamily;
       typedef GeometryGridPartFamily< GridFunction > GridFamily;
 
-      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
+      typedef GridPartType GridViewType;
 
       static const int dimension = GridFunction::GridPartType::dimension;
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
@@ -181,11 +180,9 @@ namespace Dune
     template< class GridFunction >
     class GeometryGridPart
       : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
-      , public AddGridView< GeometryGridPartTraits< GridFunction > >
     {
     public:
       typedef GridFunction GridFunctionType;
-      typedef AddGridView< GeometryGridPartTraits< GridFunction > > AddGridViewType;
 
     private:
       typedef GeometryGridPart< GridFunctionType > ThisType;
@@ -225,14 +222,7 @@ namespace Dune
       {};
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
-        : AddGridViewType( this ),
-          gridFunction_( &gridFunction ),
-          indexSet_( hostGridPart().indexSet() )
-      {}
-
-      GeometryGridPart ( const GridFunctionType &gridFunction, const GridViewType* gridView  )
-        : AddGridViewType( gridView ),
-          gridFunction_( &gridFunction ),
+        : gridFunction_( &gridFunction ),
           indexSet_( hostGridPart().indexSet() )
       {}
 

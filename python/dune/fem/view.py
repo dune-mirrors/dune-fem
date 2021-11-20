@@ -13,18 +13,15 @@ from dune.generator import Constructor, Method
 def cppBool(value):
     return "true" if value else "false"
 
-def load(includes, typeName, *args):
-    # includes = includes + ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
-    # pyIncludes = ["dune/fempy/py/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
-    # holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
 
-    moduleName = "view_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    # module = generator.load([includes,pyIncludes], typeName, moduleName, *args)
-    module = dune.grid.grid_generator.gvGenerator.load(
-                   includes+["dune/fempy/py/gridview.hh"],
-                   typeName, moduleName, *args)
-    dune.grid.grid_generator.addAttr(module, module.GridView)
-    return module
+def setup(includes, typeName, *args, ctorArgs):
+    postscript="""
+Dune::FemPy::registerGridView ( cls );
+"""
+    gv = dune.grid.grid_generator.viewModule(includes+["dune/fempy/py/gridview.hh"],
+                  typeName, postscript, *args).GridView(*ctorArgs)
+    gv._register()
+    return gv
 
 def adaptiveLeafGridView(grid, *args, **kwargs):
     """create an adaptive view of the leaf grid
@@ -54,7 +51,7 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
 
     gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + " >"
     typeName = gridPartName # + "::GridViewType"
-    includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/python/grid/gridview.hh"] # , "dune/fempy/py/grid/gridpart.hh"]
+    includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh"]
 
     # Note: AGP are constructed from the hierarchical grid like other grid
     # views so the default ctor can be used
@@ -65,9 +62,7 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
                   "return Dune::FemPy::constructGridPart<"+gridPartName+">( grid );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
     '''
-    GridView = load(includes, typeName).GridView
-    return GridView(grid)
-
+    return setup(includes, typeName, ctorArgs=[grid])
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):
     """create a filtered grid view
@@ -81,7 +76,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     Returns:
         GridView: the constructed grid view
     """
-    includes = hostGridView.cppIncludes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
+    includes = hostGridView.cppIncludes + ["dune/fem/gridpart/filteredgridpart.hh", "dune/fem/gridpart/filter/simple.hh"]
 
     hostGridViewType = hostGridView.cppTypeName
     hostGridPartType = "Dune::FemPy::GridPart< " + hostGridViewType + " >"
@@ -96,7 +91,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
                                "return " + gridPartName + " ( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                                # "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                               ["pybind11::keep_alive< 1, 2 >()"])
-    return load(includes,typeName,constructor).GridView(hostGridView, contains, domainId)
+    return setup(includes, typeName, constructor, ctorArgs=[hostGridView,contains,domainId])
 
 
 def geometryGridView(coordFunction):
@@ -115,7 +110,6 @@ Interpolate into a discrete function space or use a
 'uflFunction' if the function can be written as a ufl expression.
 """
 
-    # includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh", "dune/python/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     includes = coordFunction.cppIncludes + ["dune/fem/gridpart/geometrygridpart.hh"]
     gridPartName = "Dune::Fem::GeometryGridPart< " + coordFunction.cppTypeName + " >"
     typeName = gridPartName # + "::GridViewType"
@@ -124,9 +118,4 @@ Interpolate into a discrete function space or use a
                  # ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["return " + gridPartName + "( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-    return load(includes, typeName, constructor).GridView(coordFunction)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod(optionflags=doctest.ELLIPSIS)
+    return setup(includes, typeName, constructor, ctorArgs=[coordFunction])

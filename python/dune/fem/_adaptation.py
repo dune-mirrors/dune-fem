@@ -94,8 +94,7 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
             gridView = gridView[0]
         indicator = expression2GF(gridView,indicator,0)
     if gridView is None:
-        # API GridView: gridView = indicator.gridView
-        gridView = indicator.grid
+        gridView = indicator.gridView
     try:
         if not gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
@@ -119,8 +118,7 @@ def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
             gridView = gridView[0]
         indicator = expression2GF(gridView,indicator,0)
     if gridView is None:
-        # API GridView: gridView = indicator.gridView
-        gridView = indicator.grid
+        gridView = indicator.gridView
     try:
         if not gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
