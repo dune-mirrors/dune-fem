@@ -77,10 +77,10 @@ namespace Dune
       static const int dimension = HostEntity::dimension;
       static const int codimension = HostEntity::codimension;
 
-      typedef Dune::Entity< codimension, dimension, const GridFamily, GeometryGridPartEntity > Entity;
+      typedef typename GridFamily::template Codim< codimension > :: Entity  Entity;
 
-    private:
-      typedef GeometryGridPartEntity< codimension, dimension, const GridFamily > EntityImpl;
+    protected:
+      typedef typename Entity::Implementation  EntityImpl;
 
     public:
       EntityProxy ( const GridFunctionType &gridFunction_, const HostEntity &hostEntity )

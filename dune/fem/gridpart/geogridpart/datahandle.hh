@@ -81,10 +81,10 @@ namespace Dune
       static const int dimension = HostEntity::dimension;
       static const int codimension = HostEntity::codimension;
 
-      typedef Dune::Entity< codimension, dimension, const GridFamily, GeoEntity > Entity;
+      typedef typename GridFamily::template Codim< codimension > :: Entity  Entity;
 
-    private:
-      typedef GeoEntity< codimension, dimension, const GridFamily > EntityImpl;
+    protected:
+      typedef typename Entity::Implementation  EntityImpl;
 
     public:
       EntityProxy ( const CoordFunctionType &coordFunction, const HostEntity &hostEntity )

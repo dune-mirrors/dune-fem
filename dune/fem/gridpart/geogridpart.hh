@@ -327,9 +327,9 @@ namespace Dune
     // ------------------------------
 
     template< int codim, int dim, class GridFamily >
-    struct GridEntityAccess< Dune::Entity< codim, dim, GridFamily, GeoEntity > >
+    struct GridEntityAccess< Dune::ExtendedEntity< codim, dim, GridFamily, GeoEntity > >
     {
-      typedef Dune::Entity< codim, dim, GridFamily, GeoEntity > EntityType;
+      typedef Dune::ExtendedEntity< codim, dim, GridFamily, GeoEntity > EntityType;
       typedef GridEntityAccess< typename EntityType::Implementation::HostEntityType > HostAccessType;
       typedef typename HostAccessType::GridEntityType GridEntityType;
 
