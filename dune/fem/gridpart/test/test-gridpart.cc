@@ -160,10 +160,10 @@ try
     gpPtr.reset( new GridPartType( grid ) );
     GridPartType gp2( grid );
 
-    gvPtr.reset( new GridViewType( gpPtr->gridView() ) );
+    gvPtr.reset( new GridViewType( *gpPtr ) );
 
     gpPtr.reset( new GridPartType( grid ) );
-    gvPtr.reset( new GridViewType( gpPtr->gridView() ) );
+    gvPtr.reset( new GridViewType( *gpPtr ) );
     gpPtr.reset();
     gvPtr.reset();
 
