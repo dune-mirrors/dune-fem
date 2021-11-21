@@ -103,6 +103,11 @@ namespace Dune
         typedef typename GridPart::GridViewType GridView;
         cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );
         cls.def_property_readonly( "dimDomain", [] ( Space & ) -> int { return Space::FunctionSpaceType::dimDomain; } );
+        cls.def_property_readonly( "grid", [] ( Space &self ) -> const GridView&
+        {
+          PyErr_WarnEx(PyExc_DeprecationWarning, "attribute 'grid' is deprecated, use 'gridView' instead.", 2);
+          return self.gridPart(); }
+        );
         cls.def_property_readonly( "gridView", [] ( Space &self ) -> const GridView& { return self.gridPart(); } );
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
         cls.def( "as_ufl", [] ( pybind11::object &self ) -> auto {
