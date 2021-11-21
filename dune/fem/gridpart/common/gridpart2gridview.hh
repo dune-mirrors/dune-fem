@@ -1,7 +1,7 @@
-#error NOT NEEDED?
-
 #ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 #define DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
+
+#warning "This header should not be needed anymore. Remove it from the include list!"
 
 #include <cassert>
 
