@@ -9,6 +9,7 @@
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/extendedentity.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/indexset.hh>
@@ -88,7 +89,7 @@ namespace Dune
 
           typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeometryImpl > Geometry;
 
-          typedef Dune::Entity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
+          typedef Dune::ExtendedEntity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
         };
 

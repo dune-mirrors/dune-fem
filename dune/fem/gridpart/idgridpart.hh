@@ -5,6 +5,7 @@
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/extendedentity.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
@@ -64,7 +65,7 @@ namespace Dune
             typedef Dune::Geometry< dimension - codim, dimensionworld, const GridFamily, IdGeometry > Geometry;
             typedef Dune::Geometry< dimension - codim, dimension, const GridFamily, IdLocalGeometry > LocalGeometry;
 
-            typedef Dune::Entity< codim, dimension, const GridFamily, IdEntity > Entity;
+            typedef Dune::ExtendedEntity< codim, dimension, const GridFamily, IdEntity > Entity;
             typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
           };
 
