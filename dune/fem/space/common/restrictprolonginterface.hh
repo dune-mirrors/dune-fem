@@ -9,6 +9,7 @@
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
+#include <dune/fem/gridpart/common/indexset.hh>
 
 namespace Dune
 {
@@ -175,6 +176,9 @@ namespace Dune
       bool entitiesAreCopies ( const IndexSet &indexSet,
                                const Entity &father, const Entity &son ) const
       {
+        // adaptation and restriction/prolongation only works
+        // for index set derived from Dune::Fem::IndexSet
+        assert( Capabilities::isDuneFemIndexSet< IndexSet >::v );
         return (indexSet.index( father ) == indexSet.index( son ));
       }
 

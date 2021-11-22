@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 #define DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 
+#warning "This header should not be needed anymore. Remove it from the include list!"
+
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
@@ -14,7 +16,6 @@ namespace Dune
 #ifdef USING_DUNE_PYTHON
   namespace FemPy
   {
-    // #include <dune/fempy/py/grid/gridpart.hh>
     namespace detail
     {
       template< class Grid >

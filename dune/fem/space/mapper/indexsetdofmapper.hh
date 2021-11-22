@@ -459,18 +459,22 @@ namespace Dune
       template< class GridPart, class LocalDofMapping >
       inline void DofMapperBase< GridPart, LocalDofMapping >::requestCodimensions ()
       {
-        // collect all available codimensions
-        std::vector< int > codimensions;
-        codimensions.reserve( dimension+1 );
-
-        for( typename BlockMapType::const_iterator it = blockMap_.begin(); it != blockMap_.end(); ++it )
+        // this is only possible for index sets derived from Dune::Fem::IndexSet
+        if constexpr ( Capabilities::isDuneFemIndexSet< IndexSetType >::v )
         {
-          SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( *it ) ];
-          codimensions.push_back( info.codim  );
-        }
+          // collect all available codimensions
+          std::vector< int > codimensions;
+          codimensions.reserve( dimension+1 );
 
-        // submit request for codimension to indexSet
-        indexSet().requestCodimensions( codimensions );
+          for( typename BlockMapType::const_iterator it = blockMap_.begin(); it != blockMap_.end(); ++it )
+          {
+            SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( *it ) ];
+            codimensions.push_back( info.codim  );
+          }
+
+          // submit request for codimension to indexSet
+          indexSet().requestCodimensions( codimensions );
+        }
       }
 
       template< class GridPart, class LocalDofMapping >

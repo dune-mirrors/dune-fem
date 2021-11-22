@@ -7,6 +7,7 @@
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/extendedentity.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
@@ -81,7 +82,7 @@ namespace Dune
           typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeoGeometry > Geometry;
           typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometry;
 
-          typedef Dune::Entity< codim, dimension, const GridPartFamily, GeoEntity > Entity;
+          typedef Dune::ExtendedEntity< codim, dimension, const GridPartFamily, GeoEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
         };
 
@@ -187,7 +188,7 @@ namespace Dune
       {};
 
       explicit GeoGridPart ( const CoordFunctionType &coordFunction )
-      : coordFunction_( coordFunction ),
+      : coordFunction_( &coordFunction ),
         indexSet_( hostGridPart().indexSet() )
       {}
 
@@ -217,7 +218,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       begin () const
       {
-        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template begin< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction(), hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
@@ -231,7 +232,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       end () const
       {
-        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template end< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction(), hostGridPart().template end< codim, pitype >() );
       }
 
       int level () const
@@ -249,6 +250,7 @@ namespace Dune
         return GeoIntersectionIterator< const GridPartFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
+      [[deprecated("Use BoundnryIdProvider directly")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
@@ -261,7 +263,7 @@ namespace Dune
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
-        GeoDataHandle< GridPartFamily, HostHandleType > handleWrapper( coordFunction_, handle );
+        GeoDataHandle< GridPartFamily, HostHandleType > handleWrapper( coordFunction(), handle );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
@@ -278,7 +280,7 @@ namespace Dune
       entity ( const EntitySeed &seed ) const
       {
         return typename Codim< EntitySeed::codimension >::EntityType
-                 ::Implementation( coordFunction_, hostGridPart().entity( seed ) );
+                 ::Implementation( coordFunction(), hostGridPart().entity( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
@@ -292,26 +294,30 @@ namespace Dune
         typedef MakeableInterfaceObject< EntityType > EntityObj;
 
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( coordFunction_, entity ) );
+        return EntityObj( Implementation( coordFunction(), entity ) );
       }
 
       // return reference to the coordfunction
-      const CoordFunctionType &coordFunction () const { return coordFunction_; }
+      const CoordFunctionType &coordFunction () const
+      {
+        assert( coordFunction_);
+        return *coordFunction_;
+      }
 
       // return reference to the host grid part
       const HostGridPartType &hostGridPart () const
       {
-        return coordFunction_.gridPart();
+        return coordFunction().gridPart();
       }
 
       // return reference to the host grid part
       HostGridPartType &hostGridPart ()
       {
-        return const_cast< HostGridPartType & >( coordFunction_.gridPart() );
+        return const_cast< HostGridPartType & >( coordFunction().gridPart() );
       }
 
-    private:
-      const CoordFunctionType &coordFunction_;
+    protected:
+      const CoordFunctionType *coordFunction_;
       IndexSetType indexSet_;
     };
 
@@ -321,9 +327,9 @@ namespace Dune
     // ------------------------------
 
     template< int codim, int dim, class GridFamily >
-    struct GridEntityAccess< Dune::Entity< codim, dim, GridFamily, GeoEntity > >
+    struct GridEntityAccess< Dune::ExtendedEntity< codim, dim, GridFamily, GeoEntity > >
     {
-      typedef Dune::Entity< codim, dim, GridFamily, GeoEntity > EntityType;
+      typedef Dune::ExtendedEntity< codim, dim, GridFamily, GeoEntity > EntityType;
       typedef GridEntityAccess< typename EntityType::Implementation::HostEntityType > HostAccessType;
       typedef typename HostAccessType::GridEntityType GridEntityType;
 

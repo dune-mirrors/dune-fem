@@ -5,6 +5,7 @@
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/extendedentity.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
@@ -64,7 +65,7 @@ namespace Dune
             typedef Dune::Geometry< dimension - codim, dimensionworld, const GridFamily, IdGeometry > Geometry;
             typedef Dune::Geometry< dimension - codim, dimension, const GridFamily, IdLocalGeometry > LocalGeometry;
 
-            typedef Dune::Entity< codim, dimension, const GridFamily, IdEntity > Entity;
+            typedef Dune::ExtendedEntity< codim, dimension, const GridFamily, IdEntity > Entity;
             typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
           };
 
@@ -132,11 +133,9 @@ namespace Dune
     template< class HostGridPartImp >
     class IdGridPart
     : public GridPartInterface< IdGridPartTraits< HostGridPartImp > >
-    , public AddGridView< IdGridPartTraits< HostGridPartImp > >
     {
       typedef IdGridPart< HostGridPartImp > ThisType;
       typedef GridPartInterface< IdGridPartTraits< HostGridPartImp > > BaseType;
-      typedef AddGridView< IdGridPartTraits< HostGridPartImp > > AddGridViewType;
 
       typedef typename IdGridPartTraits< HostGridPartImp >::GridFamily GridFamily;
 
@@ -149,27 +148,23 @@ namespace Dune
       typedef typename BaseType::IntersectionType IntersectionType;
       typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
 
-      typedef typename AddGridViewType::GridViewType GridViewType;
-
       template< int codim >
       struct Codim
       : public BaseType::template Codim< codim >
       {};
 
       explicit IdGridPart ( GridType &grid )
-      : AddGridViewType( this ),
-        hostGridPart_( grid ),
+      : hostGridPart_( grid ),
         indexSet_( hostGridPart_.indexSet() )
       {}
-      explicit IdGridPart ( const GridViewType *gridView )
-      : AddGridViewType( gridView ),
-        hostGridPart_( hostGridPart ),
+
+      explicit IdGridPart ( const IdGridPart &other )
+      : hostGridPart_( other.hostGridPart() ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       explicit IdGridPart ( const HostGridPartType &hostGridPart )
-      : AddGridViewType( this ),
-        hostGridPart_( hostGridPart ),
+      : hostGridPart_( hostGridPart ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
@@ -231,6 +226,7 @@ namespace Dune
         return IdIntersectionIterator< const GridFamily >( data(), hostGridPart().iend( entity.impl().hostEntity() ) );
       }
 
+      [[deprecated("Use BoundnryIdProvider instead!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
@@ -286,9 +282,9 @@ namespace Dune
     // -----------------------------
 
     template< int codim, int dim, class GridFamily >
-    struct GridEntityAccess< Dune::Entity< codim, dim, GridFamily, IdEntity > >
+    struct GridEntityAccess< Dune::ExtendedEntity< codim, dim, GridFamily, IdEntity > >
     {
-      typedef Dune::Entity< codim, dim, GridFamily, IdEntity > EntityType;
+      typedef Dune::ExtendedEntity< codim, dim, GridFamily, IdEntity > EntityType;
       typedef GridEntityAccess< typename EntityType::Implementation::HostEntityType > HostAccessType;
       typedef typename HostAccessType::GridEntityType GridEntityType;
 

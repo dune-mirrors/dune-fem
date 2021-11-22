@@ -128,13 +128,8 @@ namespace Dune
         typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
 
         template< int codim >
-        struct Codim
+        struct Codim : public HostGridPart::template Codim< codim >
         {
-          typedef typename HostGridPart::template Codim< codim >::GeometryType Geometry;
-          typedef typename HostGridPart::template Codim< codim >::LocalGeometryType LocalGeometry;
-
-          typedef typename HostGridPart::template Codim< codim >::EntityType Entity;
-          typedef typename HostGridPart::template Codim< codim >::EntitySeedType EntitySeed;
         };
       };
 
@@ -143,6 +138,8 @@ namespace Dune
 
       //! \brief type of grid
       typedef typename HostGridPartType::GridType GridType;
+      //! \brief type of grid
+      typedef GridType Grid;
 
       /** \brief The type of the corresponding TwistUtility */
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType ;
@@ -170,24 +167,21 @@ namespace Dune
 
       //! \brief struct providing types of the iterators on codimension cd
       template< int codim >
-      struct Codim
+      struct Codim : public HostGridPartType::template Codim< codim >
       {
-        typedef typename HostGridPartType::template Codim< codim >::GeometryType GeometryType;
-        typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometryType;
-
-        typedef typename HostGridPartType::template Codim< codim >::EntityType EntityType;
-        typedef typename HostGridPartType::template Codim< codim >::EntitySeedType EntitySeedType;
-
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+          typedef IteratorType Iterator;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+        typedef IteratorType Iterator;
       };
 
       typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef CollectiveCommunicationType CollectiveCommunication;
 
       //! \brief maximum partition type, the index set provides indices for
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
@@ -224,11 +218,9 @@ namespace Dune
     template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
     class FilteredGridPart
     : public GridPartInterface< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
-    , public AddGridView< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
     {
       // type of this
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > ThisType;
-      typedef AddGridView< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > > AddGridViewType;
 
     public:
       //- Public typedefs and enums
@@ -255,7 +247,7 @@ namespace Dune
 
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
-      typedef typename AddGridViewType::GridViewType GridViewType;
+      typedef ThisType GridViewType;
 
       //! \brief grid part typedefs, use those of traits
       template< int codim >
@@ -271,28 +263,26 @@ namespace Dune
       //- Public methods
       //! \brief constructor
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter )
-      : AddGridViewType( this ),
-        hostGridPart_( hostGridPart ),
-        filter_( filter ),
-        indexSetPtr_( IndexSetSelectorType::create( *this ) )
-      {
-      }
-
-      FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter, const GridViewType *gridView)
-      : AddGridViewType( gridView ),
-        hostGridPart_( hostGridPart ),
-        filter_( filter ),
+      : hostGridPart_( &hostGridPart ),
+        filter_( new FilterType(filter) ),
         indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
       }
 
       //! \brief copy constructor
       FilteredGridPart ( const FilteredGridPart &other )
-      : AddGridViewType( other ),
-        hostGridPart_( other.hostGridPart_ ),
-        filter_( other.filter_ ),
+      : hostGridPart_( other.hostGridPart_ ),
+        filter_( new FilterType( other.filter()) ),
         indexSetPtr_ ( IndexSetSelectorType::create( *this ) )
       { }
+
+      FilteredGridPart& operator = (const FilteredGridPart &other )
+      {
+        hostGridPart_ = other.hostGridPart_;
+        filter_.reset( new FilterType( other.filter() ) );
+        indexSetPtr_.reset( IndexSetSelectorType::create( *this ) );
+        return *this;
+      }
 
       //! \brief return const reference to underlying grid
       const GridType &grid () const
@@ -311,6 +301,18 @@ namespace Dune
       const IndexSetType &indexSet() const
       {
         return IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
+      }
+
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return indexSet().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return indexSet().size( type );
       }
 
       //! \brief Begin iterator on the leaf level
@@ -366,12 +368,13 @@ namespace Dune
       }
 
       //! \brief boundary id
+      [[deprecated("Use BoundnryIdProvider instead!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
-      const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }
+      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >
@@ -394,13 +397,13 @@ namespace Dune
       //! \brief return reference to filter
       const FilterType &filter () const
       {
-        return filter_;
+        return *filter_;
       }
 
       //! \brief return reference to filter
       FilterType &filter ()
       {
-        return filter_;
+        return *filter_;
       }
 
       template< class Entity >
@@ -411,17 +414,14 @@ namespace Dune
 
       HostGridPartType &hostGridPart ()
       {
-        return hostGridPart_;
+        assert( hostGridPart_ );
+        return *hostGridPart_;
       }
 
       const HostGridPartType &hostGridPart () const
       {
-        return hostGridPart_;
-      }
-
-      int sequence () const
-      {
-        return hostGridPart().sequence();
+        assert( hostGridPart_ );
+        return *hostGridPart_;
       }
 
       /** \copydoc GridPartInterface::convert(const Entity &entity) const */
@@ -432,9 +432,22 @@ namespace Dune
       }
 
     private:
-      HostGridPartType &hostGridPart_;
-      FilterType filter_;
+      HostGridPartType *hostGridPart_;
+      std::unique_ptr< FilterType >   filter_;
       std::unique_ptr< IndexSetType > indexSetPtr_;
+    };
+
+    template< class GridPartFamily >
+    struct GridIntersectionAccess< Dune::Intersection< const GridPartFamily, typename GridPartFamily::IntersectionImpl > >
+    {
+      typedef Dune::Intersection< const GridPartFamily, typename  GridPartFamily::IntersectionImpl > IntersectionType;
+      typedef GridIntersectionAccess< typename IntersectionType::Implementation::HostIntersectionType > HostAccessType;
+      typedef typename HostAccessType::GridIntersectionType GridIntersectionType;
+
+      static const typename HostAccessType::GridIntersectionType &gridIntersection ( const IntersectionType &intersection )
+      {
+        return HostAccessType::gridIntersection( intersection.impl().hostIntersection() );
+      }
     };
 
   } // namespace Fem

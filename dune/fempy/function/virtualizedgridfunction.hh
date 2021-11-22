@@ -160,14 +160,6 @@ namespace Dune
       , impl_( new Implementation< Impl >( gf ) )
       {}
 
-#if 0
-      template <class GV, class LocalEvaluator>
-      VirtualizedGridFunction (const Dune::Python::SimpleGridFunction<GV,LocalEvaluator> &gf)
-      : Base(gridPart(gf.gridView(),"simpleGF",1)  // TODO: need name/order on SimpleGF
-      , impl_( new Implementation< Impl >( std::move( simpleGridFunction(Base::gridPart(),gf.localEvaluator(),Base::order() ) ) )
-      {}
-#endif
-
       VirtualizedGridFunction ( const VirtualizedGridFunction &other )
       : Base(other.gridPart(),other.name(),other.order())
       , impl_( other ? other.impl_->clone() : nullptr )

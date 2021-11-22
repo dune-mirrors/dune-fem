@@ -12,7 +12,6 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 
 #include <dune/fem/misc/gridwidth.hh>
 
@@ -132,6 +131,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
           continue;
         }
       }
+
       if( intersection.boundary() )
       {
         const int bndId = gridPart.boundaryId( intersection );

@@ -8,6 +8,11 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/grid/test/gridcheck.hh>
+#include <dune/grid/test/checkgeometry.hh>
+#include <dune/grid/test/checkintersectionit.hh>
+#include <dune/grid/test/checkentityseed.hh>
+
 #include <dune/fem/function/common/common.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
@@ -21,6 +26,7 @@
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
+#include <dune/fem/gridpart/geometrygridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -58,8 +64,17 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 };
 
 template <class GridPartType>
-void testAll( GridPartType& gridPart )
+void testAll( GridPartType& gp )
 {
+  // test copy constructor
+  GridPartType gridPart( gp );
+
+  // test assignment operator and destructor
+  {
+    GridPartType newGp( gp );
+    newGp = gridPart;
+  }
+
   // run tests
   std::cout << "Testing entities" << std::endl;
   testGridPart( gridPart );
@@ -81,6 +96,25 @@ void testAll( GridPartType& gridPart )
   Dune::Fem::CheckIndexSet< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   std::cout << "Testing intersections" << std::endl;
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+
+  // check geometries of macro level and leaf level
+  //Dune::GeometryChecker<typename GridPartType::GridType> checker;
+  //checker.checkGeometry( gridPart );
+  Dune::checkGeometryLifetime( gridPart );
+
+  // check entity seeds
+  // Dune::checkEntitySeed( gridPart, std::cerr );
+
+  try
+  {
+    // this test fails if the GridPart is non Cartesian but the grid is
+    if( ! Dune::Fem::GridPartCapabilities::isCartesian< GridPartType >::v )
+      checkViewIntersectionIterator( gridPart );
+
+    Dune :: checkIndexSet( gridPart.grid(), gridPart, Dune :: dvverb );
+  }
+  catch (...)
+  {}
 
   std::cout << std::endl << std::endl;
 }
@@ -126,10 +160,10 @@ try
     gpPtr.reset( new GridPartType( grid ) );
     GridPartType gp2( grid );
 
-    gvPtr.reset( new GridViewType( gpPtr->gridView() ) );
+    gvPtr.reset( new GridViewType( *gpPtr ) );
 
     gpPtr.reset( new GridPartType( grid ) );
-    gvPtr.reset( new GridViewType( gpPtr->gridView() ) );
+    gvPtr.reset( new GridViewType( *gpPtr ) );
     gpPtr.reset();
     gvPtr.reset();
 
@@ -148,7 +182,9 @@ try
     typedef Dune::GridSelector::GridType GridType;
     typedef Dune::Fem::GridPartAdapter< typename GridType::LeafGridView >  GridPartType;
 
-    GridPartType gridPart( grid.leafGridView() );
+    auto gv = grid.leafGridView();
+    // GridPartAdapter only stores a pointer
+    GridPartType gridPart( gv );
     testAll( gridPart );
   }
 
@@ -191,6 +227,27 @@ try
     std::cout << std::endl;
   }
 
+  // GeometryGridPart
+  {
+    std::cout << "************************************" << std::endl;
+    std::cout << "***      GeometryGridPart        ***"<< std::endl;
+    std::cout << "************************************" << std::endl;
+
+    typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
+    typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
+    DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
+    typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
+    CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
+    typedef Dune::Fem::Identity< CoordFunctionSpaceType > IdentityType;
+    IdentityType identity;
+    Dune::Fem::GridFunctionAdapter< IdentityType, HostGridPartType > identitydDF( "identity", identity, hostGridPart );
+    Dune::Fem::interpolate( identitydDF, coordFunction );
+    typedef Dune::Fem::GeometryGridPart< CoordFunctionType > GridPartType;
+    GridPartType gridPart( coordFunction );
+
+    testAll( gridPart );
+  }
+
   // FilteredGridPart
   {
     std::cout << "******************************" << std::endl;
@@ -230,7 +287,6 @@ try
     std::cout << std::endl << "Testing FilteredGridPart with domain filter: allow non consecutive index set" << std::endl << std::endl;
     testFilteredGridPart< false, HostGridPartType, WrapperDomainFilterType >( hostGridPart, wrapperDomainFilter );
   }
-
 
   return 0;
 }

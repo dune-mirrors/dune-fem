@@ -96,7 +96,7 @@ namespace Dune
 
       typedef std::integral_constant< bool, false > NoIndexSetType;
 
-      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
+      typedef GridPartType GridViewType;
 
     protected:
       // key type for singleton list is grid pointer
@@ -109,24 +109,21 @@ namespace Dune
       LeafGridView leafGridView_ ;
 
       // reference to index set
-      std::unique_ptr< IndexSetType, typename IndexSetProviderType::Deleter > indexSet_;
-
-      using BaseType::grid_;
+      std::shared_ptr< IndexSetType > indexSet_;
 
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
       : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( &IndexSetProviderType::getObject( &grid ) )
+        indexSet_( &IndexSetProviderType::getObject( &grid ),
+                   typename IndexSetProviderType::Deleter() )
       {}
 
       //! Copy Constructor
-      AdaptiveGridPartBase ( const ThisType &other )
-      : BaseType( other ),
-        leafGridView_( other.leafGridView_ ),
-        indexSet_( &IndexSetProviderType::getObject( &other.grid_ ) )
-      {}
+      AdaptiveGridPartBase ( const ThisType &other ) = default;
+
+      AdaptiveGridPartBase& operator= ( const AdaptiveGridPartBase& other ) = default;
 
     protected:
       //! Constructor constructing object held by index set (for iterator access)
@@ -190,12 +187,6 @@ namespace Dune
       iend ( const ElementType &entity ) const
       {
         return leafGridView_.iend( entity );
-      }
-
-      //! Returns maxlevel of the grid
-      int level () const
-      {
-        return grid().maxLevel();
       }
 
       //! corresponding communication method for this grid part
@@ -298,10 +289,8 @@ namespace Dune
     template< class Grid, PartitionIteratorType idxpitype , bool onlyCodimensionZero >
     class AdaptiveLeafGridPart
       : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
-      , public AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > BaseType;
-      typedef AddGridView< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > AddGridViewType;
     public:
       typedef typename BaseType :: NoIndexSetType  NoIndexSetType;
       typedef typename BaseType :: GridType        GridType;
@@ -310,24 +299,15 @@ namespace Dune
       //! Constructor
       explicit AdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
-      , AddGridViewType( this )
-      {}
-      AdaptiveLeafGridPart ( GridType &grid, const GridViewType* gridView )
-      : BaseType( grid )
-      , AddGridViewType( gridView )
       {}
 
       //! copy constructor (for construction from IndexSet, no public use)
       AdaptiveLeafGridPart ( GridType& grid, const NoIndexSetType& dummy )
       : BaseType( grid, dummy )
-      // , AddGridViewType( this ) this is used for the IndexSet and translating to GV not needed
       {}
 
       //! copy constructor
       AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other ) = default;
-
-      ~AdaptiveLeafGridPart()
-      {}
     };
 
     /** @ingroup AdaptiveLeafGP

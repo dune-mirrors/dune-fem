@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PY_GRIDVIEW
 #define DUNE_FEMPY_PY_GRIDVIEW
-#include <dune/python/grid/gridview.hh>
+
+#include <type_traits>
+
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 
@@ -11,18 +13,16 @@ namespace Dune
 {
   namespace FemPy
   {
-    template< class GridView, class... options >
-    inline static void registerGridView ( pybind11::handle scope, pybind11::class_< GridView, options... > cls )
+    template< class GridView, class... options>
+    inline void registerGridView ( pybind11::class_< GridView, options... > cls)
     {
-      Dune::Python::registerGridView(scope,cls);
-
-      typedef GridPart< GridView > GridPart;
+      typedef FemPy::GridPart< GridView > GridPart;
       cls.def_property_readonly("canAdapt",[](GridView &self){
        return Dune::Fem::Capabilities::isAdaptiveIndexSet<typename GridPart::IndexSetType>::v;
           });
       if (Dune::Fem::Capabilities::isAdaptiveIndexSet<typename GridPart::IndexSetType>::v)
       {
-        typedef VirtualizedGridFunction<GridPart,Dune::FieldVector<double,1>> Indicator;
+        typedef FemPy::VirtualizedGridFunction<GridPart,Dune::FieldVector<double,1>> Indicator;
         cls.def("mark",[](GridView &self,
                        Indicator &indicator,
                        double refineTolerance, double coarsenTolerance,
@@ -48,6 +48,9 @@ namespace Dune
               return Dune::Fem::GridAdaptation::doerflerMarking( grid, indicator, tolerance, maxLevel );
           });
       }
+      cls.def("_register",[](GridView &self) {
+          detail::addGridModificationListener ( self.grid() );
+        });
     }
   }
 }

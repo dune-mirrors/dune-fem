@@ -3,6 +3,7 @@
 
 //- dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/exceptions.hh>
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
@@ -12,7 +13,6 @@
 //- dune-fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/misc/boundaryidprovider.hh>
 
@@ -73,11 +73,8 @@ namespace Dune
     //! GridParts are used to parametrize spaces (see DiscreteFunctionSpaceDefault [in dune-fem]).
     template< class GridPartTraits >
     class GridPartInterface
-      : public GridPartPolicies< GridPartTraits >
     {
       typedef GridPartInterface< GridPartTraits > ThisType;
-
-      typedef GridPartPolicies< GridPartTraits > PoliciesType;
 
     public:
       //! \brief Type of the Traits
@@ -88,12 +85,18 @@ namespace Dune
 
       //! \brief type of Grid implementation
       typedef typename Traits::GridType GridType;
+      //! \brief type of Grid implementation
+      typedef GridType Grid;
 
       //! \brief Index set implementation
       typedef typename Traits::IndexSetType IndexSetType;
+      //! \brief Index set implementation
+      typedef IndexSetType IndexSet;
 
       //! \brief Collective communication
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+      //! \brief Collective communication
+      typedef CollectiveCommunicationType CollectiveCommunication;
 
       //! \brief Twist utility type
       typedef typename Traits::TwistUtilityType TwistUtilityType;
@@ -106,16 +109,22 @@ namespace Dune
 
       //! \brief type of IntersectionIterator
       typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
+      //! \brief type of IntersectionIterator
+      typedef IntersectionIteratorType IntersectionIterator;
 
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
+      //! \brief type of Intersection
+      typedef IntersectionType Intersection;
 
-      typedef typename PoliciesType::GridViewType GridViewType;
+      typedef GridPartType GridViewType;
 
       typedef typename GridType::ctype ctype;
 
       static const int dimension = GridType::dimension;
       static const int dimensionworld = GridType::dimensionworld;
+
+      static const bool conforming = Traits::conforming ;
 
       template< int codim >
       struct Codim
@@ -126,14 +135,24 @@ namespace Dune
         typedef typename Traits::template Codim< codim >::EntityType         EntityType;
         typedef typename Traits::template Codim< codim >::EntitySeedType     EntitySeedType;
 
+        // GridView typedefs interface
+        typedef GeometryType       Geometry;
+        typedef LocalGeometryType  LocalGeometry;
+        typedef EntityType         Entity;
+        typedef EntitySeedType     EntitySeed;
+
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
             IteratorType;
+          // GridView typedef
+          typedef IteratorType Iterator;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+        // GridView typedef
+        typedef IteratorType Iterator;
       };
 
       //! \brief Returns const reference to the underlying grid
@@ -154,6 +173,18 @@ namespace Dune
       {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().indexSet()));
         return asImp().indexSet();
+      }
+
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return asImp().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return asImp().size( type );
       }
 
       /** \brief obtain begin iterator for the interior-border partition
@@ -207,10 +238,11 @@ namespace Dune
       }
 
       //! \brief Level of the grid part
+      [[deprecated("Do not use this since it is no longer part of the interface")]]
       int level () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION((asImp().level()));
-        return asImp().level();
+        DUNE_THROW(NotImplemented,"GridPart::level has been removed!");
+        return -1;
       }
 
       //! \brief ibegin of corresponding intersection iterator for given entity
@@ -229,6 +261,7 @@ namespace Dune
       }
 
       //! \brief return boundary if given an intersection
+      [[deprecated("Use BoundaryIdProvider::boundaryId directly!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryId( intersection ) );
@@ -272,11 +305,36 @@ namespace Dune
         return asImp().convert( entity );
       }
 
-      [[deprecated("Use DofManager::sequence instread!")]]
+      /** @brief Return true if the given entity is contained in this grid view
+       * @todo Currently we call the implementation on the IndexSet.  This may lead to suboptimal efficiency.
+       *
+       * \note If the input element e is not an element of the grid, then
+       *       the result of contains() is undefined.
+       */
+      template<class EntityType>
+      bool contains (const EntityType& e) const
+      {
+        return asImp().contains(e);
+      }
+
+      int overlapSize ( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method overlapSize() not implemented yet" );
+      }
+
+      int ghostSize( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method ghostSize() not implemented yet" );
+      }
+
+      /** \brief return sequence number to update structures depending on the grid part
+       *  \note The default returns DofManager< Grid > :: sequence ()
+       */
+      [[deprecated("Use DofManager::sequence instead!")]]
       int sequence () const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
-        return asImp().sequence() ;
+        DUNE_THROW(NotImplemented,"GridPart::sequence is not part of the interface, use DofManager::sequence instead!");
+        return -1;
       }
 
     protected:
@@ -296,6 +354,7 @@ namespace Dune
     : public GridPartInterface< GridPartTraits >
     {
       typedef GridPartDefault< GridPartTraits > ThisType;
+      typedef GridPartInterface< GridPartTraits > BaseType;
 
     public:
       //! \brief Type of the Traits
@@ -321,26 +380,51 @@ namespace Dune
       typedef BoundaryIdProvider< GridType > BoundaryIdProviderType;
 
     protected:
-      GridType       &grid_;
-      DofManagerType &dofManager_;
+      GridType       *grid_;
+      DofManagerType *dofManager_;
 
       //! constructor
       GridPartDefault ( GridType &grid )
-      : grid_( grid ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+      : grid_( &grid ),
+        dofManager_( &DofManagerType :: instance( this->grid() ) )
       {}
 
       GridPartDefault ( const ThisType &other )
       : grid_( other.grid_ ),
-        dofManager_( DofManagerType :: instance( grid_ ) )
+        dofManager_( &DofManagerType :: instance( this->grid() ) )
       {}
+
+      GridPartDefault& operator= ( const ThisType &other )
+      {
+        grid_ = other.grid_;
+        dofManager_ = &DofManagerType :: instance( grid() );
+        return *this;
+      }
 
     public:
       //! Returns const reference to the underlying grid
-      const GridType &grid () const { return grid_; }
+      const GridType &grid () const { assert( grid_ ); return *grid_; }
 
       //! Returns reference to the underlying grid
-      GridType &grid () { return grid_; }
+      GridType &grid () { assert( grid_ ); return *grid_; }
+
+      /** \brief obtain number of entities in a given codimension */
+      int size ( int codim ) const
+      {
+        return BaseType::indexSet().size( codim );
+      }
+
+      /** \brief obtain number of entities with a given geometry type */
+      int size ( const GeometryType &type ) const
+      {
+        return BaseType::indexSet().size( type );
+      }
+
+      template<class EntityType>
+      bool contains (const EntityType& e) const
+      {
+        return BaseType::indexSet().contains(e);
+      }
 
       /** \brief obtain collective communication object */
       const CollectiveCommunicationType &comm () const
@@ -372,13 +456,8 @@ namespace Dune
         return entity;
       }
 
-      [[deprecated("Use DofManager::sequence instread!")]]
-      int sequence () const
-      {
-        return dofManager_.sequence();
-      }
-
       //! \brief \copydoc GridPartInterface::entity
+      [[deprecated("Use BoundaryIdProvider::boundaryId directly!")]]
       int boundaryId ( const IntersectionType &intersection ) const
       {
         return BoundaryIdProviderType::boundaryId( intersection );
@@ -408,37 +487,6 @@ namespace Dune
     {
       return GridEntityAccess< Entity >::gridEntity( entity );
     }
-
-    template< class TraitsImp >
-    struct AddGridView
-    {
-      typedef typename TraitsImp :: GridPartType GridPartType;
-      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
-      std::shared_ptr<GridViewType> gridViewStorage_;
-      const GridViewType* gridView_;
-      AddGridView ( const GridPartType *gridPart )
-      : gridViewStorage_(new GridViewType(*gridPart))
-      , gridView_(gridViewStorage_.get())
-      {}
-      AddGridView ( const GridViewType *gridView)
-      : gridViewStorage_(nullptr)
-      , gridView_(gridView)
-      {}
-      AddGridView( const AddGridView& other)
-      : gridViewStorage_(other.gridViewStorage_)
-      , gridView_(other.gridView_)
-      {}
-      // use this constructor if it is guaranteed that no gridview is needed
-      AddGridView ()
-      : gridViewStorage_(nullptr)
-      , gridView_(nullptr)
-      {}
-      const GridViewType &gridView() const
-      {
-        assert( gridView_ );
-        return *gridView_;
-      }
-    };
 
   } // namespace Fem
 

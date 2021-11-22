@@ -26,8 +26,6 @@ namespace Dune
       typedef typename Base::GridType GridType;
 
       explicit GridPartAdapter ( const GridView &gridView ) : Base( gridView ) {}
-
-      int level () const { DUNE_THROW( NotImplemented, "GridPartAdapter cannot provide level information" ); return -1; }
     };
 
 

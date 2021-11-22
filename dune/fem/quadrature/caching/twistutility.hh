@@ -18,6 +18,29 @@ namespace Dune
   namespace Fem
   {
 
+   template< class Intersection >
+    struct GridIntersectionAccess;
+
+    template< class Grid, class IntersectionImpl >
+    struct GridIntersectionAccess< Dune::Intersection< const Grid, IntersectionImpl > >
+    {
+      typedef Dune::Intersection< const Grid, IntersectionImpl > IntersectionType;
+      typedef IntersectionType GridIntersectionType;
+
+      static const GridIntersectionType &gridIntersection ( const IntersectionType &isec )
+      {
+        return isec;
+      }
+    };
+
+    template< class Intersection >
+    const typename GridIntersectionAccess< Intersection >::GridIntersectionType &
+    gridIntersection ( const Intersection &isec )
+    {
+      return GridIntersectionAccess< Intersection >::gridIntersection( isec );
+    }
+
+
     /** \brief TwistFreeTwistUtility provides the default implementation for twistfree grid
          such as Cartesian grids.
     */
@@ -141,8 +164,9 @@ namespace Dune
     public:
       //! \brief return twist for inner face
       template< class Intersection >
-      static inline int twistInSelf(const GridType & grid, const Intersection& intersection)
+      static inline int twistInSelf(const GridType & grid, const Intersection& isec)
       {
+        const auto& intersection = gridIntersection( isec );
         assert( dim == 2 ? (intersection.impl().twistInInside() == 0 ||
                             intersection.impl().twistInInside() == 1 ) : true );
         return intersection.impl().twistInInside();
@@ -150,8 +174,9 @@ namespace Dune
 
       //! \brief return twist for outer face
       template< class Intersection >
-      static inline int twistInNeighbor(const GridType &grid, const Intersection& intersection )
+      static inline int twistInNeighbor(const GridType &grid, const Intersection& isec )
       {
+        const auto& intersection = gridIntersection( isec );
         assert( dim == 2 ? (intersection.impl().twistInOutside() == 0 ||
                             intersection.impl().twistInOutside() == 1 ) : true );
         return intersection.impl().twistInOutside();

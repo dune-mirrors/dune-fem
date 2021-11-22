@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_POLICIES_HH
 #define DUNE_FEM_GRIDPART_COMMON_POLICIES_HH
 
+#warning "This header should not be needed anymore. Remove it from the include list!"
+
+
 #include <type_traits>
 #include <utility>
 

@@ -9,7 +9,6 @@
 #include <dune/python/common/dynvector.hh>
 #include <dune/python/common/fmatrix.hh>
 #include <dune/python/common/fvector.hh>
-#include <dune/python/grid/object.hh>
 
 #include <dune/fempy/py/grid/gridpart.hh>
 
@@ -37,7 +36,7 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
 
-        cls.def( pybind11::init( [] ( const GridView &gridView ) {
+        cls.def( pybind11::init( [] ( GridView &gridView ) {
             return new Space( gridPart< GridView >( gridView ) );
           }), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
@@ -53,7 +52,7 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
 
-        cls.def( pybind11::init( [] ( const GridView &gridView, int order ) {
+        cls.def( pybind11::init( [] ( GridView &gridView, int order ) {
             return new Space( gridPart< GridView >( gridView ), order );
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a, "order"_a );
       }
@@ -104,7 +103,12 @@ namespace Dune
         typedef typename GridPart::GridViewType GridView;
         cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );
         cls.def_property_readonly( "dimDomain", [] ( Space & ) -> int { return Space::FunctionSpaceType::dimDomain; } );
-        cls.def_property_readonly( "gridView", [] ( Space &self ) -> const GridView& { return self.gridPart().gridView(); } );
+        cls.def_property_readonly( "grid", [] ( Space &self ) -> const GridView&
+        {
+          PyErr_WarnEx(PyExc_DeprecationWarning, "attribute 'grid' is deprecated, use 'gridView' instead.", 2);
+          return self.gridPart(); }
+        );
+        cls.def_property_readonly( "gridView", [] ( Space &self ) -> const GridView& { return self.gridPart(); } );
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
         cls.def( "as_ufl", [] ( pybind11::object &self ) -> auto {
               return Dune::FemPy::getSpaceWrapper()(self);

@@ -8,6 +8,10 @@ dune_python_add_test(NAME pybackrest2
                      LABELS quick)
 
 if( ${FEM_TORTURE_TESTS} )
+  dune_python_add_test(NAME filteredgridview
+                       SCRIPT filteredgridview.py
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                       LABELS quick)
   dune_python_add_test(NAME levelspaces
                        SCRIPT levelspaces.py
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

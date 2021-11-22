@@ -28,6 +28,25 @@ namespace Dune
     namespace Capabilities
     {
 
+      /** \brief specialize with \b true if index set implements the
+       *         dune-fem interface for index sets
+       *
+       *  \note default value is \b true if index set is derived from
+       *        IndexSet
+       */
+      template< class IndexSet >
+      struct isDuneFemIndexSet
+      {
+        template< class Traits >
+        static std::true_type __isDuneFemIndexSet ( const Dune::Fem::IndexSet< Traits > & );
+
+        static std::false_type __isDuneFemIndexSet ( ... );
+
+      public:
+        static const bool v = decltype( __isDuneFemIndexSet( std::declval< IndexSet >() ) )::value;
+      };
+
+
       // isConsecutiveIndexSet
       // ---------------------
 
@@ -187,8 +206,6 @@ namespace Dune
         return static_cast< const typename Traits::IndexSetType & >( *this );
       }
     };
-
-
 
     // ConsecutiveIndexSet
     // -------------------

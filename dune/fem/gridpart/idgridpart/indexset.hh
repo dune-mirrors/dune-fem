@@ -53,7 +53,7 @@ namespace Dune
         typedef typename HostIndexSetType::Types Types;
 
         explicit IndexSet ( const HostIndexSetType &hostIndexSet )
-          : hostIndexSet_( hostIndexSet )
+          : hostIndexSet_( &hostIndexSet )
         {}
 
         Types types ( int codim ) const
@@ -108,7 +108,8 @@ namespace Dune
 
         const HostIndexSetType &hostIndexSet () const
         {
-          return hostIndexSet_;
+          assert( hostIndexSet_ );
+          return *hostIndexSet_;
         }
 
         void requestCodimensions( const std::vector< int >& codimensions ) const
@@ -117,10 +118,13 @@ namespace Dune
         }
 
       protected:
-        HostIndexSetType &hostIndexSet () { return const_cast< HostIndexSetType & >( hostIndexSet_); }
+        HostIndexSetType &hostIndexSet ()
+        {
+          assert( hostIndexSet_ );
+          return const_cast< HostIndexSetType & >(*hostIndexSet_);
+        }
 
-      private:
-        const HostIndexSetType &hostIndexSet_;
+        const HostIndexSetType *hostIndexSet_;
       };
 
 
@@ -176,7 +180,7 @@ namespace Dune
       protected:
         HostIndexSetType &hostIndexSet ()
         {
-          return const_cast< HostIndexSetType & >( BaseType::hostIndexSet() );
+          return const_cast< HostIndexSetType& >( BaseType::hostIndexSet() );
         }
       };
 

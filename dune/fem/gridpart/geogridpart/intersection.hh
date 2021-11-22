@@ -50,6 +50,12 @@ namespace Dune
         hostIntersection_( std::move( hostIntersection ) )
       {}
 
+      GeoIntersection ()
+      : coordFunction_( nullptr ),
+        insideGeo_(),
+        hostIntersection_()
+      {}
+
       Entity inside () const
       {
         return EntityImplType( coordFunction(), hostIntersection().inside() );

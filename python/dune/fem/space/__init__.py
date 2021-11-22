@@ -110,7 +110,7 @@ def dfInterpolate(self, f):
 
     try:
         # API GridView: assert func.gridView == self.gridView, "can only interpolate with same grid views"
-        assert func.grid == self.gridView, "can only interpolate with same grid views"
+        assert func.gridView == self.gridView, "can only interpolate with same grid views"
         assert func.dimRange == self.dimRange, "range dimension mismatch"
     except AttributeError:
         pass
@@ -233,11 +233,6 @@ def addAttr(module, self, field, scalar, codegen):
             lambda moduleName,interiorQuadratureOrders, skeletonQuadratureOrders:
                   _codegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders)
            )
-
-    @deprecated(msg="Use 'gridView' instead",name="grid")
-    def grid(self):
-        return self.gridView
-    self.__class__.grid = property(grid)
 
     DF = module.DiscreteFunction
     if hasattr(DF,"_project"):

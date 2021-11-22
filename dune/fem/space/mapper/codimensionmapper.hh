@@ -90,9 +90,12 @@ namespace Dune
           for( GeometryType type : types.geomTypes( 0 ) )
             maxNumDofs_ = std::max( maxNumDofs_, referenceElement( type ).size( codimension ) );
 
-          // submit codimension request to index set to enable support
-          std::vector< int > codimensions( 1, int(Traits::codimension) );
-          indexSet_.requestCodimensions( codimensions );
+          if constexpr ( Capabilities::isDuneFemIndexSet< IndexSetType >:: v )
+          {
+            // submit codimension request to index set to enable support
+            std::vector< int > codimensions( 1, int(Traits::codimension) );
+            indexSet_.requestCodimensions( codimensions );
+          }
         }
 
         /* \name DofMapper interface methods

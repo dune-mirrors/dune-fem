@@ -33,8 +33,6 @@ namespace Dune
     public:
       typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
 
-      GeoIntersectionIterator () = default;
-
       template< class Entity >
       GeoIntersectionIterator ( const Entity &inside,
                                 HostIntersectionIteratorType hostIterator )
@@ -42,6 +40,26 @@ namespace Dune
         insideGeo_( inside.geometry() ),
         hostIterator_( std::move( hostIterator ) )
       {}
+
+      GeoIntersectionIterator ( const GeoIntersectionIterator& other )
+      : coordFunction_( &other.coordFunction() ),
+        insideGeo_( other.insideGeo_ ),
+        hostIterator_( other.hostIterator_ )
+      {}
+
+      GeoIntersectionIterator ( )
+      : coordFunction_( nullptr ),
+        hostIterator_()
+      {}
+
+      GeoIntersectionIterator& operator= ( const GeoIntersectionIterator& other )
+      {
+        coordFunction_ = other.coordFunction_;
+        insideGeo_.reset();
+        insideGeo_.emplace( *other.insideGeo_ );
+        hostIterator_ = other.hostIterator_ ;
+        return *this;
+      }
 
       bool equals ( const ThisType &other ) const
       {
@@ -55,7 +73,8 @@ namespace Dune
 
       Intersection dereference () const
       {
-        return IntersectionImplType( coordFunction(), insideGeo_, *hostIterator_ );
+        assert( insideGeo_ );
+        return IntersectionImplType( coordFunction(), *insideGeo_, *hostIterator_ );
       }
 
       const CoordFunctionType &coordFunction () const
@@ -66,7 +85,7 @@ namespace Dune
 
     private:
       const CoordFunctionType *coordFunction_ = nullptr;
-      ElementGeometryType insideGeo_;
+      std::optional< ElementGeometryType > insideGeo_;
       HostIntersectionIteratorType hostIterator_;
     };
 
