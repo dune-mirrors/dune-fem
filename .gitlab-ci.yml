@@ -17,6 +17,7 @@ variables:
   DUNE_LOG_LEVEL:  WARNING
   OMP_NUM_THREADS: 1
 
+
 before_script:
   - source /duneci/bin/duneci-init-job
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
