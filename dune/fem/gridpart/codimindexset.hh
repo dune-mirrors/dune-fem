@@ -32,9 +32,10 @@ namespace Dune
       typedef CodimIndexSet < GridType >  ThisType;
 
     private:
-      enum INDEXSTATE { UNUSED = 0,  // unused indices
-                        USED   = 1,  // used indices
-                        NEW    = 2 };//  new indices
+      typedef unsigned char INDEXSTATE;
+      static const INDEXSTATE UNUSED = 0; // unused indices
+      static const INDEXSTATE USED   = 1; // used indices
+      static const INDEXSTATE NEW    = 2; // new indices
 
       // reference to grid
       const GridType& grid_;
@@ -48,7 +49,7 @@ namespace Dune
 
     protected:
       // array type for indices
-      typedef DynamicArray< IndexType > IndexArrayType;
+      typedef DynamicArray< IndexType  > IndexArrayType;
       typedef DynamicArray< INDEXSTATE > IndexStateArrayType;
 
       // use the imporved PersistentContainer
