@@ -31,21 +31,20 @@ namespace Dune
       typedef GridImp GridType;
       typedef CodimIndexSet < GridType >  ThisType;
 
-    private:
-      typedef unsigned char INDEXSTATE;
-      static const INDEXSTATE UNUSED = 0; // unused indices
-      static const INDEXSTATE USED   = 1; // used indices
-      static const INDEXSTATE NEW    = 2; // new indices
-
       // reference to grid
       const GridType& grid_;
+
+      typedef unsigned char INDEXSTATE;
+      const INDEXSTATE stateUnused_ = 0; // unused indices
+      const INDEXSTATE stateUsed_   = 1; // used indices
+      const INDEXSTATE stateNew_    = 2; // new indices
 
     public:
       // type of exported index
       typedef int IndexType ;
 
       // indices in this status have not been initialized
-      static IndexType invalidIndex() { return -1; }
+      static IndexType invalidIndex() { return IndexType(-1); }
 
     protected:
       // array type for indices
@@ -123,7 +122,7 @@ namespace Dune
       //! set all entries to unused
       void resetUsed ()
       {
-        std::fill( indexState_.begin(), indexState_.end(), UNUSED );
+        std::fill( indexState_.begin(), indexState_.end(), stateUnused_ );
       }
 
       bool consecutive ()
@@ -176,7 +175,7 @@ namespace Dune
         for( int index = 0; index < sizeOfVecs; ++index )
         {
           // create vector with all holes
-          if( indexState_[ index ] == UNUSED )
+          if( indexState_[ index ] == stateUnused_ )
             holes_[ actHole++ ] = index;
         }
 
@@ -201,7 +200,7 @@ namespace Dune
             {
               continue ;
             }
-            else if( indexState_[ index ] == UNUSED )
+            else if( indexState_[ index ] == stateUnused_ )
             {
               index = invalidIndex();
               continue ;
@@ -231,7 +230,7 @@ namespace Dune
               // only for none-ghost elements hole storage is applied
               // this is because ghost indices might have in introduced
               // after the resize was done.
-              if( indexState_[ index ] == USED )
+              if( indexState_[ index ] == stateUsed_ )
 #endif
               {
                 // remember old and new index
@@ -253,9 +252,9 @@ namespace Dune
 
           // mark holes as new
           // note: This needs to be done after reassignment, so that their
-          //       original entry will still see them as UNUSED.
+          //       original entry will still see them as stateUnused_.
           for( int hole = 0; hole < holes; ++hole )
-            indexState_[ newIdx_[ hole ] ] = NEW;
+            indexState_[ newIdx_[ hole ] ] = stateNew_;
 
         } // end if actHole > 0
 
@@ -270,9 +269,9 @@ namespace Dune
 
 #ifndef NDEBUG
         for( int i=0; i<actSize; ++i )
-          assert( indexState_[ i ] == USED ||
-                  indexState_[ i ] == UNUSED ||
-                  indexState_[ i ] == NEW );
+          assert( indexState_[ i ] == stateUsed_ ||
+                  indexState_[ i ] == stateUnused_ ||
+                  indexState_[ i ] == stateNew_ );
 
         checkConsecutive();
 #endif
@@ -339,7 +338,7 @@ namespace Dune
         // if index is invalid (-1) it does not exist
         if (index==invalidIndex()) return false;
         assert( index < IndexType( indexState_.size() ) );
-        return (indexState_[ index ] != UNUSED);
+        return (indexState_[ index ] != stateUnused_);
       }
 
       template <class EntityType>
@@ -351,7 +350,7 @@ namespace Dune
         // if index is invalid (-1) it does not exist
         if (index==invalidIndex()) return false;
         assert( index < IndexType( indexState_.size() ) );
-        return (indexState_[ index ] != UNUSED);
+        return (indexState_[ index ] != stateUnused_);
       }
 
       //! return number of holes
@@ -403,7 +402,7 @@ namespace Dune
         // if index is also larger than lastSize
         // mark as new to skip old-new index lists
         if( leafIdx >= lastSize_ )
-          indexState_[ leafIdx ] = NEW;
+          indexState_[ leafIdx ] = stateNew_;
       }
 
       // insert element and create index for element number
@@ -413,7 +412,7 @@ namespace Dune
         assert( myCodim_ == EntityType :: codimension );
         const IndexType &index = leafIndex_[ entity ];
         if( index != invalidIndex() )
-          indexState_[ index ] = UNUSED;
+          indexState_[ index ] = stateUnused_;
       }
 
       // insert element as ghost and create index for element number
@@ -456,7 +455,7 @@ namespace Dune
           indexState_.resize( index+1 );
         }
         assert( index < IndexType( indexState_.size() ) );
-        indexState_[ index ] = USED;
+        indexState_[ index ] = stateUsed_;
       }
 
     public:
@@ -494,7 +493,7 @@ namespace Dune
 
         // mark all indices used
         indexState_.resize( size );
-        std::fill( indexState_.begin(), indexState_.end(), USED );
+        std::fill( indexState_.begin(), indexState_.end(), stateUsed_ );
 
         // for consistency checking
         uint64_t storedSize = 0;
