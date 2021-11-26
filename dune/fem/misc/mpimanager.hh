@@ -237,6 +237,11 @@ namespace Dune
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
+          // HACK: the following is used to guarantee that the static
+          // storage_ variable in the SingletonStorage is set from the
+          // _fem.so Python module before all threads try to set the value
+          // causing race conflicts.
+          Dune::Fem::detail::SingletonStorage::getStorage();
           if (!singleThreadMode())
             DUNE_THROW(InvalidStateException, "ThreadPool: run is running run");
           if constexpr(! useStdThreads )

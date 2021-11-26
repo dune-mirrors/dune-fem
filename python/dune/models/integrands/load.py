@@ -163,6 +163,7 @@ class Source(object):
         writer = SourceWriter()
         writer.emit("#ifndef GuardIntegrands_" + self.signature())
         writer.emit("#define GuardIntegrands_" + self.signature())
+        writer.emit("#define USING_DUNE_PYTHON 1")
         writer.emit(code)
 
         name = self.name()
