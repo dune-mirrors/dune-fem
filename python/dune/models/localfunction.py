@@ -191,6 +191,7 @@ class UFLFunctionSource(codegen.ModelClass):
 
         source = "#ifndef GUARD_"+self.signature()+\
                  "\n#define GUARD_"+self.signature()+"\n"+\
+                 "\n#define USING_DUNE_PYTHON 1"+"\n"+\
                  source+\
                  "\n#endif\n"
 
