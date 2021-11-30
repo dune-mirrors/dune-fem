@@ -10,7 +10,7 @@
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
-#include <dune/fempy/py/common/numpyvector.hh>
+// #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/fempy/py/space.hh>
 #include <dune/fempy/py/operator.hh>

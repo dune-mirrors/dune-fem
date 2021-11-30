@@ -1,3 +1,5 @@
+#warning "This header should not be needed anymore. Remove it from the include list!"
+
 #ifndef DUNE_FEMPY_PY_FUNCTION_GRID_HH
 #define DUNE_FEMPY_PY_FUNCTION_GRID_HH
 
