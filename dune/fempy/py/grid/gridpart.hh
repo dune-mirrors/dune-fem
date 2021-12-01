@@ -164,6 +164,12 @@ namespace Dune
       return detail::gridPartConverter< GridView >()( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
     }
 
+    template< class GridView >
+    inline static const GridPart<GridView> &gridPart ( const GridView &gridView )
+    {
+      return detail::gridPartConverter< GridView >()( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
+    }
+
   } // namespace FemPy
 
 } // namespace Dune
