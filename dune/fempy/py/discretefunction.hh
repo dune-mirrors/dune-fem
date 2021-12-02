@@ -25,8 +25,9 @@
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fem/common/localcontribution.hh>
-#include <dune/fempy/py/common/numpyvector.hh>
-#include <dune/fempy/py/function/grid.hh>
+// #include <dune/fempy/py/common/numpyvector.hh>
+// #include <dune/fempy/py/function/grid.hh>
+#include <dune/python/common/numpyvector.hh>
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/py/space.hh>
@@ -209,9 +210,9 @@ namespace Dune
 
       // specialization for NumPy discrete function, since they require a constructor taking a DoF vector
       template< class Space, class Field, class... options >
-      inline static void registerDiscreteFunctionConstructor ( pybind11::class_< Dune::Fem::VectorDiscreteFunction< Space, Dune::FemPy::NumPyVector< Field > >, options... > cls, PriorityTag< 2 > )
+      inline static void registerDiscreteFunctionConstructor ( pybind11::class_< Dune::Fem::VectorDiscreteFunction< Space, Dune::Python::NumPyVector< Field > >, options... > cls, PriorityTag< 2 > )
       {
-        typedef Dune::Fem::VectorDiscreteFunction< Space, Dune::FemPy::NumPyVector< Field > > DF;
+        typedef Dune::Fem::VectorDiscreteFunction< Space, Dune::Python::NumPyVector< Field > > DF;
         typedef typename DF::VectorType VectorType;
 
         using pybind11::operator""_a;
