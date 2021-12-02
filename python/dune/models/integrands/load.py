@@ -243,6 +243,8 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         for dBC in dirichletBCs:
             _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
             coeff_ |= set(coeff__)
+
+        coeff_ = sorted(list(coeff_), key=lambda c: c.count())
         coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
 
         form = replace(form,coeff)
