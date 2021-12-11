@@ -152,7 +152,7 @@ namespace Dune
       }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
-      inline bool twisted () const { return false; }
+      static constexpr bool twisted () { return false; }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline int twistId () const { return 0; }
@@ -315,7 +315,7 @@ namespace Dune
       }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
-      inline bool twisted () const { return false; }
+      static constexpr bool twisted () { return false; }
 
       /** \brief convenience implementation for Dune::Fem::CachingInterface */
       inline int twistId () const { return 0; }
