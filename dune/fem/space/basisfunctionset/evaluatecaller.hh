@@ -281,7 +281,7 @@ namespace Dune
                 int qp = f * quadNop + j ;
                 assert( j*numBaseFct + i < int(rangeStorage_.size()) );
                 // copy and transpose
-                rangeStorageTransposed[ idx + j ]     = rangeStorage_[ qp*numBaseFct + i ][ 0 ];
+                rangeStorageTransposed[ idx + j ] = rangeStorage_[ qp*numBaseFct + i ][ 0 ];
               }
             }
           }
@@ -334,42 +334,47 @@ namespace Dune
 
         // if we are in the ranges cases then basis can be stored transposed
         // quadrature points is the outer loop
-        if( quad.twisted() )
+        if constexpr ( Quadrature::twisted() )
         {
+          if( quad.twistId() == 4 ) // no twist
+            return rangeStorageTransposed_[ quad.localFaceIndex() ];
+
           auto& rangeStorageTwisted = rangeStorageTwisted_[ quad.twistId() ];
           if( rangeStorageTwisted.empty() )
+          {
+            const int quadPoints = rangeStorage_.size() / numBaseFct;
+            const int faces = quadPoints / quadNop;
+            rangeStorageTwisted.resize( faces );
+          }
+
+          const int f = quad.localFaceIndex() ;
+          auto& rangeStorageFace = rangeStorageTwisted[ f ];
+          if( rangeStorageFace.empty() )
           {
             // either 1 or dim of grid
             const int dim = getDim( rangeStorage_[ 0 ] );
 
-            const int quadPoints = rangeStorage_.size() / numBaseFct;
-            const int faces = quadPoints / quadNop;
-            rangeStorageTwisted.resize( faces );
-            for( int f=0; f<faces; ++f )
-            {
-              auto& rangeStorageFace = rangeStorageTwisted[ f ];
-              const auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
+            const auto& rangeStorageTransposed = rangeStorageTransposed_[ f ];
 
-              // rearrange such that we store for one basis functions all
-              // evaluations for all quadrature points including the twisted mapping
-              rangeStorageFace.resize( rangeStorageTransposed.size() );
-              for( int i=0; i<numBaseFct; ++i )
+            // rearrange such that we store for one basis functions all
+            // evaluations for all quadrature points including the twisted mapping
+            rangeStorageFace.resize( rangeStorageTransposed.size() );
+            for( int i=0; i<numBaseFct; ++i )
+            {
+              const int idx  = i * (quadNop * dim);
+              for( int j=0; j<quadNop; ++j )
               {
-                const int idx = i * quadNop;
-                for( int j=0; j<quadNop; ++j )
+                const int qp = quad.localCachingPoint( j );
+                for( int d=0; d<dim; ++d )
                 {
-                  const int qp = quad.localCachingPoint( j );
-                  for( int d=0; d<dim; ++d )
-                  {
-                    rangeStorageFace[ idx + (j * dim) + d ] = rangeStorageTransposed[ idx + (qp * dim) + d ];
-                  }
+                  rangeStorageFace[ idx + (j * dim) + d ] = rangeStorageTransposed[ idx + (qp * dim) + d ];
                 }
               }
             }
           } // end if( rangeStorageTwisted.empty() )
-          return rangeStorageTwisted[ quad.localFaceIndex() ];
+          return rangeStorageFace;
         }
-        else // no twist (i.e. twist = 0 and twistId == 5 (-4 is mapped to 0))
+        else // no twist (i.e. twist = 0 and twistId == 4 (-4 is mapped to 0))
         {
           return rangeStorageTransposed_[ quad.localFaceIndex() ];
         }
