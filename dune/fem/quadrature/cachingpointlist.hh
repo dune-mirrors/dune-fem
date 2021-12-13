@@ -29,7 +29,7 @@ namespace Dune
 
     public:
       /** \brief returns true if cachingPoint is not the identity mapping */
-      inline bool twisted () const { return false; }
+      static constexpr bool twisted () { return false; }
 
       /** \brief returns the twistId, i.e. [0,...,7] */
       inline int twistId () const { return 0; }
@@ -288,7 +288,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::CachingInterface::twisted */
-      inline bool twisted() const { return true; }
+      static constexpr bool twisted() { return true; }
 
       /** \copydoc Dune::Fem::CachingInterface::twistId */
       inline int twistId () const { return twist_ + 4; }
