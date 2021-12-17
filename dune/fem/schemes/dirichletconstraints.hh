@@ -74,12 +74,11 @@ public:
   // types for boundary treatment
   // ----------------------------
   static const int localBlockSize = DiscreteFunctionSpaceType :: localBlockSize ;
-  static_assert( localBlockSize == DiscreteFunctionSpaceType::FunctionSpaceType::dimRange,
-      "local block size of the space must be identical to the dimension of the range of the function space.");
+  static const int dimRange = DiscreteFunctionSpaceType::FunctionSpaceType::dimRange;
+  static_assert( localBlockSize <= dimRange,
+       "local block size of the space must be less than or equal to the dimension of the range of the function space.");
   typedef std::array<int,localBlockSize> DirichletBlock;
   typedef std::vector< DirichletBlock > DirichletBlockVector;
-  // static_assert( dimD >= localBlockSize,
-  //     "local block size of the space must be less or equahl to the dimension of the range of the model.");
 
   class BoundaryWrapper
   {
@@ -501,10 +500,10 @@ protected:
     bool hasDirichletBoundary = false;
 
     //map local to global BlockDofs
-    std::vector< size_t> globalBlockDofs(space_.blockMapper().numDofs(entity));
+    std::vector<size_t> globalBlockDofs(space_.blockMapper().numDofs(entity));
     space_.blockMapper().map(entity,globalBlockDofs);
 
-    std::vector< bool>   globalBlockDofsFilter(space_.blockMapper().numDofs(entity));
+    std::vector<bool> globalBlockDofsFilter(space_.blockMapper().numDofs(entity));
 
     IntersectionIteratorType it = gridPart.ibegin( entity );
     const IntersectionIteratorType endit = gridPart.iend( entity );
@@ -519,19 +518,23 @@ protected:
         // get dirichlet information from model
         DirichletBlock block;
         block.fill(0);
-        const bool isDirichletIntersection = model.isDirichletIntersection( intersection, block );
+        std::array<int,dimRange> dblock;
+
+        const bool isDirichletIntersection = model.isDirichletIntersection( intersection, dblock );
         if (isDirichletIntersection)
         {
+          for ( unsigned int i=0;i<localBlockSize;++i)
+            block[i] = dblock[i];
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
           space_.blockMapper().onSubEntity(entity,face,1,globalBlockDofsFilter);
           for( unsigned int i=0;i<globalBlockDofs.size();++i)
           {
+            assert( i < globalBlockDofsFilter.size());
             if ( !globalBlockDofsFilter[i] ) continue;
             // mark global DoF number
             for(int k = 0; k < localBlockSize; ++k)
-              dirichletBlocks_[globalBlockDofs[ i ] ][k] = block [k];
-
+              dirichletBlocks_[ globalBlockDofs[ i ] ][k] = block [k];
             // we have Dirichlet values
             hasDirichletBoundary = true ;
           }

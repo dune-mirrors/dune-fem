@@ -919,6 +919,7 @@ namespace Dune {
         }
 
         printf("Error eval_triangle_2d: There is no shape function %d.\n",i);
+        assert(0);
         return 0.0;
       }
 
