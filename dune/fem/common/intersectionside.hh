@@ -47,7 +47,7 @@ namespace Dune
       else if constexpr (hasHostIntersectionBind<GF>(MetaType<Intersection>()))
         gf.bind(intersection.impl().hostIntersection(), side);
       else
-        gf.bind( side==IntersectionSide::in?  intersection.inside(): intersection.outside() );
+        gf.bind(side == IntersectionSide::in ? intersection.inside() : intersection.outside());
     }
   }
 }
