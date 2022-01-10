@@ -20,32 +20,33 @@ def _patchufl4d():
     from ufl.cell import num_cell_entities, cellname2facetname, _simplex_dim2cellname, _hypercube_dim2cellname
 
     ## check if this has been added before
-    if not 'pentachoron' in ufl.cell.num_cell_entities:
-        ufl.cell.num_cell_entities["pentachoron"] = (5, 10, 10, 5, 1) # 4d-simplex
-        ufl.cell.num_cell_entities["tesseract"]   = (16, 32, 24, 8, 1)    # 4d-cube
+    if not 'pentatope' in ufl.cell.num_cell_entities:
+        # 4d-simplex
+        ufl.cell.num_cell_entities["pentatope"] = (5, 10, 10, 5, 1)
+        # 4d-cube
+        ufl.cell.num_cell_entities["tesseract"] = (16, 32, 24, 8, 1)
 
-        ## recompute cell name to dimension mapping
+        # recompute cell name to dimension mapping
         ufl.cell.cellname2dim = dict((k, len(v) - 1) for k, v in ufl.cell.num_cell_entities.items())
 
-        ufl.cell.cellname2facetname["pentachoron"] = "tetrahedron"
-        ufl.cell.cellname2facetname["tesseract"]   = "hexahedron"
+        ufl.cell.cellname2facetname["pentatope"] = "tetrahedron"
+        ufl.cell.cellname2facetname["tesseract"] = "hexahedron"
 
-        ufl.cell._simplex_dim2cellname[4]   = "pentachoron"
+        ufl.cell._simplex_dim2cellname[4]   = "pentatope"
         ufl.cell._hypercube_dim2cellname[4] = "tesseract"
 
-        ## add types to element lists
+        # add types to element lists
         ufl.finiteelement.elementlist.simplices =\
-            ufl.finiteelement.elementlist.simplices + ("pentachoron",)
+            ufl.finiteelement.elementlist.simplices + ("pentatope",)
         ufl.finiteelement.elementlist.cubes = \
             ufl.finiteelement.elementlist.cubes + ("tesseract",)
         ufl.finiteelement.elementlist.any_cell =\
-                ufl.finiteelement.elementlist.any_cell + ("pentachoron", "tesseract", )
+                ufl.finiteelement.elementlist.any_cell + ("pentatope", "tesseract", )
 
-        ## register Lagrange again with new element type list
+        # register Lagrange again with new element type list
         ufl_elements.pop("Lagrange")
         ufl_elements.pop("CG")
-        register_element("Lagrange", "CG", 0, H1, "identity", (1, None), ufl.finiteelement.elementlist.any_cell)  # "P"
-
+        register_element("Lagrange", "CG", 0, H1, "identity", (1, None), ufl.finiteelement.elementlist.any_cell)
 
 def cell(dimDomainOrGrid):
     if isinstance(dimDomainOrGrid,ufl.Cell):
@@ -69,9 +70,9 @@ def cell(dimDomainOrGrid):
     elif dimDomain == 3:
         return ufl.Cell("tetrahedron", dimWorld)
     elif dimDomain == 4:
-        # add 4d cell types to ufl data structures
+        # add 4d cell types to ufl data structures until supported by UFL
         _patchufl4d()
-        return ufl.Cell("pentachoron", dimWorld)
+        return ufl.Cell("pentatope", dimWorld)
     else:
         raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
 
