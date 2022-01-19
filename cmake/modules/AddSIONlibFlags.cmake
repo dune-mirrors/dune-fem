@@ -1,4 +1,4 @@
-# Module providing convenience functions for using 
+# Module providing convenience functions for using
 #
 # Provides the following functions:
 #

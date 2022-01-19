@@ -134,6 +134,25 @@ else()
   message("-- Skipping ViennaCL check, since neither VIENNACL_ROOT nor VIENNACL_DIR were specified!")
 endif()
 
+# only include ViennaCL check if variables were passed
+if( DEFINED PSCTOOLKIT_ROOT OR DEFINED PSCTOOLKIT_DIR )
+  find_package(PSCToolkit)
+  if(PSCTOOLKIT_FOUND)
+    #set HAVE_PSCTOOLKIT for config.h
+    set(HAVE_PSCTOOLKIT ${PSCTOOLKIT_FOUND})
+
+    # register all PSCTOOLKIT related flags
+    if(PSCTOOLKIT_FOUND)
+      dune_register_package_flags(LIBRARIES "${PSCTOOLKIT_LIBRARIES}"
+                                  INCLUDE_DIRS "${PSCTOOLKIT_INCLUDE_DIRS}")
+    endif()
+  endif()
+  include(AddPSCToolkitFlags)
+else()
+  message("-- Skipping PSCToolkit check, since neither PSCTOOLKIT_ROOT nor PSCTOOLKIT_DIR were specified!")
+endif()
+
+
 ####### abbreviations
 include(FemShort)
 
