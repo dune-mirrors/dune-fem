@@ -2,9 +2,9 @@
 #define DUNE_FEM_ISTLPRECONDITIONERWRAPPER_HH
 
 #include <memory>
+
 // standard diagonal preconditioner
 #include <dune/fem/solver/diagonalpreconditioner.hh>
-
 
 #if HAVE_DUNE_ISTL
 #include <dune/common/version.hh>
@@ -65,22 +65,127 @@ namespace Dune
     };
 
 #if HAVE_DUNE_ISTL
-    template< class MatrixObject, class X, class Y >
-    class FemDiagonalPreconditioner : public Preconditioner<X,Y>
+    /** \brief Iterative linear methods as preconditioners.
+     *         Note: For Lagrange type spaces this only works moderately, since
+     *               the communication of the diagonal is not yet completely done,
+     *               only in the scalar case.
+     *         Note: On rows corresponding to border DoFs this scheme falls back to Jacobi, to avoid
+     *               complicated coloring strategies.
+     */
+    template< class MatrixObject, class X, class Y, bool jacobi, int l=1 >
+    class ParallelIterative : public Preconditioner<X,Y>
     {
     public:
       typedef typename MatrixObject :: ColumnDiscreteFunctionType DiscreteFunctionType ;
-      // select preconditioner for assembled operators
-      typedef DiagonalPreconditionerBase< DiscreteFunctionType, MatrixObject, true > PreconditionerType ;
 
     protected:
-      PreconditionerType diagonalPrecon_;
+      typedef typename X::field_type field_type;
+      typedef typename MatrixObject::MatrixType  MatrixType;
+      typedef MatrixType M;
+      typedef typename M::block_type MatrixBlockType;
+
+      static const bool isNumber = (M::block_type::rows == M::block_type::cols) == 1;
+
+      // implementation of SOR and Jacobi's method
+      void iterate (const M& A, X& x, const X& xold, const Y& b, const field_type& w,
+                    const std::unique_ptr< DiscreteFunctionType >& diagInv) const
+      {
+        typedef typename M::ConstRowIterator rowiterator;
+        typedef typename M::ConstColIterator coliterator;
+        typedef typename Y::block_type bblock;
+        typedef typename X::block_type xblock;
+
+        bblock rhs;
+        xblock v;
+
+        // Initialize nested data structure if there are entries
+        if(A.begin()!=A.end())
+          v=x[0];
+
+        const rowiterator endi=A.end();
+        for (rowiterator i=A.begin(); i!=endi; ++i)
+        {
+          const coliterator endj=(*i).end();           // iterate over a_ij with j < i
+          coliterator j=(*i).begin();
+          const auto rowIdx = i.index();
+          // treat missing rows as unit rows
+          if( j == endj )
+          {
+            x[rowIdx] += w*b[rowIdx];
+            continue ;
+          }
+
+          rhs = b[rowIdx];           // rhs = b_i
+          if constexpr (isNumber)
+          {
+            for (; j.index()<rowIdx; ++j)
+              rhs -= (*j) * x[j.index()];  //  rhs -= sum_{j<i} a_ij * xnew_j
+            // not needed, since we store the diagonal separately
+            coliterator diag=j;            // *diag = a_ii
+            for (; j!=endj; ++j)
+              rhs -= (*j) * x[j.index()];  //  rhs -= sum_{j<i} a_ij * xnew_j
+
+            // v = rhs / diag
+            if( diagInv )
+              v = rhs * diagInv->dofVector()[ rowIdx ];
+            else
+              v = rhs / (*diag);
+
+            x[ rowIdx ] += w*v;           //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+          }
+          else
+          {
+            for (; j.index()<rowIdx; ++j)
+              (*j).mmv(x[j.index()],rhs);  //  rhs -= sum_{j<i} a_ij * xnew_j
+            coliterator diag=j;            // *diag = a_ii
+            for (; j!=endj; ++j)
+              (*j).mmv(x[j.index()],rhs);  //  rhs -= sum_{j<i} a_ij * xnew_j
+
+            (*diag).solve(v, rhs);
+            x[rowIdx].axpy(w,v);        //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+          }
+        }
+
+      }
+
+    protected:
+      const MatrixObject& mObj_;
+      const MatrixType& _A_;
+      const int _n;
+      const double _w;
+      std::unique_ptr< DiscreteFunctionType > diagonalInv_;
 
     public:
-      typedef typename X::field_type field_type;
-      FemDiagonalPreconditioner( const MatrixObject& mObj )
-        : diagonalPrecon_( mObj )
-      {}
+      ParallelIterative( const MatrixObject& mObj, int n=1, double relax=1.0  )
+        : mObj_( mObj ),
+          _A_( mObj.exportMatrix() ),
+          _n( n ), _w(relax)
+      {
+        Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
+
+        if( mObj_.domainSpace().continuous() && isNumber )
+        {
+          diagonalInv_.reset( new DiscreteFunctionType("ParIt::diag", mObj_.domainSpace() ) );
+          // extract diagonal elements form matrix object
+          mObj_.extractDiagonal( *diagonalInv_ );
+
+          // make consistent at border dofs
+          diagonalInv_->communicate();
+
+          // In general: store 1/diag
+          //
+          // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
+          //       if DoFs are excluded from matrix setup
+          const double eps = 16.*std::numeric_limits< double >::epsilon();
+          const auto dend = diagonalInv_->dend();
+          for( auto dit = diagonalInv_->dbegin(); dit != dend; ++dit )
+            *dit = (std::abs( *dit ) < eps ? 1. : 1. / *dit);
+        }
+        else if (mObj_.domainSpace().continuous())
+        {
+          DUNE_THROW(NotImplemented,"ParallelIterative preconditioner needs communication of diagonal block with blockSize > 1");
+        }
+      }
 
       //! \copydoc Preconditioner
       void pre (X& x, Y& b) override {}
@@ -88,18 +193,38 @@ namespace Dune
       //! \copydoc Preconditioner
       void apply (X& v, const Y& d) override
       {
-        diagonalPrecon_.applyToISTLBlockVector( d, v );
+        const auto& space = mObj_.domainSpace();
+        // for communication
+        DiscreteFunctionType tmp("ParIt::tmp", space, v );
+
+        std::unique_ptr< X > xTmp;
+        if constexpr ( jacobi )
+          xTmp.reset( new X(v) );
+
+        X& x = (jacobi) ? (*xTmp) : v;
+
+        for (int i=0; i<_n; ++i)
+        {
+          iterate(_A_, x, v, d, _w, diagonalInv_ );
+          if constexpr ( jacobi )
+            v = x;
+          // communicate border unknowns
+          tmp.communicate();
+        }
       }
 
       //! \copydoc Preconditioner
       void post (X& x) override {}
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! \brief The category the precondtioner is part of.
+      //! \brief The category the preconditioner is part of.
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 
+    template< class MatrixObject, class X, class Y >
+    using ParallelSOR = ParallelIterative< MatrixObject, X, Y, false>;
+
+    template< class MatrixObject, class X, class Y >
+    using ParallelJacobi = ParallelIterative< MatrixObject, X, Y, true>;
 
     template< class X, class Y >
     class IdentityPreconditionerWrapper : public Preconditioner<X,Y>
@@ -129,12 +254,6 @@ namespace Dune
       //! \brief The field type of the preconditioner.
       typedef typename X::field_type field_type;
 
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {
-        //! \brief The category the precondtioner is part of.
-        category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       //! default constructor
       IdentityPreconditionerWrapper(){}
 
@@ -150,9 +269,7 @@ namespace Dune
       //! \copydoc Preconditioner
       void post (X& x) override {}
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 
 
@@ -225,12 +342,6 @@ namespace Dune
       typedef Y range_type;
       //! \brief The field type of the preconditioner.
       typedef typename X::field_type field_type;
-
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {
-        //! \brief The category the precondtioner is part of.
-        category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       //! copy constructor
       PreconditionerWrapper (const PreconditionerWrapper& org, bool verbose)
@@ -334,12 +445,10 @@ namespace Dune
       }
 
       //! \brief The category the precondtioner is part of.
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override
       {
         return (preconder_ ? preconder_->category() : SolverCategory::sequential);
       }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       template <class Smoother>
@@ -542,13 +651,10 @@ namespace Dune
         // SOR
         else if(preconditioning == SolverParameter::sor )
         {
-          if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
-
-          typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                      (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
+          typedef ParallelSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // ILU
         else if(preconditioning == SolverParameter::ilu)
@@ -565,36 +671,18 @@ namespace Dune
         // Gauss-Seidel
         else if(preconditioning == SolverParameter::gauss_seidel)
         {
-          if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
-
-          typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                      (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
+          typedef ParallelSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, 1.0 ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Jacobi
         else if(preconditioning == SolverParameter::jacobi)
         {
-          if( numIterations == 1 ) // diagonal preconditioning
-          {
-            typedef FemDiagonalPreconditioner< MatrixObjectType, RowBlockVectorType, ColumnBlockVectorType > PreconditionerType;
-            typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-            PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj ) );
-            return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
-          }
-          else if ( procs == 1 )
-          {
-            typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-            return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                        (PreconditionerType*)nullptr,
-                                        matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
-                                        param.verbose());
-          }
-          else
-          {
-            DUNE_THROW(InvalidStateException,"ISTL::SeqJac(Jacobi) only working with istl.preconditioning.iterations: 1 in parallel computations");
-          }
+          typedef ParallelJacobi<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // AMG ILU-0
         else if(preconditioning == SolverParameter::amg_ilu)

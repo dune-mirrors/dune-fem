@@ -162,6 +162,16 @@ namespace Dune
               entry = 0;
         }
 
+        //! set diagonal block in given row to identity
+        void unitDiag( const size_t row )
+        {
+          block_type idBlock( 0 );
+          for (int i = 0; i < idBlock.rows; ++i)
+              idBlock[i][i] = 1.0;
+
+          auto& matRow = (*this)[ row ][ row ] = idBlock;
+        }
+
         //! clear Matrix, i.e. set all entries to 0
         void unitRow( const size_t row )
         {
@@ -812,6 +822,7 @@ namespace Dune
 
       void finalizeAssembly() const
       {
+        // finalize build mode
         const_cast< ThisType& > (*this).compress();
       }
 
