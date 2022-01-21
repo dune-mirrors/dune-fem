@@ -812,6 +812,7 @@ namespace Dune
 
       void finalizeAssembly() const
       {
+        // finalize build mode
         const_cast< ThisType& > (*this).compress();
       }
 
