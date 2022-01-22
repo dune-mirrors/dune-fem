@@ -58,6 +58,8 @@ else()
   message("-- Skipping PAPI check, since neither PAPI_ROOT nor PAPI_DIR were specified!")
 endif()
 
+include(FindPkgConfig)
+
 # PETSC_ROOT overrules PETSC_DIR which overrules ENV PETSC_DIR
 if( PETSC_ROOT )
   set(PETSC_DIR ${PETSC_ROOT})
@@ -77,6 +79,7 @@ else()
 endif()
 
 find_package(PETSc)
+
 if(PETSC_FOUND)
   # set HAVE_PETSC for config.h
   set(HAVE_PETSC ${PETSC_FOUND})
