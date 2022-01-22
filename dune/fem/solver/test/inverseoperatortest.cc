@@ -222,7 +222,7 @@ std::shared_ptr< GridType > createGrid( const double length, const int cells )
 
   file << "#" << std::endl;
   file << "GridParameter" << std::endl;
-  file << "overlap 0" << std::endl;
+  file << "overlap 1" << std::endl;
   file << "#" << std::endl;
 
   std::shared_ptr< GridType > ptr;

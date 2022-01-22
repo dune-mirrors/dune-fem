@@ -94,10 +94,60 @@ namespace Dune
       //! \copydoc Preconditioner
       void post (X& x) override {}
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! \brief The category the precondtioner is part of.
+      //! \brief The category the preconditioner is part of.
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+    };
+
+    template< class MatrixObject, class X, class Y, int l=1 >
+    class ParJac : public Preconditioner<X,Y>
+    {
+    public:
+      typedef typename MatrixObject::MatrixType  MatrixType;
+      typedef typename MatrixObject :: ColumnDiscreteFunctionType DiscreteFunctionType ;
+
+    protected:
+      const MatrixObject& mObj_;
+      const MatrixType& _A_;
+      const int _n;
+      const double _w;
+      const bool needCommunication_;
+
+    public:
+      typedef typename X::field_type field_type;
+      ParJac( const MatrixObject& mObj, int n=1, double relax=1.0  )
+        : mObj_( mObj ),
+          _A_( mObj.exportMatrix() ),
+          _n( n ), _w(relax),
+          needCommunication_( mObj_.domainSpace().gridPart().comm().size() > 1 )
+      {
+        Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
+      }
+
+      //! \copydoc Preconditioner
+      void pre (X& x, Y& b) override {}
+
+      //! \copydoc Preconditioner
+      void apply (X& v, const Y& d) override
+      {
+        std::unique_ptr< DiscreteFunctionType > tmp;
+        const auto& space = mObj_.domainSpace();
+        if( ! space.continuous() )
+        {
+          tmp.reset( new DiscreteFunctionType("ParJac::tmp", space, v ) );
+        }
+        for (int i=0; i<_n; ++i)
+        {
+          dbjac(_A_,v,d,_w,Dune::BL<l>());
+          if( tmp )
+            tmp->communicate();
+        }
+      }
+
+      //! \copydoc Preconditioner
+      void post (X& x) override {}
+
+      //! \brief The category the preconditioner is part of.
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
     };
 
 
@@ -576,6 +626,7 @@ namespace Dune
         // Jacobi
         else if(preconditioning == SolverParameter::jacobi)
         {
+          /*
           if( numIterations == 1 ) // diagonal preconditioning
           {
             typedef FemDiagonalPreconditioner< MatrixObjectType, RowBlockVectorType, ColumnBlockVectorType > PreconditionerType;
@@ -584,17 +635,17 @@ namespace Dune
             return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
           }
           else if ( procs == 1 )
+          */
           {
-            typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-            return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                        (PreconditionerType*)nullptr,
-                                        matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
-                                        param.verbose());
+            typedef ParJac<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+            typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+            PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+            return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
           }
-          else
-          {
-            DUNE_THROW(InvalidStateException,"ISTL::SeqJac(Jacobi) only working with istl.preconditioning.iterations: 1 in parallel computations");
-          }
+          //else
+          //{
+          //  DUNE_THROW(InvalidStateException,"ISTL::SeqJac(Jacobi) only working with istl.preconditioning.iterations: 1 in parallel computations");
+          //}
         }
         // AMG ILU-0
         else if(preconditioning == SolverParameter::amg_ilu)

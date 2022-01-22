@@ -1,5 +1,5 @@
 # solver parameter file
-# fem.verboserank: 0
+fem.verboserank: 0
 
 fem.ode.order: 3
 fem.ode.verbose: none # noconv # ode output: none, cfl, full
@@ -16,6 +16,8 @@ fem.timeprovider.updatestep: 1
 
 istl.solver.verbosity: full
 istl.solver.type: gmres
+istl.preconditioner.method: jacobi
+istl.preconditioner.iteration: 3
 istl.preconditioner.smoother: ilu
 istl.preconditioner.type: smoother
 istl.preconditioner.amg.debuglevel: 3
@@ -38,7 +40,11 @@ fem.solver.newton.linear.maxiterations: 100
 
 # parameter used to test istl solver passing in istl parameter
 istlparam.method: cg
-istlparam.verbose: false
+istlparam.verbose: true
+istlparam.preconditioning.method: jacobi
+istlparam.preconditioning.relaxation: 1.5
+istlparam.preconditioning.iterations: 1
+istlparam.preconditioning.iteration: 5
 
 # what are these for?
 fem.solver.row.maxlineariterations: 1000
