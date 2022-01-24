@@ -8,7 +8,6 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {

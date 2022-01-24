@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_MISC_COMPATIBILITY_HH
 #define DUNE_FEM_MISC_COMPATIBILITY_HH
 
+#error COMPATIBILITY HEADER SHOULD NOT BE USED ANYMORE: make_entity can be removed
+
 #include <utility>
 
 #include <dune/grid/common/entity.hh>

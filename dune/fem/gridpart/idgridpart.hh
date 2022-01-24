@@ -120,7 +120,7 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename HostGridPartType::CommunicationType CommunicationType;
 
       static const bool conforming = HostGridPartType::Traits::conforming;
     };
@@ -146,7 +146,7 @@ namespace Dune
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
-      typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename BaseType::CommunicationType CommunicationType;
 
       template< int codim >
       struct Codim
@@ -232,7 +232,7 @@ namespace Dune
         return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
-      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
+      const CommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,

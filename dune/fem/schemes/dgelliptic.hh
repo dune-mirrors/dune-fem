@@ -42,7 +42,6 @@
 
 #include <dune/common/fmatrix.hh>
 
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
@@ -292,7 +291,6 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
         const IntersectionType &intersection = *iit;
         if ( intersection.neighbor() )
         {
-          // const EntityType outside = Dune::Fem::make_entity( intersection.outside() );
           const EntityType outside = intersection.outside() ;
 
           typedef typename IntersectionType::Geometry  IntersectionGeometryType;

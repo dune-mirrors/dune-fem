@@ -828,7 +828,7 @@ namespace Dune
     template< class Space >
     inline void DependencyCache< BlockMapper > :: buildMaps( const Space& space )
     {
-      typedef typename Space::GridPartType::CollectiveCommunicationType CommunicationType;
+      typedef typename Space::GridPartType::CommunicationType CommunicationType;
       if( interface_ == InteriorBorder_All_Interface )
       {
         LinkBuilder< CommunicationType, LinkStorageType, IndexMapVectorType,

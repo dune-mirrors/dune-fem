@@ -4,7 +4,6 @@
 #include <type_traits>
 
 #include <dune/common/version.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/fem/misc/boundaryidprovider.hh>

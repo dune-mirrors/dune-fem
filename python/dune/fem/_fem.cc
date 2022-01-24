@@ -24,8 +24,8 @@ PYBIND11_MODULE( _fem, module )
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
 
-    if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
-      DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );
+    if( !pybind11::already_registered< Dune::Fem::MPIManager::Communication >() )
+      DUNE_THROW( Dune::Exception, "Communication not registered, yet" );
 
     module.attr( "comm" ) = pybind11::cast( Dune::Fem::MPIManager::comm() );
   }
