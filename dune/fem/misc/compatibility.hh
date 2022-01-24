@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_MISC_COMPATIBILITY_HH
 #define DUNE_FEM_MISC_COMPATIBILITY_HH
 
+#error DO NOT INCLUDE 'COMPATIBILITY': the function make_entity is not needed anymore
+
 #include <utility>
 
 #include <dune/grid/common/entity.hh>
