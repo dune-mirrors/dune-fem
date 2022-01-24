@@ -7,6 +7,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/affinegeometry.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dune/fem/misc/boundaryidprovider.hh>
 
 namespace Dune
