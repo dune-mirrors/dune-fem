@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_MISC_COMPATIBILITY_HH
 #define DUNE_FEM_MISC_COMPATIBILITY_HH
 
-#error DO NOT INCLUDE 'COMPATIBILITY': the function make_entity is not needed anymore
+#warning DO NOT INCLUDE 'COMPATIBILITY': the function make_entity is not needed anymore
 
 #include <utility>
 
@@ -18,7 +18,7 @@ namespace Dune
     // -----------
 
     template< int codim, int dim, class Grid, template< int, int, class > class Implementation >
-    DUNE_VERSION_DEPRECATED_3_0("make_entity")
+    [[deprecate("make_entity")]]
     typename Dune::Entity< codim, dim, Grid, Implementation >
     make_entity ( Dune::Entity< codim, dim, Grid, Implementation > entity )
     {
