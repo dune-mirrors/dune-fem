@@ -548,7 +548,8 @@ namespace Dune
         : VTKIO( gridPart, level, false, parameter )
       {}
 
-      VTKIO ( const GridPartType &gridPart, int level, const ParameterReader &parameter = Parameter::container() ) DUNE_DEPRECATED_MSG( "pass level as unsigned int" )
+      [[deprecated( "pass level as unsigned int" )]]
+      VTKIO ( const GridPartType &gridPart, int level, const ParameterReader &parameter = Parameter::container() )
         : VTKIO( gridPart, level, false, parameter )
       {}
 

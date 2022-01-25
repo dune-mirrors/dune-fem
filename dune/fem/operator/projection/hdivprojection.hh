@@ -180,7 +180,8 @@ namespace Dune
 
      public:
       //! constructor taking space
-      HdivProjection(const DiscreteFunctionSpaceType& space) DUNE_DEPRECATED_MSG( "Use dune-fem-dg implementation." ) :
+      [[deprecated( "Use dune-fem-dg implementation." )]]
+      HdivProjection(const DiscreteFunctionSpaceType& space) :
         space_(space),
         gridPart_(space.gridPart()),
         faceSpace_( gridPart_ ),
@@ -188,7 +189,8 @@ namespace Dune
         gradSpace_( gridPart_ )
       {}
 
-      HdivProjection(const HdivProjection& org) DUNE_DEPRECATED_MSG( "Use dune-fem-dg implementation." ) :
+      [[deprecated( "Use dune-fem-dg implementation." )]]
+      HdivProjection(const HdivProjection& org) :
         space_(org.space_),
         gridPart_( org.gridPart_),
         faceSpace_( gridPart_ ),
