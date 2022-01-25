@@ -532,7 +532,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
 
       if( intersection.neighbor() )
       {
-        const EntityType neighbor = Dune::Fem::make_entity( intersection.outside() );
+        const EntityType neighbor = intersection.outside() ;
 
         typedef typename IntersectionType::Geometry  IntersectionGeometryType;
         const IntersectionGeometryType &intersectionGeometry = intersection.geometry();
