@@ -77,6 +77,11 @@ if( ${FEM_TORTURE_TESTS} )
   # 3d space interpolation is more expensive, therefore only when torture tests enabled
   dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
+  # test adaptation of tuplespace
+  dune_add_test( NAME adapt_tuplespace SOURCES adapt.cc
+  COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_TUPLE_SPACE"
+  LINK_LIBRARIES dunefem )
+
   # test adaptation of combinedspaces
   dune_add_test( NAME adapt_combinedspace_pointbased SOURCES adapt.cc
   COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE;POINTBASED"
