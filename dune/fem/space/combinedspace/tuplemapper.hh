@@ -335,17 +335,20 @@ namespace Dune
         {
           SizeType nHoles = 0;
           int comp = -1;
+          int visitedBlocks = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
-              if( localBlock >= 0 )
+              const int localBlock = block - visitedBlocks;
+              const int numBlocks = std::get< i >( this->mapperTuple_ ).numBlocks();
+              if( localBlock < numBlocks )
               {
                 comp = i;
                 nHoles = std::get< i >( this->mapperTuple_ ).numberOfHoles( localBlock );
               }
+              visitedBlocks += numBlocks;
             } );
           return nHoles;
         }
@@ -354,17 +357,20 @@ namespace Dune
         {
           int comp = -1;
           SizeType oIndex = 0;
+          int visitedBlocks = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
-              if( localBlock >= 0 )
+              const int localBlock = block - visitedBlocks;
+              const int numBlocks = std::get< i >( this->mapperTuple_ ).numBlocks();
+              if( localBlock < numBlocks )
               {
                 comp = i;
                 oIndex = std::get< i >( this->mapperTuple_ ).oldIndex( hole, localBlock );
               }
+              visitedBlocks += numBlocks;
             } );
           assert( comp >= 0 );
           return oIndex + globalOffset_[ comp ];
@@ -374,19 +380,22 @@ namespace Dune
         {
           int comp = -1;
           SizeType nIndex = 0;
+          int visitedBlocks = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
-              if( localBlock >= 0 )
+              const int localBlock = block - visitedBlocks;
+              const int numBlocks = std::get< i >( this->mapperTuple_ ).numBlocks();
+              if( localBlock < numBlocks )
               {
                 comp = i;
                 nIndex = std::get< i >( this->mapperTuple_ ).newIndex( hole, localBlock );
               }
+              visitedBlocks += numBlocks;
             } );
-          assert( comp > 0 );
+          assert( comp >= 0 );
           return nIndex + globalOffset_[ comp ];
         }
 
@@ -394,17 +403,20 @@ namespace Dune
         {
           int comp = -1;
           SizeType oOffset = 0;
+          int visitedBlocks = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
-              if( localBlock >= 0 )
+              const int localBlock = block - visitedBlocks;
+              const int numBlocks = std::get< i >( this->mapperTuple_ ).numBlocks();
+              if( localBlock < numBlocks )
               {
                 comp = i;
                 oOffset = std::get< i >( this->mapperTuple_ ).oldOffSet( localBlock );
               }
+              visitedBlocks += numBlocks;
             } );
           assert( comp >= 0 );
           return oOffset + oldGlobalOffset_[ comp ];
@@ -414,17 +426,20 @@ namespace Dune
         {
           int comp = -1;
           SizeType offset = 0;
+          int visitedBlocks = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
-              if( localBlock >= 0 )
+              const int localBlock = block - visitedBlocks;
+              const int numBlocks = std::get< i >( this->mapperTuple_ ).numBlocks();
+              if( localBlock < numBlocks )
               {
                 comp = i;
                 offset = std::get< i >( this->mapperTuple_ ).offSet( localBlock );
               }
+              visitedBlocks += numBlocks;
             } );
           assert( comp >= 0 );
           return offset + globalOffset_[ comp ];
