@@ -25,6 +25,23 @@
 cmake_policy(VERSION 3.3)
 
 include(AddMPIFlags)
+#include(FindPkgConfig)
+
+# search PETSc using pkg-config if available
+if(PKG_CONFIG_FOUND)
+  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${PETSC_DIR}/${PETSC_ARCH}/lib/pkgconfig")
+  pkg_search_module(PETSC PETSc)
+endif()
+
+if(PETSC_FOUND)
+  # set includes variable which differs from pkg-config and cmake finder
+  set(PETSC_INCLUDES ${PETSC_INCLUDE_DIRS})
+  set(PETSC_LIBRARIES ${PETSC_LINK_LIBRARIES})
+  message(STATUS "Found PETSc path: ${PETSC_INCLUDE_DIRS}")
+  message(STATUS "Found PETSc libs: ${PETSC_LIBRARIES}")
+else()
+
+# use cmake search for PETSc if pkg-config did not work
 
 set(PETSC_VALID_COMPONENTS
   C
@@ -355,4 +372,6 @@ elseif("$ENV{FEM_REQUIRE_PETSC}" STREQUAL "disable")
   message(STATUS "Enforcing PETSC_FOUND == false after inspecting env var FEM_REQUIRE_PETSC")
 else()
   message(STATUS "PETSc found: ${PETSC_FOUND}")
+endif()
+
 endif()

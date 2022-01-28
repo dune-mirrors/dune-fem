@@ -354,7 +354,7 @@ namespace Dune
           double deltaPrev = delta_;
           factor *= 0.5;
           if( verbose() )
-            std::cerr << "    line search:" << delta_ << ">" << deltaOld << std::endl;
+            std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
           if (std::abs(delta_-deltaOld) < 1e-5*delta_) // || !converged()) // line search not working
             return -1;  // failed
           w.axpy(factor,dw);
@@ -423,11 +423,11 @@ namespace Dune
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
 
       if( verbose() )
-        std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
+        std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
       while( true )
       {
         if( verbose() )
-          std::cerr << std::endl;
+          std::cout << std::endl;
         // evaluate operator's jacobian
         (*op_).jacobian( w, jOp );
 
@@ -455,17 +455,20 @@ namespace Dune
         stepCompleted_ = ls >= 0;
         ++iterations_;
         if( verbose() )
-          std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
+          std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
         // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
         if ( (finished_(w, dw, delta_)) || !converged())
         {
           if( verbose() )
-            std::cerr << std::endl;
+          {
+            std::cout << std::endl;
+            std::cout << "Linear iterations: " << linearIterations_ << std::endl;
+          }
           break;
         }
       }
       if( verbose() )
-        std::cerr << std::endl;
+        std::cout << std::endl;
 
       jInv_.unbind();
     }
