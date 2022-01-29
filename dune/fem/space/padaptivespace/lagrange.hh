@@ -144,7 +144,8 @@ namespace Dune
       using BaseType::basisFunctionSet;
 
       // default communication interface
-      static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
+      static const InterfaceType defaultInterface = GridPart::indexSetInterfaceType;
+
       // default communication direction
       static const CommunicationDirection defaultDirection = ForwardCommunication;
 

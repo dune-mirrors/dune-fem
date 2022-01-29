@@ -71,6 +71,9 @@ namespace Dune
       //! order of the Lagrange polynoms
       static const int polynomialOrder = Traits::polynomialOrder;
 
+      //! default partition iterator type for index setup
+      static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
+
       //! type of vector containing compiled local keys
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
@@ -852,9 +855,9 @@ namespace Dune
 
         const bool considerHierarchyOfElements = considerHierarchy();
 
-        typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
-        const IteratorType end = gridPart_.template end<0>();
-        for( IteratorType it = gridPart_.template begin<0>();
+        // pitype is determined by the GridPart, see above
+        const auto end = gridPart_.template end<0, pitype>();
+        for( auto it = gridPart_.template begin<0, pitype>();
              it != end ; ++it )
         {
           const ElementType &element = *it;
