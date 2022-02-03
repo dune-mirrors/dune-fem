@@ -178,9 +178,36 @@ namespace Dune
   };
 
   ///////////////////////////////////////////////////////
-  // Some pointsets from dune-geometry
+  //  a point set from dune-localfunctions
   ///////////////////////////////////////////////////////
+  template< class F, unsigned int dim >
+  struct EquidistantPointSetDerived : public Dune::EquidistantPointSet< F, dim >
+  {
+    typedef Dune::EquidistantPointSet< F, dim > Base;
 
+    EquidistantPointSetDerived(unsigned int order)
+      : Base(order)
+    {}
+
+    // needed for InterpolationQuadrature
+    static const int pointSetId = Dune::QuadratureType::size;
+
+    static unsigned int quad2PolOrder(int order) { return order; }
+    unsigned int quadOrder() const { return Base::order(); }
+
+    static auto buildCubeQuadrature(unsigned int quadOrder)
+    {
+      using namespace Impl;
+      EquidistantPointSetDerived ps(quad2PolOrder(quadOrder));
+      ps.template build<GeometryTypes::cube(dim)>();
+      return ps;
+    }
+  };
+
+
+  ///////////////////////////////////////////////////////
+  // Some point sets from dune-geometry
+  ///////////////////////////////////////////////////////
   template< class F, unsigned int dim >
   struct GaussLobattoPointSet : public PointSetFromQuadrature<F,dim>
   {
@@ -266,8 +293,76 @@ namespace Dune
       ps.template build<GeometryTypes::cube(dim)>();
       return ps;
     }
-
   };
+
+  ///////////////////////////////////////////////////////
+  // Some point sets for preconditioning providing
+  // interpolation based on cell centers of refined cells
+  ///////////////////////////////////////////////////////
+  template< class F, unsigned int dim >
+  struct CellCentersPointSet : public PointSetFromQuadrature<F,dim>
+  {
+    typedef PointSetFromQuadrature<F,dim> Base;
+    static const unsigned int dimension = dim;
+    typedef F Field;
+
+    // needed for InterpolationQuadrature
+    static const int pointSetId = Dune::QuadratureType::size+1;
+
+    CellCentersPointSet(unsigned int order)
+      : Base(order)
+    {}
+
+    /** A list of points formed by the mid points of
+     *  p+1 equispaced intervals between 0 and 1.
+     */
+    template<typename ct>
+    class CellCenters : public Dune::QuadratureRule<ct,1>
+    {
+    public:
+      /** brief The highest quadrature order available */
+      enum { highest_order=7 };
+
+      friend class QuadratureRuleFactory<ct,1>;
+      CellCenters(int p)
+      {
+        this->delivered_order = p;
+
+        const int n = p+1; // we have p+1 intervals
+        const Field h = 1./Field(n);
+        // compute cell centers of the interval
+        for( int i=0; i<n; ++i )
+        {
+          const Field x = 0.5*h + h*i;
+          assert( x > 0.0 && x < 1.0 );
+          this->push_back(QuadraturePoint<ct,1>(x, h));
+        }
+      }
+    };
+
+    static unsigned int quad2PolOrder(int order) { return order; }
+
+    unsigned int quadOrder() const { return Base::order(); }
+
+    template< GeometryType::Id geometryId >
+    bool build ()
+    {
+      // get FV centers as points
+      auto quadFactory = [](int order)
+      {
+        return CellCenters<Field>(order);
+      };
+      return Base::template build<geometryId>(quadFactory);
+    }
+    static auto buildCubeQuadrature(unsigned int quadOrder)
+    {
+      using namespace Impl;
+      CellCentersPointSet ps(quad2PolOrder(quadOrder));
+      ps.template build<GeometryTypes::cube(dim)>();
+      return ps;
+    }
+  };
+
 }  // namespace DUNE
 
 #endif // HAVE_DUNE_LOCALFUNCTIONS

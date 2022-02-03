@@ -17,7 +17,7 @@ namespace Dune
      *  \brief one-dimensional Gauss points and their weights
      *
      *  GaussPtr is an array of one-dimensional Gauss quadratures for the
-     *  interval [0,1]. The index of a quadreture equals its number of quadratrue
+     *  interval [0,1]. The index of a quadrature equals its number of quadrature
      *  points (so there is no 0-th quadrature).
      *
      *  \note This class implements the Singleton pattern
@@ -41,7 +41,7 @@ namespace Dune
        */
       GaussPts ();
 
-      /*! \brief obtain the i-th point of the m-th quadratre
+      /*! \brief obtain the i-th point of the m-th quadrature
        *
        *  \param[in]  m  index of the quadrature
        *  \param[in]  i  number of the point within the quadrature (0 <= i < m)
@@ -54,7 +54,7 @@ namespace Dune
         return G[m][i];
       }
 
-      /*! \brief obtain the i-th weight of the m-th quadratre
+      /*! \brief obtain the i-th weight of the m-th quadrature
        *
        *  \param[in]  m  index of the quadrature
        *  \param[in]  i  number of the weight within the quadrature (0 <= i < m)
@@ -67,7 +67,7 @@ namespace Dune
         return W[m][i];
       }
 
-      /*! \brief obtain the order of the m-th quadratre
+      /*! \brief obtain the order of the m-th quadrature
        *
        *  \param[in]  m  index of the quadrature
        *
