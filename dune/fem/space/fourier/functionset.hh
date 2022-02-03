@@ -8,7 +8,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/power.hh>
+#include <dune/common/math.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
@@ -26,7 +26,7 @@ namespace Dune
     template< int dimension, int Order >
     struct FourierFunctionSetSize
     {
-      static const int v = StaticPower< (2*Order+1), dimension >::power;
+      static constexpr int v = Dune::power( (2*Order+1), dimension );
     };
 
 

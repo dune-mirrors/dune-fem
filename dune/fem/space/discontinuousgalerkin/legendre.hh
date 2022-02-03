@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-#include <dune/common/power.hh>
+#include <dune/common/math.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -61,8 +61,7 @@ namespace Dune
         : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType, hierarchicalOrdering >
       {
         typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType, hierarchicalOrdering > BaseType;
-        static const int numberShapeFunctions =
-            StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
+        static const int numberShapeFunctions = Dune::power( int(polOrder+1), int(ScalarShapeFunctionSpaceType::dimDomain) );
 
       public:
         explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
@@ -84,7 +83,7 @@ namespace Dune
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
 
-      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * StaticPower< polOrder+1, GridPartType::dimension >::power > LocalBlockIndices;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * ScalarShapeFunctionSet::numberShapeFunctions > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle

@@ -3,8 +3,6 @@
 
 #include <cassert>
 
-#include <dune/common/power.hh>
-
 #include <dune/geometry/type.hh>
 
 #include <dune/grid/common/gridenums.hh>
