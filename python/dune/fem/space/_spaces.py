@@ -304,21 +304,25 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
           storageType(codegen) + ">"
         ctorArgs=[gridView]
     else:
+        def errorText(key):
+            return f"the `dglagrange({key}) space can only be used with a fully "+ \
+                    "quadrilateral/hexahedral grid"
+
         includes += ["dune/fem/space/localfiniteelement/quadratureinterpolation.hh"]
         if pointType.lower() == "equidistant":
-            pointSet = 'Dune::EquidistantPointSet'
+            pointSet = 'Dune::EquidistantPointSetDerived'
         elif pointType.lower() == "lobatto":
             if not (gridView.type.isCube):
-                raise KeyError(\
-                    "the `dglagrange(lobatto) space can only be used with a fully "+
-                    "quadrilateral/hexahedral grid")
+                raise KeyError(errorText("lobatto"))
             pointSet = 'Dune::GaussLobattoPointSet'
         elif pointType.lower() == "gauss":
             if not (gridView.type.isCube):
-                raise KeyError(\
-                    "the `dglagrange(gauss) space can only be used with a fully "+
-                    "quadrilateral/hexahedral grid")
+                raise KeyError(errorText("gauss"))
             pointSet = 'Dune::GaussLegendrePointSet'
+        elif pointType.lower() == "cellcenters":
+            if not (gridView.type.isCube):
+                raise KeyError(errorText("cellcenters"))
+            pointSet = 'Dune::CellCentersPointSet'
         else:
             raise KeyError(
                 "Parameter error in LagrangeDiscontinuousGalerkinSpace with point set type " +

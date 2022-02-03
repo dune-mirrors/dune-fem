@@ -129,6 +129,16 @@ namespace Dune
       namespace detail
       {
 
+        struct DefaultQuadratureEquidistant
+        {
+          template <class F, int d>
+          using DefaultQuadratureTraits = Dune::Fem::EquidistantQuadratureTraits< F, d >;
+
+          // TODO: double check this
+          static int volumeOrder ( const int k ) { return k; }
+          static int surfaceOrder( const int k ) { return k; }
+        };
+
         struct DefaultQuadratureGaussLobatto
         {
           template <class F, int d>
@@ -147,11 +157,25 @@ namespace Dune
           static int surfaceOrder( const int k ) { return 2 * k + 1; }
         };
 
+        struct DefaultQuadratureCellCenters
+        {
+          template <class F, int d>
+          using DefaultQuadratureTraits = Dune::Fem::CellCentersQuadratureTraits< F, d >;
+
+          static int volumeOrder ( const int k ) { return k; }
+          static int surfaceOrder( const int k ) { return k; }
+        };
+
         // default uses the default values for all spaces (see space/common/capabilities.hh)
         template< class LFEMap >
         struct DefaultQuadratureSpec : public Dune::Fem::Capabilities::DefaultQuadrature< LFEMap >
         {};
 
+
+        ///-----  Specialization for Equidistant  ----
+        template < class FunctionSpace, class GridPart, unsigned int order >
+        struct DefaultQuadratureSpec< Dune::Fem::FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, Dune::EquidistantPointSetDerived > >
+          : public DefaultQuadratureEquidistant {};
 
         ///-----  Specialization for GaussLobatto ----
         template < class FunctionSpace, class GridPart, unsigned int order >
@@ -163,6 +187,10 @@ namespace Dune
         struct DefaultQuadratureSpec< Dune::Fem::FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, Dune::GaussLegendrePointSet > >
           : public DefaultQuadratureGaussLegendre {};
 
+        ///-----  Specialization for CellCenters  ----
+        template < class FunctionSpace, class GridPart, unsigned int order >
+        struct DefaultQuadratureSpec< Dune::Fem::FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, Dune::CellCentersPointSet > >
+          : public DefaultQuadratureCellCenters {};
       } // end namespace detail
 
       template< class LFEMap, class FunctionSpace, class Storage >

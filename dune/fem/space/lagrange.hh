@@ -27,7 +27,7 @@ namespace Dune
     // ------------------------
 
 #if HAVE_DUNE_LOCALFUNCTIONS
-    template< class FunctionSpace, class GridPart, template< class, unsigned int > class PointSet = EquidistantPointSet >
+    template< class FunctionSpace, class GridPart, template< class, unsigned int > class PointSet = EquidistantPointSetDerived >
     class LagrangeFiniteElementMap
     {
       typedef LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet > ThisType;
@@ -104,7 +104,7 @@ namespace Dune
     };
 
     template< class FunctionSpace, class GridPart, unsigned int order,
-      template< class, unsigned int > class PointSet = EquidistantPointSet>
+      template< class, unsigned int > class PointSet = EquidistantPointSetDerived >
     struct FixedOrderLagrangeFiniteElementMap
     : public LagrangeFiniteElementMap<FunctionSpace,GridPart,PointSet>
     {
@@ -127,25 +127,25 @@ namespace Dune
     // -------------
 
     template< class FunctionSpace, class GridPart,
-              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class, unsigned int > class PointSet = EquidistantPointSetDerived,
               class Storage = CachingStorage >
     using LagrangeSpace = LocalFiniteElementSpace<
             LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart, unsigned int order,
-              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class, unsigned int > class PointSet = EquidistantPointSetDerived,
               class Storage = CachingStorage >
     using FixedOrderLagrangeSpace = LocalFiniteElementSpace<
             FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart,
-              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class, unsigned int > class PointSet = EquidistantPointSetDerived,
               class Storage = CachingStorage >
     using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
             LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
             FunctionSpace, Storage >;
     template< class FunctionSpace, class GridPart, unsigned int order,
-              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class, unsigned int > class PointSet = EquidistantPointSetDerived,
               class Storage = CachingStorage >
     using FixedOrderDGLagrangeSpace = DiscontinuousLocalFiniteElementSpace<
             FixedOrderLagrangeFiniteElementMap< FunctionSpace, GridPart, order, PointSet >,

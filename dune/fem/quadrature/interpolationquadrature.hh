@@ -127,8 +127,16 @@ namespace Dune
          */
         static unsigned int maxOrder ()
         {
-          return QuadratureRules<FieldType,dim>::
-            maxOrder( Dune::GeometryTypes::cube(dim), Dune::QuadratureType::Enum(PointSetType::pointSetId) );
+          // if the quadrature is from dune-geometry use the info from there
+          if constexpr( PointSetType::pointSetId < Dune::QuadratureType::size )
+          {
+            return QuadratureRules<FieldType,dim>::
+              maxOrder( Dune::GeometryTypes::cube(dim), Dune::QuadratureType::Enum(PointSetType::pointSetId) );
+          }
+          else
+          {
+            return 20;
+          }
         }
       };
 
@@ -195,6 +203,14 @@ namespace Dune
 #if HAVE_DUNE_LOCALFUNCTIONS
   //////////////////////////////////////////////////////////////////
   //
+  //  Equidistant point set
+  //
+  //////////////////////////////////////////////////////////////////
+  template <class  FieldType, int dim >
+  using EquidistantQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, EquidistantPointSetDerived >;
+
+  //////////////////////////////////////////////////////////////////
+  //
   //  GaussLobatto point set (same quadrature as in dune-geometry
   //  but different point ordering)
   //
@@ -210,6 +226,15 @@ namespace Dune
   //////////////////////////////////////////////////////////////////
   template <class  FieldType, int dim >
   using GaussLegendreQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, GaussLegendrePointSet >;
+
+  //////////////////////////////////////////////////////////////////
+  //
+  //  Cell centers point set
+  //
+  //////////////////////////////////////////////////////////////////
+  template <class  FieldType, int dim >
+  using CellCentersQuadratureTraits = detail::InterpolationQuadratureTraitsImpl< FieldType, dim, CellCentersPointSet >;
+
 #endif
 
   } // namespace Fem
