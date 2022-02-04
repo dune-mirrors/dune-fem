@@ -15,10 +15,10 @@ from ufl import Form
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 
-generator = SimpleGenerator("Operator", "Dune::FemPy")
+_defaultGenerator = SimpleGenerator("Operator", "Dune::FemPy")
 
 def load(includes, typeName, *args, baseClasses=None, preamble=None,
-         codegen=None):
+         codegen=None, generator = _defaultGenerator ):
     moduleName = hashlib.md5(typeName.encode('utf-8')).hexdigest()
     if baseClasses is None:
         baseClasses = []
