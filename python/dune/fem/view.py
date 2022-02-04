@@ -7,8 +7,6 @@ import importlib
 import dune.grid.grid_generator
 
 from dune.generator import Constructor, Method
-# from dune.generator.generator import SimpleGenerator
-# generator = SimpleGenerator("GridView", "Dune::FemPy")
 
 def cppBool(value):
     return "true" if value else "false"

@@ -37,13 +37,14 @@ def load(includes, typeName, *args, baseClasses=None, preamble=None,
     module.Operator.codegen = codegen
     return module
 
-linearGenerator = SimpleGenerator("LinearOperator", "Dune::FemPy")
+_linearGenerator = SimpleGenerator("LinearOperator", "Dune::FemPy")
 
-def loadLinear(includes, typeName, *args, backend=None, preamble=None):
+def loadLinear(includes, typeName, *args, backend=None, preamble=None,
+               generator=_linearGenerator):
     from dune.fem.space import addBackend
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = linearGenerator.load(includes, typeName, moduleName, *args, preamble=preamble, dynamicAttr=True)
+    module = generator.load(includes, typeName, moduleName, *args, preamble=preamble, dynamicAttr=True)
     LinearOperator = module.LinearOperator
     try:
         backend = backend[0] if backend[0] == backend[1] else None

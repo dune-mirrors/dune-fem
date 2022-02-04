@@ -5,6 +5,4 @@ import hashlib
 import importlib
 import inspect
 
-from dune.generator.generator import SimpleGenerator
-
 from ._functions import *
