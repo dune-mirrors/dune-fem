@@ -5,11 +5,11 @@ import hashlib
 
 from dune.generator.generator import SimpleGenerator
 
-generator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
+_defaultGenerator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
 
 modules = {}
 
-def module(space):
+def module(space, generator=_defaultGenerator):
     storage, dfIncludes, dfTypeName, _, _, _ = space.storage
     try:
         return modules[dfTypeName]

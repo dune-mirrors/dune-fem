@@ -12,14 +12,14 @@ except ImportError:
 
 from dune.generator.generator import SimpleGenerator
 
-generator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
+_defaultGenerator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
 
 modules = {}
 
 import logging, traceback
 logger = logging.getLogger(__name__)
 
-def module(grid):
+def module(grid, generator=_defaultGenerator):
     try:
         return modules[grid.cppTypeName]
     except KeyError:

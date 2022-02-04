@@ -39,14 +39,15 @@ def solve( scheme, target=None, rhs=None, name=None ):
             return scheme._solve(rhs, target)
 
 
-generator = SimpleGenerator("Scheme", "Dune::FemPy")
+_defaultGenerator = SimpleGenerator("Scheme", "Dune::FemPy")
 
 def addAttr(module, cls):
     setattr(cls, "solve", solve)
 
 fileBase = "femscheme"
 
-def module(includes, typeName, *args, backend=None):
+def module(includes, typeName, *args, backend=None,
+           generator=_defaultGenerator):
     from dune.fem.space import addBackend
     includes = includes + ["dune/fempy/py/scheme.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()

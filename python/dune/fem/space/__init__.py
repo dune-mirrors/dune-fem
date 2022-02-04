@@ -220,7 +220,7 @@ def addBackend(Df,backend):
         return None
     setattr(Df,backend,property(backend_))
 
-generator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
+_defaultGenerator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
 def addAttr(module, self, field, scalar, codegen):
     setattr(self, "_module", module)
@@ -312,8 +312,8 @@ def addDiscreteFunction(space, storage):
     return dfIncludes, dfTypeName, backend, ctor
 
 def module(field, includes, typeName, *args,
-           storage=None, scalar=False, codegen=False,
-           ctorArgs):
+           storage=None, scalar=False, codegen=False, ctorArgs,
+           generator=_defaultGenerator):
     includes = includes + ["dune/fempy/py/space.hh"]
     defines = []
 
