@@ -1,7 +1,7 @@
 # select parallel process for verbose output (-1 = verbosity off)
 fem.verboserank: 0
 # max level for test
-lagrangeadapt.maxlevel: 2
+lagrangeadapt.maxlevel: 3
 # adaptation method:  none | generic | callback
 fem.adaptation.method: generic
 
