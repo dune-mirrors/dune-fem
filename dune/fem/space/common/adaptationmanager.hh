@@ -86,6 +86,9 @@ namespace Dune
       return (am_) ? (am_->adaptive()) : false;
     }
 
+    /** \brief return true if callback adaptation is used. */
+    virtual bool isCallBackAdaptation() const { return (am_) ? (am_->isCallBackAdaptation()) : false; }
+
     /** \brief returns name of adaptation method
        \return name of adaptation method
     */
@@ -196,6 +199,9 @@ namespace Dune
 
     /** \copydoc Dune::Fem::AdaptationManagerInterface::adaptive */
     virtual bool adaptive () const { return adaptationMethod_ != none; }
+
+    /** \copydoc Dune::Fem::AdaptationManagerInterface::isCallBackAdaptation */
+    virtual bool isCallBackAdaptation() const { return adaptationMethod_ == callback; }
 
   protected:
     //! method identifier
