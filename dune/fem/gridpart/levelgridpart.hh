@@ -48,6 +48,11 @@ namespace Dune
 
       /** \} */
 
+      /** \brief Return the level that this grid part was created for.
+       *  \note This is not an interface method!
+       */
+      int level() const { return level_; }
+
     private:
       GridType *grid_;
       int level_;
