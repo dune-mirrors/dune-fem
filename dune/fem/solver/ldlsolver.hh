@@ -78,6 +78,8 @@ class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTr
 
   friend class InverseOperatorInterface< Traits >;
 public:
+  using BaseType::bind;
+
   typedef LDLInverseOperator< DF, Matrix > ThisType;
 
   typedef typename BaseType :: SolverDiscreteFunctionType

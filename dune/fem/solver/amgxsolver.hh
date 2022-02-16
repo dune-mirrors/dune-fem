@@ -107,6 +107,7 @@ namespace Dune
       friend class InverseOperatorInterface< Traits >;
     public:
       using BaseType :: parameter;
+      using BaseType :: bind;
 
       typedef typename BaseType::SolverDiscreteFunctionType  SolverDiscreteFunctionType;
       typedef typename BaseType::OperatorType                OperatorType;
