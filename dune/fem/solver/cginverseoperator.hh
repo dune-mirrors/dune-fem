@@ -404,6 +404,8 @@ namespace Dune
       typedef Fem::Solver::CGInverseOperator< DiscreteFunction > BaseType;
 
     public:
+      using BaseType::bind;
+
       typedef SolverParameter SolverParameterType;
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
@@ -538,13 +540,13 @@ namespace Dune
       {}
 
 
-
       template< class LinearOperator, std::enable_if_t< std::is_base_of< OperatorType, LinearOperator >::value, int > = 0 >
       void bind ( const LinearOperator &op )
       {
         BaseType::bind( op );
         checkPreconditioning( op );
       }
+
       void unbind ()
       {
         BaseType::unbind();

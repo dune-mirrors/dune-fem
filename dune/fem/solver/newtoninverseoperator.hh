@@ -210,6 +210,35 @@ namespace Dune
       typedef NewtonInverseOperator< JacobianOperator, LInvOp > ThisType;
       typedef Operator< typename JacobianOperator::RangeFunctionType, typename JacobianOperator::DomainFunctionType > BaseType;
 
+      //! selects LInvOp::preconditioningAvailable if available, otherwise false
+      template <class Obj, bool defaultValue = false >
+      struct SelectPreconditioning
+      {
+      private:
+        template <typename T, typename = bool>
+        struct CheckMember : public std::false_type { };
+
+        template <typename T>
+        struct CheckMember<T, decltype((void) T::preconditioningAvailable, true)> : public std::true_type { };
+
+        template <class T, bool>
+        struct SelectValue
+        {
+          static const bool value = defaultValue;
+          typedef BaseType type;
+        };
+
+        template <class T>
+        struct SelectValue< T, true >
+        {
+          static const bool value = T::preconditioningAvailable;
+          typedef typename T::PreconditionerType type;
+        };
+      public:
+        static constexpr bool value = SelectValue< Obj, CheckMember< Obj >::value >::value;
+        typedef typename SelectValue< Obj, CheckMember< Obj >::value >::type type;
+      };
+
     public:
       //! type of operator's Jacobian
       typedef JacobianOperator JacobianOperatorType;
@@ -219,6 +248,10 @@ namespace Dune
 
       //! type of linear inverse operator
       typedef LInvOp LinearInverseOperatorType;
+
+      //! type of preconditioner for linear solver
+      static constexpr bool preconditioningAvailable = SelectPreconditioning< LinearInverseOperatorType > :: value;
+      typedef typename SelectPreconditioning< LinearInverseOperatorType > :: type PreconditionerType;
 
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
@@ -302,7 +335,16 @@ namespace Dune
 
       void bind ( const OperatorType &op ) { op_ = &op; }
 
-      void unbind () { op_ = nullptr; }
+      void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
+      {
+        bind( op );
+        if( preconditioningAvailable )
+          preconditioner_ = &preconditioner;
+        else
+          std::cerr << "WARNING: linear inverse operator does not support external preconditioning!" << std::endl;
+      }
+
+      void unbind () { op_ = nullptr; preconditioner_ = nullptr; }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
@@ -374,6 +416,22 @@ namespace Dune
       }
 
     protected:
+      void bindOperatorAndPreconditioner( JacobianOperatorType& jOp ) const
+      {
+        // if preconditioner was given pass it on to linear solver
+        if constexpr ( preconditioningAvailable )
+        {
+          if( preconditioner_ )
+          {
+            jInv_.bind( jOp, *preconditioner_ );
+            return ;
+          }
+        }
+
+        // if preconditioning not enabled or set, then only set jOp
+        jInv_.bind( jOp );
+      }
+
       // hold pointer to jacobian operator, if memory reallocation is needed, the operator should know how to handle this.
       template< class ... Args>
       JacobianOperatorType& jacobian ( Args && ... args ) const
@@ -383,8 +441,9 @@ namespace Dune
         return *jOp_;
       }
 
-    private:
+    protected:
       const OperatorType *op_ = nullptr;
+      const PreconditionerType* preconditioner_ = nullptr;
 
       const bool verbose_;
       const int maxLineSearchIterations_;
@@ -434,7 +493,10 @@ namespace Dune
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
-        jInv_.bind( jOp );
+
+        // bind jOp to jInv including preconditioner if enabled and set
+        bindOperatorAndPreconditioner( jOp );
+
         if ( parameter_.maxLinearIterations() - linearIterations_ <= 0 )
           break;
         jInv_.setMaxIterations( parameter_.maxLinearIterations() - linearIterations_ );

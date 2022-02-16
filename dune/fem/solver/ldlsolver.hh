@@ -78,6 +78,9 @@ class LDLInverseOperator : public InverseOperatorInterface< LDLInverseOperatorTr
 
   friend class InverseOperatorInterface< Traits >;
 public:
+  /** \brief this solver does not offer preconditioning option */
+  static const bool preconditioningAvailable = false;
+
   typedef LDLInverseOperator< DF, Matrix > ThisType;
 
   typedef typename BaseType :: SolverDiscreteFunctionType
