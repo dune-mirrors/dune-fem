@@ -275,11 +275,23 @@ namespace Dune
         typedef typename GridType::template Codim< codim >::Entity        EntityType;
         typedef typename GridType::template Codim< codim >::EntitySeed    EntitySeedType;
 
+        // GridView typedefs interface
+        typedef GeometryType       Geometry;
+        typedef LocalGeometryType  LocalGeometry;
+        typedef EntityType         Entity;
+        typedef EntitySeedType     EntitySeed;
+
         template< PartitionIteratorType pitype >
         struct Partition
         {
           typedef typename GridType::template Codim< codim >::template Partition< pitype >::LeafIterator IteratorType;
+          // GridView typedef
+          typedef IteratorType Iterator;
         };
+
+        typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
+        // GridView typedef
+        typedef IteratorType Iterator;
       };
 
       //! \brief is true if grid on this view only has conforming intersections
