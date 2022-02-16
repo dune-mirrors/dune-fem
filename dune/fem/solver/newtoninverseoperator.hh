@@ -221,7 +221,7 @@ namespace Dune
       typedef LInvOp LinearInverseOperatorType;
 
       //! type of preconditioner for linear solver
-      typedef BaseType PreconditionerType;
+      typedef typename LinearInverseOperatorType::PreconditionerType  PreconditionerType;
 
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;

@@ -86,6 +86,7 @@ namespace Dune
 
       typedef typename BaseType :: SolverDiscreteFunctionType    PetscDiscreteFunctionType;
       typedef typename BaseType :: OperatorType                  OperatorType;
+      typedef typename BaseType :: PreconditionerType            PreconditionerType;
 
       PetscInverseOperator ( const PetscSolverParameter &parameter = PetscSolverParameter(Parameter::container()) )
       : BaseType( parameter )
@@ -100,6 +101,14 @@ namespace Dune
       void bind ( const OperatorType &op )
       {
         BaseType :: bind( op );
+        initialize( *parameter_ );
+      }
+
+      void bind ( const OperatorType &op, const PreconditionerType& p )
+      {
+        // TODO: Wrap p for use with PETSc PC.
+        std::cerr << "Warning: PetscInverseOperator not supporting external preconditioning yet!" << std::endl;
+        BaseType :: bind( op, p );
         initialize( *parameter_ );
       }
 
