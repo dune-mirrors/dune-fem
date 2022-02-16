@@ -664,14 +664,6 @@ namespace Dune
             solver_->apply(w.dofVector().array(), b, result_);
         }
 
-        template <class Preconditioner>
-        void bind (const LinearOperatorType& op, const Preconditioner& p)
-        {
-          // TODO: convert to Dune::Preconditioner that works with istl solvers
-          std::cerr << "Warning: InverseOperator not supporting external preconditioning yet!" << std::endl;
-          bind( op );
-        }
-
         void bind (const LinearOperatorType& op)
         {
           buildCommunication(op.domainSpace(), Dune::SolverCategory::overlapping, communication_);

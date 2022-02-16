@@ -85,7 +85,6 @@ public:
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   using BaseType :: parameter_;
-  using BaseType :: bind;
 
   /** \brief Constructor.
    *  \param[in] parameter parameters for the solver

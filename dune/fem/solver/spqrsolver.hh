@@ -72,8 +72,6 @@ class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperator
   typedef InverseOperatorInterface< Traits > BaseType;
   typedef SPQRInverseOperator< DF, symmetric, Matrix > ThisType;
 public:
-  using BaseType::bind;
-
   typedef DF DiscreteFunctionType;
   typedef typename BaseType :: OperatorType OperatorType;
   typedef typename BaseType :: SolverDiscreteFunctionType SolverDiscreteFunctionType;

@@ -239,7 +239,7 @@ namespace Dune
     // -------------------
 
     template< class DiscreteFunction, int method = -1,
-              class Preconditioner = Fem::Operator< DiscreteFunction, DiscreteFunction > >
+              class Preconditioner = const Operator< DiscreteFunction, DiscreteFunction > >
     class ISTLInverseOperator;
 
     template< class DiscreteFunction, int method, class Preconditioner >

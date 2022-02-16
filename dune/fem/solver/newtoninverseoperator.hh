@@ -220,9 +220,6 @@ namespace Dune
       //! type of linear inverse operator
       typedef LInvOp LinearInverseOperatorType;
 
-      //! type of preconditioner for linear solver
-      typedef typename LinearInverseOperatorType::PreconditionerType  PreconditionerType;
-
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
@@ -305,13 +302,7 @@ namespace Dune
 
       void bind ( const OperatorType &op ) { op_ = &op; }
 
-      void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
-      {
-        bind( op );
-        preconditioner_ = &preconditioner;
-      }
-
-      void unbind () { op_ = nullptr; preconditioner_ = nullptr; }
+      void unbind () { op_ = nullptr; }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
@@ -394,7 +385,6 @@ namespace Dune
 
     private:
       const OperatorType *op_ = nullptr;
-      const PreconditionerType* preconditioner_ = nullptr;
 
       const bool verbose_;
       const int maxLineSearchIterations_;
@@ -444,17 +434,7 @@ namespace Dune
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
-
-        // if preconditioner was given pass it on to linear solver
-        if( preconditioner_ )
-        {
-          jInv_.bind( jOp, *preconditioner_ );
-        }
-        else
-        {
-          jInv_.bind( jOp );
-        }
-
+        jInv_.bind( jOp );
         if ( parameter_.maxLinearIterations() - linearIterations_ <= 0 )
           break;
         jInv_.setMaxIterations( parameter_.maxLinearIterations() - linearIterations_ );
