@@ -32,6 +32,9 @@ namespace Dune {
       typedef typename Traits :: PreconditionerType           PreconditionerType;
       typedef typename Traits :: SolverParameterType          SolverParameterType;
 
+      /** \brief true if a preconditioner type is exported and can be set using bind( op, p ) */
+      static const bool preconditioningAvailable = true;
+
       /** \brief default constructor
        *  \note parameter  SolverParameter object to steer the linear solvers
        */

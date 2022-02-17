@@ -72,6 +72,9 @@ class SPQRInverseOperator : public InverseOperatorInterface< SPQRInverseOperator
   typedef InverseOperatorInterface< Traits > BaseType;
   typedef SPQRInverseOperator< DF, symmetric, Matrix > ThisType;
 public:
+  /** \brief this solver does not offer to set preconditioning option */
+  static const bool preconditioningAvailable = false;
+
   typedef DF DiscreteFunctionType;
   typedef typename BaseType :: OperatorType OperatorType;
   typedef typename BaseType :: SolverDiscreteFunctionType SolverDiscreteFunctionType;

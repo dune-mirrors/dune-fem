@@ -83,9 +83,14 @@ namespace Dune
       typedef InverseOperatorInterface< Traits > BaseType;
       friend class InverseOperatorInterface< Traits >;
     public:
+      /** \brief This solver does not offer setting preconditioning from outside
+       *  \note This needs the implementation of a PCSHELL object to wrap the preconditioner.
+       */
+      static const bool preconditioningAvailable = false;
 
       typedef typename BaseType :: SolverDiscreteFunctionType    PetscDiscreteFunctionType;
       typedef typename BaseType :: OperatorType                  OperatorType;
+      typedef typename BaseType :: PreconditionerType            PreconditionerType;
 
       PetscInverseOperator ( const PetscSolverParameter &parameter = PetscSolverParameter(Parameter::container()) )
       : BaseType( parameter )

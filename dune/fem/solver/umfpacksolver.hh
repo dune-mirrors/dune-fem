@@ -85,6 +85,10 @@ public:
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   using BaseType :: parameter_;
+  using BaseType :: bind;
+
+  /** \brief this solver does not offer to set preconditioning option */
+  static const bool preconditioningAvailable = false;
 
   /** \brief Constructor.
    *  \param[in] parameter parameters for the solver

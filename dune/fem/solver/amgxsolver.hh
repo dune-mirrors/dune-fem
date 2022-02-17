@@ -108,6 +108,9 @@ namespace Dune
     public:
       using BaseType :: parameter;
 
+      /** \brief this solver does not offer to set preconditioning option */
+      static const bool preconditioningAvailable = false;
+
       typedef typename BaseType::SolverDiscreteFunctionType  SolverDiscreteFunctionType;
       typedef typename BaseType::OperatorType                OperatorType;
       typedef typename BaseType::PreconditionerType          PreconditionerType;
