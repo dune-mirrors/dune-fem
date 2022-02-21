@@ -350,7 +350,7 @@ namespace Dune
         else
         {
           // if compress is not needed just resize with given size
-          // therefore use newSize to enleage array
+          // therefore use newSize to enlarge array
           assert( ! mapper().consecutive() );
           // resize array
           resize ( false );
@@ -366,6 +366,9 @@ namespace Dune
         // if data is non-temporary do data compression
         if( dataCompressionEnabled_ )
         {
+          // get consecutive information about mapper
+          const bool consecutive = mapper().consecutive ();
+
           // get old size (which we still have in array)
           const int oldSize = array_.size();
 
@@ -382,9 +385,9 @@ namespace Dune
             moveToFront( oldSize, block );
 
             // only close holes for consecutive mappers
-            if( mapper().consecutive () )
+            if( consecutive )
             {
-              // run over all holes and copy array vules to new place
+              // run over all holes and copy array values to new place
               const int holes = mapper().numberOfHoles( block );
               for( int i = 0; i < holes; ++i )
               {
@@ -511,6 +514,13 @@ namespace Dune
       //! move block to front again
       void moveToFront ( const int oldSize, const int block )
       {
+        // make sure offset of block 0 is zero
+        assert( mapper().offSet( 0 ) == 0 );
+        assert( mapper().oldOffSet( 0 ) == 0 );
+
+        // block 0 has always offset 0
+        if( block == 0 ) return;
+
         // get insertion point from block
         const int oldOffSet = mapper().oldOffSet( block );
 

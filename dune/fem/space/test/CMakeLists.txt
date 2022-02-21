@@ -74,6 +74,11 @@ dune_add_test( SOURCES test-auxiliarydofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 
 dune_add_test( NAME test-spaceinterpolation-2d SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS_2D}" )
 
 if( ${FEM_TORTURE_TESTS} )
+  # test adaptation of tuplespace
+  dune_add_test( NAME adapt_tuplespace SOURCES adapt.cc
+    COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_TUPLE_SPACE"
+    LINK_LIBRARIES dunefem )
+
   # 3d space interpolation is more expensive, therefore only when torture tests enabled
   dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 

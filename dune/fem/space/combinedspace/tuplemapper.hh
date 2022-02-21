@@ -19,6 +19,11 @@ namespace Dune
   namespace Fem
   {
 
+    // from adaptationmanager.hh
+    template <class GridType>
+    class AdaptationMethod ;
+
+
     // Internal forward declaration
     // ----------------------------
     template< class GridPart, class ... Mapper >
@@ -110,6 +115,7 @@ namespace Dune
           const int globalOffset_;
         };
 
+      protected:
         // size of the Mapper Tuple
         static const int mapperTupleSize = sizeof ... ( Mapper );
 
@@ -126,14 +132,14 @@ namespace Dune
           : gridPart_( gridPart ),
             mapperTuple_( mapper ... )
         {
-          init();
+          computeOffset();
         }
 
         DofMapper ( GridPartType &gridPart, Mapper && ... mapper )
           : gridPart_( gridPart ),
             mapperTuple_( std::move( mapper ) ... )
         {
-          init();
+          computeOffset();
         }
 
         SizeType size () const { return size( std::index_sequence_for< Mapper ... >() ); }
@@ -220,6 +226,8 @@ namespace Dune
           // compute update for each mapper (if any)
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ](auto i){ std::get< i >( mapperTuple_ ).update(); } );
+
+          computeOffset();
         }
 
         /*** NonInterface Methods ***/
@@ -266,7 +274,7 @@ namespace Dune
           return Std::sum( std::get< i >( mapperTuple_ ).numEntityDofs( entity ) ... );
         }
 
-        void init ()
+        void computeOffset ()
         {
           globalOffset_[ 0 ] = 0;
           // compute new offsets
@@ -294,12 +302,12 @@ namespace Dune
         typedef DofMapper< Traits< GridPart, Mapper ... >, Dune::Fem::AdaptiveDofMapper > BaseType;
 
       protected:
+        typedef typename GridPart :: GridType GridType;
+        typedef AdaptationMethod< GridType > AdaptationMethodType;
 
-        // size of the Mapper Tuple
-        static const int mapperTupleSize = sizeof ... ( Mapper );
+        typedef typename BaseType::OffsetType OffsetType;
 
-        typedef std::array< typename BaseType::Traits::SizeType, mapperTupleSize + 1 > OffsetType;
-
+        using BaseType::mapperTupleSize;
         using BaseType::mapperTuple_;
         using BaseType::gridPart_;
         using BaseType::globalOffset_;
@@ -311,14 +319,22 @@ namespace Dune
         typedef GridPart GridPartType;
 
         AdaptiveDofMapper ( GridPartType &gridPart, Mapper & ... mapper )
-          : BaseType( gridPart, mapper ... )
+          : BaseType( gridPart, mapper ... ),
+            numBlocks_( computeNumBlocks() ),
+            isCallBackAdapt_( AdaptationMethodType( gridPart.grid() ).isCallBackAdaptation() ),
+            needsFullUpdate_(true)
         {
+          oldGlobalOffset_ = globalOffset_;
           DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).addIndexSet( *this );
         }
 
         AdaptiveDofMapper ( GridPartType &gridPart, Mapper && ... mapper )
-          : BaseType( gridPart, std::move( mapper ) ... )
+          : BaseType( gridPart, std::move( mapper ) ... ),
+            numBlocks_( computeNumBlocks() ),
+            isCallBackAdapt_( AdaptationMethodType( gridPart.grid() ).isCallBackAdaptation() ),
+            needsFullUpdate_(true)
         {
+          oldGlobalOffset_ = globalOffset_;
           DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).addIndexSet( *this );
         }
 
@@ -331,103 +347,84 @@ namespace Dune
 
         SizeType numBlocks () const { return numBlocks( std::index_sequence_for< Mapper ... >() ); }
 
-        SizeType numberOfHoles ( int block ) const
+        SizeType numberOfHoles ( const int block ) const
         {
           SizeType nHoles = 0;
-          int comp = -1;
-          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
+            Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
-              if( comp >= 0 )
-                return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
+              const int localBlock = computeBlock( i, block );
               if( localBlock >= 0 )
               {
-                comp = i;
                 nHoles = std::get< i >( this->mapperTuple_ ).numberOfHoles( localBlock );
+                return;
               }
             } );
           return nHoles;
         }
 
-        GlobalKeyType oldIndex ( int hole, int block ) const
+        GlobalKeyType oldIndex ( const int hole, const int block ) const
         {
-          int comp = -1;
           SizeType oIndex = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
-              if( comp >= 0 )
-                return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
+              const int localBlock = computeBlock( i, block );
               if( localBlock >= 0 )
               {
-                comp = i;
-                oIndex = std::get< i >( this->mapperTuple_ ).oldIndex( hole, localBlock );
+                oIndex = std::get< i >( this->mapperTuple_ ).oldIndex( hole, localBlock ) + globalOffset_[ i ];
+                return;
               }
             } );
-          assert( comp >= 0 );
-          return oIndex + globalOffset_[ comp ];
+          return oIndex;
         }
 
-        GlobalKeyType newIndex ( int hole, int block ) const
+        GlobalKeyType newIndex ( const int hole, const int block ) const
         {
-          int comp = -1;
           SizeType nIndex = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
-              if( comp >= 0 )
-                return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
+              const int localBlock = computeBlock( i, block );
               if( localBlock >= 0 )
               {
-                comp = i;
-                nIndex = std::get< i >( this->mapperTuple_ ).newIndex( hole, localBlock );
+                nIndex = std::get< i >( this->mapperTuple_ ).newIndex( hole, localBlock ) + globalOffset_[ i ];
+                return ;
               }
             } );
-          assert( comp > 0 );
-          return nIndex + globalOffset_[ comp ];
+          return nIndex;
         }
 
         SizeType oldOffSet ( int block ) const
         {
-          int comp = -1;
           SizeType oOffset = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
-              if( comp >= 0 )
-                return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
+              const int localBlock = computeBlock( i, block );
               if( localBlock >= 0 )
               {
-                comp = i;
-                oOffset = std::get< i >( this->mapperTuple_ ).oldOffSet( localBlock );
+                oOffset = std::get< i >( this->mapperTuple_ ).oldOffSet( localBlock ) + oldGlobalOffset_[ i ];
+                return ;
               }
             } );
-          assert( comp >= 0 );
-          return oOffset + oldGlobalOffset_[ comp ];
+          return oOffset;
         }
 
         SizeType offSet ( int block ) const
         {
-          int comp = -1;
           SizeType offset = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i )
             {
-              if( comp >= 0 )
-                return;
-              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
+              const int localBlock = computeBlock( i, block );
               if( localBlock >= 0 )
               {
-                comp = i;
-                offset = std::get< i >( this->mapperTuple_ ).offSet( localBlock );
+                offset = std::get< i >( this->mapperTuple_ ).offSet( localBlock ) + globalOffset_[ i ];
+                return ;
               }
             } );
-          assert( comp >= 0 );
-          return offset + globalOffset_[ comp ];
+          return offset;
         }
 
         void resize () { update(); }
@@ -435,40 +432,92 @@ namespace Dune
         bool compress ()
         {
           update();
+          // after this step for both methods we need the full update
+          needsFullUpdate_ = true;
           return true;
         }
 
         void backup () const {}
 
-        void restore () { update(); }
+        void restore () { compress(); }
 
         template< class IOStream >
-        void read ( IOStream &in ) { update(); }
+        void read ( IOStream &in ) { compress(); }
 
         template< class IOStream >
         void write ( IOStream &out ) const {}
 
         template< class Entity >
-        void insertEntity ( const Entity & ) { update(); }
+        void insertEntity ( const Entity & )
+        {
+          if( needsFullUpdate_ )
+          {
+            // update also offsets in this case
+            update();
+          }
+          else
+          {
+            // call BaseType::update to avoid changing oldGlobalOffSet_
+            // do not use this->update here!
+            BaseType::update();
+          }
+        }
 
         template< class Entity >
-        void removeEntity ( const Entity & ) { update(); }
+        void removeEntity ( const Entity & ) {}
 
         void update ()
         {
+          // store previous offset
           oldGlobalOffset_ = globalOffset_;
-          BaseType::init();
+
+          // in callback we always need the full update, otherwise set to false here
+          needsFullUpdate_ = isCallBackAdapt_ ;
+
+          // update component mappers and compute offsets
+          BaseType::update();
         }
 
       protected:
+        int computeBlock( const int i, const unsigned int block ) const
+        {
+          if( block >= blocks_[ i ] && block < blocks_[ i + 1 ] )
+            return block - blocks_[ i ];
+          else
+            return -1;
+        }
+
+        void printOffSet( const OffsetType& offset, const std::string& name ) const
+        {
+          for( const auto& off : offset )
+          {
+            std::cout << name << " = " << off << std::endl;
+          }
+        }
+
         template< std::size_t ... i >
         SizeType numBlocks ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numBlocks() ... );
         }
 
-      private:
+        SizeType computeNumBlocks ()
+        {
+          // compute blocks (only needs to be done once)
+          blocks_[ 0 ] = 0;
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i ){ blocks_[ i + 1 ] = blocks_[ i ] + std::get< i >( mapperTuple_ ).numBlocks(); } );
+
+          return blocks_[ mapperTupleSize + 1 ];
+        }
+
+
         OffsetType oldGlobalOffset_;
+        OffsetType blocks_;
+
+        const SizeType numBlocks_;
+        const bool isCallBackAdapt_;
+        bool needsFullUpdate_;
       };
 
 

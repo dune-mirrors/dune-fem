@@ -4,6 +4,7 @@
 
 using namespace Dune;
 
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
@@ -12,10 +13,7 @@ using namespace Dune;
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/padaptivespace/padaptivespace.hh>
 #include <dune/fem/space/hpdg/orthogonal.hh>
-
-#if USE_COMBINED_SPACE
 #include <dune/fem/space/combinedspace.hh>
-#endif
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -68,6 +66,14 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
     typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, dimRange, VariableBased > DiscreteFunctionSpaceType ;
   #endif
 #else
+  #ifdef USE_TUPLE_SPACE
+    static const std::string usingSpaceName("Using TupleDiscreteFunctionSpace");
+    typedef Dune::Fem::FunctionSpace< typename MyGridType::ctype, double, MyGridType::dimensionworld, dimRange+2 > FuncSpace1;
+    typedef Dune::Fem::FunctionSpace< typename MyGridType::ctype, double, MyGridType::dimensionworld, dimRange > FuncSpace2;
+    typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace1, GridPartType, polOrd+1, CachingStorage > DiscreteFunctionSpaceType1;
+    typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace2, GridPartType, polOrd, CachingStorage > DiscreteFunctionSpaceType2;
+    typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
+  #else
     static const std::string usingSpaceName("Using DiscontinuousGalerkinSpace< dimRange >");
 typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
                                     GridPartType, polOrd, CachingStorage>  DiscreteFunctionSpaceType;
@@ -75,6 +81,7 @@ typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType:
 //                                    GridPartType, polOrd, true >  DiscreteFunctionSpaceType;
 //typedef PAdaptiveDGSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
 //                                    GridPartType, polOrd, CachingStorage >  DiscreteFunctionSpaceType;
+  #endif
 #endif
 
 
@@ -335,4 +342,3 @@ catch( const Dune :: Exception &exception )
   std :: cerr << exception << std :: endl;
   return 1;
 }
-
