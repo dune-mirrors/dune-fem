@@ -167,7 +167,7 @@ namespace Dune
 
         typedef decltype( makePyLocalGridFunction( std::declval< GridPartType >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, 1 >() ) ) ScalarLocalGridFunction;
         if (!pybind11::already_registered<ScalarLocalGridFunction>())
-          registerPyLocalGridFunction<GridPartType>( scope, "LocalGridFunction", std::integral_constant< int, 1 >() );
+          registerPyLocalGridFunction<GridPartType>( cls, "LocalGridFunction", std::integral_constant< int, 1 >() );
 
         cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c ) {
             const auto pself = &self; // make sure reference is correctly capture in lambda and doesn't go out of scope
