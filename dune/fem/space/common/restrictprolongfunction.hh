@@ -142,7 +142,7 @@ namespace Dune
 
     private:
       template< class FineLocalFunction, class CoarseLocalFunction >
-      void hierarchicRestrict ( const FineLocalFunction &fineLocalFunction,
+      void hierarchicRestrict ( FineLocalFunction &fineLocalFunction,
                                 CoarseLocalFunction &coarseLocalFunction ) const
       {
         typedef typename CoarseLocalFunction::EntityType Entity;
