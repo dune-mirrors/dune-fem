@@ -51,41 +51,25 @@ namespace Dune
       template <class M>
       class CallOrder
       {
-        // check for 'int order () const' or 'int order()'
-        // and variants returning unsigned int or size_t
-        template <class T> static std::true_type testSignature(int (T::*)() const);
-        template <class T> static std::true_type testSignature(int (T::*)());
-        template <class T> static std::true_type testSignature(unsigned int (T::*)() const);
-        template <class T> static std::true_type testSignature(unsigned int (T::*)());
-        template <class T> static std::true_type testSignature(std::size_t (T::*)() const);
-        template <class T> static std::true_type testSignature(std::size_t (T::*)());
-
-        template <class T>
-        static decltype(testSignature(&T::order)) test(std::nullptr_t);
-
-        template <class T>
-        static std::false_type test(...);
-
-        using type = decltype(test<M>(nullptr));
 
         template <class F>
-        static int callOrder(const F& f, std::false_type)
+        static int callOrder(const F& f, char)
         {
 #ifndef NDEBUG
-          std::cerr << "WARNING: not order method available on " << typeid(F).name() << ", defaulting to 1!" << std::endl;
+          std::cerr << "WARNING: no order method available on " << typeid(F).name() << ", defaulting to 1!" << std::endl;
 #endif
           return 1;
         }
 
         template <class F>
-        static int callOrder(const F& f, std::true_type)
+        static auto callOrder(const F& f, int) -> decltype( f.order() )
         {
           return f.order();
         }
 
       public:
         template <class F>
-        static int order (const F& f ) { return callOrder(f, type() ); }
+        static int order (const F& f ) { return callOrder(f, 0); }
       };
 
       // GalerkinOperator
