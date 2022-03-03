@@ -51,14 +51,8 @@ namespace Dune
       template <class M>
       class CallOrder
       {
-        // check for 'int order () const' or 'int order()'
-        // and variants returning unsigned int or size_t
-        template <class T> static std::true_type testSignature(int (T::*)() const);
-        template <class T> static std::true_type testSignature(int (T::*)());
-        template <class T> static std::true_type testSignature(unsigned int (T::*)() const);
-        template <class T> static std::true_type testSignature(unsigned int (T::*)());
-        template <class T> static std::true_type testSignature(std::size_t (T::*)() const);
-        template <class T> static std::true_type testSignature(std::size_t (T::*)());
+        // check for 'int order () const' and variants returning unsigned int or size_t
+        template <class T, class R> static std::true_type testSignature(R (T::*)() const);
 
         template <class T>
         static decltype(testSignature(&T::order)) test(std::nullptr_t);
@@ -85,7 +79,7 @@ namespace Dune
 
       public:
         template <class F>
-        static int order (const F& f ) { return callOrder(f, type() ); }
+        static int order (const F& f) { return callOrder(f, type() ); }
       };
 
       // GalerkinOperator
