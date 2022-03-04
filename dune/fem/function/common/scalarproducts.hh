@@ -163,8 +163,8 @@ namespace Dune
           const auto &auxiliaryDofs = space().auxiliaryDofs();
 
           // don't delete the last since this is the overall Size
-          const int auxiliarySize = auxiliaryDofs.size() - 1;
-          for(int auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
+          const size_t auxiliarySize = auxiliaryDofs.size() - 1;
+          for(size_t auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
             x[ auxiliaryDofs[auxiliary] ] = 0;
         }
 #endif // #if HAVE_MPI
