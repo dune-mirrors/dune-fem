@@ -164,10 +164,10 @@ namespace Dune
 
     template< class CoordFunction >
     class GeoGridPart
-    : public GridPartInterface< GeoGridPartTraits< CoordFunction > >
+    : public GridPartDefault< GeoGridPartTraits< CoordFunction > >
     {
       typedef GeoGridPart< CoordFunction > ThisType;
-      typedef GridPartInterface< GeoGridPartTraits< CoordFunction > > BaseType;
+      typedef GridPartDefault< GeoGridPartTraits< CoordFunction > > BaseType;
 
       typedef typename GeoGridPartTraits< CoordFunction >::GridPartFamily GridPartFamily;
 
@@ -188,19 +188,10 @@ namespace Dune
       {};
 
       explicit GeoGridPart ( const CoordFunctionType &coordFunction )
-      : coordFunction_( &coordFunction ),
+      : BaseType( const_cast< GridType& > (coordFunction.gridPart().grid() ) ),
+        coordFunction_( &coordFunction ),
         indexSet_( hostGridPart().indexSet() )
       {}
-
-      const GridType &grid () const
-      {
-        return hostGridPart().grid();
-      }
-
-      GridType &grid ()
-      {
-        return const_cast< GridType & >( hostGridPart().grid() );
-      }
 
       const IndexSetType &indexSet () const
       {
@@ -249,14 +240,6 @@ namespace Dune
       {
         return GeoIntersectionIterator< const GridPartFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
-
-      [[deprecated("Use BoundnryIdProvider directly")]]
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
-      }
-
-      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,

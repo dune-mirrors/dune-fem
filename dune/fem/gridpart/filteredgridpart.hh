@@ -217,10 +217,11 @@ namespace Dune
 
     template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
     class FilteredGridPart
-    : public GridPartInterface< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
+    : public GridPartDefault< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > >
     {
       // type of this
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > ThisType;
+      typedef GridPartDefault< FilteredGridPartTraits< HostGridPartImp, FilterImp, useFilteredIndexSet > > BaseType;
 
     public:
       //- Public typedefs and enums
@@ -263,7 +264,8 @@ namespace Dune
       //- Public methods
       //! \brief constructor
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter )
-      : hostGridPart_( &hostGridPart ),
+      : BaseType( hostGridPart.grid() ),
+        hostGridPart_( &hostGridPart ),
         filter_( new FilterType(filter) ),
         indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
@@ -271,29 +273,19 @@ namespace Dune
 
       //! \brief copy constructor
       FilteredGridPart ( const FilteredGridPart &other )
-      : hostGridPart_( other.hostGridPart_ ),
+      : BaseType( other ),
+        hostGridPart_( other.hostGridPart_ ),
         filter_( new FilterType( other.filter()) ),
         indexSetPtr_ ( IndexSetSelectorType::create( *this ) )
       { }
 
       FilteredGridPart& operator = (const FilteredGridPart &other )
       {
+        BaseType::operator=( other );
         hostGridPart_ = other.hostGridPart_;
         filter_.reset( new FilterType( other.filter() ) );
         indexSetPtr_.reset( IndexSetSelectorType::create( *this ) );
         return *this;
-      }
-
-      //! \brief return const reference to underlying grid
-      const GridType &grid () const
-      {
-        return hostGridPart().grid();
-      }
-
-      //! \brief return reference to underlying grid
-      GridType &grid ()
-      {
-        return hostGridPart().grid();
       }
 
       //! \brief return index set of this grid part
@@ -301,18 +293,6 @@ namespace Dune
       const IndexSetType &indexSet() const
       {
         return IndexSetSelectorType::indexSet( *this, indexSetPtr_ );
-      }
-
-      /** \brief obtain number of entities in a given codimension */
-      int size ( int codim ) const
-      {
-        return indexSet().size( codim );
-      }
-
-      /** \brief obtain number of entities with a given geometry type */
-      int size ( const GeometryType &type ) const
-      {
-        return indexSet().size( type );
       }
 
       //! \brief Begin iterator on the leaf level
@@ -366,15 +346,6 @@ namespace Dune
         typedef typename IntersectionIteratorType::Implementation IntersectionIteratorImpl;
         return IntersectionIteratorType( IntersectionIteratorImpl( filter(), hostGridPart().iend( entity ) ) );
       }
-
-      //! \brief boundary id
-      [[deprecated("Use BoundnryIdProvider instead!")]]
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
-      }
-
-      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       //! \brief corresponding communication method for this grid part
       template < class DataHandleImp, class DataType >

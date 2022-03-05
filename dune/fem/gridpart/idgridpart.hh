@@ -132,10 +132,10 @@ namespace Dune
 
     template< class HostGridPartImp >
     class IdGridPart
-    : public GridPartInterface< IdGridPartTraits< HostGridPartImp > >
+    : public GridPartDefault< IdGridPartTraits< HostGridPartImp > >
     {
       typedef IdGridPart< HostGridPartImp > ThisType;
-      typedef GridPartInterface< IdGridPartTraits< HostGridPartImp > > BaseType;
+      typedef GridPartDefault< IdGridPartTraits< HostGridPartImp > > BaseType;
 
       typedef typename IdGridPartTraits< HostGridPartImp >::GridFamily GridFamily;
 
@@ -154,29 +154,22 @@ namespace Dune
       {};
 
       explicit IdGridPart ( GridType &grid )
-      : hostGridPart_( grid ),
+      : BaseType( grid ),
+        hostGridPart_( grid ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       explicit IdGridPart ( const IdGridPart &other )
-      : hostGridPart_( other.hostGridPart() ),
+      : BaseType( other ),
+        hostGridPart_( other.hostGridPart() ),
         indexSet_( hostGridPart_.indexSet() )
       {}
 
       explicit IdGridPart ( const HostGridPartType &hostGridPart )
-      : hostGridPart_( hostGridPart ),
+      : BaseType( const_cast< GridType& > ( hostGridPart.grid() ) ),
+        hostGridPart_( hostGridPart ),
         indexSet_( hostGridPart_.indexSet() )
       {}
-
-      const GridType &grid () const
-      {
-        return hostGridPart().grid();
-      }
-
-      GridType &grid ()
-      {
-        return hostGridPart_.grid();
-      }
 
       const IndexSetType &indexSet () const
       {
@@ -225,14 +218,6 @@ namespace Dune
       {
         return IdIntersectionIterator< const GridFamily >( data(), hostGridPart().iend( entity.impl().hostEntity() ) );
       }
-
-      [[deprecated("Use BoundnryIdProvider instead!")]]
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
-      }
-
-      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,
