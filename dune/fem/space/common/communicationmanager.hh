@@ -61,6 +61,7 @@ namespace Dune
 
     class IsDiscreteFunction;
 
+    class IsBlockVector;
 
 
     /** @addtogroup Communication Communication
@@ -254,6 +255,24 @@ namespace Dune
         nbc.send( discreteFunction );
 
         exchangeTime_ = nbc.receive( discreteFunction, operation );
+      }
+
+      /** \brief exchange data for a discrete function using the given operation
+       *
+       *  The used operation is derived from the type of the op-pointer. The
+       *  actual pointer is not used.
+       *
+       *  \param      discreteFunction  discrete function to communicate
+       *  \param[in]  operation         a (phony) pointer to an operation
+       */
+      template< class DiscreteFunction, class Operation >
+      inline void exchange ( const Space& space,
+                             DiscreteFunction &discreteFunction,
+                             const Operation &operation ) const
+      {
+#ifndef USE_CACHED_COMM_MANAGER
+        DUNE_THROW(NotImplemented,"Communicating BlockVectorInterface and derived only works with cached communication!");
+#endif
       }
     };
 

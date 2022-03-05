@@ -139,7 +139,13 @@ namespace Dune
 
       typedef PetscMappers< DFSpace > MappersType;
 
-      typedef typename DFSpace::template CommDataHandle<void>::OperationType DefaultCommunicationOperationType;
+      struct FakeDF
+      {
+        typedef DFSpace DiscreteFunctionSpaceType;
+      };
+
+      // need to pass something that contains a typedef DiscreteFunctionSpaceType
+      typedef typename DFSpace::template CommDataHandle< FakeDF >::OperationType DefaultCommunicationOperationType;
 
       // note that Vec is a pointer type so no deep copy is made
       PetscVector ( const DFSpace& space, Vec vec )

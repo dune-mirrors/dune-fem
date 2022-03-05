@@ -20,6 +20,7 @@
 #include <dune/fem/solver/parameter.hh> // SolverParameter
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 #include <dune/fem/misc/fmatrixconverter.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune
 {
@@ -93,9 +94,11 @@ namespace Dune
 
       static const bool isNumber = (M::block_type::rows == M::block_type::cols) && (M::block_type::rows == 1);
 
-      typedef typename std::conditional< isNumber,
-                std::vector< field_type >,
-                std::vector< MatrixBlockType > > :: type DiagonalType;
+      typedef FieldVector< field_type, MatrixBlockType::rows*MatrixBlockType::cols > FlatMatrixBlock;
+      // BlockVector from dune-istl
+      typedef BlockVector< FlatMatrixBlock > DiagonalType;
+
+      typedef FieldMatrixConverter< FlatMatrixBlock, MatrixBlockType > MatrixConverterType;
 
       // Implementation of SOR and Jacobi's method
       // Note: for SOR we have xnew == xold
@@ -114,7 +117,7 @@ namespace Dune
         if(A.begin()!=A.end())
           v=xnew[0];
 
-        const bool hasDiagInv = ! diagInv.empty();
+        const bool hasDiagInv = diagInv.size() > 0 ;
 
         const rowiterator endi=A.end();
         for (rowiterator i=A.begin(); i!=endi; ++i)
@@ -138,7 +141,7 @@ namespace Dune
               rhs -= (*j) * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
 
             // not needed, since we store the diagonal separately
-            coliterator diag=j;            // *diag = a_ii
+            coliterator diag=j;               // *diag = a_ii
             for (; j!=endj; ++j)
               rhs -= (*j) * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
 
@@ -148,23 +151,26 @@ namespace Dune
             else
               v = rhs / (*diag);
 
-            xnew[ rowIdx ] += w*v;           //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+            xnew[ rowIdx ] += w*v;            //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
           }
           else
           {
             // note that for SOR xnew == xold
             for (; j.index()<rowIdx; ++j)
               (*j).mmv(xold[j.index()],rhs);  //  rhs -= sum_{j<i} a_ij * x_j
-            coliterator diag=j;            // *diag = a_ii
+            coliterator diag=j;               // *diag = a_ii
             for (; j!=endj; ++j)
               (*j).mmv(xold[j.index()],rhs);  //  rhs -= sum_{j<i} a_ij * x_j
 
             // v = rhs / diag
             if( hasDiagInv )
-              diagInv[ rowIdx ].solve( v, rhs );
+            {
+              MatrixConverterType m( diagInv[ rowIdx ] );
+              m.solve( v, rhs );
+            }
             else
               (*diag).solve(v, rhs);
-            xnew[rowIdx].axpy(w,v);        //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
+            xnew[rowIdx].axpy(w,v);           //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
           }
         }
 
@@ -186,53 +192,39 @@ namespace Dune
       {
         Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
 
-        if( mObj_.domainSpace().continuous() )
+        const auto& space = mObj_.domainSpace();
+        if( space.continuous() )
         {
           // only communicate diagonal if matrix blocks are small
           if constexpr ( size_t(MatrixBlockType::rows) == size_t(DiscreteFunctionSpaceType::dimRange) )
           {
-            typedef typename DiscreteFunctionSpaceType ::
-                template ToNewDimRange< MatrixBlockType::rows*MatrixBlockType::cols > :: Type MatrixDiscreteFunctionSpaceType;
+            // create BlockVectorWrapper for BlockVector
+            ISTLBlockVector< FlatMatrixBlock > diagonalInv( &diagonalInv_ );
 
-            typedef ISTLBlockVectorDiscreteFunction< MatrixDiscreteFunctionSpaceType > MatrixDiscreteFunctionType;
-
-            typedef FieldMatrixConverter< typename MatrixDiscreteFunctionSpaceType :: RangeType,
-                                          MatrixBlockType > MatrixConverterType;
-            MatrixDiscreteFunctionSpaceType spc( mObj_.domainSpace().gridPart() );
-
-            MatrixDiscreteFunctionType diagonalInv("ParIt::diag", spc );
+            diagonalInv.resize(space.blockMapper().size());
+            assert( space.blockMapper().size() == _A_.N() );
             diagonalInv.clear();
 
             // extract diagonal elements from matrix object
             {
               const auto end = _A_.end();
-              for( auto row = _A_.begin(); row != end; ++ row )
+              for( auto row = _A_.begin(); row != end; ++row )
               {
                 // get diagonal entry of matrix if existent
                 auto diag = (*row).find( row.index() );
                 if( diag != (*row).end() )
                 {
-                  MatrixConverterType m( diagonalInv.dofVector()[ row.index() ] );
-                  m = *diag;
+                  MatrixConverterType m( diagonalInv[ row.index() ] );
+                  m = (*diag);
                 }
               }
             }
 
             // make diagonal consistent (communicate at border dofs)
-            diagonalInv.communicate();
-
-            const size_t s = diagonalInv.dofVector().size();
-            diagonalInv_.resize( s );
-            for( size_t i=0; i<s; ++i )
-            {
-              if constexpr( isNumber )
-                diagonalInv_[ i ] = diagonalInv.dofVector()[ i ][ 0 ];
-              else
-              {
-                MatrixConverterType m( diagonalInv.dofVector()[ i ] );
-                diagonalInv_[ i ] = m ;
-              }
-            }
+            // get default communication operation type
+            typename DiscreteFunctionSpaceType :: template
+              CommDataHandle< DiscreteFunctionType > :: OperationType operation;
+            space.communicate( diagonalInv, operation );
 
             // In general: store 1/diag if diagonal is number
             //
@@ -241,7 +233,7 @@ namespace Dune
             if constexpr( isNumber )
             {
               const double eps = 16.*std::numeric_limits< double >::epsilon();
-              for( auto& diag : diagonalInv_ )
+              for( auto& diag : diagonalInv )
               {
                 diag = (std::abs( diag ) < eps ? 1. : 1. / diag );
               }
@@ -273,7 +265,6 @@ namespace Dune
 
         // for communication
         DiscreteFunctionType tmp("ParIt::apply", space, v );
-
 
         std::unique_ptr< X > xTmp;
         if constexpr ( jacobi )

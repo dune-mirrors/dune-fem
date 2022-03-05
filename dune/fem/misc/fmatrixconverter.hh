@@ -354,7 +354,7 @@ namespace Dune
       const_row_reference mat_access ( size_type i ) const
       {
         assert( i < rows );
-        return const_row_reference( &(*data_[ i * cols ]) );
+        return const_row_reference( &(data_[ i * cols ]) );
       }
 
       /** \brief Sends the matrix to an output stream */
