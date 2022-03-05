@@ -191,29 +191,30 @@ namespace Dune
           // only communicate diagonal if matrix blocks are small
           if constexpr ( size_t(MatrixBlockType::rows) == size_t(DiscreteFunctionSpaceType::dimRange) )
           {
-            typedef FunctionSpace< DomainFieldType, field_type,
-                                   DiscreteFunctionSpaceType::dimDomain,
-                                   MatrixBlockType::rows*MatrixBlockType::cols >  MatrixFunctionSpaceType;
-
-            typedef typename DiscreteFunctionSpaceType :: template ToNewFunctionSpace<
-              MatrixFunctionSpaceType > :: Type MatrixDiscreteFunctionSpaceType;
+            typedef typename DiscreteFunctionSpaceType ::
+                template ToNewDimRange< MatrixBlockType::rows*MatrixBlockType::cols > :: Type MatrixDiscreteFunctionSpaceType;
 
             typedef ISTLBlockVectorDiscreteFunction< MatrixDiscreteFunctionSpaceType > MatrixDiscreteFunctionType;
 
             typedef FieldMatrixConverter< typename MatrixDiscreteFunctionSpaceType :: RangeType,
-                                      MatrixBlockType > MatrixConverterType;
+                                          MatrixBlockType > MatrixConverterType;
+            MatrixDiscreteFunctionSpaceType spc( mObj_.domainSpace().gridPart() );
 
-            MatrixDiscreteFunctionType diagonalInv("ParIt::diag", mObj_.domainSpace() );
+            MatrixDiscreteFunctionType diagonalInv("ParIt::diag", spc );
+            diagonalInv.clear();
 
             // extract diagonal elements from matrix object
             {
               const auto end = _A_.end();
               for( auto row = _A_.begin(); row != end; ++ row )
               {
-                // get diagonal entry of matrix
+                // get diagonal entry of matrix if existent
                 auto diag = (*row).find( row.index() );
-                MatrixConverterType m( diagonalInv.dofVector()[ row.index() ] );
-                m = *diag;
+                if( diag != (*row).end() )
+                {
+                  MatrixConverterType m( diagonalInv.dofVector()[ row.index() ] );
+                  m = *diag;
+                }
               }
             }
 
