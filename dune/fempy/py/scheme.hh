@@ -147,6 +147,17 @@ namespace Dune
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             return ret;
           } );
+        cls.def( "_solve", [] ( Scheme &self,
+                                DiscreteFunction &solution,
+                                const typename Scheme::PreconditionerFunctionType& pre
+                              ) {
+            auto info = self.solve( solution, pre );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            return ret;
+          } );
 
         cls.def( "setErrorMeasure", &Scheme::setErrorMeasure,
                  pybind11::keep_alive<1,2>() );

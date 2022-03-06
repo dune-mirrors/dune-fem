@@ -200,6 +200,17 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
     _, solverIncludes, solverTypeName, param = getSolver(solver, space.storage, defaultSolver)
 
+    # check if parameters have an option preconditioning and if this is a callable
+    preconditioning = None
+    precondkey = 'newton.linear.preconditioning.method'
+    if precondkey in parameters:
+        # if preconditioning is callable then store as preconditioning
+        # and remove from parameters
+        if callable(parameters[ precondkey ]):
+            # store as preconditioning object and remove from dict
+            preconditioning = parameters[ precondkey ]
+            parameters.pop( precondkey )
+
     if virtualize is None:
         virtualize = integrands.virtualized
 
@@ -236,6 +247,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     scheme.model = integrands
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
+
+    # if preconditioning was passed as callable then store in scheme, otherwise None is stored
+    scheme.preconditioning = preconditioning
+
     return scheme
 
 def galerkin(integrands, space=None, solver=None, parameters={},

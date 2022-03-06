@@ -13,30 +13,15 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-@deprecated("the solve method on the 'scheme' now requires the 'target' argument, so first construct a discrete function using the 'interpolate' method on the 'space'")
-def depSolve( scheme, target, rhs=None, name=None ):
-    import dune.fem.function as function
-    if target == None:
-        if name == None:
-            if hasattr(scheme, 'name'):
-                name = scheme.name
-            else:
-                name = "solution"
-        target = function.discreteFunction(scheme.space, name=name)
+def solve( scheme, target, rhs=None ):
     if rhs is None:
-        info = scheme._solve(target)
-    else:
-        info = scheme._solve(rhs, target)
-    return target,info
-
-def solve( scheme, target=None, rhs=None, name=None ):
-    if target==None:
-        return depSolve( scheme, target, rhs, name )
-    else:
-        if rhs is None:
-            return scheme._solve(target)
+        if scheme.preconditioning is not None:
+            assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
+            return scheme._solve(target, scheme.preconditioning)
         else:
-            return scheme._solve(rhs, target)
+            return scheme._solve(target)
+    else:
+        return scheme._solve(rhs, target)
 
 
 _defaultGenerator = SimpleGenerator("Scheme", "Dune::FemPy")

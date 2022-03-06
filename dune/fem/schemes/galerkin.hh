@@ -24,6 +24,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/solver/preconditionfunctionwrapper.hh>
 #include <dune/fem/common/bindguard.hh>
 
 #include <dune/fem/misc/threads/threaditerator.hh>
@@ -1561,6 +1562,13 @@ namespace Dune
         typedef InverseOperator LinearInverseOperatorType;
         typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
 
+        typedef PreconditionerFunctionWrapper<
+              typename LinearOperatorType::RangeFunctionType,
+              typename LinearOperatorType::DomainFunctionType >  PreconditionerFunctionWrapperType;
+
+        // std::function to represents the Python function passed as potential preconditioner
+        typedef typename PreconditionerFunctionWrapperType::PreconditionerFunctionType  PreconditionerFunctionType ;
+
         struct SolverInfo
         {
           SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -1615,6 +1623,19 @@ namespace Dune
           bnd.clear();
           setModelConstraints( solution );
           invOp_.bind(fullOperator());
+          invOp_( bnd, solution );
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+        }
+
+        SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
+        {
+          DiscreteFunctionType bnd( solution );
+          bnd.clear();
+          setModelConstraints( solution );
+
+          PreconditionerFunctionWrapperType pre( p );
+          invOp_.bind(fullOperator(), pre);
           invOp_( bnd, solution );
           invOp_.unbind();
           return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );

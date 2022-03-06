@@ -48,11 +48,26 @@ model = create.model("integrands", grid, a==b)
 
 def test(space):
     if test_numpy:
+        def preconditioner(u , v):
+            global printMsg
+            if printMsg:
+                print(f"Python fct preconditioner: u = {u.name} and v = {v.name}")
+            printMsg = False
+
+            # do nothing preconditioner
+            v.assign(u)
+            return
+
         numpySpace  = create.space(space, grid, dimRange=1, order=1, storage='numpy')
-        numpyScheme = create.scheme("galerkin", model, numpySpace)
+        solverParameters = { "newton.linear.preconditioning.method": preconditioner }
+        numpyScheme = create.scheme("galerkin", model, numpySpace, parameters= solverParameters)
         numpy_h     = create.function("discrete", numpySpace, name="numpy")
         numpy_dofs  = numpy_h.as_numpy
-        # numpyScheme.solve(target = numpy_h)
+
+        global printMsg
+        printMsg = True
+
+        numpyScheme.solve(numpy_h)
         start= time.time()
         for i in range(testLoop):
             linOp   = linearOperator(numpyScheme)

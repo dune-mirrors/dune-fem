@@ -129,7 +129,8 @@ namespace Dune
         {
           if( v_.empty() )
           {
-            v_.reserve( parameter_->gmresRestart()+1 );
+            const int extra = ( preconditioner_ ) ? 2 : 1 ;
+            v_.reserve( parameter_->gmresRestart()+extra );
             for( int i=0; i<=parameter_->gmresRestart(); ++i )
             {
               v_.emplace_back( DiscreteFunction( "GMRes::v", u.space() ) );
