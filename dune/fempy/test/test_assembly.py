@@ -72,7 +72,7 @@ if test_scalar:
 
     space = "lagrange"
     if test_fem:
-        test(model,space,dimRange,dimRange,"fem")
+        test(model,space,dimRange,dimRange,"numpy")
     if test_istl:
         test(model,space,dimRange,dimRange,"istl")
     if test_petsc:
@@ -92,7 +92,7 @@ if test_vector:
 
     space = "lagrange"
     if test_fem:
-        test(model,space,dimRange,dimRange,"fem")
+        test(model,space,dimRange,dimRange,"numpy")
     if test_istl:
         test(model,space,dimRange,dimRange,"istl")
     if test_petsc:
@@ -115,7 +115,7 @@ if test_21:
 
     space = "lagrange"
     if test_fem:
-        test(model,space,2,1,"fem")
+        test(model,space,2,1,"numpy")
     if test_istl:
         test(model,space,2,1,"istl")
     if test_petsc:
@@ -127,7 +127,7 @@ if test_12:
 
     space = "lagrange"
     if test_fem:
-        test(model,space,1,2,"fem")
+        test(model,space,1,2,"numpy")
     if test_istl:
         test(model,space,1,2,"istl")
     if test_petsc:
