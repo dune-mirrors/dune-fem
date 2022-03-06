@@ -48,7 +48,7 @@ namespace Dune
 
     class IsDiscreteFunction;
 
-
+    class IsBlockVector;
 
     /** @addtogroup Communication Communication
         @{
@@ -519,8 +519,8 @@ namespace Dune
       }
 
       //! exchange data of discrete function
-      template< class DiscreteFunction, class Operation >
-      inline void exchange( DiscreteFunction &discreteFunction, const Operation& operation );
+      template< class Space, class DiscreteFunction, class Operation >
+      inline void exchange( const Space& space, DiscreteFunction &discreteFunction, const Operation& operation );
 
       //! write data of discrete function to buffer
       template< class DiscreteFunction >
@@ -558,24 +558,40 @@ namespace Dune
 
       // write data of DataImp& vector to object stream
       // --writeBuffer
-      template< class DiscreteFunction >
+      template< class Data >
       inline void writeBuffer( const int link,
                                ObjectStreamType &str,
-                               const DiscreteFunction &discreteFunction ) const
+                               const Data &data ) const
       {
-        assert( sequence_ == discreteFunction.space().sequence() );
         const auto &indexMap = sendIndexMap_[ dest( link ) ];
         const int size = indexMap.size();
+        typedef typename Data :: DofType DofType;
 
-        typedef typename DiscreteFunction :: DofType DofType;
-
-        // reserve write buffer for storage of dofs
-        typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
-        str.reserve( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) );
-        for( int i = 0; i < size; ++i )
+        // Dune::Fem::DiscreteFunctionInterface and derived
+        if constexpr ( std::is_base_of< IsDiscreteFunction, Data >::value )
         {
-          const auto &block = discreteFunction.dofVector()[ indexMap[ i ] ];
-          Hybrid::forEach( localBlockIndices, [ &str, &block ] ( auto &&k ) { str.writeUnchecked( block[ k ] ); } );
+          assert( sequence_ == data.space().sequence() );
+          // reserve write buffer for storage of dofs
+          typename Data::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
+          str.reserve( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) );
+          for( int i = 0; i < size; ++i )
+          {
+            const auto &block = data.dofVector()[ indexMap[ i ] ];
+            Hybrid::forEach( localBlockIndices, [ &str, &block ] ( auto &&k ) { str.writeUnchecked( block[ k ] ); } );
+          }
+        }
+
+        // Dune::Fem::BlockVectorInterface and derived
+        if constexpr ( std::is_base_of< IsBlockVector, Data > :: value )
+        {
+          static const int blockSize = Data::blockSize;
+          str.reserve( size * blockSize * sizeof( DofType ) );
+          for( int i = 0; i < size; ++i )
+          {
+            const auto &block = data[ indexMap[ i ] ];
+            for( int k=0; k<blockSize; ++k )
+              str.writeUnchecked( block[ k ] );
+          }
         }
       }
 
@@ -592,29 +608,54 @@ namespace Dune
 
       // read data from object stream to DataImp& data vector
       // --readBuffer
-      template< class DiscreteFunction, class Operation >
+      template< class Data, class Operation >
       inline void readBuffer( const int link,
                               ObjectStreamType &str,
-                              DiscreteFunction &discreteFunction,
+                              Data &data,
                               const Operation& operation ) const
       {
         static_assert( ! std::is_pointer< Operation > :: value,
                        "DependencyCache::readBuffer: Operation needs to be a reference!");
 
-        assert( sequence_ == discreteFunction.space().sequence() );
-        typedef typename DiscreteFunction :: DofType DofType;
-
         // get index map of rank belonging to link
         const auto &indexMap = recvIndexMap_[ dest( link ) ];
-
         const int size = indexMap.size();
-        // make sure that the receive buffer has the correct size
-        typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
-        assert( static_cast< std::size_t >( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
-        for( int i = 0; i < size; ++i )
+        typedef typename Data :: DofType DofType;
+
+        // Dune::Fem::DiscreteFunctionInterface and derived
+        if constexpr ( std::is_base_of< IsDiscreteFunction, Data >::value )
         {
-          auto &&block = discreteFunction.dofVector()[ indexMap[ i ] ];
-          Hybrid::forEach( localBlockIndices, [ &str, &operation, &block ] ( auto &&k ) {
+          assert( sequence_ == data.space().sequence() );
+
+          // make sure that the receive buffer has the correct size
+          typename Data::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
+          assert( static_cast< std::size_t >( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
+          for( int i = 0; i < size; ++i )
+          {
+            auto &&block = data.dofVector()[ indexMap[ i ] ];
+            Hybrid::forEach( localBlockIndices, [ &str, &operation, &block ] ( auto &&k ) {
+                DofType value;
+#if HAVE_DUNE_ALUGRID
+                str.readUnchecked( value );
+#else // #if HAVE_DUNE_ALUGRID
+                str.read( value );
+#endif // #else // #if HAVE_DUNE_ALUGRID
+                // apply operation, i.e. COPY, ADD, etc.
+                operation( value, block[ k ] );
+              } );
+          }
+        }
+
+        // Dune::Fem::BlockVectorInterface and derived
+        if constexpr ( std::is_base_of< IsBlockVector, Data > :: value )
+        {
+          static const int blockSize = Data::blockSize;
+          assert( static_cast< std::size_t >( size * blockSize * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
+          for( int i = 0; i < size; ++i )
+          {
+            auto &&block = data[ indexMap[ i ] ];
+            for( int k=0; k<blockSize; ++k )
+            {
               DofType value;
 #if HAVE_DUNE_ALUGRID
               str.readUnchecked( value );
@@ -623,7 +664,8 @@ namespace Dune
 #endif // #else // #if HAVE_DUNE_ALUGRID
               // apply operation, i.e. COPY, ADD, etc.
               operation( value, block[ k ] );
-            } );
+            }
+          }
         }
       }
     };
@@ -934,12 +976,10 @@ namespace Dune
     }
 
     template< class BlockMapper >
-    template< class DiscreteFunction, class Operation >
+    template< class Space, class DiscreteFunction, class Operation >
     inline void DependencyCache< BlockMapper >
-    :: exchange( DiscreteFunction &discreteFunction, const Operation& operation )
+    :: exchange( const Space& space, DiscreteFunction &discreteFunction, const Operation& operation )
     {
-      const auto& space = discreteFunction.space();
-
       // on serial runs: do nothing
       if( space.gridPart().comm().size() <= 1 ) return;
 
@@ -1146,7 +1186,16 @@ namespace Dune
       template <class DiscreteFunctionType, class Operation>
       void exchange(DiscreteFunctionType & df, const Operation& operation ) const
       {
-        cache().exchange( df, operation );
+        cache().exchange( df.space(), df, operation );
+      }
+
+      //! exchange discrete function to all procs we share data
+      //! using the given operation
+      template <class Vector, class Operation>
+      void exchange(const SpaceType& space, Vector& v, const Operation& operation ) const
+      {
+        static_assert( std::is_base_of< IsBlockVector, Vector > :: value, "exchange needs BlockVectorInterface and derived");
+        cache().exchange( space, v, operation );
       }
 
       //! write given df to given buffer

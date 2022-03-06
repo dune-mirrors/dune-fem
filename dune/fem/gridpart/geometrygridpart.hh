@@ -180,14 +180,14 @@ namespace Dune
 
     template< class GridFunction >
     class GeometryGridPart
-      : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
+      : public GridPartDefault< GeometryGridPartTraits< GridFunction > >
     {
     public:
       typedef GridFunction GridFunctionType;
 
     private:
       typedef GeometryGridPart< GridFunctionType > ThisType;
-      typedef GridPartInterface< GeometryGridPartTraits< GridFunctionType > > BaseType;
+      typedef GridPartDefault< GeometryGridPartTraits< GridFunctionType > > BaseType;
       typedef typename GeometryGridPartTraits< GridFunctionType >::GridFamily GridFamily;
 
     public:
@@ -223,22 +223,10 @@ namespace Dune
       {};
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
-        : gridFunction_( &gridFunction ),
+        : BaseType( const_cast< GridType& > (gridFunction.gridPart().grid()) ),
+          gridFunction_( &gridFunction ),
           indexSet_( hostGridPart().indexSet() )
       {}
-
-      ~GeometryGridPart()
-      {}
-
-      const GridType &grid () const
-      {
-        return hostGridPart().grid();
-      }
-
-      GridType &grid ()
-      {
-        return const_cast< GridType & >( hostGridPart().grid() ); //! correct?
-      }
 
       const IndexSetType &indexSet () const
       {
@@ -287,20 +275,6 @@ namespace Dune
       {
         return GeometryGridPartIntersectionIterator< const GridFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
-
-      [[deprecated("Use BoundnryIdProvider instead!")]]
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
-      }
-
-      [[deprecated("Use DofManager::sequence instead!")]]
-      int sequence () const
-      {
-        return hostGridPart().sequence();
-      }
-
-      const CollectiveCommunicationType &comm () const { return hostGridPart().comm(); }
 
       template< class DataHandle, class Data >
       void communicate ( CommDataHandleIF< DataHandle, Data > &handle,

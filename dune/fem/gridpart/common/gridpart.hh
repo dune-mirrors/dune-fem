@@ -175,15 +175,24 @@ namespace Dune
         return asImp().indexSet();
       }
 
+      //! \brief returns true if current grid part represents a conforming grid
+      bool isConforming() const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( (asImp().isConforming()) );
+        return asImp().isConforming();
+      }
+
       /** \brief obtain number of entities in a given codimension */
       int size ( int codim ) const
       {
+        CHECK_INTERFACE_IMPLEMENTATION( (asImp().size( codim )) );
         return asImp().size( codim );
       }
 
       /** \brief obtain number of entities with a given geometry type */
       int size ( const GeometryType &type ) const
       {
+        CHECK_INTERFACE_IMPLEMENTATION( (asImp().size( type )) );
         return asImp().size( type );
       }
 
@@ -407,6 +416,13 @@ namespace Dune
 
       //! Returns reference to the underlying grid
       GridType &grid () { assert( grid_ ); return *grid_; }
+
+      //! \brief returns true if current grid part represents a conforming grid
+      bool isConforming() const
+      {
+        // default is to return the static variant
+        return bool(BaseType::conforming);
+      }
 
       /** \brief obtain number of entities in a given codimension */
       int size ( int codim ) const

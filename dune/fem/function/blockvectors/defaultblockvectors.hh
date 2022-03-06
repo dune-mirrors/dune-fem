@@ -48,6 +48,8 @@ namespace Dune {
   public:
     //! Type of the field the dofs lie in
     typedef Field  FieldType;
+    //! make consistent with discrete function
+    typedef Field  DofType;
 
     /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType &other )

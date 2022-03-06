@@ -16,6 +16,7 @@
 // dune-fem includes
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/stackallocator.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/space/common/commoperations.hh>
@@ -857,12 +858,19 @@ namespace Dune
       template <class DiscreteFunction, class Operation>
       void communicate(DiscreteFunction& discreteFunction, const Operation& op ) const
       {
-        static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
-            typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
-            localBlockSize == static_cast< std::size_t >(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
-            "DiscreteFunctionSpaceDefault::communicate cannot be called with discrete functions defined over a different space" );
-
-        communicator().exchange( discreteFunction, op );
+        if constexpr ( std::is_base_of< IsDiscreteFunction, DiscreteFunction >::value )
+        {
+          static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
+              typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
+              localBlockSize == static_cast< std::size_t >(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
+              "DiscreteFunctionSpaceDefault::communicate cannot be called with discrete functions defined over a different space" );
+          communicator().exchange( discreteFunction, op );
+        }
+        else
+        {
+          static_assert( std::is_base_of< IsBlockVector, DiscreteFunction> :: value, "DiscreteFunctionSpaceDefault::communicate needs at least a BlockVectorInterface and derived");
+          communicator().exchange( asImp(), discreteFunction, op );
+        }
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation &operation) const
