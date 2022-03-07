@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import time,sys
+import time,sys,io
 import numpy as np
 import dune.grid
 import dune.fem
 import dune.create as create
 from dune.fem.operator import linear as linearOperator
+from dune.generator import algorithm
 
 from dune.ufl import Space
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, ds, dx, inner, grad
@@ -48,6 +49,13 @@ model = create.model("integrands", grid, a==b)
 
 def test(space):
     if test_numpy:
+        global printMsg
+        printMsg = True
+
+        numpySpace  = create.space(space, grid, dimRange=1, order=1, storage='numpy')
+        numpy_h     = create.function("discrete", numpySpace, name="numpy")
+        numpy_dofs  = numpy_h.as_numpy
+
         def preconditioner(u , v):
             global printMsg
             if printMsg:
@@ -58,14 +66,17 @@ def test(space):
             v.assign(u)
             return
 
-        numpySpace  = create.space(space, grid, dimRange=1, order=1, storage='numpy')
-        solverParameters = { "newton.linear.preconditioning.method": preconditioner }
-        numpyScheme = create.scheme("galerkin", model, numpySpace, parameters= solverParameters)
-        numpy_h     = create.function("discrete", numpySpace, name="numpy")
-        numpy_dofs  = numpy_h.as_numpy
+        code = """
+        #include <iostream>
+        template< class DF >
+        void preconditioner( const DF &u, DF &v ) {
+          v.assign(u);
+        }
+        """
+        preconditioner = algorithm.load('preconditioner', io.StringIO(code), numpy_h,numpy_h)
 
-        global printMsg
-        printMsg = True
+        solverParameters = { "newton.linear.preconditioning.method": preconditioner }
+        numpyScheme = create.scheme("galerkin", model, numpySpace, parameters=solverParameters)
 
         numpyScheme.solve(numpy_h)
         start= time.time()
