@@ -15,7 +15,6 @@ PYBIND11_MODULE( _fem, module )
   {
     {
       typedef typename Dune::Fem::detail::SingletonStorage::StorageType Singleton;
-      typedef typename Dune::Fem::detail::SingletonStorage::SingletonDeleter Deleter;
       pybind11::class_< Singleton, std::shared_ptr<Singleton> > cls( module, "_Singleton" );
       Dune::Fem::detail::SingletonStorage::getStorage();
       module.attr( "_singleton" ) = pybind11::cast( Dune::Fem::detail::SingletonStorage::storage_ );
