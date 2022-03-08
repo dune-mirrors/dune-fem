@@ -23,7 +23,7 @@ namespace Dune {
   namespace Fem {
 
   // tag for block vectors
-  struct IsBlockVector {};
+  class IsBlockVector {};
 
 
 
