@@ -243,7 +243,7 @@ namespace Dune
           const std::string pcNames[] = { "default", "none", "asm", "sor", "jacobi", "ilu", "icc", "superlu", "hypre", "ml", "lu" };
           pcType = reader.getEnum("petsc.preconditioning.method", pcNames, 0 );
           std::cout << "WARNING: using deprecated parameter 'petsc.preconditioning.method' use "
-                    << parameter.keyPrefix() << "preconditioning.method instead\n";
+                    << parameter.keyPrefix() << ".preconditioning.method instead\n";
           if (pcType >= 8)
             pcType = 7-pcType;  // hypre=-1, ml=-2, lu=-3
         }
@@ -300,6 +300,7 @@ namespace Dune
           case -1: // PetscPrec::hypre:
             {
 #ifdef PETSC_HAVE_HYPRE
+              // set with parameter ...petsc.preconditioning.hypre.method
               int hypreType = parameter.hypreMethod();
               std::string hypre;
               if ( hypreType == PetscSolverParameter::boomeramg )
@@ -396,6 +397,11 @@ namespace Dune
               break;
             }
           case -4: // PetscPrec::pcgamg:
+            // requires MATRIX_AIJ, i.e. not blocking of entries
+            if( parameter.blockedMode() )
+            {
+              DUNE_THROW(NotImplemented,"PetscInverseOperator: 'pcgamg' requires 'aij' matrix. Set 'petsc.blockedmode' to false!");
+            }
             ::Dune::Petsc::PCSetType( pc, PCGAMG );
             break;
 

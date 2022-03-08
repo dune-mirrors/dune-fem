@@ -4,6 +4,8 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
+#include <dune/fem/solver/parameter.hh>
+
 
 namespace Dune
 {
@@ -27,7 +29,8 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
-      DGHelmholtzJacobianOperator ( const std::string &name, const DomainFunctionSpaceType &dSpace, const RangeFunctionSpaceType &rSpace )
+      DGHelmholtzJacobianOperator ( const std::string &name, const DomainFunctionSpaceType &dSpace, const RangeFunctionSpaceType &rSpace,
+                                    const SolverParameter& param = SolverParameter() )
       : BaseType( name, dSpace, rSpace ),
         lambda_( 0 ),
         wTmp_( "DGHelmholtzJacobianOperator temporary", rSpace )
