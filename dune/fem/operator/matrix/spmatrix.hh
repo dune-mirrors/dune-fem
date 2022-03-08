@@ -340,7 +340,55 @@ namespace Dune
         return std::tie(values_,columns_,rows_);
       }
 
+      //! Apply Jacobi/SOR method
+      template<class DiagType, class ArgDFType, class DestDFType, class WType>
+      void jacobi(const DiagType& diagInv, const ArgDFType& f, DestDFType& ret, const WType& w ) const
+      {
+        DestDFType xold( ret );
+        parallelIterative( diagInv, f, xold, ret, w );
+      }
+
+      //! Apply Jacobi/SOR method
+      template<class DiagType, class ArgDFType, class DestDFType, class WType>
+      void sor(const DiagType& diagInv, const ArgDFType& f, DestDFType& ret, const WType& w ) const
+      {
+        parallelIterative( diagInv, f, ret, ret, w );
+      }
+
+
     protected:
+      //! Apply Jacobi/SOR method
+      template<class DiagType, class ArgDFType, class DestDFType, class WType>
+      void parallelIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
+      {
+        constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
+
+        for(size_type row = 0; row<dim_[0]; ++row)
+        {
+          const size_type endrow = endRow( row );
+
+          const auto rowNr  = row / blockSize ;
+          const auto rDofNr = row % blockSize ;
+
+          auto rhs = b.dofVector()[ rowNr ][ rDofNr ];
+
+          for(size_type col = startRow( row ); col<endrow; ++col)
+          {
+            const auto realCol = columns_[ col ];
+
+            if( ! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol)) )
+              continue;
+
+            const auto blockNr = realCol / blockSize ;
+            const auto dofNr   = realCol % blockSize ;
+
+            rhs -= values_[ col ] * xold.dofVector()[ blockNr ][ dofNr ] ;
+          }
+
+          xnew.dofVector()[ rowNr ][ rDofNr ] = rhs * diagInv.dofVector()[ rowNr ][ rDofNr ];
+        }
+      }
+
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
       {
