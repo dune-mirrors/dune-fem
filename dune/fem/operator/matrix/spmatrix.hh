@@ -342,17 +342,17 @@ namespace Dune
 
       //! Apply Jacobi/SOR method
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
-      void jacobi(const DiagType& diagInv, const ArgDFType& f, DestDFType& ret, const WType& w ) const
+      void jacobi(const DiagType& diagInv, const ArgDFType& b, DestDFType& x, const WType& w ) const
       {
-        DestDFType xold( ret );
-        parallelIterative( diagInv, f, xold, ret, w );
+        DestDFType xold( x );
+        parallelIterative( diagInv, b, xold, x, w );
       }
 
       //! Apply Jacobi/SOR method
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
-      void sor(const DiagType& diagInv, const ArgDFType& f, DestDFType& ret, const WType& w ) const
+      void sor(const DiagType& diagInv, const ArgDFType& b, DestDFType& x, const WType& w ) const
       {
-        parallelIterative( diagInv, f, ret, ret, w );
+        parallelIterative( diagInv, b, x, x, w );
       }
 
 
@@ -363,20 +363,20 @@ namespace Dune
       {
         constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
 
-        for(size_type row = 0; row<dim_[0]; ++row)
+        auto diag = diagInv.dbegin();
+        auto bit  = b.dbegin();
+        auto xit  = xnew.dbegin();
+
+        for(size_type row = 0; row<dim_[0]; ++row, ++bit, ++diag, ++xit)
         {
+          auto rhs = (*bit);
+
           const size_type endrow = endRow( row );
-
-          const auto rowNr  = row / blockSize ;
-          const auto rDofNr = row % blockSize ;
-
-          auto rhs = b.dofVector()[ rowNr ][ rDofNr ];
-
           for(size_type col = startRow( row ); col<endrow; ++col)
           {
             const auto realCol = columns_[ col ];
 
-            if( ! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol)) )
+            if( (realCol == row ) || (! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol))) )
               continue;
 
             const auto blockNr = realCol / blockSize ;
@@ -385,7 +385,7 @@ namespace Dune
             rhs -= values_[ col ] * xold.dofVector()[ blockNr ][ dofNr ] ;
           }
 
-          xnew.dofVector()[ rowNr ][ rDofNr ] = rhs * diagInv.dofVector()[ rowNr ][ rDofNr ];
+          (*xit) = rhs * (*diag);
         }
       }
 

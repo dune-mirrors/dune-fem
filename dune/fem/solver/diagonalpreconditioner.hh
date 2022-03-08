@@ -71,13 +71,19 @@ namespace Dune
       typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
 
     protected:
+      typedef typename OperatorType::MatrixType MatrixType;
+
       DiscreteFunctionType diagonalInv_;
+
+      const MatrixType& matrix_;
 
     public:
       DiagonalPreconditionerBase( const OperatorType& assembledOperator )
-        : diagonalInv_( "diag-preconditioning", assembledOperator.rangeSpace() )
+        : diagonalInv_( "diag-preconditioning", assembledOperator.rangeSpace()),
+          matrix_( assembledOperator.exportMatrix() )
+
       {
-        // estract diagonal elements form matrix object
+        // extract diagonal elements form matrix object
         assembledOperator.extractDiagonal( diagonalInv_ );
 
         // make consistent at border dofs
@@ -116,6 +122,10 @@ namespace Dune
     protected:
       void apply( const DiscreteFunctionType& u, DiscreteFunctionType& res ) const
       {
+        /*
+        matrix_.sor( diagonalInv_, u, res, 1.0 );
+        */
+
         ConstDofIteratorType uIt     = u.dbegin();
         ConstDofIteratorType diagInv = diagonalInv_.dbegin();
 
