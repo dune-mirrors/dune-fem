@@ -119,17 +119,39 @@ namespace Dune
         registerInverseLinearOperator( cls, PriorityTag<42>() );
       }
 
-      // registerScheme
-      // --------------
-
-      template< class Scheme, class... options >
-      inline static void registerScheme ( pybind11::module module, pybind11::class_< Scheme, options... > cls )
+      // registerSchemeSolve
+      // --------------------
+      template< class Scheme, class... options, std::enable_if_t<
+          std::is_same_v<
+                decltype( std::declval< const Scheme & >().solve(
+                  std::declval< typename Scheme::DiscreteFunctionType& >(),
+                  std::declval< const typename Scheme::PreconditionerFunctionType& >() ) ),
+                typename Scheme::SolverInfo>, int > _i=0 >
+      inline static void registerPrecondSolve ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-
         using pybind11::operator""_a;
 
-        registerSchemeConstructor( cls );
+        cls.def( "_solve", [] ( Scheme &self,
+                                DiscreteFunction &solution,
+                                const typename Scheme::PreconditionerFunctionType& pre
+                              ) {
+            auto info = self.solve( solution, pre );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            return ret;
+          } );
+      }
+      template< class Scheme, class... options >
+      inline static void registerPrecondSolve ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
+      {}
+      template< class Scheme, class... options >
+      inline static void registerSolveMethods ( pybind11::class_< Scheme, options... > cls )
+      {
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+        using pybind11::operator""_a;
 
         cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
             auto info = self.solve( rhs, solution );
@@ -147,17 +169,21 @@ namespace Dune
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             return ret;
           } );
-        cls.def( "_solve", [] ( Scheme &self,
-                                DiscreteFunction &solution,
-                                const typename Scheme::PreconditionerFunctionType& pre
-                              ) {
-            auto info = self.solve( solution, pre );
-            pybind11::dict ret;
-            ret["converged"]  = pybind11::cast(info.converged);
-            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
-            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
-            return ret;
-          } );
+          registerPrecondSolve ( cls, PriorityTag< 42 >() );
+      }
+
+      // registerScheme
+      // --------------
+
+      template< class Scheme, class... options >
+      inline static void registerScheme ( pybind11::module module, pybind11::class_< Scheme, options... > cls )
+      {
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+
+        using pybind11::operator""_a;
+
+        registerSchemeConstructor( cls );
+        registerSolveMethods( cls );
 
         cls.def( "setErrorMeasure", &Scheme::setErrorMeasure,
                  pybind11::keep_alive<1,2>() );
