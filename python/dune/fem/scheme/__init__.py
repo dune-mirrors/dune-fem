@@ -15,7 +15,7 @@ from dune.generator.generator import SimpleGenerator
 
 def solve( scheme, target, rhs=None ):
     if rhs is None:
-        if scheme.preconditioning is not None:
+        if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
             assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
             return scheme._solve(target, scheme.preconditioning)
         else:
