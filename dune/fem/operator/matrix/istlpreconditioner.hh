@@ -274,19 +274,21 @@ namespace Dune
 
         for (int i=0; i<_n; ++i)
         {
-          iterate(_A_, x, v, d, _w, diagonalInv_ );
+          iterate(_A_, v, x, d, _w, diagonalInv_ );
+
+          // communicate border unknowns
+          tmp.communicate();
+
           // for Jacobi now update the result
           if constexpr ( jacobi )
           {
-            v = x;
+            x = v;
             // for Jacobi skip last communication since this
             // is already in consistent state at this point
             if( continuous && i == _n-1)
               continue ;
           }
 
-          // communicate border unknowns
-          tmp.communicate();
         }
       }
 

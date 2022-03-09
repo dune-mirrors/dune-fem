@@ -342,23 +342,6 @@ namespace Dune
 
       //! Apply Jacobi/SOR method
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
-      void jacobi(const DiagType& diagInv, const ArgDFType& b, DestDFType& x, const WType& w ) const
-      {
-        DestDFType xold( x );
-        parallelIterative( diagInv, b, xold, x, w );
-      }
-
-      //! Apply Jacobi/SOR method
-      template<class DiagType, class ArgDFType, class DestDFType, class WType>
-      void sor(const DiagType& diagInv, const ArgDFType& b, DestDFType& x, const WType& w ) const
-      {
-        parallelIterative( diagInv, b, x, x, w );
-      }
-
-
-    protected:
-      //! Apply Jacobi/SOR method
-      template<class DiagType, class ArgDFType, class DestDFType, class WType>
       void parallelIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
       {
         constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
@@ -385,10 +368,11 @@ namespace Dune
             rhs -= values_[ col ] * xold.dofVector()[ blockNr ][ dofNr ] ;
           }
 
-          (*xit) = rhs * (*diag);
+          (*xit) = w * (rhs * (*diag));
         }
       }
 
+    protected:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
       {
@@ -530,9 +514,6 @@ namespace Dune
         rangeMapper_( rangeSpace_.blockMapper() ),
         sequence_( -1 ),
         matrix_(),
-        preconditioning_(
-            param.preconditionMethod({SolverParameter::none,SolverParameter::jacobi})
-              == SolverParameter::jacobi ),
         localMatrixStack_( *this )
       {}
 
@@ -784,7 +765,6 @@ namespace Dune
       RangeMapperType rangeMapper_ ;
       int sequence_;
       mutable MatrixType matrix_;
-      bool preconditioning_;
       mutable LocalMatrixStackType localMatrixStack_;
     };
 

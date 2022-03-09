@@ -7,6 +7,7 @@
 #include <dune/fem/solver/parameter.hh>
 
 #include <dune/fem/solver/cginverseoperator.hh>
+#include <dune/fem/solver/fempreconditioning.hh>
 
 #include <dune/fem/solver/linear/gmres.hh>
 #include <dune/fem/solver/linear/bicgstab.hh>
@@ -78,34 +79,30 @@ namespace Dune
       KrylovInverseOperator ( const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : BaseType( parameter ),
         precondObj_(),
-        useDiagonalPreconder_(false),
         verbose_( parameter.verbose() ),
         method_( method < 0 ?
             parameter.solverMethod({ SolverParameter::gmres,
                                      SolverParameter::cg,
                                      SolverParameter::bicgstab })
-            : method )
+            : method ),
+        precondMethod_( parameter.preconditionMethod(
+                         { SolverParameter::none,
+                           SolverParameter::sor,
+                           SolverParameter::gauss_seidel,
+                           SolverParameter::jacobi } )
+                      )
       {
         assert( parameter_->errorMeasure() == 0 );
-        if( ! precondObj_ )
-        {
-          bool preconditioning = parameter.parameter().template getValue< bool >( "fem.preconditioning", false );
-          if (!preconditioning)
-            preconditioning = parameter.preconditionMethod(
-                { SolverParameter::none,  SolverParameter::jacobi } ) == SolverParameter::jacobi;
-          useDiagonalPreconder_ = preconditioning;
-        }
       }
 
       template <class Operator>
       void bind ( const Operator &op )
       {
-        if( useDiagonalPreconder_ && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, Operator > :: value )
+        if( precondMethod_ && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, Operator > :: value )
         {
-          // create diagonal preconditioner
-          precondObj_.reset( new DiagonalPreconditioner< DomainFunctionType, Operator >( op ) );
-          preconditioner_ = precondObj_.operator->();
+          createPreconditioner( op );
         }
+
         if( precondObj_ )
           BaseType::bind( op, *precondObj_ );
         else
@@ -200,22 +197,41 @@ namespace Dune
       : KrylovInverseOperator( parameter )
       {
         bind(op);
-        if( ! preconditioner_ )
+      }
+
+    protected:
+      template <class LinearOperator>
+      void createPreconditioner( const LinearOperator &op )
+      {
+        if( precondMethod_ > 0 && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, LinearOperator > :: value )
         {
-          bool preconditioning = parameter.parameter().template getValue< bool >( "fem.preconditioning", false );
-          if (!preconditioning)
-            preconditioning = parameter.preconditionMethod(
-                { SolverParameter::none,  SolverParameter::jacobi } ) == 1;
-          if( preconditioning && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType >, LinearOperator > :: value )
+          const int n = parameter_->preconditionerIteration();
+          const double w = parameter_->relaxation();
+
+          if( precondMethod_ == SolverParameter::jacobi )
           {
             // create diagonal preconditioner
-            precondObj_.reset( new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( op ) );
+            precondObj_.reset( new FemJacobiPreconditioning< DomainFunctionType, LinearOperator >( op, n, w ) );
+          }
+          else if( precondMethod_ == SolverParameter::gauss_seidel )
+          {
+            // create diagonal preconditioner
+            precondObj_.reset( new FemGaussSeidelPreconditioning< DomainFunctionType, LinearOperator >( op, n, w ) );
+          }
+          else if( precondMethod_ == SolverParameter::sor )
+          {
+            // create diagonal preconditioner
+            precondObj_.reset( new FemSORPreconditioning< DomainFunctionType, LinearOperator >( op, n, w ) );
+          }
+
+          // if preconditioner was created, set pointer
+          if( precondObj_ )
+          {
             preconditioner_ = precondObj_.operator->();
           }
         }
       }
 
-    protected:
       using BaseType :: operator_;
       using BaseType :: preconditioner_;
 
@@ -223,13 +239,13 @@ namespace Dune
       using BaseType :: iterations_;
 
       std::unique_ptr< PreconditionerType > precondObj_;
-      bool useDiagonalPreconder_;
 
       mutable std::vector< DomainFunctionType > v_;
 
       const bool verbose_;
 
       const int method_;
+      const int precondMethod_;
     };
 
 
