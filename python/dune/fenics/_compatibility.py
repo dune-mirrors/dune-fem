@@ -47,21 +47,31 @@ def UnitSquareMesh( xspacing, yspacing = None, zspaceing = None, **unused ):
 # create a discrete functions space given a grid view (called mesh in Fenics)
 def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     from dune.fem.space import lagrange, dgonb, bdm, raviartThomas
+    spc = None
     if( family in ['P','Lagrange', 'CG'] ):
-        return lagrange(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        spc = lagrange(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'DG' ):
-        return dgonb(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        scp = dgonb(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'BDM' ):
-        return bdm(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        scp = bdm(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'RT' ):
-        return raviarThomas(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        spc = raviarThomas(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     else:
         raise ValueError('Space with identifier',spacetype,' not known\n')
+
+    # compatibility, add dim function returning size
+    spc.dim = lambda : spc.size
+    return spc
 
 def VectorFunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     if dimrange is None:
         dimrange = mesh.dimension
     return FunctionSpace(mesh, family, degree, dimrange, **kwargs)
+
+def MixedFunctionSpace( spaces, **kwargs ):
+    from dune.fem.space import combined
+    # combined is expecting a comma separated list
+    return combined( *spaces )
 
 # creates a discrete function given a discrete space
 _counter = -1
@@ -105,6 +115,24 @@ def solve( equation, target, bc = None, solver=None, **kwargs):
 
     scheme = galerkin( problem, target.space, solver, **kwargs)
     scheme.solve( target=target )
+
+def NonlinearVariationalProblem(equations, target, bcs=None):
+    return (equations, target, bcs)
+
+def NonlinearVariationalSolver(problem, solver_parameters={}, nullspace=None, transpose_nullspace=None):
+    from dune.fem.scheme import galerkin
+    if not isinstance(problem, tuple):
+        print("Use NonlinearVariationalProblem to create problem")
+
+    scheme = None
+    if problem[2] is not None:
+        scheme = galerkin([problem[0] == 0, problem[2]], solver="gmres", parameters=solver_parameters)
+    else:
+        scheme = galerkin(problem[0] == 0, solver="gmres", parameters=solver_parameters)
+
+    scheme._oldsolve = scheme.solve
+    scheme.solve = lambda : scheme._oldsolve(target=problem[1])
+    return scheme
 
 # plot data or grid
 def plot( obj, **unused ):
