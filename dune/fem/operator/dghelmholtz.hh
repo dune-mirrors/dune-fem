@@ -79,7 +79,7 @@ namespace Dune
       explicit DGHelmholtzOperator ( SpaceOperatorType &spaceOp )
       : spaceOp_( spaceOp ),
         lambda_( 0 ),
-        wTmp_( "DGHelmholtzOperator temporary", space() )
+        wTmp_( "DGHelmholtz::tmp", space() )
       {}
 
       void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
