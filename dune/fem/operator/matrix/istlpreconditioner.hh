@@ -69,14 +69,14 @@ namespace Dune
 
 #if HAVE_DUNE_ISTL
     /** \brief Iterative linear methods as preconditioners. Implemented are
-     *         Jacobi, Gauss-Seidel and SOR.
+     *         Jacobi, Gauss-Seidel, SOR and SSOR.
      *
      *         Note: On rows corresponding to border DoFs this scheme falls back to Jacobi, to avoid
      *               complicated coloring strategies. This will lead to a
      *               slightly increased number of linear iterations in parallel
      *               runs.
      */
-    template< class MatrixObject, class X, class Y, bool jacobi, int l=1 >
+    template< class MatrixObject, class X, class Y, int method, int l=1 >
     class ParallelIterative : public Preconditioner<X,Y>
     {
     public:
@@ -91,7 +91,6 @@ namespace Dune
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType ;
       typedef typename DiscreteFunctionSpaceType:: DomainFieldType DomainFieldType;
 
-
       static const bool isNumber = (M::block_type::rows == M::block_type::cols) && (M::block_type::rows == 1);
 
       typedef FieldVector< field_type, MatrixBlockType::rows*MatrixBlockType::cols > FlatMatrixBlock;
@@ -102,11 +101,15 @@ namespace Dune
 
       // Implementation of SOR and Jacobi's method
       // Note: for SOR we have xnew == xold
+      template <class rowiterator, bool forward>
       void iterate (const M& A, X& xnew, const X& xold, const Y& b, const field_type& w,
-                    const DiagonalType& diagInv) const
+                    const DiagonalType& diagInv,
+                    rowiterator i,
+                    const rowiterator endi,
+                    const std::integral_constant<bool, forward> fb ) const
       {
-        typedef typename M::ConstRowIterator rowiterator;
         typedef typename M::ConstColIterator coliterator;
+
         typedef typename Y::block_type bblock;
         typedef typename X::block_type xblock;
 
@@ -114,13 +117,21 @@ namespace Dune
         xblock v;
 
         // Initialize nested data structure if there are entries
-        if(A.begin()!=A.end())
+        if( i != endi )
           v=xnew[0];
 
         const bool hasDiagInv = diagInv.size() > 0 ;
 
-        const rowiterator endi=A.end();
-        for (rowiterator i=A.begin(); i!=endi; ++i)
+        const auto nextRow = [&i]()
+        {
+          // increment/decrement iterator
+          if constexpr ( forward )
+            ++i;
+          else
+            --i;
+        };
+
+        for (; i!=endi; nextRow() )
         {
           const coliterator endj=(*i).end();           // iterate over a_ij with j < i
           coliterator j=(*i).begin();
@@ -173,7 +184,24 @@ namespace Dune
             xnew[rowIdx].axpy(w,v);           //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
           }
         }
+      }
 
+      // Implementation of SOR and Jacobi's method
+      // Note: for SOR we have xnew == xold
+      void forwardIterate (const M& A, X& xnew, const X& xold, const Y& b, const field_type& w,
+                           const DiagonalType& diagInv ) const
+      {
+        // standard forwards iteration
+        iterate( A, xnew, xold, b, w, diagInv, A.begin(), A.end(), std::true_type() );
+      }
+
+      // Implementation of SOR and Jacobi's method
+      // Note: for SOR we have xnew == xold
+      void backwardIterate (const M& A, X& xnew, const X& xold, const Y& b, const field_type& w,
+                            const DiagonalType& diagInv ) const
+      {
+        // backwards iteration (use r-iterators)
+        iterate( A, xnew, xold, b, w, diagInv, A.beforeEnd(), A.beforeBegin(), std::false_type() );
       }
 
     protected:
@@ -266,6 +294,8 @@ namespace Dune
         // for communication
         DiscreteFunctionType tmp("ParIt::apply", space, v );
 
+        static constexpr bool jacobi = (method == SolverParameter::jacobi);
+
         std::unique_ptr< X > xTmp;
         if constexpr ( jacobi )
           xTmp.reset( new X(v) );
@@ -274,19 +304,30 @@ namespace Dune
 
         for (int i=0; i<_n; ++i)
         {
-          iterate(_A_, x, v, d, _w, diagonalInv_ );
+          forwardIterate(_A_, v, x, d, _w, diagonalInv_ );
+
+          if constexpr ( method == SolverParameter::ssor )
+          {
+            // seems not to be necessary
+            // communicate border unknowns
+            //tmp.communicate();
+
+            // create symmetry by iterating backwards
+            backwardIterate(_A_, v, x, d, _w, diagonalInv_ );
+          }
+
+          // communicate border unknowns
+          tmp.communicate();
+
           // for Jacobi now update the result
           if constexpr ( jacobi )
           {
-            v = x;
+            x = v;
             // for Jacobi skip last communication since this
             // is already in consistent state at this point
             if( continuous && i == _n-1)
               continue ;
           }
-
-          // communicate border unknowns
-          tmp.communicate();
         }
       }
 
@@ -298,10 +339,13 @@ namespace Dune
     };
 
     template< class MatrixObject, class X, class Y >
-    using ParallelSOR = ParallelIterative< MatrixObject, X, Y, false>;
+    using ParallelSOR = ParallelIterative< MatrixObject, X, Y, SolverParameter::sor>;
 
     template< class MatrixObject, class X, class Y >
-    using ParallelJacobi = ParallelIterative< MatrixObject, X, Y, true>;
+    using ParallelSSOR = ParallelIterative< MatrixObject, X, Y, SolverParameter::ssor>;
+
+    template< class MatrixObject, class X, class Y >
+    using ParallelJacobi = ParallelIterative< MatrixObject, X, Y, SolverParameter::jacobi>;
 
     template< class X, class Y >
     class IdentityPreconditionerWrapper : public Preconditioner<X,Y>
@@ -680,8 +724,8 @@ namespace Dune
                     SolverParameter::amg_jacobi,  // AMG with Jacobi smoother
                     SolverParameter::ildl         // ILDL from istl
                   } );
-        const double relaxFactor         = param.relaxation();
-        const size_t numIterations       = param.preconditionerIteration();
+        const double relaxFactor   = param.relaxation();
+        const size_t numIterations = param.preconditionerIteration();
 
         const DomainSpaceType& domainSpace = matrixObj.domainSpace();
         const RangeSpaceType&  rangeSpace  = matrixObj.rangeSpace();
@@ -703,20 +747,18 @@ namespace Dune
         // SSOR
         else if( preconditioning == SolverParameter::ssor )
         {
-          if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
-
-          typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                      (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations, param.verbose() );
+          typedef ParallelSSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
-        // SOR
-        else if(preconditioning == SolverParameter::sor )
+        // SOR and Gauss-Seidel
+        else if(preconditioning == SolverParameter::sor || preconditioning == SolverParameter::gauss_seidel)
         {
           typedef ParallelSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations,
+                                    (preconditioning == SolverParameter::gauss_seidel) ? 1.0 : relaxFactor ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // ILU
@@ -729,14 +771,6 @@ namespace Dune
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
           // might need to set verbosity here?
           PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage()) );
-          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
-        }
-        // Gauss-Seidel
-        else if(preconditioning == SolverParameter::gauss_seidel)
-        {
-          typedef ParallelSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, 1.0 ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Jacobi
