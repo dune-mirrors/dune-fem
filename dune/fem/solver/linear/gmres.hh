@@ -78,7 +78,7 @@ namespace LinearSolver
       const auto& vj = vjp.dofVector();
 
       const size_t numAuxiliarys = auxiliaryDofs.size();
-      for( size_t auxiliary = 0, i = 0 ; auxiliary < numAuxiliarys; ++auxiliary )
+      for( size_t auxiliary = 0, i = 0 ; auxiliary < numAuxiliarys; ++auxiliary, ++i  )
       {
         const size_t nextAuxiliary = auxiliaryDofs[ auxiliary ];
         for(; i < nextAuxiliary; ++i )
@@ -159,11 +159,8 @@ namespace LinearSolver
 
       v0 -= b ;
 
-      // cblas_daxpy(dim, -1.0, b, 1, v, 1);
-      //for( int i=0; i<dim; ++i )
-      //  v[ i ] -= b[ i ];
-
       // scalarProduct( dim, v, v );
+      // contains 1 allreduce (global zum)
       global_dot[ 0 ] = v0.scalarProductDofs( v0 );
 
       //comm.allreduce(1, local_dot, global_dot, MPI_SUM);
@@ -208,16 +205,10 @@ namespace LinearSolver
           op(vj, vjp);
         }
 
-        //cblas_dgemv(CblasRowMajor, CblasNoTrans,
-        //            j+1, dim, 1.0, v, dim, vjp, 1, 0.0, global_dot, 1);
-                    //j+1, dim, 1.0, v, dim, vjp, 1, 0.0, local_dot, 1);
+        // contains 1 allreduce (global sum)
         gemv(comm, j+1, v, vjp, global_dot.data());
 
         for(int i=0; i<=j; i++) H(i,j) = global_dot[i];
-
-        //cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        //            1, dim, j+1,  -1.0, global_dot, m,  v, dim,  1.0, vjp, dim);
-        // gemm(1, dim, j+1,  -1.0, global_dot, m,  v, dim,  1.0, vjp, dim);
 
         // assuming beta == 1.0
         for(int l=0; l<j+1; ++l)
@@ -225,13 +216,12 @@ namespace LinearSolver
           vjp.axpy( -global_dot[l], v[l] );
         }
 
+        // 1 allreduce (global sum)
         global_dot[ 0 ] = vjp.scalarProductDofs( vjp );
 
         H(j+1,j) = std::sqrt(global_dot[0]);
-        // cblas_dscal(dim, 1.0/H(j+1,j), vjp, 1);
-
-        vjp *= 1.0/H(j+1,j);
         // scale(dim, 1.0/H(j+1,j), vjp );
+        vjp *= 1.0/H(j+1,j);
 
         // perform Givens rotation
         for(int i=0; i<j; i++)
