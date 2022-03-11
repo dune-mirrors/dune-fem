@@ -7,6 +7,7 @@
 
 #include <dune/common/densevector.hh>
 #include <dune/common/dynvector.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/misc/debug.hh>
@@ -317,6 +318,18 @@ namespace Dune {
     /** \brief Const-iterator pointing to the last dof */
     ConstIteratorType end() const { return array().end(); }
 
+    /** \brief Iterator pointing to last dof */
+    IteratorType beforeEnd() { return array().beforeEnd(); }
+
+    /** \brief Iterator pointing to last dof */
+    ConstIteratorType beforeEnd() const { return array().beforeEnd(); }
+
+    /** \brief Iterator pointing to before the first dof */
+    IteratorType beforeBegin() { return array().beforeBegin(); }
+
+    /** \brief Iterator pointing to before the first dof */
+    ConstIteratorType beforeBegin() const { return array().beforeBegin(); }
+
     /** \brief Number of blocks */
     SizeType size () const { return array().size() / blockSize; }
 
@@ -622,6 +635,30 @@ namespace Dune {
 
     IteratorType end() { return IteratorType( array().end() ); }
     ConstIteratorType end() const  { return ConstIteratorType( array().end() ); }
+
+    IteratorType beforeEnd()
+    {
+      DUNE_THROW(NotImplemented,"ISTLBlockVector::beforeEnd not implemented yet");
+      return array().end();
+    }
+
+    ConstIteratorType beforeEnd() const
+    {
+      DUNE_THROW(NotImplemented,"ISTLBlockVector::beforeEnd not implemented yet");
+      return array().end();
+    }
+
+    IteratorType beforeBegin()
+    {
+      DUNE_THROW(NotImplemented,"ISTLBlockVector::beforeBegin not implemented yet");
+      return array().end();
+    }
+
+    ConstIteratorType beforeBegin() const
+    {
+      DUNE_THROW(NotImplemented,"ISTLBlockVector::beforeBegin not implemented yet");
+      return array().end();
+    }
 
     SizeType size() const { return array().size(); }
 

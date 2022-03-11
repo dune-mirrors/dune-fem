@@ -140,7 +140,12 @@ namespace Dune
 
         for( int i=0; i<n_; ++i )
         {
-          matrix_.parallelIterative( diagonalInv_, u, x, v, w_ );
+          matrix_.forwardIterative( diagonalInv_, u, x, v, w_ );
+
+          if constexpr ( method == SolverParameter :: ssor )
+          {
+            matrix_.backwardIterative( diagonalInv_, u, x, v, w_ );
+          }
 
           // synchronize data
           v.communicate();
@@ -189,6 +194,9 @@ namespace Dune
 
     template <class DFImp, class Operator>
     using FemSORPreconditioning = FemPreconditioning< DFImp, Operator, SolverParameter::sor >;
+
+    template <class DFImp, class Operator>
+    using FemSSORPreconditioning = FemPreconditioning< DFImp, Operator, SolverParameter::ssor >;
 
   } // namespace Fem
 
