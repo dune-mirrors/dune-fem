@@ -342,15 +342,56 @@ namespace Dune
 
       //! Apply Jacobi/SOR method
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
-      void parallelIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
+      void forwardIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
       {
-        constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
+        parallelIterative( diagInv.dofVector().begin(),
+                           b.dofVector().begin(),
+                           xold,
+                           xnew.dofVector().begin(),
+                           w,
+                           0,         // row begin
+                           dim_[ 0 ], // row end
+                           std::true_type() );
+      }
 
-        auto diag = diagInv.dbegin();
-        auto bit  = b.dbegin();
-        auto xit  = xnew.dbegin();
+      //! Apply Jacobi/SOR method
+      template<class DiagType, class ArgDFType, class DestDFType, class WType>
+      void backwardIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
+      {
+        parallelIterative( diagInv.dofVector().beforeEnd(),
+                           b.dofVector().beforeEnd(),
+                           xold,
+                           xnew.dofVector().beforeEnd(),
+                           w,
+                           dim_[ 0 ] - 1, // row beforeEnd
+                           size_type(-1), // row beforeBegin
+                           std::false_type() );
+      }
 
-        for(size_type row = 0; row<dim_[0]; ++row, ++bit, ++diag, ++xit)
+    protected:
+      //! Apply Jacobi/SOR method
+      template<class DiagIt, class ArgDFIt, class DestDFType, class DestDFIt,
+               class WType, bool forward>
+      void parallelIterative(DiagIt diag, ArgDFIt bit, const DestDFType& xold, DestDFIt xit,
+                             const WType& w,
+                             size_type row, const size_type end,
+                             std::integral_constant<bool, forward> ) const
+      {
+        constexpr auto blockSize = DestDFType::DiscreteFunctionSpaceType::localBlockSize;
+
+        const auto nextRow = [&diag, &xit, &bit, &row]()
+        {
+          if constexpr ( forward )
+          {
+            ++diag; ++xit; ++bit; ++row;
+          }
+          else
+          {
+            --diag; --xit; --bit; --row;
+          }
+        };
+
+        for(; row != end; nextRow())
         {
           auto rhs = (*bit);
 
@@ -371,8 +412,6 @@ namespace Dune
           (*xit) = w * (rhs * (*diag));
         }
       }
-
-    protected:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
       {

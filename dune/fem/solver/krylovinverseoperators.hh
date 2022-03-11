@@ -88,6 +88,7 @@ namespace Dune
         precondMethod_( parameter.preconditionMethod(
                          { SolverParameter::none,
                            SolverParameter::sor,
+                           SolverParameter::ssor,
                            SolverParameter::gauss_seidel,
                            SolverParameter::jacobi } )
                       )
@@ -222,6 +223,11 @@ namespace Dune
           {
             // create diagonal preconditioner
             precondObj_.reset( new FemSORPreconditioning< DomainFunctionType, LinearOperator >( op, n, w ) );
+          }
+          else if( precondMethod_ == SolverParameter::ssor )
+          {
+            // create diagonal preconditioner
+            precondObj_.reset( new FemSSORPreconditioning< DomainFunctionType, LinearOperator >( op, n, w ) );
           }
 
           // if preconditioner was created, set pointer

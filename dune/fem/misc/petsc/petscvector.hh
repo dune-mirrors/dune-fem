@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <string>
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
 
@@ -286,6 +288,29 @@ namespace Dune
       ConstDofIteratorType begin () const { return ConstDofIteratorType( *this, 0, 0 ); }
       DofIteratorType end () { return DofIteratorType( *this, mappers().size() ); }
       ConstDofIteratorType end () const { return ConstDofIteratorType( *this, mappers().size() ); }
+
+      DofIteratorType beforeEnd ()
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::beforeEnd is not implemented yet");
+        return end();
+      }
+
+      ConstDofIteratorType beforeEnd () const
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::beforeEnd is not implemented yet");
+        return end();
+      }
+
+      DofIteratorType beforeBegin ()
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::beforeBegin is not implemented yet");
+        return end();
+      }
+      ConstDofIteratorType beforeBegin () const
+      {
+        DUNE_THROW(NotImplemented,"PetscVector::beforeBegin is not implemented yet");
+        return end();
+      }
 
       DofIteratorType dbegin () { return begin(); }
       ConstDofIteratorType dbegin () const { return begin(); }
