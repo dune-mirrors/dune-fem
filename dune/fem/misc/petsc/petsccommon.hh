@@ -9,6 +9,7 @@
 
 #include <string>
 #include <iostream>
+#include <iomanip>
 
 #include <dune/common/parallel/communication.hh>
 #include <dune/common/stdstreams.hh>
@@ -232,6 +233,7 @@ namespace Dune
     inline static void PCSetUp ( PC pc ) { ErrorCheck( ::PCSetUp(  pc ) ); }
     inline static void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
     inline static void PCSORSetOmega( PC pc, PetscReal omega ) { ErrorCheck( ::PCSORSetOmega(  pc, omega ) ); }
+    inline static void PCSORSetSymmetric( PC pc, MatSORType flag ) { ErrorCheck( ::PCSORSetSymmetric(  pc, flag ) ); }
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 9
     inline static void PCFactorSetMatSolverPackage( PC pc, const MatSolverPackage type )
     {

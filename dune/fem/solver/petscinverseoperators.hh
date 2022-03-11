@@ -61,7 +61,9 @@ namespace Dune
       {
         if( Parameter :: verbose () )
         {
-          std::cout << "PETSc::KSP:  it = " << it << "    res = " << rnorm << std::endl;
+          std::cout << "PETSc::KSP:  it = "
+                    << std::setw(3) << std::left << it
+                    << "   res = " << rnorm << std::endl;
         }
         return PetscErrorCode(0);
       }
@@ -144,8 +146,9 @@ namespace Dune
         ::Dune::Petsc::KSPSetInitialGuessNonzero( ksp(), PETSC_TRUE );
 
         // set prescribed tolerances
-        PetscInt  maxits = parameter_->maxIterations();
-        PetscReal tolerance  = parameter_->tolerance();
+        PetscInt  maxits    = parameter_->maxIterations();
+        PetscReal tolerance = parameter_->tolerance();
+        PetscReal omega     = parameter_->relaxation();
         if (parameter_->errorMeasure() == 0)
           ::Dune::Petsc::KSPSetTolerances(ksp(), 1e-50, tolerance, PETSC_DEFAULT, maxits);
         else
@@ -253,7 +256,8 @@ namespace Dune
                 {
                   SolverParameter::none,   // no preconditioning
                   SolverParameter::oas,    // Overlapping Additive Schwarz
-                  SolverParameter::sor,    // SOR and SSOR
+                  SolverParameter::sor,    // SOR
+                  SolverParameter::ssor,   // symmetric SOR
                   SolverParameter::jacobi, // Jacobi preconditioning
                   SolverParameter::ilu,    // ILU preconditioning
                   SolverParameter::icc,    // Incomplete Cholesky factorization
@@ -293,6 +297,13 @@ namespace Dune
             }
           case SolverParameter::sor:
             ::Dune::Petsc::PCSetType( pc, PCSOR );
+            ::Dune::Petsc::PCSORSetOmega( pc, omega );
+            break;
+          case SolverParameter::ssor:
+            ::Dune::Petsc::PCSetType( pc, PCSOR );
+            // set symmetric version
+            ::Dune::Petsc::PCSORSetSymmetric( pc, SOR_LOCAL_SYMMETRIC_SWEEP );
+            ::Dune::Petsc::PCSORSetOmega( pc, omega );
             break;
           case SolverParameter::jacobi:
             ::Dune::Petsc::PCSetType( pc, PCJACOBI );
