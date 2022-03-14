@@ -46,6 +46,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
 #include <dune/fem/schemes/elliptic.hh>
 
@@ -231,6 +232,9 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
 
   // get discrete function space
   const DiscreteFunctionSpaceType &dfSpace = w.space();
+  Dune::Fem::ConstLocalFunction< GF > uLocal( u );
+  Dune::Fem::ConstLocalFunction< GF > uOutLocal( u );
+  Dune::Fem::AddLocalContribution< RangeDiscreteFunctionType > wLocal( w );
 
   // iterate over grid
   const IteratorType end = dfSpace.end();
@@ -247,8 +251,8 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
     const GeometryType &geometry = entity.geometry();
 
     // get local representation of the discrete functions
-    const auto uLocal = u.localFunction( entity );
-    LocalFunctionType wLocal = w.localFunction( entity );
+    auto uGuard = Dune::Fem::bindGuard( uLocal, entity );
+    auto wGuard = Dune::Fem::bindGuard( wLocal, entity );
 
     // obtain quadrature order
     const int quadOrder = uLocal.order() + wLocal.order();
@@ -300,7 +304,7 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
           const double intersectionArea = intersectionGeometry.volume();
           const double beta = penalty()(intersection,intersectionArea,area,outside.geometry().volume());
 
-          auto uOutLocal = u.localFunction( outside ); // local u on outisde element
+          auto uOutGuard = Dune::Fem::bindGuard( uOutLocal, outside );
 
           FaceQuadratureType quadInside( dfSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::INSIDE );
           FaceQuadratureType quadOutside( dfSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::OUTSIDE );
@@ -447,8 +451,8 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
 {
   // std::cout << "starting assembly\n";
   // Dune::Timer timer;
-  typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
+  typedef Dune::Fem::TemporaryLocalMatrix< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > TmpLocalMatrixType;
 
   const DomainDiscreteFunctionSpaceType &domainSpace = jOp.domainSpace();
   const RangeDiscreteFunctionSpaceType  &rangeSpace = jOp.rangeSpace();
@@ -456,6 +460,10 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
   Dune::Fem::DiagonalAndNeighborStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType> stencil(domainSpace,rangeSpace);
   jOp.reserve(stencil);
   jOp.clear();
+
+  Dune::Fem::ConstLocalFunction< GF > uLocal( u );
+  TmpLocalMatrixType jLocal( domainSpace, rangeSpace );
+  TmpLocalMatrixType localOpNb( domainSpace, rangeSpace );
 
   const GridPartType& gridPart = rangeSpace.gridPart();
 
@@ -480,9 +488,10 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
 
     const GeometryType geometry = entity.geometry();
 
-    const auto uLocal = u.localFunction( entity );
+    auto uGuard = Dune::Fem::bindGuard( uLocal, entity );
 
-    LocalMatrixType jLocal = jOp.localMatrix( entity, entity );
+    jLocal.bind( entity, entity );
+    jLocal.clear();
 
     const BasisFunctionSetType &baseSet = jLocal.domainBasisFunctionSet();
     const unsigned int numBaseFunctions = baseSet.size();
@@ -521,7 +530,11 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
       }
     }
     if ( rangeSpace.continuous() )
+    {
+      jOp.addLocalMatrix( entity, entity, jLocal );
+      jLocal.unbind();
       continue;
+    }
 
     double area = geometry.volume();
     const IntersectionIteratorType endiit = gridPart.iend( entity );
@@ -539,7 +552,9 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
 
         //! [Assemble skeleton terms: get contributions on off diagonal block]
         // get local matrix for face entries
-        LocalMatrixType localOpNb = jOp.localMatrix( neighbor, entity );
+        localOpNb.bind( neighbor, entity );
+        localOpNb.clear();
+
         // get neighbor's base function set
         const BasisFunctionSetType &baseSetNb = localOpNb.domainBasisFunctionSet();
         //! [Assemble skeleton terms: get contributions on off diagonal block]
@@ -640,8 +655,9 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             jLocal.column( localCol ).axpy( phi, dphi, valueEn, dvalueEn, weight );
             localOpNb.column( localCol ).axpy( phi, dphi, valueNb, dvalueNb, weight );
           }
-          //! [Assemble skeleton terms: compute factors for axpy method]
         }
+        jOp.addLocalMatrix( neighbor, entity, localOpNb );
+        localOpNb.unbind();
       }
       else if( intersection.boundary() )
       {
@@ -724,8 +740,10 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
             jLocal.column( localCol ).axpy( phi, dphi, valueEn, dvalueEn, weight );
           }
         }
-      }
-    }
+      } // is boundary
+    } // end of intersection loop
+    jOp.addLocalMatrix( entity, entity, jLocal );
+    jLocal.unbind();
   } // end grid traversal
   jOp.flushAssembly();
   // std::cout << "   in assembly: final    " << timer.elapsed() << std::endl;;
