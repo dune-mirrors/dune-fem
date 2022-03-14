@@ -54,6 +54,7 @@
 #include <dune/fem/function/localfunction/const.hh>
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
 
 // include parameter handling
@@ -334,9 +335,9 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
 {
   // std::cout << "starting assembly\n";
   // Dune::Timer timer;
-  typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DomainDiscreteFunctionSpaceType::BasisFunctionSetType DomainBasisFunctionSetType;
   typedef typename RangeDiscreteFunctionSpaceType::BasisFunctionSetType  RangeBasisFunctionSetType;
+  typedef Dune::Fem::TemporaryLocalMatrix< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > TmpLocalMatrixType;
 
   const DomainDiscreteFunctionSpaceType &domainSpace = jOp.domainSpace();
   const RangeDiscreteFunctionSpaceType  &rangeSpace = jOp.rangeSpace();
@@ -344,6 +345,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
   Dune::Fem::DiagonalStencil<DomainDiscreteFunctionSpaceType,RangeDiscreteFunctionSpaceType> stencil( domainSpace, rangeSpace );
   jOp.reserve(stencil);
   jOp.clear();
+  TmpLocalMatrixType jLocal( domainSpace, rangeSpace );
 
   const int domainBlockSize = domainSpace.localBlockSize; // is equal to 1 for scalar functions
   std::vector< typename DomainLocalFunctionType::RangeType >         phi( domainSpace.blockMapper().maxNumDofs()*domainBlockSize );
@@ -362,7 +364,8 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
     const GeometryType &geometry = entity.geometry();
 
     auto uGuard = Dune::Fem::bindGuard( uLocal, entity );
-    LocalMatrixType jLocal = jOp.localMatrix( entity, entity );
+    jLocal.bind( entity, entity );
+    jLocal.clear();
 
     const DomainBasisFunctionSetType &domainBaseSet = jLocal.domainBasisFunctionSet();
     const RangeBasisFunctionSetType &rangeBaseSet  = jLocal.rangeBasisFunctionSet();
@@ -444,6 +447,8 @@ void DifferentiableEllipticOperator< JacobianOperator, Model >
         }
       }
     }
+    jOp.addLocalMatrix( entity, entity, jLocal );
+    jLocal.unbind();
   } // end grid traversal
   // std::cout << "   in assembly: final    " << timer.elapsed() << std::endl;;
   jOp.flushAssembly();
