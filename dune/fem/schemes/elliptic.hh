@@ -54,6 +54,7 @@
 #include <dune/fem/function/localfunction/const.hh>
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
 
 // include parameter handling
