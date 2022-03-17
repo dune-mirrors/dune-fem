@@ -133,7 +133,7 @@ namespace Dune
 
       public:
         //! constructor
-        MapperContainer() : mappers_(100, (TwistStorageType*) 0)
+        MapperContainer() : mappers_(1000, (TwistStorageType*) 0)
         {}
 
         //! destructor

@@ -115,7 +115,7 @@ namespace Dune
       static const int minQuadNop = MIN_NUMBER_OF_QUAD_POINTS;
 
       // maximal number of different quadratures we can use here
-      static const int maxQuadratures = 50;
+      static const int maxQuadratures = 1000;
 
       class EvaluatorStorage
       {
