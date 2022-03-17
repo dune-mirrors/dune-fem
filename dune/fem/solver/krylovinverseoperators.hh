@@ -80,18 +80,8 @@ namespace Dune
       : BaseType( parameter ),
         precondObj_(),
         verbose_( parameter.verbose() ),
-        method_( method < 0 ?
-            parameter.solverMethod({ SolverParameter::gmres,
-                                     SolverParameter::cg,
-                                     SolverParameter::bicgstab })
-            : method ),
-        precondMethod_( parameter.preconditionMethod(
-                         { SolverParameter::none,
-                           SolverParameter::sor,
-                           SolverParameter::ssor,
-                           SolverParameter::gauss_seidel,
-                           SolverParameter::jacobi } )
-                      )
+        method_( method < 0 ? parameter.solverMethod( supportedSolverMethods() ) : method ),
+        precondMethod_( parameter.preconditionMethod( supportedPreconditionMethods() ) )
       {
         assert( parameter_->errorMeasure() == 0 );
       }
@@ -108,6 +98,20 @@ namespace Dune
           BaseType::bind( op, *precondObj_ );
         else
           BaseType::bind( op );
+      }
+
+      static std::vector< int > supportedSolverMethods() {
+        return std::vector< int > ({ SolverParameter::gmres, // default solver
+                                     SolverParameter::cg,
+                                     SolverParameter::bicgstab });
+      }
+
+      static std::vector< int > supportedPreconditionMethods() {
+        return std::vector< int > ({ SolverParameter::none,
+                                     SolverParameter::sor,
+                                     SolverParameter::ssor,
+                                     SolverParameter::gauss_seidel,
+                                     SolverParameter::jacobi } );
       }
 
     protected:

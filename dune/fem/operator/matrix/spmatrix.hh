@@ -379,7 +379,7 @@ namespace Dune
       {
         constexpr auto blockSize = DestDFType::DiscreteFunctionSpaceType::localBlockSize;
 
-        const auto nextRow = [&diag, &xit, &bit, &row]()
+        const auto nextRow = [&diag, &xit, &bit](size_type &row)
         {
           if constexpr ( forward )
           {
@@ -391,7 +391,7 @@ namespace Dune
           }
         };
 
-        for(; row != end; nextRow())
+        for(; row != end; nextRow(row))
         {
           auto rhs = (*bit);
 

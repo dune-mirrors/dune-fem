@@ -28,6 +28,23 @@ namespace Dune
   namespace Fem
   {
 
+    struct ISTLPreconditionMethods
+    {
+      static std::vector< int > supportedPreconditionMethods() {
+        return std::vector< int > ({ SolverParameter::none,        // no preconditioner
+                                     SolverParameter::ssor,        // SSOR preconditioner
+                                     SolverParameter::sor ,        // SOR preconditioner
+                                     SolverParameter::ilu ,        // ILU preconditioner
+                                     SolverParameter::gauss_seidel,// Gauss-Seidel preconditioner
+                                     SolverParameter::jacobi,      // Jacobi preconditioner
+                                     SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
+                                     SolverParameter::amg_jacobi,  // AMG with Jacobi smoother
+                                     SolverParameter::ildl         // ILDL from istl
+                                    });
+      }
+    };
+
+
     template <class MatrixImp>
     class LagrangeParallelMatrixAdapter;
 
@@ -714,16 +731,7 @@ namespace Dune
                            const ISTLSolverParameter& param )
       {
         int preconditioning = param.preconditionMethod(
-                  { SolverParameter::none,        // no preconditioner
-                    SolverParameter::ssor,        // SSOR preconditioner
-                    SolverParameter::sor ,        // SOR preconditioner
-                    SolverParameter::ilu ,        // ILU preconditioner (deprecated)
-                    SolverParameter::gauss_seidel,// Gauss-Seidel preconditioner
-                    SolverParameter::jacobi,      // Jacobi preconditioner
-                    SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
-                    SolverParameter::amg_jacobi,  // AMG with Jacobi smoother
-                    SolverParameter::ildl         // ILDL from istl
-                  } );
+            ISTLPreconditionMethods::supportedPreconditionMethods() );
         const double relaxFactor   = param.relaxation();
         const size_t numIterations = param.preconditionerIteration();
 

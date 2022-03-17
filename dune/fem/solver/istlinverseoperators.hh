@@ -115,6 +115,22 @@ namespace Dune
       std::shared_ptr<ISTLSolverParameter> parameter_;
     };
 
+
+    struct ISTLInverseOperatorMethods
+    {
+      static std::vector< int > supportedSolverMethods() {
+        return std::vector< int > ({
+                                     SolverParameter::gmres, // default solver
+                                     SolverParameter::cg,
+                                     SolverParameter::bicgstab,
+                                     SolverParameter::minres,
+                                     SolverParameter::gradient,
+                                     SolverParameter::loop,
+                                     SolverParameter::superlu
+                                   });
+      }
+    };
+
     template< int method,
               class X,
               class Reduction = ISTLSolverReduction< X > >
@@ -127,16 +143,7 @@ namespace Dune
 
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
-          method_( method < 0 ?
-              parameter->solverMethod({ SolverParameter::gmres,
-                                        SolverParameter::cg,
-                                        SolverParameter::bicgstab,
-                                        SolverParameter::minres,
-                                        SolverParameter::gradient,
-                                        SolverParameter::loop,
-                                        SolverParameter::superlu
-                                     })
-              : method ),
+          method_( method < 0 ? parameter->solverMethod( ISTLInverseOperatorMethods::supportedSolverMethods() ) : method ),
           parameter_( parameter )
       {}
 
@@ -309,7 +316,6 @@ namespace Dune
       {
         bind( op, preconditioner );
       }
-
 
     protected:
       // apply for arbitrary domain function type and matching range function type
