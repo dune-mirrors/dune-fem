@@ -166,7 +166,7 @@ namespace Dune
         void enableDofCompression () {}
 
         //! return array's size
-        int size () const { return dofVector_.size(); }
+        SizeType size () const { return dofVector_.size(); }
       };
 
     protected:
