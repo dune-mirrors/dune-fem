@@ -66,16 +66,18 @@ namespace Dune
       IndexMapType auxiliarys_;
 
     public:
+      typedef typename IndexMapType :: IndexType IndexType;
+
       struct ConstIterator
-        : public std::iterator< std::forward_iterator_tag, const int, int >
+        : public std::iterator< std::forward_iterator_tag, const IndexType, IndexType >
       {
         ConstIterator () = default;
-        ConstIterator ( const IndexMapType &auxiliarys, int index ) : auxiliarys_( &auxiliarys ), index_( index ) {}
+        ConstIterator ( const IndexMapType &auxiliarys, IndexType index ) : auxiliarys_( &auxiliarys ), index_( index ) {}
 
-        const int &operator* () const { return (*auxiliarys_)[ index_ ]; }
-        const int *operator-> () const { return &(*auxiliarys_)[ index_ ]; }
+        const IndexType &operator* () const { return (*auxiliarys_)[ index_ ]; }
+        const IndexType *operator-> () const { return &(*auxiliarys_)[ index_ ]; }
 
-        const int &operator[] ( int n ) const noexcept { return (*auxiliarys_)[ index_ + n ]; }
+        const IndexType &operator[] ( IndexType n ) const noexcept { return (*auxiliarys_)[ index_ + n ]; }
 
         bool operator== ( const ConstIterator &other ) const { return (index_ == other.index_); }
         bool operator!= ( const ConstIterator &other ) const { return (index_ != other.index_); }
@@ -86,15 +88,15 @@ namespace Dune
         ThisType &operator-- () noexcept { --index_; return *this; }
         ThisType operator-- ( int ) noexcept { ThisType copy( *this ); --(*this); return copy; }
 
-        ThisType &operator+= ( int n ) noexcept { index_ += n; return *this; }
-        ThisType &operator-= ( int n ) noexcept { index_ -= n; return *this; }
+        ThisType &operator+= ( IndexType n ) noexcept { index_ += n; return *this; }
+        ThisType &operator-= ( IndexType n ) noexcept { index_ -= n; return *this; }
 
-        ThisType operator+ ( int n ) const noexcept { return ThisType( index_ + n ); }
-        ThisType operator- ( int n ) const noexcept { return ThisType( index_ - n ); }
+        ThisType operator+ ( IndexType n ) const noexcept { return ThisType( index_ + n ); }
+        ThisType operator- ( IndexType n ) const noexcept { return ThisType( index_ - n ); }
 
-        friend ThisType operator+ ( int n, const ThisType &i ) noexcept { return i + n; }
+        friend ThisType operator+ ( IndexType n, const ThisType &i ) noexcept { return i + n; }
 
-        int operator- ( const ThisType &other ) const noexcept { return (index_ - other.index_); }
+        IndexType operator- ( const ThisType &other ) const noexcept { return (index_ - other.index_); }
 
         bool operator< ( const ThisType &other ) const noexcept { return (index_ < other.index_); }
         bool operator<= ( const ThisType &other ) const noexcept { return (index_ <= other.index_); }
@@ -103,7 +105,7 @@ namespace Dune
 
       private:
         const IndexMapType *auxiliarys_ = nullptr;
-        int index_ = 0;
+        IndexType index_ = 0;
       };
 
       AuxiliaryDofs ( const GridPartType &gridPart, const MapperType &mapper )
@@ -113,13 +115,13 @@ namespace Dune
       AuxiliaryDofs ( const AuxiliaryDofs& ) = delete;
 
       //! return dof number of auxiliary for index
-      int operator [] ( const int index ) const
+      IndexType operator [] ( const IndexType index ) const
       {
         return auxiliarys_[ index ];
       }
 
       //! return number of auxiliary dofs
-      int size () const
+      IndexType size () const
       {
         return auxiliarys_.size();
       }
@@ -128,14 +130,14 @@ namespace Dune
       ConstIterator end () const { assert( size() > 0 ); return ConstIterator( auxiliarys_, size()-1 ); }
 
       //! return true if index is contained, meaning it is a auxiliary dof
-      bool contains ( int index ) const { return std::binary_search( begin(), end(), index ); }
+      bool contains ( IndexType index ) const { return std::binary_search( begin(), end(), index ); }
 
       [[deprecated("Use contains instead")]]
-      bool isSlave ( int index ) const { return contains( index ); }
+      bool isSlave ( IndexType index ) const { return contains( index ); }
 
       void rebuild ()
       {
-        std::set< int > auxiliarySet;
+        std::set< IndexType > auxiliarySet;
         buildMaps( auxiliarySet );
         auxiliarys_.clear();
         auxiliarys_.set( auxiliarySet );
@@ -144,7 +146,7 @@ namespace Dune
       const GridPartType &gridPart () const { return gridPart_; }
 
     protected:
-      void buildMaps ( std::set< int > &auxiliarySet )
+      void buildMaps ( std::set< IndexType > &auxiliarySet )
       {
         // build linkage and index maps
         for( int codim = 1; codim <= GridPartType::dimension; ++codim )
@@ -155,7 +157,7 @@ namespace Dune
         return buildDiscontinuousMaps( auxiliarySet );
       }
 
-      void buildDiscontinuousMaps ( std::set< int > &auxiliarySet )
+      void buildDiscontinuousMaps ( std::set< IndexType > &auxiliarySet )
       {
         // if DoFs are only attached to codimension 0, we do not have to communicate
         const auto idxpitype = GridPartType::indexSetPartitionType;
@@ -163,13 +165,13 @@ namespace Dune
         {
           const auto& entity = *it;
           if( entity.partitionType() != Dune::InteriorEntity )
-            mapper_.mapEachEntityDof( entity, [ &auxiliarySet ] ( int, int value ) { auxiliarySet.insert( value ); } );
+            mapper_.mapEachEntityDof( entity, [ &auxiliarySet ] ( IndexType, IndexType value ) { auxiliarySet.insert( value ); } );
         }
         // insert overall size at the end
         auxiliarySet.insert( mapper_.size() );
       }
 
-      void buildCommunicatedMaps ( std::set< int > &auxiliarySet )
+      void buildCommunicatedMaps ( std::set< IndexType > &auxiliarySet )
       {
         // we have to skip communication when parallel program is executed only on one processor
         // otherwise YaspGrid and Lagrange polorder=2 fails :(
@@ -198,10 +200,10 @@ namespace Dune
 
     template< class GridPart, class Mapper >
     class AuxiliaryDofs< GridPart, Mapper >::LinkBuilder
-      : public CommDataHandleIF< LinkBuilder, int >
+      : public CommDataHandleIF< LinkBuilder, int > // int is data type to be communicated
     {
     public:
-      LinkBuilder( std::set< int > &auxiliarySet, const GridPartType &gridPart, const MapperType &mapper )
+      LinkBuilder( std::set< IndexType > &auxiliarySet, const GridPartType &gridPart, const MapperType &mapper )
         : myRank_( gridPart.comm().rank() ), mySize_( gridPart.comm().size() ),
           auxiliarySet_( auxiliarySet ), mapper_( mapper )
       {}
@@ -255,7 +257,7 @@ namespace Dune
 
     private:
       int myRank_, mySize_;
-      std::set< int > &auxiliarySet_;
+      std::set< IndexType > &auxiliarySet_;
       const MapperType &mapper_;
     };
 
@@ -277,24 +279,25 @@ namespace Dune
     struct PrimaryDofs< AuxiliaryDofs< GridPart, Mapper > >
     {
       typedef AuxiliaryDofs< GridPart, Mapper > AuxiliaryDofsType;
+      typedef typename AuxiliaryDofsType :: IndexType IndexType;
 
       struct ConstIterator
-        : public std::iterator< std::forward_iterator_tag, int, std::ptrdiff_t, Envelope< int >, int >
+        : public std::iterator< std::forward_iterator_tag, IndexType, std::ptrdiff_t, Envelope< IndexType >, IndexType >
       {
         ConstIterator () = default;
 
-        ConstIterator ( int index, int auxiliary )
+        ConstIterator ( IndexType index, IndexType auxiliary )
           : index_( index ), auxiliary_( auxiliary )
         {}
 
-        ConstIterator ( const AuxiliaryDofsType &auxiliaryDofs, int index, int auxiliary )
+        ConstIterator ( const AuxiliaryDofsType &auxiliaryDofs, IndexType index, IndexType auxiliary )
           : auxiliaryDofs_( &auxiliaryDofs ), index_( index ), auxiliary_( auxiliary )
         {
           skipAuxiliarys();
         }
 
-        int operator* () const { return index_; }
-        Envelope< int > operator-> () const { return Envelope< int >( index_ ); }
+        IndexType operator* () const { return index_; }
+        Envelope< IndexType > operator-> () const { return Envelope< IndexType >( index_ ); }
 
         bool operator== ( const ConstIterator &other ) const { return (index_ == other.index_); }
         bool operator!= ( const ConstIterator &other ) const { return (index_ != other.index_); }
@@ -304,19 +307,19 @@ namespace Dune
 
         const AuxiliaryDofsType &auxiliaryDofs () const { assert( auxiliaryDofs_ ); return *auxiliaryDofs_; }
 
-        bool contains( const int index ) const { return ! auxiliaryDofs().contains( index ); }
+        bool contains( const IndexType index ) const { return ! auxiliaryDofs().contains( index ); }
 
       private:
         void skipAuxiliarys ()
         {
-          const int aSize = auxiliaryDofs().size();
+          const IndexType aSize = auxiliaryDofs().size();
           assert( auxiliary_ < aSize );
           for( ; (index_ == auxiliaryDofs()[ auxiliary_ ]) && (++auxiliary_ != aSize); ++index_ )
             continue;
         }
 
         const AuxiliaryDofsType *auxiliaryDofs_ = nullptr;
-        int index_ = 0, auxiliary_ = 0;
+        IndexType index_ = 0, auxiliary_ = 0;
       };
 
       explicit PrimaryDofs ( const AuxiliaryDofsType &auxiliaryDofs )
@@ -326,7 +329,7 @@ namespace Dune
       ConstIterator begin () const { return ConstIterator( auxiliaryDofs_, 0, 0 ); }
       ConstIterator end () const { return ConstIterator( auxiliaryDofs_[ auxiliaryDofs_.size()-1 ], auxiliaryDofs_.size() ); }
 
-      int size () const { return auxiliaryDofs_[ auxiliaryDofs_.size()-1 ] - (auxiliaryDofs_.size()-1); }
+      IndexType size () const { return auxiliaryDofs_[ auxiliaryDofs_.size()-1 ] - (auxiliaryDofs_.size()-1); }
 
     private:
       const AuxiliaryDofsType &auxiliaryDofs_;
