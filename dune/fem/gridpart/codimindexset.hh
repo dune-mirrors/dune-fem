@@ -11,6 +11,7 @@
 
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/storage/dynamicarray.hh>
+#include <dune/fem/space/common/commindexmap.hh>
 
 namespace Dune
 {
@@ -40,8 +41,8 @@ namespace Dune
       const INDEXSTATE stateNew_    = 2; // new indices
 
     public:
-      // type of exported index
-      typedef int IndexType ;
+      // type of exported index (local to one core)
+      typedef typename Fem::CommunicationIndexMap::IndexType IndexType;
 
       // indices in this status have not been initialized
       static IndexType invalidIndex() { return IndexType(-1); }
@@ -127,7 +128,7 @@ namespace Dune
 
       bool consecutive ()
       {
-        std::set< int > found ;
+        std::set< IndexType > found ;
         // Something's wrong here: This method _must_ always return true
         typedef typename IndexContainerType::Iterator Iterator;
         bool consecutive = true;
@@ -142,7 +143,10 @@ namespace Dune
             }
             assert( found.find( *it ) == found.end() );
             found.insert( *it );
+            //consecutive &= (*it < IndexType( indexState_.size() ));
           }
+          //else
+          //  consecutive = false;
           consecutive &= (*it < IndexType( indexState_.size() ));
         }
         return consecutive;
@@ -164,15 +168,15 @@ namespace Dune
       //! return true, if at least one hole was closed
       bool compress ()
       {
-        const int sizeOfVecs = indexState_.size();
+        const IndexType sizeOfVecs = indexState_.size();
         holes_.resize( sizeOfVecs );
 
         // true if a least one dof must be copied
         bool haveToCopy = false;
 
         // mark holes
-        int actHole = 0;
-        for( int index = 0; index < sizeOfVecs; ++index )
+        IndexType actHole = 0;
+        for( IndexType index = 0; index < sizeOfVecs; ++index )
         {
           // create vector with all holes
           if( indexState_[ index ] == stateUnused_ )
@@ -180,7 +184,7 @@ namespace Dune
         }
 
         // the new size is the actual size minus the holes
-        const int actSize = sizeOfVecs - actHole;
+        const IndexType actSize = sizeOfVecs - actHole;
 
         // resize hole storing vectors
         oldIdx_.resize(actHole);
@@ -189,20 +193,23 @@ namespace Dune
         // only compress if number of holes > 0
         if(actHole > 0)
         {
+          // for int this is -1 or a large number for unsigned types
+          const IndexType invIndex = invalidIndex();
+
           // close holes
-          int holes = 0; // number of real holes
+          IndexType holes = 0; // number of real holes
           typedef typename IndexContainerType::Iterator Iterator;
           const Iterator end = leafIndex_.end();
           for( Iterator it = leafIndex_.begin(); it != end; ++it )
           {
             IndexType& index = *it;
-            if( index == invalidIndex() )
+            if( index == invIndex )
             {
               continue ;
             }
             else if( indexState_[ index ] == stateUnused_ )
             {
-              index = invalidIndex();
+              index = invIndex;
               continue ;
             }
 
@@ -220,8 +227,10 @@ namespace Dune
               assert(actHole >= 0);
               while ( holes_[actHole] >= actSize )
               {
+                assert(actHole > 0);
                 --actHole;
-                if(actHole < 0) break;
+
+                if( actHole == invIndex ) break;
               }
 
               assert(actHole >= 0);
@@ -253,7 +262,7 @@ namespace Dune
           // mark holes as new
           // note: This needs to be done after reassignment, so that their
           //       original entry will still see them as stateUnused_.
-          for( int hole = 0; hole < holes; ++hole )
+          for( IndexType hole = 0; hole < holes; ++hole )
             indexState_[ newIdx_[ hole ] ] = stateNew_;
 
         } // end if actHole > 0
@@ -268,7 +277,7 @@ namespace Dune
         indexState_.resize( actSize );
 
 #ifndef NDEBUG
-        for( int i=0; i<actSize; ++i )
+        for( IndexType i=0; i<actSize; ++i )
           assert( indexState_[ i ] == stateUsed_ ||
                   indexState_[ i ] == stateUnused_ ||
                   indexState_[ i ] == stateNew_ );
@@ -360,14 +369,14 @@ namespace Dune
       }
 
       //! return old index, for dof manager only
-      IndexType oldIndex (int elNum ) const
+      IndexType oldIndex ( IndexType elNum ) const
       {
         assert( numberHoles_ == IndexType(oldIdx_.size()) );
         return oldIdx_[elNum];
       }
 
       //! return new index, for dof manager only returns index
-      IndexType newIndex (int elNum) const
+      IndexType newIndex ( IndexType elNum) const
       {
         assert( numberHoles_ == IndexType(newIdx_.size()) );
         return newIdx_[elNum];
