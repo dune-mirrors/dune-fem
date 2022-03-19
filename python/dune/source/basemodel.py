@@ -1,3 +1,5 @@
+assert False, "not used?"
+
 from __future__ import print_function, unicode_literals
 
 from .cplusplus import AccessModifier, Constructor, Declaration, Function, Method, TypeAlias, UnformattedExpression, UnformattedBlock, Variable
