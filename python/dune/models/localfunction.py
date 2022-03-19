@@ -14,7 +14,6 @@ from dune.source.cplusplus import Include, Method, UnformattedExpression,\
      UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_, IfStatement
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
-from dune.source import BaseModel
 from dune.source.fem import declareFunctionSpace
 import ufl
 from ufl import Coefficient, as_vector, replace
