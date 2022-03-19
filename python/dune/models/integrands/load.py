@@ -108,6 +108,7 @@ class Source(object):
     def signature(self):
         return uflSignature(self.form,
                 *self.integrands._coefficients,
+                *self.integrands.coefficientCppTypes,
                 *self.integrands._constantNames,
                 *[a for a in self.args if isinstance(a,DirichletBC)],
                 *self.integrands.baseSignature
