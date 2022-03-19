@@ -3,9 +3,11 @@
 
 #include <string>
 #include <fstream>
+
 // we would use cstdint,
 // if it would be available for all compilers, e.g. clang
-#include <stdint.h>
+//#include <stdint.h>
+#include <cstdint>
 
 #include <dune/common/exceptions.hh>
 
@@ -96,6 +98,15 @@ namespace Dune
       void writeInt ( const int value )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeInt( value ) );
+      }
+
+      /** \brief write an int64_t to the stream
+       *
+       * \param[in]  value  value to write to the stream
+       */
+      void writeSignedInt64 ( int64_t value )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeSignedInt64( value ) );
       }
 
       /** \brief write a char to the stream
@@ -251,6 +262,26 @@ namespace Dune
       {
         int value;
         readInt( value );
+        return value;
+      }
+
+      /** \brief read an int64_t from the stream
+       *
+       *  \param[out]  value  reference to the variable to read from the stream
+       */
+      void readSignedInt64 ( int64_t &value )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readSignedInt64( value ) );
+      }
+
+      /** \brief read an int64_t from the stream
+       *
+       *  \param[out]  value  reference to the variable to read from the stream
+       */
+      int64_t readSignedInt64 ()
+      {
+        int64_t value;
+        readSignedInt64( value );
         return value;
       }
 
