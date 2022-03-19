@@ -11,7 +11,7 @@
 #include <utility>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/power.hh>
+#include <dune/common/math.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -189,7 +189,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::maxBlocks */
         static constexpr std::size_t maxBlocks () noexcept
         {
-          return Dune::StaticPower< maxOrder+1, FunctionSpace::dimDomain >::power;
+          return Dune::power( int(maxOrder+1), int(FunctionSpace::dimDomain) );
         }
 
         /** \copydoc Dune::Fem::BasisFunctionSets::maxBlocks */
