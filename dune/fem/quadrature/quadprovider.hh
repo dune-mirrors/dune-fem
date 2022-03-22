@@ -369,12 +369,21 @@ namespace Dune
       //! key for access of quadratures in the storage
       typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
 
+      class PointQuadratureStorage : public PointQuadratureType
+      {
+      public:
+        // only call IdProvider ::instance().newId() when object is created
+        PointQuadratureStorage( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+          : PointQuadratureType( geometry, quadKey, IdProvider::instance().newId() )
+        {}
+      };
+
       //! Access to the quadrature implementations.
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             const QuadratureKeyType& quadKey )
       {
         assert( geometry.isCube() || geometry.isSimplex() );
-        return Singleton< PointQuadratureType > :: instance( geometry, quadKey, IdProvider ::instance().newId() );
+        return Singleton< PointQuadratureStorage > :: instance( geometry, quadKey );
       }
 
       //! Access to the quadrature implementations.
