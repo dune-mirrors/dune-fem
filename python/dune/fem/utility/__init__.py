@@ -87,11 +87,17 @@ class Sampler:
             self.lineSampler = algorithm.load('sample', io.StringIO(_lineSampleCode), self.gridFunction, x0, x1, N)
 
         p,v = self.lineSampler( self.gridFunction, x0, x1, N )
-        x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
+        if self.gridFunction.scalar:
+            x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
+        else:
+            x,y = numpy.zeros(len(p)), numpy.zeros(( len(p),self.gridFunction.dimRange) )
         length = (x1-x0).two_norm
         for i in range(len(x)):
             x[i] = (p[i]-x0).two_norm / length
-            y[i] = v[i][0]
+            if self.gridFunction.scalar:
+                y[i] = v[i][0]
+            else:
+                y[i] = v[i]
         return x,y
 
     def pointSample(self, x0):
@@ -124,7 +130,10 @@ class Sampler:
             self.pointSampler = algorithm.load('sample', io.StringIO(_pointSampleCode), self.gridFunction, x0)
 
         v = self.pointSampler(self.gridFunction, x0 )
-        return v
+        if self.gridFunction.scalar:
+            return v[0]
+        else:
+            return v
 
 def lineSample(gridFunction,x0,x1,N):
     return Sampler(gridFunction).lineSample(x0, x1, N)
