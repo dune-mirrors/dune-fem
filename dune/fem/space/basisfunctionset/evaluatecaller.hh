@@ -105,7 +105,6 @@ namespace Dune
       typedef EvaluateCallerInterface< Traits >  ThisType;
     public:
       typedef std::unique_ptr< ThisType > StoragePointerType;
-      typedef std::pair< bool, StoragePointerType > StorageItemType;
 
     protected:
       static const int maxNumBaseFunctions = MAX_NUMBER_OF_BASE_FCT;
@@ -115,25 +114,32 @@ namespace Dune
       static const int minQuadNop = MIN_NUMBER_OF_QUAD_POINTS;
 
       // maximal number of different quadratures we can use here
-      static const int maxQuadratures = 50;
+      static const int maxQuadratures = 25;
 
       class EvaluatorStorage
       {
+        class Item : public std::pair< bool, StoragePointerType >
+        {
+          typedef std::pair< bool, StoragePointerType > BaseType;
+
+        public:
+          Item() : BaseType(false, StoragePointerType() ) {}
+        };
+
       protected:
-        std::vector< StorageItemType > storage_;
+        std::vector< Item > storage_;
       public:
         EvaluatorStorage() :
-          storage_( maxQuadratures )
-        {
-          for( auto& item : storage_ )
-          {
-            item.first = false ;
-            item.second.reset();
-          }
-        }
+          storage_( maxQuadratures ) {}
 
-        StorageItemType& operator [] ( const int i ) { return storage_[ i ]; }
-        const StorageItemType& operator [] ( const int i ) const { return storage_[ i ]; }
+        Item& get( const size_t id )
+        {
+          if( id > storage_.size() )
+          {
+            storage_.resize( id + 10 );
+          }
+          return storage_[ id ];
+        }
       };
 
 
@@ -173,22 +179,20 @@ namespace Dune
                                                const Storage& dataCache,
                                                const QuadratureType& quad)
       {
-        const int nop = quad.nop();
-        static const int dimRange = BaseFunctionSet :: FunctionSpaceType:: dimRange;
-        const int numBaseFct = baseSet.size() / dimRange;
-
-        assert( quad.id() < maxQuadratures );
-
         // static vector holding all evaluator instances
         static ThreadSafeValue< EvaluatorStorage > evaluatorStorage;
         EvaluatorStorage& evaluators = *evaluatorStorage;
 
         // check if object already created
         const size_t quadId = quad.id();
-        if( ! evaluators[ quadId ].first )
+        auto& item = evaluators.get( quadId );
+        if( ! item.first )
         {
+          const int nop = quad.nop();
+          static const int dimRange = BaseFunctionSet :: FunctionSpaceType:: dimRange;
+          const int numBaseFct = baseSet.size() / dimRange;
+
           typedef EvaluateCallerTraits< Traits, BaseFunctionSet, Storage> NewTraits;
-          auto& item = evaluators[ quadId ];
 
 #if 0 // NDEBUG
           if( quad.isInterpolationQuadrature( numBaseFct ) )
@@ -214,7 +218,7 @@ namespace Dune
         }
 
         // this can be a nullptr (in this case the default implementation is used)
-        return evaluators[ quadId ].second;
+        return item.second;
       }
     };
 
