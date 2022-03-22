@@ -134,7 +134,7 @@ namespace Dune
 
         Item& get( const size_t id )
         {
-          if( id > storage_.size() )
+          if( id >= storage_.size() )
           {
             storage_.resize( id + 10 );
           }
