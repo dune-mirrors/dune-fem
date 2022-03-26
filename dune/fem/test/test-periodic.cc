@@ -104,7 +104,13 @@ try
 {
   Dune::Fem::MPIManager :: initialize( argc, argv );
 
-  auto gridPtr = createGrid( 1.0, 4 );
+  std::shared_ptr< GridType > gridPtr;
+
+  if( argc > 1 )
+    gridPtr.reset( Dune::GridPtr< GridType > (argv[1]).release() );
+  else
+    gridPtr = createGrid( 1.0, 4 );
+
   GridType& grid = *gridPtr;
   grid.loadBalance();
 
