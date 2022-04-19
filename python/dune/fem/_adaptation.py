@@ -80,8 +80,10 @@ def loadBalance(first, *args):
     hgrid,args = _adaptArguments(first,*args)
     module(hgrid).gridAdaptation(hgrid).loadBalance(args)
 
-def mark(indicator, refineTolerance, coarsenTolerance=0,
-         minLevel=0, maxLevel=None, gridView=None):
+def mark(indicator, refineTolerance, coarsenTolerance=0.,
+         minLevel=0, maxLevel=None, minVolume=0.0, maxVolume=-1.,
+         gridView=None,
+         markNeighbors=False):
     if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
         indicator = ufl.as_vector(indicator)
     if ufl and isinstance(indicator, ufl.core.expr.Expr):#
@@ -100,33 +102,23 @@ def mark(indicator, refineTolerance, coarsenTolerance=0,
             raise AttributeError("indicator function must be over grid view that supports adaptation")
     except AttributeError:
         raise AttributeError("indicator function must be over grid view that supports adaptation")
-    if maxLevel==None:
-        maxLevel = -1
-    return gridView.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
 
-def markNeighbors(indicator, refineTolerance, coarsenTolerance=0,
-                  minLevel=0, maxLevel=None, gridView=None):
-    if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
-        indicator = ufl.as_vector(indicator)
-    if ufl and isinstance(indicator, ufl.core.expr.Expr):#
-        if gridView is None:
-            _, coeff_ = extract_arguments_and_coefficients(indicator)
-            gridView = [c.gridView for c in coeff_ if hasattr(c,"gridView")]
-            # gridView += [c.space.gridView for c in coeff_ if hasattr(c,"space")]
-            if len(gridView) == 0:
-                raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
-            gridView = gridView[0]
-        indicator = expression2GF(gridView,indicator,0)
-    if gridView is None:
-        gridView = indicator.gridView
-    try:
-        if not gridView.canAdapt:
-            raise AttributeError("indicator function must be over grid view that supports adaptation")
-    except AttributeError:
-        raise AttributeError("indicator function must be over grid view that supports adaptation")
     if maxLevel==None:
         maxLevel = -1
-    return gridView.markNeighbors(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel)
+    return gridView.mark(indicator,refineTolerance,coarsenTolerance,minLevel,maxLevel, minVolume, maxVolume, markNeighbors)
+
+def markNeighbors(indicator, refineTolerance, coarsenTolerance=0.0,
+                  minLevel=0, maxLevel=None,
+                  minVolume=0.0, maxVolume=-1.0,
+                  gridView=None):
+    return mark(indicator, refineTolerance,
+                coarsenTolerance=coarsenTolerance,
+                minLevel=minLevel,
+                maxLevel=maxLevel,
+                minVolume=minVolume,
+                maxVolume=maxVolume,
+                gridView=gridView,
+                markNeighbors=True)
 
 def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
     try:

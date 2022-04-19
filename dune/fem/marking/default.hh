@@ -26,7 +26,10 @@ namespace Dune
       std::pair< int, int >
       mark( Grid& grid, Indicator& indicator,
             const double refineTolerance, const double coarsenTolerance,
-            int minLevel = 0, int maxLevel = -1,
+            const int minLevel = 0,
+            int maxLevel = -1,
+            const double minVolume = 0.0,
+            double maxVolume = -1.0,
             const bool markNeighbors = false )
       {
         Dune::Fem::ConstLocalFunction<Indicator> localIndicator(indicator);
@@ -39,6 +42,14 @@ namespace Dune
 
         if ( maxLevel < 0 )
           maxLevel = std::numeric_limits<int>::max();
+
+        const bool useVolumeRefinement = minVolume > 0.0;
+        const bool useVolumeCoarsening = maxVolume > 0.0;
+        if ( ! useVolumeCoarsening )
+        {
+          // this will avoid volume check
+          maxVolume = std::numeric_limits<double>::max();
+        }
 
         const auto& gridPart = indicator.space().gridPart();
 
@@ -55,7 +66,14 @@ namespace Dune
           localIndicator.evaluate(center,value);
           double eta = std::abs(value[0]);
           const int level = e.level();
-          if (eta>refineTolerance && level<maxLevel)
+
+          // compute volume only if necessary
+          const double volume = (useVolumeRefinement || useVolumeCoarsening) ? e.geometry().volume() : 0.0;
+
+          // check that estimator is larger than tolerance
+          // check that level is smaller than minimal level
+          // check that volume of element is larger than minimal acceptable volume
+          if (eta>refineTolerance && level<maxLevel && volume>minVolume)
           {
             refMarked += grid.mark( Marker::refine, gridEntity);
             if( markNeighbors )
@@ -67,14 +85,15 @@ namespace Dune
                 if( intersection.neighbor() )
                 {
                   const auto& outside = intersection.outside();
-                  if (outside.level()<maxLevel)
+                  const double outsideVol = (useVolumeRefinement) ? outside.geometry().volume() : 0.0;
+                  if (outside.level()<maxLevel && outsideVol>minVolume )
                     refMarked += grid.mark( Marker::refine, Dune::Fem::gridEntity(outside) );
                 }
               }
 
             }
           }
-          else if (eta<coarsenTolerance && level>minLevel)
+          else if (eta<coarsenTolerance && level>minLevel && volume<maxVolume )
             crsMarked += grid.mark( Marker::coarsen, gridEntity);
           else
             grid.mark(Marker::keep, gridEntity);
