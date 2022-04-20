@@ -150,7 +150,7 @@ namespace Dune
       {
         StaticArray< DofType > array_;
         DofVectorType dofVector_;
-        typedef typename DofVectorType :: SizeType SizeType;
+        typedef typename DofStorageInterface::SizeType SizeType;
 
       public:
         DofStorageWrapper ( const SizeType size,
@@ -166,7 +166,7 @@ namespace Dune
         void enableDofCompression () {}
 
         //! return array's size
-        int size () const { return dofVector_.size(); }
+        SizeType size () const { return dofVector_.size(); }
       };
 
     protected:

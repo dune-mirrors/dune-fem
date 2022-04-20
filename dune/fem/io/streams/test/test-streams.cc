@@ -18,7 +18,9 @@ struct Data
   std :: string my_string;
   unsigned int my_uint;
   uint64_t my_uint64;
+  int64_t my_int64;
   unsigned long int my_ulong;
+  long int my_long;
   size_t my_sizet;
   double my_double;
   int my_int;
@@ -36,7 +38,9 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
   out << data.my_string
       << data.my_uint
       << data.my_uint64
+      << data.my_int64
       << data.my_ulong
+      << data.my_long
       << data.my_sizet
       << data.my_double
       << data.my_int
@@ -61,15 +65,21 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
 
   Data check;
   in >> check.my_string
-     >> check.my_uint >> check.my_uint64
-     >> check.my_ulong >> check.my_sizet
+     >> check.my_uint
+     >> check.my_uint64
+     >> check.my_int64
+     >> check.my_ulong
+     >> check.my_long
+     >> check.my_sizet
      >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
   std :: cerr << "Data: " << check.my_string
               << ", " << check.my_uint
               << ", " << check.my_uint64
+              << ", " << check.my_int64
               << ", " << check.my_ulong
+              << ", " << check.my_long
               << ", " << check.my_sizet
               << ", " << check.my_double
               << ", " << check.my_int
@@ -91,15 +101,17 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
 
   bool equal = true;
   equal &= (data.my_string == check.my_string);
-  equal &= (data.my_uint == check.my_uint);
+  equal &= (data.my_uint   == check.my_uint);
   equal &= (data.my_uint64 == check.my_uint64);
-  equal &= (data.my_ulong == check.my_ulong);
-  equal &= (data.my_sizet == check.my_sizet);
+  equal &= (data.my_int64  == check.my_int64);
+  equal &= (data.my_ulong  == check.my_ulong);
+  equal &= (data.my_long   == check.my_long);
+  equal &= (data.my_sizet  == check.my_sizet);
   equal &= (data.my_double == check.my_double);
-  equal &= (data.my_int == check.my_int);
-  equal &= (data.my_float == check.my_float);
-  equal &= (data.my_char  == check.my_char );
-  equal &= (data.my_bool  == check.my_bool);
+  equal &= (data.my_int    == check.my_int);
+  equal &= (data.my_float  == check.my_float);
+  equal &= (data.my_char   == check.my_char );
+  equal &= (data.my_bool   == check.my_bool);
   return equal;
 }
 
@@ -115,7 +127,9 @@ int main ( int argc, char** argv )
     data.my_string = "Hello, World!";
     data.my_uint   = 42;
     data.my_uint64 = -4 ; // this results in 18446744073709551612
+    data.my_int64  = -4 ; // this results in -4
     data.my_ulong  = uint32_t(-4) ; // this results in 4294967292
+    data.my_long   = -long(uint32_t(-4)); // this results in -4294967292
     data.my_sizet  = uint32_t(-16) ; // this results in 4294967280
     data.my_double = 1.2345678901234;
     data.my_int    = -767;

@@ -215,6 +215,8 @@ namespace Dune
       DofStorageInterface() = default;
 
     public:
+      typedef std::size_t SizeType;
+
       //! destructor
       virtual ~DofStorageInterface() = default;
 
@@ -222,7 +224,7 @@ namespace Dune
       virtual void enableDofCompression() { }
 
       //! size of space, i.e. mapper.size()
-      virtual int size () const = 0;
+      virtual SizeType size () const = 0;
     };
 
 
@@ -236,13 +238,17 @@ namespace Dune
       ManagedDofStorageInterface() = default;
 
     public:
+      typedef typename DofStorageInterface::SizeType SizeType;
+      // interface for MemObject lists
+      typedef LocalInterface< SizeType > MemObjectCheckType;
+
       //! destructor
       virtual ~ManagedDofStorageInterface() = default;
 
       //! resize memory
       virtual void resize ( const bool enlargeOnly ) = 0;
       //! resize memory
-      virtual void reserve (int newSize) = 0;
+      virtual void reserve (const SizeType newSize) = 0;
       //! compressed the underlying dof vector and clear the array if it's
       //! temporary and clearresizedarrays is enabled (default)
       virtual void dofCompress ( const bool clearResizedArrays ) = 0;
@@ -268,9 +274,11 @@ namespace Dune
     template <class GridImp, class MapperType , class DofArrayType>
     class ManagedDofStorageImplementation : public ManagedDofStorageInterface
     {
-      // interface for MemObject lists
-      typedef LocalInterface< int > MemObjectCheckType;
+    public:
+      typedef typename ManagedDofStorageInterface::SizeType SizeType;
     protected:
+      typedef typename ManagedDofStorageInterface::MemObjectCheckType MemObjectCheckType;
+
       // type of this class
       typedef ManagedDofStorageImplementation <GridImp, MapperType , DofArrayType> ThisType;
 
@@ -330,21 +338,21 @@ namespace Dune
       ReserveMemoryObjectType& reserveMemoryObject() { return reserveMemObj_; }
 
       //! return size of underlying array
-      int size () const { return array_.size(); }
+      SizeType size () const { return array_.size(); }
 
       //! resize the memory with the new size
-      void resize ( const bool enlargeOnly )
+      void resize ( const bool enlargeOnly ) override
       {
         resize( std::integral_constant< bool, Capabilities::isAdaptiveDofMapper< MapperType >::v >(), enlargeOnly );
       }
 
-      //! reserve memory for what is comming
-      inline void reserve ( const int needed )
+      //! reserve memory for what is coming
+      inline void reserve ( const SizeType needed ) override
       {
         // if index set is compressible, then add requested size
         if( mapper().consecutive() )
         {
-          const int nSize = size() + (needed * mapper().maxNumDofs());
+          const SizeType nSize = size() + (needed * SizeType(mapper().maxNumDofs()));
           array_.reserve( nSize );
         }
         else
@@ -361,7 +369,7 @@ namespace Dune
       void dofCompress ( const bool clearResizedArrays )
       {
         // get current size
-        const int nSize = mapper().size();
+        const SizeType nSize = mapper().size();
 
         // if data is non-temporary do data compression
         if( dataCompressionEnabled_ )
@@ -370,7 +378,7 @@ namespace Dune
           const bool consecutive = mapper().consecutive ();
 
           // get old size (which we still have in array)
-          const int oldSize = array_.size();
+          const SizeType oldSize = array_.size();
 
           // NOTE: new size can also be larger than old size
           // e.g. during loadBalancing when ghosts where
@@ -388,11 +396,11 @@ namespace Dune
             if( consecutive )
             {
               // run over all holes and copy array values to new place
-              const int holes = mapper().numberOfHoles( block );
-              for( int i = 0; i < holes; ++i )
+              const SizeType holes = mapper().numberOfHoles( block );
+              for( SizeType i = 0; i < holes; ++i )
               {
-                const int oldIndex = mapper().oldIndex( i, block );
-                const int newIndex = mapper().newIndex( i, block );
+                const SizeType oldIndex = mapper().oldIndex( i, block );
+                const SizeType newIndex = mapper().newIndex( i, block );
 
                 assert( newIndex < nSize );
                 // implements array_[ newIndex ] = array_[ oldIndex ] ;
@@ -440,8 +448,8 @@ namespace Dune
         //       it to obtain old array size.
         mapper().update(); // make sure the mapper is up2date
 
-        const int newSize = mapper().size();
-        const int oldSize = array_.size();
+        const SizeType newSize = mapper().size();
+        const SizeType oldSize = array_.size();
 
         if( enlargeOnly && newSize < oldSize ) return ;
 
@@ -454,10 +462,10 @@ namespace Dune
       {
         // note: The mapper is adaptive and has been updated automatically, so
         //       do not use it to obtain old array size.
-        const int oldSize = array_.size();
+        const SizeType oldSize = array_.size();
 
         // get current size
-        const int nSize = mapper().size();
+        const SizeType nSize = mapper().size();
 
         // if enlarge only option is given only resize
         // if new size if larger than old size
@@ -476,7 +484,7 @@ namespace Dune
         const int numBlocks = mapper().numBlocks();
 
         // initialize upperBound
-        int upperBound = oldSize ;
+        SizeType upperBound = oldSize ;
 
         // make sure offset of block 0 is zero
         assert( mapper().offSet( 0 ) == 0 );
@@ -486,8 +494,8 @@ namespace Dune
         for( int block = numBlocks-1; block >= 1; --block )
         {
           // get offsets
-          const int newOffSet = mapper().offSet( block );
-          const int oldOffSet = mapper().oldOffSet( block );
+          const SizeType newOffSet = mapper().offSet( block );
+          const SizeType oldOffSet = mapper().oldOffSet( block );
 
           // make sure new offset is larger
           assert( newOffSet >= oldOffSet );
@@ -496,7 +504,7 @@ namespace Dune
           if( newOffSet > oldOffSet )
           {
             // calculate block size
-            const int blockSize = upperBound - oldOffSet;
+            const SizeType blockSize = upperBound - oldOffSet;
             // move block backward
             array_.memMoveBackward( blockSize, oldOffSet, newOffSet );
 
@@ -512,7 +520,7 @@ namespace Dune
       }
 
       //! move block to front again
-      void moveToFront ( const int oldSize, const int block )
+      void moveToFront ( const SizeType oldSize, const int block )
       {
         // make sure offset of block 0 is zero
         assert( mapper().offSet( 0 ) == 0 );
@@ -522,10 +530,10 @@ namespace Dune
         if( block == 0 ) return;
 
         // get insertion point from block
-        const int oldOffSet = mapper().oldOffSet( block );
+        const SizeType oldOffSet = mapper().oldOffSet( block );
 
         // get new off set
-        const int newOffSet = mapper().offSet( block );
+        const SizeType newOffSet = mapper().offSet( block );
 
         // here we should have at least the same offsets
         assert( newOffSet <= oldOffSet );
@@ -537,9 +545,9 @@ namespace Dune
           const int numBlocks = mapper().numBlocks();
 
           // for last section upperBound is size
-          const int upperBound
+          const SizeType upperBound
             = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
-          const int blockSize = upperBound - oldOffSet;
+          const SizeType blockSize = upperBound - oldOffSet;
 
           // move block forward
           array_.memMoveForward( blockSize, oldOffSet, newOffSet );
@@ -631,13 +639,15 @@ namespace Dune
 
     template <class MemObjectType>
     class ResizeMemoryObjects
-    : public LocalInlinePlus < ResizeMemoryObjects < MemObjectType > , int >
+    : public LocalInlinePlus < ResizeMemoryObjects < MemObjectType > , typename MemObjectType::SizeType >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
-      MemObjectType & memobj_;
+      MemObjectType& memobj_;
 
     public:
+      typedef typename MemObjectType::SizeType SizeType;
+
       // Constructor of MemObject, only to call from DofManager
       ResizeMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {}
       ResizeMemoryObjects ( const ResizeMemoryObjects& org )
@@ -645,7 +655,7 @@ namespace Dune
       {}
 
       // resize mem object, parameter not needed
-      inline void apply ( int& enlargeOnly )
+      inline void apply ( SizeType& enlargeOnly )
       {
         memobj_.resize( bool(enlargeOnly) );
       }
@@ -654,18 +664,20 @@ namespace Dune
     // this class is the object for a single MemObject to
     template <class MemObjectType>
     class ReserveMemoryObjects
-    : public LocalInlinePlus < ReserveMemoryObjects < MemObjectType > , int >
+    : public LocalInlinePlus < ReserveMemoryObjects < MemObjectType > , typename MemObjectType::SizeType >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
-      MemObjectType & memobj_;
+      MemObjectType& memobj_;
 
     public:
+      typedef typename MemObjectType::SizeType SizeType;
+
       // Constructor of MemObject, only to call from DofManager
       ReserveMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {}
 
       // reserve for at least chunkSize new values
-      inline void apply ( int & chunkSize )
+      inline void apply ( SizeType& chunkSize )
       {
         memobj_.reserve( chunkSize );
       }
@@ -793,7 +805,8 @@ namespace Dune
 
     private:
       typedef std::list< ManagedDofStorageInterface* > ListType;
-      typedef LocalInterface< int > MemObjectCheckType;
+      typedef typename ManagedDofStorageInterface::MemObjectCheckType MemObjectCheckType;
+      typedef typename MemObjectCheckType::Traits::ParamType MemObjSizeType;
       typedef std::list< ManagedIndexSetInterface * > IndexListType;
 
       // list with MemObjects, for each DiscreteFunction we have one MemObject
@@ -823,7 +836,7 @@ namespace Dune
       mutable MemObjectCheckType reserveMemObjs_;
 
       //! if chunk size if small then defaultChunkSize is used
-      const int defaultChunkSize_;
+      const MemObjSizeType defaultChunkSize_;
 
       //! number of sequence, incremented every resize is called
       int sequence_;
@@ -972,9 +985,10 @@ namespace Dune
 
       /** \brief reserve memory for at least nsize elements,
        *         dummy is needed for dune-grid ALUGrid version */
-      void reserveMemory ( int nsize, bool dummy = false )
+      void reserveMemory ( std::size_t nsize, bool dummy = false )
       {
-        int localChunkSize = std::max(nsize, defaultChunkSize_ );
+        MemObjSizeType localChunkSize =
+          std::max( MemObjSizeType(nsize), defaultChunkSize_ );
         assert( localChunkSize > 0 );
 
         // reserves (size + chunkSize * elementMemory), see above
@@ -1016,7 +1030,7 @@ namespace Dune
       //! resize the MemObject if necessary
       void resizeMemory()
       {
-        int enlargeOnly = 0;
+        MemObjSizeType enlargeOnly( 0 );
         // pass dummy parameter
         resizeMemObjs_.apply ( enlargeOnly );
       }
@@ -1024,7 +1038,7 @@ namespace Dune
       //! resize the MemObject if necessary
       void enlargeMemory()
       {
-        int enlargeOnly = 1;
+        MemObjSizeType enlargeOnly( 1 );
         // pass dummy parameter
         resizeMemObjs_.apply ( enlargeOnly );
       }

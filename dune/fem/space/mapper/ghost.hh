@@ -30,7 +30,7 @@ namespace Dune
     class AuxiliaryDofs;
 
     template< class AuxiliaryDofs >
-    struct MasterDofs;
+    struct PrimaryDofs;
 
 
 
@@ -364,11 +364,11 @@ namespace Dune
 
 
 
-    // MasterDofs for AuxiliaryDofs< GhostDofMapper >
+    // PrimaryDofs for AuxiliaryDofs< GhostDofMapper >
     // ------------------------------------------
 
     template< class GridPart, class BaseMapper, class GlobalKey >
-    struct MasterDofs< AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > >
+    struct PrimaryDofs< AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > >
     {
       typedef AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > > AuxiliaryDofsType;
 
@@ -379,7 +379,7 @@ namespace Dune
 
       typedef __GhostDofMapper::ConstIterator< GlobalKeyType > ConstIteratorType;
 
-      explicit MasterDofs ( const AuxiliaryDofsType &auxiliaryDofs )
+      explicit PrimaryDofs ( const AuxiliaryDofsType &auxiliaryDofs )
         : mapper_( auxiliaryDofs.mapper() )
       {}
 

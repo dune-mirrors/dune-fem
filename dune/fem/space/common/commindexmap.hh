@@ -14,6 +14,10 @@ namespace Dune
 
     class CommunicationIndexMap
     {
+    public:
+      // this typedef will also change the type of index
+      // for AuxiliaryDofs and AdaptiveLeafIndexSet
+      // TODO: extract to a more common place
       typedef int IndexType ;
     private:
       DynamicArray< IndexType > indices_;

@@ -47,6 +47,7 @@ namespace Dune
       virtual void writeDouble ( double value ) = 0;
       virtual void writeFloat ( float value ) = 0;
       virtual void writeInt ( int value ) = 0;
+      virtual void writeSignedInt64 ( int64_t value ) = 0;
       virtual void writeString ( const std::string &s ) = 0;
       virtual void writeUnsignedInt ( unsigned int value ) = 0;
       virtual void writeUnsignedInt64 ( uint64_t value ) = 0;
@@ -123,6 +124,11 @@ namespace Dune
         stream_->writeInt( value );
       }
 
+      void writeSignedInt64 ( int64_t value )
+      {
+        stream_->writeSignedInt64( value );
+      }
+
       void writeString ( const std :: string &s )
       {
         stream_->writeString( s );
@@ -164,6 +170,7 @@ namespace Dune
       virtual void readDouble ( double &value ) = 0;
       virtual void readFloat ( float &value ) = 0;
       virtual void readInt ( int &value ) = 0;
+      virtual void readSignedInt64 ( int64_t &value ) = 0;
       virtual void readString ( std::string &s ) = 0;
       virtual void readUnsignedInt ( unsigned int &value ) = 0;
       virtual void readUnsignedInt64 ( uint64_t &value ) = 0;
@@ -235,6 +242,11 @@ namespace Dune
         stream_->readInt( value );
       }
 
+      void readSignedInt64 ( int64_t &value )
+      {
+        stream_->readSignedInt64( value );
+      }
+
       void readString ( std :: string &s )
       {
         stream_->readString( s );
@@ -301,6 +313,11 @@ namespace Dune
         stream_.writeInt( value );
       }
 
+      virtual void writeSignedInt64 ( int64_t value )
+      {
+        stream_.writeSignedInt64( value );
+      }
+
       virtual void writeString ( const std :: string &s )
       {
         stream_.writeString( s );
@@ -360,6 +377,11 @@ namespace Dune
       virtual void readInt ( int &value )
       {
         stream_.readInt( value );
+      }
+
+      virtual void readSignedInt64 ( int64_t &value )
+      {
+        stream_.readSignedInt64( value );
       }
 
       virtual void readString ( std :: string &s )

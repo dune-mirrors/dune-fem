@@ -641,7 +641,7 @@ namespace Dune
       ///////////////////////////////////////////////////////////////////
 
       //! \copydoc Dune::Fem::AdaptiveIndexSet::numberOfHoles */
-      int numberOfHoles ( GeometryType type ) const
+      IndexType numberOfHoles ( GeometryType type ) const
       {
         const int codim = dimension - type.dim();
         // this index set works only with single geometry types adaptively
@@ -658,7 +658,7 @@ namespace Dune
       }
 
       //! return number of holes of the sets indices
-      int numberOfHoles ( const int codim ) const
+      IndexType numberOfHoles ( const int codim ) const
       {
         if( codimAvailable( codim ) && codimUsed( codim ) )
         {
@@ -669,7 +669,7 @@ namespace Dune
       }
 
       //! \copydoc Dune::Fem::AdaptiveIndexSet::oldIndex */
-      int oldIndex ( int hole, GeometryType type ) const
+      IndexType oldIndex ( IndexType hole, GeometryType type ) const
       {
         const int codim = dimension - type.dim();
         assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
@@ -677,7 +677,7 @@ namespace Dune
       }
 
       //! return old index, for dof manager only
-      int oldIndex (const int hole, const int codim ) const
+      IndexType oldIndex (const IndexType hole, const int codim ) const
       {
         if( codimAvailable( codim ) )
         {
@@ -687,12 +687,12 @@ namespace Dune
         else
         {
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-          return -1;
+          return IndexType(-1);
         }
       }
 
       //! \copydoc Dune::Fem::AdaptiveIndexSet::newIndex */
-      int newIndex ( int hole, GeometryType type ) const
+      IndexType newIndex ( IndexType hole, GeometryType type ) const
       {
         const int codim = dimension - type.dim();
         assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
@@ -700,7 +700,7 @@ namespace Dune
       }
 
       //! return new index, for dof manager only returns index
-      int newIndex (const int hole , const int codim ) const
+      IndexType newIndex (const IndexType hole , const int codim ) const
       {
         if( codimAvailable( codim ) )
         {
@@ -710,7 +710,7 @@ namespace Dune
         else
         {
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
-          return -1;
+          return IndexType(-1);
         }
       }
 
@@ -1374,7 +1374,8 @@ namespace Dune
         if( this->grid_.comm().size() == 1 )
         {
           for( int codim = Traits::startingCodimension; codim < Traits::numCodimensions; ++codim )
-            assert( this->codimUsed( codim ) ? this->size( codim ) == this->grid_.size( codim ) : true );
+            assert( this->codimUsed( codim ) ?
+                size_t(this->size( codim )) == size_t(this->grid_.size( codim )) : true );
         }
 #endif // #ifndef NDEBUG
 
@@ -1447,7 +1448,7 @@ namespace Dune
         {
           for( int codim = Traits::startingCodimension; codim < Traits::numCodimensions; ++codim )
             if( codim != Traits::intersectionCodimension )
-              assert( this->size( codim ) == this->grid_.size( codim ) );
+              assert( size_t(this->size( codim )) == size_t(this->grid_.size( codim )) );
         }
 #endif // #ifndef NDEBUG
 
@@ -1514,7 +1515,7 @@ namespace Dune
 
 #ifndef NDEBUG
         if( this->grid_.comm().size() == 1 )
-          assert( this->size( 0 ) == this->grid_.size( 0 ) );
+          assert( size_t(this->size( 0 )) == size_t(this->grid_.size( 0 )) );
 #endif // #ifndef NDEBUG
 
         return compressed;

@@ -62,6 +62,8 @@ namespace Dune
       typedef ManagedDofStorageImplementation< GridType, MapperType, DofArrayType > BaseType;
 
     public:
+      typedef typename BaseType :: SizeType SizeType;
+
       //! Constructor of ManagedDofStorageImpl, only to call from DofManager
       PetscManagedDofStorage( const DiscreteFunctionSpace& space,
                               const MapperType& mapper )
@@ -70,10 +72,11 @@ namespace Dune
       {
       }
 
-      void resize( const bool )
+      void resize( const bool ) override
       { // do nothing here, only in compress
       }
-      void reserve( int  )
+
+      void reserve( const SizeType ) override
       {
         // do nothing here, only in compress
       }

@@ -108,13 +108,19 @@ namespace Dune
         writePrimitive( value );
       }
 
+      /** \copydoc Dune::Fem::OutStreamInterface::writeSignedInt64 */
+      void writeSignedInt64 ( int64_t value )
+      {
+        writePrimitive( value );
+      }
+
       /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeChar ( const char value )
       {
         writePrimitive( value );
       }
 
-      /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
+      /** \copydoc Dune::Fem::OutStreamInterface::writeBool */
       void writeBool ( const bool value )
       {
         writePrimitive( value );
@@ -233,6 +239,12 @@ namespace Dune
 
       /** \copydoc Dune::Fem::InStreamInterface::readInt */
       void readInt ( int &value )
+      {
+        readPrimitive( value );
+      }
+
+      /** \copydoc Dune::Fem::InStreamInterface::readSignedInt64 */
+      void readSignedInt64 ( int64_t &value )
       {
         readPrimitive( value );
       }

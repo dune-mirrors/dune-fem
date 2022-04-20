@@ -108,6 +108,14 @@ namespace Dune
           writeError();
       }
 
+      /** \copydoc Dune::Fem::OutStreamInterface::writeSignedInt64 */
+      void writeSignedInt64 ( int64_t value )
+      {
+        stream_ << value << std::endl;
+        if( !valid () )
+          writeError();
+      }
+
       /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeChar ( const char value )
       {
@@ -241,6 +249,14 @@ namespace Dune
 
       /** \copydoc Dune::Fem::InStreamInterface::readInt */
       void readInt ( int &value )
+      {
+        stream_ >> value;
+        if( !valid () )
+          readError();
+      }
+
+      /** \copydoc Dune::Fem::InStreamInterface::readSignedInt64 */
+      void readSignedInt64 (int64_t &value )
       {
         stream_ >> value;
         if( !valid () )
