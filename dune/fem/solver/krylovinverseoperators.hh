@@ -120,7 +120,7 @@ namespace Dune
         std::ostream* os = nullptr;
         // only set output when general verbose mode is enabled
         // (basically to avoid output on every rank)
-        if( verbose_ && Parameter :: verbose() )
+        if( verbose_ && Parameter :: verbose( Parameter::solverStatistics ) )
         {
           os = &std::cout;
         }

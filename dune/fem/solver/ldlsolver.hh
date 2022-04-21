@@ -103,7 +103,7 @@ public:
    */
   LDLInverseOperator(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
         const ParameterReader &parameter = Parameter::container() ) :
-    verbose_(verbose && Dune::Fem::Parameter::verbose()), ccsmat_()
+    verbose_(verbose && Parameter::verbose(Parameter::solverStatistics )), ccsmat_()
   {}
 
   /** \brief Constructor.
@@ -113,7 +113,8 @@ public:
    */
   LDLInverseOperator(const double& redEps, const double& absLimit, const int& maxIter,
         const ParameterReader &parameter = Parameter::container() ) :
-    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
+    verbose_(parameter.getValue<bool>("fem.solver.verbose",false) && Parameter::verbose(Parameter::solverStatistics )),
+    ccsmat_()
   {}
 
   LDLInverseOperator(const SolverParameter &parameter = SolverParameter(Parameter::container()) )

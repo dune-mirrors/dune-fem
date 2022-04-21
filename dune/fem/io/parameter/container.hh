@@ -30,6 +30,21 @@ namespace Dune
 
     struct ParameterContainerData
     {
+      //! print iteration count and residual information
+      static const int solverStatistics   = 1; // this is the new default level
+      //! some solver packages offer extended output, use this level for this
+      static const int extendedStatistics = 2;
+      //! print which parameters have been read, i.e. fem.dofmanager.memoryfactor
+      static const int parameterOutput    = 3;
+      //! more diagnostics, i.e. about timing and other things
+      static const int diagnosticsOutput  = 4;
+      //! print debug output at this level
+      static const int debugOutput        = 5;
+
+      // default verbosity level used when verbose()
+      // without specifying a level is called (old behavior)
+      static const int defaultVerbosityLevel = parameterOutput;
+
       struct Value
       {
         enum ShadowStatus { unresolved, resolved, resolving };
@@ -55,13 +70,19 @@ namespace Dune
       void resolveShadows ( const std::string &key, Value &val ) const;
       std::string getShadowKey ( const std::string key, const char delimter, std::string &value ) const;
 
-      bool verbose () const {
-        return (verboseRank == MPIManager::rank());
+      bool verbose ( const int level = defaultVerbosityLevel ) const
+      {
+        // return true if verboserank is the current rank and if
+        // the activated verbosity level is higher or equal to the given level
+        return (verboseRank == MPIManager::rank() && level <= verbosityLevel);
       }
 
       mutable std::map< std::string, Value > map;
       std::set< std::string > deprecated;
-      int verboseRank = -1;
+      int verboseRank = 0; // default is to output on rank 0
+      int verbosityLevel = 1; // default verbosity level is 1
+      bool verbosityLevelPresent = false; // this is parameter was provided
+      bool verbosityChangedByVerboseRank = false; // this is true if verboserank was provided, but not verbositylevel
     };
 
 
@@ -174,7 +195,10 @@ namespace Dune
       void clear () { parameter_.map.clear(); }
 
       /** \brief obtain the cached value for fem.verbose */
-      bool verbose () const { return parameter_.verbose(); }
+      bool verbose ( const int level = ParameterContainerData::defaultVerbosityLevel ) const
+      {
+        return parameter_.verbose( level );
+      }
 
       std::string commonInputPath () const
       {
@@ -392,6 +416,29 @@ namespace Dune
         ParameterParser< int >::parse( val.value, parameter_.verboseRank );
         if( (parameter_.verboseRank < -1) || (parameter_.verboseRank >= MPIManager::size() ) )
           std::cout << "Warning: Parameter 'fem.verboserank' is neither a " << "valid rank nor -1." << std::endl;
+
+        // Restore default behavior:
+        // If fem.verboserank is provided, then we set the verbosityLevel to 3
+        // to restore the old behavior. Otherwise the level is 1.
+        if( ! parameter_.verbosityLevelPresent &&
+            parameter_.verbosityLevel < ParameterContainerData::defaultVerbosityLevel )
+        {
+          parameter_.verbosityLevel = ParameterContainerData::defaultVerbosityLevel;
+          parameter_.verbosityChangedByVerboseRank = true;
+        }
+      }
+
+      if( key == "fem.verbositylevel" )
+      {
+        // if verbositylevel is provided undo the changed by verboserank
+        if( parameter_.verbosityChangedByVerboseRank )
+          parameter_.verbosityLevel = 1;
+
+        parameter_.verbosityLevelPresent = true;
+
+        ParameterParser< int >::parse( val.value, parameter_.verbosityLevel );
+        if( (parameter_.verbosityLevel < 0) || (parameter_.verbosityLevel >= 10 ) )
+          std::cout << "Warning: Parameter 'fem.verbositylevel' is neither a " << "valid level nor 0." << std::endl;
       }
 
       if( verbose() )

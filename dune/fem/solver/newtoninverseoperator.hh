@@ -281,7 +281,7 @@ namespace Dune
 
       // main constructor
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const ParameterType &parameter )
-        : verbose_( parameter.verbose() && Parameter::verbose() ),
+        : verbose_( parameter.verbose() && Parameter::verbose( Parameter::solverStatistics ) ), // 1 level for solver stats
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),

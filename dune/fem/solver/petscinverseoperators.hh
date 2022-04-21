@@ -59,7 +59,7 @@ namespace Dune
       static PetscErrorCode
       monitor (KSP ksp, PetscInt it, PetscReal rnorm, void *mctx)
       {
-        if( Parameter :: verbose () )
+        if( Parameter :: verbose ( Parameter::solverStatistics ) )
         {
           std::cout << "PETSc::KSP:  it = "
                     << std::setw(3) << std::left << it
@@ -444,7 +444,7 @@ namespace Dune
 
         // set monitor in verbose mode for all cores
         // (and then check Parameter::verbose locally inside monitor)
-        if( parameter.verbose() )
+        if( parameter.verbose() && Parameter::verbose( Parameter::solverStatistics ) )
         {
           ::Dune::Petsc::KSPView( comm, ksp() );
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
@@ -471,14 +471,19 @@ namespace Dune
         ::Dune::Petsc::KSPGetIterationNumber( *ksp_, &its );
         KSPConvergedReason reason;
         ::Dune::Petsc::KSPGetConvergedReason( *ksp_, &reason );
-        if( parameter_->verbose() && Parameter::verbose() )
+
+        bool converged = int(reason) >= 0 ;
+
+        if( parameter_->verbose() && Parameter::verbose( 1 ) )
         {
           // list of reasons:
           // https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPConvergedReason.html
-          std::cout << "Converged reason:" << reason << std::endl;
+          if( converged )
+            std::cout << "Converged    reason: ";
+          else
+            std::cout << "**Diverged** reason: ";
+          std::cout << reason << "  linear iterations: " << its << std::endl;
         }
-
-        bool converged = int(reason) >= 0 ;
 
         return (converged) ? its : -its;
       }

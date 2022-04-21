@@ -190,6 +190,12 @@ namespace Dune
     class Parameter
     {
     public:
+      static const int solverStatistics   = ParameterContainerData::solverStatistics;
+      static const int extendedStatistics = ParameterContainerData::extendedStatistics;
+      static const int parameterOutput    = ParameterContainerData::parameterOutput;
+      static const int diagnosticsOutput  = ParameterContainerData::diagnosticsOutput;
+      static const int debugOutput        = ParameterContainerData::debugOutput;
+
       static ParameterContainer &container ()
       {
         return Singleton< ParameterContainer > :: instance();
@@ -441,8 +447,11 @@ namespace Dune
         return container().commonInputPath();
       }
 
-      /** \brief obtain the cached value for fem.verbose */
+      /** \brief obtain the cached value for fem.verbose with default verbosity level 2 */
       static bool verbose () { return container().verbose(); }
+
+      /** \brief obtain the cached value for fem.verbose */
+      static bool verbose ( const int level ) { return container().verbose(level ); }
 
       /** \brief write the parameter database to a file
        *
