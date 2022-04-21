@@ -28,7 +28,7 @@ namespace Dune
             const double refineTolerance, const double coarsenTolerance,
             const int minLevel = 0,
             int maxLevel = -1,
-            const double minVolume = 0.0,
+            const double minVolume = -1.,
             double maxVolume = -1.0,
             const bool markNeighbors = false )
       {

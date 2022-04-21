@@ -81,7 +81,7 @@ def loadBalance(first, *args):
     module(hgrid).gridAdaptation(hgrid).loadBalance(args)
 
 def mark(indicator, refineTolerance, coarsenTolerance=0.,
-         minLevel=0, maxLevel=None, minVolume=0.0, maxVolume=-1.,
+         minLevel=0, maxLevel=None, minVolume=-1.0, maxVolume=-1.0,
          gridView=None,
          markNeighbors=False):
     if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
@@ -109,7 +109,7 @@ def mark(indicator, refineTolerance, coarsenTolerance=0.,
 
 def markNeighbors(indicator, refineTolerance, coarsenTolerance=0.0,
                   minLevel=0, maxLevel=None,
-                  minVolume=0.0, maxVolume=-1.0,
+                  minVolume=-1.0, maxVolume=-1.0,
                   gridView=None):
     return mark(indicator, refineTolerance,
                 coarsenTolerance=coarsenTolerance,
