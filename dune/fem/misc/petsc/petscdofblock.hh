@@ -264,19 +264,21 @@ namespace Dune
      */
     template< class PVector >
     class PetscDofBlock< PVector >::DofIterator
-    : public std::iterator< std::input_iterator_tag, PetscScalar >
     {
       typedef typename PetscDofBlock< PVector >::DofIterator ThisType;
       typedef PetscDofBlock< PVector > DofBlockType;
-
-      typedef std::iterator< std::input_iterator_tag, PetscScalar > BaseType;
 
       // TODO: get rid of this! we don't like shared pointers. Own a real instance instead!
       typedef std::shared_ptr< DofBlockType > DofBlockSharedPointer;
 
     public:
+      typedef std::input_iterator_tag iterator_category;
+      typedef typename DofBlockType::DofProxy value_type;
+      typedef std::ptrdiff_t difference_type;
+      typedef PetscScalar* pointer;
+      typedef PetscScalar& reference;
+
       typedef PVector PetscVectorType;
-      typedef typename DofBlockType::DofProxy value_type; // (this overrides the 2nd template parameter of BaseType...)
 
       // standard ctor
       DofIterator ( PetscVectorType &petscVector, unsigned int blockIndex, PetscInt indexInBlock = 0 )

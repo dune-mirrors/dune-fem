@@ -2,7 +2,6 @@
 #define DUNE_FEM_QUADRATURE_HH
 
 #include <cassert>
-#include <iterator>
 #include <memory>
 
 #include <dune/common/fvector.hh>
@@ -101,18 +100,15 @@ namespace Dune
    */
   template< class Quadrature >
   class QuadraturePointIterator
-    : public std::iterator< std::forward_iterator_tag, QuadraturePointWrapper< Quadrature >,
-                            std::ptrdiff_t, Envelope< QuadraturePointWrapper< Quadrature > >, QuadraturePointWrapper< Quadrature > >
   {
     typedef QuadraturePointIterator< Quadrature > ThisType;
-    typedef std::iterator< std::forward_iterator_tag, QuadraturePointWrapper< Quadrature >,
-                           std::ptrdiff_t, Envelope< QuadraturePointWrapper< Quadrature > >, QuadraturePointWrapper< Quadrature > >
-      BaseType;
 
   public:
-    typedef typename BaseType::value_type value_type;
-    typedef typename BaseType::pointer pointer;
-    typedef typename BaseType::reference reference;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef QuadraturePointWrapper< Quadrature > value_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef Envelope< QuadraturePointWrapper< Quadrature > > pointer;
+    typedef QuadraturePointWrapper< Quadrature > reference;
 
     QuadraturePointIterator () noexcept = default;
 

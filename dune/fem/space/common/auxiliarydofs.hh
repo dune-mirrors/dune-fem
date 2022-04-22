@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -69,8 +68,13 @@ namespace Dune
       typedef typename IndexMapType :: IndexType IndexType;
 
       struct ConstIterator
-        : public std::iterator< std::forward_iterator_tag, const IndexType, IndexType >
       {
+        typedef std::forward_iterator_tag iterator_category;
+        typedef const IndexType value_type;
+        typedef IndexType difference_type;
+        typedef IndexType* pointer;
+        typedef IndexType& reference;
+
         ConstIterator () = default;
         ConstIterator ( const IndexMapType &auxiliarys, IndexType index ) : auxiliarys_( &auxiliarys ), index_( index ) {}
 
@@ -282,8 +286,13 @@ namespace Dune
       typedef typename AuxiliaryDofsType :: IndexType IndexType;
 
       struct ConstIterator
-        : public std::iterator< std::forward_iterator_tag, IndexType, std::ptrdiff_t, Envelope< IndexType >, IndexType >
       {
+        typedef std::forward_iterator_tag iterator_category;
+        typedef IndexType value_type;
+        typedef std::ptrdiff_t difference_type;
+        typedef Envelope< IndexType > pointer;
+        typedef IndexType reference;
+
         ConstIterator () = default;
 
         ConstIterator ( IndexType index, IndexType auxiliary )
