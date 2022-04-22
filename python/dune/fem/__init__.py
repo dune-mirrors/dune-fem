@@ -86,6 +86,23 @@ registry["model"] = {
          "integrands" : model.integrands
      }
 
+#------------------------------------------------------
+# Setting verbosity level for dune-fem
+def setVerbosity( level=1, rank=0 ):
+    """
+    Verbosity levels:
+      0: no output
+      1: solver statistics (default)
+      2: extended solver statistics
+      3: parameter and other output
+      4: diagnostics output
+      5: debug output
+
+    Set verbose rank (-1,0,...,MPI_size-1) to the rank that should print output.
+    """
+    parameter._setVerbosity( level, rank )
+#------------------------------------------------------
+
 from ufl import dx
 from dune.ufl import GridFunction
 def evaluate(expression,x,**kwargs):

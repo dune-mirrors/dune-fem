@@ -884,8 +884,10 @@ namespace Dune
       {
         // only print memory factor if it deviates from the default value
         if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 )
-          if( Parameter::verbose() && (grid_.comm().rank() == 0) )
+        {
+          if( Parameter::verbose( Parameter::parameterOutput ) && (grid_.comm().rank() == 0) )
             std::cout << "Created DofManager with memory factor " << memoryFactor_ << "." << std::endl;
+        }
       }
 
       //! Desctructor, removes all MemObjects and IndexSetObjects
@@ -1250,21 +1252,23 @@ namespace Dune
     template <class GridType>
     inline DofManager<GridType>::~DofManager ()
     {
+      // enable output if verbosity level is debugOutput
+      const bool verbose = Parameter::verbose( Parameter::debugOutput );
       if(memList_.size() > 0)
       {
         while( memList_.rbegin() != memList_.rend())
         {
           DofStorageInterface * mobj = (* memList_.rbegin() );
-          dverb << "Removing '" << mobj << "' from DofManager!\n";
+          if( verbose )
+            std::cout << "Removing '" << mobj << "' from DofManager!\n";
           memList_.pop_back();
         }
       }
 
       if(indexList_.size() > 0)
       {
-#ifndef NDEBUG
-        std::cerr << "ERROR: Not all index sets have been removed from DofManager yet!" << std::endl;
-#endif
+        if( verbose )
+          std::cerr << "ERROR: Not all index sets have been removed from DofManager yet!" << std::endl;
         while ( indexList_.rbegin() != indexList_.rend())
         {
           ManagedIndexSetInterface* iobj = (* indexList_.rbegin() );

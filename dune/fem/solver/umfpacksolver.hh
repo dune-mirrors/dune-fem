@@ -159,7 +159,7 @@ public:
     double UMF_Apply_Info[UMFPACK_INFO];
     Caller::solve(UMFPACK_A, getCCSMatrix().getColStart(), getCCSMatrix().getRowIndex(), getCCSMatrix().getValues(),
                   dest, const_cast<DofType*>(arg), UMF_Numeric, UMF_Control, UMF_Apply_Info);
-    if( Parameter::verbose() && parameter_->verbose() )
+    if( Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose() )
     {
       Caller::report_status(UMF_Control, UMF_Apply_Info[UMFPACK_STATUS]);
       std::cout <<"[UMFPack Solve]" << std::endl;
@@ -259,7 +259,7 @@ protected:
                      reinterpret_cast<double*>(getCCSMatrix().getValues()), &UMF_Symbolic, UMF_Control, UMF_Decomposition_Info);
     Caller::numeric(getCCSMatrix().getColStart(), getCCSMatrix().getRowIndex(), reinterpret_cast<double*>(getCCSMatrix().getValues()),
                     UMF_Symbolic, &UMF_Numeric, UMF_Control, UMF_Decomposition_Info);
-    if( Parameter::verbose() && parameter_->verbose() )
+    if( Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose() )
     {
       Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
       std::cout << "[UMFPack Decomposition]" << std::endl;

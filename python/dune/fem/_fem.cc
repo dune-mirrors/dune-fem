@@ -40,6 +40,15 @@ PYBIND11_MODULE( _fem, module )
     auto mpiManagerCls = pybind11::class_<Dune::Fem::MPIManager>(module, "threading");
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
 
+    // function to verbose rank and verbosity level
+    param.def( "_setVerbosity", [] ( Dune::Fem::ParameterContainer &self, const int level, const int rank )
+      {
+        // set verbosity level (see dune/fem/io/parameter/container.hh for doc)
+        self.append( "fem.verbositylevel", level, /* force */ true );
+        // set verbose rank
+        self.append( "fem.verboserank", rank, /* force */ true );
+      }, "level"_a, "rank"_a );
+
     param.def( "write", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
         std::ofstream file( fileName );
         if( file )
