@@ -4,7 +4,6 @@
 #include <cstddef>
 
 #include <algorithm>
-#include <iterator>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -97,11 +96,16 @@ namespace Dune
 
       template< class Index >
       class ConstIterator
-        : public std::iterator< std::random_access_iterator_tag, Index, Index, Envelope< Index >, Index >
       {
         typedef ConstIterator< Index > ThisType;
 
       public:
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef Index value_type;
+        typedef Index difference_type;
+        typedef Envelope< Index > pointer;
+        typedef Index reference;
+
         ConstIterator () noexcept = default;
         explicit ConstIterator ( Index index ) noexcept : index_( index ) {}
 
