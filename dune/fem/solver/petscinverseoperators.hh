@@ -446,7 +446,10 @@ namespace Dune
         // (and then check Parameter::verbose locally inside monitor)
         if( parameter.verbose() && Parameter::verbose( Parameter::solverStatistics ) )
         {
-          ::Dune::Petsc::KSPView( comm, ksp() );
+          // only print information about solver type and pc type in extended mode
+          if( Parameter::verbose( Parameter::extendedStatistics ) )
+            ::Dune::Petsc::KSPView( comm, ksp() );
+
           ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
         }
       }

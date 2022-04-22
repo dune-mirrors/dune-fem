@@ -152,7 +152,10 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        const int verbosity = (Dune::Fem::Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose()) ? 2 : 0;
+        int verbosity = (Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose()) ? 2 : 0;
+        if ( verbosity && Parameter::verbose( Parameter::extendedStatistics ) )
+          verbosity += 2;
+
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
         {

@@ -152,7 +152,7 @@ namespace Dune
     AdaptationMethod ( const GridType &grid, const ParameterReader &parameter = Parameter::container() )
       : adaptationMethod_(generic)
     {
-      const bool output = ( Parameter :: verbose() && MPIManager::isMainThread() );
+      const bool output = ( Parameter :: verbose( Parameter ::parameterOutput ) && MPIManager::isMainThread() );
       int am = 1;
       const std::string methodNames [] = { "none", "generic", "callback" };
       am = parameter.getEnum("fem.adaptation.method", methodNames, am);
@@ -660,7 +660,7 @@ namespace Dune
     {
       if( ++referenceCounter_ > 1 )
         DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
-      if( Parameter::verbose() )
+      if( Parameter::verbose( Parameter::parameterOutput ) )
         std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
 

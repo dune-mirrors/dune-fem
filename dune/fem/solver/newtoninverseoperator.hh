@@ -281,7 +281,7 @@ namespace Dune
 
       // main constructor
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const ParameterType &parameter )
-        : verbose_( parameter.verbose() && Parameter::verbose( Parameter::solverStatistics ) ), // 1 level for solver stats
+        : verbose_( parameter.verbose() ),
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
@@ -352,7 +352,7 @@ namespace Dune
       void setMaxIterations ( int maxIterations ) { parameter_.setMaxIterations( maxIterations ); }
       int linearIterations () const { return linearIterations_; }
       void setMaxLinearIterations ( int maxLinearIterations ) { parameter_.setMaxLinearIterations( maxLinearIterations ); }
-      bool verbose() const { return verbose_; }
+      bool verbose() const { return verbose_ && Parameter::verbose( Parameter::solverStatistics ); }
 
       NewtonFailure failed () const
       {
@@ -391,11 +391,12 @@ namespace Dune
         double factor = 1.0;
         int noLineSearch = (delta_ < deltaOld)?1:0;
         int lineSearchIteration = 0;
+        const bool lsVerbose = verbose() && Parameter::verbose( Parameter::extendedStatistics );
         while (delta_ >= deltaOld)
         {
           double deltaPrev = delta_;
           factor *= 0.5;
-          if( verbose() )
+          if( lsVerbose )
             std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
           if (std::abs(delta_-deltaOld) < 1e-5*delta_) // || !converged()) // line search not working
             return -1;  // failed
@@ -481,13 +482,14 @@ namespace Dune
       residual -= u;
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
 
-      if( verbose() )
+      const bool newtonVerbose = verbose();
+      if( newtonVerbose )
         std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
       while( true )
       {
-        if( verbose() )
+        if( newtonVerbose )
           std::cout << std::endl;
-        // evaluate operator's jacobian
+        // evaluate operator's Jacobian
         (*op_).jacobian( w, jOp );
 
         // David: With this factor, the tolerance of CGInverseOp is the absolute
@@ -516,12 +518,12 @@ namespace Dune
         int ls = lineSearch(w,dw,u,residual);
         stepCompleted_ = ls >= 0;
         ++iterations_;
-        if( verbose() )
+        if( newtonVerbose )
           std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
         // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
         if ( (finished_(w, dw, delta_)) || !converged())
         {
-          if( verbose() )
+          if( newtonVerbose )
           {
             std::cout << std::endl;
             std::cout << "Linear iterations: " << linearIterations_ << std::endl;
@@ -529,7 +531,7 @@ namespace Dune
           break;
         }
       }
-      if( verbose() )
+      if( newtonVerbose )
         std::cout << std::endl;
 
       jInv_.unbind();
