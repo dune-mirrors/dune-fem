@@ -338,7 +338,7 @@ namespace Dune
       ReserveMemoryObjectType& reserveMemoryObject() { return reserveMemObj_; }
 
       //! return size of underlying array
-      SizeType size () const { return array_.size(); }
+      SizeType size () const override { return array_.size(); }
 
       //! resize the memory with the new size
       void resize ( const bool enlargeOnly ) override
@@ -366,7 +366,7 @@ namespace Dune
       }
 
       //! copy the dof from the rear section of the vector to the holes
-      void dofCompress ( const bool clearResizedArrays )
+      void dofCompress ( const bool clearResizedArrays ) override
       {
         // get current size
         const SizeType nSize = mapper().size();
@@ -421,13 +421,13 @@ namespace Dune
       }
 
       //! return used memory size
-      size_t usedMemorySize() const
+      size_t usedMemorySize() const override
       {
         return ((size_t) sizeof(ThisType) + array_.usedMemorySize());
       }
 
       //! enable dof compression for this MemObject
-      void enableDofCompression()
+      void enableDofCompression() override
       {
         dataCompressionEnabled_ = true;
       }

@@ -81,7 +81,7 @@ namespace Dune
         // do nothing here, only in compress
       }
 
-      void dofCompress( const bool clearResizedArrays )
+      void dofCompress( const bool clearResizedArrays ) override
       {
         myArray_.resize();
         if( clearResizedArrays )
@@ -91,7 +91,7 @@ namespace Dune
       }
 
       //! enable dof compression for dof storage (default is empty)
-      void enableDofCompression()
+      void enableDofCompression() override
       {
         std::cerr << "WARNING: PetscVector cannot handle dof compression!" << std::endl;
       }
