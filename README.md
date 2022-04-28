@@ -8,6 +8,33 @@ and Finite Volume Methods (FV) and Discontinuous Galerkin Methods (DG).
 If you need help, please ask on our [mailinglist][5]. Bugs can also be submitted
 to the DUNE-FEM [bugtracker][6] instead.
 
+Tutorial
+--------
+
+A [tutorial][18] for the recently added Python bindings can be found [here][18].
+
+Installation
+------------
+
+**Using pip**
+
+dune-fem can be installed using the Package Index of Python (pip).
+
+```
+pip install dune-fem
+```
+
+See https://dune-project.org/doc/installation-pip/ for a more detailed
+description.
+
+**From source**
+
+For a full explanation of the DUNE installation process please read
+the [installation notes][2].
+
+When using the main branch observe the [build status][19]
+to make sure you get a working version.
+
 Dependencies
 ------------
 
@@ -64,33 +91,6 @@ A detailed description of DUNE-FEM can be found in
 * A. Dedner, R. Klöfkorn, and M. Nolte. Python Bindings for the DUNE-FEM module.
   Zenodoo, 2020 http://dx.doi.org/10.5281/zenodo.3706994
 
-
-Tutorial
---------
-
-A [tutorial][18] for the recently added Python bindings can be found [here][18].
-
-Installation
-------------
-
-**Using pip**
-
-dune-fem can be installed using the Package Index of Python (pip).
-
-```
-pip install dune-fem
-```
-
-See https://dune-project.org/doc/installation-pip/ for a more detailed
-description.
-
-**From source**
-
-For a full explanation of the DUNE installation process please read
-the [installation notes][2].
-
-When using the main branch observe the [build status][19]
-to make sure you get a working version.
 
  [0]: https://www.dune-project.org/modules/dune-fem/
  [1]: https://www.dune-project.org
