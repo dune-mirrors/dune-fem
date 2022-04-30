@@ -716,7 +716,7 @@ def rannacherTurek(gridView, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if dimRange < 1:
+    if dimRange and dimRange < 1:
         raise KeyError("invalid dimRange: " + str(dimRange) + " (must be >= 1)")
 
     # check requirements on parameters
