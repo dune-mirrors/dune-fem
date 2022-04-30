@@ -250,9 +250,12 @@ namespace Dune
       }
 
       //! \todo please doc me
-      template< class Point, class DofVector >
-      void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
+      template< class Point, class DofVector, class HessianRange >
+      void hessianAll ( const Point &x, const DofVector &dofs, HessianRange& hessian ) const
       {
+        if( ! std::is_same< HessianRange, HessianRangeType >:: value )
+          DUNE_THROW( NotImplemented, "hessianAll: HessianRange mismatch!" );
+
         DUNE_THROW( NotImplemented, "hessianAll for TransformedBasisFunctionSet not implemented." );
       }
 
