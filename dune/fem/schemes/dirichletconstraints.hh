@@ -129,7 +129,7 @@ public:
   template < class DiscreteFunctionType >
   void operator ()( const DiscreteFunctionType& u, DiscreteFunctionType& w ) const
   {
-    updateDirichletDofs();
+    update();
 
     // if Dirichlet Dofs have been found, treat them
     if( hasDirichletDofs_ )
@@ -167,7 +167,7 @@ public:
   template < class DiscreteFunctionType >
   void operator ()( const typename DiscreteFunctionType::RangeType& value, DiscreteFunctionType& w ) const
   {
-    updateDirichletDofs();
+    update();
 
     // if Dirichlet Dofs have been found, treat them
     if( hasDirichletDofs_ )
@@ -203,7 +203,7 @@ public:
   template < class DiscreteFunctionType >
   void operator ()( DiscreteFunctionType& w ) const
   {
-    updateDirichletDofs();
+    update();
 
     if( hasDirichletDofs_ )
     {
@@ -231,7 +231,7 @@ public:
   void operator ()( const GridFunctionType &u,
                     DiscreteFunctionType& w, Operation op=Operation::setDF ) const
   {
-    updateDirichletDofs();
+    update();
 
     if( hasDirichletDofs_ )
     {
@@ -264,7 +264,7 @@ public:
   template <class LinearOperator>
   void applyToOperator( LinearOperator& linearOperator ) const
   {
-    updateDirichletDofs();
+    update();
 
     typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
     typedef typename IteratorType :: Entity EntityType;
@@ -295,11 +295,9 @@ public:
 
   const DirichletBlockVector &dirichletBlocks() const
   {
-    updateDirichletDofs();
+    update();
     return dirichletBlocks_;
   }
-
-protected:
 
   /*! treatment of Dirichlet-DoFs for one entity
    *
@@ -345,6 +343,7 @@ protected:
     }
   }
 
+protected:
   //! set the Dirichlet points to exact values
   template< class LocalInterpolationType, class LocalFunctionType >
   void dirichletDofTreatment( const LocalInterpolationType& interpolation, LocalFunctionType &wLocal ) const
@@ -425,9 +424,9 @@ protected:
     }
   }
 
-protected:
+public:
   // detect all DoFs on the Dirichlet boundary
-  void updateDirichletDofs() const
+  void update() const
   {
     if( sequence_ != space_.sequence() )
     {
@@ -485,6 +484,7 @@ protected:
     }
   }
 
+protected:
   // detect all DoFs on the Dirichlet boundary of the given entity
   template< class EntityType >
   bool searchEntityDirichletDofs( const EntityType &entity, ModelType& model ) const

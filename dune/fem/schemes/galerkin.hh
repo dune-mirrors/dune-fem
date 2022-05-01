@@ -89,6 +89,7 @@ namespace Dune
 
         typedef ThreadIterator< GridPartType > ThreadIteratorType;
 
+
         template <class Space>
         struct QuadratureSelector
         {
@@ -1006,8 +1007,9 @@ namespace Dune
           }
         };
 
-        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+        template< class GridFunction, class JacobianOperator, class DirichletConstraints, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp,
+                        const DirichletConstraints* dirichletConstraints, const Iterators& iterators,
                         Functor& addLocalMatrix, std::false_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
@@ -1046,13 +1048,18 @@ namespace Dune
               }
             }
 
+            // Dirichlet boundary values
+            if( dirichletConstraints )
+              dirichletConstraints->dirichletDofsCorrectOnEntity( entity, jOpLocal );
+
             addLocalMatrix.unbind(jOpLocal);
           }
           addLocalMatrix.finalize();
         }
 
-        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+        template< class GridFunction, class JacobianOperator, class DirichletConstraints, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp,
+                        const DirichletConstraints* dirichletConstraints, const Iterators& iterators,
                         Functor& addLocalMatrix, std::true_type ) const
         {
           typedef typename JacobianOperator::DomainSpaceType  DomainSpaceType;
@@ -1119,13 +1126,19 @@ namespace Dune
                   addLinearizedBoundaryIntegral( intersection, uIn, phiIn, jOpInIn );
               }
             }
+
+            // Dirichlet boundary values
+            if( dirichletConstraints )
+              dirichletConstraints->dirichletDofsCorrectOnEntity( inside, jOpInIn );
+
             addLocalMatrix.unbind(jOpInIn);
           }
           addLocalMatrix.finalize();
         }
 
-        template< class GridFunction, class JacobianOperator, class Iterators, class Functor >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators,
+        template< class GridFunction, class JacobianOperator, class DirichletConstraints, class Iterators, class Functor >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp,
+                        const DirichletConstraints* dirichletConstraints, const Iterators& iterators,
                         Functor& addLocalMatrix, int ) const
         {
           typedef typename JacobianOperator::RangeSpaceType RangeSpaceType;
@@ -1139,17 +1152,18 @@ namespace Dune
           defaultSurfaceOrder_  = [] (const int order) { return Capabilities::DefaultQuadrature< RangeSpaceType >::surfaceOrder(order); };
 
           if( integrands().hasSkeleton() )
-            assemble( u, jOp, iterators, addLocalMatrix, std::true_type() );
+            assemble( u, jOp, dirichletConstraints, iterators, addLocalMatrix, std::true_type() );
           else
-            assemble( u, jOp, iterators, addLocalMatrix, std::false_type() );
+            assemble( u, jOp, dirichletConstraints, iterators, addLocalMatrix, std::false_type() );
         }
 
       public:
-        template< class GridFunction, class JacobianOperator, class Iterators >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators, std::shared_mutex& mtx) const
+        template< class GridFunction, class JacobianOperator, class DirichletConstraints, class Iterators >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp,
+                        const DirichletConstraints* dirichletConstraints, const Iterators& iterators, std::shared_mutex& mtx) const
         {
           AddLocalAssembleLocked<JacobianOperator> addLocalAssemble( jOp, mtx, iterators);
-          assemble( u, jOp, iterators, addLocalAssemble, 10 );
+          assemble( u, jOp, dirichletConstraints, iterators, addLocalAssemble, 10 );
           #if 0 // print information about how many times a lock was used during assemble
           std::lock_guard guard ( mtx );
           std::cout << MPIManager::thread() << " : "
@@ -1158,11 +1172,11 @@ namespace Dune
           #endif
         }
 
-        template< class GridFunction, class JacobianOperator, class Iterators >
-        void assemble ( const GridFunction &u, JacobianOperator &jOp, const Iterators& iterators ) const
+        template< class GridFunction, class JacobianOperator, class DirichletConstraints, class Iterators >
+        void assemble ( const GridFunction &u, JacobianOperator &jOp, const DirichletConstraints* dirichletConstraints, const Iterators& iterators ) const
         {
           AddLocalAssemble<JacobianOperator> addLocalAssemble(jOp);
-          assemble( u, jOp, iterators, addLocalAssemble, 10 );
+          assemble( u, jOp, dirichletConstraints, iterators, addLocalAssemble, 10 );
         }
 
         // accessors
@@ -1363,6 +1377,8 @@ namespace Dune
 
       typedef typename BaseType::GridPartType GridPartType;
 
+      typedef Dune::DirichletConstraints< Integrands, RangeDiscreteFunctionSpaceType > ConstraintsType;
+
       template< class... Args >
       explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
                                                 const RangeDiscreteFunctionSpaceType &rSpace,
@@ -1392,6 +1408,11 @@ namespace Dune
       const RangeDiscreteFunctionSpaceType& rangeSpace() const
       {
         return rSpace_;
+      }
+
+      void setConstraints( const ConstraintsType& constraints ) const
+      {
+        constraints_ = &constraints;
       }
 
       using BaseType::impl;
@@ -1430,7 +1451,7 @@ namespace Dune
 
         auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
-          this->impl().assemble( u, jOp, this->iterators_, mutex );
+          this->impl().assemble( u, jOp, this->constraints_, this->iterators_, mutex );
         };
 
         try {
@@ -1444,7 +1465,7 @@ namespace Dune
         {
           // redo assemble since it failed previously
           jOp.clear();
-          impl().assemble( u, jOp, iterators_ );
+          impl().assemble( u, jOp, constraints_, iterators_ );
 
           // update number of interior elements
           gridSizeInterior_ = impl().gridSizeInterior();
@@ -1453,6 +1474,7 @@ namespace Dune
         // note: assembly done without local contributions so need
         // to call flush assembly
         jOp.flushAssembly();
+        constraints_ = nullptr;
       }
 
       using BaseType::gatherGridSizeInterior;
@@ -1461,6 +1483,8 @@ namespace Dune
 
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;
+
+      mutable const ConstraintsType* constraints_;
 
       mutable DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilDAN_;
       mutable DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilD_;

@@ -84,16 +84,20 @@ struct DirichletWrapperOperator
 
   void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
   {
+    constraints().update();
+    op_.setConstraints( constraints() );
     op_.jacobian(u,jOp);
-    constraints().applyToOperator( jOp );
+    // constraints().applyToOperator( jOp );
     jOp.flushAssembly();
   }
   template <class GridFunctionType>
   auto jacobian ( const GridFunctionType &u, JacobianOperatorType &jOp ) const
   -> Dune::void_t<decltype(std::declval<const Operator&>().jacobian(u,jOp))>
   {
+    constraints().update();
+    op_.setConstraints( constraints() );
     op_.jacobian(u,jOp);
-    constraints().applyToOperator( jOp );
+    // constraints().applyToOperator( jOp );
     jOp.flushAssembly();
   }
 
