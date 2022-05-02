@@ -388,10 +388,8 @@ namespace Dune
       void setUnitRowsImpl( const std::vector< PetscInt >& r,
                             const std::vector< PetscInt >& a )
       {
-        if( ! r.empty() )
-          ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.0 );
-        if( ! a.empty() )
-          ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 0.0 );
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.0 );
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 0.0 );
       }
 
       template <class Vector>
