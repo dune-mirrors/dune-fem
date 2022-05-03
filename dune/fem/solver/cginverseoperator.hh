@@ -378,11 +378,16 @@ namespace Dune
           return solver_.averageCommTime();
         }
 
+      SolverParameter& parameter () const
+      {
+        return parameter_;
+      }
+
       protected:
         const OperatorType *operator_ = nullptr;
         const PreconditionerType *preconditioner_ = nullptr;
         SolverType solver_;
-        SolverParameter parameter_;
+        mutable SolverParameter parameter_;
       };
     }
 

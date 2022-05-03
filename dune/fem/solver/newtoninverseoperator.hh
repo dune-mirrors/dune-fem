@@ -21,6 +21,44 @@ namespace Dune
   namespace Fem
   {
 
+    /** \class EisenstatWalkerStrategy
+     *
+     * \brief Adaptive tolerance selection for linear solver.
+     *
+     * \note Prevents oversolving linear systems far away from solution.
+     *       Source: "Globally Convergent Inexact Newton Methods", Stanley C. Eisenstat and Homer F. Walker, https://doi.org/10.1137/0804022.
+    */
+    class EisenstatWalkerStrategy
+    {
+    protected:
+      const double etaMax_ = 0.99;
+      const double gamma_ = 0.1;
+      const double newtonTolerance_;
+      mutable double previousEta_ = -1.0;
+      mutable double previousResidual_ = -1;
+
+    public:
+      /** constructor
+       *  \param[in]  newtonTolerance      the absolute tolerance of the Newton method
+      */
+      EisenstatWalkerStrategy(const double newtonTolerance) : newtonTolerance_(newtonTolerance) {}
+      double nextLinearTolerance(const double currentResidual) const
+      {
+        double eta = etaMax_;
+        // First call previousEta_ is negative
+        if (previousEta_ >= 0.0)
+        {
+          const double etaA = gamma_ * currentResidual * currentResidual / (previousResidual_ * previousResidual_);
+          const double indicator = gamma_ * previousEta_ * previousEta_;
+          const double etaC = indicator < 0.1 ? std::min(etaA, etaMax_) : std::min(etaMax_, std::max(etaA, indicator));
+          eta = std::min(etaMax_, std::max(etaC, 0.5 * newtonTolerance_ / currentResidual));
+        }
+        previousResidual_ = currentResidual;
+        previousEta_ = eta;
+        return eta;
+      }
+    };
+
     // NewtonParameter
     // ---------------
 
@@ -162,6 +200,23 @@ namespace Dune
         Parameter::append( keyPrefix_ + "lineSearch", lineSearchMethods[int(method)], true );
       }
 
+      enum class LinearToleranceStrategy {
+          none   = 0,
+          eisenstatwalker = 1
+        };
+
+      virtual LinearToleranceStrategy linearToleranceStrategy () const
+      {
+        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
+        return static_cast< LinearToleranceStrategy>( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy, 0 ) );
+      }
+
+      virtual void setLinearToleranceStrategy ( const LinearToleranceStrategy strategy )
+      {
+        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
+        Parameter::append( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
+      }
+
     private:
       mutable double tolerance_ = -1;
       mutable int verbose_ = -1;
@@ -286,7 +341,9 @@ namespace Dune
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
-          finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } )
+          finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
+          linearToleranceStrategy_ ( parameter.linearToleranceStrategy() ),
+          eisenstatWalker_ ( epsilon )
       {}
 
 
@@ -352,6 +409,12 @@ namespace Dune
       void setMaxIterations ( int maxIterations ) { parameter_.setMaxIterations( maxIterations ); }
       int linearIterations () const { return linearIterations_; }
       void setMaxLinearIterations ( int maxLinearIterations ) { parameter_.setMaxLinearIterations( maxLinearIterations ); }
+      void updateLinearTolerance () const {
+        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+          double newTol = eisenstatWalker_.nextLinearTolerance( delta_ );
+          jInv_.parameter().setTolerance( newTol );
+        }
+      }
       bool verbose() const { return verbose_ && Parameter::verbose( Parameter::solverStatistics ); }
 
       NewtonFailure failed () const
@@ -458,6 +521,8 @@ namespace Dune
       mutable int stepCompleted_;
       typename ParameterType::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
+      typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
+      const EisenstatWalkerStrategy eisenstatWalker_;
     };
 
 
@@ -481,6 +546,7 @@ namespace Dune
       (*op_)( w, residual );
       residual -= u;
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+      updateLinearTolerance();
 
       const bool newtonVerbose = verbose();
       if( newtonVerbose )
@@ -517,6 +583,7 @@ namespace Dune
         residual -= u;
         int ls = lineSearch(w,dw,u,residual);
         stepCompleted_ = ls >= 0;
+        updateLinearTolerance();
         ++iterations_;
         if( newtonVerbose )
           std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
