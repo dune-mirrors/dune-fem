@@ -277,8 +277,10 @@ public:
 
       std::vector<std::size_t> globalBlockDofs;
       std::vector<std::size_t> globalDofs;
-      std::vector<std::size_t> unitRows;
-      std::vector<std::size_t> auxRows;
+
+      // storage for unit rows and auxiliary rows, should be unique and sorted
+      std::set<std::size_t> unitRows;
+      std::set<std::size_t> auxRows;
 
       const auto& space = space_; // linearOperator.rangeSpace();
       // get auxiliary dof structure (for parallel runs)   /*@LST0S@*/
@@ -301,10 +303,12 @@ public:
         globalDofs.resize(localBlocks * localBlockSize);
         mapper.map( entity, globalDofs );
 
+        /*
         unitRows.reserve( globalDofs.size() );
         unitRows.clear();
         auxRows.reserve( globalDofs.size() );
         auxRows.clear();
+        */
 
         // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
         int localDof = 0;
@@ -312,19 +316,20 @@ public:
         for( int localBlockDof = 0 ; localBlockDof < localBlocks; ++ localBlockDof )
         {
           int global = globalBlockDofs[localBlockDof];
-          std::vector<std::size_t>& rows = auxiliaryDofs.contains( global ) ? auxRows : unitRows;
+          std::set<std::size_t>& rows = auxiliaryDofs.contains( global ) ? auxRows : unitRows;
           for( int l = 0; l < localBlockSize; ++ l, ++ localDof )
           {
             if( dirichletBlocks_[global][l] )
             {
               // push non-blocked dof
-              rows.push_back( globalDofs[ localDof ] );
+              rows.insert( globalDofs[ localDof ] );
             }
           }
         }
+      } // end for elements
 
-        linearOperator.setUnitRows( unitRows, auxRows );
-      }
+      // set unit and auxiliary rows at once
+      linearOperator.setUnitRows( unitRows, auxRows );
     }
   }
 

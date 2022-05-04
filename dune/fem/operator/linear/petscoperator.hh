@@ -392,19 +392,19 @@ namespace Dune
         ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 0.0 );
       }
 
-      template <class Vector>
-      void setUnitRows( const Vector &unitRows, const Vector& auxRows )
+      template <class Container> // could bet std::set or std::vector
+      void setUnitRows( const Container& unitRows, const Container& auxRows )
       {
-        std::vector< PetscInt > r( unitRows.size() );
-        std::vector< PetscInt > a( auxRows.size() );
+        std::vector< PetscInt > r, a;
+        r.reserve( unitRows.size() );
+        a.reserve( auxRows.size() );
 
-        auto setupRows = [this] (const Vector& rows, std::vector< PetscInt >& r )
+        auto setupRows = [this] (const Container& rows, std::vector< PetscInt >& r )
         {
-          const std::size_t size = rows.size();
-          for( std::size_t i =0 ; i< size; ++i )
+          for( const auto& row : rows )
           {
-            const PetscInt block = this->rangeMappers_.parallelIndex( rows[ i ] / rangeLocalBlockSize );
-            r[ i ] = block * rangeLocalBlockSize + (rows[ i ] % rangeLocalBlockSize);
+            const PetscInt block = this->rangeMappers_.parallelIndex( row / rangeLocalBlockSize );
+            r.push_back( block * rangeLocalBlockSize + (row % rangeLocalBlockSize) );
           }
         };
 

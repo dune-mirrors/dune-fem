@@ -839,10 +839,10 @@ namespace Dune
       }
 
     protected:
-      template <class Vector>
-      void setUnitRowImpl( const Vector &rows, const double diagonal )
+      template <class Container> // could be std::set or std::vector
+      void setUnitRowImpl( const Container &rows, const double diagonal )
       {
-        for (auto r : rows)
+        for (const auto& r : rows)
         {
           const std::size_t blockRow( r/(LittleBlockType :: rows) );
           const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
@@ -868,8 +868,8 @@ namespace Dune
       }
 
     public:
-      template <class Vector>
-      void setUnitRows( const Vector &unitRows, const Vector& auxRows )
+      template <class Container>
+      void setUnitRows( const Container& unitRows, const Container& auxRows )
       {
         setUnitRowImpl( unitRows, 1.0 );
         setUnitRowImpl( auxRows,  0.0 );
