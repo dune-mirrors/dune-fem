@@ -47,6 +47,7 @@
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fem/space/common/localinterpolation.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune {
 
