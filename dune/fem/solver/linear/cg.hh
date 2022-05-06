@@ -64,7 +64,12 @@ namespace LinearSolver
     RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
     RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
 
-    const RealType tolerance = (epsilon * epsilon) * std::real(residuum);
+    // TODO: what should the options for toleranceCriteria correspond to?
+    const RealType tolerance = (
+        toleranceCriteria == ToleranceCriteria::absolute ? epsilon * epsilon :
+        toleranceCriteria == ToleranceCriteria::relative ? (epsilon * epsilon) * b.normSquaredDofs( ) : // <- currently, this is always used
+        toleranceCriteria == ToleranceCriteria::residualReduction ? (epsilon * epsilon) * std::real(residuum)
+    );
 
     int iterations = 0;
     for( iterations = 0; (std::real(residuum) > tolerance) && (iterations < maxIterations); ++iterations )
