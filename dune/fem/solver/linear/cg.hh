@@ -34,8 +34,6 @@ namespace LinearSolver
     typedef typename DiscreteFunction::RangeFieldType RangeFieldType;
     typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
-    const RealType tolerance = (epsilon * epsilon) * b.normSquaredDofs( );
-
     assert( preconditioner ? tempMem.size() == 5 : tempMem.size() == 3 );
 
     DiscreteFunction& h = tempMem[ 0 ];
@@ -65,6 +63,8 @@ namespace LinearSolver
 
     RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
     RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+
+    const RealType tolerance = (epsilon * epsilon) * std::real(residuum);
 
     int iterations = 0;
     for( iterations = 0; (std::real(residuum) > tolerance) && (iterations < maxIterations); ++iterations )
