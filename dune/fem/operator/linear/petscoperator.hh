@@ -291,6 +291,7 @@ namespace Dune
           petscDest_.reset();
 
           unitRows_.clear();
+          auxRows_.clear();
 
           // create matrix
           ::Dune::Petsc::MatCreate( domainSpace().gridPart().comm(), &petscMatrix_ );
@@ -382,6 +383,8 @@ namespace Dune
       {
         flushAssembly();
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
+        unitRows_.clear();
+        auxRows_.clear();
         flushAssembly();
       }
 
