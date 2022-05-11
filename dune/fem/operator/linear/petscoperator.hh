@@ -290,9 +290,6 @@ namespace Dune
           petscArg_.reset();
           petscDest_.reset();
 
-          unitRows_.clear();
-          auxRows_.clear();
-
           // create matrix
           ::Dune::Petsc::MatCreate( domainSpace().gridPart().comm(), &petscMatrix_ );
 
@@ -383,9 +380,10 @@ namespace Dune
       {
         flushAssembly();
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
+        flushAssembly();
+
         unitRows_.clear();
         auxRows_.clear();
-        flushAssembly();
       }
 
       void setUnitRowsImpl( const std::vector< PetscInt >& r,
@@ -768,6 +766,8 @@ namespace Dune
           status_ = statNothing ;
         }
         sequence_ = -1;
+        unitRows_.clear();
+        auxRows_.clear();
       }
 
       void setStatus (const Status &newstatus) const
