@@ -175,7 +175,10 @@ namespace Dune
       PetscVector ( const ThisType &other )
         : mappers_( other.mappers_ ), owner_(true)
       {
-        // assign vectors
+        // init vector
+        init();
+
+        // copy dofs
         assign( other );
       }
 
@@ -415,17 +418,10 @@ namespace Dune
         // we start copying values from it
         other.communicateIfNecessary();
 
-        if( owner_ )
-        {
-          removeObj();
-          // Do the copying on the PETSc level
-          ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
-          ::Dune::Petsc::VecCopy( other.vec_, vec_ );
-          ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
-        }
-        else
-          ::Dune::Petsc::VecCopy( other.vec_, vec_ );
+        // copy vector entries
+        ::Dune::Petsc::VecCopy( other.vec_, vec_ );
 
+        // update ghost values
         updateGhostRegions();
       }
 
