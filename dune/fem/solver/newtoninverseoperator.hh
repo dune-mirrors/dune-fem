@@ -201,9 +201,9 @@ namespace Dune
       }
 
       enum class LinearToleranceStrategy {
-          none   = 0,
-          eisenstatwalker = 1
-        };
+        none = 0,
+        eisenstatwalker = 1
+      };
 
       virtual LinearToleranceStrategy linearToleranceStrategy () const
       {
@@ -344,7 +344,13 @@ namespace Dune
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
           linearToleranceStrategy_ ( parameter.linearToleranceStrategy() ),
           eisenstatWalker_ ( epsilon )
-      {}
+      {
+        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+          if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
+            DUNE_THROW( InvalidStateException, "Parameter `newton.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
+          }
+        }
+      }
 
 
       /** constructor
