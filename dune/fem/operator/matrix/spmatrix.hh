@@ -778,14 +778,21 @@ namespace Dune
         }
       }
 
-      template <class Vector>
-      void setUnitRows( const Vector &rows )
+      template <class Container>
+      void setUnitRows( const Container& unitRows, const Container& auxRows )
       {
-        const auto &auxiliaryDofs = domainSpace().auxiliaryDofs();
-        for (auto r : rows)
+        for (const auto& r : unitRows )
         {
           matrix_.clearRow(r);
-          matrix_.set(r,r,auxiliaryDofs.contains( r )? 0.0 : 1.0);
+          matrix_.set(r, r, 1.0);
+        }
+
+        for (const auto& r : auxRows )
+        {
+          matrix_.clearRow(r);
+          // not sure if this is really needed,
+          // but for consistency with previous code
+          matrix_.set(r, r, 0.0);
         }
       }
 

@@ -47,6 +47,7 @@
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fem/space/common/localinterpolation.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 namespace Dune {
 
@@ -272,24 +273,64 @@ public:
     // if Dirichlet Dofs have been found, treat them
     if( hasDirichletDofs_ )
     {
-      typedef typename LinearOperator::DomainSpaceType  DomainSpaceType;
-      typedef typename LinearOperator::RangeSpaceType   RangeSpaceType;
-      typedef Dune::Fem::TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType > TemporaryLocalMatrixType;
-      TemporaryLocalMatrixType localMatrix( linearOperator.domainSpace(), linearOperator.rangeSpace() );
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
+      Dune::Fem::NonBlockMapper< BlockMapperType, localBlockSize > mapper( space_.blockMapper() );
+
+      std::vector<std::size_t> globalBlockDofs;
+      std::vector<std::size_t> globalDofs;
+
+      // storage for unit rows and auxiliary rows, should be unique and sorted
+      std::set<std::size_t> unitRows;
+      std::set<std::size_t> auxRows;
+
+      const auto& space = space_; // linearOperator.rangeSpace();
+      // get auxiliary dof structure (for parallel runs)   /*@LST0S@*/
+      const auto &auxiliaryDofs = space.auxiliaryDofs();
 
       const IteratorType end = space_.end();
       for( IteratorType it = space_.begin(); it != end; ++it )
       {
         const EntityType &entity = *it;
-        // init localMatrix to entity
-        localMatrix.init( entity, entity );
-        // obtain local matrix values
-        linearOperator.getLocalMatrix( entity, entity, localMatrix );
-        // adjust local matrix
-        dirichletDofsCorrectOnEntity( entity, localMatrix );
-        // write back changed local matrix to linear operator
-        linearOperator.setLocalMatrix( entity, entity, localMatrix );
-      }
+
+        // get number of basis functions
+        const int localBlocks = space.blockMapper().numDofs( entity );
+
+        // map local to global dofs
+        globalBlockDofs.resize(localBlocks);
+        // obtain all DofBlocks for this element
+        space.blockMapper().map( entity, globalBlockDofs );
+
+        // obtain all non-blocked dofs
+        globalDofs.resize(localBlocks * localBlockSize);
+        mapper.map( entity, globalDofs );
+
+        /*
+        unitRows.reserve( globalDofs.size() );
+        unitRows.clear();
+        auxRows.reserve( globalDofs.size() );
+        auxRows.clear();
+        */
+
+        // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
+        int localDof = 0;
+        // iterate over face dofs and set unit row
+        for( int localBlockDof = 0 ; localBlockDof < localBlocks; ++ localBlockDof )
+        {
+          int global = globalBlockDofs[localBlockDof];
+          std::set<std::size_t>& rows = auxiliaryDofs.contains( global ) ? auxRows : unitRows;
+          for( int l = 0; l < localBlockSize; ++ l, ++ localDof )
+          {
+            if( dirichletBlocks_[global][l] )
+            {
+              // push non-blocked dof
+              rows.insert( globalDofs[ localDof ] );
+            }
+          }
+        }
+      } // end for elements
+
+      // set unit and auxiliary rows at once
+      linearOperator.setUnitRows( unitRows, auxRows );
     }
   }
 
@@ -300,51 +341,6 @@ public:
   }
 
 protected:
-
-  /*! treatment of Dirichlet-DoFs for one entity
-   *
-   *   delete rows for dirichlet-DoFs, setting diagonal element to 1.
-   *
-   *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
-   *
-   *   \param[in]  entity  entity to perform Dirichlet treatment on
-   */
-  template< class EntityType, class LocalMatrix >
-  void dirichletDofsCorrectOnEntity ( const EntityType &entity,
-                                      LocalMatrix& localMatrix ) const
-  {
-    // get auxiliary dof structure (for parallel runs)   /*@LST0S@*/
-    const auto &auxiliaryDofs = localMatrix.rangeSpace().auxiliaryDofs();
-
-    // get number of basis functions
-    const int localBlocks = space_.blockMapper().numDofs( entity );
-
-    // map local to global dofs
-    std::vector<std::size_t> globalBlockDofs(localBlocks);
-    // obtain all DofBlocks for this element
-    space_.blockMapper().map( entity, globalBlockDofs );
-
-    // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
-    int localDof = 0;
-    // iterate over face dofs and set unit row
-    for( int localBlockDof = 0 ; localBlockDof < localBlocks; ++ localBlockDof )
-    {
-      int global = globalBlockDofs[localBlockDof];
-      for( int l = 0; l < localBlockSize; ++ l, ++ localDof )
-      {
-        if( dirichletBlocks_[global][l] )
-        {
-          // clear all other columns
-          localMatrix.clearRow( localDof );
-
-          // set diagonal to 1
-          double value = auxiliaryDofs.contains( global )? 0.0 : 1.0;
-          localMatrix.set( localDof, localDof, value );
-        }
-      }
-    }
-  }
-
   //! set the Dirichlet points to exact values
   template< class LocalInterpolationType, class LocalFunctionType >
   void dirichletDofTreatment( const LocalInterpolationType& interpolation, LocalFunctionType &wLocal ) const

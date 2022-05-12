@@ -210,12 +210,10 @@ namespace Dune
           ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
           ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
 
-          if( ! unitRows_.empty() )
-          {
-            ::Dune::Petsc::MatZeroRows( petscMatrix_, unitRows_.size(), unitRows_.data(), 1. );
-            // remove all cached unit rows
-            unitRows_.clear();
-          }
+          setUnitRowsImpl( unitRows_, auxRows_ );
+          // remove all cached unit rows
+          unitRows_.clear();
+          auxRows_.clear();
         }
       }
 
@@ -291,8 +289,6 @@ namespace Dune
           // reset temporary Petsc discrete functions
           petscArg_.reset();
           petscDest_.reset();
-
-          unitRows_.clear();
 
           // create matrix
           ::Dune::Petsc::MatCreate( domainSpace().gridPart().comm(), &petscMatrix_ );
@@ -385,27 +381,50 @@ namespace Dune
         flushAssembly();
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
         flushAssembly();
+
+        unitRows_.clear();
+        auxRows_.clear();
       }
 
-      template <class Vector>
-      void setUnitRows( const Vector &rows )
+      void setUnitRowsImpl( const std::vector< PetscInt >& r,
+                            const std::vector< PetscInt >& a )
       {
-        std::vector< PetscInt > r( rows.size() );
-        for( std::size_t i =0 ; i< rows.size(); ++i )
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.0 );
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 0.0 );
+      }
+
+      template <class Container> // could bet std::set or std::vector
+      void setUnitRows( const Container& unitRows, const Container& auxRows )
+      {
+        std::vector< PetscInt > r, a;
+        r.reserve( unitRows.size() );
+        a.reserve( auxRows.size() );
+
+        auto setupRows = [this] (const Container& rows, std::vector< PetscInt >& r )
         {
-          const PetscInt block = rangeMappers_.parallelIndex( rows[ i ] / rangeLocalBlockSize );
-          r[ i ] = block * rangeLocalBlockSize + (rows[ i ] % rangeLocalBlockSize);
-        }
+          for( const auto& row : rows )
+          {
+            const PetscInt block = this->rangeMappers_.parallelIndex( row / rangeLocalBlockSize );
+            r.push_back( block * rangeLocalBlockSize + (row % rangeLocalBlockSize) );
+          }
+        };
+
+        setupRows( unitRows, r );
+        setupRows( auxRows,  a );
 
         if( finalizedAlready() )
         {
-          ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
+          setUnitRowsImpl( r, a );
         }
         else
         {
           unitRows_.reserve( unitRows_.size() + r.size() );
           for( const auto& row : r )
             unitRows_.push_back( row );
+
+          auxRows_.reserve( auxRows_.size() + a.size() );
+          for( const auto& row : a )
+            auxRows_.push_back( row );
         }
       }
 
@@ -747,6 +766,8 @@ namespace Dune
           status_ = statNothing ;
         }
         sequence_ = -1;
+        unitRows_.clear();
+        auxRows_.clear();
       }
 
       void setStatus (const Status &newstatus) const
@@ -791,7 +812,8 @@ namespace Dune
       mutable ThreadSafeValue< std::vector< PetscScalar > > v_;
       mutable ThreadSafeValue< std::pair< std::vector< PetscInt >, std::vector< PetscInt > > > rcTemp_;
 
-      mutable std::vector< PetscInt    > unitRows_;
+      mutable std::vector< PetscInt > unitRows_;
+      mutable std::vector< PetscInt > auxRows_;
     };
 
 

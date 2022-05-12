@@ -838,12 +838,11 @@ namespace Dune
         matrix().unitRow( row );
       }
 
-      template <class Vector>
-      void setUnitRows( const Vector &rows )
+    protected:
+      template <class Container> // could be std::set or std::vector
+      void setUnitRowImpl( const Container &rows, const double diagonal )
       {
-        const auto &auxiliaryDofs = domainSpace().auxiliaryDofs();
-
-        for (auto r : rows)
+        for (const auto& r : rows)
         {
           const std::size_t blockRow( r/(LittleBlockType :: rows) );
           const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
@@ -858,7 +857,7 @@ namespace Dune
               entry = 0;
             if (col.index() == blockRow)
             {
-              (*col)[localRowIdx][localRowIdx] = auxiliaryDofs.contains( r )? 0.0 : 1.0;
+              (*col)[localRowIdx][localRowIdx] = diagonal;
 #ifndef NDEBUG
               set = true;
 #endif
@@ -866,6 +865,14 @@ namespace Dune
           }
           assert(set);
         }
+      }
+
+    public:
+      template <class Container>
+      void setUnitRows( const Container& unitRows, const Container& auxRows )
+      {
+        setUnitRowImpl( unitRows, 1.0 );
+        setUnitRowImpl( auxRows,  0.0 );
       }
 
       //! default reserve method setting implicit build mode

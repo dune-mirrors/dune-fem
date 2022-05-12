@@ -175,7 +175,10 @@ namespace Dune
       PetscVector ( const ThisType &other )
         : mappers_( other.mappers_ ), owner_(true)
       {
-        // assign vectors
+        // init vector
+        init();
+
+        // copy dofs
         assign( other );
       }
 
@@ -373,8 +376,11 @@ namespace Dune
       void clearGhost( )
       {
         PetscScalar *array;
+        // create local memory
         VecGetArray( ghostedVec_,&array );
         std::fill_n( array + mappers().ghostMapper().interiorSize() * blockSize, mappers().ghostMapper().ghostSize() * blockSize, PetscScalar( 0 ) );
+        // destroy memory
+        VecRestoreArray( ghostedVec_, &array );
       }
 
       // debugging; comes in handy to call these 2 methods in gdb
@@ -412,11 +418,10 @@ namespace Dune
         // we start copying values from it
         other.communicateIfNecessary();
 
-        // Do the copying on the PETSc level
-        ::Dune::Petsc::VecDuplicate( other.vec_, &vec_ );
+        // copy vector entries
         ::Dune::Petsc::VecCopy( other.vec_, vec_ );
-        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
 
+        // update ghost values
         updateGhostRegions();
       }
 
