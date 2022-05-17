@@ -288,11 +288,10 @@ namespace Dune
       //! of the underlying function spaces
       virtual void apply (ObjectStreamType &str, const EntityType & entity ) const
       {
-        //std::cout << "apply on interface class \n";
-        if(dc_) (*dc_).apply(str, entity );
-        else
+        // if dc_ was set (otherwise we might be load balancing only the grid)
+        if(dc_)
         {
-          std::cerr << "WARNING: apply: did nothing! \n";
+          (*dc_).apply(str, entity );
         }
       };
 
