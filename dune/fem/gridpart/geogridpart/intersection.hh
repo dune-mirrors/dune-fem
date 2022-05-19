@@ -58,12 +58,12 @@ namespace Dune
 
       Entity inside () const
       {
-        return EntityImplType( coordFunction(), hostIntersection().inside() );
+        return Entity( EntityImplType( coordFunction(), hostIntersection().inside() ) );
       }
 
       Entity outside () const
       {
-        return EntityImplType( coordFunction(), hostIntersection().outside() );
+        return Entity( EntityImplType( coordFunction(), hostIntersection().outside() ) );
       }
 
       bool boundary () const

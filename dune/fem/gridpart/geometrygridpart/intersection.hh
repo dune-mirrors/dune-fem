@@ -54,8 +54,8 @@ namespace Dune
 
       operator bool () const { return bool( hostIntersection_ ); }
 
-      Entity inside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().inside() ); }
-      Entity outside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().outside() ); }
+      Entity inside () const { return Entity( typename Entity::Implementation( gridFunction(), hostIntersection().inside() )); }
+      Entity outside () const { return Entity( typename Entity::Implementation( gridFunction(), hostIntersection().outside() )); }
 
       int boundaryId () const {
         return Dune::Fem::BoundaryIdProvider< typename HostGridPartType::GridType > :: boundaryId( hostIntersection() );
