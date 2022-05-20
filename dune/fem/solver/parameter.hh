@@ -8,6 +8,15 @@ namespace Dune
 
   namespace Fem
   {
+    namespace LinearSolver
+    {
+      struct ToleranceCriteria {
+        static const int absolute = 0;
+        static const int relative = 1;
+        static const int residualReduction = 2;
+      };
+    }
+
     struct SolverParameter
 #ifndef DOXYGEN
     : public LocalParameter< SolverParameter, SolverParameter >

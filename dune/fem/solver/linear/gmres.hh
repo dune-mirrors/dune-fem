@@ -7,7 +7,7 @@
 
 #include <utility>
 
-#include <dune/fem/solver/linear/cg.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {

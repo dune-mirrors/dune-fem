@@ -168,8 +168,8 @@ class MyLinearInverseOperator
   typedef Dune::Fem::SolverParameter SolverParameterType;
 
   MyLinearInverseOperator(const SolverParameterType& parameter = SolverParameterType() )
-   //: BaseType( parameter )
-  {}
+   : parameter_ ( parameter )
+  { }
 
   void bind ( const LinearOperatorType& jOp ) { jOp_ = &jOp; }
   void unbind () { jOp_ = nullptr; }
@@ -187,8 +187,13 @@ class MyLinearInverseOperator
   int iterations() const { return 1; }
   void setMaxIterations ( unsigned int ) {}
 
+  SolverParameterType &parameter() const {
+    return parameter_;
+  }
+
  private:
   const LinearOperatorType * jOp_ = nullptr;
+  mutable SolverParameterType parameter_;
 };
 
 

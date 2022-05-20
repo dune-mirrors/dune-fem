@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <dune/common/ftraits.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace Dune
 {
@@ -12,13 +13,6 @@ namespace Fem
 {
 namespace LinearSolver
 {
-  struct ToleranceCriteria
-  {
-    static const int absolute = 0;
-    static const int relative = 1;
-    static const int residualReduction = 2;
-  };
-
 
   template <class Operator, class Precoditioner, class DiscreteFunction>
   inline int cg( Operator &op,
@@ -33,8 +27,6 @@ namespace LinearSolver
   {
     typedef typename DiscreteFunction::RangeFieldType RangeFieldType;
     typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
-
-    const RealType tolerance = (epsilon * epsilon) * b.normSquaredDofs( );
 
     assert( preconditioner ? tempMem.size() == 5 : tempMem.size() == 3 );
 
@@ -65,6 +57,13 @@ namespace LinearSolver
 
     RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
     RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+
+    const RealType tolerance = epsilon * epsilon * (
+      toleranceCriteria == ToleranceCriteria::relative ? b.normSquaredDofs( ) :
+      toleranceCriteria == ToleranceCriteria::residualReduction ? std::real(residuum) :
+      // absolute tolerance
+      1.0
+    );
 
     int iterations = 0;
     for( iterations = 0; (std::real(residuum) > tolerance) && (iterations < maxIterations); ++iterations )
