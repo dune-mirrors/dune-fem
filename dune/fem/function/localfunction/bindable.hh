@@ -72,8 +72,9 @@ namespace Dune
 
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
-        bind( side==IntersectionSide::in?
-              intersection.inside(): intersection.outside() );
+        // store local copy to avoid problems with casting to temporary types
+        const EntityType entity = side==IntersectionSide::in? intersection.inside(): intersection.outside();
+        bind( entity );
       }
 
       bool continuous() const { return true; }
