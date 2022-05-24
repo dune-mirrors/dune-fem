@@ -7,10 +7,27 @@ import warnings
 from ufl.equation import Equation
 
 from dune.generator import Constructor, Method
+from dune.common.utility import isString
 
 logger = logging.getLogger(__name__)
 
-def getSolver(solver,storage,default):
+def getSolverStorage(space, solver):
+    """
+    Return storage that fits chosen solver (default: space.storage)
+    """
+    from dune.fem.discretefunction import _storage
+    storage = space.storage
+
+    # this feature only works for numpy storage of the space
+    if solver is not None and storage[0] == 'numpy':
+        tupLen = len(solver)
+        if len(solver)> 1 and isString(solver[0]):
+            # return storage and solver name
+            return _storage(dfStorage="numpy", solverStorage=solver[0])(space), solver[1]
+    else:
+        return storage, solver
+
+def getSolver(solver, storage, default):
     if not solver:
         return default(storage)
     if isinstance(solver,str):
@@ -47,7 +64,7 @@ def femschemeModule(space, model, includes, solver, operator, *args,
         modelType = None, ctorArgs={}):
     from . import module
     _, _, _, _, defaultSolver, backend = space.storage
-    _, _, _, param = getSolver(solver,space.storage,defaultSolver)
+    _, _, _, param = getSolver(solver,space,defaultSolver)
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
     mod = module(includes, typeName, *args, backend=backend)
@@ -128,8 +145,26 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
 
 def _galerkin(integrands, space=None, solver=None, parameters={},
-              errorMeasure=None, virtualize=None, schemeName=None ):
-    if schemeName is None:
+              errorMeasure=None, virtualize=None, _schemeName=None ):
+    """
+    Parameters:
+
+        integrands   Model of the weak form of the PDEs solved by Galerkin scheme
+        space        Discrete function space
+        solver       String (e.g. 'gmres', 'bicgstab', 'cg'...) or tuple
+                     containing backend and solver name,
+                     e.g. ('petsc', 'gmres') or ('istl', 'bicgstab') or
+                     ('suitesparse', 'umfpack'). See documentation for complete
+                     list.
+        parameters   dictionary with parameters passed to the nonlinear and linear solvers
+        errorMeasure Overloading the nonlinear solver stopping criterion,
+                     i.e. a function `f( w, dw, float )` where w and dw are discrete functions returning a bool whether the
+                     solver has converged or not.
+        virtualize   If True, integrands will be virtualized to avoid
+                     re-compilation. (default: True)
+    """
+
+    if _schemeName is None:
         raise Exception("_galerkin needs a scheme Name: GalerkinScheme or MethodOfLinesScheme")
 
     if hasattr(integrands,"interpolate"):
@@ -168,8 +203,13 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         raise ValueError("wrong space given")
     from . import module
 
-    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
-    _, solverIncludes, solverTypeName, param = getSolver(solver, space.storage, defaultSolver)
+    storageStr, dfIncludes, dfTypeName, _, _, _ = space.storage
+
+    # get storage of solver, it could differ from storage of space
+    solverStorage, solver = getSolverStorage(space, solver)
+
+    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
+    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, defaultSolver)
 
     # check if parameters have an option preconditioning and if this is a callable
     preconditioning = None
@@ -200,7 +240,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         integrandsType = integrands.cppTypeName
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
-    typeName = 'Dune::Fem::'+schemeName+'< ' + integrandsType + ', ' +\
+    typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' +\
             linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
     ctors = []
@@ -226,15 +266,17 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
 def galerkin(integrands, space=None, solver=None, parameters={},
              errorMeasure=None, virtualize=None):
+    galerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, schemeName='GalerkinScheme')
+                     virtualize=virtualize, _schemeName='GalerkinScheme')
 
 def molGalerkin(integrands, space=None, solver=None, parameters={},
                 errorMeasure=None, virtualize=None):
+    molGalerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, schemeName='MethodOfLinesScheme')
+                     virtualize=virtualize, _schemeName='MethodOfLinesScheme')
 
 
 def h1(model, space=None, solver=None, parameters={}):

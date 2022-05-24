@@ -5,3 +5,5 @@ from ._discretefunctions import *
 from ._solvers import *
 
 from dune.fem import function
+
+from ._discretefunctions import _storage
