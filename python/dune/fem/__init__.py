@@ -68,9 +68,7 @@ registry["scheme"] = {
          "dg"         : scheme.dg,
          "dggalerkin" : scheme.dgGalerkin,
          "galerkin"   : scheme.galerkin,
-         "linearized" : scheme.linearized,
-         "stokes"     : scheme.stokes,
-         "burgers"    : scheme.burgers
+         "linearized" : scheme.linearized
      }
 registry["function"] = {
          "global"     : function.globalFunction,

@@ -55,35 +55,6 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme.model = model
     return scheme
 
-def burgers(space, model, name, viscosity, timestep, **kwargs):
-    """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
-
-    Args:
-
-    Returns:
-        Scheme: the constructed scheme
-    """
-
-    from . import module, storageToSolver
-    vspace = space[0]
-    pspace = space[1]
-    vstorage = storageToSolver(vspace.storage)
-    pstorage = storageToSolver(pspace.storage)
-    if not (vstorage == pstorage):
-        raise KeyError("storages provided differ")
-
-    includes = [ "navierstokes/burgers.cc" ] + vspace._module.cppIncludes + pspace._module.cppIncludes
-    vspaceType = vspace._module.cppTypeName
-    pspaceType = pspace._module.cppTypeName
-    typeName = "BurgersSchemeWrapper<PRPScheme< " + vspaceType + ", " + pspaceType + ", " +\
-        "ConservationLawModel< " +\
-          "typename " + vspaceType + "::GridPartType, " +\
-          vspaceType + "::dimRange+1 " +\
-          vspaceType + "::dimRange+1 " +\
-        "> > >"
-
-    return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
-
 from dune.fem.scheme.dgmodel import transform
 def dg(model, space=None, penalty=1, solver=None, parameters={},
        penaltyClass=None):
@@ -337,32 +308,3 @@ def linearized(scheme, ubar=None, parameters={}):
         return m.Scheme(scheme, ubar, parameters)
     else:
         return m.Scheme(scheme, parameters)
-
-def stokes(space, model, name, viscosity, timestep, **kwargs):
-    """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
-
-    Args:
-
-    Returns:
-        Scheme: the constructed scheme
-    """
-
-    from . import module, storageToSolver
-    vspace = space[0]
-    pspace = space[1]
-    vstorage = storageToSolver(vspace.storage)
-    pstorage = storageToSolver(pspace.storage)
-    if not (vstorage == pstorage):
-        raise KeyError("storages provided differ")
-
-    includes = [ "navierstokes/stokes.cc" ] + vspace._module.cppIncludes + pspace._module.cppIncludes
-    vspaceType = vspace._module.cppTypeName
-    pspaceType = pspace._module.cppTypeName
-    typeName = "StokesSchemeWrapper<UzawaScheme< " + vspaceType + ", " + pspaceType + ", " +\
-        "ConservationLawModel< " +\
-          "typename " + vspaceType + "::GridPartType, " +\
-          vspaceType + "::dimRange+1 " +\
-          vspaceType + "::dimRange+1 " +\
-        "> > >"
-
-    return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) #**kwargs)
