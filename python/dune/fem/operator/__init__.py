@@ -14,6 +14,7 @@ from ufl import Form
 
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
+from dune.common.utility import isString
 
 _defaultGenerator = SimpleGenerator("Operator", "Dune::FemPy")
 
@@ -60,7 +61,23 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None,
 
 
 def _galerkin(integrands, domainSpace=None, rangeSpace=None,
-              virtualize=None, communicate=True, operatorPrefix = '' ):
+              virtualize=None, communicate=True,
+              jacobianStorage=None,
+              operatorPrefix = '' ):
+    """
+    Parameter:
+        integrands       Model representing the operator B(u,v): V -> W, i.e. weak form of a PDE
+        domainSpace      V, discrete function space representing the domain
+        rangeSpace       W, discrete function space representing the range
+        virtualize       virtualize the integrands model passed
+        communicate      If true, a synchronization will be done during the
+                         application of the operator
+        jacobianStorage  Storage for the Jacobian linear operator (default: same as spaces)
+
+    Return:
+        A Galerkin operator implementing the integration of the weak form of the
+        given PDE.
+    """
     if rangeSpace is None:
         rangeSpace = domainSpace
 
@@ -101,6 +118,12 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     storage, domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
     rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
 
+    # use storage of discrete function if not specified
+    if jacobianStorage is None:
+        jacobianStorage = storage
+    else:
+        assert isString(jacobianStorage)
+
     includes = ["dune/fem/schemes/galerkin.hh", "dune/fempy/py/grid/gridpart.hh"]
     if operatorPrefix == 'MOL':
         includes += ["dune/fem/schemes/molgalerkin.hh"]
@@ -123,8 +146,13 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
                                   ['return new DuneType( dSpace.gridPart(), integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
-        import dune.create as create
-        linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+        from dune.fem.discretefunction import _storage
+        # get storage depending on choices
+        _, linopincludes, _, linearOperator, _, _ = _storage( dfStorage=storage, solverStorage=jacobianStorage)(domainSpace,rangeSpace)
+        # add extra includes in case storages differ
+        if jacobianStorage != storage:
+            includes += linopincludes
+
         typeName = 'Dune::Fem::' + operatorPrefix + 'DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
         constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
                                   ['return new DuneType( dSpace, rSpace, integrands );'],

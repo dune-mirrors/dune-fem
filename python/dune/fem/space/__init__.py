@@ -320,7 +320,7 @@ def module(field, includes, typeName, *args,
     class DummySpace:
         cppTypeName = typeName
         cppIncludes = includes
-    DummySpace.field     = field
+    DummySpace.field = field
     dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
 
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest() \
