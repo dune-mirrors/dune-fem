@@ -66,7 +66,7 @@ def femschemeModule(space, model, includes, solver, operator, *args,
         modelType = None, ctorArgs={}):
     from . import module
     _, _, _, _, defaultSolver, backend = space.storage
-    _, _, _, param = getSolver(solver,space,defaultSolver)
+    _, _, _, param = getSolver(solver,space.storage,defaultSolver)
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
     mod = module(includes, typeName, *args, backend=backend)
