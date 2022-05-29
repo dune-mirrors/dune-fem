@@ -19,11 +19,10 @@ def getSolverStorage(space, solver):
     storage = space.storage
 
     # this feature only works for numpy storage of the space
-    if storage[0] == 'numpy':
-        # if solver was given and is not a string
-        if solver is not None and not isString(solver):
-            # is length is larger than 1 and first entry is a string
-            if len(solver)> 1 and isString(solver[0]):
+    if storage[0] == 'numpy' and solver is not None:
+        if isString(solver[0]):
+            # changing the storage only works for petsc and istl, but is not needed for suitesparse
+            if solver[0] == 'petsc' or solver[0] == 'istl':
                 # return storage and solver name
                 return _storage(dfStorage="numpy", solverStorage=solver[0])(space), solver[1]
 
