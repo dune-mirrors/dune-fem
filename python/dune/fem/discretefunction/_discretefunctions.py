@@ -41,7 +41,8 @@ def _storage( dfStorage="numpy", solverStorage=None ):
     elif dfStorage == "petsc":
         dfType  = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space.cppTypeName + " >"
         headers = ["dune/fem/function/petscdiscretefunction.hh"]
-
+    else:
+        raise ValueError(f"_storage: wrong discrete function storage {dfStorage}. Valid are 'numpy','petsc','istl'")
 
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
 
@@ -85,6 +86,8 @@ def _storage( dfStorage="numpy", solverStorage=None ):
             solvers.petscsolver,\
             asStorage
         ]
+    else:
+        raise ValueError(f"_storage: wrong discrete function storage {dfStorage}. Valid are 'numpy','petsc','istl'")
 
 def numpy():
     return _storage(dfStorage="numpy")
