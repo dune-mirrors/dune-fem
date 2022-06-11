@@ -79,7 +79,7 @@ namespace Dune
         interpolation( v.space() );
 
       // iterate over selected partition
-      for( const auto entity : elements( v.gridPart(), ps ) )
+      for( const auto& entity : elements( v.gridPart(), ps ) )
       {
         // initialize u to entity
         auto uGuard = bindGuard( uLocal, entity );
