@@ -49,14 +49,14 @@ namespace Dune
       struct hasStaticPolynomialOrder< LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
-        static const int order = 111;
+        static const int order = 6; // default polynomial order if not specified otherwise
       };
 
       template< class LFEMap, class FunctionSpace, class Storage >
       struct hasStaticPolynomialOrder< DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > >
       {
         static const bool v = false;
-        static const int order = 111;
+        static const int order = 6; // default polynomial order if not specified otherwise
       };
 
 
