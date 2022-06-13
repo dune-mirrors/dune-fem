@@ -144,7 +144,7 @@ namespace Dune
         typedef typename DiscreteFunction::DiscreteFunctionSpaceType
           DiscreteFunctionSpaceType;
 
-        if( GridPartType::Traits::conforming || !Fem::GridPartCapabilities::hasGrid< GridPartType >::v )
+        if( u.space().gridPart().isConforming() || !Fem::GridPartCapabilities::hasGrid< GridPartType >::v )
           return;
 
         const auto &blockMapper = u.space().blockMapper();
