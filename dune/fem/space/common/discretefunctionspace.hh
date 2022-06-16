@@ -977,7 +977,7 @@ namespace Dune
       typedef FunctionSpaceType BaseType;
 
     public:
-      enum { polynomialOrder = 111 };
+      enum { polynomialOrder = 6 }; // default polynomial order basically for determination of quadrature orders
 
       //! type of the grid
       typedef typename GridPartType :: GridType GridType;
