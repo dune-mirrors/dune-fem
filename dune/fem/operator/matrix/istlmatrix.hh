@@ -715,8 +715,6 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
 
       mutable std::unique_ptr< MatrixAdapterType >     matrixAdap_;
-      mutable std::unique_ptr< ColumnBlockVectorType > Arg_;
-      mutable std::unique_ptr< RowBlockVectorType >    Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
       ISTLSolverParameter param_;
@@ -957,6 +955,15 @@ namespace Dune
         matrixAdapter().apply( arg.blockVector(), dest.blockVector() );
       }
 
+      //! apply with arbitrary discrete functions
+      template <class CDF, class RDF>
+      void apply(const CDF& arg, RDF& dest) const
+      {
+        // this can happen when different storages are used for discrete
+        // function and matrix/solver objects
+        DUNE_THROW(NotImplemented,"ISTLMatrixObj::apply called for DiscreteFunctions not specified in the template list");
+      }
+
       //! resort row numbering in matrix to have ascending numbering
       void resort()
       {}
@@ -1150,19 +1157,7 @@ namespace Dune
 
       void removeObj ()
       {
-        Dest_.reset( nullptr );
-        Arg_.reset( nullptr );
         matrixAdap_.reset( nullptr );
-      }
-
-      void createBlockVectors () const
-      {
-        if( !Arg_  )
-          Arg_.reset( new RowBlockVectorType( rowMapper_.size() ) );
-        if( !Dest_ )
-          Dest_.reset( new ColumnBlockVectorType( colMapper_.size() ) );
-
-        createMatrixAdapter ();
       }
     };
 

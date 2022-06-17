@@ -116,10 +116,6 @@ namespace Dune
       //! get matrix
       const MatrixType& getmat () const override { return matrix_; }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
     protected:
       void communicate( Y &y ) const
       {
@@ -166,11 +162,6 @@ namespace Dune
       typedef X domain_type;
       typedef Y range_type;
       typedef typename X::field_type field_type;
-
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! define the category
-      enum { category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       using BaseType :: matrix_;
@@ -228,9 +219,7 @@ namespace Dune
         return scp_.norm(tmp);
       }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       void communicate( Y &y ) const
@@ -271,11 +260,6 @@ namespace Dune
       typedef X domain_type;
       typedef Y range_type;
       typedef typename X::field_type field_type;
-
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! define the category
-      enum { category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       using BaseType :: matrix_;
@@ -371,9 +355,7 @@ namespace Dune
         return std::sqrt( res );
       }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       void communicate(const X& x) const
