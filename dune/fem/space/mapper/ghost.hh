@@ -367,6 +367,27 @@ namespace Dune
     };
 
 
+    /** \brief @ingroup Communication
+     *
+     *  Apply action encoded in Functor f to all primary dofs.
+     *  \param[in]  auxiliaryDofs  AuxiliaryDofs instance (from space)
+     *  \param[in]  f  a Functor or lambda offering operator()( const size_t dof )
+     *
+     *  \note: This is a specialization for the Petsc  GhostMapper based AuxiliaryDofs.
+     */
+    template <class GridPart, class BaseMapper, class GlobalKey, class F>
+    static void forEachPrimaryDof( const AuxiliaryDofs< GridPart, GhostDofMapper< GridPart, BaseMapper, GlobalKey > >& auxiliaryDofs, F&& f )
+    {
+      const size_t size = auxiliaryDofs.mapper().interiorSize();
+      for( size_t dof = 0 ; dof<size; ++dof )
+      {
+        // apply action to primary dof
+        f( dof );
+      }
+    }
+
+
+
 
     // PrimaryDofs for AuxiliaryDofs< GhostDofMapper >
     // ------------------------------------------
@@ -383,6 +404,7 @@ namespace Dune
 
       typedef __GhostDofMapper::ConstIterator< GlobalKeyType > ConstIteratorType;
 
+      [[deprecated("Use forEachPrimaryDof instead!")]]
       explicit PrimaryDofs ( const AuxiliaryDofsType &auxiliaryDofs )
         : mapper_( auxiliaryDofs.mapper() )
       {}

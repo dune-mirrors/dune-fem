@@ -11,7 +11,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
 #include <dune/common/ftraits.hh>
-#include <dune/common/version.hh>
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
@@ -50,16 +49,9 @@ namespace Dune
     struct ISTLScalarProductSelector< Dune::Fem::ISTLBlockVector< Block > >
       : public Dune::ScalarProduct< typename Dune::Fem::ISTLBlockVector< Block > :: DofContainerType >
     {
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! define the category
-      enum { category=Dune::SolverCategory::sequential };
-#endif // #if !DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       typedef typename ISTLBlockVector< Block > :: DofContainerType type;
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       Dune::SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 #endif
 
@@ -126,8 +118,11 @@ namespace Dune
         typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
 
         RangeFieldType scp = 0;
-        for( const auto i : primaryDofs( space().auxiliaryDofs() ) )
-          Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, i ] ( auto &&j ) { scp += x[ i ][ j ] * y[ i ][ j ]; } );
+        auto compScp = [&x, &y, &scp]( const size_t dof ){
+          Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, dof ] ( auto &&j ) { scp += x[ dof ][ j ] * y[ dof ][ j ]; } );
+        };
+        // compute scalar product for primary dofs
+        forEachPrimaryDof( space().auxiliaryDofs(), compScp );
         return space().gridPart().comm().sum( scp );
       }
 
@@ -160,12 +155,11 @@ namespace Dune
         // only delete ghost entries
         if( deleteGhostEntries )
         {
-          const auto &auxiliaryDofs = space().auxiliaryDofs();
-
-          // don't delete the last since this is the overall Size
-          const size_t auxiliarySize = auxiliaryDofs.size() - 1;
-          for(size_t auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
-            x[ auxiliaryDofs[auxiliary] ] = 0;
+          auto delEntry = [&x] (const size_t dof )
+          {
+            x[ dof ] = 0;
+          };
+          forEachAuxiliaryDof( space().auxiliaryDofs(), delEntry );
         }
 #endif // #if HAVE_MPI
       }
