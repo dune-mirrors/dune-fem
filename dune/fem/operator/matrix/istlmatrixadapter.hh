@@ -188,7 +188,8 @@ namespace Dune
       //! apply operator to x:  \f$ y = A(x) \f$
       void apply ( const X &x, Y &y ) const override
       {
-        matrix_.mv( x, y );
+        //matrix_.mv( x, y );
+        matrix_.mvThreaded(x, y );
         communicate( y );
       }
 
@@ -197,7 +198,8 @@ namespace Dune
       {
         if( rowSpace_.grid().comm().size() <= 1 )
         {
-          matrix_.usmv(alpha,x,y);
+          //matrix_.usmv(alpha,x,y);
+          matrix_.usmvThreaded(alpha, x, y );
           communicate( y );
         }
         else
@@ -289,7 +291,8 @@ namespace Dune
         communicate( x );
 
         // apply vector to matrix
-        matrix_.mv(x,y);
+        //matrix_.mv(x,y);
+        matrix_.mvThreaded(x, y );
 
         // delete non-interior
         scp_.deleteNonInterior( y );
@@ -302,7 +305,8 @@ namespace Dune
         communicate( x );
 
         // apply matrix
-        matrix_.usmv(alpha,x,y);
+        //matrix_.usmv(alpha,x,y);
+        matrix_.usmvThreaded(alpha, x, y );
 
         // delete non-interior
         scp_.deleteNonInterior( y );

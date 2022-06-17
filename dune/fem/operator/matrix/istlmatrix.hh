@@ -135,6 +135,66 @@ namespace Dune
           BaseType(org)
         {}
 
+      protected:
+        template <class X, class Y, bool isMV>
+        void mvThreadedImpl( const field_type& alpha,
+                             const X& x, Y& y, std::integral_constant<bool, isMV> ) const
+        {
+          auto doMV = [this, &alpha, &x, &y] ()
+          {
+            const size_type numThreads = MPIManager :: numThreads();
+            const size_type sliceSize = this->N() / numThreads ;
+            const size_type thread = MPIManager :: thread();
+
+            const size_type sliceStart = thread * sliceSize ;
+            const size_type sliceEnd   = ( thread == numThreads-1 ) ? this->N() : (sliceStart + sliceSize) ;
+
+            ConstRowIterator endi( this->r, sliceEnd);
+            for (ConstRowIterator i( this->r, sliceStart); i!=endi; ++i)
+            {
+              if constexpr ( isMV )
+                y[i.index()] = 0;
+
+              ConstColIterator endj = (*i).end();
+              for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+              {
+                auto&& xj = Dune::Impl::asVector(x[j.index()]);
+                auto&& yi = Dune::Impl::asVector(y[i.index()]);
+                if constexpr ( isMV )
+                  Dune::Impl::asMatrix(*j).umv(xj, yi);
+                else
+                  Dune::Impl::asMatrix(*j).usmv(alpha, xj, yi);
+              }
+            }
+          };
+
+          try {
+            // execute in parallel
+            MPIManager :: run ( doMV );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            // serial version
+            if constexpr ( isMV )
+              this->mv( x, y );
+            else
+              this->umv( x, y );
+          }
+        }
+
+      public:
+        template <class X, class Y>
+        void usmvThreaded( const field_type& alpha, const X& x, Y& y ) const
+        {
+          mvThreadedImpl(alpha, x, y, std::false_type() );
+        }
+
+        template <class X, class Y>
+        void mvThreaded( const X& x, Y& y ) const
+        {
+          mvThreadedImpl(1.0, x, y, std::true_type() );
+        }
+
         template < class SparsityPattern >
         void createEntries(const SparsityPattern& sparsityPattern)
         {
