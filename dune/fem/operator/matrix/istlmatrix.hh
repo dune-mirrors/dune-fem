@@ -135,6 +135,16 @@ namespace Dune
           BaseType(org)
         {}
 
+        ConstRowIterator slicedBegin( const size_type row ) const
+        {
+          return ConstRowIterator( this->r, row );
+        }
+
+        ConstRowIterator slicedEnd( const size_type row ) const
+        {
+          return ConstRowIterator( this->r, row );
+        }
+
       protected:
         template <class X, class Y, bool isMV>
         void mvThreadedImpl( const field_type& alpha,
@@ -149,8 +159,8 @@ namespace Dune
             const size_type sliceStart = thread * sliceSize ;
             const size_type sliceEnd   = ( thread == numThreads-1 ) ? this->N() : (sliceStart + sliceSize) ;
 
-            ConstRowIterator endi( this->r, sliceEnd);
-            for (ConstRowIterator i( this->r, sliceStart); i!=endi; ++i)
+            const ConstRowIterator endi = slicedEnd( sliceEnd );
+            for (ConstRowIterator i = slicedBegin(sliceStart); i!=endi; ++i)
             {
               if constexpr ( isMV )
                 y[i.index()] = 0;

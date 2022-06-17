@@ -208,8 +208,40 @@ namespace Dune
       void forwardIterate (const M& A, X& xnew, const X& xold, const Y& b, const field_type& w,
                            const DiagonalType& diagInv ) const
       {
-        // standard forwards iteration
-        iterate( A, xnew, xold, b, w, diagInv, A.begin(), A.end(), std::true_type() );
+        bool runSerial = &xnew == &xold; // GS and SOR;
+
+        if( ! runSerial )
+        {
+          auto doIterate = [this, &A, &xnew, &xold, &b, &w, &diagInv] ()
+          {
+            typedef typename M::size_type size_type;
+            const size_type numThreads = MPIManager :: numThreads();
+            const size_type sliceSize = A.N() / numThreads ;
+            const size_type thread = MPIManager :: thread();
+            const size_type sliceStart = thread * sliceSize ;
+
+            auto begin = A.slicedBegin( sliceStart );
+            auto end   = (thread == numThreads-1) ? A.end() : A.slicedEnd( sliceStart + sliceSize );
+
+            // standard forwards iteration
+            iterate( A, xnew, xold, b, w, diagInv, begin, end, std::true_type() );
+          };
+
+          try {
+            // execute in parallel
+            MPIManager :: run ( doIterate );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            runSerial = true;
+          }
+        }
+
+        if( runSerial )
+        {
+          // serial version
+          iterate( A, xnew, xold, b, w, diagInv, A.begin(), A.end(), std::true_type() );
+        }
       }
 
       // Implementation of SOR and Jacobi's method
