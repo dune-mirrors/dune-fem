@@ -208,9 +208,9 @@ namespace Dune
       void forwardIterate (const M& A, X& xnew, const X& xold, const Y& b, const field_type& w,
                            const DiagonalType& diagInv ) const
       {
-        bool runSerial = &xnew == &xold; // GS and SOR;
+        bool runParallel = threading_ && (&xnew != &xold); // Jacobi only
 
-        if( ! runSerial )
+        if( runParallel )
         {
           auto doIterate = [this, &A, &xnew, &xold, &b, &w, &diagInv] ()
           {
@@ -233,11 +233,11 @@ namespace Dune
           }
           catch ( const SingleThreadModeError& e )
           {
-            runSerial = true;
+            runParallel = false;
           }
         }
 
-        if( runSerial )
+        if( ! runParallel )
         {
           // serial version
           iterate( A, xnew, xold, b, w, diagInv, A.begin(), A.end(), std::true_type() );
@@ -261,11 +261,14 @@ namespace Dune
 
       DiagonalType diagonalInv_;
 
+      const bool threading_;
+
     public:
       ParallelIterative( const MatrixObject& mObj, int n=1, double relax=1.0  )
         : mObj_( mObj ),
           _A_( mObj.exportMatrix() ),
-          _n( n ), _w(relax)
+          _n( n ), _w(relax),
+          threading_( mObj.threading()  )
       {
         Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
 
@@ -702,7 +705,8 @@ namespace Dune
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         return new MatrixAdapterType( matrixObj.exportMatrix(),
-                                      matrixObj.domainSpace(), matrixObj.rangeSpace(), PreConType(param.verbose()) );
+                                      matrixObj.domainSpace(), matrixObj.rangeSpace(), PreConType(param.verbose()),
+                                      matrixObj.threading() );
       }
 
     };

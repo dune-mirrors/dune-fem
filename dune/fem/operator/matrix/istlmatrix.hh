@@ -188,7 +188,10 @@ namespace Dune
             if constexpr ( isMV )
               this->mv( x, y );
             else
-              this->umv( x, y );
+            {
+              DUNE_THROW(SingleThreadModeError,"ImprovedBCRSMatrix::usmvThreaded: Cannot recover from threading error. Disable threading!");
+              // this->usmv( alpha, x, y );
+            }
           }
         }
 
@@ -787,6 +790,8 @@ namespace Dune
       mutable std::unique_ptr< MatrixAdapterType >     matrixAdap_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
+      const bool threading_ ;
+
       ISTLSolverParameter param_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
@@ -803,6 +808,7 @@ namespace Dune
         , sequence_(-1)
         , localMatrixStack_( *this )
         , overflowFraction_( param.overflowFraction() )
+        , threading_( param.threading() )
         , param_( param )
       {}
 
@@ -816,6 +822,8 @@ namespace Dune
       }
 
     public:
+      bool threading() const { return threading_; }
+
       void printTexInfo(std::ostream& out) const
       {
         out << "ISTL MatrixObj: ";

@@ -55,14 +55,14 @@ namespace Dune
       SparseRowMatrix(const ThisType& ) = delete;
 
       //! construct matrix of zero size
-      explicit SparseRowMatrix() :
-        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false )
+      explicit SparseRowMatrix( const bool threading = true ) :
+        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false ), threading_( threading )
       {}
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      SparseRowMatrix(const size_type rows, const size_type cols, const size_type nz) :
-        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false )
+      SparseRowMatrix(const size_type rows, const size_type cols, const size_type nz, const bool threading = true ) :
+        values_(0), columns_(0), rows_(0), dim_({{0,0}}), maxNzPerRow_(0), compressed_( false ), threading_( threading )
       {
         reserve(rows,cols,nz);
       }
@@ -147,26 +147,55 @@ namespace Dune
       template<class ArgDFType, class DestDFType>
       void apply(const ArgDFType& f, DestDFType& ret ) const
       {
-        constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
-        auto ret_it = ret.dbegin();
+        bool runParallel = threading_;
 
-        for(size_type row = 0; row<dim_[0]; ++row)
+        auto doApply = [this, &f, &ret]()
         {
-          const size_type endrow = endRow( row );
-          (*ret_it) = 0.0;
-          for(size_type col = startRow( row ); col<endrow; ++col)
+          constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
+
+          // compute slice of rows to be worked on
+          const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), std::true_type() );
+
+          // same as begin just with a row not necessarily zero
+          auto ret_it = ret.dofVector().find( slice.first );
+
+          const auto& fDofVec = f.dofVector();
+          for(size_type row = slice.first; row<slice.second; ++row)
           {
-            const auto realCol = columns_[ col ];
+            const size_type endrow = endRow( row );
+            (*ret_it) = 0.0;
+            for(size_type col = startRow( row ); col<endrow; ++col)
+            {
+              const auto realCol = columns_[ col ];
 
-            if( ! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol)) )
-              continue;
+              if( ! compressed_ && ((realCol == defaultCol) || (realCol == zeroCol)) )
+                continue;
 
-            const auto blockNr = realCol / blockSize ;
-            const auto dofNr   = realCol % blockSize ;
-            (*ret_it) += values_[ col ] * f.dofVector()[ blockNr ][ dofNr ];
+              const auto blockNr = realCol / blockSize ;
+              const auto dofNr   = realCol % blockSize ;
+              (*ret_it) += values_[ col ] * fDofVec[ blockNr ][ dofNr ];
+            }
+
+            ++ret_it;
           }
+        };
 
-          ++ret_it;
+        if( runParallel )
+        {
+          try {
+            // execute in parallel
+            MPIManager :: run ( doApply );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            runParallel = false;
+          }
+        }
+
+        // run serial if threading disabled or something else went wrong
+        if( ! runParallel )
+        {
+          doApply();
         }
       }
 
@@ -344,38 +373,80 @@ namespace Dune
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
       void forwardIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
       {
-        parallelIterative( diagInv.dofVector().begin(),
-                           b.dofVector().begin(),
-                           xold,
-                           xnew.dofVector().begin(),
-                           w,
-                           0,         // row begin
-                           dim_[ 0 ], // row end
-                           std::true_type() );
+        parallelIterative(diagInv, b, xold, xnew, w, std::true_type() );
       }
 
       //! Apply Jacobi/SOR method
       template<class DiagType, class ArgDFType, class DestDFType, class WType>
       void backwardIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew, const WType& w ) const
       {
-        parallelIterative( diagInv.dofVector().beforeEnd(),
-                           b.dofVector().beforeEnd(),
-                           xold,
-                           xnew.dofVector().beforeEnd(),
-                           w,
-                           dim_[ 0 ] - 1, // row beforeEnd
-                           size_type(-1), // row beforeBegin
-                           std::false_type() );
+        parallelIterative(diagInv, b, xold, xnew, w, std::false_type() );
       }
 
     protected:
+      // return slice of rows for given thread in forward direction
+      std::pair< size_type, size_type > sliceBeginEnd(const size_type thread,  const size_type numThreads, std::true_type ) const
+      {
+        const size_type sliceSize  = this->rows() / numThreads;
+        const size_type sliceBegin = (thread * sliceSize) ;
+        const size_type sliceEnd   = (thread == numThreads-1 ) ? this->rows(): (sliceBegin + sliceSize);
+        return std::make_pair( sliceBegin, sliceEnd );
+      }
+
+      // return slice of rows for given thread in backward direction
+      std::pair< size_type, size_type > sliceBeginEnd(const size_type thread, const size_type numThreads, std::false_type ) const
+      {
+        std::pair< size_type, size_type > beginEnd = sliceBeginEnd( thread, numThreads, std::true_type() );
+        return std::make_pair( beginEnd.second-1, beginEnd.first-1 );
+      }
+
+      template<class DiagType, class ArgDFType, class DestDFType, class WType, bool forward >
+      void parallelIterative(const DiagType& diagInv, const ArgDFType& b, const DestDFType& xold, DestDFType& xnew,
+                             const WType& w, std::integral_constant<bool, forward> direction ) const
+      {
+        bool runParallel = threading_ && (&xold != &xnew) ; // only for Jacobi
+
+        auto doIterate = [this, &diagInv, &b, &xold, &xnew, &w, &direction] ()
+        {
+          // compute slice to be worked on depending on direction
+          const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), direction );
+
+          doParallelIterative( diagInv.dofVector().find( slice.first ), // still O(1) operation just like for begin()
+                               b.dofVector().find( slice.first ),
+                               xold,
+                               xnew.dofVector().find( slice.first ),
+                               w,
+                               slice.first, // row begin
+                               slice.second,   // row end
+                               direction );
+        };
+
+        if( runParallel )
+        {
+          try {
+            // execute in parallel
+            MPIManager :: run ( doIterate );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            runParallel = false;
+          }
+        }
+
+        // run serial if threading disabled or something else went wrong
+        if( ! runParallel )
+        {
+          doIterate();
+        }
+      }
+
       //! Apply Jacobi/SOR method
       template<class DiagIt, class ArgDFIt, class DestDFType, class DestDFIt,
                class WType, bool forward>
-      void parallelIterative(DiagIt diag, ArgDFIt bit, const DestDFType& xold, DestDFIt xit,
-                             const WType& w,
-                             size_type row, const size_type end,
-                             std::integral_constant<bool, forward> ) const
+      void doParallelIterative(DiagIt diag, ArgDFIt bit, const DestDFType& xold, DestDFIt xit,
+                               const WType& w,
+                               size_type row, const size_type end,
+                               std::integral_constant<bool, forward> ) const
       {
         constexpr auto blockSize = DestDFType::DiscreteFunctionSpaceType::localBlockSize;
 
@@ -391,6 +462,7 @@ namespace Dune
           }
         };
 
+        const auto& xOldVec = xold.dofVector();
         for(; row != end; nextRow(row))
         {
           auto rhs = (*bit);
@@ -406,7 +478,7 @@ namespace Dune
             const auto blockNr = realCol / blockSize ;
             const auto dofNr   = realCol % blockSize ;
 
-            rhs -= values_[ col ] * xold.dofVector()[ blockNr ][ dofNr ] ;
+            rhs -= values_[ col ] * xOldVec[ blockNr ][ dofNr ] ;
           }
 
           (*xit) = w * (rhs * (*diag));
@@ -495,6 +567,7 @@ namespace Dune
       std::array<size_type,2> dim_;
       size_type maxNzPerRow_;
       bool compressed_;
+      const bool threading_;
     };
 
 
@@ -552,7 +625,7 @@ namespace Dune
         domainMapper_( domainSpace_.blockMapper() ),
         rangeMapper_( rangeSpace_.blockMapper() ),
         sequence_( -1 ),
-        matrix_(),
+        matrix_( param.threading() ),
         localMatrixStack_( *this )
       {}
 

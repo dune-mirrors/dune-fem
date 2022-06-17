@@ -330,6 +330,12 @@ namespace Dune {
     /** \brief Iterator pointing to before the first dof */
     ConstIteratorType beforeBegin() const { return array().beforeBegin(); }
 
+    /** \brief Iterator pointing to a given dof (non blocked numbering) */
+    IteratorType find( const SizeType dof ) { return array().find( dof ); }
+
+    /** \brief Iterator pointing to a given dof (non blocked numbering) */
+    ConstIteratorType find( const SizeType dof ) const { return array().find( dof ); }
+
     /** \brief Number of blocks */
     SizeType size () const { return array().size() / blockSize; }
 
@@ -549,11 +555,24 @@ namespace Dune {
               , const EmbeddedIterator& end = EmbeddedIterator()
 #endif
               )
+        : Iterator( it, 0
+#ifndef NDEBUG
+                  , end
+#endif
+                  )
+      {}
+
+      //! Default constructor
+      Iterator( const EmbeddedIterator& it, const int index
+#ifndef NDEBUG
+              , const EmbeddedIterator& end = EmbeddedIterator()
+#endif
+              )
         : it_( it ),
 #ifndef NDEBUG
           end_( end ),
 #endif
-          index_(0)
+          index_( index )
       {}
 
       //! return dof
@@ -658,6 +677,30 @@ namespace Dune {
     {
       DUNE_THROW(NotImplemented,"ISTLBlockVector::beforeBegin not implemented yet");
       return array().end();
+    }
+
+    /** \brief Iterator pointing to a given dof (non blocked numbering) */
+    IteratorType find( const SizeType dof )
+    {
+      const SizeType block = dof / blockSize;
+      const SizeType index = dof % blockSize;
+      return IteratorType( array().find( block ), index
+#ifndef NDEBUG
+                          , array().end()
+#endif
+                         );
+    }
+
+    /** \brief Iterator pointing to a given dof (non blocked numbering) */
+    ConstIteratorType find( const SizeType dof ) const
+    {
+      const SizeType block = dof / blockSize;
+      const SizeType index = dof % blockSize;
+      return ConstIteratorType( array().find( block ), index
+#ifndef NDEBUG
+                              , array().end()
+#endif
+                              );
     }
 
     SizeType size() const { return array().size(); }
