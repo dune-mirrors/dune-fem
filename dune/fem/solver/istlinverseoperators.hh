@@ -38,10 +38,6 @@ namespace Dune
       typedef typename Preconditioner::RangeFunctionType  RangeFunctionType;
 
     public:
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {category=SolverCategory::sequential};
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       typedef typename BaseType::domain_type domain_type;
       typedef typename BaseType::range_type  range_type;
       typedef typename BaseType::field_type  field_type;
@@ -77,9 +73,7 @@ namespace Dune
         }
       }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const { return SolverCategory::sequential; }
 
     protected:
       const Preconditioner *precon_;
@@ -259,8 +253,8 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef Preconditioner PreconditionerType;
 
-      typedef Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
       typedef ISTLBlockVectorDiscreteFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > SolverDiscreteFunctionType ;
+      typedef Dune::Fem::ISTLLinearOperator< DiscreteFunction, DiscreteFunction > AssembledOperatorType;
 
       typedef ISTLInverseOperator< DiscreteFunction, method, Preconditioner >  InverseOperatorType;
       typedef ISTLSolverParameter SolverParameterType;
@@ -288,14 +282,14 @@ namespace Dune
       using BaseType :: setMaxLinearIterations;
 
     protected:
+      typedef typename Traits::SolverDiscreteFunctionType       SolverDiscreteFunctionType;
+
       typedef typename DomainFunctionType :: DiscreteFunctionSpaceType
         DiscreteFunctionSpaceType;
 
-      typedef ISTLLinearOperatorAdapter< OperatorType >         ISTLOperatorType;
-      typedef ISTLPreconditionAdapter< PreconditionerType >     ISTLPreconditionerAdapterType;
 
-      typedef typename RangeFunctionType :: ScalarProductType   ParallelScalarProductType;
-      typedef typename RangeFunctionType::DofStorageType        BlockVectorType;
+      typedef typename SolverDiscreteFunctionType::ScalarProductType   ParallelScalarProductType;
+      typedef typename SolverDiscreteFunctionType::DofStorageType      BlockVectorType;
 
       typedef ISTLSolverAdapter< method, BlockVectorType > SolverAdapterType;
       typedef typename SolverAdapterType::ReductionType ReductionType;
@@ -323,29 +317,40 @@ namespace Dune
     protected:
       // apply for arbitrary domain function type and matching range function type
       template <class DomainFunction>
-      int apply( const DomainFunction& u, RangeFunctionType& w ) const
+      int apply( const DomainFunction& u, SolverDiscreteFunctionType& w ) const
       {
         auto& scp = w.scalarProduct();
         // u may not be a discrete function, therefore use w.space()
         const DiscreteFunctionSpaceType& space = w.space();
-        ISTLPreconditionerAdapterType istlPreconditioner( preconditioner_, space, space );
+
+        typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > ISTLPreconditionerType;
+        std::shared_ptr< ISTLPreconditionerType > istlPre;
+        if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+        {
+          typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerAdapterType;
+          istlPre.reset( new ISTLPreconditionerAdapterType( preconditioner_, space, space ) );
+        }
 
         if( assembledOperator_ )
         {
           auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_.parameter()) );
           // if preconditioner_ was set use that one, otherwise the one from the matrix object
-          typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > PreconditionerType;
-          PreconditionerType& matrixPre = matrix.preconditionAdapter();
-          PreconditionerType& istlPre   = istlPreconditioner;
-          PreconditionerType& precon    = ( preconditioner_ ) ? istlPre : matrixPre;
+          ISTLPreconditionerType& matrixPre = matrix.preconditionAdapter();
+          ISTLPreconditionerType& precon    = ( preconditioner_ ) ? (*istlPre) : matrixPre;
           return solve( matrix, scp, precon, u, w );
         }
-        else
+
+        if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
         {
           assert( operator_ );
+          assert( istlPre );
+          typedef ISTLLinearOperatorAdapter< OperatorType >  ISTLOperatorType;
           ISTLOperatorType istlOperator( *operator_, space, space );
-          return solve( istlOperator, scp, istlPreconditioner, u, w );
+          return solve( istlOperator, scp, *istlPre, u, w );
         }
+
+        DUNE_THROW(InvalidStateException,"ISTLInverseOperator::apply: No valid operator found!");
+        return -1;
       }
 
       //! final solve execution only copying the right hand side
@@ -353,12 +358,12 @@ namespace Dune
       int solve ( OperatorAdapter &istlOperator, ParallelScalarProductType &scp,
                   ISTLPreconditioner &preconditioner,
                   const DomainFunction& u,
-                  RangeFunctionType& w ) const
+                  SolverDiscreteFunctionType& w ) const
       {
         if( ! rhs_ )
         {
           // u may not be a discrete function, therefore use w.space()
-          rhs_.reset( new DomainFunctionType( "ISTLInvOp::rhs", w.space() ) );
+          rhs_.reset( new SolverDiscreteFunctionType( "ISTLInvOp::rhs", w.space() ) );
           rightHandSideCopied_ = false;
         }
 

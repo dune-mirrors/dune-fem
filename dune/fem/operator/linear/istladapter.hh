@@ -29,10 +29,6 @@ namespace Dune
       typedef typename Operator::RangeFunctionType  RangeFunctionType;
 
     public:
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {category=SolverCategory::sequential};
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       typedef Operator OperatorType;
 
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
@@ -65,9 +61,7 @@ namespace Dune
         y.axpy( alpha, fy.blockVector() );
       }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const { return SolverCategory::sequential; }
 
     protected:
       const OperatorType &op_;
@@ -85,10 +79,6 @@ namespace Dune
       typedef typename Operator::RangeFunctionType        RangeFunctionType;
 
     public:
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      enum {category=SolverCategory::sequential};
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
       typedef Operator OperatorType;
 
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
@@ -151,9 +141,7 @@ namespace Dune
         return scp_.norm(tmp);
       }
 
-#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      SolverCategory::Category category () const override { return SolverCategory::sequential; }
-#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const { return SolverCategory::sequential; }
 
       //! return reference to preconditioner
       ParallelScalarProductType& scp() const { return scp_; }
