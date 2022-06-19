@@ -145,6 +145,14 @@ namespace Dune
           return ConstRowIterator( this->r, row );
         }
 
+        std::pair< size_type, size_type > sliceBeginEnd( const size_type thread, const size_type numThreads ) const
+        {
+          const size_type sliceSize  = this->N() / numThreads ;
+          const size_type sliceBegin = thread * sliceSize ;
+          const size_type sliceEnd   = ( thread == numThreads-1 ) ? this->N() : (sliceBegin + sliceSize) ;
+          return std::make_pair( sliceBegin, sliceEnd );
+        }
+
       protected:
         template <class X, class Y, bool isMV>
         void mvThreadedImpl( const field_type& alpha,
@@ -152,15 +160,9 @@ namespace Dune
         {
           auto doMV = [this, &alpha, &x, &y] ()
           {
-            const size_type numThreads = MPIManager :: numThreads();
-            const size_type sliceSize = this->N() / numThreads ;
-            const size_type thread = MPIManager :: thread();
-
-            const size_type sliceStart = thread * sliceSize ;
-            const size_type sliceEnd   = ( thread == numThreads-1 ) ? this->N() : (sliceStart + sliceSize) ;
-
-            const ConstRowIterator endi = slicedEnd( sliceEnd );
-            for (ConstRowIterator i = slicedBegin(sliceStart); i!=endi; ++i)
+            const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads() );
+            const ConstRowIterator endi = slicedEnd( slice.second );
+            for (ConstRowIterator i = slicedBegin(slice.first); i!=endi; ++i)
             {
               if constexpr ( isMV )
                 y[i.index()] = 0;

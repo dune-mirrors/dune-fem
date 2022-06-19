@@ -214,17 +214,10 @@ namespace Dune
         {
           auto doIterate = [this, &A, &xnew, &xold, &b, &w, &diagInv] ()
           {
-            typedef typename M::size_type size_type;
-            const size_type numThreads = MPIManager :: numThreads();
-            const size_type sliceSize = A.N() / numThreads ;
-            const size_type thread = MPIManager :: thread();
-            const size_type sliceStart = thread * sliceSize ;
-
-            auto begin = A.slicedBegin( sliceStart );
-            auto end   = (thread == numThreads-1) ? A.end() : A.slicedEnd( sliceStart + sliceSize );
-
+            const auto slice = A.sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads() );
             // standard forwards iteration
-            iterate( A, xnew, xold, b, w, diagInv, begin, end, std::true_type() );
+            iterate( A, xnew, xold, b, w, diagInv,
+                     A.slicedBegin( slice.first ), A.slicedEnd( slice.second ), std::true_type() );
           };
 
           try {
