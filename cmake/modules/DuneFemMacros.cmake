@@ -39,8 +39,10 @@ if(USE_OPENMP)
     # add flags to compiler flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-    # on MacOS we need to add the shared linker flags
+    # on MacOS we need to add the linker flags
     if(APPLE)
+      get_filename_component(OPENMP_LIB_PATH ${OpenMP_CXX_LIBRARIES} DIRECTORY)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lomp -L${OPENMP_LIB_PATH}")
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_CXX_LIBRARIES}")
     endif()
   endif(OPENMP_FOUND)
