@@ -55,7 +55,8 @@ namespace Dune
       {
         const auto gradFT = localFunction().entity().geometry().jacobianTransposed( local );
 
-        FieldMatrix< ctype, coorddimension, mydimension > gradPhi;
+        typename LocalFunction::FunctionSpaceType::JacobianRangeType gradPhi;
+
         localFunction().jacobian( local, gradPhi );
 
         JacobianTransposed jacTransposed( 0 );
