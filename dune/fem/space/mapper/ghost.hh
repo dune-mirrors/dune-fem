@@ -351,6 +351,9 @@ namespace Dune
       //! return number of auxiliary dofs
       SizeType size () const { return mapper().ghostSize()+1; }
 
+      //! return number of primary dofs
+      SizeType primarySize () const { return mapper().interiorSize(); }
+
       ConstIteratorType begin () const { return ConstIteratorType( mapper().interiorSize() ); }
       ConstIteratorType end () const { return ConstIteratorType( mapper().interiorSize() + mapper().ghostSize() ); }
 

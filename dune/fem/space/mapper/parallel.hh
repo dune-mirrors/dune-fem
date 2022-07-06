@@ -174,18 +174,23 @@ namespace Dune
       {
         AuxiliaryDofs< GridPartType, BaseMapperType > auxiliaryDofs( gridPart(), baseMapper() );
         auxiliaryDofs.rebuild();
-        auto primaryDofs = Dune::Fem::primaryDofs( auxiliaryDofs );
+        //auto primaryDofs = Dune::Fem::primaryDofs( auxiliaryDofs );
 
-        size_ = primaryDofs.size();
+        const auto primarySize = auxiliaryDofs.primarySize(); // primaryDofs.size();
+        size_ = primarySize;  // primaryDofs.size();
         offset_ = exScan( gridPart().comm(), size_ );
         size_ = gridPart().comm().sum( size_ );
 
         std::size_t baseSize = baseMapper().size();
         mapping_.resize( baseSize );
         GlobalKeyType next = static_cast< GlobalKeyType >( offset_ );
-        for( const auto i : primaryDofs )
-          mapping_[ i ] = next++;
-        assert( next == static_cast< GlobalKeyType >( offset_ + primaryDofs.size() ) );
+        std::vector< GlobalKeyType >& mapping = mapping_;
+        auto mapNext = [&mapping, &next] (const auto i) { mapping[ i ] = next++; };
+        // for all primary dofs build mapping
+        forEachPrimaryDof( auxiliaryDofs, mapNext );
+        //for( const auto i : primaryDofs )
+        //  mapping_[ i ] = next++;
+        assert( next == static_cast< GlobalKeyType >( offset_ + primarySize ) );
 
         __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), auxiliaryDofs, mapping_ );
         gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );

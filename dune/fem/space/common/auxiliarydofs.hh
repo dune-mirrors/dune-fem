@@ -130,6 +130,15 @@ namespace Dune
         return auxiliarys_.size();
       }
 
+      //! return number of primaryDofs
+      IndexType primarySize () const
+      {
+        const IndexType last = auxiliarys_.size() - 1;
+        // last entry is the overall size, thus substract size - 1 from the
+        // overall number to obtain the number of primary dofs
+        return auxiliarys_[ last ] - last ;
+      }
+
       ConstIterator begin () const { return ConstIterator( auxiliarys_, 0 ); }
       ConstIterator end () const { assert( size() > 0 ); return ConstIterator( auxiliarys_, size()-1 ); }
 
