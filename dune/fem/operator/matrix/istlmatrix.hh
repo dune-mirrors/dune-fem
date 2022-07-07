@@ -135,6 +135,81 @@ namespace Dune
           BaseType(org)
         {}
 
+        ConstRowIterator slicedBegin( const size_type row ) const
+        {
+          return ConstRowIterator( this->r, row );
+        }
+
+        ConstRowIterator slicedEnd( const size_type row ) const
+        {
+          return ConstRowIterator( this->r, row );
+        }
+
+        std::pair< size_type, size_type > sliceBeginEnd( const size_type thread, const size_type numThreads ) const
+        {
+          const size_type sliceSize  = this->N() / numThreads ;
+          const size_type sliceBegin = thread * sliceSize ;
+          const size_type sliceEnd   = ( thread == numThreads-1 ) ? this->N() : (sliceBegin + sliceSize) ;
+          return std::make_pair( sliceBegin, sliceEnd );
+        }
+
+      protected:
+        template <class X, class Y, bool isMV>
+        void mvThreadedImpl( const field_type& alpha,
+                             const X& x, Y& y, std::integral_constant<bool, isMV> ) const
+        {
+          auto doMV = [this, &alpha, &x, &y] ()
+          {
+            const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads() );
+            const ConstRowIterator endi = slicedEnd( slice.second );
+            for (ConstRowIterator i = slicedBegin(slice.first); i!=endi; ++i)
+            {
+              if constexpr ( isMV )
+                y[i.index()] = 0;
+
+              ConstColIterator endj = (*i).end();
+              for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+              {
+                auto&& xj = Dune::Impl::asVector(x[j.index()]);
+                auto&& yi = Dune::Impl::asVector(y[i.index()]);
+                if constexpr ( isMV )
+                  Dune::Impl::asMatrix(*j).umv(xj, yi);
+                else
+                  Dune::Impl::asMatrix(*j).usmv(alpha, xj, yi);
+              }
+            }
+          };
+
+          try {
+            // execute in parallel
+            MPIManager :: run ( doMV );
+          }
+          catch ( const SingleThreadModeError& e )
+          {
+            // serial version
+            if constexpr ( isMV )
+              this->mv( x, y );
+            else
+            {
+              DUNE_THROW(SingleThreadModeError,"ImprovedBCRSMatrix::usmvThreaded: Cannot recover from threading error. Disable threading!");
+              // this->usmv( alpha, x, y );
+            }
+          }
+        }
+
+      public:
+        template <class X, class Y>
+        void usmvThreaded( const field_type& alpha, const X& x, Y& y ) const
+        {
+          mvThreadedImpl(alpha, x, y, std::false_type() );
+        }
+
+        template <class X, class Y>
+        void mvThreaded( const X& x, Y& y ) const
+        {
+          mvThreadedImpl(1.0, x, y, std::true_type() );
+        }
+
         template < class SparsityPattern >
         void createEntries(const SparsityPattern& sparsityPattern)
         {
@@ -717,6 +792,8 @@ namespace Dune
       mutable std::unique_ptr< MatrixAdapterType >     matrixAdap_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
+      const bool threading_ ;
+
       ISTLSolverParameter param_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
@@ -733,6 +810,7 @@ namespace Dune
         , sequence_(-1)
         , localMatrixStack_( *this )
         , overflowFraction_( param.overflowFraction() )
+        , threading_( param.threading() )
         , param_( param )
       {}
 
@@ -746,6 +824,8 @@ namespace Dune
       }
 
     public:
+      bool threading() const { return threading_; }
+
       void printTexInfo(std::ostream& out) const
       {
         out << "ISTL MatrixObj: ";

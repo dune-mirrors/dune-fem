@@ -77,18 +77,15 @@ namespace LinearSolver
       const auto& auxiliaryDofs = vjp.space().auxiliaryDofs();
       const auto& vj = vjp.dofVector();
 
-      const size_t numAuxiliarys = auxiliaryDofs.size();
-      for( size_t auxiliary = 0, i = 0 ; auxiliary < numAuxiliarys; ++auxiliary, ++i  )
+      auto scp = [&m, &y, &vj, &v] (const size_t dof)
       {
-        const size_t nextAuxiliary = auxiliaryDofs[ auxiliary ];
-        for(; i < nextAuxiliary; ++i )
+        for(int l=0; l<m; ++l)
         {
-          for(int l=0; l<m; ++l)
-          {
-            y[ l ] += (vj[ i ] * v[ l ].dofVector()[ i ]);
-          }
+          y[ l ] += (vj[ dof ] * v[ l ].dofVector()[ dof ]);
         }
-      }
+      };
+      // see dune/fem/space/common/auiliarydofs.hh
+      forEachPrimaryDof( auxiliaryDofs, scp );
 
       // communicate sum
       comm.sum( y, m );

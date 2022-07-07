@@ -224,6 +224,11 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "preconditioning.level", 0 );
       }
 
+      virtual bool threading () const
+      {
+        return parameter_.getValue< bool >( keyPrefix_ + "threading", true );
+      }
+
      private:
       virtual double absoluteTol__ ( )  const
       {

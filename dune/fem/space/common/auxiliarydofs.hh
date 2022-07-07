@@ -130,6 +130,15 @@ namespace Dune
         return auxiliarys_.size();
       }
 
+      //! return number of primaryDofs
+      IndexType primarySize () const
+      {
+        const IndexType last = auxiliarys_.size() - 1;
+        // last entry is the overall size, thus substract size - 1 from the
+        // overall number to obtain the number of primary dofs
+        return auxiliarys_[ last ] - last ;
+      }
+
       ConstIterator begin () const { return ConstIterator( auxiliarys_, 0 ); }
       ConstIterator end () const { assert( size() > 0 ); return ConstIterator( auxiliarys_, size()-1 ); }
 
@@ -259,12 +268,51 @@ namespace Dune
         return (ptype == InteriorEntity) || (ptype == BorderEntity);
       }
 
-    private:
+    protected:
       int myRank_, mySize_;
       std::set< IndexType > &auxiliarySet_;
       const MapperType &mapper_;
     };
 
+
+    /** \brief @ingroup Communication
+     *
+     *  Apply action encoded in Functor f to all auxiliary dofs.
+     *  \param[in]  auxiliaryDofs  AuxiliaryDofs instance (from space)
+     *  \param[in]  f  a Functor or lambda offering operator()( const size_t dof )
+     */
+    template <class AuxiliaryDofs, class F>
+    static void forEachAuxiliaryDof( const AuxiliaryDofs& auxiliaryDofs, F&& f )
+    {
+      // don't delete the last since this is the overall Size
+      const size_t auxiliarySize = auxiliaryDofs.size() - 1;
+      for(size_t auxiliary = 0; auxiliary<auxiliarySize; ++auxiliary)
+      {
+        // apply action to auxiliary dof
+        f( auxiliaryDofs[auxiliary] );
+      }
+    }
+
+    /** \brief @ingroup Communication
+     *
+     *  Apply action encoded in Functor f to all primary dofs.
+     *  \param[in]  auxiliaryDofs  AuxiliaryDofs instance (from space)
+     *  \param[in]  f  a Functor or lambda offering operator()( const size_t dof )
+     */
+    template <class AuxiliaryDofs, class F>
+    static void forEachPrimaryDof( const AuxiliaryDofs& auxiliaryDofs, F&& f )
+    {
+      const size_t numAuxiliarys = auxiliaryDofs.size();
+      for( size_t auxiliary = 0, dof = 0 ; auxiliary < numAuxiliarys; ++auxiliary, ++dof  )
+      {
+        const size_t nextAuxiliary = auxiliaryDofs[ auxiliary ];
+        for(; dof < nextAuxiliary; ++dof )
+        {
+          // apply action to primary dof
+          f( dof );
+        }
+      }
+    }
 
 
     // PrimaryDofs
@@ -331,6 +379,7 @@ namespace Dune
         IndexType index_ = 0, auxiliary_ = 0;
       };
 
+      [[deprecated("Use forEachPrimaryDof instead!")]]
       explicit PrimaryDofs ( const AuxiliaryDofsType &auxiliaryDofs )
         : auxiliaryDofs_( auxiliaryDofs )
       {}
@@ -350,6 +399,7 @@ namespace Dune
     // -----------
 
     template< class AuxiliaryDofs >
+    [[deprecated("Use forEachPrimaryDof instead!" )]]
     inline static PrimaryDofs< AuxiliaryDofs > primaryDofs ( const AuxiliaryDofs &auxiliaryDofs )
     {
       return PrimaryDofs< AuxiliaryDofs >( auxiliaryDofs );

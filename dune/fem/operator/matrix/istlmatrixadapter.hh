@@ -65,7 +65,8 @@ namespace Dune
         colSpace_( org.colSpace_ ),
         scp_( colSpace_ ),
         preconditioner_( org.preconditioner_ ),
-        averageCommTime_( org.averageCommTime_ )
+        averageCommTime_( org.averageCommTime_ ),
+        threading_( org.threading_ )
       {}
 
       //! constructor: just store a reference to a matrix
@@ -73,13 +74,15 @@ namespace Dune
       ISTLParallelMatrixAdapterInterface ( MatrixType &matrix,
                                            const RowSpaceType &rowSpace,
                                            const ColSpaceType &colSpace,
-                                           const PreconditionAdapterType& precon )
+                                           const PreconditionAdapterType& precon,
+                                           const bool threading = true )
       : matrix_( matrix ),
         rowSpace_( rowSpace ),
         colSpace_( colSpace ),
         scp_( colSpace_ ),
         preconditioner_( precon ),
-        averageCommTime_( 0 )
+        averageCommTime_( 0 ),
+        threading_( threading )
       {}
 
       //! return communication time
@@ -116,6 +119,9 @@ namespace Dune
       //! get matrix
       const MatrixType& getmat () const override { return matrix_; }
 
+      //! return true if matvec and preconditioning should use threading (depends on implementation of preconditioning)
+      bool threading () const { return threading_; }
+
     protected:
       void communicate( Y &y ) const
       {
@@ -134,6 +140,7 @@ namespace Dune
       mutable ParallelScalarProductType scp_;
       PreconditionAdapterType preconditioner_;
       mutable double averageCommTime_;
+      const bool threading_;
     };
 
     template <class MatrixImp>
@@ -163,6 +170,8 @@ namespace Dune
       typedef Y range_type;
       typedef typename X::field_type field_type;
 
+      using BaseType :: threading;
+
     protected:
       using BaseType :: matrix_;
       using BaseType :: scp_ ;
@@ -181,14 +190,19 @@ namespace Dune
       LagrangeParallelMatrixAdapter ( MatrixType &matrix,
                                       const RowSpaceType &rowSpace,
                                       const ColSpaceType &colSpace,
-                                      const PreconditionAdapterType& precon )
-      : BaseType( matrix, rowSpace, colSpace, precon )
+                                      const PreconditionAdapterType& precon,
+                                      const bool threading = true )
+      : BaseType( matrix, rowSpace, colSpace, precon, threading )
       {}
 
       //! apply operator to x:  \f$ y = A(x) \f$
       void apply ( const X &x, Y &y ) const override
       {
-        matrix_.mv( x, y );
+        if( threading() )
+          matrix_.mvThreaded(x, y );
+        else
+          matrix_.mv( x, y );
+
         communicate( y );
       }
 
@@ -197,7 +211,11 @@ namespace Dune
       {
         if( rowSpace_.grid().comm().size() <= 1 )
         {
-          matrix_.usmv(alpha,x,y);
+          if( threading() )
+            matrix_.usmvThreaded(alpha, x, y );
+          else
+            matrix_.usmv(alpha,x,y);
+
           communicate( y );
         }
         else
@@ -261,6 +279,8 @@ namespace Dune
       typedef Y range_type;
       typedef typename X::field_type field_type;
 
+      using BaseType :: threading;
+
     protected:
       using BaseType :: matrix_;
       using BaseType :: scp_;
@@ -278,8 +298,9 @@ namespace Dune
       DGParallelMatrixAdapter (MatrixType& A,
                                const RowSpaceType& rowSpace,
                                const ColSpaceType& colSpace,
-                               const PreconditionAdapterType& precon )
-        : BaseType( A, rowSpace, colSpace, precon )
+                               const PreconditionAdapterType& precon,
+                               const bool threading = true)
+        : BaseType( A, rowSpace, colSpace, precon, threading )
       {}
 
       //! apply operator to x:  \f$ y = A(x) \f$
@@ -289,7 +310,10 @@ namespace Dune
         communicate( x );
 
         // apply vector to matrix
-        matrix_.mv(x,y);
+        if( threading() )
+          matrix_.mvThreaded( x, y );
+        else
+          matrix_.mv(x,y);
 
         // delete non-interior
         scp_.deleteNonInterior( y );
@@ -302,7 +326,10 @@ namespace Dune
         communicate( x );
 
         // apply matrix
-        matrix_.usmv(alpha,x,y);
+        if( threading() )
+          matrix_.usmvThreaded(alpha, x, y );
+        else
+          matrix_.usmv(alpha,x,y);
 
         // delete non-interior
         scp_.deleteNonInterior( y );
