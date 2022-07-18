@@ -10,7 +10,7 @@ globalBlock = block
 
 def triangulationOfNetwork(grid, level=0, linewidth=0.01):
     from matplotlib.tri import Triangulation
-    x, t = grid.tesselate(level)
+    x, t = grid.tessellate(level)
     n, m = len(x), len(t)
     t = append(t.T, [zeros(m, dtype=int32)], axis=0).T
     t = append(t, zeros((m,3), dtype=int32), axis=0)
@@ -51,7 +51,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                 data = linalg.norm(solution.pointData(level),axis=1)
             else:
                 data = solution.pointData(level)[:,0]
-            pyplot.plot(grid.tesselate(level)[0], data, '-p')
+            pyplot.plot(grid.tessellate(level)[0], data, '-p')
             if xlim:
                 fig.gca().set_xlim(xlim)
             fig.tight_layout()
