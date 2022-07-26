@@ -93,6 +93,10 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                 logNorm = {}
             minData = amin(data)
             maxData = amax(data)
+            r = maxData-minData
+            # avoid some weird 'white' patches when value hits min/max
+            minData -= r*0.01
+            maxData += r*0.01
             if clim == None:
                 clim = [minData, maxData]
             # having extend not 'both' does not seem to work (needs fixing)...
