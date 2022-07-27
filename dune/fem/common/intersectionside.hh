@@ -2,6 +2,7 @@
 #define DUNE_FEM_COMMON_INTERSECTIONSIDE_HH
 
 #include <dune/common/typelist.hh>
+#include <dune/common/typeutilities.hh>
 
 namespace Dune
 {
