@@ -9,49 +9,38 @@ namespace Dune
   {
     enum class IntersectionSide : std::size_t { in = 0u, out = 1u };
 
-    template<class GF, class Intersection>
-    constexpr auto hasIntersectionBind(const MetaType<Intersection> &) ->
-      decltype(std::declval<GF&>().bind(
-                      std::declval<const Intersection&>(), IntersectionSide::in
-               ), std::true_type{})
-    {
-      return {};
-    }
+    template <int N> struct priority : priority<N-1> {};
+    template <> struct priority<0> {};
 
-    template <class GF>
-    constexpr auto hasIntersectionBind(...) -> std::false_type
+
+    template<class GF, class Intersection>
+    auto bindIntersection(GF& gf, const Intersection& intersection, IntersectionSide side, priority<2>)
+     -> decltype(gf.bind(intersection, side))
     {
-      return {};
+      gf.bind(intersection, side);
     }
 
     template<class GF, class Intersection>
-    constexpr auto hasHostIntersectionBind(const MetaType<Intersection> &) ->
-      decltype(std::declval<GF&>().bind(
-                      std::declval<const typename Intersection::Implementation::HostIntersectionType&>(), IntersectionSide::in
-               ), std::true_type{})
+    auto bindIntersection(GF& gf, const Intersection& intersection, IntersectionSide side, priority<1>)
+     -> decltype(gf.bind(intersection.impl().hostIntersection(), side))
     {
-      return {};
+      gf.bind(intersection.impl().hostIntersection(), side);
     }
 
-    template <class GF>
-    constexpr auto hasHostIntersectionBind(...) -> std::false_type
+    template<class GF, class Intersection>
+    auto bindIntersection(GF& gf, const Intersection& intersection, IntersectionSide side, priority<0>)
+     -> decltype(gf.bind(intersection.inside()))
     {
-      return {};
+      // store local copy to avoid problems with casting to temporary types
+      const auto entity = (side == IntersectionSide::in) ? intersection.inside() : intersection.outside();
+      gf.bind(entity);
     }
+
 
     template<class GF, class Intersection>
     void defaultIntersectionBind(GF &gf, const Intersection &intersection, IntersectionSide side)
     {
-      if constexpr (hasIntersectionBind<GF>(MetaType<Intersection>()))
-        gf.bind(intersection, side);
-      else if constexpr (hasHostIntersectionBind<GF>(MetaType<Intersection>()))
-        gf.bind(intersection.impl().hostIntersection(), side);
-      else
-      {
-        // store local copy to avoid problems with casting to temporary types
-        const auto entity = side==IntersectionSide::in? intersection.inside(): intersection.outside();
-        gf.bind(entity);
-      }
+      bindIntersection(gf, intersection, side, priority<2>{});
     }
   }
 }
