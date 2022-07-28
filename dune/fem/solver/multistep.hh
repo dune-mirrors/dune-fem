@@ -33,7 +33,7 @@ namespace DuneODE
   public:
     typedef typename Operator::DestinationType DestinationType;
     typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-    // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType;
+    // typedef typename SpaceType :: GridType :: Traits :: Communication DuneCommunicatorType;
   protected:
     std::vector< std::vector<double> > a;
     std::vector<double> b;
@@ -373,7 +373,7 @@ namespace DuneODE
   public:
     typedef typename Operator :: DestinationType DestinationType;
     typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-    typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType;
+    typedef typename SpaceType :: GridType :: Traits :: Communication DuneCommunicatorType;
 
   public:
     /** \brief constructor
