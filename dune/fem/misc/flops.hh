@@ -137,8 +137,8 @@ namespace Dune {
         result_t min( values );
         result_t sum( values );
 
-        typedef MPIManager :: Communication Communication;
-        const Communication& comm = MPIManager :: comm();
+        typedef MPIManager :: CollectiveCommunication CollectiveCommunication;
+        const CollectiveCommunication& comm = MPIManager :: comm();
 
         const int size = max.size();
         // compute max, min, and sum of flop values

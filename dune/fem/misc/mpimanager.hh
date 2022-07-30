@@ -340,8 +340,8 @@ namespace Dune
 
     struct MPIManager
     {
-      typedef Dune::Communication< MPIHelper::MPICommunicator >
-        Communication;
+      typedef Dune::CollectiveCommunication< MPIHelper::MPICommunicator >
+        CollectiveCommunication;
     private:
       static MPIManager &instance ()
       {
@@ -395,9 +395,9 @@ namespace Dune
 
       static void initialize ( int &argc, char **&argv );
 
-      static const Communication &comm ()
+      static const CollectiveCommunication &comm ()
       {
-        const std::unique_ptr< Communication > &comm = instance().comm_;
+        const std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
         if( !comm )
           DUNE_THROW( InvalidStateException, "MPIManager has not been initialized." );
         return *comm;
@@ -446,7 +446,7 @@ namespace Dune
 
     private:
       MPIHelper *helper_ = nullptr;
-      std::unique_ptr< Communication > comm_;
+      std::unique_ptr< CollectiveCommunication > comm_;
       bool wasInitializedHere_ = false ;
 #if HAVE_PETSC
       bool petscWasInitializedHere_ = false ;
@@ -472,7 +472,7 @@ namespace Dune
     inline void MPIManager::initialize ( int &argc, char **&argv )
     {
       MPIHelper *&helper = instance().helper_;
-      std::unique_ptr< Communication > &comm = instance().comm_;
+      std::unique_ptr< CollectiveCommunication > &comm = instance().comm_;
 
       // the following initialization overrides the MPI_Init in dune-common
       // to avoid a call to MPI_Finalize before all singletons have been deleted
@@ -525,7 +525,7 @@ namespace Dune
       // this will just initialize the static variables inside MPIHelper but
       // not call MPI_Init again
       helper = &MPIHelper::instance( argc, argv );
-      comm.reset( new Communication( helper->getCommunicator() ) );
+      comm.reset( new CollectiveCommunication( helper->getCommunicator() ) );
 
 #if HAVE_PETSC
       // initialize PETSc if present

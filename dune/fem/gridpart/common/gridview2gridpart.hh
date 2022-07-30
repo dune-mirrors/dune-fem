@@ -40,7 +40,7 @@ namespace Dune
       static const bool conforming = GridView::conforming;
 
       typedef typename GridViewType::Grid GridType;
-      typedef typename GridViewType::Communication CommunicationType;
+      typedef typename GridViewType::CollectiveCommunication CollectiveCommunicationType;
 
       typedef typename GridView::IndexSet IndexSetType;
 
@@ -101,8 +101,8 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::IndexSetType */
       typedef typename BaseType::IndexSetType IndexSetType;
 
-      /** \copydoc Dune::Fem::GridPartInterface::CommunicationType */
-      typedef typename BaseType::CommunicationType CommunicationType;
+      /** \copydoc Dune::Fem::GridPartInterface::CollectiveCommunicationType */
+      typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
 
     private:
       typedef DofManager< GridType > DofManagerType;
@@ -194,7 +194,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::comm */
-      const CommunicationType &comm () const { return gridView().comm(); }
+      const CollectiveCommunicationType &comm () const { return gridView().comm(); }
 
       /** \copydoc Dune::Fem::GridPartInterface::communicate */
       template< class DataHandle, class DataType >

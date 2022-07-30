@@ -241,7 +241,7 @@ namespace Dune
 
       const GridPartType &gridPart () const { return gridPart_; }
 
-      const typename GridPartType::CommunicationType& comm () const
+      const typename GridPartType::CollectiveCommunicationType& comm () const
       {
         return gridPart().comm();
       }

@@ -81,7 +81,7 @@ namespace Dune
           : dfSpace_( dfSpace ), solverCategory_( solverCategory )
         {}
 
-        const typename DiscreteFunctionSpace::GridPartType::CommunicationType &communicator () const { return dfSpace_.gridPart().comm(); }
+        const typename DiscreteFunctionSpace::GridPartType::CollectiveCommunicationType &communicator () const { return dfSpace_.gridPart().comm(); }
 
         template< class T >
         void copyOwnerToAll ( const T &x, T &y ) const

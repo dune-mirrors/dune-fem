@@ -456,7 +456,7 @@ namespace Dune
 
           enum { tag = Grid::tag };
           YLoadBalance< dim > loadBalancer;
-          Torus< typename Grid::Communication, dim > torus( grid.comm(), tag, anz, &loadBalancer );
+          Torus< typename Grid::CollectiveCommunication, dim > torus( grid.comm(), tag, anz, &loadBalancer );
           torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
         }
       };
