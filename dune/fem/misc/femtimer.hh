@@ -270,7 +270,7 @@ namespace Dune
         output_.close();
       }
 
-      const MPIManager::Communication &comm = MPIManager::comm();
+      const MPIManager::CollectiveCommunication &comm = MPIManager::comm();
       if( comm.rank() == 0 )
       {
         double *totalTimes = new double[ comm.size() ];

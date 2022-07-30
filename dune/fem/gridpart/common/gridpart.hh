@@ -94,9 +94,9 @@ namespace Dune
       typedef IndexSetType IndexSet;
 
       //! \brief Collective communication
-      typedef typename Traits::CommunicationType CommunicationType;
+      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
       //! \brief Collective communication
-      typedef CommunicationType Communication;
+      typedef CollectiveCommunicationType CollectiveCommunication;
 
       //! \brief Twist utility type
       typedef typename Traits::TwistUtilityType TwistUtilityType;
@@ -278,7 +278,7 @@ namespace Dune
       }
 
       /** \brief obtain collective communication object */
-      const CommunicationType &comm () const
+      const CollectiveCommunicationType &comm () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().comm() );
         return asImp().comm();
@@ -380,7 +380,7 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       //! \brief Collective communication
-      typedef typename Traits::CommunicationType CommunicationType;
+      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
       //! \brief type of DofManager
       typedef DofManager< GridType >  DofManagerType;
@@ -443,7 +443,7 @@ namespace Dune
       }
 
       /** \brief obtain collective communication object */
-      const CommunicationType &comm () const
+      const CollectiveCommunicationType &comm () const
       {
         return grid().comm();
       }

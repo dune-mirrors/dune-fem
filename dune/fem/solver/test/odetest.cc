@@ -41,11 +41,11 @@ class myDest : public Dune::FieldVector<double, N> {
 private:
   struct GridPartDummy
   {
-    typedef Dune::Communication< Dune::No_Comm > CommunicationType;
+    typedef Dune::CollectiveCommunication< Dune::No_Comm > CollectiveCommunicationType;
 
-    const CommunicationType &comm () const { return comm_; }
+    const CollectiveCommunicationType &comm () const { return comm_; }
 
-    CommunicationType comm_;
+    CollectiveCommunicationType comm_;
   };
 
   struct SpaceDummy {

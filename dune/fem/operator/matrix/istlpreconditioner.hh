@@ -440,13 +440,13 @@ namespace Dune
       // use BCRSMatrix type because of specializations in dune-istl
       typedef typename MatrixType :: BaseType ISTLMatrixType ;
 
-      typedef typename MatrixType :: CommunicationType
-        CommunicationType;
+      typedef typename MatrixType :: CollectiveCommunictionType
+        CollectiveCommunictionType;
 
       // matrix adapter for AMG
   //#if HAVE_MPI
   //    typedef Dune::OverlappingSchwarzOperator<
-  //     ISTLMatrixType, X, Y, CommunicationType> OperatorType ;
+  //     ISTLMatrixType, X, Y, CollectiveCommunictionType> OperatorType ;
   //#else
       typedef MatrixAdapter< ISTLMatrixType, X, Y > OperatorType;
   //#endif
@@ -546,7 +546,7 @@ namespace Dune
                             field_type relax,
                             bool verbose,
                             const PreconditionerType* p ,
-                            const CommunicationType& comm)
+                            const CollectiveCommunictionType& comm)
   //#if HAVE_MPI
   //      : op_( new OperatorType( matrix, comm ) )
   //#else
@@ -605,7 +605,7 @@ namespace Dune
     protected:
       template <class Smoother>
       PreconditionerInterfaceType*
-      createAMGPreconditioner(const CommunicationType& comm,
+      createAMGPreconditioner(const CollectiveCommunictionType& comm,
                 int iter, field_type relax, const Smoother* )
       {
         typedef typename Dune::FieldTraits< field_type>::real_type real_type;

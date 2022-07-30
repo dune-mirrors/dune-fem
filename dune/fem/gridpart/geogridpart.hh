@@ -152,7 +152,7 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPartType::CommunicationType CommunicationType;
+      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
 
       static const bool conforming = HostGridPartType::Traits::conforming;
     };
@@ -180,7 +180,7 @@ namespace Dune
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
-      typedef typename BaseType::CommunicationType CommunicationType;
+      typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
 
       template< int codim >
       struct Codim
