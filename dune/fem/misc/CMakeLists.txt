@@ -13,3 +13,5 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
 dune_add_subdirs(petsc threads)
 
 target_sources(dunefem PRIVATE femtimer.cc)
+
+exclude_from_headercheck( compatibility.hh )
