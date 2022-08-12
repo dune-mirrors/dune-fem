@@ -106,7 +106,7 @@ void interpolateOnly ( const GridFunction &u, DiscreteFunction &v )
   Dune::Fem::LocalInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType > interpolation( v.space() );
 
   // iterate over selected partition
-  for( const auto entity : elements( v.gridPart(), Dune::Partitions::all ) )
+  for( const auto& entity : elements( v.gridPart(), Dune::Partitions::all ) )
   {
     // initialize u, v to entity
     auto uGuard = bindGuard( uLocal, entity );

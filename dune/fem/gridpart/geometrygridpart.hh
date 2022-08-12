@@ -168,8 +168,8 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
-      typedef CollectiveCommunicationType CollectiveCommunication;
+      typedef typename HostGridPartType::CommunicationType CommunicationType;
+      typedef CommunicationType Communication;
       static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
@@ -209,9 +209,9 @@ namespace Dune
       //! \brief type of intersection
       typedef typename BaseType::Intersection Intersection;
       //! \brief Collective communication
-      typedef typename BaseType::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename BaseType::CommunicationType CommunicationType;
       //! \brief Collective communication
-      typedef typename BaseType::CollectiveCommunication     CollectiveCommunication;
+      typedef typename BaseType::Communication     Communication;
       typedef typename BaseType::GridViewType GridViewType;
 
       // the interface takes this from the grid
