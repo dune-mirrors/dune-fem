@@ -110,7 +110,7 @@ namespace Dune
         typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType;
 
         //! type of communication object
-        typedef typename RangeSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
+        typedef typename RangeSpaceType :: GridType :: Traits :: Communication   CommunicationType ;
 
         typedef typename BaseType :: BuildMode BuildMode ;
 

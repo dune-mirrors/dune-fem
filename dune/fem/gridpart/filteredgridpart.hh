@@ -180,8 +180,8 @@ namespace Dune
         typedef IteratorType Iterator;
       };
 
-      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
-      typedef CollectiveCommunicationType CollectiveCommunication;
+      typedef typename HostGridPartType::CommunicationType CommunicationType;
+      typedef CommunicationType Communication;
 
       //! \brief maximum partition type, the index set provides indices for
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
@@ -246,7 +246,7 @@ namespace Dune
       //! \brief intersection type
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-      typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename Traits::CommunicationType CommunicationType;
 
       typedef ThisType GridViewType;
 

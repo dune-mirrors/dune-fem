@@ -232,7 +232,7 @@ namespace Dune
       /** \brief The type of the corresponding TwistUtility */
       typedef TwistUtility< GridType >  TwistUtilityType ;
 
-      typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
+      typedef typename GridType::Communication CommunicationType;
 
     protected:
       // choose the AdaptiveIndexSet (based on the HierarchicIndexSet)

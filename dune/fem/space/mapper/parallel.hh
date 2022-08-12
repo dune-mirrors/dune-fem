@@ -203,14 +203,14 @@ namespace Dune
 
     private:
       template< class Comm, class T >
-      static T exScan ( const CollectiveCommunication< Comm > &comm, T in )
+      static T exScan ( const Communication< Comm > &comm, T in )
       {
         return T( 0 );
       }
 
 #if HAVE_MPI
       template< class T >
-      static T exScan ( const CollectiveCommunication< MPI_Comm > &comm, T in )
+      static T exScan ( const Communication< MPI_Comm > &comm, T in )
       {
         T out( 0 );
         MPI_Exscan( &in, &out, 1, MPITraits< T >::getType(), MPI_SUM, static_cast< MPI_Comm >( comm ) );

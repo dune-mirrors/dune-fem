@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_MISC_COMPATIBILITY_HH
 #define DUNE_FEM_MISC_COMPATIBILITY_HH
 
-#warning DO NOT INCLUDE 'COMPATIBILITY': the function make_entity is not needed anymore
+#error COMPATIBILITY HEADER SHOULD NOT BE USED ANYMORE: make_entity can be removed
 
 #include <utility>
 
