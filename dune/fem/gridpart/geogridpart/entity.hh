@@ -36,8 +36,9 @@ namespace Dune
       typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;
 
-    private:
       typedef typename Traits::HostGridPartType HostGridPartType;
+
+    private:
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
       typedef typename Geometry::Implementation GeometryImplType;
@@ -128,8 +129,9 @@ namespace Dune
       typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
       typedef typename Traits::LevelIntersectionIterator LevelIntersectionIterator;
 
-    private:
       typedef typename Traits::HostGridPartType HostGridPartType;
+    private:
+
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
       typedef typename Geometry::Implementation GeometryImplType;
