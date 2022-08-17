@@ -54,10 +54,10 @@ namespace Dune
 
       /** \} */
 
-    protected:
       // type of the host grid
       typedef typename Traits::HostGridPartType  HostGridPartType;
 
+    protected:
       // type of extra data, e.g. a pointer to grid (here empty)
       typedef typename Traits::ExtraData ExtraData;
 
@@ -158,10 +158,10 @@ namespace Dune
     protected:
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
-    protected:
+    public:
       // type of the host grid
       typedef typename Traits::HostGridPartType  HostGridPartType;
-
+    protected:
       // type of extra data, e.g. a pointer to grid (here empty)
       typedef typename Traits::ExtraData ExtraData;
 
@@ -173,6 +173,7 @@ namespace Dune
 
       //! type of corresponding host entity
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
+
       /** \} */
 
       /** \brief construct a null entity */
@@ -197,12 +198,13 @@ namespace Dune
       typedef IdEntityBasic< 0, dim, GridFamily > BaseType ;
     protected:
       typedef typename BaseType::Traits Traits;
-      typedef typename BaseType::HostGridPartType HostGridPartType;
 
       // type of extra data, e.g. a pointer to grid (here empty)
       typedef typename BaseType::ExtraData ExtraData;
 
     public:
+      typedef typename BaseType::HostGridPartType HostGridPartType;
+
       using BaseType::codimension ;
       using BaseType::data ;
       using BaseType::hostEntity ;

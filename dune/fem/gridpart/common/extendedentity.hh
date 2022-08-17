@@ -40,15 +40,29 @@ namespace Dune
 
 
     template <class Impl, bool>
-    struct HE { typedef Impl type; };
+    struct HE {
+      typedef Impl      HostEntity;
+      typedef BaseType  GridEntity;
+    };
 
     template <class Impl>
-    struct HE< Impl, true >  {typedef typename Impl::HostEntityType type; };
+    struct HE< Impl, true >
+    {
+    private:
+      // type of grid entity
+      typedef typename Impl::HostGridPartType::GridType::template Codim<cd>::Entity __GEType;
+    public:
+      typedef typename Impl::HostEntityType HostEntity;
+      typedef typename
+        std::conditional< std::is_same<HostEntity, __GEType>::value,
+                          BaseType, __GEType> :: type GridEntity;
+    };
 
   public:
     typedef typename BaseType::Implementation  ImplementationType;
     static constexpr bool hasHostEntity = checkHostEntity< ImplementationType >::value;
-    typedef typename HE< ImplementationType, hasHostEntity >::type  HostEntityType;
+    typedef typename HE< ImplementationType, hasHostEntity >::HostEntity   HostEntityType;
+    typedef typename HE< ImplementationType, hasHostEntity >::GridEntity  GridEntityType;
 
     /** \brief cast to HostEntityType if such type exists otherwise return implementation */
     operator const HostEntityType& () const
@@ -57,6 +71,17 @@ namespace Dune
         return this->impl().hostEntity();
       else
         return this->impl();
+    }
+
+    /** \brief cast to HostEntityType if such type exists otherwise return implementation */
+    operator const GridEntityType& () const
+    {
+      if constexpr ( std::is_same< BaseType, GridEntityType > :: value )
+        return *this;
+      else
+      {
+        return gridEntity(*this);
+      }
     }
   };
 

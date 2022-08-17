@@ -25,6 +25,9 @@ namespace Dune
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
       typedef typename Traits::GridFunctionType GridFunctionType;
 
+      //typedef typename GridFamily::GridType GridType;
+      //typedef typename GridType::template Codim<codim>::Entity GridEntityType;
+
     public:
       static const int codimension = codim;
       static const int dimension = std::remove_const< GridFamily >::type::dimension;
@@ -36,9 +39,8 @@ namespace Dune
       typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;
 
-    private:
       typedef typename Traits::HostGridPartType HostGridPartType;
-
+    private:
       typedef typename Geometry::Implementation GeometryImplType;
 
     public:
@@ -118,8 +120,9 @@ namespace Dune
       typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
       typedef typename Traits::LevelIntersectionIterator LevelIntersectionIterator;
 
-    private:
       typedef typename Traits::HostGridPartType HostGridPartType;
+    private:
+      typedef typename HostGridPartType::GridType GridType;
 
     public:
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;

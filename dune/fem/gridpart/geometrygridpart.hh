@@ -290,12 +290,15 @@ namespace Dune
       MakeableInterfaceObject< typename Codim< Entity::codimension >::EntityType >
       convert ( const Entity &entity ) const
       {
+        // make sure we have a grid entity
+        const auto& gridEntity = Fem::gridEntity( entity );
+
         // create a grid part entity from a given grid entity
         typedef typename Codim< Entity::codimension >::EntityType EntityType;
         typedef typename EntityType::Implementation Implementation;
         typedef MakeableInterfaceObject< EntityType > EntityObj;
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( gridFunction(), entity ) );
+        return EntityObj( Implementation( gridFunction(), hostGridPart().convert( gridEntity ) ) );
       }
       template < class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityType
