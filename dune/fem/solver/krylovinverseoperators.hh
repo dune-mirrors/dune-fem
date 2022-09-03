@@ -83,7 +83,7 @@ namespace Dune
         method_( method < 0 ? parameter.solverMethod( supportedSolverMethods() ) : method ),
         precondMethod_( parameter.preconditionMethod( supportedPreconditionMethods() ) )
       {
-        assert( parameter_->errorMeasure() == 0 );
+        // assert( parameter_->errorMeasure() == 0 );
       }
 
       template <class Operator>
