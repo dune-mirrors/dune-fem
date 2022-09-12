@@ -480,6 +480,40 @@ namespace Dune
         }
       }
 
+      //! \brief evaluate all basis function and multiply with given values and add to dofs
+      template< class QuadratureType, class HessianArray, class DofVector >
+      void axpyImpl ( const QuadratureType &quad, const HessianArray &hessianFactors, DofVector &dofs, const HessianRangeType& ) const
+      {
+        assert( hessianFactors.size() >= quad.nop() );
+        /* TODO add code generation for hessians
+        // if shape function set supports codegen and quadrature supports caching
+        if constexpr ( codegenShapeFunctionSet && std::is_base_of< CachingInterface, QuadratureType > :: value)
+        {
+          typedef Codegen :: EvaluateCallerInterfaceTraits< QuadratureType, HessianArray, DofVector, Geometry >  Traits;
+          typedef Codegen :: EvaluateCallerInterface< Traits > BaseEvaluationType;
+
+          // get base function evaluate caller (calls axpyRanges)
+          const auto& baseEval = BaseEvaluationType::storage( *this, hessianCache( quad ), quad );
+
+          // true if implementation exists
+          if( baseEval )
+          {
+            // call appropriate axpyRanges method
+            const Geometry &geo = geometry();
+            baseEval->axpyHessian( quad, geo, hessianFactors, dofs );
+            return ;
+          }
+        }
+        */
+        {
+          const unsigned int nop = quad.nop();
+          for( unsigned int qp = 0; qp < nop; ++qp )
+          {
+            axpy( quad[ qp ], hessianFactors[ qp ], dofs );
+          }
+        }
+      }
+
       template <class QuadratureType>
       const auto& rangeCache( const QuadratureType& quad ) const
       {
