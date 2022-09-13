@@ -422,6 +422,7 @@ namespace Dune
         }
       }
       bool verbose() const { return verbose_ && Parameter::verbose( Parameter::solverStatistics ); }
+      double residual () const { return delta_; }
 
       NewtonFailure failed () const
       {
