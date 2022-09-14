@@ -268,7 +268,8 @@ namespace Dune
         : Base( getPointList( intersection, quadKey, side ) ),
           twist_( getTwist( gridPart, intersection, side ) ),
           mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_) ),
-          points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
+          points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) ),
+          intersection_(intersection)
       {
       }
 
@@ -285,6 +286,11 @@ namespace Dune
       const CoordinateType &point ( const size_t i ) const
       {
         return points_[ cachingPoint( i ) ];
+      }
+
+      const IntersectionType &intersection() const
+      {
+        return intersection_;
       }
 
       /** \copydoc Dune::Fem::CachingInterface::twisted */
@@ -373,6 +379,7 @@ namespace Dune
       const int twist_;
       const MapperPairType &mapper_;
       const PointVectorType &points_;
+      const IntersectionType &intersection_;
     };
 
   } //namespace Fem
