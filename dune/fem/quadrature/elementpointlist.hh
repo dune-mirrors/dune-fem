@@ -164,7 +164,8 @@ namespace Dune
                                     const QuadratureKeyType& quadKey,
                                     const typename Base :: Side side )
       : Base( getPointList( intersection, quadKey, side ) ),
-        referenceGeometry_( side == Base::INSIDE ? intersection.geometryInInside() : intersection.geometryInOutside() )
+        referenceGeometry_( side == Base::INSIDE ?  intersection.geometryInInside() : intersection.geometryInOutside()),
+        intersection_(intersection)
       {}
 
       const QuadraturePointWrapperType operator[] ( size_t i ) const
@@ -185,6 +186,10 @@ namespace Dune
 
       using Base::localFaceIndex;
 
+      const IntersectionType &intersection() const
+      {
+        return intersection_;
+      }
     protected:
       Base getPointList ( const IntersectionType &intersection, const int order,
                           const typename Base :: Side side )
@@ -208,6 +213,7 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection::LocalGeometry ReferenceGeometry;
 
       ReferenceGeometry referenceGeometry_;
+      const IntersectionType &intersection_;
       mutable CoordinateType dummy_;
     };
 
