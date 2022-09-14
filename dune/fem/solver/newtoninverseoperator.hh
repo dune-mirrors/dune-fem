@@ -33,9 +33,9 @@ namespace Dune
     protected:
       const double etaMax_ = 0.99;
       const double gamma_ = 0.1;
-      const double newtonTolerance_;
       mutable double previousEta_ = -1.0;
-      mutable double previousResidual_ = -1;
+      mutable double previousResidual_ = -1.0;
+      mutable double newtonTolerance_;
 
     public:
       /** constructor
@@ -57,6 +57,7 @@ namespace Dune
         previousEta_ = eta;
         return eta;
       }
+      void setTolerance(const double newtonTolerance) { newtonTolerance_ = newtonTolerance; }
     };
 
     // NewtonParameter
@@ -317,6 +318,8 @@ namespace Dune
 
       typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
 
+      const EisenstatWalkerStrategy eisenstatWalker_;
+
       /** constructor
        *
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
@@ -528,7 +531,6 @@ namespace Dune
       typename ParameterType::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
       typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
-      const EisenstatWalkerStrategy eisenstatWalker_;
     };
 
 
