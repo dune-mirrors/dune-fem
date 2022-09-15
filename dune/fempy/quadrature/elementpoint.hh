@@ -26,6 +26,7 @@ namespace Dune
       typedef ElementPoint< Coordinate, 0 > This;
 
     public:
+      static const int codimension = 0 ;
       typedef Coordinate CoordinateType;
       typedef typename FieldTraits< Coordinate >::real_type RealType;
       typedef Coordinate LocalCoordinateType;
@@ -55,6 +56,7 @@ namespace Dune
       typedef ElementPoint< Coordinate, 1 > This;
 
     public:
+      static const int codimension = 1 ;
       typedef Coordinate CoordinateType;
       typedef typename FieldTraits< Coordinate >::real_type RealType;
       typedef FieldVector< typename FieldTraits< Coordinate >::field_type, Coordinate::dimension-1 > LocalCoordinateType;
