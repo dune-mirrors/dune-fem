@@ -57,7 +57,7 @@ namespace Dune
         previousEta_ = eta;
         return eta;
       }
-      void setTolerance(const double newtonTolerance) { newtonTolerance_ = newtonTolerance; }
+      void setTolerance(const double newtonTolerance) const { newtonTolerance_ = newtonTolerance; }
     };
 
     // NewtonParameter
