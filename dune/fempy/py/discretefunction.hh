@@ -378,6 +378,7 @@ namespace Dune
           } );
 
         cls.def( "clear", [] ( DF &self ) { self.clear(); } );
+        cls.def( "communicate", [] ( DF &self ) { self.communicate(); } );
         // assign is added in __init__ of space
         //cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); }, "other"_a );
         cls.def( "scalarProductDofs", [] ( DF &self, const DF &other ) { return self.scalarProductDofs( other ); }, "other"_a );
