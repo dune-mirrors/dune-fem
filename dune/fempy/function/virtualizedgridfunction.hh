@@ -237,7 +237,7 @@ namespace Dune
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       jacobian ( const Fem::QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
-        impl_->jacobian( ElementPoint<Quadrature<codimension>( x ), jacobian );
+        impl_->jacobian( ElementPoint<Quadrature::codimension>( x ), jacobian );
       }
 
       template< class Point >

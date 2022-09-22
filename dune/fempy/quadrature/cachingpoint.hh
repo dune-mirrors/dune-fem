@@ -32,20 +32,17 @@ namespace Dune
       typedef Coordinate CoordinateType;
       typedef typename FieldTraits< Coordinate >::real_type RealType;
       typedef Coordinate LocalCoordinateType;
-      typedef typename GridPart::template Codim<0>::EntityType EntityType;
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       CachingPoint ( const Quadrature &quadrature, std::size_t idx )
         : id_( quadrature.id() ),
           idx_( quadrature.cachingPoint( idx ) ),
-          position_( quadrature.point( idx ) ),
-          entity_( quadrature.entity() )
+          position_( quadrature.point( idx ) )
       {}
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       explicit CachingPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-        : CachingPoint( x.quadrature(), x.index() ),
-          entity_( x.quadrature().entity() )
+        : CachingPoint( x.quadrature(), x.index() )
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
@@ -59,15 +56,9 @@ namespace Dune
 
       std::size_t cachingPoint ( std::size_t qp ) const { assert( qp == 0u ); return idx_; }
 
-      const EntityType &entity() const
-      {
-        return entity_;
-      }
-
     private:
       std::size_t id_, idx_;
       const CoordinateType &position_;
-      const EntityType &entity_;
     };
 
     template< class GridPart, class Coordinate >
@@ -95,8 +86,7 @@ namespace Dune
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       explicit CachingPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-        : CachingPoint( x.quadrature(), x.index() ),
-          intersection_( x.quadrature().intersection() )
+        : CachingPoint( x.quadrature(), x.index() )
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
