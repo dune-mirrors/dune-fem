@@ -428,6 +428,26 @@ namespace Dune
         return asImp().size();
       }
 
+      /** \brief get number of primary DoFs for this space
+
+          \returns number of primary DoFs (degrees of freedom that are owned by this process )
+       */
+      inline int primarySize () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().primarySize() );
+        return asImp().primarySize();
+      }
+
+      /** \brief get number of auxiliary DoFs for this space
+
+          \returns number of auxiliary DoFs (degrees of freedom that are NOT owned by this process)
+       */
+      inline int auxiliarySize () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().auxiliarySize() );
+        return asImp().auxiliarySize();
+      }
+
       /** \brief get iterator pointing to the first entity of the associated grid
                  partition
 
@@ -758,6 +778,19 @@ namespace Dune
       inline int size () const
       {
         return blockMapper().size() * localBlockSize ;
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::primarySize */
+      inline int primarySize () const
+      {
+        return auxiliaryDofs().primarySize() * localBlockSize;
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::auxiliarySize */
+      inline int auxiliarySize () const
+      {
+        // total size minus primary dofs
+        return size() - primarySize();
       }
 
       //! \brief return the maximal number of dofs on entities
