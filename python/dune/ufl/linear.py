@@ -191,6 +191,8 @@ def splitForm(form, arguments, idFct=None):
     for integral in form.integrals():
         domain_id = integral.subdomain_id()
         if type( domain_id ) is int:
+            assert integral.integral_type() == 'exterior_facet',\
+                   "integral id is at the moment only available for boundary (ds)"
             assert domain_id > 0
             a = integral.integrand() *\
                      conditional( eq(idFct,domain_id), 1.,0. )
