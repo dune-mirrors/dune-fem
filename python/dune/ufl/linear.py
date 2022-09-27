@@ -13,6 +13,8 @@ from .applyrestrictions import applyRestrictions
 
 from .tensors import conditionalExprTensor, ExprTensor, keys
 
+from ufl import conditional, eq
+
 def sumTensorMaps(left, right):
     result = {key: l.copy() for key, l in left.items()}
     for key, r in right.items():
@@ -177,9 +179,7 @@ def splitMultiLinearExpr(expr, arguments=None):
         arguments = extract_arguments(expr)
     return MultiLinearExprSplitter(arguments).visit(expr)
 
-
-
-def splitForm(form, arguments=None):
+def splitForm(form, arguments, idFct=None):
     if arguments is None:
         arguments = form.arguments()
 
@@ -189,7 +189,14 @@ def splitForm(form, arguments=None):
 
     integrals = {}
     for integral in form.integrals():
-        right = splitMultiLinearExpr(integral.integrand(), arguments)
+        domain_id = integral.subdomain_id()
+        if type( domain_id ) is int:
+            assert domain_id > 0
+            a = integral.integrand() *\
+                     conditional( eq(idFct,domain_id), 1.,0. )
+        else:
+            a = integral.integrand()
+        right = splitMultiLinearExpr(a, arguments)
         left = integrals.get(integral.integral_type())
         if left is not None:
             right = sumTensorMaps(left, right)

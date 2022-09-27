@@ -10,7 +10,7 @@ class BuiltInFunction:
         self.cppType = cppType
         self.name = name
         self.namespace = namespace
-        self.tarts = None if targs is None else [a.strip() for a in targs]
+        self.targs = None if targs is None else [a.strip() for a in targs]
         self.args = [] if args is None else [a.strip() if isString(a) else a for a in args]
 
         if len(self.args) > 0:
@@ -57,6 +57,11 @@ atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X
 exp = BuiltInFunction('cmath', 'X', 'exp', targs=['class X'], args=['const X &x'])
 cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
 cosh = BuiltInFunction('cmath', 'X', 'cosh', targs=['class X'], args=['const X &x'])
+
+boundaryIdFct = BuiltInFunction('dune/fempy/geometry/entityids.hh', 'int',
+  'boundaryId<GridPartType>', namespace='Dune::FemPy', targs=['class GridPartType','class Intersection'],
+  args=['const Intersection &intersection'])
+
 log = BuiltInFunction('cmath', 'X', 'log', targs=['class X'], args=['const X &x'])
 pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
 sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])

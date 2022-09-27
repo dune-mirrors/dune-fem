@@ -19,13 +19,25 @@ from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declar
 
 from dune.source.builtin import make_pair
 from dune.source.cplusplus import InitializerList, Variable
-from dune.source.cplusplus import construct, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
+from dune.source.cplusplus import construct, lambda_, makeExpression,\
+                                  maxEdgeLength, minEdgeLength, return_,\
+                                  boundaryIdFct
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
 from dune.common.hashit import hashIt
 
-from dune.ufl import codegen, DirichletBC
+import ufl.geometry
+from ufl.core.ufl_type import ufl_type
+from ufl.classes import all_ufl_classes, terminal_classes, ufl_classes
+@ufl_type()
+class BoundaryId(ufl.geometry.GeometricFacetQuantity):
+    """UFL geometry representation: The minimum edge length of the facet."""
+    __slots__ = ()
+    name = "facetid"
+all_ufl_classes.add(BoundaryId)
+
+from dune.ufl import codegen, DirichletBC, Constant
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors
@@ -224,15 +236,17 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
+    boundaryId = BoundaryId( form.ufl_cell() )
+
     try:
         integrands.field = u.ufl_function_space().field
     except AttributeError:
         pass
 
-    integrals = splitForm(form, [phi])
+    integrals = splitForm(form, [phi], boundaryId)
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
-    linearizedIntegrals = splitForm(dform, [phi, u])
+    linearizedIntegrals = splitForm(dform, [phi, u], boundaryId)
 
     if not set(integrals.keys()) <= {'cell', 'exterior_facet', 'interior_facet'}:
         raise Exception('unknown integral encountered in ' + str(set(integrals.keys())) + '.')
@@ -260,6 +274,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         arg = Variable(integrands.domainValueTuple, 'u')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
+        predefined[boundaryId] = boundaryIdFct(integrands.intersection())
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
         predefined[cellVolume] = integrands.cellVolume()
@@ -272,6 +287,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars=tempVars);
 
         predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
+        predefined[boundaryId] = boundaryIdFct(integrands.intersection())
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
         predefined[cellVolume] = integrands.cellVolume()
