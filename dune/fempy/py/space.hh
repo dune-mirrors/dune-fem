@@ -120,6 +120,8 @@ namespace Dune
       {
         registerFunctionSpace(module,cls);
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
+        cls.def_property_readonly( "primarySize", [] ( Space &self ) -> int { return self.primarySize(); } );
+        cls.def_property_readonly( "auxiliarySize", [] ( Space &self ) -> int { return self.auxiliarySize(); } );
         cls.def_property_readonly( "_sizeOfField", [] ( Space &self ) -> unsigned int { return sizeof(typename Space::RangeFieldType); } );
         cls.def_property_readonly( "localBlockSize", [] ( Space &spc ) -> unsigned int { return spc.localBlockSize; } );
         cls.def("localOrder", [] ( Space &self, typename Space::EntityType &e) -> int { return self.order(e); } );
