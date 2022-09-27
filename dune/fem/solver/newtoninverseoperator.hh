@@ -318,8 +318,6 @@ namespace Dune
 
       typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
 
-      const EisenstatWalkerStrategy eisenstatWalker_;
-
       /** constructor
        *
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
@@ -532,6 +530,7 @@ namespace Dune
       typename ParameterType::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
       typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
+      const EisenstatWalkerStrategy eisenstatWalker_;
     };
 
 
