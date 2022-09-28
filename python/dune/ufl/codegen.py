@@ -87,6 +87,8 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.atan2))
         return self._makeTmp(cplusplus.atan2(x, y))
 
+    boundary_id = _require_predefined
+
     cell_volume = _require_predefined
 
     def coefficient(self, expr):
@@ -551,6 +553,9 @@ class ModelClass():
     def cellVolume(self, side=None):
         entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
         return UnformattedExpression('auto', entity + '.geometry().volume()')
+
+    def intersection(self):
+        return UnformattedExpression('auto', 'intersection_')
 
     def cellGeometry(self, side=None):
         entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'

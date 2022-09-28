@@ -541,3 +541,13 @@ try:
     plain.for_type(ufl.equation.Equation, lambda e, p, c: None)
 except Exception as e:
     pass
+
+import ufl.geometry
+from ufl.core.ufl_type import ufl_type
+from ufl.classes import all_ufl_classes, terminal_classes, ufl_classes
+@ufl_type()
+class BoundaryId(ufl.geometry.GeometricFacetQuantity):
+    """UFL boundary id: can be used in a conditional to fix the desired boundary id."""
+    __slots__ = ()
+    name = "facetid"
+all_ufl_classes.add(BoundaryId)
