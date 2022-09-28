@@ -319,6 +319,13 @@ namespace Dune
       }
     };
 
+    template< class GridPart, class Intersection>
+    inline static int boundaryId ( const Intersection &intersection )
+    {
+      return Dune::Fem::BoundaryIdProvider< typename GridPart::GridType > ::
+             boundaryId( intersection );
+    }
+
   } // namespace Fem
 
 } // namespace Dune

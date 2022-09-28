@@ -58,8 +58,8 @@ exp = BuiltInFunction('cmath', 'X', 'exp', targs=['class X'], args=['const X &x'
 cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
 cosh = BuiltInFunction('cmath', 'X', 'cosh', targs=['class X'], args=['const X &x'])
 
-boundaryIdFct = BuiltInFunction('dune/fempy/geometry/entityids.hh', 'int',
-  'boundaryId<GridPartType>', namespace='Dune::FemPy', targs=['class GridPartType','class Intersection'],
+boundaryIdFct = BuiltInFunction('dune/fem/misc/boundaryidprovider.hh', 'int',
+  'boundaryId<GridPartType>', namespace='Dune::Fem', targs=['class GridPartType','class Intersection'],
   args=['const Intersection &intersection'])
 
 log = BuiltInFunction('cmath', 'X', 'log', targs=['class X'], args=['const X &x'])

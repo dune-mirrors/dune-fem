@@ -191,12 +191,16 @@ def splitForm(form, arguments, idFct=None):
     for integral in form.integrals():
         domain_id = integral.subdomain_id()
         if type( domain_id ) is int:
+            domain_id = [domain_id]
+        if type( domain_id ) in [list,tuple]:
             assert integral.integral_type() == 'exterior_facet',\
                    "integral id is at the moment only available for boundary (ds)"
-            assert domain_id > 0
-            a = integral.integrand() *\
-                     conditional( eq(idFct,domain_id), 1.,0. )
+            for id in domain_id:
+                assert type(id) is int and id > 0
+                a = integral.integrand() *\
+                             conditional( eq(idFct,id), 1.,0. )
         else:
+            assert domain_id == 'everywhere'
             a = integral.integrand()
         right = splitMultiLinearExpr(a, arguments)
         left = integrals.get(integral.integral_type())

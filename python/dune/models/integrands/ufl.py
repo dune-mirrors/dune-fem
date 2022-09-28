@@ -27,17 +27,7 @@ from dune.source.algorithm.extractvariables import extractVariablesFromExpressio
 
 from dune.common.hashit import hashIt
 
-import ufl.geometry
-from ufl.core.ufl_type import ufl_type
-from ufl.classes import all_ufl_classes, terminal_classes, ufl_classes
-@ufl_type()
-class BoundaryId(ufl.geometry.GeometricFacetQuantity):
-    """UFL geometry representation: The minimum edge length of the facet."""
-    __slots__ = ()
-    name = "facetid"
-all_ufl_classes.add(BoundaryId)
-
-from dune.ufl import codegen, DirichletBC, Constant
+from dune.ufl import codegen, DirichletBC, Constant, BoundaryId
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors
