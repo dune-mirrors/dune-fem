@@ -57,7 +57,7 @@ namespace Dune
         previousEta_ = eta;
         return eta;
       }
-      void setTolerance(const double newtonTolerance) const { newtonTolerance_ = newtonTolerance; }
+      void setTolerance(const double newtonTolerance) { newtonTolerance_ = newtonTolerance; }
     };
 
     // NewtonParameter
@@ -397,6 +397,8 @@ namespace Dune
 
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 
+      EisenstatWalkerStrategy& eisenstatWalker () { return eisenstatWalker_; }
+
       void bind ( const OperatorType &op ) { op_ = &op; }
 
       void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
@@ -530,7 +532,7 @@ namespace Dune
       typename ParameterType::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
       typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
-      const EisenstatWalkerStrategy eisenstatWalker_;
+      EisenstatWalkerStrategy eisenstatWalker_;
     };
 
 
