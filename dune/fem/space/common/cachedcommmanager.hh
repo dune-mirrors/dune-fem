@@ -10,6 +10,7 @@
 #include <queue>
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 //- dune-common includes
 #include <dune/common/math.hh>
@@ -621,6 +622,7 @@ namespace Dune
         const auto &indexMap = recvIndexMap_[ dest( link ) ];
         const int size = indexMap.size();
         typedef typename Data :: DofType DofType;
+        std::unordered_set<std::size_t> operated;
 
         // Dune::Fem::DiscreteFunctionInterface and derived
         if constexpr ( std::is_base_of< IsDiscreteFunction, Data >::value )
@@ -632,8 +634,11 @@ namespace Dune
           assert( static_cast< std::size_t >( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
           for( int i = 0; i < size; ++i )
           {
-            auto &&block = data.dofVector()[ indexMap[ i ] ];
-            Hybrid::forEach( localBlockIndices, [ &str, &operation, &block ] ( auto &&k ) {
+            const std::size_t &idx = indexMap[ i ];
+            bool operate = operated.insert(idx).second;
+
+            auto &&block = data.dofVector()[ idx ];
+            Hybrid::forEach( localBlockIndices, [ &str, &operation, &block, &operate ] ( auto &&k ) {
                 DofType value;
 #if HAVE_DUNE_ALUGRID
                 str.readUnchecked( value );
@@ -641,7 +646,8 @@ namespace Dune
                 str.read( value );
 #endif // #else // #if HAVE_DUNE_ALUGRID
                 // apply operation, i.e. COPY, ADD, etc.
-                operation( value, block[ k ] );
+                if (operate)
+                  operation( value, block[ k ] );
               } );
           }
         }
@@ -653,7 +659,10 @@ namespace Dune
           assert( static_cast< std::size_t >( size * blockSize * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
           for( int i = 0; i < size; ++i )
           {
-            auto &&block = data[ indexMap[ i ] ];
+            const std::size_t &idx = indexMap[ i ];
+            bool operate = operated.insert(idx).second;
+
+            auto &&block = data[ idx ];
             for( int k=0; k<blockSize; ++k )
             {
               DofType value;
@@ -663,7 +672,8 @@ namespace Dune
               str.read( value );
 #endif // #else // #if HAVE_DUNE_ALUGRID
               // apply operation, i.e. COPY, ADD, etc.
-              operation( value, block[ k ] );
+              if (operate)
+                operation( value, block[ k ] );
             }
           }
         }
