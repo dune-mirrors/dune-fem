@@ -516,6 +516,7 @@ protected:
         block.fill(0);
         std::array<int,dimRange> dblock;
 
+        model.init(intersection);
         const bool isDirichletIntersection = model.isDirichletIntersection( intersection, dblock );
         if (isDirichletIntersection)
         {

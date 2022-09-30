@@ -329,6 +329,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         predefined = {}
         # predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
         predefined[x] = UnformattedExpression('auto', 'intersection.geometry().center( )')
+        predefined[boundaryId] = boundaryIdFct(integrands.intersection())
         integrands.predefineCoefficients(predefined, False)
 
         maxId = 0

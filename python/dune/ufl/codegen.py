@@ -69,9 +69,15 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.abs_))
         return self._makeTmp(cplusplus.abs_(x))
 
-    def AndCondition(self, expr, left, right):
+    def not_condition(self, o, x):
+        self.using.add(Using(cplusplus.not_))
+        return self._makeTmp(cplusplus.not_(x))
+    def and_condition(self, expr, left, right):
         self.using.add(Using(cplusplus.and_))
         return self._makeTmp(cplusplus.and_(left, right))
+    def or_condition(self, expr, left, right):
+        self.using.add(Using(cplusplus.or_))
+        return self._makeTmp(cplusplus.or_(left, right))
 
     def argument(self, expr):
         try:
