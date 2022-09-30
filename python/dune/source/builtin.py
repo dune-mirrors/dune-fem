@@ -5,13 +5,17 @@ from ..common.utility import isString
 from .expression import Variable
 
 class BuiltInFunction:
-    def __init__(self, header, cppType, name, namespace='std', targs=None, args=None):
+    def __init__(self, header, cppType, name, namespace='std', targs=None, args=None, extra=None):
         self.header = header
         self.cppType = cppType
-        self.name = name
+        self.fctName = name
         self.namespace = namespace
         self.targs = None if targs is None else [a.strip() for a in targs]
         self.args = [] if args is None else [a.strip() if isString(a) else a for a in args]
+        if extra is None:
+            self.name = self.fctName
+        else:
+            self.name = self.fctName + extra.strip()
 
         if len(self.args) > 0:
             arg = self.args[len(self.args)-1]
@@ -23,6 +27,14 @@ class BuiltInFunction:
         if (len(args) != len(self.args)) and not self.variadic:
             raise Exception('Wrong number of Arguments: ' + str(len(args)) + ' (should be ' + str(len(self.args)) + ').')
         from .expression import Application, makeExpression
+        """
+        if self.extra is not None:
+            name = self.name + self.extra
+        else:
+            name = self.name
+        copy = BuiltInFunction(self.header, self.cppType, name,
+               self.namespace, self.targs, self.args, extra=None)
+        """
         return Application(self, args=[makeExpression(arg) for arg in args])
 
     def __eq__(self, other):
@@ -39,17 +51,24 @@ class BuiltInFunction:
 
     def __str__(self):
         if self.namespace is None:
-            return self.name
+            return self.fctName
         else:
-            return self.namespace + '::' + self.name
+            return self.namespace + '::' + self.fctName
 
     def __repr__(self):
         return "built-in(" + str(self) + ")"
 
-
-and_ = BuiltInFunction('algorithm', 'X', 'std::logical_and', targs=['class X'], args=['const X &x', 'const X &y'])
-max_ = BuiltInFunction('algorithm', 'X', 'max', targs=['class X'], args=['const X &x', 'const X &y'])
-min_ = BuiltInFunction('algorithm', 'X', 'min', targs=['class X'], args=['const X &x', 'const X &y'])
+not_ = BuiltInFunction('functional', 'X', 'logical_not',
+               targs=['class X'], args=['const X &x'],
+               extra="()")
+or_  = BuiltInFunction('functional', 'X', 'logical_or',
+               targs=['class X'], args=['const X &x', 'const X &y'],
+               extra="()")
+and_ = BuiltInFunction('functional', 'X', 'logical_and',
+               targs=['class X'], args=['const X &x', 'const X &y'],
+               extra="()")
+max_ = BuiltInFunction('algorithm',  'X', 'max', targs=['class X'], args=['const X &x', 'const X &y'])
+min_ = BuiltInFunction('algorithm',  'X', 'min', targs=['class X'], args=['const X &x', 'const X &y'])
 
 abs_ = BuiltInFunction('cmath', 'X', 'abs', targs=['class X'], args=['const X &x'])
 atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['const X &x'])
