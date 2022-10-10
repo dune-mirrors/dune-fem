@@ -93,6 +93,8 @@ namespace Dune
         using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, Storage > >;
 
       public:
+        static const int polynomialOrder = order;
+
         using GridPartType = typename BaseType::GridPartType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
 
@@ -129,6 +131,8 @@ namespace Dune
         using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, Storage > >;
 
       public:
+        static const int polynomialOrder = order;
+
         using GridPartType = typename BaseType::GridPartType;
         using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
