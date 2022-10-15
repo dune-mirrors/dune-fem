@@ -542,12 +542,16 @@ try:
 except Exception as e:
     pass
 
-import ufl.geometry
 from ufl.core.ufl_type import ufl_type
-from ufl.classes import all_ufl_classes, terminal_classes, ufl_classes
-@ufl_type()
+from ufl.classes import all_ufl_classes
+@ufl_type(is_scalar=True)
 class BoundaryId(ufl.geometry.GeometricFacetQuantity):
     """UFL boundary id: can be used in a conditional to fix the desired boundary id."""
     __slots__ = ()
     name = "facetid"
 all_ufl_classes.add(BoundaryId)
+# make sure that BoundaryId is the last class that was added to all_ufl_classes,
+# otherwise an error in ufl.algorithms.Transformer will occur.
+assert BoundaryId._ufl_typecode_ == len(all_ufl_classes)-1, \
+"""dune.ufl was inserted after other external modules adding ufl_types.
+Please Insert dune.ufl first!"""
