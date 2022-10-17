@@ -738,6 +738,45 @@ namespace Dune
         // create buffers
         ObjectStreamVectorType osv( nlinks );
 
+        const int codimensions = BlockMapper::GridPartType::dimension;
+        int hasHigherCodims = 0;
+        for( int c=1; c<=codimensions; ++c )
+          hasHigherCodims += int(blockMapper_.contains( c ));
+
+        // make sure all dof pairs are unique
+        // otherwise remove duplicates, for codimension 0 it does not matter
+        if( hasHigherCodims > 0 )
+        {
+          typedef typename IndexMapVectorType::value_type::IndexType IndexType;
+          typedef std::pair<IndexType, IndexType> IndexPairType;
+          for(int link=0; link<nlinks; ++link)
+          {
+            std::set< IndexPairType > uniquePairs;
+            auto& sendMap = sendIndexMap_[ dest[link] ];
+            auto& recvMap = recvIndexMap_[ dest[link] ];
+            assert( sendMap.size() == recvMap.size() );
+
+            const auto& end = uniquePairs.end();
+            const size_t size = sendMap.size();
+            for( size_t i=0; i<size; ++i )
+            {
+              IndexPairType pair = std::make_pair( sendMap[ i ], recvMap[ i ] );
+              if( uniquePairs.find( pair ) == end )
+              {
+                uniquePairs.insert( pair );
+              }
+              else
+              {
+                sendMap.erase( i );
+                recvMap.erase( i );
+              }
+            }
+
+            // make maps consecutive again
+            sendMap.compress();
+            recvMap.compress();
+          }
+        }
         //////////////////////////////////////////////////////////////
         //
         //  at this point complete send maps exsist on receiving side,
