@@ -982,9 +982,12 @@ namespace Dune
             auto nnz = stencil.maxNonZerosEstimate();
             if( nnz == 0 )
             {
-              Stencil tmpStencil( stencil );
-              tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
-              nnz = tmpStencil.maxNonZerosEstimate();
+              if (domainSpace_.begin() != domainSpace_.end() && rangeSpace_.begin() != rangeSpace_.end())
+              {
+                Stencil tmpStencil( stencil );
+                tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
+                nnz = tmpStencil.maxNonZerosEstimate();
+              }
             }
             matrix_.reset( new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ ) );
           }
