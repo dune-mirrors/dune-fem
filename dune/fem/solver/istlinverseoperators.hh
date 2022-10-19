@@ -73,7 +73,7 @@ namespace Dune
         }
       }
 
-      SolverCategory::Category category () const { return SolverCategory::sequential; }
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
 
     protected:
       const Preconditioner *precon_;
@@ -225,7 +225,7 @@ namespace Dune
       }
 
       template< class Op >
-      void callSuperLU ( ISTLLinearOperatorAdapter< Op >& op, range_type &rhs, domain_type &x,
+      void callSuperLU ( Op& op, range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
         DUNE_THROW(NotImplemented,"ISTLSolverAdapter::callSuperLU: SuperLU only works for AssembledLinearOperators!");
