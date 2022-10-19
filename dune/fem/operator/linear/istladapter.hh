@@ -61,7 +61,7 @@ namespace Dune
         y.axpy( alpha, fy.blockVector() );
       }
 
-      SolverCategory::Category category () const { return SolverCategory::sequential; }
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
 
     protected:
       const OperatorType &op_;
@@ -141,7 +141,7 @@ namespace Dune
         return scp_.norm(tmp);
       }
 
-      SolverCategory::Category category () const { return SolverCategory::sequential; }
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
 
       //! return reference to preconditioner
       ParallelScalarProductType& scp() const { return scp_; }
