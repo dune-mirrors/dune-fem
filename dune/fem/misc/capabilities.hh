@@ -198,6 +198,17 @@ namespace Dune
       };
 #endif // #if HAVE_DUNE_METAGRID
 
+
+
+      // isMMesh
+      // -------
+
+      template< class Grid >
+      struct isMMesh
+      {
+        static const bool v = false;
+      };
+
     } // namespace Capabilities
 
   } // namespace Fem
