@@ -33,6 +33,7 @@
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/misc/capabilities.hh>
 
 namespace Dune
 {
@@ -701,6 +702,8 @@ namespace Dune
       IndexMapVectorType &sendIndexMap_;
       IndexMapVectorType &recvIndexMap_;
 
+      typedef typename BlockMapper::GridPartType::GridType GridType;
+      static constexpr bool isMMesh = Capabilities::isMMesh<GridType>::v;
 
     public:
       LinkBuilder( const CommunicationType& comm,
@@ -781,11 +784,20 @@ namespace Dune
         const auto myPartitionType = entity.partitionType();
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
 
-        // if we send data then send rank and dofs
-        if( send )
+        if constexpr (isMMesh)
         {
           // send rank for linkage
           buffer.write( myRank_ );
+        }
+
+        // if we send data then send rank and dofs
+        if( send )
+        {
+          if constexpr (!isMMesh)
+          {
+            // send rank for linkage
+            buffer.write( myRank_ );
+          }
 
           const int numDofs = blockMapper_.numEntityDofs( entity );
 
@@ -860,7 +872,7 @@ namespace Dune
       {
         const PartitionType myPartitionType = entity.partitionType();
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
-        return (send) ? (blockMapper_.numEntityDofs( entity ) + 1) : 0;
+        return (send) ? (blockMapper_.numEntityDofs( entity ) + 1) : isMMesh;
       }
     };
 
