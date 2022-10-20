@@ -127,6 +127,8 @@ struct DirichletWrapperOperator
 
   ModelType &model () const { return op_.model(); }
   const ConstraintsType &constraints () const { return constraints_; }
+  const auto& impl() const { return op_.impl(); }
+
 
 private:
   Operator op_;

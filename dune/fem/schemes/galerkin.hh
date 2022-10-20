@@ -1584,7 +1584,8 @@ namespace Dune
                              const ParameterReader& parameter = Parameter::container() )
           : dfSpace_( dfSpace ),
             fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
-            invOp_(parameter)
+            invOp_(parameter),
+            parameter_(parameter)
         {}
 
         void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
@@ -1677,6 +1678,11 @@ namespace Dune
             return fullOperator().dirichletBlocks();
         }
 
+        const ParameterReader& parameter () const
+        {
+          return parameter_;
+        }
+
       protected:
         void setZeroConstraints( DiscreteFunctionType &u ) const
         {
@@ -1691,6 +1697,7 @@ namespace Dune
         const DiscreteFunctionSpaceType &dfSpace_;
         DifferentiableOperatorType fullOperator_;
         mutable NewtonOperatorType invOp_;
+        const ParameterReader parameter_;
       };
 
     } // end namespace Impl
