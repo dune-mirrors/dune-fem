@@ -1,3 +1,12 @@
 [build-system]
-requires = ['dune-grid>=2.8.0.dev0', 'mpi4py', 'matplotlib', 'scipy', 'fenics-ufl==2019.1.0', 'dune-alugrid>=2.8.0.dev0', 'dune-istl>=2.8.0.dev0', 'dune-localfunctions>=2.8.0.dev0']
+requires = [
+  'dune-grid@git+https://gitlab.dune-project.org/core/dune-grid.git',
+  'dune-alugrid@git+https://gitlab.dune-project.org/extensions/dune-alugrid.git',
+  'dune-istl@git+https://gitlab.dune-project.org/core/dune-istl.git',
+  'dune-localfunctions@git+https://gitlab.dune-project.org/core/dune-localfunctions.git',
+  'mpi4py',
+  'matplotlib',
+  'scipy',
+  'fenics-ufl==2019.1.0'
+]
 build-backend = 'setuptools.build_meta'
