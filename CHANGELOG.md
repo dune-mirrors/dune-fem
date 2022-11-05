@@ -1,4 +1,8 @@
-# Master (will become release 2.7)
+# Release 2.9
+
+# Release 2.8
+
+# Release 2.7
 
 -  Added a new way to pass parameters to classes accepting an instance of
    the `ParameterReader`. The free standing function `parameterDict` in
