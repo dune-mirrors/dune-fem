@@ -136,13 +136,18 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
             pyplot.tricontour(triangulation, data, levels=contours,
                     colors=contourColor, linewidths=contourWidth)
 
-    fig.gca().set_aspect('equal')
-    fig.gca().autoscale()
+    try:
+        ax = fig.gca()
+        fig.tight_layout()
+    except:
+        ax = fig
+    ax.set_aspect('equal')
+    ax.autoscale()
     if xlim:
-        fig.gca().set_xlim(xlim)
+        ax.set_xlim(xlim)
     if ylim:
-        fig.gca().set_ylim(ylim)
-    fig.tight_layout()
+        ax.set_ylim(ylim)
+
 
 from ufl.core.expr import Expr
 from dune.ufl import expression2GF
