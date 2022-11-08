@@ -87,8 +87,6 @@ namespace Dune
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-        typedef ThreadIterator< GridPartType > ThreadIteratorType;
-
         template <class Space>
         struct QuadratureSelector
         {
