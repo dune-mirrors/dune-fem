@@ -83,7 +83,7 @@ def dfInterpolate(self, f):
             dimExpr = func.ufl_shape[0]
     else:
         try:
-            gl = len(inspect.getargspec(f)[0])
+            gl = len(inspect.getfullargspec(f)[0])
             func = None
         except TypeError:
             func = f
@@ -132,7 +132,7 @@ def dfProject(self, f):
             dimExpr = func.ufl_shape[0]
     else:
         try:
-            gl = len(inspect.getargspec(f)[0])
+            gl = len(inspect.getfullargspec(f)[0])
             func = None
         except TypeError:
             func = f
