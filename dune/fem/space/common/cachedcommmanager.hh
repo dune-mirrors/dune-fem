@@ -6,7 +6,8 @@
 
 //- system includes
 #include <iostream>
-#include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <memory>
 #include <vector>
@@ -748,23 +749,19 @@ namespace Dune
         if( hasHigherCodims > 0 )
         {
           typedef typename IndexMapVectorType::value_type::IndexType IndexType;
-          typedef std::pair<IndexType, IndexType> IndexPairType;
           for(int link=0; link<nlinks; ++link)
           {
-            std::set< IndexPairType > uniquePairs;
+            std::unordered_map< IndexType, std::unordered_set<IndexType> > uniqueRecvIndicesForSendIndex;
             auto& sendMap = sendIndexMap_[ dest[link] ];
             auto& recvMap = recvIndexMap_[ dest[link] ];
             assert( sendMap.size() == recvMap.size() );
 
-            const auto& end = uniquePairs.end();
             const size_t size = sendMap.size();
             for( size_t i=0; i<size; ++i )
             {
-              IndexPairType pair = std::make_pair( sendMap[ i ], recvMap[ i ] );
-              if( uniquePairs.find( pair ) == end )
-              {
-                uniquePairs.insert( pair );
-              }
+              auto& uniqueRecvIndices = uniqueRecvIndicesForSendIndex[ sendMap[ i ] ];
+              if( uniqueRecvIndices.count( recvMap[ i ] ) == 0 )
+                uniqueRecvIndices.insert( recvMap[ i ] );
               else
               {
                 sendMap.erase( i );
