@@ -138,18 +138,18 @@ namespace Dune
       //! remove and invalid indices from the stored list of indices
       void compress()
       {
+        size_t writePos = 0;
         const size_t idxSize = indices_.size();
         for(size_t i=0; i<idxSize; ++i)
         {
-          if( indices_[ i ] == invalidIndex )
+          if( indices_[ i ] != invalidIndex )
           {
-            for( size_t k=i+1; k<idxSize; ++k )
-            {
-              indices_[ k-1 ] = indices_[ k ];
-            }
-            resize( idxSize-1 );
+            if( i != writePos )
+              indices_[ writePos ] = indices_[ i ];
+            writePos++;
           }
         }
+        indices_.resize( writePos );
       }
 
     protected:
