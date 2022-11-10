@@ -155,6 +155,7 @@ PYBIND11_MODULE( _fem, module )
     module.def( "__finalizeFemModule__", [] () {
         pybind11::module gc = pybind11::module::import("gc");
         gc.attr("collect")();
+        Dune::Fem::MPIManager::comm().barrier();
         Dune::Fem::MPIManager::finalize();
         } );
 
