@@ -16,7 +16,7 @@ from . import model as model
 from . import plotting
 
 # finalization of fem module (i.e. calling PETSc finalize etc)
-atexit.register( _fem.__finalizeFemModule__ )
+# atexit.register( _fem.__finalizeFemModule__ )
 
 registry = {}
 
