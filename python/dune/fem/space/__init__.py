@@ -190,9 +190,10 @@ def localContribution(self, assembly):
     else:
         raise ValueError("assembly can only be `set` or `add`")
 
-def addDFAttr(module, cls, spc, storage):
-    setattr(cls, "_module", module)
-    setattr(cls, "_storage", storage)
+def dummyPlot(*args,**kwargs):
+    print("problem importing plotting utility - possibly matplotlib is missing?")
+def addDFAttr(module, cls):
+    cls._storage = property( lambda self: self._space.storage)
     cls.space = property( lambda self: self._space.as_ufl() )
     setattr(cls, "interpolate", dfInterpolate )
     setattr(cls, "assign", dfAssign )
@@ -203,8 +204,7 @@ def addDFAttr(module, cls, spc, storage):
         from dune.fem.plotting import plotPointData
         setattr(cls, "plot", plotPointData)
     except ImportError:
-        setattr(cls, "plot", lambda *args,**kwargs:
-           print("problem importing plotting utility - possibly matplotlib is missing?"))
+        setattr(cls, "plot", dummyPlot)
 
 def addBackend(Df,backend):
     def backend_(self):
@@ -222,24 +222,26 @@ def addBackend(Df,backend):
 
 _defaultGenerator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
+import functools
+def spcInterpolate(self,*args,**kwargs):
+    return interpolate(self,*args,**kwargs)
+def spcCodegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders):
+    return _codegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders)
+def spcProject(self,*args,**kwargs):
+    return project(self,*args,**kwargs)
+def spcFunction(self,*args,**kwargs):
+    return function.discreteFunction(self,*args,**kwargs)
 def addAttr(module, self, field, scalar, codegen):
-    setattr(self, "_module", module)
     setattr(self, "field", field)
     setattr(self, "scalar", scalar)
+    setattr(self, "interpolate",functools.partial(spcInterpolate,self))
     setattr(self, "codegenStorage", codegen)
-    setattr(self, "interpolate",
-            lambda *args,**kwargs: interpolate(self,*args,**kwargs))
-    setattr(self, "codegen",
-            lambda moduleName,interiorQuadratureOrders, skeletonQuadratureOrders:
-                  _codegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders)
-           )
+    setattr(self, "codegen", functools.partial(spcCodegen,self))
 
     DF = module.DiscreteFunction
     if hasattr(DF,"_project"):
-        setattr(self, "project",
-            lambda *args,**kwargs: project(self,*args,**kwargs))
-    setattr(self, "function",
-            lambda *args,**kwargs: function.discreteFunction(self,*args,**kwargs))
+        setattr(self, "project",functools.partial(spcProject,self))
+    setattr(self, "function",functools.partial(spcFunction,self))
     DF.scalar = property(lambda self: self.space.scalar)
 
 def addStorage(obj, storage):
@@ -311,6 +313,14 @@ def addDiscreteFunction(space, storage):
     dfIncludes += ["dune/fempy/py/discretefunction.hh"]
     return dfIncludes, dfTypeName, backend, ctor
 
+def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend):
+    addAttr(module, spc, field, scalar, codegen)
+    setattr(spc,"DiscreteFunction",module.DiscreteFunction)
+    addStorage(spc,storage)
+    # is called now from C++ registring function: addDFAttr(module, module.DiscreteFunction)
+    if not backend is None:
+        addBackend(module.DiscreteFunction, backend)
+
 def module(field, includes, typeName, *args,
            storage=None, scalar=False, codegen=False, ctorArgs,
            generator=_defaultGenerator):
@@ -334,11 +344,7 @@ def module(field, includes, typeName, *args,
                             defines=defines)
 
     spc = module.Space(*ctorArgs)
-    addAttr(module, spc, field, scalar, codegen)
-    setattr(spc,"DiscreteFunction",module.DiscreteFunction)
-    addDFAttr(module, module.DiscreteFunction, spc, addStorage(spc,storage))
-    if not backend is None:
-        addBackend(module.DiscreteFunction, backend)
+    addSpaceAttr(module,spc,field,scalar,codegen,storage,backend)
     return spc
 
 def _codegen(space,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders):

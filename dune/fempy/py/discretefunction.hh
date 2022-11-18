@@ -241,6 +241,38 @@ namespace Dune
           {
             return new DF( std::move( name ), space );
           } ), "space"_a, "name"_a, pybind11::keep_alive< 1, 2 >() );
+        cls.def(pybind11::pickle(
+            [](const pybind11::object &self) { // __getstate__
+            DF& df = self.cast<DF&>();
+            std::ostringstream stream;
+            Dune::Fem::StandardOutStream outStream(stream);
+            df.write( outStream );
+            pybind11::bytes s(stream.str());
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(df.name(), df.space(), s, d);
+          },
+        [](pybind11::tuple t) { // __setstate__
+            // issue: we add a keep alive on 't' here so that the space is
+            // protected from gc. This also keeps the byte stream for the
+            // data alive.
+            // Possibly we can remove the byte stream from the tuple and replace with None
+            if (t.size() != 4)
+                throw std::runtime_error("Invalid state!");
+            pybind11::handle pySpc = t[1];
+            auto& spc = pySpc.cast<typename DF::DiscreteFunctionSpaceType&>();
+            /* Create a new C++ instance */
+            DF *df = new DF( t[0].cast<std::string>(),spc );
+            pybind11::bytes state(t[2]);
+            std::istringstream stream( state );
+            Dune::Fem::StandardInStream inStream(stream);
+            df->read( inStream );
+            auto py_state = t[3].cast<pybind11::dict>();
+            return std::make_pair(df, py_state);
+          }
+        ), pybind11::keep_alive< 1, 2 >());
       }
 
       template< class DF, class... options >
@@ -482,6 +514,8 @@ namespace Dune
           self.write( outStream );
           return stream.str();
           } );
+        auto addHAttr = pybind11::module::import( "dune.fem.space").attr("addDFAttr");
+        addHAttr(module,cls);
       }
 
     } // namespace detail
