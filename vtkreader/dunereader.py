@@ -2,18 +2,29 @@
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://www.litianyi.me/2019/10/27/paraview-meshio-plugin/
 # https://github.com/tianyikillua/paraview-meshio/blob/master/meshioPlugin.py
-
 import numpy as np
+import os,sys
 import vtk
-import pickle
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
-import dune.common
-from dune.alugrid import aluConformGrid as view
-from dune.grid import cartesianDomain
+def find_egglinks(directory_name):
+    dune_found = []
+    for path, subdirs, files in os.walk(directory_name):
+        if not path.endswith("site-packages"):
+            continue
+        dune_found.append(path)
+        for name in files:
+            if not "dune" in name:
+                continue
+            ext = os.path.splitext(name)[1]
+            if ext == ".egg-link":
+                file_path = os.path.join(path,name)
+                with open(file_path,"r") as f:
+                    dune_found.append(f.read().split()[0])
+    return dune_found
 
 dune_extensions = ["dbf","dgf"]
 @smproxy.reader(
@@ -29,10 +40,23 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._filename = None
         self._level = 0
         self._gridView = None
-        # need to load at least one module - then dune.generated is
-        # available. Actually not sure why this is needed or works...
+        # in older paraview versions there is no way to set the
+        # virtual environment to use - use a environment variable
+        # to set it before starting paraview:
+        try:
+            envdir = os.path.realpath(os.environ['VIRTUAL_ENV'])
+            dunePaths = find_egglinks(os.path.join(envdir,"lib"))
+            sys.path += dunePaths
+            if not "DUNE_PY_DIR" in os.environ:
+                os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
+            # print(os.environ["DUNE_PY_DIR"], dunePaths)
+        except KeyError:
+            # print("no virtual env path found!")
+            pass
+        import dune.common
         dune.common.FieldVector([1])
-        view( cartesianDomain([-2,-2],[2,2],[10,10]) )
+        import dune.fem
+        self.load = dune.fem.load
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
@@ -50,23 +74,16 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._level = level
         self.Modified()
 
-    def load(self):
+    def loadData(self):
+        print("loadData")
         with open(self._filename,"rb") as f:
-            self._df = pickle.load(f)
-            """
-            self._gridView = pickle.load(f).leafView
-            space = lagrange(self._gridView, order=4)
-            self._df = []
-            self._df += [space.interpolate(0,name="test")]
-            self._df[-1].read( pickle.load(f) )
-            self._df += [space.interpolate(0,name="test2")]
-            self._df[-1].read( pickle.load(f) )
-            """
+            df = self.load(f)
+        self._df = [d for d in df if hasattr(d,"gridView")]
         self._gridView = self._df[0].gridView
 
     def RequestData(self, request, inInfo, outInfo):
         if self._gridView is None:
-            self.load()
+            self.loadData()
 
         points, cells = self._gridView.tessellate(self._level)
         output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))

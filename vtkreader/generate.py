@@ -1,12 +1,12 @@
 # %%
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
-import pickle, numpy
+import numpy
 from dune.alugrid import aluConformGrid as view
 from dune.grid import cartesianDomain, Marker
 from dune.fem.function import gridFunction
 from dune.fem.space import lagrange, dgonb
-from dune.fem import adapt
+import dune.fem
 
 def test1(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
@@ -22,7 +22,7 @@ def test1(fileName):
         grid.hierarchicalGrid.mark(lambda e:
              Marker.refine if df.localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 1
              else Marker.coarsen)
-        adapt(grid.hierarchicalGrid)
+        dune.fem.adapt(grid.hierarchicalGrid)
         df.interpolate( gf )
     print("size of adapted grid:", grid.size(0))
     df.plot()
@@ -34,6 +34,6 @@ def test1(fileName):
     df2.plot()
 
     with open(fileName,"wb") as f:
-        pickle.dump([df.__impl__,df2.__impl__],f)
+        dune.fem.dump([1,df,2,df2,3],f) # adding some numbers just for testing
 
 test1("dump.dbf")

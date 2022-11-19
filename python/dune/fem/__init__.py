@@ -140,3 +140,33 @@ def vtkDispatchUFL(grid,f):
         gf = None
     return gf
 _writeVTKDispatcher.append(vtkDispatchUFL)
+
+import pickle as _pickle
+def dump(objects, f, protocol=None):
+    if not (isinstance(objects,list) or isinstance(objects,tuple)):
+        raise TypeError("only pass in tuples/lists to pickle")
+    gv = None
+    obj = []
+    for o in objects:
+        if hasattr(o,"gridView"):
+            if gv and not (gv==o.gridView):
+                raise TypeError("all gridviews must be the same")
+            gv = o.gridView
+        if hasattr(o,"__impl__"):
+            obj.append((True,o.__impl__))
+        else:
+            obj.append((False,o))
+    _pickle.dump([gv,obj],f,protocol)
+def load(f):
+    # need to load one jit dune module to make sure the path to
+    # dune.generated in dune-py is available:
+    import dune.common
+    dune.common.FieldVector([1])
+    objects = []
+    _,obj = _pickle.load(f)
+    for o in obj:
+        if o[0]:
+            objects.append(o[1].as_ufl())
+        else:
+            objects.append(o[1])
+    return objects
