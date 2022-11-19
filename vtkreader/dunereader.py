@@ -26,7 +26,7 @@ def find_egglinks(directory_name):
                     dune_found.append(f.read().split()[0])
     return dune_found
 
-dune_extensions = ["dbf","dgf"]
+dune_extensions = ["dbf"] # ,"dgf"]
 @smproxy.reader(
     label="Dune Reader",
     extensions=dune_extensions,
@@ -75,11 +75,15 @@ class DuneReader(VTKPythonAlgorithmBase):
         self.Modified()
 
     def loadData(self):
-        print("loadData")
-        with open(self._filename,"rb") as f:
-            df = self.load(f)
-        self._df = [d for d in df if hasattr(d,"gridView")]
-        self._gridView = self._df[0].gridView
+        ext = os.path.splitext(self._filename)[1]
+        if ext == ".dgf":
+            print("Still need to implement dgf reading")
+            print("Which grid to use with which dimensions?")
+        else:
+            with open(self._filename,"rb") as f:
+                df = self.load(f)
+            self._df = [d for d in df if hasattr(d,"gridView")]
+            self._gridView = self._df[0].gridView
 
     def RequestData(self, request, inInfo, outInfo):
         if self._gridView is None:
