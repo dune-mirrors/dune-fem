@@ -6,7 +6,7 @@ import importlib
 
 import dune.grid.grid_generator
 
-from dune.generator import Constructor, Method
+from dune.generator import Constructor, Method, Pickler
 
 def cppBool(value):
     return "true" if value else "false"
@@ -116,4 +116,24 @@ Interpolate into a discrete function space or use a
                  # ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["return " + gridPartName + "( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-    return setup(includes, typeName, constructor, ctorArgs=[coordFunction])
+    pickler = Pickler(getterBody=
+      """
+            auto& gv = self.cast<DuneType&>();
+            /* Return a tuple that fully encodes the state of the object */
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(gv.gridFunction(),d);
+      """, setterBody=
+      """
+            if (t.size() != 2)
+                throw std::runtime_error("Invalid state!");
+            pybind11::handle pyGF = t[0];
+            const auto& gf = pyGF.cast<const typename DuneType::GridFunctionType&>();
+            /* Create a new C++ instance */
+            auto py_state = t[1].cast<pybind11::dict>();
+            return std::make_pair(std::make_unique<DuneType>(gf), py_state);
+      """)
+
+    return setup(includes, typeName, constructor, pickler, ctorArgs=[coordFunction])

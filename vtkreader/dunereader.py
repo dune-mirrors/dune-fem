@@ -10,6 +10,22 @@ from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
+def setDuneModulePaths():
+    # in older paraview versions there is no way to set the
+    # virtual environment to use - use a environment variable
+    # to set it before starting paraview:
+    try:
+        envdir = os.path.realpath(os.environ['VIRTUAL_ENV'])
+        dunePaths = find_egglinks(os.path.join(envdir,"lib"))
+        sys.path += dunePaths
+        if not "DUNE_PY_DIR" in os.environ:
+            os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
+        # print(os.environ["DUNE_PY_DIR"], dunePaths)
+    except KeyError:
+        # print("no virtual env path found!")
+        pass
+
+
 def find_egglinks(directory_name):
     dune_found = []
     for path, subdirs, files in os.walk(directory_name):
@@ -40,19 +56,9 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._filename = None
         self._level = 0
         self._gridView = None
-        # in older paraview versions there is no way to set the
-        # virtual environment to use - use a environment variable
-        # to set it before starting paraview:
-        try:
-            envdir = os.path.realpath(os.environ['VIRTUAL_ENV'])
-            dunePaths = find_egglinks(os.path.join(envdir,"lib"))
-            sys.path += dunePaths
-            if not "DUNE_PY_DIR" in os.environ:
-                os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
-            # print(os.environ["DUNE_PY_DIR"], dunePaths)
-        except KeyError:
-            # print("no virtual env path found!")
-            pass
+        setDuneModulePaths()
+        # do not yet know how to fix the problem in paraview that
+        # dune.generated in not found - the following hack works for some reason
         import dune.common
         dune.common.FieldVector([1])
         import dune.fem

@@ -142,6 +142,8 @@ def vtkDispatchUFL(grid,f):
 _writeVTKDispatcher.append(vtkDispatchUFL)
 
 import pickle as _pickle
+import pickletools
+import importlib, sys
 def dump(objects, f, protocol=None):
     if not (isinstance(objects,list) or isinstance(objects,tuple)):
         raise TypeError("only pass in tuples/lists to pickle")
@@ -156,14 +158,37 @@ def dump(objects, f, protocol=None):
             obj.append((True,o.__impl__))
         else:
             obj.append((False,o))
-    _pickle.dump([gv,obj],f,protocol)
+    _pickle.dump(obj,f,protocol)
 def load(f):
-    # need to load one jit dune module to make sure the path to
-    # dune.generated in dune-py is available:
-    import dune.common
-    dune.common.FieldVector([1])
+    # make sure dune.generated in dune-py is added to dune package path
+    from dune.generator import builder
+    builder.initialize()
     objects = []
-    _,obj = _pickle.load(f)
+
+    mods = []
+    for opcode,arg,pos in pickletools.genops(f):
+        try:
+            if "dune.generated" in arg:
+                mods += [arg]
+        except:
+            pass
+    while len(mods)>0:
+        cont = False
+        for m in mods:
+            module = sys.modules.get(m)
+            try:
+                importlib.import_module(m)
+                print("loading",m)
+                mods.remove(m)
+                cont = True
+            except ImportError as ex:
+                print(ex)
+                print("skipping",m)
+                pass
+        assert cont, "no module could be loaded"
+    f.seek(0)
+
+    obj = _pickle.load(f)
     for o in obj:
         if o[0]:
             objects.append(o[1].as_ufl())
