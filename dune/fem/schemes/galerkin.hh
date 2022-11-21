@@ -103,6 +103,7 @@ namespace Dune
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
         typedef ThreadIterator< GridPartType > ThreadIteratorType;
+        typedef ThreadIterator< GridPartType, All_Partition > ThreadIteratorTypeAll;
 
         template <class Space>
         struct QuadratureSelector
@@ -1253,10 +1254,12 @@ namespace Dune
 
       typedef typename RangeFunctionType::GridPartType GridPartType;
       typedef ThreadIterator< GridPartType > ThreadIteratorType;
+      typedef ThreadIterator< GridPartType, All_Partition > ThreadIteratorTypeAll;
 
       template< class... Args >
       explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
         : iterators_( gridPart ),
+          iterators_all_( gridPart ),
           impl_( gridPart, std::forward< Args >( args )... ),
           gridSizeInterior_( 0 ),
           communicate_( true )
@@ -1350,6 +1353,7 @@ namespace Dune
       }
 
       mutable ThreadIteratorType iterators_;
+      mutable ThreadIteratorTypeAll iterators_all_;
       ThreadSafeValue< GalerkinOperatorImplType > impl_;
 
       mutable std::size_t gridSizeInterior_;
@@ -1438,14 +1442,14 @@ namespace Dune
         // reserve memory and clear entries
         {
           prepare( jOp );
-          iterators_.update();
+          iterators_all_.update();
         }
 
         std::shared_mutex mutex;
 
         auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
-          this->impl().assemble( u, jOp, this->iterators_, mutex );
+          this->impl().assemble( u, jOp, this->iterators_all_, mutex );
         };
 
         try {
@@ -1459,7 +1463,7 @@ namespace Dune
         {
           // redo assemble since it failed previously
           jOp.clear();
-          impl().assemble( u, jOp, iterators_ );
+          impl().assemble( u, jOp, iterators_all_ );
 
           // update number of interior elements
           gridSizeInterior_ = impl().gridSizeInterior();
@@ -1472,6 +1476,7 @@ namespace Dune
 
       using BaseType::gatherGridSizeInterior;
       using BaseType::iterators_;
+      using BaseType::iterators_all_;
       using BaseType::gridSizeInterior_;
 
       const DomainDiscreteFunctionSpaceType &dSpace_;
