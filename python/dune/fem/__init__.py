@@ -158,13 +158,29 @@ def dump(objects, f, protocol=None):
             obj.append((True,o.__impl__))
         else:
             obj.append((False,o))
+    objDump = _pickle.dumps(obj,protocol)
+    mods = []
+    for opcode,arg,pos in pickletools.genops(objDump):
+        try:
+            if "dune.generated" in arg:
+                mods += [arg]
+        except:
+            pass
+    modsCode = []
+    for m in mods:
+        fname = importlib.import_module(m).__file__
+        fname = fname.replace(".so",".cc")
+        with open(fname,"r") as fmod:
+            modsCode += [[m, fmod.read()]]
+    _pickle.dump(modsCode,f,protocol)
     _pickle.dump(obj,f,protocol)
+
 def load(f):
     # make sure dune.generated in dune-py is added to dune package path
     from dune.generator import builder
     builder.initialize()
-    objects = []
 
+    """
     mods = []
     for opcode,arg,pos in pickletools.genops(f):
         try:
@@ -187,7 +203,23 @@ def load(f):
                 pass
         assert cont, "no module could be loaded"
     f.seek(0)
+    """
+    mods = _pickle.load(f)
+    while len(mods)>0:
+        cont = False
+        for m in mods:
+            try:
+                module = builder.load(m[0].split(".")[-1], m[1], None)
+                # print("loading",m[0])
+                mods.remove(m)
+                cont = True
+            except ImportError as ex:
+                # print(ex)
+                # print("skipping",m[0])
+                pass
+        assert cont, "no module could be loaded"
 
+    objects = []
     obj = _pickle.load(f)
     for o in obj:
         if o[0]:

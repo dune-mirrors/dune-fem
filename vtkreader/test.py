@@ -1,7 +1,7 @@
 import sys,math
 
-from dunereader import setDuneModulePaths
-setDuneModulePaths()
+# from dunereader import setDuneModulePaths
+# setDuneModulePaths()
 import dune.fem
 
 # gv = "geometry"
@@ -38,8 +38,7 @@ else:
     with open("dump"+gv,"rb") as f:
         _,l_h,_,d_h,_ = dune.fem.load(f)
 print("====================")
-print(dir(l_h.space.gridView))
-print("====================")
+# print(dir(l_h.space.gridView))
 print(l_h.size,l_h.__impl__)
 print(l_h.space.size)
 print(l_h.space.gridView.size(0))
