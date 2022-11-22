@@ -5,8 +5,8 @@ import sys,math
 import dune.fem
 
 # gv = "geometry"
-# gv = "adaptive"
-gv = "original"
+gv = "adaptive"
+# gv = "original"
 def gridView(grid):
     if gv == "geometry":
         expr =  [ (x[0]+x[1])/ufl.sqrt(2), (-x[0]+x[1])*ufl.sqrt(2) ]

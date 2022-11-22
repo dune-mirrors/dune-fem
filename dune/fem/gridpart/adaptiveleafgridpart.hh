@@ -143,6 +143,13 @@ namespace Dune
         return *indexSet_;
       }
 
+      //! Returns reference to index set of the underlying grid
+      IndexSetType &indexSet ()
+      {
+        assert( indexSet_ );
+        return *indexSet_;
+      }
+
       //! Begin iterator on the leaf level
       template< int codim >
       typename Codim< codim > :: IteratorType
