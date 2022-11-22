@@ -140,7 +140,7 @@ namespace Dune
 
         auto lfClass = Python::insertClass<LocalFunction>(cls, "LocalFunction",
             Python::GenerateTypeName("TODO-LGF"), pybind11::dynamic_attr());
-        assert( lfClass.second );
+        // assert( lfClass.second );
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
 
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );

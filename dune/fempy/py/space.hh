@@ -50,7 +50,7 @@ namespace Dune
           },
         [](pybind11::tuple t) { // __setstate__
             if (t.size() != 2)
-                throw std::runtime_error("Invalid state!");
+                throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
             pybind11::handle gvPtr = t[0];
             GridView& gv = gvPtr.cast<GridView&>();
             /* Create a new C++ instance */
@@ -86,7 +86,7 @@ namespace Dune
           },
         [](pybind11::tuple t) { // __setstate__
             if (t.size() != 3)
-                throw std::runtime_error("Invalid state!");
+                throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
             auto order = t[1].cast<int>();
             pybind11::handle gvPtr = t[0];
             GridView& gv = gvPtr.cast<GridView&>();
@@ -189,41 +189,6 @@ namespace Dune
               Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
 
-#if 1
-#else
-        cls.def("__getstate__", [](const pybind11::object &self) {
-          Space& spc = self.cast<Space&>();
-          std::cout << "__getstate__ space\n";
-          std::cout << spc.gridPart().gridView().size(0) << std::endl;
-          /* Return a tuple that fully encodes the state of the object */
-          return pybind11::make_tuple(spc.gridPart().gridView(), spc.order());
-        });
-        cls.def("__setstate__", [](const pybind11::object &self, const pybind11::tuple &t) {
-            std::cout << "__setstate__ space\n";
-            if (t.size() != 2)
-                throw std::runtime_error("Invalid state!");
-            auto order = t[1].cast<int>();
-            std::cout << "order=" << order << std::endl;
-            pybind11::object gvPtr = t[0];
-            GridView& gv = gvPtr.cast<GridView&>();
-            std::cout << "gv size=" << gv.size(0) << std::endl;
-            std::cout << "  " << &gv << " " << &(gv.grid()) << std::endl;
-            /* Create a new C++ instance */
-            Space &spc = self.cast<Space &>();
-            new (&spc) Space( gridPart< GridView >(gvPtr), order );
-            // create Python guard object, removing the gv once the space dies
-            pybind11::cpp_function remove_gridview( [gvPtr] ( pybind11::handle weakref ) {
-                std::cout << "remove_gv\n";
-                gvPtr.dec_ref();
-                weakref.dec_ref();
-              } );
-            gvPtr.inc_ref();
-            pybind11::weakref weakref( self, remove_gridview );
-            weakref.release();
-
-            std::cout << "returning spc=" << &spc << std::endl;
-        });
-#endif
       }
 
     } // namespace detail

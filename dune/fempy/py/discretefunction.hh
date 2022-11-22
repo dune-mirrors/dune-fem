@@ -260,7 +260,7 @@ namespace Dune
             // data alive.
             // Possibly we can remove the byte stream from the tuple and replace with None
             if (t.size() != 4)
-                throw std::runtime_error("Invalid state!");
+                throw std::runtime_error("Invalid state in DiscreteFunction::setstate with "+std::to_string(t.size())+"arguments!");
             pybind11::handle pySpc = t[1];
             auto& spc = pySpc.cast<typename DF::DiscreteFunctionSpaceType&>();
             /* Create a new C++ instance */

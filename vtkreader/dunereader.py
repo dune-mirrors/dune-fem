@@ -61,8 +61,8 @@ class DuneReader(VTKPythonAlgorithmBase):
         # dune.generated in not found - the following hack works for some reason
         import dune.common
         dune.common.FieldVector([1])
-        import dune.fem
-        self.load = dune.fem.load
+        import dune.common.pickle
+        self.load = dune.common.pickle.load
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()

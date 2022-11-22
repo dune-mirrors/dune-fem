@@ -67,7 +67,7 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
       """, setterBody=
       """
             if (t.size() != 3)
-                throw std::runtime_error("Invalid state!");
+                throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
             pybind11::handle pyHg = t[0];
             auto& hg = pyHg.cast<typename DuneType::GridType&>();
             /* Create a new C++ instance */
@@ -147,7 +147,7 @@ Interpolate into a discrete function space or use a
       """, setterBody=
       """
             if (t.size() != 2)
-                throw std::runtime_error("Invalid state!");
+                throw std::runtime_error("Invalid state in GeoGV with "+std::to_string(t.size())+"arguments!");
             pybind11::handle pyGF = t[0];
             const auto& gf = pyGF.cast<const typename DuneType::GridFunctionType&>();
             /* Create a new C++ instance */

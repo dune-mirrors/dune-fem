@@ -8,6 +8,7 @@ from dune.fem.function import gridFunction
 from dune.fem.space import lagrange, dgonb
 from dune.fem.view import geometryGridView, adaptiveLeafGridView
 import dune.fem
+import dune.common.pickle
 
 def test1(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
@@ -35,7 +36,7 @@ def test1(fileName):
         dune.fem.adapt(grid.hierarchicalGrid)
         df.interpolate( gf )
     print("size of adapted grid:", grid.size(0))
-    df.plot()
+    # df.plot()
 
     x = ufl.SpatialCoordinate(ufl.triangle)
     expr =  [ (x[0]+x[1])/ufl.sqrt(2), (-x[0]+x[1])*ufl.sqrt(2) ]
@@ -46,9 +47,9 @@ def test1(fileName):
     def gf(x): return numpy.sin(x[0]*x[1]*numpy.pi)
     dg = dgonb(grid, order=4)
     df2 = dg.interpolate(gf,name="test2")
-    df2.plot()
+    # df2.plot()
 
     with open(fileName,"wb") as f:
-        dune.fem.dump([1,2,df2,3],f) # adding some numbers just for testing
+        dune.common.pickle.dump([1,2,df2,3],f) # adding some numbers just for testing
 
 test1("dump.dbf")
