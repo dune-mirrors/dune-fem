@@ -147,17 +147,14 @@ import importlib, sys
 def dump(objects, f, protocol=None):
     if not (isinstance(objects,list) or isinstance(objects,tuple)):
         raise TypeError("only pass in tuples/lists to pickle")
-    gv = None
-    obj = []
+    obj = objects # []
+    """
     for o in objects:
-        if hasattr(o,"gridView"):
-            if gv and not (gv==o.gridView):
-                raise TypeError("all gridviews must be the same")
-            gv = o.gridView
         if hasattr(o,"__impl__"):
             obj.append((True,o.__impl__))
         else:
             obj.append((False,o))
+    """
     objDump = _pickle.dumps(obj,protocol)
     mods = []
     for opcode,arg,pos in pickletools.genops(objDump):
@@ -180,30 +177,6 @@ def load(f):
     from dune.generator import builder
     builder.initialize()
 
-    """
-    mods = []
-    for opcode,arg,pos in pickletools.genops(f):
-        try:
-            if "dune.generated" in arg:
-                mods += [arg]
-        except:
-            pass
-    while len(mods)>0:
-        cont = False
-        for m in mods:
-            module = sys.modules.get(m)
-            try:
-                importlib.import_module(m)
-                print("loading",m)
-                mods.remove(m)
-                cont = True
-            except ImportError as ex:
-                print(ex)
-                print("skipping",m)
-                pass
-        assert cont, "no module could be loaded"
-    f.seek(0)
-    """
     mods = _pickle.load(f)
     while len(mods)>0:
         cont = False
@@ -214,16 +187,18 @@ def load(f):
                 mods.remove(m)
                 cont = True
             except ImportError as ex:
-                # print(ex)
-                # print("skipping",m[0])
+                # print("skipping",m[0],"due to",ex)
                 pass
         assert cont, "no module could be loaded"
 
     objects = []
     obj = _pickle.load(f)
+    return obj
+    """
     for o in obj:
         if o[0]:
             objects.append(o[1].as_ufl())
         else:
             objects.append(o[1])
     return objects
+    """
