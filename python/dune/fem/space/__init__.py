@@ -200,6 +200,7 @@ def addDFAttr(module, cls):
     if hasattr(cls,"_project"):
         setattr(cls, "project", dfProject )
     setattr(cls, "localContribution", localContribution )
+    cls.scalar = property(lambda self: self.space.scalar)
     try:
         from dune.fem.plotting import plotPointData
         setattr(cls, "plot", plotPointData)
@@ -242,7 +243,6 @@ def addAttr(module, self, field, scalar, codegen):
     if hasattr(DF,"_project"):
         setattr(self, "project",functools.partial(spcProject,self))
     setattr(self, "function",functools.partial(spcFunction,self))
-    DF.scalar = property(lambda self: self.space.scalar)
 
 def addStorage(obj, storage):
     if not storage:

@@ -392,7 +392,7 @@ class GridFunction(ufl.Coefficient):
             return GridFunction(self.gf,scalar=False, count=-self.count())
 
     def __getstate__(self):
-        return [self.__impl__, self.scalar, self.count]
+        return [self.__impl__, self.scalar, self.count()]
     def __setstate__(self,l):
         self.__init__(l[0],l[1],l[2])
 

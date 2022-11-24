@@ -253,6 +253,8 @@ namespace Dune
               d = self.attr("__dict__");
             }
             return pybind11::make_tuple(df.name(), df.space(), s, d);
+            // pybind11::object pySpace = pybind11::cast(df.space());
+            // return pybind11::make_tuple(df.name(), pySpace, s, d);
           },
         [](pybind11::tuple t) { // __setstate__
             // issue: we add a keep alive on 't' here so that the space is

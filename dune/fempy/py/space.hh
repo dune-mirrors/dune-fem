@@ -52,7 +52,6 @@ namespace Dune
             if (t.size() != 2)
                 throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
             pybind11::handle gvPtr = t[0];
-            GridView& gv = gvPtr.cast<GridView&>();
             /* Create a new C++ instance */
             Space *spc = new Space( gridPart< GridView >(gvPtr) );
             auto py_state = t[1].cast<pybind11::dict>();
@@ -89,7 +88,6 @@ namespace Dune
                 throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
             auto order = t[1].cast<int>();
             pybind11::handle gvPtr = t[0];
-            GridView& gv = gvPtr.cast<GridView&>();
             /* Create a new C++ instance */
             Space *spc = new Space( gridPart< GridView >(gvPtr), order );
             auto py_state = t[2].cast<pybind11::dict>();
@@ -159,8 +157,6 @@ namespace Dune
       template< class Space, class... options >
       void registerSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
       {
-        typedef typename Space::GridPartType GridPart;
-        typedef typename GridPart::GridViewType GridView;
         registerFunctionSpace(module,cls);
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
         cls.def_property_readonly( "primarySize", [] ( Space &self ) -> int { return self.primarySize(); } );

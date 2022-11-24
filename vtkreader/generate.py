@@ -9,6 +9,7 @@ from dune.fem.space import lagrange, dgonb
 from dune.fem.view import geometryGridView, adaptiveLeafGridView
 import dune.fem
 import dune.common.pickle
+from transform import exact
 
 def test1(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
@@ -43,13 +44,15 @@ def test1(fileName):
     coord = lagrange(grid,dimRange=2).interpolate(expr,name="coord")
     grid = geometryGridView( coord )
 
-    @gridFunction(grid, name="gf", order=3)
-    def gf(x): return numpy.sin(x[0]*x[1]*numpy.pi)
     dg = dgonb(grid, order=4)
-    df2 = dg.interpolate(gf,name="test2")
+    df2 = dg.interpolate(exact(grid),name="test2")
     # df2.plot()
 
     with open(fileName,"wb") as f:
         dune.common.pickle.dump([1,2,df2,3],f) # adding some numbers just for testing
+    with open("grid"+fileName,"wb") as f:
+        dune.common.pickle.dump([grid],f) # adding some numbers just for testing
+    df2.gridView.writeVTK("dump", pointdata=[df2])
+    df2.gridView.writeVTK("dump2", pointdata=[df2], subsampling=2)
 
 test1("dump.dbf")
