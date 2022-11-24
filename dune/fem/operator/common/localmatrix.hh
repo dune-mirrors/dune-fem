@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_LOCALMATRIX_HH
 #define DUNE_FEM_LOCALMATRIX_HH
 
+#include <optional>
+
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include "../../common/explicitfieldvector.hh"
