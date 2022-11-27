@@ -112,6 +112,7 @@ class DuneReader(VTKPythonAlgorithmBase):
         try:
             mod = importlib.import_module(transform)
             transformFcts = [m.__name__ for m in mod.register]
+            transformFcts[:0] = ["None"]
             transformFct  = transformFcts[0]
             self._transform = mod
             self._transformFcts = transformFcts
@@ -168,6 +169,11 @@ class DuneReader(VTKPythonAlgorithmBase):
     def RequestData(self, request, inInfo, outInfo):
         if self._gridView is None:
             self.loadData()
+        # data
+        if self._transform is not None and self._transformFct != "None":
+            gfs = getattr(self._transform,self._transformFct)(self._gridView, self._df)
+        else:
+            gfs = self._df
 
         points, cells = self._gridView.tessellate(self._level)
         output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
@@ -198,11 +204,6 @@ class DuneReader(VTKPythonAlgorithmBase):
         cell_conn = np.hstack([cell_conn, conn])
         output.SetCells(cell_types, cell_offsets, cell_conn)  # cell connectivities
 
-        # data
-        if self._transform is not None:
-            gfs = getattr(self._transform,self._transformFct)(self._gridView, self._df)
-        else:
-            gfs = self._df
         for df in gfs:
             array = df.pointData(self._level)
             output.PointData.append(array, df.name)  # point data

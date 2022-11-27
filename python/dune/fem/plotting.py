@@ -44,8 +44,6 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
             pyplot.gca().add_collection(coll)
 
     if not solution == None:
-        data = solution.pointData(level)
-
         if grid.dimGrid == 1 and grid.dimWorld == 1:
             if solution.dimRange > 1:
                 data = linalg.norm(solution.pointData(level),axis=1)

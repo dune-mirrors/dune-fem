@@ -13,8 +13,22 @@ def exact(grid):
     @gridFunction(grid, name="exact", order=3)
     def _exact(x):
         return numpy.sin(x[0]*x[1]*numpy.pi)
+        # return x[0]
     return _exact
 def error(gv,dfs):
     err = uflFunction(gv,name="error",order=1,ufl=dfs[0]-exact(gv))
     return [err,*dfs]
-register = [error,gradx,grady]
+
+# this does not currently work - needs some more thought
+# One issue is that the transformer is only called after the grid has been
+# changed
+def adapt(gv,dfs):
+    from dune.grid import Marker
+    from dune.fem import adapt
+    for i in range(4):
+        dfs[0].gridView.hierarchicalGrid.mark(lambda e:
+             Marker.refine if dfs[0].localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 4
+                           else Marker.keep)
+        adapt(dfs)
+    return dfs
+register = [error,gradx,grady,adapt]

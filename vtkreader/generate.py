@@ -39,20 +39,28 @@ def test1(fileName):
     print("size of adapted grid:", grid.size(0))
     # df.plot()
 
+    # there is an issue with GeometryGV and adaptivity - perhaps
+    # one needs to change the order, i.e., can only use GeometryGV<Adaptiv>
+    # not the other way around?
+    """
     x = ufl.SpatialCoordinate(ufl.triangle)
     expr =  [ (x[0]+x[1])/ufl.sqrt(2), (-x[0]+x[1])*ufl.sqrt(2) ]
     coord = lagrange(grid,dimRange=2).interpolate(expr,name="coord")
     grid = geometryGridView( coord )
+    """
 
-    dg = dgonb(grid, order=4)
-    df2 = dg.interpolate(exact(grid),name="test2")
-    # df2.plot()
+    x   = ufl.SpatialCoordinate(ufl.triangle)
+    lag = lagrange(grid, order=3)
+    # lag = dgonb(grid, order=3)
+    dg  = dgonb(grid, order=4, dimRange=2)
+    df2 = lag.interpolate(exact(grid),name="exact_h")
+    df3 = dg.interpolate(ufl.tanh(2*(x[0]-x[1]))*x,name="tanh")
 
     with open(fileName,"wb") as f:
-        dune.common.pickle.dump([1,2,df2,3],f) # adding some numbers just for testing
+        dune.common.pickle.dump([1,2,df2,3,df3],f) # adding some numbers just for testing
     with open("grid"+fileName,"wb") as f:
         dune.common.pickle.dump([grid],f) # adding some numbers just for testing
-    df2.gridView.writeVTK("dump", pointdata=[df2])
-    df2.gridView.writeVTK("dump2", pointdata=[df2], subsampling=2)
+    df2.gridView.writeVTK("dump", pointdata=[df2,df3])
+    df2.gridView.writeVTK("dump2", pointdata=[df2,df3], subsampling=2)
 
 test1("dump.dbf")
