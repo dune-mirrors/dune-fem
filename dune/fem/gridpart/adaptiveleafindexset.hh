@@ -1228,7 +1228,7 @@ namespace Dune
     inline bool AdaptiveIndexSetBase< TraitsImp >
       ::write ( OutStreamInterface< StreamTraits >& out ) const
     {
-      // write name for indentification
+      // write name for identification
       const std::string myname( name() );
       out << myname;
 

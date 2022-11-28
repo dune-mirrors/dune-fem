@@ -16,7 +16,8 @@ def exact(grid):
         # return x[0]
     return _exact
 def error(gv,dfs):
-    err = uflFunction(gv,name="error",order=1,ufl=dfs[0]-exact(gv))
+    # err = uflFunction(gv,name="error",order=1,ufl=dfs[0]-exact(gv))
+    err = uflFunction(gv,name="error",order=1,ufl=(dfs[0]-exact(gv)))
     return [err,*dfs]
 
 # this does not currently work - needs some more thought

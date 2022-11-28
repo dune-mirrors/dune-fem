@@ -1,6 +1,7 @@
 import ufl
 from dune.alugrid import aluConformGrid as view
 from dune.grid import cartesianDomain
+from dune.fem import globalRefine
 from dune.fem.space import lagrange, dgonb
 from dune.fem.view import adaptiveLeafGridView
 import dune.common.pickle
@@ -12,7 +13,10 @@ def test1(fileName):
     # we can remove either of these lines to make it work
     #####################################################
     grid = adaptiveLeafGridView( grid )
-    grid.hierarchicalGrid.globalRefine(1)
+    print(grid.size(0))
+    globalRefine(1,grid.hierarchicalGrid)
+    print(grid.size(0))
+    # grid.hierarchicalGrid.globalRefine(1)
     #####################################################
 
     x    = ufl.SpatialCoordinate(ufl.triangle)

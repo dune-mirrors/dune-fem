@@ -14,6 +14,8 @@
 
 import numpy as np
 import os,sys,vtk,importlib
+from importlib.util import spec_from_loader, module_from_spec
+from importlib.machinery import SourceFileLoader
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
 from vtkmodules.numpy_interface import dataset_adapter as dsa
@@ -75,7 +77,7 @@ dune_extensions = ["dbf"] # ,"dgf"]
     file_description="dune-supported files",
 )
 class DuneReader(VTKPythonAlgorithmBase):
-    def __init__(self, parent=None):
+    def __init__(self):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=0, nOutputPorts=1, outputType="vtkUnstructuredGrid"
         )
@@ -86,14 +88,13 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._transformFct = ""
         self._gridView = None
         setDuneModulePaths()
-        import dune.common.pickle
+        try:
+            import dune.common.pickle
+            import dune.common.utility
+        except ImportError:
+            raise ImportError("could not import dune.common")
         self.load = dune.common.pickle.load
-        # self.AddObserver('ModifiedEvent', MyObserver())
-        # self.AddObserver(vtkCommand.KeyPressEvent,MyObserver())
-
-    def keyPress(self, obj, event):
-        key = obj.GetKeySym()
-        print( self.GetClassName(), event, key)
+        self.reload = dune.common.utility.reload_module
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
@@ -101,35 +102,45 @@ class DuneReader(VTKPythonAlgorithmBase):
         extensions=dune_extensions, file_description="dune supported files"
     )
     def SetFileName(self, filename):
-        if self._filename != filename:
+        if (self._filename != filename):
             self._filename = filename
-            self.Modified()
+            if self._filename != "None":
+                self.loadData()
+                self.Modified()
 
-    @smproperty.stringvector(name="Transform")
-    def SetTransform(self, transform):
-        if transform == "None":
+    @smproperty.stringvector(name="Transform", default_values="") # , panel_visibility="never")
+    @smdomain.filelist()
+    def SetTransform(self, transformPath):
+        if transformPath is None:
             return
         try:
-            mod = importlib.import_module(transform)
-            transformFcts = [m.__name__ for m in mod.register]
-            transformFcts[:0] = ["None"]
-            transformFct  = transformFcts[0]
-            self._transform = mod
-            self._transformFcts = transformFcts
-            self._transformFct  = transformFct
-            self.Modified()
-        except:
-            print("Failed to import script",transform)
+            mod = sys.modules.get(transformPath)
+            if mod is None:
+                mod = importlib.import_module(transformPath)
+            else:
+                mod = self.reload(mod)
+        except ImportError:
+            try:
+                spec = spec_from_loader("transform", SourceFileLoader("transform", transformPath))
+                mod = module_from_spec(spec)
+                spec.loader.exec_module(mod)
+            except ImportError:
+                print("Failed to import script",transformPath)
+                return
+        if not hasattr(mod,"register"):
+            print("Script",transformPath,"does not have a 'register' attribute - import cancelled")
+            return
+        transformFcts = [m.__name__ for m in mod.register]
+        transformFcts[:0] = ["None"]
+        transformFct  = transformFcts[0]
+        self._transform = mod
+        self._transformFcts = transformFcts
+        self._transformFct  = transformFct
+        self.Modified()
 
     @smproperty.stringvector(name="TransformFct", information_only="1")
     def getTransformFcts(self):
         return self._transformFcts
-        """
-        if self._transform is None:
-            return []
-        return [ d for d in dir(self._transform)
-                 if d.startswith("trans_") and callable(getattr(self._transform,d)) ]
-        """
     @smproperty.stringvector(name="transfnc", number_of_elements="1")
     @smdomain.xml(\
         """<StringListDomain name="list">
@@ -167,10 +178,10 @@ class DuneReader(VTKPythonAlgorithmBase):
             assert all( [self._gridView == d.gridView for d in self._df] ), "all grid function must be over the same gridView"
 
     def RequestData(self, request, inInfo, outInfo):
-        if self._gridView is None:
-            self.loadData()
         # data
-        if self._transform is not None and self._transformFct != "None":
+        if ( (self._transform is not None)
+             and (not self._transformFct in ["","None"])
+             and (not self._transformFct is None) ):
             gfs = getattr(self._transform,self._transformFct)(self._gridView, self._df)
         else:
             gfs = self._df
