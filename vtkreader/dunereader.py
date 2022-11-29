@@ -21,6 +21,31 @@ from paraview.util.vtkAlgorithm import smdomain, smhint, smproperty, smproxy
 from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
+# patch stdout/stderr to include 'isatty' method to make ufl happy
+# (vtk provides its own output streams without that method
+# ufl fails if 'AttributeError').
+# Note that the pvpython streams have no slots so 'setattr' does not work
+# and a more complex hack is required:
+def patchStream(stream):
+    class PatchedStream(stream.__class__):
+        def __init__(self):
+            self.__impl__ = stream
+        def isatty(self):
+            return False
+        def __getattr__(self, item):
+            def tocontainer(func):
+                @wraps(func)
+                def wrapper(*args, **kwargs):
+                    return func(*args, **kwargs)
+                return wrapper
+            result = getattr(self.__impl__, item)
+            if not isinstance(result, PatchedStdStream) and callable(result):
+                result = tocontainer(result)
+            return result
+    return PatchedStream()
+sys.stdout = patchStream(sys.stdout)
+sys.stderr = patchStream(sys.stderr)
+
 # In older paraview versions there is no way to set the
 # virtual environment to use - use a environment variable
 # to set it before starting paraview.
@@ -124,7 +149,7 @@ class DuneReader(VTKPythonAlgorithmBase):
                 spec = spec_from_loader("transform", SourceFileLoader("transform", transformPath))
                 mod = module_from_spec(spec)
                 spec.loader.exec_module(mod)
-            except ImportError:
+            except FileNotFoundError:
                 print("Failed to import script",transformPath)
                 return
         if not hasattr(mod,"register"):

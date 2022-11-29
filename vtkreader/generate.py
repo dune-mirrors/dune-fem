@@ -29,7 +29,8 @@ def test1(fileName):
     space = lagrange(grid, order=2)
     df = space.interpolate(gf,name="test")
 
-    grid.hierarchicalGrid.globalRefine(4)
+    dune.fem.globalRefine(4,grid.hierarchicalGrid)
+    # grid.hierarchicalGrid.globalRefine(4)
     for i in range(5):
         grid.hierarchicalGrid.mark(lambda e:
              Marker.refine if df.localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 1
@@ -53,14 +54,16 @@ def test1(fileName):
     lag = lagrange(grid, order=3)
     # lag = dgonb(grid, order=3)
     dg  = dgonb(grid, order=4, dimRange=2)
+    dg5  = dgonb(grid, order=4, dimRange=4)
     df2 = lag.interpolate(exact(grid),name="exact_h")
     df3 = dg.interpolate(ufl.tanh(2*(x[0]-x[1]))*x,name="tanh")
+    df5 = dg5.interpolate( [ufl.dot(x,x), -x[1],x[0], ufl.sin(x[0]*x[1])], name="euler")
 
     with open(fileName,"wb") as f:
-        dune.common.pickle.dump([1,2,df2,3,df3],f) # adding some numbers just for testing
+        dune.common.pickle.dump([1,2,df2,3,df3,df5],f) # adding some numbers just for testing
     with open("grid"+fileName,"wb") as f:
         dune.common.pickle.dump([grid],f) # adding some numbers just for testing
-    df2.gridView.writeVTK("dump", pointdata=[df2,df3])
-    df2.gridView.writeVTK("dump2", pointdata=[df2,df3], subsampling=2)
+    df2.gridView.writeVTK("dump", pointdata=[df2,df3,df5])
+    df2.gridView.writeVTK("dump2", pointdata=[df2,df3,df5], subsampling=2)
 
 test1("dump.dbf")

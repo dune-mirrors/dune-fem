@@ -19,6 +19,9 @@ def error(gv,dfs):
     # err = uflFunction(gv,name="error",order=1,ufl=dfs[0]-exact(gv))
     err = uflFunction(gv,name="error",order=1,ufl=(dfs[0]-exact(gv)))
     return [err,*dfs]
+def velocity(gv,dfs):
+    U = dfs[2]
+    return [uflFunction(gv,name="velo",order=1,ufl=[U[1],U[2],0])]
 
 # this does not currently work - needs some more thought
 # One issue is that the transformer is only called after the grid has been
@@ -32,4 +35,4 @@ def adapt(gv,dfs):
                            else Marker.keep)
         adapt(dfs)
     return dfs
-register = [error,gradx,grady,adapt]
+register = [error,gradx,grady,adapt,velocity]
