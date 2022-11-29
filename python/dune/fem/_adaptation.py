@@ -133,6 +133,10 @@ def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
 def globalRefine(level, first, *args):
     hgrid,args = _adaptArguments(first,*args)
 
+    if len(args) == 0:
+        hgrid.globalRefine(level)
+        return
+
     # make sure all args are over the same grid
     assert all([a.gridView.hierarchicalGrid==hgrid for a in args]),\
             "all discrete functions must be over the same hierarchical grid"
