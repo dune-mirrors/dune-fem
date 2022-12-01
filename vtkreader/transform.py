@@ -2,7 +2,7 @@ from dune.fem.function import uflFunction, gridFunction
 from ufl import *
 import numpy
 
-def gradx(gv,df,dfs):
+def gradx(gv,t,df,dfs):
     if df.dimRange > 1:
         g = sqrt(dot(df,df))
         name = f"d/dx |{df.name}|"
@@ -11,7 +11,7 @@ def gradx(gv,df,dfs):
         name = f"d/dx {df.name}|"
     g = uflFunction(gv,name=name,order=1,ufl=grad(g)[0])
     return [g]
-def grady(gv,df,dfs):
+def grady(gv,t,df,dfs):
     if df.dimRange > 1:
         g = sqrt(dot(df,df))
     else:
@@ -19,16 +19,20 @@ def grady(gv,df,dfs):
     g = uflFunction(gv,name="grad",order=1,ufl=grad(g)[1])
     return [g]
 
-def exact(grid):
+def exact(grid,t=0):
     @gridFunction(grid, name="exact", order=3)
     def _exact(x):
-        return numpy.sin(x[0]*x[1]*numpy.pi)
-        # return x[0]
+        return numpy.sin((t*x[0]+x[0]*x[1])*numpy.pi*(t+1)/5)
     return _exact
-def error(gv,df,dfs):
-    # err = uflFunction(gv,name="error",order=1,ufl=dfs[0]-exact(gv))
-    err = uflFunction(gv,name="error",order=1,ufl=(dfs[0]-exact(gv)))
-    return [err,*dfs]
+def error(gv,t,df,dfs):
+    # err = uflFunction(gv,name="error",order=1,ufl=(dfs[0]-exact(gv)))
+    ldf = dfs[0].localFunction()
+    ex = exact(gv,t)
+    @gridFunction(gv,name="error",order=1)
+    def _error(e,x):
+        ldf.bind(e)
+        return ldf(x) - ex(e.geometry.toGlobal(x))
+    return [_error,*dfs]
 def velocity(gv,df,dfs):
     U = dfs[2]
     return [uflFunction(gv,name="velo",order=1,ufl=[U[1],U[2],0])]

@@ -66,9 +66,10 @@ def test1(fileName):
 
     series = dune.common.pickle.SeriesPickler(fileName, [1,2,df2,3,df3,df5])
 
-    tsps = [0,0.1,0.4,0.8,2,10]
+    tsps = [0,0.1,0.4,0.8,2,4]
     for i,tsp in enumerate(tsps):
         t.value = tsp
+        df2.interpolate(exact(grid,tsp))
         df3.interpolate(ufl.tanh(2*(t*x[0]-x[1]))*x)
         series.dump({"time":tsp})
 

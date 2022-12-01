@@ -95,7 +95,7 @@ def setDuneModulePaths():
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://github.com/Kitware/ParaView/blob/master/Examples/Plugins/PythonAlgorithm/PythonAlgorithmExamples.py
 
-dune_extensions = ["dbf","tsdbf"] # ,"dgf"]
+dune_extensions = ["dbf"] # ,"dgf"]
 @smproxy.reader(
     label="Dune Reader",
     extensions=dune_extensions,
@@ -115,7 +115,7 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._dataFcts = []
         self._dataFct = 0
         self._timeSteps = None
-        self._currentTime = 0
+        self._currentTime = None
         self._gridView = None
         setDuneModulePaths()
         try:
@@ -134,20 +134,25 @@ class DuneReader(VTKPythonAlgorithmBase):
             self._filename = filename
             if self._filename != "None":
                 filepart = filename.split(".")
-                if len(filepart)>=3 and filepart[2] == "dbf":
-                    if filepart[1] == "series":
+                if len(filepart)>=3 and filepart[-1] == "dbf":
+                    if filepart[-2] == "series":
                         with open(filename,"r") as f:
                             self._filenameSeries = json.load(f)
-                        print(self._filenameSeries)
                         self._timeSteps = [float(v["time"]) for v in self._filenameSeries.values()]
                         self._currentTime = self._timeSteps[0]
                     else:
-                        # assume a file of the form 'base.0000.dbf' was
-                        # provided and find all files in the numbered series
-                        self._filenameSeries = glob.glob(".".join(filepart[0:-2]) + ".*.dbf")
-                        self._filenameSeries.sort()
-                        self._timeSteps = list(range(len(self._filenameSeries)))
-                        self._currentTime = self._filenameSeries.index(filename)
+                        # see if a file of the form 'base.0000.dbf' and
+                        # there are others of the same type available:
+                        self._filenameSeries = [ f for f in glob.glob(".".join(filepart[0:-2]) + ".*.dbf")
+                                                 if f.split(".")[-2].isnumeric() ]
+                        if len(self._filenameSeries) > 1 and filename in self._filenameSeries:
+                            # we seem to have a series:
+                            self._timeSteps = list(range(len(self._filenameSeries)))
+                            self._filenameSeries.sort()
+                            self._timeSteps = list(range(len(self._filenameSeries)))
+                            self._currentTime = self._filenameSeries.index(filename)
+                        else:
+                            self._filenameSeries = None
                 self.loadData()
                 self.Modified()
 
@@ -295,7 +300,7 @@ class DuneReader(VTKPythonAlgorithmBase):
              and (not self._transformFct is None) ):
             assert self._dataFct >= 0
             gfs = getattr(self._transform,self._transformFct)\
-                         (self._gridView, self._df[self._dataFct], self._df)
+                         (self._gridView, self._currentTime, self._df[self._dataFct], self._df)
         else:
             gfs = self._df
 
@@ -331,7 +336,7 @@ class DuneReader(VTKPythonAlgorithmBase):
         for df in gfs:
             array = df.pointData(self._level)
             output.PointData.append(array, df.name)  # point data
-            # output.CellData.append(array, name)  # cell data
+            # output.CellData.append(array, df.name)  # cell data
             # output.FieldData.append(array, name)  # field data
 
         return 1
