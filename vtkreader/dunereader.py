@@ -13,7 +13,7 @@
 ###############################################################################
 
 import numpy as np
-import os,sys,vtk,importlib
+import os,sys,vtk,importlib,glob,json
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase
@@ -95,11 +95,11 @@ def setDuneModulePaths():
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://github.com/Kitware/ParaView/blob/master/Examples/Plugins/PythonAlgorithm/PythonAlgorithmExamples.py
 
-dune_extensions = ["dbf"] # ,"dgf"]
+dune_extensions = ["dbf","tsdbf"] # ,"dgf"]
 @smproxy.reader(
     label="Dune Reader",
     extensions=dune_extensions,
-    file_description="dune-supported files",
+    file_description="dune binary format files",
 )
 class DuneReader(VTKPythonAlgorithmBase):
     def __init__(self):
@@ -107,10 +107,15 @@ class DuneReader(VTKPythonAlgorithmBase):
             self, nInputPorts=0, nOutputPorts=1, outputType="vtkUnstructuredGrid"
         )
         self._filename = None
+        self._filenameSeries = None
         self._level = 0
         self._transform = None
         self._transformFcts = []
         self._transformFct = ""
+        self._dataFcts = []
+        self._dataFct = 0
+        self._timeSteps = None
+        self._currentTime = 0
         self._gridView = None
         setDuneModulePaths()
         try:
@@ -123,18 +128,71 @@ class DuneReader(VTKPythonAlgorithmBase):
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
-    @smhint.filechooser(
-        extensions=dune_extensions, file_description="dune supported files"
-    )
+    @smhint.filechooser( extensions=dune_extensions, file_description="dune binary file format" )
     def SetFileName(self, filename):
         if (self._filename != filename):
             self._filename = filename
             if self._filename != "None":
+                filepart = filename.split(".")
+                if len(filepart)>=3 and filepart[2] == "dbf":
+                    if filepart[1] == "series":
+                        with open(filename,"r") as f:
+                            self._filenameSeries = json.load(f)
+                        print(self._filenameSeries)
+                        self._timeSteps = [float(v["time"]) for v in self._filenameSeries.values()]
+                        self._currentTime = self._timeSteps[0]
+                    else:
+                        # assume a file of the form 'base.0000.dbf' was
+                        # provided and find all files in the numbered series
+                        self._filenameSeries = glob.glob(".".join(filepart[0:-2]) + ".*.dbf")
+                        self._filenameSeries.sort()
+                        self._timeSteps = list(range(len(self._filenameSeries)))
+                        self._currentTime = self._filenameSeries.index(filename)
                 self.loadData()
                 self.Modified()
 
+    def _get_timesteps(self):
+        return self._timeSteps
+    @smproperty.doublevector(name="TimestepValues", information_only="1", si_class="vtkSITimeStepsProperty")
+    def GetTimestepValues(self):
+        return self._get_timesteps()
+    def _get_update_time(self, outInfo):
+        executive = self.GetExecutive()
+        timesteps = self._get_timesteps()
+        if timesteps is None or len(timesteps) == 0:
+            return None
+        elif outInfo.Has(executive.UPDATE_TIME_STEP()) and len(timesteps) > 0:
+            utime = outInfo.Get(executive.UPDATE_TIME_STEP())
+            dtime = timesteps[0]
+            for atime in timesteps:
+                if atime > utime:
+                    return dtime
+                else:
+                    dtime = atime
+            return dtime
+        else:
+            assert(len(timesteps) > 0)
+            return timesteps[0]
+
+    @smproperty.stringvector(name="DataFct", information_only="1")
+    def getDataFcts(self):
+        return self._dataFcts
+    @smproperty.stringvector(name="Datafct", number_of_elements="1")
+    @smdomain.xml(\
+        """<StringListDomain name="list">
+                <RequiredProperties>
+                    <Property name="DataFct" function="DataFct"/>
+                </RequiredProperties>
+            </StringListDomain>
+        """)
+    def setDataFcts(self, value):
+        if value in self.getDataFcts():
+            self._dataFct = self.getDataFcts().index(value)
+            self.Modified()
+
     @smproperty.stringvector(name="Transform", default_values="") # , panel_visibility="never")
     @smdomain.filelist()
+    @smhint.filechooser( extensions=["py"], file_description="Python script" )
     def SetTransform(self, transformPath):
         if transformPath is None:
             return
@@ -166,7 +224,7 @@ class DuneReader(VTKPythonAlgorithmBase):
     @smproperty.stringvector(name="TransformFct", information_only="1")
     def getTransformFcts(self):
         return self._transformFcts
-    @smproperty.stringvector(name="transfnc", number_of_elements="1")
+    @smproperty.stringvector(name="Transfct", number_of_elements="1")
     @smdomain.xml(\
         """<StringListDomain name="list">
                 <RequiredProperties>
@@ -190,8 +248,17 @@ class DuneReader(VTKPythonAlgorithmBase):
             print("Still need to implement dgf reading")
             print("Which grid to use with which dimensions?")
         else:
-            with open(self._filename,"rb") as f:
-                df = self.load(f)
+            if self._filenameSeries is not None:
+                if type(self._filenameSeries) is dict:
+                    idx = self._timeSteps.index(self._currentTime)
+                    with open(self._filenameSeries[str(idx)]["dumpFileName"],"rb") as f:
+                        df = self.load(f)
+                else:
+                    with open(self._filenameSeries[self._currentTime],"rb") as f:
+                        df = self.load(f)
+            else:
+                with open(self._filename,"rb") as f:
+                    df = self.load(f)
             self._df = [d for d in df if hasattr(d,"gridView")]
             if len(self._df) > 0:
                 self._gridView = self._df[0].gridView
@@ -201,13 +268,34 @@ class DuneReader(VTKPythonAlgorithmBase):
             assert hasattr(self._gridView,"dimension"), "file read contains no valid grid view"
             assert all( [hasattr(d,"pointData") for d in self._df] ), "found a non valid grid function (no 'pointData' attribute"
             assert all( [self._gridView == d.gridView for d in self._df] ), "all grid function must be over the same gridView"
+            self._dataFcts = [df.name for df in self._df]
+
+    def RequestInformation(self, request, inInfo, outInfo):
+        executive = self.GetExecutive()
+        outInfo = outInfo.GetInformationObject(0)
+        outInfo.Remove(executive.TIME_STEPS())
+        outInfo.Remove(executive.TIME_RANGE())
+
+        timesteps = self._get_timesteps()
+        if timesteps is not None:
+            for t in timesteps:
+                outInfo.Append(executive.TIME_STEPS(), t)
+            outInfo.Append(executive.TIME_RANGE(), timesteps[0])
+            outInfo.Append(executive.TIME_RANGE(), timesteps[-1])
+        return 1
 
     def RequestData(self, request, inInfo, outInfo):
+        cTime = self._get_update_time(outInfo.GetInformationObject(0))
+        if self._currentTime != cTime:
+            self._currentTime = cTime
+            self.loadData()
         # data
         if ( (self._transform is not None)
              and (not self._transformFct in ["","None"])
              and (not self._transformFct is None) ):
-            gfs = getattr(self._transform,self._transformFct)(self._gridView, self._df)
+            assert self._dataFct >= 0
+            gfs = getattr(self._transform,self._transformFct)\
+                         (self._gridView, self._df[self._dataFct], self._df)
         else:
             gfs = self._df
 
