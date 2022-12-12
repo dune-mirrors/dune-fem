@@ -39,6 +39,25 @@ namespace Dune
         cls.def( pybind11::init( [] ( GridView &gridView ) {
             return new Space( gridPart< GridView >( gridView ) );
           }), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
+        cls.def(pybind11::pickle(
+            [](const pybind11::object &self) { // __getstate__
+            Space& spc = self.cast<Space&>();
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(spc.gridPart().gridView(),d);
+          },
+        [](pybind11::tuple t) { // __setstate__
+            if (t.size() != 2)
+                throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
+            pybind11::handle gvPtr = t[0];
+            /* Create a new C++ instance */
+            Space *spc = new Space( gridPart< GridView >(gvPtr) );
+            auto py_state = t[1].cast<pybind11::dict>();
+            return std::make_pair(spc, py_state);
+          }
+        ), pybind11::keep_alive< 1, 2 >());
       }
 
       template< class Space, class... options >
@@ -55,14 +74,34 @@ namespace Dune
         cls.def( pybind11::init( [] ( GridView &gridView, int order ) {
             return new Space( gridPart< GridView >( gridView ), order );
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a, "order"_a );
+        cls.def(pybind11::pickle(
+            [](const pybind11::object &self) { // __getstate__
+            Space& spc = self.cast<Space&>();
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(spc.gridPart().gridView(), spc.order(), d);
+          },
+        [](pybind11::tuple t) { // __setstate__
+            if (t.size() != 3)
+                throw std::runtime_error("Invalid state in Space::setstate with "+std::to_string(t.size())+" arguments!");
+            auto order = t[1].cast<int>();
+            pybind11::handle gvPtr = t[0];
+            /* Create a new C++ instance */
+            Space *spc = new Space( gridPart< GridView >(gvPtr), order );
+            auto py_state = t[2].cast<pybind11::dict>();
+            return std::make_pair(spc, py_state);
+          }
+        ), pybind11::keep_alive< 1, 2 >());
       }
 
       template< class Space, class... options >
       void registerSpaceConstructor ( pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::GridPartType GridPart;
-        registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
         registerSpaceConstructorWithOrder( cls, std::is_constructible< Space, GridPart&, int >() );
+        registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
       }
 
       template< class Space, class... options >
@@ -145,6 +184,7 @@ namespace Dune
             #endif
               Dune::Fem::generateCode(self, interiorOrders, skeletonOrders, path, filename);
             } );
+
       }
 
     } // namespace detail

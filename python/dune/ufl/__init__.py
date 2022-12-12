@@ -125,6 +125,11 @@ class FemSpace(Space):
     def as_ufl(self):
         return self
 
+    def __getstate__(self):
+        return [self.__impl__, self.scalar]
+    def __setstate__(self,l):
+        self.__init__(l[0],l[1])
+
     def __getattr__(self, item):
         def tocontainer(func):
             @wraps(func)
@@ -141,7 +146,9 @@ class FemSpace(Space):
         return repr(self.__impl__)
     __dict__   = property(lambda self:self.__impl__.__dict__)
     __name__   = property(lambda self:self.__impl__.__name__)
+"""
     __class__  = property(lambda self:self.__impl__.__class__)
+"""
 
 class MixedFunctionSpace(ufl.MixedFunctionSpace):
     def __init__(self, *spaces):
@@ -384,6 +391,10 @@ class GridFunction(ufl.Coefficient):
         else:
             return GridFunction(self.gf,scalar=False, count=-self.count())
 
+    def __getstate__(self):
+        return [self.__impl__, self.scalar, self.count()]
+    def __setstate__(self,l):
+        self.__init__(l[0],l[1],l[2])
 
     def as_ufl(self):
         return self
@@ -442,7 +453,7 @@ class GridFunction(ufl.Coefficient):
         return self.name
     __dict__   = property(lambda self:self.gf.__dict__)
     __name__   = property(lambda self:self.gf.__name__)
-    __class__  = property(lambda self:self.gf.__class__)
+    # __class__  = property(lambda self:self.gf.__class__)
 
     def __call__(self,e,x=None):
         if x is None:

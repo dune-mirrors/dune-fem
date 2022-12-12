@@ -5,6 +5,7 @@ add_subdirectory(operator)
 add_subdirectory(scheme)
 add_subdirectory(space)
 add_subdirectory(utility)
+add_subdirectory(reader)
 
 add_python_targets(fem
   __init__

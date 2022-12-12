@@ -346,6 +346,11 @@ namespace Dune
         return -1;
       }
 
+      const auto& gridView() const
+      {
+        return asImp();
+      }
+
     protected:
       //! do not create explicit instances of this class
       GridPartInterface () = default;
