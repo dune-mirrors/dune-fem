@@ -143,6 +143,7 @@ _writeVTKDispatcher.append(vtkDispatchUFL)
 
 def assemble(form,space=None,gridView=None,order=None):
     import ufl
+    from ufl.equation import Equation
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
     try:
         params = form[1:]
@@ -150,10 +151,17 @@ def assemble(form,space=None,gridView=None,order=None):
     except TypeError:
         params = []
         pass
+    if isinstance(form, Equation):
+        functional = form.rhs
+        form = form.lhs
+    else:
+        functional = None
 
     args, cc = extract_arguments_and_coefficients(form)
     arity = len(args)
     assert arity == 0 or arity == 1 or arity == 2
+    assert functional is None or arity == 2
+
     if arity == 0:
         assert len(form.integrals()) == 1, "can only integrate forms with single integral"
         if gridView is None:
@@ -178,7 +186,16 @@ def assemble(form,space=None,gridView=None,order=None):
             op(space.zero,b)
             return b
         else:
-            op = dune.fem.operator.galerkin( [form] + params )
-            A = dune.fem.operator.linear(op)
-            op.jacobian(space.zero,A)
-            return A
+            if functional is not None:
+                op = dune.fem.operator.galerkin( [form == functional] + params )
+                A = dune.fem.operator.linear(op)
+                op.jacobian(space.zero,A)
+                b = space.zero.copy()
+                op(space.zero,b)
+                b *= -1
+                return A,b
+            else:
+                op = dune.fem.operator.galerkin( [form] + params )
+                A = dune.fem.operator.linear(op)
+                op.jacobian(space.zero,A)
+                return A

@@ -24,3 +24,9 @@ print("rhs:", b.scalarProductDofs(b))
 u = TrialFunction(s)
 A = assemble( x[0]*x[1]*u*v*dx )
 print("matrix",A.as_numpy.count_nonzero())
+
+from scipy.sparse.linalg import spsolve as solve
+A,b = assemble( x[0]*x[1]*u*v*dx == x[0]*x[1]*v*dx )
+print(b.as_numpy)
+x = solve(A.as_numpy,b.as_numpy[:])
+print(x)
