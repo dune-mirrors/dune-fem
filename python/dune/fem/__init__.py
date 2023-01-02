@@ -144,6 +144,13 @@ _writeVTKDispatcher.append(vtkDispatchUFL)
 def assemble(form,space=None,gridView=None,order=None):
     import ufl
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
+    try:
+        params = form[1:]
+        form = form[0]
+    except TypeError:
+        params = []
+        pass
+
     args, cc = extract_arguments_and_coefficients(form)
     arity = len(args)
     assert arity == 0 or arity == 1 or arity == 2
@@ -166,12 +173,12 @@ def assemble(form,space=None,gridView=None,order=None):
         if arity == 1:
             # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
             u = ufl.TrialFunction(space)
-            op = dune.fem.operator.galerkin( u*v*ufl.dx == form)
+            op = dune.fem.operator.galerkin( [u*v*ufl.dx == form] + params )
             b = space.zero.copy()
             op(space.zero,b)
             return b
         else:
-            op = dune.fem.operator.galerkin(form)
+            op = dune.fem.operator.galerkin( [form] + params )
             A = dune.fem.operator.linear(op)
             op.jacobian(space.zero,A)
             return A
