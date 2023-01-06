@@ -12,6 +12,9 @@
 #include <dune/istl/bvector.hh>
 #include <dune/python/istl/bvector.hh>
 #endif // #if HAVE_DUNE_ISTL
+#ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+#include <dune/fempy/py/testpetsc4py.hh>
+#endif
 
 #include <cstddef>
 
@@ -115,11 +118,7 @@ namespace Dune
       {
         cls.def_property_readonly( "_backend", [] ( DF &self )
         {
-          if (import_petsc4py() != 0)
-          {                           \
-            std::cout << "ERROR: could not import petsc4py\n";
-            throw std::runtime_error("Error during import of petsc4py");
-          }
+          testPetsc4PyCompatibility();
 
           Vec vec = self.dofVector().array();
           pybind11::handle petsc_vec(PyPetscVec_New(vec));
