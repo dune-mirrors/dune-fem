@@ -708,12 +708,12 @@ class ModelClass():
             uninitEntity = Method('void', 'unbind')
         if self.skeleton is None:
             for i, c in enumerate(self._coefficients):
-                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( entity )', uses=[entity, coefficients_]))
+                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( this->entity() )', uses=[entity, coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( )', uses=[coefficients_]))
         else:
             for i, c in enumerate(self._coefficients):
-                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity )', uses=[entity, coefficients_]))
-                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity )', uses=[entity, coefficients_]))
+                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
+                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).unbind( )', uses=[coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).unbind( )', uses=[coefficients_]))
         initEntity.append(self.init)
