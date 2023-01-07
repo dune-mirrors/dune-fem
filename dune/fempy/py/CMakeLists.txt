@@ -12,6 +12,7 @@ set(HEADERS
   space.hh
   spaceadapt.hh
   ufllocalfunction.hh
+  testpetsc4py.hh
 )
 
 if( NOT DUNE_ENABLE_PYTHONBINDINGS )

@@ -211,8 +211,10 @@ def addBackend(Df,backend):
     def backend_(self):
         try:
             return self._backend
+        except ImportError as ex:
+            raise ex
         except:
-            pass
+            pass # still try numpy
         try:
             import numpy as np
             return np.array( self.dofVector, copy=False )

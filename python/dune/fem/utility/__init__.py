@@ -304,5 +304,5 @@ def pointSample(gridFunction,x0):
     return Sampler(gridFunction).pointSample( x0 )
 
 def boundarySample(gridFunction, **kwargs):
-    boundarySample.__doc__ = Sampler.boundarySample.__doc__
     return Sampler(gridFunction).boundarySample(**kwargs)
+boundarySample.__doc__ = Sampler.boundarySample.__doc__
