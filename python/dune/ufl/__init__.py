@@ -139,7 +139,8 @@ class FemSpace(Space):
         result = getattr(self.__impl__, item)
         if isinstance(result, GridFunction):
             return result
-        if not isinstance(result, FemSpace) and callable(result):
+        if ( not isinstance(result, FemSpace) and callable(result) and
+             not item in ["mapper"] ):
             # doc = result.func.__doc__
             result = tocontainer(result)
             # result.func.__doc__ = doc
