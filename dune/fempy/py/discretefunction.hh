@@ -12,9 +12,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/python/istl/bvector.hh>
 #endif // #if HAVE_DUNE_ISTL
-#ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
 #include <dune/fempy/py/testpetsc4py.hh>
-#endif
 
 #include <cstddef>
 
