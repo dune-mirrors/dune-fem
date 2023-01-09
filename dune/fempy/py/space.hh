@@ -4,6 +4,7 @@
 #include <dune/common/hybridutilities.hh>
 
 #include <dune/fem/space/basisfunctionset/codegen.hh>
+#include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include <dune/python/common/dynmatrix.hh>
 #include <dune/python/common/dynvector.hh>
@@ -157,18 +158,70 @@ namespace Dune
       template< class Space, class... options >
       void registerSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
       {
+        typedef typename Space::EntityType  EntityType;
+        typedef typename Space::DomainType  DomainType;
+        typedef typename Space::RangeType   RangeType;
+        typedef typename Space::JacobianRangeType  JacobianRangeType;
+        typedef typename Space::BlockMapperType          BlockMapperType;
+        // this only works when GlobalKeyType is size_t or similar, which it is
+        // for all implementations so far
+        typedef typename BlockMapperType::GlobalKeyType  GlobalKeyType;
+
         registerFunctionSpace(module,cls);
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
         cls.def_property_readonly( "primarySize", [] ( Space &self ) -> int { return self.primarySize(); } );
         cls.def_property_readonly( "auxiliarySize", [] ( Space &self ) -> int { return self.auxiliarySize(); } );
         cls.def_property_readonly( "_sizeOfField", [] ( Space &self ) -> unsigned int { return sizeof(typename Space::RangeFieldType); } );
-        cls.def_property_readonly( "localBlockSize", [] ( Space &spc ) -> unsigned int { return spc.localBlockSize; } );
-        cls.def("localOrder", [] ( Space &self, typename Space::EntityType &e) -> int { return self.order(e); } );
-        cls.def("map", [] ( Space &spc, typename Space::EntityType &e) -> std::vector<unsigned int>
-            { std::vector<unsigned int> idx(spc.blockMapper().numDofs(e));
-              spc.blockMapper().mapEach(e, Fem::AssignFunctor< std::vector< unsigned int > >( idx ) );
+        cls.def_property_readonly( "localBlockSize", [] ( Space &self ) -> unsigned int { return self.localBlockSize; } );
+        cls.def("localOrder", [] ( Space &self, const EntityType &e) -> int { return self.order(e); } );
+        cls.def("map", [] ( Space &self, const EntityType &e) -> std::vector< GlobalKeyType >
+            { std::vector< GlobalKeyType > idx;
+              // fill vector with dof indices
+              self.blockMapper().map(e, idx);
               return idx;
             } );
+        cls.def("evaluateBasis", [] ( Space &self, const EntityType &e, const DomainType& xLocal) -> std::vector<RangeType>
+            {
+              // get basis function set
+              const auto basisSet = self.basisFunctionSet( e );
+              // evaluate all basis functions at given point xLocal
+              std::vector< RangeType > phis( basisSet.size() );
+              basisSet.evaluateAll( xLocal, phis );
+              return phis;
+            } );
+        cls.def("jacobianBasis", [] ( Space &spc, const EntityType &e, const DomainType& xLocal) -> std::vector< JacobianRangeType >
+            {
+              // get basis function set
+              const auto basisSet = spc.basisFunctionSet( e );
+
+              std::vector< JacobianRangeType > dPhis( basisSet.size() );
+              basisSet.jacobianAll( xLocal, dPhis );
+              return dPhis;
+            } );
+
+        auto regMap = Dune::Python::insertClass< BlockMapperType >
+              ( cls, "BlockMapper", Dune::Python::GenerateTypeName(cls,"BlockMapperType"));
+        if( regMap.second )
+        {
+          auto clsMap = regMap.first;
+          clsMap.def_property_readonly( "localBlockSize", [] ( BlockMapperType &self ) -> unsigned int { return Space::localBlockSize; } );
+          clsMap.def("block", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
+              { std::vector< GlobalKeyType > idx;
+                self.map(e, idx);
+                return idx;
+              } );
+          clsMap.def("__call__", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
+              {
+                typedef Dune::Fem::NonBlockMapper< BlockMapperType, Space::localBlockSize > MapperType;
+                MapperType mapper( self );
+                std::vector< GlobalKeyType > idx;
+                // fill vector with dof indices
+                mapper.map( e, idx );
+                return idx;
+              } );
+        }
+        cls.def_property_readonly( "mapper", [] ( Space &self ) -> auto&
+        { return self.blockMapper(); } );
 
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
