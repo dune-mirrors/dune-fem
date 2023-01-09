@@ -137,6 +137,8 @@ class FemSpace(Space):
                 return func(*args, **kwargs)
             return wrapper
         result = getattr(self.__impl__, item)
+        if isinstance(result, GridFunction):
+            return result
         if not isinstance(result, FemSpace) and callable(result):
             # doc = result.func.__doc__
             result = tocontainer(result)

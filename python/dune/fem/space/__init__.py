@@ -2,6 +2,7 @@ import hashlib
 import inspect
 import sys
 import os
+import functools
 
 from dune.deprecate import deprecated
 import dune.common.module
@@ -225,7 +226,6 @@ def addBackend(Df,backend):
 
 _defaultGenerator = SimpleGenerator(["Space","DiscreteFunction"], "Dune::FemPy")
 
-import functools
 def spcInterpolate(self,*args,**kwargs):
     return interpolate(self,*args,**kwargs)
 def spcCodegen(self,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders):
@@ -234,12 +234,20 @@ def spcProject(self,*args,**kwargs):
     return project(self,*args,**kwargs)
 def spcFunction(self,*args,**kwargs):
     return function.discreteFunction(self,*args,**kwargs)
+def zeroDF(space):
+    try:
+        return space._zero
+    except AttributeError:
+        space._zero = space.function(name="zero")
+        space._zero.clear()
+        return space._zero
 def addAttr(module, self, field, scalar, codegen):
     setattr(self, "field", field)
     setattr(self, "scalar", scalar)
     setattr(self, "interpolate",functools.partial(spcInterpolate,self))
     setattr(self, "codegenStorage", codegen)
     setattr(self, "codegen", functools.partial(spcCodegen,self))
+    module.Space.zero = property( zeroDF )
 
     DF = module.DiscreteFunction
     if hasattr(DF,"_project"):

@@ -140,3 +140,62 @@ def vtkDispatchUFL(grid,f):
         gf = None
     return gf
 _writeVTKDispatcher.append(vtkDispatchUFL)
+
+def assemble(form,space=None,gridView=None,order=None):
+    import ufl
+    from ufl.equation import Equation
+    from ufl.algorithms.analysis import extract_arguments_and_coefficients
+    try:
+        params = form[1:]
+        form = form[0]
+    except TypeError:
+        params = []
+        pass
+    if isinstance(form, Equation):
+        functional = form.rhs
+        form = form.lhs
+    else:
+        functional = None
+
+    args, cc = extract_arguments_and_coefficients(form)
+    arity = len(args)
+    assert arity == 0 or arity == 1 or arity == 2
+    assert functional is None or arity == 2
+
+    if arity == 0:
+        assert len(form.integrals()) == 1, "can only integrate forms with single integral"
+        if gridView is None:
+            assert len(cc) > 0, "to integrate a form  a 'gridView' has to be provided"
+            gridView = cc[0].gridView
+        if order is None:
+            assert len(cc) > 0, "to integrate an form a quadrature 'order' has to be provided"
+            order = max( gf.order for gf in cc if hasattr(gf,"order") )
+        return dune.fem.function.integrate(gridView,form.integrals()[0].integrand(),order=order)
+    else:
+        v = args[0]
+        if not space:
+            try:
+                space = v.ufl_function_space()
+            except:
+                raise AttributeError("can not access space from given form")
+        if arity == 1:
+            # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
+            u = ufl.TrialFunction(space)
+            op = dune.fem.operator.galerkin( [u*v*ufl.dx == form] + params )
+            b = space.zero.copy()
+            op(space.zero,b)
+            return b
+        else:
+            if functional is not None:
+                op = dune.fem.operator.galerkin( [form == functional] + params )
+                A = dune.fem.operator.linear(op)
+                op.jacobian(space.zero,A)
+                b = space.zero.copy()
+                op(space.zero,b)
+                b *= -1
+                return A,b
+            else:
+                op = dune.fem.operator.galerkin( [form] + params )
+                A = dune.fem.operator.linear(op)
+                op.jacobian(space.zero,A)
+                return A
