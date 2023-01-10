@@ -159,7 +159,8 @@ namespace Dune
       void registerSpace ( pybind11::handle module, pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::EntityType  EntityType;
-        typedef typename Space::DomainType  DomainType;
+        typedef typename Dune::FieldVector< typename Space::DomainFieldType,
+                                            Space::GridPartType::dimension >  LocalDomainType;
         typedef typename Space::RangeType   RangeType;
         typedef typename Space::JacobianRangeType  JacobianRangeType;
         typedef typename Space::BlockMapperType          BlockMapperType;
@@ -180,7 +181,7 @@ namespace Dune
               self.blockMapper().map(e, idx);
               return idx;
             } );
-        cls.def("evaluateBasis", [] ( Space &self, const EntityType &e, const DomainType& xLocal) -> std::vector<RangeType>
+        cls.def("evaluateBasis", [] ( Space &self, const EntityType &e, const LocalDomainType& xLocal) -> std::vector<RangeType>
             {
               // get basis function set
               const auto basisSet = self.basisFunctionSet( e );
@@ -189,7 +190,7 @@ namespace Dune
               basisSet.evaluateAll( xLocal, phis );
               return phis;
             } );
-        cls.def("jacobianBasis", [] ( Space &spc, const EntityType &e, const DomainType& xLocal) -> std::vector< JacobianRangeType >
+        cls.def("jacobianBasis", [] ( Space &spc, const EntityType &e, const LocalDomainType& xLocal) -> std::vector< JacobianRangeType >
             {
               // get basis function set
               const auto basisSet = spc.basisFunctionSet( e );
