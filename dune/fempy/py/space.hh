@@ -176,10 +176,10 @@ namespace Dune
         cls.def_property_readonly( "localBlockSize", [] ( Space &self ) -> unsigned int { return self.localBlockSize; } );
         cls.def("localOrder", [] ( Space &self, const EntityType &e) -> int { return self.order(e); } );
         cls.def("map", [] ( Space &self, const EntityType &e) -> std::vector< GlobalKeyType >
-            { std::vector< GlobalKeyType > idx;
+            { std::vector< GlobalKeyType > indices( self.blockMapper().numDofs( e ) );
               // fill vector with dof indices
-              self.blockMapper().map(e, idx);
-              return idx;
+              self.blockMapper().mapEach(e, [&indices]( const int local, GlobalKeyType global ) { indices[ local ] = global; });
+              return indices;
             } );
         cls.def("evaluateBasis", [] ( Space &self, const EntityType &e, const LocalDomainType& xLocal) -> std::vector<RangeType>
             {
@@ -207,18 +207,19 @@ namespace Dune
           auto clsMap = regMap.first;
           clsMap.def_property_readonly( "localBlockSize", [] ( BlockMapperType &self ) -> unsigned int { return Space::localBlockSize; } );
           clsMap.def("block", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
-              { std::vector< GlobalKeyType > idx;
-                self.map(e, idx);
-                return idx;
+              { std::vector< GlobalKeyType > indices( self.numDofs( e ) );
+                // fill vector with dof indices
+                self.mapEach(e, [&indices]( const int local, GlobalKeyType global ) { indices[ local ] = global; });
+                return indices;
               } );
           clsMap.def("__call__", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
               {
                 typedef Dune::Fem::NonBlockMapper< BlockMapperType, Space::localBlockSize > MapperType;
                 MapperType mapper( self );
-                std::vector< GlobalKeyType > idx;
+                std::vector< GlobalKeyType > indices;
                 // fill vector with dof indices
-                mapper.map( e, idx );
-                return idx;
+                mapper.map( e, indices );
+                return indices;
               } );
         }
         cls.def_property_readonly( "mapper", [] ( Space &self ) -> auto&
