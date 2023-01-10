@@ -57,6 +57,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
 
         if grid.dimGrid == 1:
             triangulation = triangulationOfNetwork(grid, level, linewidth)
+            data = solution.pointData(level)
             n = len(data)
             data = append(data.T, [zeros(len(triangulation.triangles))], axis=1).T
             for i in range(n//2):
