@@ -22,6 +22,8 @@ namespace Dune
     private:
       DynamicArray< IndexType > indices_;
 
+      static const IndexType invalidIndex = IndexType(-1);
+
     public:
       //! constructor creating empty map
       CommunicationIndexMap()
@@ -37,6 +39,12 @@ namespace Dune
       {
         assert( i < size() );
         return indices_[ i ];
+      }
+
+      //! mark index stored at this position as invalid
+      void erase( const size_t i )
+      {
+        indices_[ i ] = invalidIndex;
       }
 
       //! clear index map
@@ -125,6 +133,23 @@ namespace Dune
           buffer.read( indices_[i] );
           //std::cout << "P[" << MPIManager ::rank() << " read idx " << indices_[i] << std::endl;
         }
+      }
+
+      //! remove and invalid indices from the stored list of indices
+      void compress()
+      {
+        size_t writePos = 0;
+        const size_t idxSize = indices_.size();
+        for(size_t i=0; i<idxSize; ++i)
+        {
+          if( indices_[ i ] != invalidIndex )
+          {
+            if( i != writePos )
+              indices_[ writePos ] = indices_[ i ];
+            writePos++;
+          }
+        }
+        indices_.resize( writePos );
       }
 
     protected:

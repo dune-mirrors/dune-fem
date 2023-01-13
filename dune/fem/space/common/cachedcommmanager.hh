@@ -6,7 +6,8 @@
 
 //- system includes
 #include <iostream>
-#include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <queue>
 #include <memory>
 #include <vector>
@@ -738,6 +739,41 @@ namespace Dune
         // create buffers
         ObjectStreamVectorType osv( nlinks );
 
+        const int codimensions = BlockMapper::GridPartType::dimension;
+        int hasHigherCodims = 0;
+        for( int c=1; c<=codimensions; ++c )
+          hasHigherCodims += int(blockMapper_.contains( c ));
+
+        // make sure all dof pairs are unique
+        // otherwise remove duplicates, for codimension 0 it does not matter
+        if( hasHigherCodims > 0 )
+        {
+          typedef typename IndexMapVectorType::value_type::IndexType IndexType;
+          for(int link=0; link<nlinks; ++link)
+          {
+            std::unordered_map< IndexType, std::unordered_set<IndexType> > uniqueRecvIndicesForSendIndex;
+            auto& sendMap = sendIndexMap_[ dest[link] ];
+            auto& recvMap = recvIndexMap_[ dest[link] ];
+            assert( sendMap.size() == recvMap.size() );
+
+            const size_t size = sendMap.size();
+            for( size_t i=0; i<size; ++i )
+            {
+              auto& uniqueRecvIndices = uniqueRecvIndicesForSendIndex[ sendMap[ i ] ];
+              if( uniqueRecvIndices.count( recvMap[ i ] ) == 0 )
+                uniqueRecvIndices.insert( recvMap[ i ] );
+              else
+              {
+                sendMap.erase( i );
+                recvMap.erase( i );
+              }
+            }
+
+            // make maps consecutive again
+            sendMap.compress();
+            recvMap.compress();
+          }
+        }
         //////////////////////////////////////////////////////////////
         //
         //  at this point complete send maps exsist on receiving side,
