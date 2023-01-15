@@ -29,7 +29,7 @@ namespace Dune
 
     /** \brief Local Mass Matrix inversion implementation, select the correct method in your
         implementation */
-    template< class DiscreteFunctionSpace, class VolumeQuadrature >
+    template< class DiscreteFunctionSpace, class VolumeQuadrature, bool refElemScaling = true >
     class LocalMassMatrixImplementation
     {
       typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > ThisType;
@@ -258,7 +258,17 @@ namespace Dune
       //! return mass factor for diagonal mass matrix
       double getAffineMassFactor(const Geometry& geo) const
       {
-        return geoInfo_.referenceVolume( geo.type() ) / geo.volume();
+        // for all normalized spaces scaling with reference element volume
+        // is needed (DG spaces)
+        if constexpr( refElemScaling )
+        {
+          return geoInfo_.referenceVolume( geo.type() ) / geo.volume();
+        }
+        else
+        {
+          // no scaling is needed for finite volume spaces
+          return 1.0 / geo.volume();
+        }
       }
 
       template< class BasisFunctionSet >
@@ -923,11 +933,11 @@ namespace Dune
     ///////////////////////////////////////////////////////////////////
 
     /** \brief DG Local Mass Matrix for arbitrary spaces */
-    template< class DiscreteFunctionSpace, class VolumeQuadrature >
+    template< class DiscreteFunctionSpace, class VolumeQuadrature, bool refElemScaling = true >
     class LocalMassMatrixImplementationDgOrthoNormal
-    : public LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature >
+    : public LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature, refElemScaling >
     {
-      typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature > BaseType;
+      typedef LocalMassMatrixImplementation< DiscreteFunctionSpace, VolumeQuadrature, refElemScaling > BaseType;
 
     public:
       typedef typename BaseType :: EntityType  EntityType;
