@@ -144,7 +144,7 @@ namespace Dune
           adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
 
         // mark new polynomial orders for space
-        for( const auto element : space_ )
+        for( const auto& element : space_ )
           space_.mark( marking(element), element );
 
         // adapt the polynomial orders of the space and adjust
