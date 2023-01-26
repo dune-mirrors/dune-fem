@@ -921,7 +921,7 @@ namespace Dune
 
     public:
       // copy base class constructors
-      using BaseType :: LocalMassMatrixImplementation;
+      using BaseType :: BaseType;
     };
 
 
