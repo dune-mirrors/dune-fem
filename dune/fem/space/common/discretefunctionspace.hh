@@ -961,7 +961,6 @@ namespace Dune
       {
       }
 
-    protected:
       /** \brief returns true if the grid has more than one geometry type
        *
        *  \return \b true if the underlying grid has more than one geometry type
@@ -971,6 +970,7 @@ namespace Dune
       {
         return allGeomTypes_.geomTypes(codim);
       }
+    protected:
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
