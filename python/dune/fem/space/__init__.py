@@ -302,8 +302,8 @@ def addDiscreteFunction(space, storage):
                    ]
     elif storage == "numpy" or storage == "fem":
         ctor = [Constructor(['const std::string &name', 'const ' +
-            spaceType + '&space', 'pybind11::array_t<double> dofVector'],
-                ['double *dof = static_cast< double* >( dofVector.request(false).ptr );',
+            spaceType + '&space', 'pybind11::array_t<'+space.field+'> dofVector'],
+                [space.field + ' *dof = static_cast< '+space.field+'* >( dofVector.request(false).ptr );',
                  'return new DuneType(name,space,dof);'],
                 ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
             ]
