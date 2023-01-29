@@ -24,8 +24,12 @@ namespace Dune
     template <class GridPartType>
     struct WeightDefault {
       typedef typename GridPartType::template Codim<0>::EntityType EntityType;
-      typedef FieldVector<double,GridPartType::dimensionworld> WorldDomainType;
-      typedef FieldVector<double,GridPartType::dimension> DomainType;
+
+      typedef typename EntityType::Geometry::GlobalCoordinate WorldDomainType;
+      typedef typename EntityType::Geometry::LocalCoordinate  DomainType;
+
+      //typedef FieldVector<double,GridPartType::dimensionworld> WorldDomainType;
+      //typedef FieldVector<double,GridPartType::dimension> DomainType;
       void setEntity(const EntityType& en) {
         en_ = en;
         volume_ = en.geometry().volume();
