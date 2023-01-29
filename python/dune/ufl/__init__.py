@@ -105,14 +105,18 @@ class Space(ufl.FunctionSpace):
             return Space(self._cell,1)
 
 class FemSpace(Space):
-    def __init__(self, space, scalar=None):
+    def __init__(self, space, field=None, scalar=None):
         # we shouldn't get into the situation of double wrapping
         assert not isinstance(space,FemSpace)
         if scalar is None:
             self.scalar = space.scalar
         else:
             self.scalar = scalar
-        Space.__init__(self,space, scalar=self.scalar)
+        # obtain field from space if not given
+        if field is None:
+            self.field = space.field
+
+        Space.__init__(self,space, field=self.field, scalar=self.scalar)
         self.__impl__ = space
         __module__ = space.__module__
         self.FemSpaceClass = space.__class__
