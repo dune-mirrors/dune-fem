@@ -7,6 +7,7 @@
 //- Dune includes
 #include <dune/common/version.hh>
 #include <dune/fem/quadrature/quadrature.hh>
+#include <dune/common/hash.hh>
 
 namespace Dune
 {
@@ -27,6 +28,11 @@ namespace Dune
         return (id_ < other.id_);
       }
 
+      bool operator> ( const QuadratureKey &other ) const
+      {
+        return (id_ > other.id_);
+      }
+
       bool operator== ( const QuadratureKey &other ) const
       {
         return (id_ == other.id_);
@@ -35,6 +41,13 @@ namespace Dune
       friend std::ostream &operator<< ( std::ostream &out, const QuadratureKey &key )
       {
         return out << "(topologyId " << ((key.id_ >> 16) << 1) << ", quadId " << (key.id_ & ((1u << 16)-1)) << ")";
+      }
+
+      inline friend std::size_t hash_value(const QuadratureKey& arg)
+      {
+        std::size_t seed = 0;
+        hash_combine(seed,arg.id_);
+        return seed;
       }
 
     protected:
@@ -70,5 +83,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+DUNE_DEFINE_HASH(DUNE_HASH_TEMPLATE_ARGS(),DUNE_HASH_TYPE(Dune::Fem::QuadratureKey))
 
 #endif // #ifndef DUNE_FEM_POINTMAPPER_HH
