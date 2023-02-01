@@ -2,6 +2,7 @@
 #define DUNE_FEM_BASISFUNCTIONSET_BASISFUNCTIONSET_HH
 
 #include <cstddef>
+#include <type_traits>
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
@@ -48,8 +49,9 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename DomainType::value_type,
-                                      DomainType::dimension > ReferenceElementType;
+      typedef std::decay_t< decltype( Dune::ReferenceElements< typename Entity::Geometry::ctype,
+                                                               Entity::Geometry::coorddimension >::
+                              general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       //! \brief return order of basis function set
       int order () const;

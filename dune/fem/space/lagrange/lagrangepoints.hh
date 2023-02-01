@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 #define DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 
+#include <type_traits>
+
 // dune-common includes
 #include <dune/fem/common/forloop.hh>
 
@@ -484,8 +486,9 @@ namespace Dune
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
 
     private:
-      typedef Dune::ReferenceElement< FieldType, dimension > ReferenceElementType;
+      //! \brief type of reference element
       typedef Dune::ReferenceElements< FieldType, dimension > ReferenceElementsType;
+      typedef std::decay_t< decltype( ReferenceElementsType::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       SubEntityLagrangePointIterator ( const LagrangePointSetType &lagrangePointSet,
                                        const unsigned int subEntity,
