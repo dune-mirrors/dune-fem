@@ -661,8 +661,7 @@ namespace Dune
         // in case of linear space the is zero
         const int numGradDofs = gradientBaseFct( gradSet );
 
-        const Dune::ReferenceElement< coordType, dim > & refElem =
-            Dune::ReferenceElements< coordType, dim >::general( startType );
+        const auto& refElem = Dune::ReferenceElements< coordType, dim >::general( startType );
 
         // get number of faces
         const int overallFaceDofs = numFaceDofs * refElem.size(1);
