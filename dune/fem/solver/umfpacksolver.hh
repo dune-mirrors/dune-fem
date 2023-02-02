@@ -80,7 +80,8 @@ public:
   typedef DiscreteFunction DiscreteFunctionType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType,long int> CCSMatrixType;
+  // Use index type from SuiteSparse (see SuiteSparse_config.h)
+  typedef ColCompMatrix<typename AssembledOperatorType::MatrixType::MatrixBaseType, SuiteSparse_long> CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
