@@ -551,4 +551,6 @@ class SourceWriter:
         if field=="complex":
             return "std::complex<double>"
         else:
-            return "double"
+            assert field == "double" or \
+                   field == "float" , "Unsupported field type!"
+            return field

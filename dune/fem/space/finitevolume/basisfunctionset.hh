@@ -72,7 +72,7 @@ namespace Dune
       {
         const unsigned int nop = quadrature.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-          axpy( quadrature[ qp ], values[ qp ], dofs );
+          axpyImpl( values[ qp ], dofs );
       }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
@@ -82,8 +82,8 @@ namespace Dune
         const unsigned int nop = quadrature.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
         {
-          axpy( quadrature[ qp ], valuesA[ qp ], dofs );
-          axpy( quadrature[ qp ], valuesB[ qp ], dofs );
+          axpyImpl( valuesA[ qp ], dofs );
+          axpyImpl( valuesB[ qp ], dofs );
         }
       }
 
@@ -91,10 +91,24 @@ namespace Dune
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
+        axpyImpl( valueFactor, dofs );
+      }
+
+    protected:
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
+      template< class DofVector >
+      void axpyImpl ( const RangeType &valueFactor, DofVector &dofs ) const
+      {
         for( int i = 0; i < RangeType::dimension; ++i )
           dofs[ i ] += valueFactor[ i ];
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
+      template< class DofVector >
+      void axpyImpl ( const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
+      {}
+
+    public:
       /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const

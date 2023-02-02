@@ -1,4 +1,6 @@
 from __future__ import print_function
+from dune.generator import algorithm, path
+import io
 
 # just an idea
 
@@ -47,6 +49,43 @@ def evaluate(expression, grid=None, space=None, target=None, coordinate=None):
         assert target
         pass # return solver info
 
+class GridWidth:
+    def __init__(self, gridView):
+        self._gridView = gridView
+        code = """
+#include <dune/fem/misc/gridwidth.hh>
+#include <dune/fem/gridpart/common/gridpartadapter.hh>
+
+template <class GridView>
+double gridWidth(const GridView& gv)
+{
+  Dune::Fem::GridPartAdapter< GridView > gp( gv );
+  return Dune::Fem::GridWidth::calcGridWidth(gp);
+}
+"""
+        self._gridWidth = algorithm.load("gridWidth", io.StringIO(code), self._gridView )
+
+    def __call__(self):
+        """
+        Returns:
+        --------
+            h computed as min(|E|/|e|) forall E in gridView
+        """
+        return self._gridWidth(self._gridView)
+
+def gridWidth( gridView ):
+    """
+    Computes the minimal grid width which over all elements by computing min { |E|/|e| }
+    for all intersections e of an element.
+
+    Parameters:
+        gridView  grid view to compute gridwidth h for. h is comp
+
+    Returns: h computed as min(|E|/|e|) forall E in gridView
+    """
+    return GridWidth(gridView)()
+
+
 class Sampler:
     def __init__(self, gridFunction ):
         self.gridFunction = gridFunction
@@ -55,12 +94,10 @@ class Sampler:
         self.boundarySampler = None
 
     def lineSample(self,x0,x1,N):
-        from dune.generator import algorithm, path
         from dune.common import FieldVector
         import numpy
         x0, x1 = FieldVector(x0), FieldVector(x1)
         if self.lineSampler is None:
-            import io
             _lineSampleCode = \
             """
             #ifndef FEMPY_UTILITY_HH
@@ -102,12 +139,10 @@ class Sampler:
         return x,y
 
     def pointSample(self, x0):
-        from dune.generator import algorithm, path
         from dune.common import FieldVector
         import numpy
         x0 = FieldVector(x0)
         if self.pointSampler is None:
-            import io
             _pointSampleCode = \
             """
             #ifndef FEMPY_UTILITY_HH
@@ -152,7 +187,6 @@ class Sampler:
                            points and values will be empty.
 
         """
-        from dune.generator import algorithm, path
         import numpy
 
         if boundaryId is None and boundaryDomain is None:
@@ -180,7 +214,6 @@ class Sampler:
         boundaryDomain.cppTypeName = "std::function<bool(const Dune::FieldVector<double, " + str(self.gridFunction.gridView.dimensionworld) + ">&)>"
 
         if self.boundarySampler is None:
-            import io
             _bndSampleCode = \
 """
 #include <algorithm>

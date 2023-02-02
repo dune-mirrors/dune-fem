@@ -114,18 +114,6 @@ def toFileName(value):
     value = unicode(re.sub('[-\s]+', '-', value))
     return value
 
-def modelSignature(form,*args):
-    dirichletBCs = [str(arg.ufl_value) for arg in args if isinstance(arg, DirichletBC)]
-    expr = [str(arg) for arg in args if isinstance(arg, Expr)]
-    sig = form.signature()
-    if len(dirichletBCs) > 0:
-        dirichletBCs.append(sig)
-        sig = hashIt( dirichletBCs )
-    if len(expr) > 0:
-        expr.append(sig)
-        sig = hashIt( expr )
-    return sig
-
 def compileUFL(form, patch, *args, **kwargs):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
@@ -184,10 +172,12 @@ def compileUFL(form, patch, *args, **kwargs):
 
     x = SpatialCoordinate(form.ufl_cell())
 
-    try:
-        field = u.ufl_function_space().field
-    except AttributeError:
-        field = "double"
+    field = kwargs.get("field", None)
+    if field is None:
+        try:
+            field = u.ufl_function_space().field
+        except AttributeError:
+            field = "double"
 
     # if exact solution is passed in subtract a(u,.) from the form
     if "exact" in kwargs:
@@ -205,10 +195,11 @@ def compileUFL(form, patch, *args, **kwargs):
     # linNVSource = linSources[2]
     # linSource = linSources[0] + linSources[1]
 
+
     if patch is not None:
-        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,*patch,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, codegen.uflSignature(form,*patch,*args), field=field)
     else:
-        model = ConservationLawModel(dimDomain, dimRange, u, modelSignature(form,None,*args))
+        model = ConservationLawModel(dimDomain, dimRange, u, codegen.uflSignature(form,None,*args), field=field)
     model._replaceCoeff = coeff
 
     model.hasNeumanBoundary = not boundarySource.is_zero()

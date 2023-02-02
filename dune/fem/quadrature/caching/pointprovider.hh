@@ -4,6 +4,7 @@
 //- System includes
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 //- Dune includes
 #include <dune/common/math.hh>
@@ -47,7 +48,7 @@ namespace Dune
                                                     const GeometryType& elementGeo);
 
     private:
-      typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
+      typedef std::unordered_map<QuadratureKeyType, GlobalPointVectorType> PointContainerType;
       typedef typename PointContainerType::iterator PointIteratorType;
 
       // points container holding quadrature points

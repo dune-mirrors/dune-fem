@@ -80,7 +80,8 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void apply ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
-        Range value;
+        // use local functions range type here in case those differ
+        typename LocalFunction::RangeType value;
         LocalAverage< LocalFunction, GridPartType >::apply( localFunction, value );
         for( int i = 0; i < Range::dimension; ++i )
           localDofVector[ i ] = value[ i ];

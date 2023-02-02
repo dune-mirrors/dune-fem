@@ -20,7 +20,7 @@ from ufl.differentiation import Grad
 
 class ConservationLawModel:
     version = "v1_3"
-    def __init__(self, dimDomain, dimRange, u, signature):
+    def __init__(self, dimDomain, dimRange, u, signature, field = "double"):
         assert isInteger(dimRange)
         self.dimDomain = dimDomain
         self.dimRange = dimRange
@@ -28,7 +28,7 @@ class ConservationLawModel:
         self.init = []
         self.vars = None
         self.signature = signature + ConservationLawModel.version
-        self.field = "double"
+        self.field = field
 
         self._constants = []
         self._constantNames = {}
