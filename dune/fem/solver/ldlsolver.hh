@@ -20,12 +20,14 @@
 #if HAVE_SUITESPARSE_LDL
 
 #ifdef __cplusplus
-extern "C"
-{
-#include "ldl.h"
-#include "amd.h"
+extern "C" {
+#endif
+#include <ldl.h>
+#ifdef __cplusplus
 }
 #endif
+
+#include <amd.h>
 
 namespace Dune
 {
