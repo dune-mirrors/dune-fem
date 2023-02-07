@@ -178,11 +178,12 @@ class ConservationLawModel:
         code.append(constructor)
 
         init = ['entity_ = &entity;']
-        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').bind( entity );' for i, c in enumerate(self._coefficients)]
+        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').bind( this->entity() );' for i, c in enumerate(self._coefficients)]
         init = [UnformattedBlock(init)] + self.init + [return_(True)]
         code.append(Method('bool', 'init', args=['const EntityType &entity'], code=init, const=True))
-        uninit = ['entity_ = nullptr;']
+        uninit = []
         uninit += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( );' for i, c in enumerate(self._coefficients)]
+        uninit += ['entity_ = nullptr;']
         uninit = [UnformattedBlock(uninit)]
         code.append(Method('void', 'unbind', code=uninit, const=True))
 
