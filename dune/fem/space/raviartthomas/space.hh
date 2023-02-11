@@ -14,15 +14,16 @@
 #include <dune/geometry/type.hh>
 
 // dune-localfunction includes
-#include <dune/localfunctions/raviartthomas/raviartthomas02d.hh>
+#include <dune/localfunctions/raviartthomas/raviartthomassimplex.hh>
+
 #include <dune/localfunctions/raviartthomas/raviartthomas0cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas0cube3d.hh>
-#include <dune/localfunctions/raviartthomas/raviartthomas12d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas1cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas1cube3d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas2cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas3cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas4cube2d.hh>
+
 
 // dune-fem includes
 #include <dune/fem/space/common/uniquefacetorientation.hh>
@@ -49,6 +50,35 @@ namespace Dune
       };
 
       // 2d, Simplex, 0th order
+      template< class D, class R, int order >
+      struct RaviartThomasLocalFiniteElement< Dune::GeometryTypes::simplex( 2 ).id(), D, R, 2, order >
+        : public RaviartThomasSimplexLocalFiniteElement< 2, D, R >
+      {
+        static constexpr std::size_t numOrientations = 8; //Dune::power(2, dimension+1);
+        //using RaviartThomasSimplexLocalFiniteElement< 2, D, R >::RaviartThomasSimplexLocalFiniteElement;
+        RaviartThomasLocalFiniteElement( int i = 0 ):
+          RaviartThomasSimplexLocalFiniteElement< 2, D, R >(Dune::GeometryTypes::simplex( 2 ), order ) {}
+
+        RaviartThomasLocalFiniteElement( const RaviartThomasLocalFiniteElement& ) : RaviartThomasSimplexLocalFiniteElement< 2, D, R >(Dune::GeometryTypes::simplex( 2 ), order ) {}
+      };
+
+      // 3d, Simplex, 0th order
+      template< class D, class R, int order >
+      struct RaviartThomasLocalFiniteElement< Dune::GeometryTypes::simplex( 3 ).id(), D, R, 3, order >
+        : public RaviartThomasSimplexLocalFiniteElement< 3, D, R >
+      {
+        static constexpr std::size_t numOrientations = 16; //Dune::power(2, dimension+1);
+        //using RaviartThomasSimplexLocalFiniteElement< 3, D, R >::RaviartThomasSimplexLocalFiniteElement;
+
+        RaviartThomasLocalFiniteElement( int i=0 ):
+          RaviartThomasSimplexLocalFiniteElement< 3, D, R >(Dune::GeometryTypes::simplex( 3 ), order ) {}
+
+        RaviartThomasLocalFiniteElement( const RaviartThomasLocalFiniteElement& other ):
+          RaviartThomasSimplexLocalFiniteElement< 3, D, R >(Dune::GeometryTypes::simplex( 3 ), order ) {}
+      };
+
+      /*
+      // 2d, Simplex, 0th order
       template< class D, class R >
       struct RaviartThomasLocalFiniteElement< Dune::GeometryTypes::simplex( 2 ).id(), D, R, 2, 0 >
         : public RT02DLocalFiniteElement< D, R >
@@ -65,6 +95,7 @@ namespace Dune
         static constexpr std::size_t numOrientations = 8;
         using RT12DLocalFiniteElement< D, R >::RT12DLocalFiniteElement;
       };
+      */
 
       // 2d, Cube, 0th order
       template< class D, class R >
