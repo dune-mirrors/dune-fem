@@ -143,32 +143,59 @@ class Sampler:
         import numpy
         x0 = FieldVector(x0)
         if self.pointSampler is None:
-            _pointSampleCode = \
-            """
-            #ifndef FEMPY_UTILITY_HH
-            #define FEMPY_UTILITY_HH
-            #include <dune/fem/misc/linesegmentsampler.hh>
-            #include <dune/fem/gridpart/common/entitysearch.hh>
-            #include <dune/fem/function/localfunction/const.hh>
+            if hasattr(self.gridFunction,"gridView"):
+                _pointSampleCode = \
+                """
+                #ifndef FEMPY_UTILITY_HH
+                #define FEMPY_UTILITY_HH
+                #include <dune/fem/misc/linesegmentsampler.hh>
+                #include <dune/fem/gridpart/common/entitysearch.hh>
+                #include <dune/fem/function/localfunction/const.hh>
 
-            template <class GF, class DT>
-            typename GF::RangeType sample(const GF &gf, DT &point)
-            {
-              typedef typename GF::DiscreteFunctionSpaceType::GridPartType GridPartType;
-              Dune::Fem::EntitySearch<GridPartType> search(gf.space().gridPart());
-              const auto &entity = search(point);
-              const auto localPoint = entity.geometry().local(point);
-              return constLocalFunction(gf,entity).evaluate(localPoint);
-            }
-            #endif // FEMPY_UTILITY_HH
+                template <class GF, class DT>
+                typename GF::RangeType sample(const GF &gf, DT &point)
+                {
+                  typedef typename GF::DiscreteFunctionSpaceType::GridPartType GridPartType;
+                  Dune::Fem::EntitySearch<GridPartType> search(gf.space().gridPart());
+                  const auto &entity = search(point);
+                  const auto localPoint = entity.geometry().local(point);
+                  return constLocalFunction(gf,entity).evaluate(localPoint);
+                }
+                #endif // FEMPY_UTILITY_HH
 
-            """
-            self.pointSampler = algorithm.load('sample', io.StringIO(_pointSampleCode), self.gridFunction, x0)
+                """
+                self.pointSampler = algorithm.load('sample', io.StringIO(_pointSampleCode), self.gridFunction, x0)
+            else:
+                _pointSampleCode = \
+                """
+                #ifndef FEMPY_UTILITY_HH
+                #define FEMPY_UTILITY_HH
+                #include <tuple>
+                #include <dune/fem/gridpart/common/entitysearch.hh>
+                #include <dune/fempy/py/grid/gridpart.hh>
+
+                template <class GV, class DT>
+                auto sample(const GV &gv, DT &point)
+                {
+                  const auto& gp = Dune::FemPy::gridPart(gv);
+                  Dune::Fem::EntitySearch<Dune::FemPy::GridPart<GV>>
+                    search(gp);
+                  const auto &entity = search(point);
+                  const auto localPoint = entity.geometry().local(point);
+                  return std::make_tuple(entity,localPoint);
+                }
+                #endif // FEMPY_UTILITY_HH
+
+                """
+                self.pointSampler = algorithm.load('sample', io.StringIO(_pointSampleCode), self.gridFunction, x0)
 
         v = self.pointSampler(self.gridFunction, x0 )
-        if self.gridFunction.scalar:
-            return v[0]
-        else:
+        try:
+            if self.gridFunction.scalar:
+                return v[0]
+            else:
+                return v
+        except AttributeError:
             return v
 
     def boundarySample(self, boundaryId=None, boundaryDomain=None, order=-1):
