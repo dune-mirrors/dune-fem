@@ -145,7 +145,7 @@ namespace Dune
 
 
     // GridPart
-    // retrieve (or construct) gridPart from given givenView
+    // retrieve (or construct) gridPart from given gridView
     // --------
 
     template< class GridView >
