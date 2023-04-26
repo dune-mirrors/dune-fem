@@ -73,6 +73,7 @@ namespace Dune
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
         const QuadratureType quadrature( entity, order_ );
+        const auto& geometry = entity.geometry();
         for( const auto& qp : quadrature )
         {
           // evaluate function in quadrature point
@@ -80,7 +81,7 @@ namespace Dune
           function.evaluate( qp, phi );
 
           // calculate the weight of the quadrature point
-          const RealType weight = entity.geometry().integrationElement( qp.position() ) * qp.weight();
+          const RealType weight = geometry.integrationElement( qp.position() ) * qp.weight();
 
           ret.axpy( weight, phi );
         }
