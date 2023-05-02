@@ -224,6 +224,9 @@ def compileUFL(form, patch, *args, **kwargs):
                 _, c = extract_arguments_and_coefficients(a)
                 uflCoefficients |= set(c)
 
+    # sort coefficients according to creation number to avoid re-compilation
+    uflCoefficients = sorted(list(uflCoefficients), key=lambda c: c.count())
+
     constants = dict()
     coefficients = dict()
 
