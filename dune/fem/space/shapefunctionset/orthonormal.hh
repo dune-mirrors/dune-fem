@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
 
 #include <dune/geometry/type.hh>
 
@@ -13,6 +14,10 @@
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_1d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_2d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_3d.hh>
+
+#if HAVE_DUNE_LOCALFUNCTIONS
+#include <dune/localfunctions/orthonormal.hh>
+#endif
 
 namespace Dune
 {
@@ -151,6 +156,13 @@ namespace Dune
       /** \copydoc Dune::Fem::ShapeFunctionSet::HessianRangeType */
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+#if HAVE_DUNE_LOCALFUNCTIONS
+      typedef OrthonormalLocalFiniteElement< dimension, DomainType, RangeType>  OrthonormalLocalFiniteElementType;
+      static const bool haveLocalFunctions_ = true;
+#else
+      typedef int OrthonormalLocalFiniteElementType;
+      static const bool haveLocalFunctions_ = false;
+#endif
       /** \name Construction
        *  \{
        */
@@ -161,7 +173,8 @@ namespace Dune
         : order_( order ),
           evaluate_( nullptr ),
           jacobian_( nullptr ),
-          hessian_( nullptr )
+          hessian_( nullptr ),
+          onbElem_()
       {
         // for type none simply create cube basis function set.
         if( type.isNone() )
@@ -173,13 +186,16 @@ namespace Dune
         assert( evaluate_ );
         assert( jacobian_ );
 
-        if( dimension == 2 )
+        if constexpr ( dimension == 2 )
         {
           if( type.isTriangle() )
             hessian_ = OrthonormalBase2d::hess_triangle_2d;
           else if( type.isQuadrilateral() )
             hessian_ = OrthonormalBase2d::hess_quadrilateral_2d;
         }
+        else if constexpr ( dimension == 3 && haveLocalFunctions_ )
+          onbElem_.reset( new OrthonormalLocalFiniteElementType( type, order ) );
+
       }
 
       OrthonormalShapeFunctionSet ( const ThisType & ) = default;
@@ -247,12 +263,47 @@ namespace Dune
       void hessianEach ( const Point &x, Functor functor ) const
       {
         const DomainType y = Dune::Fem::coordinate( x );
-        HessianRangeType hessian;
-        const std::size_t size = this->size();
-        for( std::size_t i = 0; i < size; ++i )
+        if constexpr ( dimension == 2 )
         {
-          this->hessian( i, y, hessian );
-          functor( i, hessian );
+          HessianRangeType hessian;
+          const std::size_t size = this->size();
+          for( std::size_t i = 0; i < size; ++i )
+          {
+            this->hessian( i, y, hessian );
+            functor( i, hessian );
+          }
+        }
+        else if constexpr( dimension == 3 && haveLocalFunctions_ )
+        {
+          const std::size_t size = this->size();
+          // for p < 2 this is simply zero
+          if ( order_ < 2 )
+          {
+            HessianRangeType hessian(0);
+            for( std::size_t i = 0; i < size; ++i )
+            {
+              // convert to our own data type to avoid
+              // conversion conflicts in functor call
+              functor( i, hessian );
+            }
+            return ;
+          }
+
+          typedef typename OrthonormalLocalFiniteElementType::Traits::LocalBasisType::HessianType HessianType;
+          std::vector< HessianType > hessians;
+          onbElem_->localBasis().evaluateHessian( y, hessians );
+          HessianRangeType hessian;
+          for( std::size_t i = 0; i < size; ++i )
+          {
+            // convert to our own data type to avoid
+            // conversion conflicts in functor call
+            hessian = hessians[ i ];
+            functor( i, hessian );
+          }
+        }
+        else
+        {
+          std::abort();
         }
       }
 
@@ -272,18 +323,26 @@ namespace Dune
       void hessian ( std::size_t i, const DomainType &x, HessianRangeType &hessian ) const
       {
         assert( hessian_ );
-
-        RangeFieldType values[] = { 0, 0, 0 };
-        hessian_( i , &x[ 0 ], values );
-        for( unsigned int j = 0; j < FunctionSpaceType::dimDomain;  ++j )
-          for( unsigned int k = 0; k < FunctionSpaceType::dimDomain; ++k )
-            hessian[ 0 ][ j ][ k ] = values[ j + k ];
+        if constexpr (dimension == 2 )
+        {
+          RangeFieldType values[] = { 0, 0, 0 };
+          hessian_( i , &x[ 0 ], values );
+          for( unsigned int j = 0; j < FunctionSpaceType::dimDomain;  ++j )
+            for( unsigned int k = 0; k < FunctionSpaceType::dimDomain; ++k )
+              hessian[ 0 ][ j ][ k ] = values[ j + k ];
+        }
+        else
+        {
+          std::abort();
+        }
       }
 
       int order_;
       Evaluate evaluate_;
       Jacobian jacobian_;
       Hessian hessian_;
+
+      mutable std::shared_ptr< OrthonormalLocalFiniteElementType > onbElem_;
     };
 
 
