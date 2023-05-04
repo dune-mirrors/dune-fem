@@ -6,7 +6,9 @@
 
 #include <dune/python/pybind11/complex.h>
 #if HAVE_EIGEN
-#include <dune/python/pybind11/eigen.h>
+// this leads to an error with Eigen.h not correctly found
+// We don't really support Eigen anymore so removed for now.
+// #include <dune/python/pybind11/eigen.h>
 #endif
 #include <dune/python/pybind11/extensions.h>
 #include <dune/python/pybind11/numpy.h>
