@@ -660,6 +660,16 @@ def bdm(gridView, order=1, dimRange=None,
         field="double", storage=None, scalar=False, dimrange=None, codegen=True):
     from dune.fem.space import module
 
+    # BDM are always vector valued (vector field)
+    # also it is not possible at the moment to construct a space of the
+    # form BDM^r so the dimRange argument does not make any sense
+    # We remove this argument
+    if dimRange is None:
+        dimRange = gridView.dimension
+    else:
+        import warnings
+        warnings.warn('dimRange argument for the BDM space is deprecated.  RT is already a vector field and RT^r is not available in dune-fem !\n')
+
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
     if order < 1:
@@ -686,6 +696,16 @@ def bdm(gridView, order=1, dimRange=None,
 def raviartThomas(gridView, order=1, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
     from dune.fem.space import module
+
+    # RT are always vector valued (vector field)
+    # also it is not possible at the moment to construct a space of the
+    # form RT^r so the dimRange argument does not make any sense
+    # We remove this argument
+    if dimRange is None:
+        dimRange = gridView.dimension
+    else:
+        import warnings
+        warnings.warn('dimRange argument for the RT space is deprecated.  RT is already a vector field and RT^r is not available in dune-fem !\n')
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
