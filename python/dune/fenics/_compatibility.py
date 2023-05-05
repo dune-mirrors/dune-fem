@@ -53,9 +53,9 @@ def FunctionSpace( mesh, family, degree=1, dimrange=None, **kwargs ):
     elif( family == 'DG' ):
         scp = dgonb(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
     elif( family == 'BDM' ):
-        scp = bdm(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        scp = bdm(gridView=mesh, order=degree, **kwargs )
     elif( family == 'RT' ):
-        spc = raviarThomas(gridView=mesh, order=degree, dimRange=dimrange, **kwargs )
+        spc = raviarThomas(gridView=mesh, order=degree, **kwargs )
     else:
         raise ValueError('Space with identifier',spacetype,' not known\n')
 
