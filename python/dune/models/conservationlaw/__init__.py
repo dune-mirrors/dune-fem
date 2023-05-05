@@ -73,8 +73,9 @@ def initModel(model, *args, **kwargs):
     model._init(*args)
 
     # register model to all constants
-    for c in model._constants:
-        c.registerModel(model)
+    if hasattr(model, "_constants"):
+        for c in model._constants:
+            c.registerModel(model)
 
 def setConstant(integrands, index, value):
     try:
@@ -222,12 +223,13 @@ def load(grid, model, *args, modelPatch=[None,None], virtualize=True, **kwargs):
     module = builder.load(name, source, modelName)
     if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)
-        # overload setConstant method
-        module.Model._setConstant = module.Model.setConstant
-        setattr(module.Model, 'setConstant', setConstant)
         setattr(module.Model, '_coefficientNames', {c['name']: i for i, c in enumerate(model._coefficients)})
-        # store constants on module for registration
-        setattr(module.Model, '_constants', model.constants)
+        if hasattr(module.Model, "setConstant" ):
+            # overload setConstant method
+            module.Model._setConstant = module.Model.setConstant
+            setattr(module.Model, 'setConstant', setConstant)
+            # store constants on module for registration
+            setattr(module.Model, '_constants', model.constants)
         module.Model._init = module.Model.__dict__['__init__']
         setattr(module.Model, '__init__', initModel)
     return module
