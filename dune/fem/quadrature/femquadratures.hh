@@ -114,14 +114,14 @@ namespace Dune
      *        product) as quadrature points
      */
     template< class FieldImp, int dim >
-    class CubeQuadrature
+    class CubeQuadratureBase
     : public QuadratureImp< FieldImp, dim >
     {
     public:
       typedef FieldImp FieldType;
 
     private:
-      typedef CubeQuadrature< FieldType, dim > ThisType;
+      typedef CubeQuadratureBase< FieldType, dim > ThisType;
       typedef QuadratureImp< FieldType, dim > BaseType;
 
     public:
@@ -137,8 +137,12 @@ namespace Dune
        *  \param[in]  gemoetry  geometry type for which a quadrature is desired
        *  \param[in]  order     desired order (provided by the user)
        *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+       *  \param[in]  pts       struct providing quadrature points and weights
        */
-      CubeQuadrature( const GeometryType &geometry, int order, size_t id );
+      template <class QuadPoints>
+      CubeQuadratureBase( const GeometryType &geometry,
+                          int order, size_t id,
+                          const QuadPoints& pts );
 
       /** \copydoc Dune::Fem::QuadratureImp::geometry */
       virtual GeometryType geometryType () const
@@ -157,6 +161,82 @@ namespace Dune
       {
         return GaussPts :: highestOrder;
       }
+    };
+
+    /*  \class CubeQuadrature
+     *  \ingroup Quadrature
+     *  \brief generic quadrature class for cubes
+     *
+     *  CubeQuadrature implements the geometry-specific part of the quadrature
+     *  and initialises the vector quadrature points and weights.
+     *
+     *  \note The quadrature uses the 1d gauss points (and their tensorial
+     *        product) as quadrature points
+     */
+    template< class FieldImp, int dim >
+    class CubeQuadrature : public CubeQuadratureBase< FieldImp, dim >
+    {
+    public:
+      typedef FieldImp FieldType;
+
+    private:
+      typedef CubeQuadrature< FieldType, dim > ThisType;
+      typedef CubeQuadratureBase< FieldType, dim > BaseType;
+
+    public:
+      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
+      typedef typename BaseType :: CoordinateType CoordinateType;
+
+    public:
+      /** \brief constructor filling the list of points and weights
+       *
+       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  order     desired order (provided by the user)
+       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+       */
+      CubeQuadrature( const GeometryType &geometry, int order, size_t id )
+        : BaseType( geometry, order, id, GaussPts() )
+      {}
+    };
+
+
+    /*  \class ModifiedNewtonCotesQuadrature
+     *  \ingroup Quadrature
+     *  \brief A quadrature with equidistant points where the first and last interval
+     *         is only h/2 instead of h in the original Newton-Cotes rule.
+     *         This allows to compute integrals of DG functions on quadrature
+     *         points that correspond to a finite volume submesh.
+     *
+     *  ModifiedNewtonCotesQuadrature implements the geometry-specific part of the quadrature
+     *  and initialises the vector quadrature points and weights.
+     *
+     *  \note The quadrature uses the 1d equidistant points (and their tensorial
+     *        product) as quadrature points
+     */
+    template< class FieldImp, int dim >
+    class ModifiedNewtonCotesQuadrature : public CubeQuadratureBase< FieldImp, dim >
+    {
+    public:
+      typedef FieldImp FieldType;
+
+    private:
+      typedef ModifiedNewtonCotesQuadrature< FieldType, dim > ThisType;
+      typedef CubeQuadratureBase< FieldType, dim > BaseType;
+
+    public:
+      /** \copydoc Dune::Fem::QuadratureImp::CoordinateType */
+      typedef typename BaseType :: CoordinateType CoordinateType;
+
+    public:
+      /** \brief constructor filling the list of points and weights
+       *
+       *  \param[in]  gemoetry  geometry type for which a quadrature is desired
+       *  \param[in]  order     desired order (provided by the user)
+       *  \param[in]  id        unique identifier (provided by QuadratureProvider)
+       */
+      ModifiedNewtonCotesQuadrature( const GeometryType &geometry, int order, size_t id )
+        : BaseType( geometry, order, id, ModifiedNewtonCotes() )
+      {}
     };
 
 

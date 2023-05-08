@@ -12,35 +12,32 @@ namespace Dune
   namespace Fem
   {
 
-    /*! \class GaussPts
+    /*! \class QuadPtsBase
      *  \ingroup Quadrature
-     *  \brief one-dimensional Gauss points and their weights
+     *  \brief one-dimensional quadrature points and their weights
      *
-     *  GaussPtr is an array of one-dimensional Gauss quadratures for the
+     *  QuadPtsBase is an array of one-dimensional quadratures for the
      *  interval [0,1]. The index of a quadrature equals its number of quadrature
      *  points (so there is no 0-th quadrature).
      *
      *  \note This class implements the Singleton pattern
      */
-    class GaussPts
+    class QuadPtsBase
     {
-    public:
-      //! number of available quadratures
-      enum { MAXP=10 };
-
-      //! highest quadrature order within the array
-      enum { highestOrder=19 };
-
-    private:
+    protected:
       std::vector< std::vector< double > > G; //[MAXP+1][MAXP]; // positions of Gauss points
       std::vector< std::vector< double > > W; //[MAXP+1][MAXP]; // weights associated with points
       std::vector< int > O;                   //[MAXP+1];       // order of the rule
 
-    public:
-      /*! \brief constructor initializing the Gauss points for all orders
+      /*! \brief constructor initializing the points for all orders
        */
-      GaussPts ();
+      QuadPtsBase ( const int maxp )
+       : G( maxp+1, std::vector<double>(maxp,0.0)),
+         W( maxp+1, std::vector<double>(maxp,0.0)),
+         O( maxp+1, 0 )
+      {}
 
+    public:
       /*! \brief obtain the i-th point of the m-th quadrature
        *
        *  \param[in]  m  index of the quadrature
@@ -96,9 +93,74 @@ namespace Dune
       }
     };
 
+
+    /*! \class GaussPts
+     *  \ingroup Quadrature
+     *  \brief one-dimensional Gauss points and their weights
+     *
+     *  GaussPtr is an array of one-dimensional Gauss quadratures for the
+     *  interval [0,1]. The index of a quadrature equals its number of quadrature
+     *  points (so there is no 0-th quadrature).
+     *
+     *  \note This class implements the Singleton pattern
+     */
+    class GaussPts : public QuadPtsBase
+    {
+    public:
+      //! number of available quadratures
+      static const int MAXP=10;
+
+      //! highest quadrature order within the array
+      static const int highestOrder=19;
+
+    protected:
+      using QuadPtsBase :: G;
+      using QuadPtsBase :: W;
+      using QuadPtsBase :: O;
+
+    public:
+      /*! \brief constructor initializing the Gauss points for all orders
+       */
+      GaussPts ();
+    };
+
+    /*! \class Modified Newton-Cotes (for Lobatto <--> FV identification)
+     *  \ingroup Quadrature
+     *  \brief one-dimensional modified Newton-Cotes points and their weights
+     *         The difference to Newton-Cotes is that the
+     *         first and last interval is only h/2 instead of h in the original Newton-Cotes rule.
+     *         This allows to compute integrals of DG functions on quadrature
+     *         points that correspond to a finite volume submesh.
+     *
+     *  ModifiedNewtonCotes is an array of one-dimensional quadratures for the
+     *  interval [0,1]. The index of a quadrature equals its number of quadrature
+     *  points (so there is no 0-th quadrature).
+     *
+     *  \note This class implements the Singleton pattern
+     */
+    class ModifiedNewtonCotes : public QuadPtsBase
+    {
+    public:
+      //! number of available quadratures
+      static const int MAXP=10;
+
+      //! highest quadrature order within the array
+      static const int highestOrder=10;
+
+    protected:
+      using QuadPtsBase :: G;
+      using QuadPtsBase :: W;
+      using QuadPtsBase :: O;
+
+    public:
+      /*! \brief constructor initializing the points for all orders
+       */
+      ModifiedNewtonCotes ();
+    };
   } // namespace Fem
 
 } // namespace Dune
 
 #include "gausspoints_implementation.hh"
+#include "modifiednewtoncotes_implementation.hh"
 #endif // #ifndef DUNE_FEM_GAUSSPOINTS_HH
