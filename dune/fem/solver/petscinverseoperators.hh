@@ -450,7 +450,7 @@ namespace Dune
           if( Parameter::verbose( Parameter::extendedStatistics ) )
             ::Dune::Petsc::KSPView( comm, ksp() );
 
-          ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULL, PETSC_NULL);
+          ::Dune::Petsc::KSPMonitorSet( ksp(), &monitor, PETSC_NULLPTR, PETSC_NULLPTR);
         }
       }
 

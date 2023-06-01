@@ -25,6 +25,11 @@
 
 #include <petsc.h>
 
+// newer versions of PETSc use PETSC_NULLPTR instread of PETSC_NULL
+#ifndef PETSC_NULLPTR
+#define PETSC_NULLPTR PETSC_NULL
+#endif
+
 namespace Dune
 {
 
@@ -65,7 +70,7 @@ namespace Dune
       msgout << "PETSc Error in the PETSc function '" << function << "' at " << file << ":" << line << ":";
 
       const char *text;
-      PetscErrorMessage( errorCode, &text, PETSC_NULL );
+      PetscErrorMessage( errorCode, &text, PETSC_NULLPTR );
       if( text )
         msgout << " '" << text << "'. Error message: '" << message << "'";
       else
@@ -283,13 +288,13 @@ namespace Dune
     {
       if (bs == 1)
       {
-        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULL) );
-        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,nz,PETSC_NULL,nz/2,PETSC_NULL) );
+        ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULLPTR) );
+        ErrorCheck( ::MatMPIAIJSetPreallocation(mat,nz,PETSC_NULLPTR,nz/2,PETSC_NULLPTR) );
       }
       else
       {
-        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,nz,PETSC_NULL) );
-        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,nz,PETSC_NULL,nz/2,PETSC_NULL) );
+        ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,nz,PETSC_NULLPTR) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,nz,PETSC_NULLPTR,nz/2,PETSC_NULLPTR) );
       }
       // the following seems not to work for block matrix
       ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
@@ -308,7 +313,7 @@ namespace Dune
       else
       {
         ErrorCheck( ::MatSeqBAIJSetPreallocation(mat,bs,0,d_nnz ) );
-        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,0,d_nnz,5,PETSC_NULL) );
+        ErrorCheck( ::MatMPIBAIJSetPreallocation(mat,bs,0,d_nnz,5,PETSC_NULLPTR) );
       }
       // see previous comments
       ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
