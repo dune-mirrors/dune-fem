@@ -382,6 +382,20 @@ namespace Dune
       }
     }
 
+    inline static void PetscOptionsSetValue(const std::string& key, const std::string& value)
+    {
+      // add parameter to global data base (nullptr)
+      // TODO, add PetscOptions object to have several data bases
+      ErrorCheck( ::PetscOptionsSetValue(PETSC_NULLPTR, key.c_str(), value.c_str() ));
+    }
+
+    inline static void PetscOptionsClear()
+    {
+      // clear global data base (nullptr)
+      // TODO, add PetscOptions object to have several data bases
+      ErrorCheck( ::PetscOptionsClear(PETSC_NULLPTR) );
+    }
+
     inline static void PetscBarrier ( PetscObject obj ) { ErrorCheck( ::PetscBarrier( obj ) ); }
     inline static void PetscFinalize () { ErrorCheck( ::PetscFinalize() ); }
     inline static void PetscInitialize( int *argc, char ***args, const char file[], const char help[] ) { ErrorCheck( ::PetscInitialize( argc, args, file, help ) ); }

@@ -171,6 +171,56 @@ namespace Dune
       }
 
     protected:
+      template <class Reader>
+      bool parseAndSetOptions(const Reader& reader, const std::string& optionsKey) const
+      {
+        if( reader.exists(optionsKey) )
+        {
+          std::string opts = reader.template getValue< std::string > (optionsKey);
+
+          std::stringstream options( opts );
+
+          std::string key;
+          std::string value;
+          std::string nextKey;
+          bool readKey = true;
+
+          while (! options.eof() )
+          {
+            if( readKey )
+              options >> key;
+            else
+            {
+              key = nextKey;
+              readKey = true;
+            }
+
+            if( key.length() == 0 )
+              break;
+
+            options >> value;
+            // if a key was instead simply store for next iteration
+            if ( value.length() > 0 && value[0] == '-')
+            {
+              // store key for next iteration
+              nextKey = value;
+              value = ""; // empty value
+              readKey = false;
+            }
+
+            // add key,value to global options data base
+            ::Dune::Petsc::PetscOptionsSetValue( key, value);
+          }
+          return true;
+        }
+        else
+        {
+          std::cout << "WARNING: 'kspoptions' selected but no options delivered with '" << optionsKey << "'!" << std::endl;
+          return false;
+        }
+      }
+
+
       void initialize ( const PetscSolverParameter& parameter )
       {
         if( !assembledOperator_ )
@@ -260,10 +310,21 @@ namespace Dune
             ::Dune::Petsc::KSPSetType( ksp(), KSPPREONLY );
               break;
           case PetscSolver::kspoptions:
-            // setup solver context from database/cmdline options
-            ::Dune::Petsc::KSPSetFromOptions( ksp() );
-            ::Dune::Petsc::KSPSetUp( ksp() );
-            break;
+            {
+              const std::string key = parameter.keyPrefix() + "kspoptions";
+              const bool foundOptions = parseAndSetOptions( reader, key );
+
+              // setup solver context from database/cmdline options
+              ::Dune::Petsc::KSPSetFromOptions( ksp() );
+              ::Dune::Petsc::KSPSetUp( ksp() );
+              if( foundOptions )
+              {
+                // clear global options data base
+                ::Dune::Petsc::PetscOptionsClear();
+              }
+
+              break;
+            }
           default:
             DUNE_THROW(InvalidStateException,"PetscInverseOperator: invalid solver choosen." );
         }
@@ -299,9 +360,17 @@ namespace Dune
             // don't setup the pc context twice
             if ( kspType != PetscSolver::kspoptions )
             {
+              const std::string key = parameter.keyPrefix() + "kspoptions";
+              const bool foundOptions = parseAndSetOptions( reader, key );
+
               // setup pc context from database/cmdline options
               ::Dune::Petsc::PCSetFromOptions( pc );
               ::Dune::Petsc::PCSetUp( pc );
+              if( foundOptions )
+              {
+                // clear global options data base
+                ::Dune::Petsc::PetscOptionsClear();
+              }
             }
             break;
           case SolverParameter::none:
