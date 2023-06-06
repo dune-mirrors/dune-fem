@@ -30,71 +30,68 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    CubeQuadrature<ct, dim>::CubeQuadrature(const GeometryType&, int order, size_t id) :
+    template <class QuadPoints>
+    CubeQuadratureBase<ct, dim>::CubeQuadratureBase(const GeometryType&, int order, size_t id, const QuadPoints& gp) :
       QuadratureImp<ct, dim>(id),
       order_((order <= 0) ? 1 : order)
     {
-      assert( order_ <= GaussPts::highestOrder );
+      assert( order_ <= QuadPoints::highestOrder );
 
       typedef FieldVector< ct, dim > CoordinateType;
 
-      const GaussPts gp;
+      // point quadrature
+      if constexpr ( dim == 0 )
+      {
+        typedef FieldVector< double, 0 > CoordinateType;
 
-      // find the right Gauss Rule from given order
-      int m = 0;
-      for (int i = 0; i <= GaussPts::MAXP; i++) {
-        if (gp.order(i)>=order_) {
-          m = i;
-          break;
-        }
-      }
+        order_ = 20;
 
-      if (m==0) DUNE_THROW(NotImplemented, "order " << order_ << " not implemented");
-      order_ = gp.order(m);
-
-      // fill in all the gauss points
-      int n = gp.power(m,dim);
-      for (int i = 0; i < n; i++) {
-        // compute multidimensional coordinates of Gauss point
-        int x[dim];
-        int z = i;
-        for (int k=0; k<dim; ++k) {
-          x[k] = z%m;
-          z = z/m;
-        }
-
+        // fill in all the gauss points
         // compute coordinates and weight
         double weight = 1.0;
-        CoordinateType local;
-        for (int k = 0; k < dim; k++)
-        {
-          local[k] = gp.point(m,x[k]);
-          weight *= gp.weight(m,x[k]);
-        }
+        CoordinateType local( 0 );
 
         // put in container
         this->addQuadraturePoint(local, weight);
       }
+      else
+      {
+        // find the right Gauss Rule from given order
+        int m = 0;
+        for (int i = 0; i <= GaussPts::MAXP; i++) {
+          if (gp.order(i)>=order_) {
+            m = i;
+            break;
+          }
+        }
 
-    }
+        if (m==0) DUNE_THROW(NotImplemented, "order " << order_ << " not implemented");
+        order_ = gp.order(m);
 
-    template <>
-    inline CubeQuadrature<double, 0>::CubeQuadrature(const GeometryType&, int order, size_t id) :
-      QuadratureImp<double, 0>(id),
-      order_((order <= 0) ? 1 : order)
-    {
-      typedef FieldVector< double, 0 > CoordinateType;
+        // fill in all the gauss points
+        int n = gp.power(m,dim);
+        for (int i = 0; i < n; i++) {
+          // compute multidimensional coordinates of Gauss point
+          int x[dim];
+          int z = i;
+          for (int k=0; k<dim; ++k) {
+            x[k] = z%m;
+            z = z/m;
+          }
 
-      order_ = 20;
+          // compute coordinates and weight
+          double weight = 1.0;
+          CoordinateType local;
+          for (int k = 0; k < dim; k++)
+          {
+            local[k] = gp.point(m,x[k]);
+            weight *= gp.weight(m,x[k]);
+          }
 
-      // fill in all the gauss points
-     // compute coordinates and weight
-     double weight = 1.0;
-     CoordinateType local( 0 );
-
-     // put in container
-     this->addQuadraturePoint(local, weight);
-
+          // put in container
+          this->addQuadraturePoint(local, weight);
+        }
+      }
     }
 
 
