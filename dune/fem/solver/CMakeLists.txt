@@ -9,7 +9,8 @@ dune_install(cginverseoperator.hh diagonalpreconditioner.hh fempreconditioning.h
 dune_add_subdirs(communication linear rungekutta test)
 
 target_sources(dunefem PRIVATE
-    rungekutta/butchertable.cc )
+    rungekutta/butchertable.cc
+    parameterdoc.cc )
 
 # avoid deprecation warning.
 exclude_from_headercheck(
