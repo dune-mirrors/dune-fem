@@ -21,12 +21,20 @@ namespace Dune
     {
       static bool parse ( const std::string &s, T &value )
       {
+        if constexpr ( std::is_same< T, std::string >::value )
+        {
+          // if string is non-empty just copy completely
+          if( ! s.empty() )
+            value = s;
+          return true;
+        }
+
         std::istringstream in( s );
         in >> value;
-        if( std::is_same< T, std::string >::value && s.empty() )
-          return true;
+
         if( in.fail() )
           return false;
+
         char eof;
         in >> eof;
         return in.eof();
