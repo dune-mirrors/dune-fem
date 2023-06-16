@@ -257,12 +257,18 @@ namespace Dune
       const bool threading_;
 
     public:
-      ParallelIterative( const MatrixObject& mObj, int n=1, double relax=1.0  )
+      ParallelIterative( const MatrixObject& mObj, int n=1, double relax=1.0, const bool verbose=false )
         : mObj_( mObj ),
           _A_( mObj.exportMatrix() ),
           _n( n ), _w(relax),
           threading_( mObj.threading()  )
       {
+        if ( verbose )
+        {
+          std::string name = SolverParameter::preconditionMethodTable( method );
+          std::cout << "Using ParallelIterative(" << name << "): it = " << n << ", w = "<< relax << std::endl;
+        }
+
         Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
 
         const auto& space = mObj_.domainSpace();
@@ -770,6 +776,8 @@ namespace Dune
         MatrixType& matrix = matrixObj.exportMatrix();
         const auto procs = domainSpace.gridPart().comm().size();
 
+        const bool verbose = param.verbose();// && Parameter::verbose();
+
         typedef typename MatrixType :: BaseType ISTLMatrixType;
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
 
@@ -786,7 +794,7 @@ namespace Dune
         {
           typedef ParallelSSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          PreConType preconAdapter( matrix, verbose, new PreconditionerType( matrixObj, numIterations, relaxFactor,  verbose ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // SOR and Gauss-Seidel
@@ -794,8 +802,8 @@ namespace Dune
         {
           typedef ParallelSOR<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations,
-                                    (preconditioning == SolverParameter::gauss_seidel) ? 1.0 : relaxFactor ) );
+          PreConType preconAdapter( matrix, verbose, new PreconditionerType( matrixObj, numIterations,
+                                    (preconditioning == SolverParameter::gauss_seidel) ? 1.0 : relaxFactor, verbose ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // ILU
@@ -807,7 +815,7 @@ namespace Dune
           typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
           // might need to set verbosity here?
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage()) );
+          PreConType preconAdapter( matrix, verbose, new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage()) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Jacobi
@@ -815,7 +823,7 @@ namespace Dune
         {
           typedef ParallelJacobi<MatrixObjectType, RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-          PreConType preconAdapter( matrix, param.verbose(), new PreconditionerType( matrixObj, numIterations, relaxFactor ) );
+          PreConType preconAdapter( matrix, verbose, new PreconditionerType( matrixObj, numIterations, relaxFactor, verbose ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // AMG ILU-0
@@ -826,7 +834,7 @@ namespace Dune
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
-                                         param.verbose());
+                                         verbose);
         }
         // AMG Jacobi
         else if(preconditioning == SolverParameter::amg_jacobi)
@@ -835,7 +843,7 @@ namespace Dune
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
-                                         param.verbose());
+                                         verbose);
         }
         // ILDL
         else if(preconditioning == SolverParameter::ildl)
@@ -843,14 +851,14 @@ namespace Dune
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILDL not working in parallel computations");
 
-          PreConType preconAdapter( matrix, param.verbose(), new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
+          PreConType preconAdapter( matrix, verbose, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         else
         {
           preConErrorMsg(preconditioning);
         }
-        return new MatrixAdapterType(matrix, domainSpace, rangeSpace,  PreConType(param.verbose()) );
+        return new MatrixAdapterType(matrix, domainSpace, rangeSpace,  PreConType(verbose) );
       }
 
       typedef ISTLParallelMatrixAdapterInterface< MatrixType >   MatrixAdapterInterfaceType;
