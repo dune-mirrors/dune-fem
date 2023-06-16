@@ -10,6 +10,8 @@
 #include <string>
 #include <utility>
 
+#include <dune/common/timer.hh>
+
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -344,7 +346,8 @@ namespace Dune
           lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
           linearToleranceStrategy_ ( parameter.linearToleranceStrategy() ),
-          eisenstatWalker_ ( epsilon )
+          eisenstatWalker_ ( epsilon ),
+          timing_(3, 0.0)
       {
         if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
           if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
@@ -489,6 +492,9 @@ namespace Dune
         return noLineSearch;
       }
 
+      //! returns [overall, jacobian, solve] timings in seconds for last operator () call.
+      const std::vector<double>& timing() const { return timing_; }
+
     protected:
       void bindOperatorAndPreconditioner( JacobianOperatorType& jOp ) const
       {
@@ -533,6 +539,8 @@ namespace Dune
       ErrorMeasureType finished_;
       typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
       EisenstatWalkerStrategy eisenstatWalker_;
+
+      mutable std::vector<double> timing_;
     };
 
 
@@ -544,10 +552,16 @@ namespace Dune
       ::operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
       assert( op_ );
+      std::fill(timing_.begin(), timing_.end(), 0.0 );
 
+      Dune::Timer allTimer;
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
+
+      Dune::Timer jacTimer;
+      double jacTime = 0.0;
       JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space(), parameter_.solverParameter() );
+      jacTime += jacTimer.elapsed();
 
       stepCompleted_ = true;
       iterations_ = 0;
@@ -566,6 +580,7 @@ namespace Dune
         if( newtonVerbose )
           std::cout << std::endl;
         // evaluate operator's Jacobian
+        jacTimer.reset();
         (*op_).jacobian( w, jOp );
 
         // David: With this factor, the tolerance of CGInverseOp is the absolute
@@ -574,6 +589,7 @@ namespace Dune
 
         // bind jOp to jInv including preconditioner if enabled and set
         bindOperatorAndPreconditioner( jOp );
+        jacTime += jacTimer.elapsed();
 
         if ( parameter_.maxLinearIterations() - linearIterations_ <= 0 )
           break;
@@ -607,11 +623,16 @@ namespace Dune
           }
           break;
         }
-      }
+      } // end Newton loop
       if( newtonVerbose )
         std::cout << std::endl;
 
       jInv_.unbind();
+
+      // store time measurements
+      timing_[0] = allTimer.elapsed();
+      timing_[1] = jacTime;
+      timing_[2] = timing_[0] - jacTime;
     }
 
   } // namespace Fem

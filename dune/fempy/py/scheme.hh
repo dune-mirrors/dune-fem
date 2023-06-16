@@ -140,6 +140,7 @@ namespace Dune
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
             return ret;
           } );
       }
@@ -158,6 +159,7 @@ namespace Dune
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
             return ret;
           } );
         cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
@@ -166,6 +168,7 @@ namespace Dune
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
             return ret;
           } );
           registerPrecondSolve ( cls, PriorityTag< 42 >() );
