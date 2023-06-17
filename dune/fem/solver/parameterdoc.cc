@@ -21,7 +21,7 @@
 #include <dune/fem/operator/matrix/istlpreconditioner.hh>
 #include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
-#include <dune/fem/solver/petscinverseoperators.hh>
+#include <dune/fem/solver/petscavailable.hh>
 #include <dune/fem/solver/parameter.hh>
 
 namespace Dune
@@ -38,7 +38,7 @@ namespace Dune
         return s;
       }
 
-      std::pair< std::string, std::string > solverString()
+      std::pair< std::string, std::string > solverString(const bool havePetsc)
       {
         std::set< std::string > numpy, istl, petsc, all;
         std::set< std::string > preNum, preIstl, prePetsc, preAll;
@@ -74,10 +74,10 @@ namespace Dune
         }
 #endif
 
-#if HAVE_PETSC
         // petsc
+        if( havePetsc )
         {
-          typedef Dune::Fem::PetscInverseOperator< DiscreteFunction > InverseOperatorType;
+          typedef Dune::Fem::PetscInverseOperatorAvailable InverseOperatorType;
           petsc = addMethods( InverseOperatorType::supportedSolverMethods(), &SolverParameter::solverMethodTable );
           for( const auto& m : petsc )
             all.insert( m );
@@ -88,7 +88,6 @@ namespace Dune
           for( const auto& m : prePetsc )
             preAll.insert( m );
         }
-#endif
 
         const auto contains = [&](const std::string& m, const std::set< std::string >& s ) -> std::string
         {

@@ -3,7 +3,7 @@ dune_install(cginverseoperator.hh diagonalpreconditioner.hh fempreconditioning.h
              krylovinverseoperators.hh multistep.hh newtoninverseoperator.hh
              odesolver.hh odesolverinterface.hh oemsolver.hh
              parameter.hh parameterdoc.hh pardginverseoperators.hh preconditionfunctionwrapper.hh
-             petscinverseoperators.hh preconditionedinverseoperator.hh
+             petscavailable.hh petscinverseoperators.hh preconditionedinverseoperator.hh
              timeprovider.hh umfpacksolver.hh spqrsolver.hh ldlsolver.hh eigen.hh)
 
 dune_add_subdirs(communication linear rungekutta test)
