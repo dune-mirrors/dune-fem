@@ -17,7 +17,7 @@ namespace Dune
 
   namespace detail {
 
-        std::pair< std::string, std::string > solverString();
+        std::pair< std::string, std::string > solverString(const bool havePetsc);
   } // namespace
 
   }
@@ -26,7 +26,11 @@ namespace Dune
 template <class Scheme>
 auto docString()
 {
-  auto str = Dune::Fem::detail::solverString();
+  bool havePetsc = false;
+#if HAVE_PETSC
+  havePetsc = true;
+#endif
+  auto str = Dune::Fem::detail::solverString(havePetsc);
   std::string doc = R"doc(
 A scheme finds a solution `u=ufl.TrialFunction` for a given variational equation.
 The main method is `solve` which takes a discrete functions as `target` argument to
