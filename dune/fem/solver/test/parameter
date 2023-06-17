@@ -1,5 +1,6 @@
 # solver parameter file
-# fem.verboserank: 0
+fem.verboserank: 0
+#fem.verbositylevel: 3
 
 fem.ode.order: 3
 fem.ode.verbose: none # noconv # ode output: none, cfl, full
@@ -35,6 +36,9 @@ fem.solver.newton.linear.method: gmres  # this is fixed to gmres in the test
 fem.solver.newton.linear.tolerance: 1e-12
 fem.solver.newton.linear.gmres.restart: 15
 fem.solver.newton.linear.maxiterations: 100
+#fem.solver.newton.linear.preconditioning: kspoptions
+#fem.solver.preconditioning.method: kspoptions
+#fem.solver.kspoptions: -pc_type hypre -pc_hypre_type boomeramg -ksp_error_if_not_converged -ksp_level 0
 
 # parameter used to test istl solver passing in istl parameter
 istlparam.method: cg

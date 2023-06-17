@@ -1569,12 +1569,14 @@ namespace Dune
 
         struct SolverInfo
         {
-          SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
-            : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
+          SolverInfo ( bool converged, int linearIterations, int nonlinearIterations, const std::vector<double>& timing )
+            : converged( converged ), linearIterations( linearIterations ),
+              nonlinearIterations( nonlinearIterations ), timing( timing )
           {}
 
           bool converged;
           int linearIterations, nonlinearIterations;
+          std::vector<double> timing;
         };
 
         GalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
@@ -1613,7 +1615,7 @@ namespace Dune
           invOp_.bind(fullOperator());
           invOp_( rhs0, solution );
           invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
 
         SolverInfo solve ( DiscreteFunctionType &solution ) const
@@ -1624,7 +1626,7 @@ namespace Dune
           invOp_.bind(fullOperator());
           invOp_( bnd, solution );
           invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
 
         SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
@@ -1637,7 +1639,7 @@ namespace Dune
           invOp_.bind(fullOperator(), pre);
           invOp_( bnd, solution );
           invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
 
         template< class GridFunction >

@@ -172,12 +172,14 @@ public:
 
   struct SolverInfo
   {
-    SolverInfo(bool pconverged,int plinearIterations,int pnonlinearIterations)
-      : converged(pconverged), linearIterations(plinearIterations), nonlinearIterations(pnonlinearIterations)
+    SolverInfo(bool pconverged,int plinearIterations,int pnonlinearIterations, const std::vector<double>& ptiming)
+      : converged(pconverged), linearIterations(plinearIterations),
+        nonlinearIterations(pnonlinearIterations), timing(ptiming)
     {}
     bool converged;
     int linearIterations;
     int nonlinearIterations;
+    std::vector<double> timing;
   };
   void setErrorMeasure(ErrorMeasureType &errorMeasure) const
   {
@@ -191,7 +193,7 @@ public:
     setModelConstraints( solution );
     invOp_( rhs0, solution );
     invOp_.unbind();
-    return SolverInfo(invOp_.converged(),invOp_.linearIterations(),invOp_.iterations());
+    return SolverInfo(invOp_.converged(),invOp_.linearIterations(),invOp_.iterations(), invOp_.timing() );
   }
   SolverInfo solve ( DiscreteFunctionType &solution ) const
   {
@@ -201,7 +203,7 @@ public:
     invOp_.bind(fullOperator());
     invOp_( bnd, solution );
     invOp_.unbind();
-    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
+    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
   }
 
   template< class GridFunction, std::enable_if_t<

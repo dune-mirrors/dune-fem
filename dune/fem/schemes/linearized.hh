@@ -50,6 +50,7 @@ namespace Dune
 
         bool converged;
         int linearIterations, nonlinearIterations;
+        std::vector<double> timing;
       };
 
       LinearizedScheme ( SchemeType &scheme,
