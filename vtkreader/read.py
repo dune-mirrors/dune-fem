@@ -1,7 +1,10 @@
 import dune.common.pickle
 from dune.grid import Marker
 
-with open("dump.dbf","rb") as f:
+from mpi4py import MPI
+rank = MPI.COMM_WORLD.Get_rank()
+
+with open(f"dump.{rank}.pdbf","rb") as f:
     dump = dune.common.pickle.load(f)
 df = dump[2]
 df.plot(level=3)

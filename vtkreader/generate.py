@@ -2,7 +2,7 @@
 import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 import numpy, ufl
-from dune.alugrid import aluConformGrid as view
+from dune.alugrid import aluSimplexGrid as view
 from dune.grid import cartesianDomain, Marker
 from dune.fem.function import gridFunction
 from dune.fem.space import lagrange, dgonb
@@ -13,8 +13,10 @@ import dune.common.pickle
 from transform import exact
 
 def test1(fileName):
-    grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
-    grid = adaptiveLeafGridView( grid )
+    grid = view( cartesianDomain([-2,-2],[2,2],[3,3]) )
+    grid.hierarchicalGrid.globalRefine(2)
+    grid.hierarchicalGrid.loadBalance()
+    # grid = adaptiveLeafGridView( grid )
 
     """
     # mark further down fails on geometryGV due to wrong entity type from hierarchicalGrid
@@ -30,9 +32,10 @@ def test1(fileName):
     space = lagrange(grid, order=2)
     df = space.interpolate(gf,name="test")
 
-    dune.fem.globalRefine(4,grid.hierarchicalGrid)
-    # grid.hierarchicalGrid.globalRefine(4)
-    for i in range(5):
+    """
+    dune.fem.globalRefine(1,grid.hierarchicalGrid)
+    print("A")
+    for i in range(2):
         grid.hierarchicalGrid.mark(lambda e:
              Marker.refine if df.localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 1
              else Marker.coarsen)
@@ -40,6 +43,7 @@ def test1(fileName):
         df.interpolate( gf )
     print("size of adapted grid:", grid.size(0))
     # df.plot()
+    """
 
     # there is an issue with GeometryGV and adaptivity - perhaps
     # one needs to change the order, i.e., can only use GeometryGV<Adaptiv>
@@ -61,10 +65,13 @@ def test1(fileName):
     df5 = dg5.interpolate( [ufl.dot(x,x), -x[1],x[0], ufl.sin(x[0]*x[1])], name="euler")
     df3 = dg.interpolate(ufl.tanh(2*(t*x[0]-x[1]))*x,name="tanh")
 
-    with open(fileName+".dbf","wb") as f:
+    rank = grid.comm.rank
+    print("B",rank)
+
+    with open(fileName+"."+str(rank)+".pdbf","wb") as f:
         dune.common.pickle.dump([1,2,df2,3,df3,df5],f) # adding some numbers just for testing
 
-    series = dune.common.pickle.SeriesPickler(fileName, [1,2,df2,3,df3,df5])
+    series = dune.common.pickle.SeriesPickler(fileName+"."+str(rank), [1,2,df2,3,df3,df5])
 
     tsps = [0,0.1,0.4,0.8,2,4]
     for i,tsp in enumerate(tsps):

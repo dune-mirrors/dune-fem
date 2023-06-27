@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 ###############################################################################
-# This paraview reader adds support for 'dune binary format' # files (dbf).
+# This paraview reader adds support for 'dune binary format' files (dbf).
 # The file is assumed to be written using 'dune.common.pickle.dump'. It
 # therefore consists of two parts (the required jit module source code and
 # a pickled list of objects). This list is searched for objects containing
@@ -12,6 +12,7 @@
 # entry is assumed to be a grid view and only the grid is plotted.
 ###############################################################################
 
+from mpi4py import MPI
 import numpy as np
 import os,sys,vtk,importlib,glob,json
 from importlib.util import spec_from_loader, module_from_spec
@@ -80,9 +81,7 @@ def setDuneModulePaths():
         if not "DUNE_PY_DIR" in os.environ:
             os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
         sys.path += os.path.join(os.environ["DUNE_PY_DIR"],"python","dune","generated")
-        # print(os.environ["DUNE_PY_DIR"], dunePaths)
     except KeyError:
-        # print("no virtual env path found!")
         pass
 
 ############################################
@@ -95,7 +94,7 @@ def setDuneModulePaths():
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://github.com/Kitware/ParaView/blob/master/Examples/Plugins/PythonAlgorithm/PythonAlgorithmExamples.py
 
-dune_extensions = ["dbf"] # ,"dgf"]
+dune_extensions = ["dbf", "pdbf"] # ,"dgf"]
 @smproxy.reader(
     label="Dune Reader",
     extensions=dune_extensions,
@@ -133,6 +132,12 @@ class DuneReader(VTKPythonAlgorithmBase):
         if (self._filename != filename):
             self._filename = filename
             if self._filename != "None":
+                ext = os.path.splitext(self._filename)[1]
+                if ext == ".pdbf":
+                    # need to replace the rank from the given file name with the current rank
+                    rank = str( MPI.COMM_WORLD.Get_rank() )
+                    base,_,ext = self._filename.rsplit('.',2)
+                    self._filename = base + "." + rank + "." + ext
                 filepart = filename.split(".")
                 if len(filepart)>=3 and filepart[-1] == "dbf":
                     if filepart[-2] == "series":
@@ -274,6 +279,7 @@ class DuneReader(VTKPythonAlgorithmBase):
             assert all( [hasattr(d,"pointData") for d in self._df] ), "found a non valid grid function (no 'pointData' attribute"
             assert all( [self._gridView == d.gridView for d in self._df] ), "all grid function must be over the same gridView"
             self._dataFcts = [df.name for df in self._df]
+            points, cells = self._gridView.tessellate(self._level)
 
     def RequestInformation(self, request, inInfo, outInfo):
         executive = self.GetExecutive()
@@ -287,6 +293,7 @@ class DuneReader(VTKPythonAlgorithmBase):
                 outInfo.Append(executive.TIME_STEPS(), t)
             outInfo.Append(executive.TIME_RANGE(), timesteps[0])
             outInfo.Append(executive.TIME_RANGE(), timesteps[-1])
+        outInfo.Set(self.CAN_HANDLE_PIECE_REQUEST(), 1)
         return 1
 
     def RequestData(self, request, inInfo, outInfo):
