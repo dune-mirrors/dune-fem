@@ -693,7 +693,7 @@ def bdm(gridView, order=1, dimRange=None,
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def raviartThomas(gridView, order=1, dimRange=None,
+def raviartThomas(gridView, order=0, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
     from dune.fem.space import module
 
