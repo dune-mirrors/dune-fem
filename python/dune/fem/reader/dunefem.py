@@ -22,8 +22,8 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # patch stdout/stderr to include 'isatty' method to make ufl happy
-# (vtk provides its own output streams without that method
-# ufl fails if 'AttributeError').
+# (paraview provides its own output streams without that method
+# ufl fails with 'AttributeError').
 # Note that the pvpython streams have no slots so 'setattr' does not work
 # and a more complex hack is required:
 def patchStream(stream):
@@ -94,6 +94,10 @@ def setDuneModulePaths():
 # Some documentation
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://github.com/Kitware/ParaView/blob/master/Examples/Plugins/PythonAlgorithm/PythonAlgorithmExamples.py
+# https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
+
+# Order widgets: https://discourse.paraview.org/t/controlling-the-order-that-widgets-appear-in-the-gui-for-a-python-algorithm-plugin/10003/5
+
 
 dune_extensions = ["dbf"] # ,"dgf"]
 @smproxy.reader(
@@ -117,6 +121,7 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._timeSteps = None
         self._currentTime = None
         self._gridView = None
+        self._refType = 0 # h-refienement
         setDuneModulePaths()
         try:
             import dune.common.pickle
@@ -195,7 +200,7 @@ class DuneReader(VTKPythonAlgorithmBase):
             self._dataFct = self.getDataFcts().index(value)
             self.Modified()
 
-    @smproperty.stringvector(name="Transform", default_values="") # , panel_visibility="never")
+    @smproperty.stringvector(name="Transform", default_values="")
     @smdomain.filelist()
     @smhint.filechooser( extensions=["py"], file_description="Python script" )
     def SetTransform(self, transformPath):
@@ -241,11 +246,41 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._transformFct = value
         self.Modified()
 
-    @smproperty.intvector(name="Level", default_values="0")
-    @smdomain.intrange(min=0, max=5)
+
+    @smproperty.stringvector(name="RefinementType", information_only="1")
+    def getRefinementType(self):
+        return ["h-adapt","p-adapt"]
+    @smproperty.stringvector(name="Refinement", number_of_elements="1")
+    @smdomain.xml(\
+        """<StringListDomain name="list">
+                <RequiredProperties>
+                    <Property name="RefinementType" function="RefinementType"/>
+                </RequiredProperties>
+            </StringListDomain>
+        """)
+    def setRefinementType(self, value):
+        if value in self.getRefinementType():
+            self._refType = self.getRefinementType().index(value)
+            self._level = 0 if self._refType==0 else 1
+            print( dir(self.SetLevel) )
+            print( dir(self.SetLevel._pv_original_func) )
+            print( dir(self.SetLevel._pvsm_domain_xmls) )
+            self.Modified()
+    @smproperty.intvector(name="LevelRangeInfo", information_only="1")
+    def GetLevelRange(self):
+        return (0, 5) if self._refType==0 else (1,8)
+    @smproperty.intvector(name="ref-level", default_values=0)
+    @smdomain.xml(\
+        """<IntRangeDomain name="range" default_mode="min">
+                <RequiredProperties>
+                    <Property name="LevelRangeInfo" function="RangeInfo"/>
+                </RequiredProperties>
+           </IntRangeDomain>
+        """)
     def SetLevel(self, level):
         self._level = level
         self.Modified()
+
 
     def loadData(self):
         ext = os.path.splitext(self._filename)[1]
@@ -304,18 +339,43 @@ class DuneReader(VTKPythonAlgorithmBase):
         else:
             gfs = self._df
 
-        points, cells = self._gridView.tessellate(self._level)
-        output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
+        if self._refType == 0: # h-refienement
+            points, cells = self._gridView.tessellate(self._level)
+            if self._gridView.dimWorld == 2:
+                vtk_type = vtk.VTK_TRIANGLE
+            elif self._gridView.dimWorld == 3:
+                if self._gridView.dimGrid == 2:
+                    vtk_type = vtk.VTK_TRIANGLE
+                else:
+                    vtk_type = vtk.VTK_TETRA
+        else: # https://www.kitware.com/modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit
+            nPoints = (self._level+2)*(self._level+3) // 2 # level should start at 0
+            t = vtk.vtkLagrangeTriangle()
+            t.GetPointIds().SetNumberOfIds(nPoints)
+            t.GetPoints().SetNumberOfPoints(nPoints)
+            t.Initialize()
+            c = t.GetParametricCoords()
+            points = np.zeros([self._gridView.size(0)*nPoints,2])
+            cells  = np.zeros([self._gridView.size(0),nPoints],dtype=np.int64)
+            for e,elem in enumerate(self._gridView.elements):
+                geo = elem.geometry
+                for i in range(nPoints):
+                    p = [c[i*3+j] for j in range(2)]
+                    x = geo.toGlobal(p)
+                    points[e*nPoints+i][:] = x
+                cells[e][:] = range(e*nPoints,(e+1)*nPoints)
+            if self._gridView.dimWorld == 2:
+                vtk_type = vtk.VTK_LAGRANGE_TRIANGLE
+            elif self._gridView.dimWorld == 3:
+                if self._gridView.dimGrid == 2:
+                    vtk_type = vtk.VTK_LAGRANGE_TRIANGLE
+                else:
+                    vtk_type = vtk.VTK_LAGRANGE_TETRAHEDRON
 
         # points need to be 3d:
         if self._gridView.dimWorld == 2:
-            vtk_type = vtk.VTK_TRIANGLE
             points = np.hstack([points, np.zeros((len(points), 1))])
-        elif self._gridView.dimWorld == 3:
-            if self._gridView.dimGrid == 2:
-                vtk_type = vtk.VTK_TRIANGLE
-            else:
-                vtk_type = vtk.VTK_TETRA
+        output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
         output.SetPoints(points)
 
         cell_types = np.array([], dtype=np.ubyte)
@@ -333,10 +393,21 @@ class DuneReader(VTKPythonAlgorithmBase):
         cell_conn = np.hstack([cell_conn, conn])
         output.SetCells(cell_types, cell_offsets, cell_conn)  # cell connectivities
 
-        for df in gfs:
-            array = df.pointData(self._level)
-            output.PointData.append(array, df.name)  # point data
-            # output.CellData.append(array, df.name)  # cell data
-            # output.FieldData.append(array, name)  # field data
+        if self._refType == 0: # h-refienement
+            for df in gfs:
+                array = df.pointData(self._level)
+                output.PointData.append(array, df.name)  # point data
+                # output.CellData.append(array, df.name)  # cell data
+                # output.FieldData.append(array, name)  # field data
+        else:
+            for df in gfs:
+                ldf = df.localFunction()
+                array = np.zeros([self._gridView.size(0)*nPoints,df.dimRange])
+                for e,elem in enumerate(self._gridView.elements):
+                    ldf.bind(elem)
+                    for i in range(nPoints):
+                        p = [c[i*3+j] for j in range(2)]
+                        array[e*nPoints+i] = ldf(p)
+                output.PointData.append(array, df.name)  # point data
 
         return 1

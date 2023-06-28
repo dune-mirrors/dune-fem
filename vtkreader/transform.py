@@ -14,12 +14,14 @@ def gradx(gv,t,df,dfs):
 def grady(gv,t,df,dfs):
     if df.dimRange > 1:
         g = sqrt(dot(df,df))
+        name = f"d/dy |{df.name}|"
     else:
         g = df
-    g = uflFunction(gv,name="grad",order=1,ufl=grad(g)[1])
+        name = f"d/dy {df.name}|"
+    g = uflFunction(gv,name=name,order=1,ufl=grad(g)[1])
     return [g]
 
-def exact(grid,t=0):
+def exact(grid,t=2):
     @gridFunction(grid, name="exact", order=3)
     def _exact(x):
         return numpy.sin((t*x[0]+x[0]*x[1])*numpy.pi*(t+1)/5)

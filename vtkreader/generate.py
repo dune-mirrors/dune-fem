@@ -13,8 +13,8 @@ import dune.common.pickle
 from transform import exact
 
 def test1(fileName):
-    grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
-    grid = adaptiveLeafGridView( grid )
+    grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
+    # grid = adaptiveLeafGridView( grid )
 
     """
     # mark further down fails on geometryGV due to wrong entity type from hierarchicalGrid
@@ -30,11 +30,11 @@ def test1(fileName):
     space = lagrange(grid, order=2)
     df = space.interpolate(gf,name="test")
 
-    dune.fem.globalRefine(4,grid.hierarchicalGrid)
+    dune.fem.globalRefine(2,grid.hierarchicalGrid)
     # grid.hierarchicalGrid.globalRefine(4)
     for i in range(5):
         grid.hierarchicalGrid.mark(lambda e:
-             Marker.refine if df.localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 1
+                  Marker.refine if df.localFunction(e).jacobian([1./3.,1./3.]).infinity_norm > 1
              else Marker.coarsen)
         dune.fem.adapt(grid.hierarchicalGrid)
         df.interpolate( gf )
@@ -58,7 +58,7 @@ def test1(fileName):
     dg  = dgonb(grid, order=4, dimRange=2)
     dg5  = dgonb(grid, order=4, dimRange=4)
     df2 = lag.interpolate(exact(grid),name="exact_h")
-    df5 = dg5.interpolate( [ufl.dot(x,x), -x[1],x[0], ufl.sin(x[0]*x[1])], name="euler")
+    df5 = dg5.interpolate( [ufl.dot(x,x)/4, -x[1],x[0], ufl.sin(2*ufl.pi*x[0]*x[1])], name="euler")
     df3 = dg.interpolate(ufl.tanh(2*(t*x[0]-x[1]))*x,name="tanh")
 
     with open(fileName+".dbf","wb") as f:
