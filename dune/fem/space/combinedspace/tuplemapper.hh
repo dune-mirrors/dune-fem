@@ -11,7 +11,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
-
+#include <dune/fem/misc/functor.hh>
 
 namespace Dune
 {
@@ -188,6 +188,17 @@ namespace Dune
         template< class Entity >
         SizeType numEntityDofs ( const Entity &entity ) const { return numEntityDofs( entity, std::index_sequence_for< Mapper ... >() ); }
 
+        void map ( const ElementType &element, std::vector< SizeType > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          mapEach( element, AssignFunctor< std::vector< SizeType > >( indices ) );
+        }
+        template< class Entity >
+        void mapEntityDofs ( const Entity &entity, std::vector< SizeType > &indices ) const
+        {
+          indices.resize( numEntityDofs( entity ) );
+          mapEachEntityDof( entity, AssignFunctor< std::vector< SizeType > >( indices ) );
+        }
 
         static constexpr bool consecutive () noexcept { return false; }
 
