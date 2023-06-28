@@ -262,9 +262,6 @@ class DuneReader(VTKPythonAlgorithmBase):
         if value in self.getRefinementType():
             self._refType = self.getRefinementType().index(value)
             self._level = 0 if self._refType==0 else 1
-            print( dir(self.SetLevel) )
-            print( dir(self.SetLevel._pv_original_func) )
-            print( dir(self.SetLevel._pvsm_domain_xmls) )
             self.Modified()
     @smproperty.intvector(name="LevelRangeInfo", information_only="1")
     def GetLevelRange(self):
@@ -278,6 +275,8 @@ class DuneReader(VTKPythonAlgorithmBase):
            </IntRangeDomain>
         """)
     def SetLevel(self, level):
+        if level < self.GetLevelRange()[0]:
+            return
         self._level = level
         self.Modified()
 
@@ -349,18 +348,22 @@ class DuneReader(VTKPythonAlgorithmBase):
                 else:
                     vtk_type = vtk.VTK_TETRA
         else: # https://www.kitware.com/modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit
-            nPoints = (self._level+2)*(self._level+3) // 2 # level should start at 0
-            t = vtk.vtkLagrangeTriangle()
+            if self._gridView.dimGrid == 2:
+                nPoints = (self._level+1)*(self._level+2) // 2 # level should start at 0
+                t = vtk.vtkLagrangeTriangle()
+            else:
+                nPoints = (self._level+1)*(self._level+2)*(self._level+3) // 6 # level should start at 0
+                t = vtk.vtkLagrangeTetra()
             t.GetPointIds().SetNumberOfIds(nPoints)
             t.GetPoints().SetNumberOfPoints(nPoints)
             t.Initialize()
             c = t.GetParametricCoords()
-            points = np.zeros([self._gridView.size(0)*nPoints,2])
+            points = np.zeros([self._gridView.size(0)*nPoints,self._gridView.dimWorld])
             cells  = np.zeros([self._gridView.size(0),nPoints],dtype=np.int64)
             for e,elem in enumerate(self._gridView.elements):
                 geo = elem.geometry
                 for i in range(nPoints):
-                    p = [c[i*3+j] for j in range(2)]
+                    p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
                     x = geo.toGlobal(p)
                     points[e*nPoints+i][:] = x
                 cells[e][:] = range(e*nPoints,(e+1)*nPoints)
@@ -406,7 +409,7 @@ class DuneReader(VTKPythonAlgorithmBase):
                 for e,elem in enumerate(self._gridView.elements):
                     ldf.bind(elem)
                     for i in range(nPoints):
-                        p = [c[i*3+j] for j in range(2)]
+                        p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
                         array[e*nPoints+i] = ldf(p)
                 output.PointData.append(array, df.name)  # point data
 

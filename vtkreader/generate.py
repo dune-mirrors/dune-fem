@@ -12,9 +12,9 @@ from dune.ufl import Constant
 import dune.common.pickle
 from transform import exact
 
-def test1(fileName):
+def adaptTest(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
-    # grid = adaptiveLeafGridView( grid )
+    grid = adaptiveLeafGridView( grid )
 
     """
     # mark further down fails on geometryGV due to wrong entity type from hierarchicalGrid
@@ -38,23 +38,10 @@ def test1(fileName):
              else Marker.coarsen)
         dune.fem.adapt(grid.hierarchicalGrid)
         df.interpolate( gf )
-    print("size of adapted grid:", grid.size(0))
-    # df.plot()
-
-    # there is an issue with GeometryGV and adaptivity - perhaps
-    # one needs to change the order, i.e., can only use GeometryGV<Adaptiv>
-    # not the other way around?
-    """
-    x = ufl.SpatialCoordinate(ufl.triangle)
-    expr =  [ (x[0]+x[1])/ufl.sqrt(2), (-x[0]+x[1])*ufl.sqrt(2) ]
-    coord = lagrange(grid,dimRange=2).interpolate(expr,name="coord")
-    grid = geometryGridView( coord )
-    """
 
     t = Constant(0,"time")
     x   = ufl.SpatialCoordinate(ufl.triangle)
     lag = lagrange(grid, order=3)
-    # lag = dgonb(grid, order=3)
     dg  = dgonb(grid, order=4, dimRange=2)
     dg5  = dgonb(grid, order=4, dimRange=4)
     df2 = lag.interpolate(exact(grid),name="exact_h")
@@ -73,4 +60,43 @@ def test1(fileName):
         df3.interpolate(ufl.tanh(2*(t*x[0]-x[1]))*x)
         series.dump({"time":tsp})
 
-test1("dump")
+def geoTest(fileName):
+    grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
+    x   = ufl.SpatialCoordinate(ufl.triangle)
+    coordSpace = lagrange(grid, dimRange=2, order=3)
+    coord = ufl.as_vector([ x[0]*(1+0.1*ufl.cos(ufl.pi*x[1])), x[1]*(1+0.2*ufl.sin(ufl.pi*x[0])) ])
+    coord = coordSpace.interpolate(coord,name="coord")
+    geoGrid = geometryGridView(coord)
+    geoLag = lagrange(geoGrid, order=3)
+    geoDf = geoLag.interpolate(ufl.sin(2*ufl.pi*x[0]*x[1]), name="df")
+    with open(fileName+".dbf","wb") as f:
+        dune.common.pickle.dump(["hallo",geoDf],f)
+
+def surfTest(fileName):
+    grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
+    x = ufl.SpatialCoordinate(ufl.triangle)
+    coordSpace = lagrange(grid, dimRange=3, order=3)
+    coord = ufl.as_vector([ x[0],x[1], ufl.sin(ufl.pi*x[0]*x[1]) ])
+    coord = coordSpace.interpolate(coord,name="coord")
+    geoGrid = geometryGridView(coord)
+    geoLag = lagrange(geoGrid, order=3)
+    x = ufl.SpatialCoordinate(geoLag)
+    geoDf = geoLag.interpolate(ufl.sin(2*ufl.pi*x[0]*x[1]*x[2]), name="df")
+    with open(fileName+".dbf","wb") as f:
+        dune.common.pickle.dump(["hallo",geoDf],f)
+
+def test3D(fileName):
+    grid = view( cartesianDomain([-2,-2,-2],[2,2,2],[4,4,4]) )
+    space = lagrange(grid, order=4)
+    x = ufl.SpatialCoordinate(space)
+    df1 = space.interpolate(ufl.sin(2*ufl.pi*x[0]*x[1]*x[2]), name="df")
+    df2 = space.interpolate(ufl.dot(x,x), name="df")
+    with open(fileName+".dbf","wb") as f:
+        dune.common.pickle.dump([df1,1,df2],f)
+
+############################################################################
+
+adaptTest("adapt")
+geoTest("geo")
+surfTest("surface")
+test3D("3d")
