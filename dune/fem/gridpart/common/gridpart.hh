@@ -121,10 +121,13 @@ namespace Dune
 
       typedef typename GridType::ctype ctype;
 
-      static const int dimension = GridType::dimension;
-      static const int dimensionworld = GridType::dimensionworld;
+      // static const int dimension = GridType::dimension;
+      // static const int dimensionworld = GridType::dimensionworld;
+      // static const bool conforming = Traits::conforming ;
 
-      static const bool conforming = Traits::conforming ;
+      static constexpr int dimension = GridType::dimension;
+      static constexpr int dimensionworld = GridType::dimensionworld;
+      static constexpr bool conforming = Traits::conforming ;
 
       template< int codim >
       struct Codim
