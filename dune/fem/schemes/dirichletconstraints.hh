@@ -499,7 +499,7 @@ protected:
     std::vector<size_t> globalBlockDofs(space_.blockMapper().numDofs(entity));
     space_.blockMapper().map(entity,globalBlockDofs);
 
-    std::vector<bool> globalBlockDofsFilter(space_.blockMapper().numDofs(entity));
+    std::vector<char> subEntityFilter(space_.blockMapper().numDofs(entity));
 
     IntersectionIteratorType it = gridPart.ibegin( entity );
     const IntersectionIteratorType endit = gridPart.iend( entity );
@@ -520,18 +520,20 @@ protected:
         const bool isDirichletIntersection = model.isDirichletIntersection( intersection, dblock );
         if (isDirichletIntersection)
         {
-          for ( unsigned int i=0;i<localBlockSize;++i)
-            block[i] = dblock[i];
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
-          space_.blockMapper().onSubEntity(entity,face,1,globalBlockDofsFilter);
+          space_.blockMapper().onSubEntity(entity,face,1,subEntityFilter);
           for( unsigned int i=0;i<globalBlockDofs.size();++i)
           {
-            assert( i < globalBlockDofsFilter.size());
-            if ( !globalBlockDofsFilter[i] ) continue;
+            assert( i < subEntityFilter.size());
+            if ( subEntityFilter[i]==0) continue;
             // mark global DoF number
             for(int k = 0; k < localBlockSize; ++k)
-              dirichletBlocks_[ globalBlockDofs[ i ] ][k] = block [k];
+            {
+              int comp = subEntityFilter[i]-1+k;
+              assert( comp < dimRange );
+              dirichletBlocks_[ globalBlockDofs[ i ] ][k] = dblock[comp];
+            }
             // we have Dirichlet values
             hasDirichletBoundary = true ;
           }

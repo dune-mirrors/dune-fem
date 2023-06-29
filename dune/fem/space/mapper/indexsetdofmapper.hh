@@ -147,6 +147,15 @@ namespace Dune
 
         void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const;
 
+        [[deprecated("Use onSubEntity method with char vector instead")]]
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          std::vector< char > _idx;
+          onSubEntity(element, i, c, _idx);
+          indices.resize( _idx.size() );
+          for (std::size_t i=0; i<_idx.size();++i)
+            _idx[i] = indices[i] > 0;
+        }
         /** \brief fills a vector of bools with true indicating that the corresponding
          *  local degree of freedom is attached to the subentity specified by the (c,i)
          *  pair.
@@ -154,8 +163,16 @@ namespace Dune
          *  subentity or to a subentity S'<S i.e. S' has codimension greater than c
          *  and lies within S. For example all dofs are attached to the element itself
          *  and dofs attached to a vertex of an edge are also attached to that edge.
-         **/
-        void onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const;
+         * this method returns which local dofs are attached to the given subentity.
+         * indices[locDofNr] =
+         *  0 : not attached, not equal to 0 : attached
+         * (so this method can still be used in the way the deprecated method was).
+         * New: In case the dof can be associated to a component of the
+         *      space, the value returned is that component+1. In other
+         *      cases (normal velocity for RT for example) the value is 1).
+         * So indices[i] is in [0,dimRange+1]
+        **/
+        void onSubEntity( const ElementType &element, int i, int c, std::vector< char > &indices ) const;
 
         unsigned int maxNumDofs () const { return maxNumDofs_; }
         unsigned int numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
@@ -435,14 +452,14 @@ namespace Dune
 
       template< class GridPart, class LocalDofMapping >
       inline void DofMapperBase< GridPart, LocalDofMapping >
-        ::onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        ::onSubEntity( const ElementType &element, int i, int c, std::vector< char > &indices ) const
       {
         const SubEntityFilter filter( RefElementsType::general( element.type() ), i, c );
         indices.resize( numDofs( element ) );
         code( element )( [ this, &indices, &filter ] ( unsigned int gtIndex, unsigned int subEntity, auto begin, auto end ) {
             const bool active = filter( subEntity, subEntityInfo_[ gtIndex ].codim );
             while( begin != end )
-              indices[ *(begin++) ] = active;
+              indices[ *(begin++) ] = active? 1:0;
           } );
       }
 

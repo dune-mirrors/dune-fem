@@ -176,9 +176,65 @@ namespace Dune
             } );
         }
 
+        [[deprecated("Use onSubEntity method with char vector instead")]]
         void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
         {
-          DUNE_THROW( NotImplemented, "Method onSubEntity(...) not yet implemented for TupleMapper" );
+          std::vector< char > _idx;
+          onSubEntity(element, i, c, _idx);
+          indices.resize( _idx.size() );
+          for (std::size_t i=0; i<_idx.size();++i)
+            _idx[i] = indices[i] > 0;
+        }
+        // this method returns which local dofs are attached to the given subentity.
+        // indices[locDofNr] =
+        //  0 : not attached, not equal to 0 : attached
+        // (so this method can still be used in the way the deprecated method was).
+        // New: In case the dof can be associated to a component of the
+        //      space, the value returned is that component+1. In other
+        //      cases (normal velocity for RT for example) the value is -1).
+        // So indices[i] is in [-1,dimRange+1]
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< char > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          OffsetType localOffset;
+          localOffset[ 0 ] = 0;
+          int rangeOffset = 0;
+          Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto t )
+            {
+              std::vector< char > subIndices;
+              std::get< t >( mapperTuple_ ).onSubEntity( element, i,c, subIndices );
+              auto localSize = std::get< t >( mapperTuple_ ).numDofs( element );
+              assert( subIndices.size() == localSize );
+              assert( localOffset[ t ] + localSize <= indices.size() );
+              for (std::size_t d=0;d<subIndices.size();++d)
+              {
+                indices[ localOffset[t] + d ] = subIndices[d]==0? 0 : subIndices[d] + rangeOffset;
+              }
+              // std::copy( subIndices.begin(), subIndices.end(), indices.begin() + localOffset[ t ] );
+              /*
+              std::cout << "\t space<" << t << ">:";
+              for (std::size_t d=0;d<localSize;++d)
+                std::cout << " " << subIndices[d];
+              std::cout << " ->";
+              for (std::size_t d=0;d<indices.size();++d)
+                std::cout << " " << indices[d];
+              std::cout << std::endl;
+              */
+              // FIXME: here we need 'dimRange' of the subspace to cover
+              // cases where a space is vector valued by has blockSize=1
+              // like RT. Otherwise we will get for RTxRT something like
+              // [1,0,0,1, 2,0,0,2] instead of [1,0,0,1, 3,0,0,3]
+              rangeOffset += std::get< t >( mapperTuple_ ).blockSize;
+              localOffset[ t + 1 ] = localOffset[ t ] + localSize;
+            } );
+          /*
+          std::cout << "element (" << i << "," << c << "):";
+          for (std::size_t d=0;d<indices.size();++d)
+            std::cout << " " << indices[d];
+          std::cout << std::endl;
+          */
+          // DUNE_THROW( NotImplemented, "Method onSubEntity(...) not yet implemented for TupleMapper" );
         }
 
         int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }

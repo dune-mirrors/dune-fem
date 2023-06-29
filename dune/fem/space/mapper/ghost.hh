@@ -187,7 +187,24 @@ namespace Dune
         mapEach( element, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
       }
 
+      [[deprecated("Use onSubEntity method with char vector instead")]]
       void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+      {
+        std::vector< char > _idx;
+        onSubEntity(element, i, c, _idx);
+        indices.resize( _idx.size() );
+        for (std::size_t i=0; i<_idx.size();++i)
+          _idx[i] = indices[i] > 0;
+      }
+      // this method returns which local dofs are attached to the given subentity.
+      // indices[locDofNr] =
+      //  0 : not attached, not equal to 0 : attached
+      // (so this method can still be used in the way the deprecated method was).
+      // New: In case the dof can be associated to a component of the
+      //      space, the value returned is that component+1. In other
+      //      cases (normal velocity for RT for example) the value is -1).
+      // So indices[i] is in [-1,dimRange+1]
+      void onSubEntity ( const ElementType &element, int i, int c, std::vector< char > &indices ) const
       {
         baseMapper().onSubEntity( element, i, c, indices );
       }
