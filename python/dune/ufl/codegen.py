@@ -756,7 +756,7 @@ class ModelClass():
         if not self.bindable:
             code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
 
-        code.append(AccessModifier('private'))
+        # code.append(AccessModifier('private'))
 
         if self._coefficients:
             for cppType, name in self._derivatives:

@@ -36,6 +36,8 @@ namespace Dune
       explicit SubFunctionStorage( DiscreteFunctionType& discreteFunction ) :
         discreteFunction_( discreteFunction ),
         space_( discreteFunction.space() ),
+        // FIXME: this line assumes that the 'subspaces' are constructed with only a grid part
+        //        which fails with higher order 'DynamicLagrangeSpace' for example.
         subSpace_( space_.gridPart (), space_.communicationInterface(), space_.communicationDirection() ),
         subVector_( dimRange, nullptr ),
         subDiscreteFunction_( dimRange, nullptr )
