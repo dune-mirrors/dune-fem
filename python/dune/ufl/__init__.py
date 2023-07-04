@@ -211,6 +211,7 @@ class Constant(ufl.Coefficient):
 
         # TODO: Either take mesh instead of cell, or drop cell and let
         # grad(c) be undefined.
+        self._cell = cell
         if cell is not None:
             cell = ufl.as_cell(cell)
         ufl_domain = None
@@ -275,6 +276,10 @@ class Constant(ufl.Coefficient):
             setattr(model,self.name,self._value)
         else:
             model.setConstant(self,self._value)
+    def __getstate__(self):
+        return [self._value,self.name, self._cell]
+    def __setstate__(self,l):
+        self.__init__(l[0],l[1],l[2])
     # def __eq__(self, other):
     #     return self._value == other._value
     # def __ne__(self, other):

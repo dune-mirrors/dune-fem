@@ -9,6 +9,7 @@ import dune.ufl
 import dune.grid
 import dune.fem.space
 import dune.models.localfunction
+from dune.models.localfunction import uflFunction
 from dune.generator import builder
 
 import dune.common.checkconfiguration as checkconfiguration
@@ -65,25 +66,6 @@ def partitionFunction(gridView,name="rank"):
         def __call__(self,en,x):
             return [self.rank]
     return Partition(gridView.comm.rank)
-
-def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
-                predefined=None, *args, **kwargs):
-    Func = dune.models.localfunction.UFLFunction(gridView, name, order,
-            ufl, renumbering=None,
-            virtualize=virtualize,
-            predefined=predefined, *args, **kwargs)
-    if Func is None:
-        raise AttributeError("could not generate ufl grid function from expression "+str(ufl))
-    try:
-        from dune.fem.plotting import plotPointData
-        setattr(Func, "plot", plotPointData)
-    except ImportError:
-        setattr(Func, "plot", lambda *args,**kwargs:
-           print("problem importing plotting utility - possibly matplotlib is missing?"))
-    func = Func(gridView,name,order,*args,**kwargs)
-    if not hasattr(func,"scalar"):
-        func.scalar = scalar
-    return func.as_ufl() if func is not None else None
 
 def cppFunction(gridView, name, order, fctName, includes,
                 *args,**kwargs):

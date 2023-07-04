@@ -6,9 +6,11 @@ import os
 import sys
 import timeit
 import types
+import functools
 
 from dune.common.hashit import hashIt
 from dune.generator import builder
+from dune.ufl import GridFunction
 
 from dune.source.cplusplus import Include, Method, UnformattedExpression,\
      UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_, IfStatement
@@ -110,7 +112,6 @@ class UFLFunctionSource(codegen.ModelClass):
                 pass
 
     def _signature(self):
-        from dune.common.hashit import hashIt
         coeffTypes = ','.join(self.coefficientCppTypes)
         return hashIt(self.codeString + coeffTypes)
     def signature(self):
@@ -119,7 +120,6 @@ class UFLFunctionSource(codegen.ModelClass):
                             *self._constantNames, self.expr)+UFLFunctionSource.version
 
     def name(self):
-        from dune.common.hashit import hashIt
         if self.virtualize:
             return 'localfunction_' + self._signature() + '_' + hashIt(self.gridType)
         else:
@@ -160,7 +160,7 @@ class UFLFunctionSource(codegen.ModelClass):
         name = self.name()
 
         register = []
-        register.append('auto cls = Dune::Python::insertClass<LocalFunctionType>(module,"UFLLocalFunction",Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        register.append('auto cls = Dune::Python::insertClass<LocalFunctionType> (module,"UFLLocalFunction",pybind11::dynamic_attr(),Dune::Python::GenerateTypeName("'+localFunctionName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
         register.append('Dune::FemPy::registerUFLLocalFunction( module, cls );')
 
         initArgs = 'pybind11::object gridView, const std::string &name, int order'
@@ -174,6 +174,7 @@ class UFLFunctionSource(codegen.ModelClass):
         register.append('cls.def( pybind11::init( [] ( ' + initArgs + ' ) {'
                 + 'return new LocalFunctionType( ' + initCall
                 + '); } ), ' + keepAlive + ' );')
+
         for t, n, sn in zip(self.constantTypes, self.constantNames, self.constantShortNames):
             te = localFunctionName+"::" + t
             register.append('cls.def_property( "' + sn + '", [] ( LocalFunctionType &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( LocalFunctionType &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
@@ -203,15 +204,15 @@ class UFLFunctionSource(codegen.ModelClass):
         return source
 
 
-def init(lf, gridView, name, order, *args, **kwargs):
-    coefficients = kwargs.pop('coefficients', dict())
-    coefficientNames = lf._coefficientNames
-    if len(args) == 1 and isinstance(args[0], dict):
-        coefficients.update(args[0])
+def init(coefficientNames, renumbering):
+    coefficients = dict() # kwargs.pop('coefficients', dict())
+    # if len(args) == 1 and isinstance(args[0], dict):
+    #     coefficients.update(args[0])
     args = []
 
     args += [None] * (len(coefficientNames) - len(args))
 
+    """
     for name, value in kwargs.items():
         try:
             i = coefficientNames[name]
@@ -221,11 +222,12 @@ def init(lf, gridView, name, order, *args, **kwargs):
         if args[i] is not None:
             raise ValueError('Coefficient already given as positional argument: ' + name + '.')
         args[i] = value
+    """
 
     for key, value in coefficients.items():
         if isinstance(key, Coefficient):
             try:
-                i = lf._renumbering[key]
+                i = renumbering[key]
             except AttributeError:
                 raise ValueError('Cannot map UFL coefficients, because model was not generated from UFL form.')
             except KeyError:
@@ -241,8 +243,8 @@ def init(lf, gridView, name, order, *args, **kwargs):
             raise ValueError('Coefficient already given as positional or keyword argument: ' + str(key) + '.')
         args[i] = value
 
-    if hasattr(lf, '_renumbering'):
-        for c, i in lf._renumbering.items():
+    if renumbering is not None:
+        for c, i in renumbering.items():
             if isinstance(c, GridFunction):
                 if args[i] is None:
                     args[i] = c.gf
@@ -251,10 +253,7 @@ def init(lf, gridView, name, order, *args, **kwargs):
         missing = [name for name, i in coefficientNames.items() if args[i] is None]
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
-    # lf.base.__init__(lf,gridView,name,order,*args)
-    super(lf.__class__,lf).__init__(gridView,name,order,*args)
-    for c in lf._constants:
-        c.registerModel(lf)
+    return args
 
 def setConstant(lf, index, value):
     try:
@@ -263,8 +262,7 @@ def setConstant(lf, index, value):
         pass
     lf._setConstant(index, value)
 
-def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True,
-                predefined=None, **kwargs):
+def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, tempVars=True, predefined=None):
     scalar = False
     if type(expr) == list or type(expr) == tuple:
         expr = ufl.as_vector(expr)
@@ -299,23 +297,47 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
 
     # call code generator
-    from dune.generator import builder
     module = builder.load(source.name(), source, "UFLLocalFunction")
 
     assert hasattr(module,"UFLLocalFunction"),\
           "GridViews of coefficients need to be compatible with the grid view of the ufl local functions"
+    if module.UFLLocalFunction is None:
+        raise AttributeError("could not generate ufl grid function from expression "+str(expr))
+    try:
+        from dune.fem.plotting import plotPointData
+        setattr(module.UFLLocalFunction, "plot", plotPointData)
+    except ImportError:
+        setattr(module.UFLLocalFunction, "plot", lambda *args,**kwargs:
+           print("problem importing plotting utility - possibly matplotlib is missing?"))
 
-    class LocalFunction(module.UFLLocalFunction):
-        def __init__(self, gridView, name, order, *args, **kwargs):
-            # self.base = module.UFLLocalFunction
-            self._coefficientNames = {n: i for i, n in enumerate(source.coefficientNames)}
-            if renumbering is not None:
-                self._renumbering = renumbering
-                self._setConstant = self.setConstant # module.UFLLocalFunction.__dict__['setConstant']
-                self.setConstant = lambda *args: setConstant(self,*args)
-            self.constantShape = source._constantShapes
-            self._constants = [c for c in source.constantList if isinstance(c,Constant)]
-            self.scalar = scalar
-            init(self, gridView, name, order, *args, **kwargs)
+    gfs = init({n: i for i, n in enumerate(source.coefficientNames)}, renumbering)
+    func = module.UFLLocalFunction(grid,name,order, *gfs)
+    if func is None:
+        return None
+    if renumbering is not None:
+        func._setConstant = func.setConstant
+        func.setConstant = functools.partial( setConstant, func )
+    func.constantShape = source._constantShapes
+    func._constants = [c for c in source.constantList if isinstance(c,Constant)]
+    func.scalar = scalar
+    for c in func._constants:
+        c.registerModel(func)
+    return func
 
-    return LocalFunction
+class UFLGridFunction(GridFunction):
+    def __init__(self, func, gridView, name, order, ufl, virtualize, scalar, predefined):
+        super(self.__class__,self).__init__(func)
+        self.ctor = {"grid":gridView, "name":name, "order":order,
+                     "expr":ufl, "virtualize":virtualize, "predefined":predefined}
+    def __getstate__(self):
+        return self.ctor
+    def __setstate__(self,ctor):
+        func = UFLFunction(**ctor)
+        super(self.__class__,self).__init__(func)
+
+def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False, predefined=None):
+    func = UFLFunction(gridView, name, order,
+                  ufl, renumbering=None,
+                  virtualize=virtualize, predefined=predefined)
+    return ( UFLGridFunction(func,gridView,name,order,ufl,virtualize,scalar,predefined)
+             if func is not None else None )

@@ -70,7 +70,6 @@ def geoTest(fileName):
     geoGrid = geometryGridView(coord)
     geoLag = lagrange(geoGrid, order=4)
     geoDf = geoLag.interpolate(ufl.sin(ufl.pi*ufl.dot(x,x)), name="df")
-    geoDf.plot(level=4)
     with open(fileName+".dbf","wb") as f:
         dune.common.pickle.dump(["hallo",geoDf],f)
 
@@ -78,8 +77,8 @@ def surfTest(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
     x = ufl.SpatialCoordinate(ufl.triangle)
     coord = ufl.as_vector([ x[0],x[1], ufl.sin(ufl.pi*x[0]*x[1]) ])
-    coord_h = lagrange(grid, dimRange=3, order=3).interpolate(coord,name="coord")
-    oord_h = uflFunction(grid, name="coord", order=5, ufl=coord)
+    # coord_h = lagrange(grid, dimRange=3, order=3).interpolate(coord,name="coord")
+    coord_h = uflFunction(grid, name="coord", order=5, ufl=coord)
     geoGrid = geometryGridView(coord_h)
     geoLag = lagrange(geoGrid, order=3)
     x = ufl.SpatialCoordinate(geoLag)
