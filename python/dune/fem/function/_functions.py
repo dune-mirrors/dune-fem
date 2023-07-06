@@ -156,5 +156,5 @@ def tupleDiscreteFunction(*spaces, **kwargs):
         components = df.components
         assert len(compNames) == len(components)
         for c, n in zip(components, compNames):
-            setattr(df,n,c)
+            setattr(df,n,c.as_ufl())
     return df.as_ufl()

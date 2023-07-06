@@ -251,7 +251,8 @@ def init(lf, gridView, name, order, *args, **kwargs):
         missing = [name for name, i in coefficientNames.items() if args[i] is None]
         raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
 
-    lf.base.__init__(lf,gridView,name,order,*args)
+    # lf.base.__init__(lf,gridView,name,order,*args)
+    super(lf.__class__,lf).__init__(gridView,name,order,*args)
     for c in lf._constants:
         c.registerModel(lf)
 
@@ -306,7 +307,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
 
     class LocalFunction(module.UFLLocalFunction):
         def __init__(self, gridView, name, order, *args, **kwargs):
-            self.base = module.UFLLocalFunction
+            # self.base = module.UFLLocalFunction
             self._coefficientNames = {n: i for i, n in enumerate(source.coefficientNames)}
             if renumbering is not None:
                 self._renumbering = renumbering

@@ -3,8 +3,9 @@ import matplotlib
 matplotlib.rc( 'image', cmap='jet' )
 import numpy, ufl
 from dune.alugrid import aluConformGrid as view
+# from dune.alugrid import aluCubeGrid as view
 from dune.grid import cartesianDomain, Marker
-from dune.fem.function import gridFunction
+from dune.fem.function import gridFunction, uflFunction
 from dune.fem.space import lagrange, dgonb
 from dune.fem.view import geometryGridView, adaptiveLeafGridView
 import dune.fem
@@ -61,29 +62,30 @@ def adaptTest(fileName):
         series.dump({"time":tsp})
 
 def geoTest(fileName):
-    grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
+    grid = view( cartesianDomain([-2,-2],[2,2],[10,10]) )
     x   = ufl.SpatialCoordinate(ufl.triangle)
-    coordSpace = lagrange(grid, dimRange=2, order=3)
+    coordSpace = lagrange(grid, dimRange=2, order=4)
     coord = ufl.as_vector([ x[0]*(1+0.1*ufl.cos(ufl.pi*x[1])), x[1]*(1+0.2*ufl.sin(ufl.pi*x[0])) ])
     coord = coordSpace.interpolate(coord,name="coord")
     geoGrid = geometryGridView(coord)
-    geoLag = lagrange(geoGrid, order=3)
-    geoDf = geoLag.interpolate(ufl.sin(2*ufl.pi*x[0]*x[1]), name="df")
+    geoLag = lagrange(geoGrid, order=4)
+    geoDf = geoLag.interpolate(ufl.sin(ufl.pi*ufl.dot(x,x)), name="df")
+    geoDf.plot(level=4)
     with open(fileName+".dbf","wb") as f:
         dune.common.pickle.dump(["hallo",geoDf],f)
 
 def surfTest(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[4,4]) )
     x = ufl.SpatialCoordinate(ufl.triangle)
-    coordSpace = lagrange(grid, dimRange=3, order=3)
     coord = ufl.as_vector([ x[0],x[1], ufl.sin(ufl.pi*x[0]*x[1]) ])
-    coord = coordSpace.interpolate(coord,name="coord")
-    geoGrid = geometryGridView(coord)
+    coord_h = lagrange(grid, dimRange=3, order=3).interpolate(coord,name="coord")
+    oord_h = uflFunction(grid, name="coord", order=5, ufl=coord)
+    geoGrid = geometryGridView(coord_h)
     geoLag = lagrange(geoGrid, order=3)
     x = ufl.SpatialCoordinate(geoLag)
-    geoDf = geoLag.interpolate(ufl.sin(2*ufl.pi*x[0]*x[1]*x[2]), name="df")
+    geoDf = geoLag.interpolate(ufl.sin(ufl.pi*(x[0]+x[1]+x[2])), name="df")
     with open(fileName+".dbf","wb") as f:
-        dune.common.pickle.dump(["hallo",geoDf],f)
+        dune.common.pickle.dump(["hallo",geoDf,coord],f)
 
 def test3D(fileName):
     grid = view( cartesianDomain([-2,-2,-2],[2,2,2],[4,4,4]) )

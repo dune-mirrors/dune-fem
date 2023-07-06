@@ -159,7 +159,7 @@ namespace Dune
         ldu.reserve( maxNumBlocks * localBlockSize );
         ldw.reserve( maxNumBlocks * localBlockSize );
 
-        std::vector< bool > onSubEntity;
+        std::vector< char > onSubEntity;
         onSubEntity.reserve( maxNumBlocks );
 
         OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );

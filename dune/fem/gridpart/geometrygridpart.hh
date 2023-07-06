@@ -66,8 +66,8 @@ namespace Dune
       typedef GridFunction GridFunctionType;
       typedef typename GridFunction::RangeFieldType ctype;
 
-      static const int dimension = GridFunction::GridPartType::dimension;
-      static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
+      constexpr static int dimension = GridFunction::GridPartType::dimension;
+      constexpr static int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
 
       typedef GeometryGridPartFamily< GridFunction > GridPartFamily;
 
@@ -132,8 +132,8 @@ namespace Dune
 
       typedef GridPartType GridViewType;
 
-      static const int dimension = GridFunction::GridPartType::dimension;
-      static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
+      constexpr static int dimension = GridFunction::GridPartType::dimension;
+      constexpr static int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
 
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPartType::TwistUtilityType >  TwistUtilityType;
@@ -215,7 +215,7 @@ namespace Dune
       typedef typename BaseType::GridViewType GridViewType;
 
       // the interface takes this from the grid
-      static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
+      constexpr static int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
 
       template< int codim >
       struct Codim

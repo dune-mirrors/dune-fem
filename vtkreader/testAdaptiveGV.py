@@ -1,6 +1,6 @@
 import sys
 import ufl
-from dune.alugrid import aluSimplexGrid as view
+from dune.alugrid import aluConformGrid as view
 from dune.grid import cartesianDomain
 from dune.fem import globalRefine
 from dune.fem.space import lagrange, dgonb
@@ -14,17 +14,14 @@ import dune.common.pickle
 
 def test1(fileName):
     grid = view( cartesianDomain([-2,-2],[2,2],[2,2]) )
-    print(grid.size(0))
-    print(grid._module)
+    print( grid.hierarchicalGrid.refineStepsForHalf )
 
     #####################################################
     # we can remove either of these lines to make it work
     #####################################################
-    grid = adaptiveLeafGridView( grid )                #1
-    print(grid._module)
-    print(grid.size(0))
+    # grid = adaptiveLeafGridView( grid )              #1
     globalRefine(1,grid.hierarchicalGrid)              #2
-    print(grid.size(0))
+    grid.plot()
     #####################################################
 
     x    = ufl.SpatialCoordinate(ufl.triangle)
@@ -44,17 +41,27 @@ def test1(fileName):
     for elem in grid.elements:
         print("Elem:",elem.geometry.center,end="\t")
         print("IS:", [ indset.subIndices(elem,c) for c in range(3) ] )
+    globalRefine(1,grid.hierarchicalGrid)              #2
+    grid.plot()
 
 test1("testAGV.dbf")
 
 with open("testAGV.dbf","rb") as f:
     lag1,lag3,dg = dune.common.pickle.load(f)
 grid = lag1.gridView
+print( grid.hierarchicalGrid.refineStepsForHalf )
+grid.plot()
 elem = grid.elements.__next__()
 indset = grid.indexSet
 for elem in grid.elements:
     print("Elem:",elem.geometry.center,end="\t")
     print("IS:", [ indset.subIndices(elem,c) for c in range(3) ] )
+
+# ISSUE: refinening here does not work
+# RuntimeError: NotImplemented [numBlocks:/home/dedner/DUNE_PYTHON/dune-fem/dune/fem/space/mapper/codimensionmapper.hh:202]: Method numBlocks() called on non-adaptive block mapper
+# globalRefine(1,grid.hierarchicalGrid)
+# dune.fem.globalRefine(1,grid.hierarchicalGrid)
+# grid.plot()
 
 """
 # level = 0 works fine as expected

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 ###############################################################################
-# This paraview reader adds support for 'dune binary format' # files (dbf).
+# This paraview reader adds support for 'dune binary format' files (dbf).
 # The file is assumed to be written using 'dune.common.pickle.dump'. It
 # therefore consists of two parts (the required jit module source code and
 # a pickled list of objects). This list is searched for objects containing
@@ -13,7 +13,7 @@
 ###############################################################################
 
 import numpy as np
-import os,sys,vtk,importlib,glob,json
+import os,sys,vtk,importlib,glob,json,collections
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase
@@ -79,7 +79,7 @@ def setDuneModulePaths():
         sys.path += dunePaths
         if not "DUNE_PY_DIR" in os.environ:
             os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
-        sys.path += os.path.join(os.environ["DUNE_PY_DIR"],"python","dune","generated")
+        sys.path += [os.path.join(os.environ["DUNE_PY_DIR"],"dune-py","python")] # ,"dune","generated")]
         # print(os.environ["DUNE_PY_DIR"], dunePaths)
     except KeyError:
         # print("no virtual env path found!")
@@ -121,15 +121,17 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._timeSteps = None
         self._currentTime = None
         self._gridView = None
-        self._refType = 0 # h-refienement
+        self._refType = 1 # h-refienement
         setDuneModulePaths()
         try:
             import dune.common.pickle
             import dune.common.utility
+            import dune.geometry
         except ImportError:
             raise ImportError("could not import dune.common")
         self.load = dune.common.pickle.load
         self.reload = dune.common.utility.reload_module
+        self.simplex = dune.geometry.simplex
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
@@ -250,7 +252,7 @@ class DuneReader(VTKPythonAlgorithmBase):
     @smproperty.stringvector(name="RefinementType", information_only="1")
     def getRefinementType(self):
         return ["h-adapt","p-adapt"]
-    @smproperty.stringvector(name="Refinement", number_of_elements="1")
+    @smproperty.stringvector(name="Refinement", default_values="p-adapt")
     @smdomain.xml(\
         """<StringListDomain name="list">
                 <RequiredProperties>
@@ -265,7 +267,7 @@ class DuneReader(VTKPythonAlgorithmBase):
             self.Modified()
     @smproperty.intvector(name="LevelRangeInfo", information_only="1")
     def GetLevelRange(self):
-        return (0, 5) if self._refType==0 else (1,8)
+        return (0, 5) if self._refType==0 else (1,6)
     @smproperty.intvector(name="ref-level", default_values=0)
     @smdomain.xml(\
         """<IntRangeDomain name="range" default_mode="min">
@@ -303,6 +305,7 @@ class DuneReader(VTKPythonAlgorithmBase):
                 self._gridView = self._df[0].gridView
             else:
                 self._gridView = df[0]
+            self._geoType = self._gridView.type
             # make some checks:
             assert hasattr(self._gridView,"dimension"), "file read contains no valid grid view"
             assert all( [hasattr(d,"pointData") for d in self._df] ), "found a non valid grid function (no 'pointData' attribute"
@@ -347,37 +350,60 @@ class DuneReader(VTKPythonAlgorithmBase):
                     vtk_type = vtk.VTK_TRIANGLE
                 else:
                     vtk_type = vtk.VTK_TETRA
+            arrays = []
+            for df in gfs:
+                arrays += [df.pointData(self._level)]
+            # points need to be 3d:
+            if self._gridView.dimWorld == 2:
+                points = np.hstack([points, np.zeros((len(points), 1))])
         else: # https://www.kitware.com/modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit
             if self._gridView.dimGrid == 2:
-                nPoints = (self._level+1)*(self._level+2) // 2 # level should start at 0
-                t = vtk.vtkLagrangeTriangle()
-            else:
-                nPoints = (self._level+1)*(self._level+2)*(self._level+3) // 6 # level should start at 0
-                t = vtk.vtkLagrangeTetra()
-            t.GetPointIds().SetNumberOfIds(nPoints)
-            t.GetPoints().SetNumberOfPoints(nPoints)
-            t.Initialize()
-            c = t.GetParametricCoords()
-            points = np.zeros([self._gridView.size(0)*nPoints,self._gridView.dimWorld])
-            cells  = np.zeros([self._gridView.size(0),nPoints],dtype=np.int64)
-            for e,elem in enumerate(self._gridView.elements):
-                geo = elem.geometry
-                for i in range(nPoints):
-                    p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
-                    x = geo.toGlobal(p)
-                    points[e*nPoints+i][:] = x
-                cells[e][:] = range(e*nPoints,(e+1)*nPoints)
-            if self._gridView.dimWorld == 2:
-                vtk_type = vtk.VTK_LAGRANGE_TRIANGLE
-            elif self._gridView.dimWorld == 3:
-                if self._gridView.dimGrid == 2:
+                if self._geoType == self.simplex( self._gridView.dimGrid ):
+                    locPoints = (self._level+1)*(self._level+2) // 2
+                    t = vtk.vtkLagrangeTriangle()
                     vtk_type = vtk.VTK_LAGRANGE_TRIANGLE
                 else:
+                    locPoints = (self._level+1)**2
+                    t = vtk.vtkLagrangeQuadrilateral()
+                    vtk_type = vtk.VTK_LAGRANGE_QUADRILATERAL
+            else:
+                if self._geoType == self.simplex( self._gridView.dimGrid ):
+                    locPoints = (self._level+1)*(self._level+2)*(self._level+3) // 6
+                    t = vtk.vtkLagrangeTetra()
                     vtk_type = vtk.VTK_LAGRANGE_TETRAHEDRON
+                else:
+                    locPoints = (self._level+1)**3
+                    t = vtk.vtkLagrangeHexahedron()
+                    vtk_type = vtk.VTK_LAGRANGE_HEXAHEDRON
 
-        # points need to be 3d:
-        if self._gridView.dimWorld == 2:
-            points = np.hstack([points, np.zeros((len(points), 1))])
+            t.GetPointIds().SetNumberOfIds(locPoints)
+            t.GetPoints().SetNumberOfPoints(locPoints)
+            t.Initialize()
+            c = t.GetParametricCoords()
+
+            # for a 'continuous' geometry we can use a dune-fem lagrange space directly in C++
+            # to generate a compact form of the grid.
+            # Here is a dg version done in Python
+            nofPoints = self._gridView.size(0) * locPoints
+
+            points = np.zeros([nofPoints,3])
+            cells  = np.zeros([self._gridView.size(0),locPoints],dtype=np.int64)
+            arrays = []
+            ldfs = [df.localFunction() for df in gfs]
+            for df in gfs:
+                arrays += [np.zeros([nofPoints,df.dimRange])]
+            for e,elem in enumerate(self._gridView.elements):
+                for ldf in ldfs:
+                    ldf.bind(elem)
+                geo = elem.geometry
+                for i in range(locPoints):
+                    p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
+                    idx = e*locPoints + i
+                    points[idx][0:self._gridView.dimWorld] = geo.toGlobal(p)
+                    cells[e][i] = idx
+                    for j,ldf in enumerate(ldfs):
+                        arrays[j][idx] = ldf(p)
+
         output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
         output.SetPoints(points)
 
@@ -396,21 +422,9 @@ class DuneReader(VTKPythonAlgorithmBase):
         cell_conn = np.hstack([cell_conn, conn])
         output.SetCells(cell_types, cell_offsets, cell_conn)  # cell connectivities
 
-        if self._refType == 0: # h-refienement
-            for df in gfs:
-                array = df.pointData(self._level)
-                output.PointData.append(array, df.name)  # point data
-                # output.CellData.append(array, df.name)  # cell data
-                # output.FieldData.append(array, name)  # field data
-        else:
-            for df in gfs:
-                ldf = df.localFunction()
-                array = np.zeros([self._gridView.size(0)*nPoints,df.dimRange])
-                for e,elem in enumerate(self._gridView.elements):
-                    ldf.bind(elem)
-                    for i in range(nPoints):
-                        p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
-                        array[e*nPoints+i] = ldf(p)
-                output.PointData.append(array, df.name)  # point data
+        for a,df in zip(arrays,gfs):
+            output.PointData.append(a, df.name)  # point data
+            # output.CellData.append(array, df.name)  # cell data
+            # output.FieldData.append(array, name)  # field data
 
         return 1
