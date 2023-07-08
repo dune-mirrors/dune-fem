@@ -417,7 +417,7 @@ class ModelClass():
         self.constantList = sorted((c for c in coefficients if c.is_cellwise_constant()), key=lambda c: c.count())
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
 
-        constants=[fieldVectorType(c,useScalar=True) for c in self.constantList]
+        constants=[fieldVectorType(c,useScalar=c.scalar) for c in self.constantList]
         coefficients=(fieldVectorType(c) for c in self.coefficientList)
         constantNames=[getattr(c, 'name', None) for c in self.constantList]
         constantShapes=[getattr(c, 'ufl_shape', None) for c in self.constantList]
