@@ -222,10 +222,13 @@ class Constant(ufl.Coefficient):
         # Create UFL element and initialize constant
         if rank == 0:
             ufl_element = ufl.FiniteElement("Real", cell, 0)
+            self.scalar = True
         elif rank == 1:
             ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
+            self.scalar = False
         else:
             ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
+            self.scalar = False
 
         # Initialize base classes
         ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
