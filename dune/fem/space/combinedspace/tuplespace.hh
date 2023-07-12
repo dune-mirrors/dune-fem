@@ -204,7 +204,7 @@ namespace Dune
       typedef LocalInterpolationWrapper< ThisType > InterpolationType;
       typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
 
-#if 1 // see base type for explanation
+#if 0 // see base type for explanation
       /** \brief constructor
        *
        *  \param[in]  gridPart       reference to the grid part
