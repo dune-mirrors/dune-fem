@@ -342,9 +342,9 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
             if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
-            if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
+            if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != phi.ufl_function_space()):
                 raise Exception('Space of trial function and dirichlet boundary function must be the same - note that boundary conditions on subspaces are not available, yet')
-            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
+            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != phi.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 
             if isinstance(bc.value, list):

@@ -251,10 +251,15 @@ def h1(model, domainSpace=None, rangeSpace=None):
 #       The returning operator could have a 'update' method and then we
 #       remove the 'jacobian' from the official interface
 def linear(operator, ubar=None,parameters={}):
-    from dune.fem.function import discreteFunction
-    assert hasattr(operator,"jacobian"), "operator does not allow assembly"
-    rangeSpace  = operator.rangeSpace
-    domainSpace = operator.domainSpace
+    try:
+        rangeSpace  = operator[0]
+        domainSpace = operator[1]
+        assemble = False
+    except TypeError:
+        assert hasattr(operator,"jacobian"), "operator does not allow assembly"
+        rangeSpace  = operator.rangeSpace
+        domainSpace = operator.domainSpace
+        assemble = True
 
     domainSpaceType = domainSpace.cppTypeName
     rangeSpaceType = rangeSpace.cppTypeName
@@ -278,9 +283,11 @@ def linear(operator, ubar=None,parameters={}):
                               ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
 
     lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace,parameters)
-    if ubar is None:
-        # operator.jacobian(domainSpace.interpolate([0,]*domainSpace.dimRange,"tmp"), lin)
-        operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
-    else:
-        operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
+
+    if assemble:
+        if ubar is None:
+            from dune.fem.function import discreteFunction
+            operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
+        else:
+            operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
     return lin

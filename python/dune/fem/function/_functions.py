@@ -104,11 +104,11 @@ def _assertSizesMatch(space, dofVector):
     except AttributeError:
         pass
 
-    # check that sizes and data size match
+    # check that sizes and data size match (if vector size is larger always use the first part)
     try:
-        assert space.size == len(dofVector), f"space (size={space.size}) and vector (size={len(dofVector)}) do not match!"
+        assert space.size <= len(dofVector), f"space (size={space.size}) is larger than vector (size={len(dofVector)})!"
     except TypeError:
-        assert space.size == dofVector.size, f"space (size={space.size}) and vector (size={dofVector.size}) do not match!"
+        assert space.size == dofVector.size, f"space (size={space.size}) is larger than vector (size={dofVector.size}) do not match!"
 
     if hasattr(dofVector, "dtype"):
         dtype = dofVector.dtype

@@ -79,6 +79,7 @@ def cell(dimDomainOrGrid):
 
 class Space(ufl.FunctionSpace):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False):
+        assert not scalar or dimRange is None or dimRange == 1
         if not dimRange:
             try:
                 dimRange = dimDomainOrGridOrSpace.dimRange
@@ -88,7 +89,7 @@ class Space(ufl.FunctionSpace):
                 scalar = True
         self.scalar = scalar
         if scalar:
-            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, 1)
         else:
             ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
         domain = ufl.domain.default_domain(ve.cell())
@@ -427,6 +428,8 @@ class GridFunction(ufl.Coefficient):
         return self
     def __getitem__(self,i):
         if isinstance(i,int):
+            if i<0:
+                i = self.__impl__.dimRange + i
             return GridIndexed(self,i)
         else:
             return ufl.Coefficient.__getitem__(self,i)
