@@ -245,23 +245,21 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' +\
             linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
-    try:
-        logTag = parameters["logging"]
-        method = [Method("parameterLog",(
-                f'[](DuneType &)'
-                f'{{return Dune::Fem::Parameter::localParameterLog()["{logTag}"];}}'
-            ) )]
-    except KeyError:
-        method = []
-
     parameters.update(param)
-    scheme = module(includes, typeName, *method, backend=backend).Scheme(space, integrands, parameters)
+    scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
 
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
+
+    try:
+        from dune.fem import parameter
+        logTag = parameters["logging"]
+        scheme.parameterLog = lambda: parameter.log()[logTag]
+    except KeyError:
+        pass
 
     return scheme
 
