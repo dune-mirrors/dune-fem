@@ -8,6 +8,7 @@
 
 #include <dune/python/pybind11/extensions.h>
 #include <dune/python/pybind11/pybind11.h>
+#include <dune/python/pybind11/stl.h>
 
 PYBIND11_MODULE( _fem, module )
 {
@@ -57,6 +58,13 @@ PYBIND11_MODULE( _fem, module )
           file.close();
         }
       }, "fileName"_a );
+
+    param.def( "log", [] ( Dune::Fem::ParameterContainer &self ) {
+      auto map = Dune::Fem::Parameter::localParameterLog();
+      auto def = Dune::Fem::Parameter::write();
+      map.insert(def.begin(), def.end());
+      return map;
+    } );
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
         self.append( fileName );
