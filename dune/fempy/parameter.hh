@@ -14,8 +14,8 @@ namespace Dune
   namespace FemPy
   {
 
-    // noParameter
-    // -----------
+    // noParameter (not used - so can be removed?)
+    // -------------------------------------------
 
     inline static Fem::ParameterReader noParameter ()
     {
@@ -33,16 +33,16 @@ namespace Dune
         } );
     }
 
-
-
     // pyParameter
     // -----------
     namespace detail {
 
+      template <bool logging>
       inline static Fem::ParameterReader pyParameterImpl ( const std::string &rmPrefix,
-          std::map< std::string, std::string >&& dict, std::shared_ptr< std::string > tmp )
+          std::map<std::string,std::string>&& dict, std::shared_ptr< std::string > tmp,
+          const std::string loggingName )
       {
-        return Fem::ParameterReader( [ rmPrefix, dict, tmp ] ( const std::string &key, const std::string *def ) -> const std::string * {
+        return Fem::ParameterReader( [ rmPrefix, dict, tmp, loggingName ] ( const std::string &key, const std::string *def ) -> const std::string * {
           // first determine if the `prefix` of the provided key corresponds
           // to the prefix to be removed:
           if (key.compare(0,rmPrefix.size(),rmPrefix) == 0)
@@ -53,6 +53,8 @@ namespace Dune
             auto it = dict.find( reducedKey );
             if( it != dict.end() )
             {
+              if constexpr (logging)
+                Dune::Fem::Parameter::localParameterLog()[loggingName].insert(*it);
               *tmp = it->second;
               return tmp.get();
             }
@@ -62,6 +64,8 @@ namespace Dune
             auto it = dict.find( key );
             if( it != dict.end() )
             {
+              if constexpr (logging)
+                Dune::Fem::Parameter::localParameterLog()[loggingName].insert(*it);
               *tmp = it->second;
               return tmp.get();
             }
@@ -72,24 +76,37 @@ namespace Dune
           if( !Fem::Parameter::exists( key ) )
           {
             if (def == nullptr)
+            {
+              Dune::Fem::Parameter::localParameterLog()[loggingName].
+                       insert({key,""});
               return nullptr; // not found and no default
+            }
             else if( *def == Dune::Fem::checkParameterExistsString() )
+            {
               return nullptr;
+            }
+            if constexpr (logging)
+              Dune::Fem::Parameter::localParameterLog()[loggingName].
+                       insert({key,*def});
             return def;
           }
           if (def)
             Fem::Parameter::get( key, *def, *tmp );
           else
             Fem::Parameter::get( key, *tmp );
+          if constexpr (logging)
+            Dune::Fem::Parameter::localParameterLog()[loggingName].
+                     insert({key,*tmp+" (global)"});
           return tmp.get();
         } );
       }
-    }
+    } // namespace detail
 
 
     inline static Fem::ParameterReader pyParameter ( const std::string &rmPrefix, const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
     {
       typedef std::map< std::string, std::string > DictMap;
+
       // convert to std::map for enabling find
       DictMap dictMap;
       for( const auto& item : dict )
@@ -99,7 +116,10 @@ namespace Dune
             static_cast< std::string >( pybind11::str(item.second ) ) );
       }
 
-      return detail::pyParameterImpl( rmPrefix, std::move(dictMap), tmp );
+      if (auto it = dictMap.find( "logging" ); it != dictMap.end() && !it->second.empty() )
+        return detail::pyParameterImpl<true>( rmPrefix, std::move(dictMap), tmp, it->second );
+      else
+        return detail::pyParameterImpl<false>( rmPrefix, std::move(dictMap), tmp, "" );
     }
 
     inline static Fem::ParameterReader pyParameter ( const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
