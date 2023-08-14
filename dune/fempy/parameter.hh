@@ -78,7 +78,7 @@ namespace Dune
             if (def == nullptr)
             {
               Dune::Fem::Parameter::localParameterLog()[loggingName].
-                       insert({key,"(not found and no default)"});
+                       insert({key,""});
               return nullptr; // not found and no default
             }
             else if( *def == Dune::Fem::checkParameterExistsString() )
@@ -87,7 +87,7 @@ namespace Dune
             }
             if constexpr (logging)
               Dune::Fem::Parameter::localParameterLog()[loggingName].
-                       insert({key,*def+" (default)"});
+                       insert({key,*def});
             return def;
           }
           if (def)
