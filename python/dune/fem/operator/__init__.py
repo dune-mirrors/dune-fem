@@ -246,11 +246,11 @@ def h1(model, domainSpace=None, rangeSpace=None):
     scheme.model = model
     return scheme
 
-# TODO: linear could also return the 'affine shift' and the point of
-#       linearization (0 now) could also be passed in
-#       The returning operator could have a 'update' method and then we
-#       remove the 'jacobian' from the official interface
 def linear(operator, ubar=None,parameters={}):
+    """ operator can be either a dune.fem.operator/scheme or a tuple/list of spaces.
+        In the second case ubar needs to be None and the operator is unassembled.
+        In the first case the operator will be assembled around 'ubar' or around zero if ubar is None.
+    """
     try:
         rangeSpace  = operator[0]
         domainSpace = operator[1]

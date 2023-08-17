@@ -64,7 +64,6 @@ namespace Dune
 
       //! default communication direction
       static const CommunicationDirection defaultDirection = ForwardCommunication;
-#if 1 // Possibly deprecate:
       // this ctor is problematic: assume that one space is a DynamicLS
       // then this constructor uses some default order (=1) silently.
       // Not sure if we want that.
@@ -82,7 +81,6 @@ namespace Dune
           spaceTuple_( Traits::createSpaces( gridPart, commInterface, commDirection ) ),
           blockMapper_( Traits::getBlockMapper( spaceTuple_ ) )
       {}
-#endif
 
     protected:
 
