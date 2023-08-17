@@ -81,6 +81,8 @@ def surfTest(fileName):
     coord_h = lagrange(grid, dimRange=3, order=3).interpolate(coord,name="coord")
     oord_h = uflFunction(grid, name="coord", order=5, ufl=coord)
     geoGrid = geometryGridView(coord_h)
+    with open(fileName+".dbf","wb") as f:
+        dune.common.pickle.dump([geoGrid],f)
     geoLag = lagrange(geoGrid, order=3)
     x = ufl.SpatialCoordinate(geoLag)
     geoDf = geoLag.interpolate(ufl.sin(ufl.pi*(x[0]+x[1]+x[2])), name="df")
