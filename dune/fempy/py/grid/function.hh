@@ -300,10 +300,10 @@ namespace Dune
       inline static auto registerPyGlobalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
       {
         typedef decltype( makePyGlobalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
-        std::string adapt = Python::GenerateTypeName("Dune::FemPy::GridPartAdapter",
+        std::string adapt = Python::GenerateTypeName("Dune::Fem::GridPartAdapter",
             Dune::MetaType<typename GridPart::GridViewType>()).name();
         auto gfClass = Python::insertClass<GridFunction>(scope, name+std::to_string(dimRange),
-            Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
+            Python::GenerateTypeName("Dune::FemPy::VirtualizedGridFunction",
               adapt,
               "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
               Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fem/gridpart/common/gridpartadapter.hh"}
@@ -340,10 +340,10 @@ namespace Dune
       {
         typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         const std::string clsName = name + std::to_string( dimRange );
-        std::string adapt = Python::GenerateTypeName("Dune::FemPy::GridPartAdapter",
+        std::string adapt = Python::GenerateTypeName("Dune::Fem::GridPartAdapter",
             Dune::MetaType<typename GridPart::GridViewType>()).name();
         auto gfClass = Python::insertClass<GridFunction>(scope,name+std::to_string(dimRange),
-            Python::GenerateTypeName("Dune::FemPy::VirtualizeGridFunction",
+            Python::GenerateTypeName("Dune::FemPy::VirtualizedGridFunction",
               adapt,
               "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
               Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh","dune/fem/gridpart/common/gridpartadapter.hh"}
