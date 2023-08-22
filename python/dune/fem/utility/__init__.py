@@ -93,7 +93,7 @@ class Sampler:
         self.pointSampler = None
         self.boundarySampler = None
 
-    def lineSample(self,x0,x1,N):
+    def lineSample(self,x0,x1,N, allowOutside=False):
         from dune.common import FieldVector
         import numpy
         x0, x1 = FieldVector(x0), FieldVector(x1)
@@ -110,21 +110,25 @@ class Sampler:
 
             template <class GF, class DT>
             std::pair<std::vector<DT>, std::vector<typename GF::RangeType>>
-            sample(const GF &gf, DT &start, DT &end, int n)
+            sample(const GF &gf, DT &start, DT &end, int n, bool allowOutside)
             {
               Dune::Fem::LineSegmentSampler<typename GF::GridPartType> sampler(gf.gridPart(),start,end);
               std::vector<DT> coords(n);
               std::vector<typename GF::RangeType> values(n);
-              sampler(gf,values);
+              if (allowOutside)
+                sampler(gf,values, std::nothrow);
+              else
+                sampler(gf,values);
               sampler.samplePoints(coords);
               return std::make_pair(coords,values);
             }
             #endif
 
             """
-            self.lineSampler = algorithm.load('sample', io.StringIO(_lineSampleCode), self.gridFunction, x0, x1, N)
+            self.lineSampler = algorithm.load('sample', io.StringIO(_lineSampleCode),
+                                 self.gridFunction, x0, x1, N, allowOutside)
 
-        p,v = self.lineSampler( self.gridFunction, x0, x1, N )
+        p,v = self.lineSampler( self.gridFunction, x0, x1, N, allowOutside )
         if self.gridFunction.scalar:
             x,y = numpy.zeros(len(p)), numpy.zeros(len(p))
         else:
@@ -357,8 +361,8 @@ sampleBnd(const GF &gf, const std::vector<int>& boundaryIds,
 #########################################################################
 
 
-def lineSample(gridFunction,x0,x1,N):
-    return Sampler(gridFunction).lineSample(x0, x1, N)
+def lineSample(gridFunction,x0,x1,N, allowOutside=False):
+    return Sampler(gridFunction).lineSample(x0, x1, N, allowOutside)
 
 def pointSample(gridFunction,x0):
     return Sampler(gridFunction).pointSample( x0 )
