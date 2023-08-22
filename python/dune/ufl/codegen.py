@@ -136,6 +136,10 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))
 
+    def acos(self, expr, x):
+        self.using.add(Using(cplusplus.acos))
+        return self._makeTmp(cplusplus.acos(x))
+
     def cosh(self, expr, x):
         self.using.add(Using(cplusplus.cosh))
         return self._makeTmp(cplusplus.cosh(x))
@@ -253,6 +257,10 @@ class CodeGenerator(MultiFunction):
     def sin(self, expr, x):
         self.using.add(Using(cplusplus.sin))
         return self._makeTmp(cplusplus.sin(x))
+
+    def asin(self, expr, x):
+        self.using.add(Using(cplusplus.asin))
+        return self._makeTmp(cplusplus.asin(x))
 
     def sinh(self, expr, x):
         self.using.add(Using(cplusplus.sinh))
