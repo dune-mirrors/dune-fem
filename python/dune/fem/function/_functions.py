@@ -68,6 +68,11 @@ def partitionFunction(gridView,name="rank"):
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
+    from ufl.algorithms.analysis import extract_arguments
+    assert len(extract_arguments(ufl)) == 0,\
+    """
+Error: the ufl expression used to define a function should not used a `Test` or `Trial` function.
+"""
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
             ufl, renumbering=None,
             virtualize=virtualize,
