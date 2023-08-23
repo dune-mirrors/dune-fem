@@ -88,7 +88,7 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    version = "v1_3"
+    version = "v1_4"
     def __init__(self, integrands, grid, modelIncludes, form, *args,
             tempVars=True, virtualize=True):
         gridType = grid.cppTypeName
@@ -169,7 +169,8 @@ class Source(object):
 
         name = self.name()
         coefficients = integrands.coefficientCppTypes
-        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
+        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(
+                 ['typename Dune::FemPy::GridPart< ' + self.gridType + ' >'] + coefficients) + ' >'
 
         register = []
         register.append('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
