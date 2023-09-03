@@ -146,7 +146,7 @@ def assemble(form,space=None,gridView=None,order=None):
     from ufl.equation import Equation
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
     try:
-        params = form[1:]
+        params = [*form[1:]]
         form = form[0]
     except TypeError:
         params = []
