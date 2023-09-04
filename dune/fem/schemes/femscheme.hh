@@ -138,6 +138,13 @@ public:
   {
     implicitOperator_.setConstraints( u, v );
   }
+  template <class GridFunctionType, typename O = Operator,
+            typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.setConstraints( u, v );
+  }
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const

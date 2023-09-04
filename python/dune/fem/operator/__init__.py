@@ -246,10 +246,14 @@ def h1(model, domainSpace=None, rangeSpace=None):
     scheme.model = model
     return scheme
 
-def linear(operator, ubar=None,parameters={}):
+def linear(operator, ubar=None,parameters={},affineShift=False):
     """ operator can be either a dune.fem.operator/scheme or a tuple/list of spaces.
         In the second case ubar needs to be None and the operator is unassembled.
         In the first case the operator will be assembled around 'ubar' or around zero if ubar is None.
+
+        If affineShift is true the function returns both the linearization
+        A and the affine shift, i.e., both L[0] and DL[0]. Note that the
+        `right hand side` returned by `affine` is `b=-L[0]`.
     """
     try:
         rangeSpace  = operator[0]
@@ -290,4 +294,9 @@ def linear(operator, ubar=None,parameters={}):
             operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
         else:
             operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
-    return lin
+    if affineShift:
+        b = rangeSpace.zero.copy()
+        operator(rangeSpace.zero,b)
+        return lin,b
+    else:
+        return lin

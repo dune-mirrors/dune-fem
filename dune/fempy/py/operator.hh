@@ -101,6 +101,7 @@ namespace Dune
           cls.def( "setConstraints", [] ( Operator &self, DomainFunction &u) { self.setConstraints( u ); } );
           cls.def( "setConstraints", [] ( Operator &self, const typename DomainFunction::RangeType &value, DomainFunction &u) { self.setConstraints( value, u ); } );
           cls.def( "setConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.setConstraints( u,v ); } );
+          cls.def( "setConstraints", [] ( Operator &self, const GeneralGridFunction<DomainFunction> &u, RangeFunction &v) { self.setConstraints( u,v ); } );
           cls.def( "subConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.subConstraints( u,v ); } );
           using DirichletBlockVector = typename Operator::DirichletBlockVector;
           pybind11::bind_vector<DirichletBlockVector>(cls, "DirichletBlockVector");

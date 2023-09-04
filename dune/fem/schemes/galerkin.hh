@@ -1683,6 +1683,13 @@ namespace Dune
           if constexpr (addDirichletBC)
             fullOperator().setConstraints( u, v );
         }
+        template < class GridFunctionType,
+           typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
+        void setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().setConstraints( u, v );
+        }
         void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
         {
           if constexpr (addDirichletBC)
