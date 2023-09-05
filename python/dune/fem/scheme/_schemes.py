@@ -258,6 +258,13 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
 
+    from dune.fem.operator import linear
+    scheme.parameters = parameters
+    scheme.__class__.linear = lambda self, parameters=None:(
+        dune.fem.operator.linear([self.domainSpace,self.rangeSpace],
+              parameters=(self.parameters if parameters is None else parameters) )
+      )
+
     try:
         from dune.fem import parameter
         logTag = parameters["logging"]

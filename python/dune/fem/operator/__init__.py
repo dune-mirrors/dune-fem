@@ -164,6 +164,9 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     gridSizeInterior = Method('gridSizeInterior', '''[]( DuneType &self ) { return self.gridSizeInterior(); }''' )
     op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
+    op.__class__.linear = lambda self, parameters=None: (
+        linear([self.domainSpace,self.rangeSpace], parameters)
+      )
     # apply communicate flag
     op.setCommunicate( communicate )
     return op
@@ -246,7 +249,8 @@ def h1(model, domainSpace=None, rangeSpace=None):
     scheme.model = model
     return scheme
 
-def linear(operator, ubar=None,parameters={},affineShift=False):
+# possibly deprecate?
+def linear(operator, ubar=None,parameters=None,affineShift=False):
     """ operator can be either a dune.fem.operator/scheme or a tuple/list of spaces.
         In the second case ubar needs to be None and the operator is unassembled.
         In the first case the operator will be assembled around 'ubar' or around zero if ubar is None.
@@ -255,6 +259,8 @@ def linear(operator, ubar=None,parameters={},affineShift=False):
         A and the affine shift, i.e., both L[0] and DL[0]. Note that the
         `right hand side` returned by `affine` is `b=-L[0]`.
     """
+    if parameters is None:
+        parameters = {}
     try:
         rangeSpace  = operator[0]
         domainSpace = operator[1]

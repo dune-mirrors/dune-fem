@@ -244,14 +244,13 @@ def assemble(form,space=None,gridView=None,order=None):
             return b
         else:
             op = dune.fem.operator.galerkin( [form] + params )
-            A = dune.fem.operator.linear(op)
-            op.jacobian(space.zero,A)
+            A = op.linear()
             if wasEqn or not compute_form_rhs(form).empty():
                 b = space.zero.copy()
-                op(space.zero,b)
-                b *= -1
+                op.jacobian(space.zero,A,b)
                 return A,b
             else:
+                op.jacobian(space.zero,A)
                 return A
 
 def integrate(expr, gridView=None, order=None):
