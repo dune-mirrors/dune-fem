@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-GPL-2.0-only-with-DUNE-exception
 
 ###############################################################################
-# This paraview reader adds support for 'dune binary format' # files (dbf).
+# This paraview reader adds support for 'dune binary format' files (dbf).
 # The file is assumed to be written using 'dune.common.pickle.dump'. It
 # therefore consists of two parts (the required jit module source code and
 # a pickled list of objects). This list is searched for objects containing
@@ -13,7 +13,7 @@
 ###############################################################################
 
 import numpy as np
-import os,sys,vtk,importlib,glob,json
+import os,sys,vtk,importlib,glob,json,collections
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase
@@ -22,8 +22,8 @@ from vtkmodules.numpy_interface import dataset_adapter as dsa
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 
 # patch stdout/stderr to include 'isatty' method to make ufl happy
-# (vtk provides its own output streams without that method
-# ufl fails if 'AttributeError').
+# (paraview provides its own output streams without that method
+# ufl fails with 'AttributeError').
 # Note that the pvpython streams have no slots so 'setattr' does not work
 # and a more complex hack is required:
 def patchStream(stream):
@@ -79,7 +79,7 @@ def setDuneModulePaths():
         sys.path += dunePaths
         if not "DUNE_PY_DIR" in os.environ:
             os.environ["DUNE_PY_DIR"] = os.path.join(envdir,".cache")
-        sys.path += os.path.join(os.environ["DUNE_PY_DIR"],"python","dune","generated")
+        sys.path += [os.path.join(os.environ["DUNE_PY_DIR"],"dune-py","python")] # ,"dune","generated")]
         # print(os.environ["DUNE_PY_DIR"], dunePaths)
     except KeyError:
         # print("no virtual env path found!")
@@ -94,6 +94,10 @@ def setDuneModulePaths():
 # Some documentation
 # https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
 # https://github.com/Kitware/ParaView/blob/master/Examples/Plugins/PythonAlgorithm/PythonAlgorithmExamples.py
+# https://kitware.github.io/paraview-docs/latest/python/paraview.util.vtkAlgorithm.html
+
+# Order widgets: https://discourse.paraview.org/t/controlling-the-order-that-widgets-appear-in-the-gui-for-a-python-algorithm-plugin/10003/5
+
 
 dune_extensions = ["dbf"] # ,"dgf"]
 @smproxy.reader(
@@ -117,14 +121,17 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._timeSteps = None
         self._currentTime = None
         self._gridView = None
+        self._refType = 1 # h-refienement
         setDuneModulePaths()
         try:
             import dune.common.pickle
             import dune.common.utility
+            import dune.geometry
         except ImportError:
             raise ImportError("could not import dune.common")
         self.load = dune.common.pickle.load
         self.reload = dune.common.utility.reload_module
+        self.simplex = dune.geometry.simplex
 
     @smproperty.stringvector(name="FileName")
     @smdomain.filelist()
@@ -195,7 +202,7 @@ class DuneReader(VTKPythonAlgorithmBase):
             self._dataFct = self.getDataFcts().index(value)
             self.Modified()
 
-    @smproperty.stringvector(name="Transform", default_values="") # , panel_visibility="never")
+    @smproperty.stringvector(name="Transform", default_values="")
     @smdomain.filelist()
     @smhint.filechooser( extensions=["py"], file_description="Python script" )
     def SetTransform(self, transformPath):
@@ -241,11 +248,40 @@ class DuneReader(VTKPythonAlgorithmBase):
         self._transformFct = value
         self.Modified()
 
-    @smproperty.intvector(name="Level", default_values="0")
-    @smdomain.intrange(min=0, max=5)
+
+    @smproperty.stringvector(name="RefinementType", information_only="1")
+    def getRefinementType(self):
+        return ["h-adapt","p-adapt"]
+    @smproperty.stringvector(name="Refinement", default_values="p-adapt")
+    @smdomain.xml(\
+        """<StringListDomain name="list">
+                <RequiredProperties>
+                    <Property name="RefinementType" function="RefinementType"/>
+                </RequiredProperties>
+            </StringListDomain>
+        """)
+    def setRefinementType(self, value):
+        if value in self.getRefinementType():
+            self._refType = self.getRefinementType().index(value)
+            self._level = 0 if self._refType==0 else 1
+            self.Modified()
+    @smproperty.intvector(name="LevelRangeInfo", information_only="1")
+    def GetLevelRange(self):
+        return (0, 5) if self._refType==0 else (1,6)
+    @smproperty.intvector(name="ref-level", default_values=0)
+    @smdomain.xml(\
+        """<IntRangeDomain name="range" default_mode="min">
+                <RequiredProperties>
+                    <Property name="LevelRangeInfo" function="RangeInfo"/>
+                </RequiredProperties>
+           </IntRangeDomain>
+        """)
     def SetLevel(self, level):
+        if level < self.GetLevelRange()[0]:
+            return
         self._level = level
         self.Modified()
+
 
     def loadData(self):
         ext = os.path.splitext(self._filename)[1]
@@ -269,6 +305,7 @@ class DuneReader(VTKPythonAlgorithmBase):
                 self._gridView = self._df[0].gridView
             else:
                 self._gridView = df[0]
+            self._geoType = self._gridView.type
             # make some checks:
             assert hasattr(self._gridView,"dimension"), "file read contains no valid grid view"
             assert all( [hasattr(d,"pointData") for d in self._df] ), "found a non valid grid function (no 'pointData' attribute"
@@ -304,18 +341,70 @@ class DuneReader(VTKPythonAlgorithmBase):
         else:
             gfs = self._df
 
-        points, cells = self._gridView.tessellate(self._level)
-        output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
-
-        # points need to be 3d:
-        if self._gridView.dimWorld == 2:
-            vtk_type = vtk.VTK_TRIANGLE
-            points = np.hstack([points, np.zeros((len(points), 1))])
-        elif self._gridView.dimWorld == 3:
-            if self._gridView.dimGrid == 2:
+        if self._refType == 0: # h-refienement
+            points, cells = self._gridView.tessellate(self._level)
+            if self._gridView.dimWorld == 2:
                 vtk_type = vtk.VTK_TRIANGLE
+            elif self._gridView.dimWorld == 3:
+                if self._gridView.dimGrid == 2:
+                    vtk_type = vtk.VTK_TRIANGLE
+                else:
+                    vtk_type = vtk.VTK_TETRA
+            arrays = []
+            for df in gfs:
+                arrays += [df.pointData(self._level)]
+            # points need to be 3d:
+            if self._gridView.dimWorld == 2:
+                points = np.hstack([points, np.zeros((len(points), 1))])
+        else: # https://www.kitware.com/modeling-arbitrary-order-lagrange-finite-elements-in-the-visualization-toolkit
+            if self._gridView.dimGrid == 2:
+                if self._geoType == self.simplex( self._gridView.dimGrid ):
+                    locPoints = (self._level+1)*(self._level+2) // 2
+                    t = vtk.vtkLagrangeTriangle()
+                    vtk_type = vtk.VTK_LAGRANGE_TRIANGLE
+                else:
+                    locPoints = (self._level+1)**2
+                    t = vtk.vtkLagrangeQuadrilateral()
+                    vtk_type = vtk.VTK_LAGRANGE_QUADRILATERAL
             else:
-                vtk_type = vtk.VTK_TETRA
+                if self._geoType == self.simplex( self._gridView.dimGrid ):
+                    locPoints = (self._level+1)*(self._level+2)*(self._level+3) // 6
+                    t = vtk.vtkLagrangeTetra()
+                    vtk_type = vtk.VTK_LAGRANGE_TETRAHEDRON
+                else:
+                    locPoints = (self._level+1)**3
+                    t = vtk.vtkLagrangeHexahedron()
+                    vtk_type = vtk.VTK_LAGRANGE_HEXAHEDRON
+
+            t.GetPointIds().SetNumberOfIds(locPoints)
+            t.GetPoints().SetNumberOfPoints(locPoints)
+            t.Initialize()
+            c = t.GetParametricCoords()
+
+            # for a 'continuous' geometry we can use a dune-fem lagrange space directly in C++
+            # to generate a compact form of the grid.
+            # Here is a dg version done in Python
+            nofPoints = self._gridView.size(0) * locPoints
+
+            points = np.zeros([nofPoints,3])
+            cells  = np.zeros([self._gridView.size(0),locPoints],dtype=np.int64)
+            arrays = []
+            ldfs = [df.localFunction() for df in gfs]
+            for df in gfs:
+                arrays += [np.zeros([nofPoints,df.dimRange])]
+            for e,elem in enumerate(self._gridView.elements):
+                for ldf in ldfs:
+                    ldf.bind(elem)
+                geo = elem.geometry
+                for i in range(locPoints):
+                    p = [c[i*3+j] for j in range(self._gridView.dimGrid)]
+                    idx = e*locPoints + i
+                    points[idx][0:self._gridView.dimWorld] = geo.toGlobal(p)
+                    cells[e][i] = idx
+                    for j,ldf in enumerate(ldfs):
+                        arrays[j][idx] = ldf(p)
+
+        output = dsa.WrapDataObject(vtkUnstructuredGrid.GetData(outInfo))
         output.SetPoints(points)
 
         cell_types = np.array([], dtype=np.ubyte)
@@ -333,9 +422,8 @@ class DuneReader(VTKPythonAlgorithmBase):
         cell_conn = np.hstack([cell_conn, conn])
         output.SetCells(cell_types, cell_offsets, cell_conn)  # cell connectivities
 
-        for df in gfs:
-            array = df.pointData(self._level)
-            output.PointData.append(array, df.name)  # point data
+        for a,df in zip(arrays,gfs):
+            output.PointData.append(a, df.name)  # point data
             # output.CellData.append(array, df.name)  # cell data
             # output.FieldData.append(array, name)  # field data
 

@@ -170,11 +170,20 @@ namespace Dune
           extension_ = extension;
         }
 
+        [[deprecated("Use onSubEntity method with char vector instead")]]
         void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
         {
+          std::vector< char > _idx;
+          onSubEntity(element, i, c, _idx);
+          indices.resize( _idx.size() );
+          for (std::size_t i=0; i<_idx.size();++i)
+            _idx[i] = indices[i] > 0;
+        }
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< char > &indices ) const
+        {
           indices.resize( numDofs(element) );
-          std::fill(indices.begin(),indices.end(),false);
-          indices[i] = true;
+          std::fill(indices.begin(),indices.end(),0);
+          indices[i] = 1;
         }
 
         /* \} */

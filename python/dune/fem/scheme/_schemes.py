@@ -245,17 +245,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' +\
             linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
-    ctors = []
-    ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands'],
-                             ['return new ' + typeName + '( space, std::ref( integrands ) );'],
-                             ['"space"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
-    ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands', 'const pybind11::dict &parameters'],
-                             ['return new ' + typeName + '( space, std::ref( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
-                             ['"space"_a', '"integrands"_a', '"parameters"_a',
-                                 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()']))
-
     parameters.update(param)
-    # scheme = module(includes, typeName, *ctors, backend=backend).Scheme(space, integrands, parameters)
     scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
     if not errorMeasure is None:
@@ -263,6 +253,13 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
+
+    try:
+        from dune.fem import parameter
+        logTag = parameters["logging"]
+        scheme.parameterLog = lambda: parameter.log()[logTag]
+    except KeyError:
+        pass
 
     return scheme
 

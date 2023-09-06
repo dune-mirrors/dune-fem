@@ -64,7 +64,9 @@ namespace Dune
 
       //! default communication direction
       static const CommunicationDirection defaultDirection = ForwardCommunication;
-
+      // this ctor is problematic: assume that one space is a DynamicLS
+      // then this constructor uses some default order (=1) silently.
+      // Not sure if we want that.
       /** \brief constructor
        *
        *  \param[in]  gridPart       reference to the grid part
@@ -159,7 +161,6 @@ namespace Dune
       {
         return SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( spaceTuple_ );
       }
-
     private:
       //! tuple of spaces
       DiscreteFunctionSpaceTupleType spaceTuple_;

@@ -1,5 +1,6 @@
 import matplotlib
 from matplotlib import pyplot
+import numpy as np
 from numpy import amin, amax, linspace, linalg, log, append, zeros, int32
 from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
@@ -30,7 +31,7 @@ def triangulationOfNetwork(grid, level=0, linewidth=0.01):
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
-        triplot=False, logscale=False, ticks=11):
+        triplot=False, logscale=False, ticks=11, allowNaN=False):
 
     if colorbar == True:
         colorbar = "vertical"
@@ -90,8 +91,14 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                 logNorm = {"norm":LogNorm()}
             else:
                 logNorm = {}
-            minData = amin(data)
-            maxData = amax(data)
+            if allowNaN:
+                minData = amin(data[np.isfinite(data)])
+                maxData = amax(data[np.isfinite(data)])
+            else:
+                minData = amin(data[np.isfinite(data)])
+                maxData = amax(data[np.isfinite(data)])
+                assert minData == minData and maxData == maxData
+
             r = maxData-minData
             # avoid some weird 'white' patches when value hits min/max
             minData -= r*0.01
@@ -114,6 +121,10 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                         linewidth=linewidth, color='black')
             else:
                 try:
+                    if allowNaN:
+                        isbad = np.isnan(data)
+                        mask = np.any(np.where(isbad[triangulation.triangles], True, False), axis=1)
+                        triangulation.set_mask(mask)
                     pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels,
                             **logNorm,extend=extend)
                 except:
@@ -155,6 +166,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
         colorbar="vertical", grid=None, triplot=False,
+        allowNaN=False,
         block=globalBlock,
         logscale=False, ticks=11):
     if disable: return
@@ -191,7 +203,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
     _plotPointData(figure, grid, solution, level, gridLines, linewidth,
                     vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
-                    logscale, ticks)
+                    logscale, ticks, allowNaN)
 
     if newFig and block:
         pyplot.show(block=block)
@@ -200,7 +212,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
 def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
-        block=globalBlock, grid=None, colorbar=None):
+        block=globalBlock, grid=None, colorbar=None, allowNaN=False):
     if disable: return
     try:
         grid = solution.gridView
@@ -234,14 +246,16 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         pyplot.subplot(subfig)
         _plotPointData(figure,grid,None,level,gridLines,0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
-                xlim,ylim,clim,cmap,colorbar)
+                xlim,ylim,clim,cmap,colorbar,
+                allowNaN=allowNaN)
 
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
         _plotPointData(figure,grid,solution[p],level,"",0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
-                xlim,ylim,clim,cmap,colorbar)
+                xlim,ylim,clim,cmap,colorbar,
+                allowNaN=allowNaN)
 
     if newFig and block:
         pyplot.show(block=block)

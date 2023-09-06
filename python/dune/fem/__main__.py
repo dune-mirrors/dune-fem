@@ -9,6 +9,8 @@ parserConfigure = subparsers.add_parser('reader',
                   help='Environment variable export needed for paraview to find reader')
 parserConfigure = subparsers.add_parser('readerpath',
                   help='Path to paraview file reader')
+parserConfigure = subparsers.add_parser('tutorial',
+                  help='Path to paraview file reader')
 
 args = parser.parse_args()
 

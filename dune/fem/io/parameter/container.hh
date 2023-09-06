@@ -225,6 +225,9 @@ namespace Dune
        * \param[in]  writeAll default is true
        */
       void write ( std::ostream &out, bool writeAll = true ) const;
+      auto write ( ) const;
+
+      std::map<std::string,std::set<std::pair<std::string,std::string>>> localParameterLog_;
 
     private:
       std::string curFileName_;
@@ -645,6 +648,16 @@ namespace Dune
           out << param.first << ": " << param.second << std::endl;
         out << std::endl;
       }
+    }
+    inline auto ParameterContainer::write () const
+    {
+      std::map< std::string, std::set<std::pair<std::string, std::string>> > writeMap;
+      for( const auto &param : parameter_.map )
+      {
+        const Value &val = param.second;
+        writeMap[ val.fileName ].insert( {param.first,val.value} );
+      }
+      return writeMap;
     }
 
   } // namespace Fem

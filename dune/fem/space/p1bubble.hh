@@ -10,6 +10,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
+#include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/mapper/code.hh>
 #include <dune/fem/space/mapper/localkey.hh>
 #include <dune/fem/space/mapper/indexsetdofmapper.hh>

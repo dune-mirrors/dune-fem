@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
-from dune.generator import Constructor, Method
+from dune.generator import Constructor, Method, Pickler
 logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
@@ -530,7 +530,11 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
 
 
 def combined(*spaces, **kwargs):
-    """create a discrete function space from a tuple of discrete function spaces
+    """create a discrete function space from a tuple of discrete function spaces.
+       Use to solve a problem over the product of dfferent spaces
+       'monolithicly', i.e. as one big system. To use a similar setup of
+       the problem but to solve it in a decoupled fashion use the 'prodcut'
+       space.
 
     Args:
         spaces: tuple of discrete function spaces
@@ -568,19 +572,49 @@ def combined(*spaces, **kwargs):
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
+    pickler = Pickler(getterBody=
+      """
+            auto& tsp = self.cast<DuneType&>();
+            /* Return a tuple that fully encodes the state of the object */
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(tsp.spaceTuple(),d);
+      """, setterBody=
+      """
+            if (t.size() != 2)
+                throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
+            pybind11::handle pyspaceTuple = t[0];
+            auto spaceTuple = pyspaceTuple.cast<typename DuneType::DiscreteFunctionSpaceTupleType>();
+            /* Create a new C++ instance */
+            DuneType* tsp = new DuneType(spaceTuple);
+            auto py_state = t[1].cast<pybind11::dict>();
+            return std::make_pair(tsp, py_state);
+      """)
 
-    spc = module(combinedField, includes, typeName, constructor,
+    # subFunction = Method('subFunction', 'this requires exporting SubFunctionStorage first')
+    spc = module(combinedField, includes, typeName, constructor, pickler, # subFunction,
             storage=combinedStorage,
             scalar=scalar, codegen=codegen,
             ctorArgs=[spaces])
     try:
         spc.componentNames = kwargs["components"]
+        # might be nice to add 'component' attributes to the discrete
+        # functions, e.g., for visualization. This would require exporting
+        # the `SubFunctionStorage` class first which requires a bit (not much) work
+        # but probably can't be done from the Python side.
+        # for i,c in enumerate(spc.componentNames):
+        #     setattr(spc.DiscreteFunction, "c", lambda self,i:self.subFunction(i))
     except KeyError:
         pass
     return spc.as_ufl()
 
 def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
+       Use to solve a problem over the product of multiple spaces
+       in a decoupled fashion. To use a similar setup of
+       the problem but to solve it as one large system, use the 'combined' space.
 
     Args:
         spaces: tuple of discrete function spaces
@@ -693,7 +727,7 @@ def bdm(gridView, order=1, dimRange=None,
             ctorArgs=[gridView])
     return spc.as_ufl()
 
-def raviartThomas(gridView, order=1, dimRange=None,
+def raviartThomas(gridView, order=0, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
     from dune.fem.space import module
 

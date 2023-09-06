@@ -136,6 +136,10 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))
 
+    def acos(self, expr, x):
+        self.using.add(Using(cplusplus.acos))
+        return self._makeTmp(cplusplus.acos(x))
+
     def cosh(self, expr, x):
         self.using.add(Using(cplusplus.cosh))
         return self._makeTmp(cplusplus.cosh(x))
@@ -253,6 +257,10 @@ class CodeGenerator(MultiFunction):
     def sin(self, expr, x):
         self.using.add(Using(cplusplus.sin))
         return self._makeTmp(cplusplus.sin(x))
+
+    def asin(self, expr, x):
+        self.using.add(Using(cplusplus.asin))
+        return self._makeTmp(cplusplus.asin(x))
 
     def sinh(self, expr, x):
         self.using.add(Using(cplusplus.sinh))
@@ -417,7 +425,7 @@ class ModelClass():
         self.constantList = sorted((c for c in coefficients if c.is_cellwise_constant()), key=lambda c: c.count())
         self.coefficientList = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
 
-        constants=[fieldVectorType(c,useScalar=True) for c in self.constantList]
+        constants=[fieldVectorType(c,useScalar=c.scalar) for c in self.constantList]
         coefficients=(fieldVectorType(c) for c in self.coefficientList)
         constantNames=[getattr(c, 'name', None) for c in self.constantList]
         constantShapes=[getattr(c, 'ufl_shape', None) for c in self.constantList]
@@ -756,7 +764,7 @@ class ModelClass():
         if not self.bindable:
             code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
 
-        code.append(AccessModifier('private'))
+        # code.append(AccessModifier('private'))
 
         if self._coefficients:
             for cppType, name in self._derivatives:

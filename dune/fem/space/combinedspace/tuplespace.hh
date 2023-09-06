@@ -211,7 +211,10 @@ namespace Dune
        *  \param[in]  commDirection  communication direction to use (optional)
        *
        */
-      TupleDiscreteFunctionSpaceImpl ( GridPartType &gridPart,
+      template <class GP,
+                typename = std::enable_if_t<(... &&
+                           std::is_constructible<DiscreteFunctionSpaces, GP&>::value)> >
+      TupleDiscreteFunctionSpaceImpl ( GP &gridPart,
                                        const InterfaceType commInterface = InteriorBorder_All_Interface,
                                        const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection )

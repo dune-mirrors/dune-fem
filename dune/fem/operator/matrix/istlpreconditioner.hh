@@ -274,53 +274,45 @@ namespace Dune
         const auto& space = mObj_.domainSpace();
         if( space.continuous() )
         {
-          // only communicate diagonal if matrix blocks are small
-          if constexpr ( size_t(MatrixBlockType::rows) == size_t(DiscreteFunctionSpaceType::dimRange) )
+          // create BlockVectorWrapper for BlockVector
+          ISTLBlockVector< FlatMatrixBlock > diagonalInv( &diagonalInv_ );
+
+          diagonalInv.resize(space.blockMapper().size());
+          assert( space.blockMapper().size() == _A_.N() );
+          diagonalInv.clear();
+
+          // extract diagonal elements from matrix object
           {
-            // create BlockVectorWrapper for BlockVector
-            ISTLBlockVector< FlatMatrixBlock > diagonalInv( &diagonalInv_ );
-
-            diagonalInv.resize(space.blockMapper().size());
-            assert( space.blockMapper().size() == _A_.N() );
-            diagonalInv.clear();
-
-            // extract diagonal elements from matrix object
+            const auto end = _A_.end();
+            for( auto row = _A_.begin(); row != end; ++row )
             {
-              const auto end = _A_.end();
-              for( auto row = _A_.begin(); row != end; ++row )
+              // get diagonal entry of matrix if existent
+              auto diag = (*row).find( row.index() );
+              if( diag != (*row).end() )
               {
-                // get diagonal entry of matrix if existent
-                auto diag = (*row).find( row.index() );
-                if( diag != (*row).end() )
-                {
-                  MatrixConverterType m( diagonalInv[ row.index() ] );
-                  m = (*diag);
-                }
-              }
-            }
-
-            // make diagonal consistent (communicate at border dofs)
-            // get default communication operation type
-            typename DiscreteFunctionSpaceType :: template
-              CommDataHandle< DiscreteFunctionType > :: OperationType operation;
-            space.communicate( diagonalInv, operation );
-
-            // In general: store 1/diag if diagonal is number
-            //
-            // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
-            //       if DoFs are excluded from matrix setup
-            if constexpr( isNumber )
-            {
-              const double eps = 16.*std::numeric_limits< double >::epsilon();
-              for( auto& diag : diagonalInv )
-              {
-                diag = (std::abs( diag ) < eps ? 1. : 1. / diag );
+                MatrixConverterType m( diagonalInv[ row.index() ] );
+                m = (*diag);
               }
             }
           }
-          else
+
+          // make diagonal consistent (communicate at border dofs)
+          // get default communication operation type
+          typename DiscreteFunctionSpaceType :: template
+            CommDataHandle< DiscreteFunctionType > :: OperationType operation;
+          space.communicate( diagonalInv, operation );
+
+          // In general: store 1/diag if diagonal is number
+          //
+          // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
+          //       if DoFs are excluded from matrix setup
+          if constexpr( isNumber )
           {
-            DUNE_THROW(NotImplemented,"ParallelIterative: communicating diagonal does not work for large block matrices");
+            const double eps = 16.*std::numeric_limits< double >::epsilon();
+            for( auto& diag : diagonalInv )
+            {
+              diag = (std::abs( diag ) < eps ? 1. : 1. / diag );
+            }
           }
         }
       }

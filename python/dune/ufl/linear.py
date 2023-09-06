@@ -125,11 +125,13 @@ class MultiLinearExprSplitter(Transformer):
     abs = terminal
     cos = terminal
     cosh = terminal
+    acos = terminal
     exp = terminal
     ln = terminal
     power = terminal
     sin = terminal
     sinh = terminal
+    asin = terminal
     sqrt = terminal
     tan = terminal
     tanh = terminal

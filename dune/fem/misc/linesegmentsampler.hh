@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <type_traits>
+#include <new>
 
 #include <dune/common/fvector.hh>
 
@@ -81,6 +82,8 @@ namespace Dune
        *        samples, which may not be less than 2.
        */
       template< class GridFunction >
+      void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples, std::nothrow_t ) const;
+      template< class GridFunction >
       void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
 
       /** \brief returns sampling points
@@ -128,18 +131,17 @@ namespace Dune
     template< class GridPart >
     template< class GridFunction >
     inline void LineSegmentSampler< GridPart >
-      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const
+      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples,
+                     std::nothrow_t) const
     {
       typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename GridFunction::RangeFieldType RangeFieldType;
 
       const int numSamples = samples.size();
-      if( numSamples < 2 )
-        DUNE_THROW( InvalidStateException, "LineSegmentSampler cannot sample less than 2 points." );
       DomainType ds = right_ - left_;
       ds /= DomainFieldType( numSamples - 1 );
 
-      typedef typename GridFunction::RangeFieldType RangeFieldType;
       const RangeFieldType invalid
         = std::numeric_limits< RangeFieldType >::quiet_NaN();
       for( int i = 0; i < numSamples; ++i )
@@ -201,6 +203,20 @@ namespace Dune
 
       typedef Reduce< typename GridFunction::RangeType > Op;
       gridPart().comm().template allreduce< Op >( &(samples[ 0 ]), numSamples );
+    }
+
+    template< class GridPart >
+    template< class GridFunction >
+    inline void LineSegmentSampler< GridPart >
+      ::operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const
+    {
+      typedef typename GridFunction::RangeFieldType RangeFieldType;
+
+      const int numSamples = samples.size();
+      if( numSamples < 2 )
+        DUNE_THROW( InvalidStateException, "LineSegmentSampler cannot sample less than 2 points." );
+
+      (*this)(f,samples,std::nothrow);
 
       bool valid = true;
 

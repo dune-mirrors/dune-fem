@@ -201,6 +201,11 @@ namespace Dune
         return Singleton< ParameterContainer > :: instance();
       }
 
+      static auto &localParameterLog ()
+      {
+        return container().localParameterLog_;
+      }
+
       /** \brief add parameters from the command line
           RangeType gRight;
        *
@@ -484,6 +489,7 @@ namespace Dune
        *  \param[in]  writeAll default is true
        */
       static void write ( std::ostream &out, bool writeAll = true ) { return container().write( out, writeAll ); }
+      static auto write () { return container().write(); }
 
     protected:
       friend class PersistenceManager ;
