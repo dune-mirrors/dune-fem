@@ -93,7 +93,7 @@ namespace Dune
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().contains( entity ) );
-        return asImp().contains< cd >( entity );
+        return asImp().template contains< cd >( entity );
       }
 
       //! \brief returns true if the given entity of the pointer in the domain
@@ -102,7 +102,7 @@ namespace Dune
       {
         enum { cc = Entity::codimension };
         CHECK_INTERFACE_IMPLEMENTATION( asImp().contains< cc >( entity ) );
-        return asImp().contains< cc >( entity );
+        return asImp().template contains< cc >( entity );
       }
 
       //! \brief returns true if an intersection is interior
