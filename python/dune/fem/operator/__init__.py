@@ -165,7 +165,7 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
     op.__class__.linear = lambda self, parameters=None: (
-        linear([self.domainSpace,self.rangeSpace], parameters)
+        _linear([self.domainSpace,self.rangeSpace], parameters)
       )
     # apply communicate flag
     op.setCommunicate( communicate )
@@ -247,10 +247,12 @@ def h1(model, domainSpace=None, rangeSpace=None):
 
     scheme = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace, model)
     scheme.model = model
+    op.__class__.linear = lambda self, parameters=None: (
+        _linear([self.domainSpace,self.rangeSpace], parameters)
+      )
     return scheme
 
-# possibly deprecate?
-def linear(operator, ubar=None,parameters=None,affineShift=False):
+def _linear(operator, ubar=None,parameters=None,affineShift=False):
     """ operator can be either a dune.fem.operator/scheme or a tuple/list of spaces.
         In the second case ubar needs to be None and the operator is unassembled.
         In the first case the operator will be assembled around 'ubar' or around zero if ubar is None.
@@ -262,8 +264,8 @@ def linear(operator, ubar=None,parameters=None,affineShift=False):
     if parameters is None:
         parameters = {}
     try:
-        rangeSpace  = operator[0]
-        domainSpace = operator[1]
+        domainSpace = operator[0]
+        rangeSpace  = operator[1]
         assemble = False
     except TypeError:
         assert hasattr(operator,"jacobian"), "operator does not allow assembly"
@@ -295,14 +297,21 @@ def linear(operator, ubar=None,parameters=None,affineShift=False):
     lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace,parameters)
 
     if assemble:
+        try:
+            lin.dirichletBlocks = operator.dirichletBlocks
+        except:
+            pass
         if ubar is None:
-            from dune.fem.function import discreteFunction
-            operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
+            operator.jacobian(domainSpace.zero, lin)
         else:
-            operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
+            operator.jacobian(ubar, lin)
     if affineShift:
         b = rangeSpace.zero.copy()
         operator(rangeSpace.zero,b)
         return lin,b
     else:
         return lin
+"""
+def linear(operator, ubar=None,parameters=None,affineShift=False):
+    return _linear(operator,ubar,parameters,affineShift)
+"""

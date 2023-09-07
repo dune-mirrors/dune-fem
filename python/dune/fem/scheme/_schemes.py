@@ -72,6 +72,12 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     mod = module(includes, typeName, *args, backend=backend)
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
+    from dune.fem.operator import _linear
+    scheme.parameters = parameters
+    scheme.__class__.linear = lambda self, parameters=None:(
+        _linear([self.domainSpace,self.rangeSpace],
+              parameters=(self.parameters if parameters is None else parameters) )
+      )
     return scheme
 
 from dune.fem.scheme.dgmodel import transform
@@ -258,10 +264,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
 
-    from dune.fem.operator import linear
+    from dune.fem.operator import _linear
     scheme.parameters = parameters
     scheme.__class__.linear = lambda self, parameters=None:(
-        dune.fem.operator.linear([self.domainSpace,self.rangeSpace],
+        _linear([self.domainSpace,self.rangeSpace],
               parameters=(self.parameters if parameters is None else parameters) )
       )
 
