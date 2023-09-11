@@ -210,7 +210,8 @@ namespace Dune
         assert( next == static_cast< GlobalKeyType >( offset_ + primarySize ) );
 
         __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), auxiliaryDofs, mapping_ );
-        gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
+        //gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
+        gridPart().communicate( dataHandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication );
       }
 
       const GridPartType &gridPart () const { return gridPart_; }

@@ -268,7 +268,9 @@ namespace Dune
 
         const int rank = gridPart().comm().rank();
         __GhostDofMapper::BuildDataHandle< BaseMapper > dataHandle( rank, baseMapper_, masters );
-        gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
+
+        gridPart().communicate( dataHandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication );
+        //gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
         // at this point all shared DoFs are assigned to their master rank
         // all other DoFs (with rank -1) are not shared at all
 
