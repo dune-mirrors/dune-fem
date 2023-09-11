@@ -7,6 +7,7 @@ from matplotlib.colors import LogNorm
 
 from dune.plotting import block, disable
 from ufl import as_vector
+from dune.grid import Partitions
 globalBlock = block
 
 def triangulationOfNetwork(grid, level=0, linewidth=0.01):
@@ -31,7 +32,9 @@ def triangulationOfNetwork(grid, level=0, linewidth=0.01):
 def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
-        triplot=False, logscale=False, ticks=11, allowNaN=False):
+        triplot=False, logscale=False, ticks=11, allowNaN=False,
+        *,
+        partition=Partitions.all):
 
     if colorbar == True:
         colorbar = "vertical"
@@ -44,16 +47,31 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
             coll = PolyCollection(p,facecolor='none',edgecolor=gridLines,linewidth=linewidth,zorder=2)
             pyplot.gca().add_collection(coll)
 
+    try:
+        ax = fig.gca()
+        fig.tight_layout()
+    except:
+        ax = fig
+    ax.set_aspect('equal')
+    ax.autoscale()
+    if xlim:
+        ax.set_xlim(xlim)
+    if ylim:
+        ax.set_ylim(ylim)
+
     if not solution == None:
         if grid.dimGrid == 1 and grid.dimWorld == 1:
-            if solution.dimRange > 1:
-                data = linalg.norm(solution.pointData(level),axis=1)
-            else:
-                data = solution.pointData(level)[:,0]
-            pyplot.plot(grid.tessellate(level)[0], data, '-p')
             if xlim:
                 fig.gca().set_xlim(xlim)
             fig.tight_layout()
+            triang = grid.tessellate(level, partition=partition)
+            if triang is None: # parition set is empty
+                return
+            if solution.dimRange > 1:
+                data = linalg.norm(solution.pointData(level, partition=partition),axis=1)
+            else:
+                data = solution.pointData(level, partition=partition)[:,0]
+            pyplot.plot(triang[0], data, '-p')
             return
 
         if grid.dimGrid == 1:
@@ -65,8 +83,10 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                 for j in range(2):
                     data[n+2*i+j] = data[2*i+j]
         else:
-            triangulation = grid.triangulation(level)
-            data = solution.pointData(level)
+            triangulation = grid.triangulation(level, partition=partition)
+            if triangulation is None:
+                return
+            data = solution.pointData(level,partition=partition)
 
         try:
             x1 = vectors[0]
@@ -146,18 +166,6 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
             pyplot.tricontour(triangulation, data, levels=contours,
                     colors=contourColor, linewidths=contourWidth)
 
-    try:
-        ax = fig.gca()
-        fig.tight_layout()
-    except:
-        ax = fig
-    ax.set_aspect('equal')
-    ax.autoscale()
-    if xlim:
-        ax.set_xlim(xlim)
-    if ylim:
-        ax.set_ylim(ylim)
-
 
 from ufl.core.expr import Expr
 from dune.ufl import expression2GF
@@ -168,7 +176,9 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         colorbar="vertical", grid=None, triplot=False,
         allowNaN=False,
         block=globalBlock,
-        logscale=False, ticks=11):
+        logscale=False, ticks=11,
+        *,
+        partition=Partitions.all):
     if disable: return
     try:
         grid = solution.gridView
@@ -203,7 +213,8 @@ def plotPointData(solution, figure=None, linewidth=0.1,
     _plotPointData(figure, grid, solution, level, gridLines, linewidth,
                     vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
-                    logscale, ticks, allowNaN)
+                    logscale, ticks, allowNaN,
+                    partition=partition)
 
     if newFig and block:
         pyplot.show(block=block)
