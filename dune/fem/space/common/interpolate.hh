@@ -54,7 +54,7 @@ namespace Dune
     static inline void interpolate ( const GridFunction &u, DiscreteFunction &v )
     {
       // just call interpolate for the all partition
-      interpolate( u, v, Partitions::all );
+      interpolate( u, v, Partitions::interiorBorder );
     }
 
     template< class Function, class DiscreteFunction, unsigned int partitions >
