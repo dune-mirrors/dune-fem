@@ -54,10 +54,12 @@ namespace Dune
       {}
 
       SimpleLocalFunction ( const EntityType &entity, LocalEvaluator localEvaluator, int order )
-        : entity_( &entity ), localEvaluator_( std::move( localEvaluator ) ), order_( order )
-      {}
+        : entity_(), localEvaluator_( std::move( localEvaluator ) ), order_( order )
+      {
+        init( entity );
+      }
 
-      void init ( const EntityType &entity ) { entity_ = &entity; }
+      void init ( const EntityType &entity ) { entity_.emplace( entity ); }
 
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const
@@ -101,10 +103,12 @@ namespace Dune
 
       int order () const { return order_; }
 
-      const EntityType &entity () const { assert( entity_ ); return *entity_; }
+      const EntityType &entity () const { assert( entity_ ); return entity_.value(); }
 
     private:
-      const EntityType *entity_ = nullptr;
+      std::optional< EntityType > entity_;
+      // this will fail when bind with intersection was called
+      //const EntityType *entity_ = nullptr;
       LocalEvaluator localEvaluator_;
       int order_;
     };
