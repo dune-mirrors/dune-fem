@@ -64,8 +64,10 @@ namespace Dune
 
       typedef TwistUtility< GridType > TwistUtilityType;
 
+      // partition on which indices are defined
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
-      static const InterfaceType indexSetInterfaceType = All_All_Interface;
+      // partition identifiers for default communication
+      static const InterfaceType indexSetInterfaceType = InteriorBorder_All_Interface;
     };
 
 #endif // #ifndef DOXYGEN
