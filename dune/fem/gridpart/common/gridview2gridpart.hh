@@ -254,6 +254,56 @@ namespace Dune
       const IndexSetType* indexSet_;
     };
 
+
+    // Capabilities
+    // ------------
+
+    namespace GridPartCapabilities
+    {
+
+      // Capabilities for GridView2GridPart
+      // -------------------------------------
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct hasGrid< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = true;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct hasSingleGeometryType< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< typename GridView::Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< typename GridView::Grid >::topologyId;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct isCartesian< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< typename GridView::Grid >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy, int codim  >
+      struct hasEntity< GridView2GridPart< GridView, Implementation, storeCopy >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< typename GridView::Grid, codim >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy, int codim >
+      struct canCommunicate< GridView2GridPart< GridView, Implementation, storeCopy >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< typename GridView::Grid, codim >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct isConforming< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< typename GridView::Grid >::v;
+      };
+
+    }
+
   } // namespace Fem
 
 } // namespace Dune
