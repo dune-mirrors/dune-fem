@@ -152,6 +152,12 @@ namespace Dune
       const GridType &grid () const { return gridView().grid(); }
       GridType &grid () { return const_cast< GridType & >( gridView().grid() ); }
 
+      //! \brief Dune::Fem::GridPartInterface::isConforming */
+      bool isConforming() const
+      {
+        return gridView().isConforming();
+      }
+
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { assert( indexSet_ ); return *indexSet_; }
 
