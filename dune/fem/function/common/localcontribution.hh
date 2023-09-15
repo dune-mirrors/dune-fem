@@ -54,7 +54,13 @@ namespace Dune
               Hybrid::forEach( LocalBlockIndices(), [ &dofVector, &auxiliaryDof ] ( auto &&j ) { dofVector[ auxiliaryDof ][ j ] = DofType( 0 ); } );
           }
 
-          static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Add() ); }
+          static void end ( DiscreteFunction &df, const bool communicate )
+          {
+            if ( communicate )
+            {
+              df.space().communicate( df, DFCommunicationOperation::Add() );
+            }
+          }
         };
 
 
@@ -66,7 +72,13 @@ namespace Dune
         struct SetBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
         {
           static void begin ( DiscreteFunction &df ) {}
-          static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Copy() ); }
+          static void end ( DiscreteFunction &df, const bool communicate )
+          {
+            if ( communicate )
+            {
+              df.space().communicate( df, DFCommunicationOperation::Copy() );
+            }
+          }
         };
 
       } // namespace Global
@@ -214,19 +226,25 @@ namespace Dune
       using BaseType::axpy;
 
       template< class... Args >
-      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
+      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, const bool communicate, Args &&... args )
         : BaseType( discreteFunction.space() ),
           discreteFunction_( discreteFunction ),
           assemblyOperation_( std::forward< Args >( args )... ),
+          communicate_( communicate ),
           bound_( false )
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
 
+      template< class... Args >
+      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
+        : LocalContribution( discreteFunction, /* communicate */ true, args... )
+      {}
+
       LocalContribution ( const ThisType & ) = delete;
       LocalContribution ( ThisType && ) = delete;
 
-      ~LocalContribution () { discreteFunction().template endAssemble< typename AssemblyOperationType::GlobalOperationType >(); }
+      ~LocalContribution () { discreteFunction().template endAssemble< typename AssemblyOperationType::GlobalOperationType >( communicate_ ); }
 
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
@@ -263,6 +281,7 @@ namespace Dune
     protected:
       DiscreteFunctionType& discreteFunction_;
       AssemblyOperationType assemblyOperation_;
+      const bool communicate_;
       bool bound_;
     };
 

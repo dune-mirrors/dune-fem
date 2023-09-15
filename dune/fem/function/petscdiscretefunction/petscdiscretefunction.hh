@@ -180,10 +180,10 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::endAssemble() */
       template< class AssembleOperation >
-      void endAssemble ()
+      void endAssemble ( const bool communicate = true )
       {
         BaseType :: template endAssemble< AssembleOperation > ();
-        dofVector().endAssemble();
+        dofVector().endAssemble( communicate );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
