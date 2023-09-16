@@ -60,11 +60,13 @@ namespace Dune
       {
         const int sequence = space_.sequence();
 
-        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence ) );
-        update( *ghostMapper_, sequence );
+        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence-1 ) );
+        // update anyway here because of comm interface for Lagrange spaces
+        update( *ghostMapper_, sequence, space );
 
-        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence ) );
-        update( *parallelMapper_, sequence );
+        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence-1 ) );
+        // update anyway here because of comm interface for Lagrange spaces
+        update( *parallelMapper_, sequence, space );
       }
 
       //! copy constructor obtaining pointers for mapper objects
@@ -100,19 +102,25 @@ namespace Dune
         const int sequence = space().sequence();
 
         assert( ghostMapper_ );
-        update( *ghostMapper_, sequence );
+        update( *ghostMapper_, sequence, space() );
 
         assert( parallelMapper_ );
-        update( *parallelMapper_, sequence );
+        update( *parallelMapper_, sequence, space() );
       }
 
     private:
       template< class Mapper >
-      static void update ( std::pair< Mapper, int > &mapper, int sequence )
+      static void update ( std::pair< Mapper, int > &mapper, int sequence, const DiscreteFunctionSpaceType& space )
       {
         if( mapper.second != sequence )
         {
-          mapper.first.update();
+          // TODO: For Lagrange spaces the comm interface needs to be InteriorBorder_InteriorBorder_Interface
+          // otherwise the petsc solvers don't work.
+          // This is only a temporary fix and need further investigation.
+          const InterfaceType commIf =
+            space.continuous() ? InteriorBorder_InteriorBorder_Interface : space.communicationInterface();
+
+          mapper.first.update( commIf );
           mapper.second = sequence;
         }
       }

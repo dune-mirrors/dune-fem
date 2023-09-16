@@ -257,7 +257,8 @@ namespace Dune
 
       // update
 
-      void update ()
+      // TODO: default comm interface should come out of space
+      void update ( const InterfaceType commInterface  = InteriorBorder_All_Interface )
       {
         std::size_t baseSize = baseMapper().size();
         mapping_.resize( baseSize );
@@ -269,8 +270,7 @@ namespace Dune
         const int rank = gridPart().comm().rank();
         __GhostDofMapper::BuildDataHandle< BaseMapper > dataHandle( rank, baseMapper_, masters );
 
-        gridPart().communicate( dataHandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication );
-        //gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
+        gridPart().communicate( dataHandle, commInterface, ForwardCommunication );
         // at this point all shared DoFs are assigned to their master rank
         // all other DoFs (with rank -1) are not shared at all
 
