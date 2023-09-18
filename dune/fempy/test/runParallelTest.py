@@ -1,6 +1,6 @@
 import subprocess, datetime, pickle, sys
 
-count = 1 # datetime.date.today().toordinal()
+count = datetime.date.today().toordinal()
 res = {}
 
 for np in range(1,5):

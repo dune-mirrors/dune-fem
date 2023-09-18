@@ -306,14 +306,20 @@ def runTest(count=None):
     if count is None:
         count = datetime.date.today().toordinal()
     grids = [ ["yasp","cube"], ["conf","simp"]]
+    storage = [ "numpy", "petsc", "istl" ]
+    crossProduct = [ [g,s] for g in grids for s in storage ]
 
-    total = len(grids)*2  # the 2 is for with or without 'adaptive leaf grid view"
+    # we have 12 different sets of experiments currently so everything is
+    # checked in about 2 weeks
+    total = len(crossProduct)*2  # the 2 is for with or without 'adaptive leaf grid view"
     todaysExperiment = count % total
-    useAdapt = todaysExperiment % 2
-    gridGroup = grids[todaysExperiment // 2]
+    useAdapt  = todaysExperiment % 2
+    gridGroup = crossProduct[todaysExperiment // 2][0]
+    storage   = crossProduct[todaysExperiment // 2][1]
 
     comm = MPI.COMM_WORLD
     ex = experiments(ignore=False)
+    ex = [e for e in ex if e["storage"] == storage]
 
     # in serial first compile all required modules using multiple threads without computing any results
     if comm.Get_size() == 1:

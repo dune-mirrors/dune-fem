@@ -11,12 +11,6 @@ dune_python_add_test(NAME pyassemble
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      LABELS quick)
 
-# move to turture test later
-dune_python_add_test(NAME pyrunparalleltest
-                     SCRIPT runParallelTest.py
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                     LABELS quick)
-
 if( ${FEM_TORTURE_TESTS} )
   dune_python_add_test(NAME filteredgridview
                        SCRIPT filteredgridview.py
@@ -34,6 +28,10 @@ if( ${FEM_TORTURE_TESTS} )
                        SCRIPT scheme_assemble.py
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        TIMEOUT 2000
+                       LABELS quick)
+  dune_python_add_test(NAME pyrunparalleltest
+                       SCRIPT runParallelTest.py
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        LABELS quick)
 endif()
 
