@@ -13,7 +13,7 @@ from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
-from . import plotting
+#from . import plotting
 
 # finalization of fem module (i.e. calling PETSc finalize etc)
 # atexit.register( _fem.__finalizeFemModule__ )
