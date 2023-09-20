@@ -5,6 +5,7 @@ import hashlib
 import importlib
 
 import dune.grid.grid_generator
+from dune.grid import Partitions
 
 from dune.generator import Constructor, Method, Pickler
 
@@ -21,7 +22,7 @@ Dune::FemPy::registerGridView ( cls );
     gv._register()
     return gv
 
-def adaptiveLeafGridView(grid, *args, **kwargs):
+def adaptiveLeafGridView(grid, *args, partition=Partitions.all, **kwargs):
     """create an adaptive view of the leaf grid
 
     Args:
@@ -47,7 +48,13 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     if not isinstance(grid, getattr(gridModule, "HierarchicalGrid")):
         raise ValueError('Cannot only create an adaptiveLeafGridView from a DUNE grid.')
 
-    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + " >"
+    partitionType = '' # default partition, All_Partition
+    if partition == Partitions.interiorBorder:
+        partitionType = ', Dune::InteriorBorder_Partition'
+    else:
+        assert partition == Partitions.all
+
+    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + partitionType + " >"
     typeName = gridPartName # + "::GridViewType"
     includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh"]
 

@@ -64,8 +64,10 @@ namespace Dune
 
       typedef TwistUtility< GridType > TwistUtilityType;
 
+      // partition on which indices are defined
       static const PartitionIteratorType indexSetPartitionType = All_Partition;
-      static const InterfaceType indexSetInterfaceType = All_All_Interface;
+      // partition identifiers for default communication
+      static const InterfaceType indexSetInterfaceType = InteriorBorder_All_Interface;
     };
 
 #endif // #ifndef DOXYGEN
@@ -149,6 +151,12 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       const GridType &grid () const { return gridView().grid(); }
       GridType &grid () { return const_cast< GridType & >( gridView().grid() ); }
+
+      //! \brief Dune::Fem::GridPartInterface::isConforming */
+      bool isConforming() const
+      {
+        return gridView().isConforming();
+      }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { assert( indexSet_ ); return *indexSet_; }
@@ -253,6 +261,56 @@ namespace Dune
       std::conditional_t<storeCopy, GridView, const GridView* > gridView_;
       const IndexSetType* indexSet_;
     };
+
+
+    // Capabilities
+    // ------------
+
+    namespace GridPartCapabilities
+    {
+
+      // Capabilities for GridView2GridPart
+      // -------------------------------------
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct hasGrid< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = true;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct hasSingleGeometryType< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::hasSingleGeometryType< typename GridView::Grid >::v;
+        static const unsigned int topologyId
+          = Dune::Capabilities::hasSingleGeometryType< typename GridView::Grid >::topologyId;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct isCartesian< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::isCartesian< typename GridView::Grid >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy, int codim  >
+      struct hasEntity< GridView2GridPart< GridView, Implementation, storeCopy >, codim >
+      {
+        static const bool v = Dune::Capabilities::hasEntity< typename GridView::Grid, codim >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy, int codim >
+      struct canCommunicate< GridView2GridPart< GridView, Implementation, storeCopy >, codim >
+      {
+        static const bool v = Dune::Capabilities::canCommunicate< typename GridView::Grid, codim >::v;
+      };
+
+      template< class GridView, class Implementation, bool storeCopy >
+      struct isConforming< GridView2GridPart< GridView, Implementation, storeCopy > >
+      {
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< typename GridView::Grid >::v;
+      };
+
+    }
 
   } // namespace Fem
 

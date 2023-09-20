@@ -199,8 +199,12 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
             integrands = makeIntegrands(space.gridView,integrands,*integrandsParam)
         else:
             integrands = makeIntegrands(space.gridView,integrands)
-    elif not integrands.cppTypeName.startswith("Integrands"):
-        raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
+    else:
+        try:
+            if not integrands.cppTypeName.startswith("Integrands"):
+                raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
+        except AttributeError:
+            raise ValueError("first argument should be a ufl equation (not only a form) or an 'integrands' model")
     if not hasattr(space,"interpolate"):
         raise ValueError("wrong space given")
     from . import module

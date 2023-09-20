@@ -21,19 +21,18 @@ def grady(gv,t,df,dfs):
     g = uflFunction(gv,name=name,order=1,ufl=grad(g)[1])
     return [g]
 
-def exact(grid,t=2):
+def exact(grid,t=None):
     @gridFunction(grid, name="exact", order=3)
     def _exact(x):
-        return numpy.sin((t*x[0]+x[0]*x[1])*numpy.pi*(t+1)/5)
+        return numpy.sin(numpy.pi*x.two_norm2)
     return _exact
 def error(gv,t,df,dfs):
-    # err = uflFunction(gv,name="error",order=1,ufl=(dfs[0]-exact(gv)))
     ldf = dfs[0].localFunction()
     ex = exact(gv,t)
     @gridFunction(gv,name="error",order=1)
     def _error(e,x):
         ldf.bind(e)
-        return ldf(x) - ex(e.geometry.toGlobal(x))
+        return abs( ldf(x) - ex(e.geometry.toGlobal(x)) )
     return [_error,*dfs]
 def velocity(gv,df,dfs):
     U = dfs[2]
@@ -51,4 +50,4 @@ def adapt(gv,dfs):
                            else Marker.keep)
         adapt(dfs)
     return dfs
-register = [error,gradx,grady,adapt,velocity]
+register = [error,gradx,grady,adapt,velocity,exact]

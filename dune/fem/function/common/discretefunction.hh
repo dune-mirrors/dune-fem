@@ -986,7 +986,7 @@ namespace Dune
        *  \tparam AssembleOperation the specific operation (Add, Set, ...)
        */
       template< class AssembleOperation >
-      void endAssemble ()
+      void endAssemble ( const bool communicate = true )
       {
         const std::type_index id( typeid( AssembleOperation ) );
         if( assembleOperation_ != id )
@@ -994,7 +994,7 @@ namespace Dune
         assert( assembleCount_ > 0 );
         if( --assembleCount_ == 0 )
         {
-          AssembleOperation::end( asImp() );
+          AssembleOperation::end( asImp(), communicate );
           assembleOperation_ = std::type_index( typeid( void ) );
         }
       }

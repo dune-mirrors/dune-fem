@@ -390,7 +390,7 @@ namespace Dune
                             const std::vector< PetscInt >& a )
       {
         ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.0 );
-        ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 0.0 );
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, a.size(), a.data(), 1.0 );
       }
 
       template <class Container> // could bet std::set or std::vector

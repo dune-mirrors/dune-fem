@@ -258,9 +258,11 @@ namespace Dune
         ::Dune::Petsc::VecAssemblyBegin( vec_ );
       }
 
-      void endAssemble()
+      void endAssemble( const bool communicate )
       {
         ::Dune::Petsc::VecAssemblyEnd( vec_ );
+        if( communicate )
+          communicateIfNecessary();
       }
 
       // force communication _now_

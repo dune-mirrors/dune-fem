@@ -950,7 +950,7 @@ namespace Dune
       void setUnitRows( const Container& unitRows, const Container& auxRows )
       {
         setUnitRowImpl( unitRows, 1.0 );
-        setUnitRowImpl( auxRows,  0.0 );
+        setUnitRowImpl( auxRows,  1.0 );
       }
 
       //! default reserve method setting implicit build mode

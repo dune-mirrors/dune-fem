@@ -187,7 +187,8 @@ namespace Dune
 
       // update
 
-      void update ()
+      // TODO: default interface should come out of space
+      void update ( const InterfaceType commInterface = InteriorBorder_All_Interface )
       {
         AuxiliaryDofs< GridPartType, BaseMapperType > auxiliaryDofs( gridPart(), baseMapper() );
         auxiliaryDofs.rebuild();
@@ -205,12 +206,10 @@ namespace Dune
         auto mapNext = [&mapping, &next] (const auto i) { mapping[ i ] = next++; };
         // for all primary dofs build mapping
         forEachPrimaryDof( auxiliaryDofs, mapNext );
-        //for( const auto i : primaryDofs )
-        //  mapping_[ i ] = next++;
         assert( next == static_cast< GlobalKeyType >( offset_ + primarySize ) );
 
         __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), auxiliaryDofs, mapping_ );
-        gridPart().communicate( dataHandle, InteriorBorder_All_Interface, ForwardCommunication );
+        gridPart().communicate( dataHandle, commInterface, ForwardCommunication );
       }
 
       const GridPartType &gridPart () const { return gridPart_; }

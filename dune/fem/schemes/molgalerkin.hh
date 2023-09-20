@@ -222,6 +222,9 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
 
+      typedef DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >  DiagonalAndNeighborStencilType;
+      typedef DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >             DiagonalStencilType;
+
       typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
@@ -231,10 +234,15 @@ namespace Dune
         : BaseType( rSpace.gridPart(), std::forward< Args >( args )... ),
           dSpace_(dSpace),
           rSpace_(rSpace),
-          stencilDAN_(dSpace,rSpace), stencilD_(dSpace,rSpace),
           domainSpaceSequence_(dSpace.sequence()),
-          rangeSpaceSequence_(rSpace.sequence())
-      {}
+          rangeSpaceSequence_(rSpace.sequence()),
+          stencilDAN_(), stencilD_()
+      {
+        if( impl().model().hasSkeleton() )
+          stencilDAN_.reset( new DiagonalAndNeighborStencilType( dSpace_, rSpace_ ) );
+        else
+          stencilD_.reset( new DiagonalStencilType( dSpace_, rSpace_ ) );
+      }
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
       {
@@ -278,14 +286,21 @@ namespace Dune
           domainSpaceSequence_ = domainSpace().sequence();
           rangeSpaceSequence_ = rangeSpace().sequence();
           if( impl().model().hasSkeleton() )
-            stencilDAN_.update();
+          {
+            assert( stencilDAN_ );
+            stencilDAN_->update();
+          }
           else
-            stencilD_.update();
+          {
+            assert( stencilD_ );
+            stencilD_->update();
+          }
         }
+
         if( impl().model().hasSkeleton() )
-          jOp.reserve( stencilDAN_ );
+          jOp.reserve( *stencilDAN_ );
         else
-          jOp.reserve( stencilD_ );
+          jOp.reserve( *stencilD_ );
         // set all entries to zero
         jOp.clear();
       }
@@ -466,10 +481,10 @@ namespace Dune
 
       const DomainDiscreteFunctionSpaceType &dSpace_;
       const RangeDiscreteFunctionSpaceType &rSpace_;
-
-      mutable DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilDAN_;
-      mutable DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType > stencilD_;
       mutable int domainSpaceSequence_, rangeSpaceSequence_;
+
+      mutable std::unique_ptr< DiagonalAndNeighborStencilType > stencilDAN_;
+      mutable std::unique_ptr< DiagonalStencilType >            stencilD_;
     };
 
 

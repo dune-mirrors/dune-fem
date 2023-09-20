@@ -865,7 +865,7 @@ namespace Dune
           matrix_.clearRow(r);
           // not sure if this is really needed,
           // but for consistency with previous code
-          matrix_.set(r, r, 0.0);
+          matrix_.set(r, r, 1.0);
         }
       }
 

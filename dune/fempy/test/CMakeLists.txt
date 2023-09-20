@@ -29,6 +29,10 @@ if( ${FEM_TORTURE_TESTS} )
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        TIMEOUT 2000
                        LABELS quick)
+  dune_python_add_test(NAME pyrunparalleltest
+                       SCRIPT runParallelTest.py
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                       LABELS quick)
 endif()
 
 # which to add to test?

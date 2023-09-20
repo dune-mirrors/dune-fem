@@ -13,6 +13,7 @@ variables:
   DUNE_CMAKE_FLAGS: "$GLOBAL_CMAKE_FLAGS"
   DUNE_LOG_LEVEL:  WARNING
   OMP_NUM_THREADS: 1
+  REGURL:             "https://gitlab.dune-project.org/api/v4/projects/302/packages/generic"
 
 before_script:
   - source /duneci/bin/duneci-init-job
