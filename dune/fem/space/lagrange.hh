@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/gmpfield.hh>
 
 #include <dune/fem/space/lagrange/space.hh>
@@ -60,7 +61,12 @@ namespace Dune
 
       LagrangeFiniteElementMap ( const GridPart &gridPart, unsigned int order )
         : gridPart_( gridPart ), order_( order ), localFeVector_( size() )
-      {}
+      {
+        if( order_ == 0 )
+        {
+          DUNE_THROW(NotImplemented, "LagrangeFiniteElementMap is not implemented for order=0, Use FiniteVolume space instead!");
+        }
+      }
 
       static std::size_t size () { return LocalGeometryTypeIndex::size(dimLocal); }
 
