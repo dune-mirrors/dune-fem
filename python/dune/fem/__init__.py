@@ -26,20 +26,21 @@ registry["view"] = {
          "geometry"   : view.geometryGridView
      }
 registry["space"] = {
-         "lagrange"      : space.lagrange,
-         "lagrangehp"    : space.lagrangehp,
-         "dgonb"         : space.dgonb,
-         "dgonbhp"       : space.dgonbhp,
-         "dglegendre"    : space.dglegendre,
-         "dglegendrehp"  : space.dglegendrehp,
-         "dglagrange"    : space.dglagrange,
-         "finitevolume"  : space.finiteVolume,
-         "p1bubble"      : space.p1Bubble,
-         "combined"      : space.combined,
-         "product"       : space.product,
-         "bdm"           : space.bdm,
-         "raviartthomas" : space.raviartThomas,
-         "rannacherTurek": space.rannacherTurek
+         "lagrange"          : space.lagrange,
+         "lagrangehp"        : space.lagrangehp,
+         "dgonb"             : space.dgonb,
+         "dgonbhp"           : space.dgonbhp,
+         "dglegendre"        : space.dglegendre,
+         "dglegendrehp"      : space.dglegendrehp,
+         "dglagrange"        : space.dglagrange,
+         "dglagrangelobatto" : space.dglagrangelobatto,
+         "finitevolume"      : space.finiteVolume,
+         "p1bubble"          : space.p1Bubble,
+         "combined"          : space.combined,
+         "product"           : space.product,
+         "bdm"               : space.bdm,
+         "raviartthomas"     : space.raviartThomas,
+         "rannacherTurek"    : space.rannacherTurek
      }
 registry["discretefunction"] = {
          "numpy"      : discretefunction.numpy,
