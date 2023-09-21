@@ -13,7 +13,27 @@ from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
-#from . import plotting
+# from . import plotting
+
+from warnings import warn
+class plotting:
+    @staticmethod
+    def plotPointData(*args,**kwarg):
+        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        from dune.fem.plotting import plotPointData
+        plotPointData(*args,**kwarg)
+    def plotComponents(*args,**kwarg):
+        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        from dune.fem.plotting import plotComponents
+        plotComponents(*args,**kwarg)
+    def triangulationOfNetwork(*args,**kwarg):
+        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        from dune.fem.plotting import triangulationOfNetwork
+        triangulationOfNetwork(*args,**kwarg)
+    def mayaviPointData(*args,**kwarg):
+        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        from dune.fem.plotting import mayaviPointData
+        mayaviPointData(*args,**kwarg)
 
 # finalization of fem module (i.e. calling PETSc finalize etc)
 # atexit.register( _fem.__finalizeFemModule__ )
