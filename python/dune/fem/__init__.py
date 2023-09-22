@@ -164,12 +164,14 @@ _writeVTKDispatcher.append(vtkDispatchUFL)
 
 def assemble(form,space=None,gridView=None,order=None):
     import ufl
+    from ufl.log import UFLException
     from ufl.equation import Equation
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
+    from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
     try:
         params = [*form[1:]]
         form = form[0]
-    except TypeError:
+    except TypeError: # UFLException is thrown if an expression instead of a form is provided
         params = []
         pass
     if isinstance(form, Equation):
@@ -184,14 +186,28 @@ def assemble(form,space=None,gridView=None,order=None):
     assert functional is None or arity == 2
 
     if arity == 0:
+        # woud be nice to extend this to multiple integrals
+        # The whole thing could possibly be implemented using a galerkin
+        # operator with test functions in a FV space? This would be similar
+        # to the arity 1 case but would then include summing up the result vector.
+        # Efficiency is the issue but it might provide a way of including
+        # integrals over boundaries or possibly internal boundaries. Or we
+        # define a space with a single constant 1 basis function.
         assert len(form.integrals()) == 1, "can only integrate forms with single integral"
         if gridView is None:
-            assert len(cc) > 0, "to integrate a form  a 'gridView' has to be provided"
+            assert len(cc) > 0, "to integrate an expression  a 'gridView' has to be provided or the form must contain a grid function."
             gridView = cc[0].gridView
         if order is None:
-            assert len(cc) > 0, "to integrate an form a quadrature 'order' has to be provided"
-            order = max( gf.order for gf in cc if hasattr(gf,"order") )
-        return dune.fem.function.integrate(gridView,form.integrals()[0].integrand(),order=order)
+            ### assert len(cc) > 0, "to integrate an expression not containing a grid functiona quadrature 'order' has to be provided."
+            ### order = max( gf.order for gf in cc if hasattr(gf,"order") )
+            # the ufl estimate is quite high,
+            # e.g. degree(x)=1, degree(x.x)=2, degree(sin(x))=3=degree(x)+2, degree(sin(x.x))=4=degree(x.x)+2
+            # so degree( (df-exact)**2 ) = 8 if exact=sin(x.x) independent of degree(df).
+            # With for example df linear Lagrange I would assume that integrating with order=5 is more than enough.
+            # If exact=xy and df is linear (exact-df)**2*dx would be integrated with order 4
+            # - I would probably have taken 5 again which have been stupid...
+            order = estimate_total_polynomial_degree( form )
+        return dune.fem.function.integrate(gridView, form.integrals()[0].integrand(), order=order)
     else:
         v = args[0]
         if not space:
