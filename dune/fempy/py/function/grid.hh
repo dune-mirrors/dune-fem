@@ -12,7 +12,7 @@
 #include <dune/common/visibility.hh>
 
 #include <dune/fem/function/localfunction/bindable.hh>
-#include <dune/fem/function/common/discretefunction.hh>
+// #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 namespace Dune
