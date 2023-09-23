@@ -236,3 +236,10 @@ def assemble(form,space=None,gridView=None,order=None):
                 A = dune.fem.operator.linear(op)
                 op.jacobian(space.zero,A)
                 return A
+
+def integrate(expression, gridView=None, order=None):
+    return dune.fem.function.integrate(gridView, expression, order)
+
+def uflFunction(expression, name, gridView=None, order=None, virtualize=True, scalar=False,
+                predefined=None, *args, **kwargs):
+    return dune.fem.function.uflFunction(gridView,name,order,expression,virtualize,scalar,predefined,*args,**kwargs)

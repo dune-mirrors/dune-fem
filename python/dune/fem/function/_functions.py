@@ -14,7 +14,7 @@ from dune.generator import builder
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
-def integrate(grid,expression,order):
+def integrate(grid,expression,order=None):
     try:
         return expression.integrate()
     except AttributeError:
@@ -68,8 +68,25 @@ def partitionFunction(gridView,name="rank"):
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
+    expr = ufl
+    import ufl
+    if gridView is None:
+        try:
+            if type(expr) == list or type(expr) == tuple:
+                expr = ufl.as_vector(expr)
+            from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
+            args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+            assert len(cc) > 0, "a 'gridView' has to be provided or the expression must contain a grid function."
+            gridView = cc[0].gridView
+        except:
+            assert False, "a 'gridView' has to be provided or the expression must contain a grid function."
+    if order is None:
+        try:
+            order = ufl.algorithms.estimate_total_polynomial_degree(expr)
+        except:
+            assert False, "a 'gridView' has to be provided or the expression must contain a grid function."
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
-            ufl, renumbering=None,
+            expr, renumbering=None,
             virtualize=virtualize,
             predefined=predefined, *args, **kwargs)
     if Func is None:
