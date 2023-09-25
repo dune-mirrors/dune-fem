@@ -13,7 +13,6 @@ from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
-# from . import plotting
 
 from warnings import warn
 class plotting:
@@ -34,6 +33,7 @@ class plotting:
         warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
         from dune.fem.plotting import mayaviPointData
         mayaviPointData(*args,**kwarg)
+
 
 # finalization of fem module (i.e. calling PETSc finalize etc)
 # atexit.register( _fem.__finalizeFemModule__ )
@@ -163,27 +163,45 @@ def vtkDispatchUFL(grid,f):
 _writeVTKDispatcher.append(vtkDispatchUFL)
 
 def assemble(form,space=None,gridView=None,order=None):
+    from dune.ufl import DirichletBC
     import ufl
     from ufl.log import UFLException
     from ufl.equation import Equation
+    from ufl.algorithms import compute_form_rhs
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
     from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
-    try:
+    if type(form)==tuple or type(form)==list:
         params = [*form[1:]]
         form = form[0]
-    except TypeError: # UFLException is thrown if an expression instead of a form is provided
-        params = []
-        pass
-    if isinstance(form, Equation):
-        functional = form.rhs
-        form = form.lhs
+        if not (isinstance(form,Equation) or isinstance(form,ufl.Form)):
+            raise ValueError(
+"""If the first argument is a list then the first entry must be either a ufl Form or an Equation"""
+            )
+        if isinstance(form, ufl.core.expr.Expr):
+            raise ValueError("must provide a form or equation not a ufl expression - forgot to multiply with ufl.dx?")
+        if not all([isinstance(x,DirichletBC) for x in params]):
+            raise ValueError(
+"""if the first argument is a list or tuple it must be of the form [ufl_form,DirichletBC,...,DirichletBC]"""
+            )
     else:
-        functional = None
+        params = []
+        if isinstance(form, ufl.core.expr.Expr):
+            raise ValueError("must provide a form or equation not a ufl expression - forgot to multiply with ufl.dx?")
+        if not (isinstance(form,Equation) or isinstance(form,ufl.Form)):
+            raise ValueError(
+"""If the first argument is a list then the first entry must be either a ufl Form or an Equation"""
+            )
+        pass
 
+    if isinstance(form,Equation):
+        form = form.lhs - form.rhs
+        wasEqn = True
+    else:
+        wasEqn = False
     args, cc = extract_arguments_and_coefficients(form)
     arity = len(args)
-    assert arity == 0 or arity == 1 or arity == 2
-    assert functional is None or arity == 2
+    if wasEqn and arity<2:
+        raise ValueError("An equation must have arity 2, i.e., contain a bilinear form")
 
     if arity == 0:
         # woud be nice to extend this to multiple integrals
@@ -193,19 +211,21 @@ def assemble(form,space=None,gridView=None,order=None):
         # Efficiency is the issue but it might provide a way of including
         # integrals over boundaries or possibly internal boundaries. Or we
         # define a space with a single constant 1 basis function.
-        assert len(form.integrals()) == 1, "can only integrate forms with single integral"
+
+        if len(form.integrals()) > 1:
+            raise ValueError("currently only forms with single integral can be integrated")
         if gridView is None:
-            assert len(cc) > 0, "to integrate an expression  a 'gridView' has to be provided or the form must contain a grid function."
-            gridView = cc[0].gridView
+            try:
+                gridView = cc[0].gridView
+            except TypeError:
+                raise ValueError(
+"""to integrate an expression a 'gridView' has to be provided or the form must contain a grid function."""
+                )
         if order is None:
-            ### assert len(cc) > 0, "to integrate an expression not containing a grid functiona quadrature 'order' has to be provided."
-            ### order = max( gf.order for gf in cc if hasattr(gf,"order") )
             # the ufl estimate is quite high,
             # e.g. degree(x)=1, degree(x.x)=2, degree(sin(x))=3=degree(x)+2, degree(sin(x.x))=4=degree(x.x)+2
             # so degree( (df-exact)**2 ) = 8 if exact=sin(x.x) independent of degree(df).
             # With for example df linear Lagrange I would assume that integrating with order=5 is more than enough.
-            # If exact=xy and df is linear (exact-df)**2*dx would be integrated with order 4
-            # - I would probably have taken 5 again which have been stupid...
             order = estimate_total_polynomial_degree( form )
         return dune.fem.function.integrate(gridView, form.integrals()[0].integrand(), order=order)
     else:
@@ -214,27 +234,25 @@ def assemble(form,space=None,gridView=None,order=None):
             try:
                 space = v.ufl_function_space()
             except:
-                raise AttributeError("can not access space from given form")
+                raise ValueError("can not access space from given form - provide a space as argument")
         if arity == 1:
             # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
-            u = ufl.TrialFunction(space)
-            op = dune.fem.operator.galerkin( [u*v*ufl.dx == form] + params )
+            u = ufl.TrialFunction(space) # this is not good - the space might not be available
+            op = dune.fem.operator.galerkin( [u*v*ufl.dx - form] + params )
             b = space.zero.copy()
             op(space.zero,b)
+            b *= -1 # note: using u*v*ufl.dx + form to avoid the *=-1 fails since the boundary values would have the wrong sign
             return b
         else:
-            if functional is not None:
-                op = dune.fem.operator.galerkin( [form == functional] + params )
-                A = dune.fem.operator.linear(op)
-                op.jacobian(space.zero,A)
+            op = dune.fem.operator.galerkin( [form] + params )
+            A = dune.fem.operator.linear(op)
+            op.jacobian(space.zero,A)
+            if compute_form_rhs(form):
                 b = space.zero.copy()
                 op(space.zero,b)
                 b *= -1
                 return A,b
             else:
-                op = dune.fem.operator.galerkin( [form] + params )
-                A = dune.fem.operator.linear(op)
-                op.jacobian(space.zero,A)
                 return A
 
 def integrate(expression, gridView=None, order=None):
