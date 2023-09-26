@@ -547,8 +547,8 @@ def expression2GF(grid,expression,order,name=None):
             return expression.gf
     except:
         pass
-    from dune.fem.function import localFunction, uflFunction
-    return uflFunction(grid, "expr" if name is None else name, order, expression)
+    from dune.fem.function._functions import _uflFunction
+    return _uflFunction(grid, "expr" if name is None else name, order, expression)
 
 # register markdown formatter for integrands, forms and equations to IPython
 

@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys, os
+import sys, os, io
 import logging
 logger = logging.getLogger(__name__)
 from numpy import dtype as np_dtype
@@ -15,19 +15,13 @@ import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
 def integrate(grid,expression,order=None):
+    assert False, "just for now, deprecation is required"
+    return _integrate(grid,expression,order)
+def _integrate(grid,expression,order=None):
     try:
         return expression.integrate()
     except AttributeError:
-        return uflFunction(grid,"tmp",order,expression).integrate()
-    # return dune.ufl.expression2GF(grid,expression,order).integrate()
-# perhaps a general
-#    def assemble(grid/space, expression, order):
-# would be better. If expression is a function this would return a
-# fieldvector with the integral of this function, if expression is a
-# functional a discreteFunctional and for a bilinear form a matrix is
-# returned. This could also include a "piecewise" option that (at least in
-# the case of a function) returns the integral on each element.
-
+        return _uflFunction(grid,"tmp",order,expression).integrate()
 
 def globalFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
@@ -36,13 +30,35 @@ def localFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
 # decorators similar to dune.python but with ufl support
-def gridFunction(view,name,order):
-    def gridFunction_decorator(func):
-        gf = dune.grid.gridFunction(view,name=name,order=order)(func)
-        setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
-        setattr(gf.__class__,"integrate", lambda self: uflFunction(view,"tmp",order,self).integrate())
-        return gf.as_ufl()
-    return gridFunction_decorator
+def gridFunction(expr=None,gridView=None,view=None,name=None,order=None, **kwargs):
+    from ufl.core.expr import Expr
+    if view is not None:
+        assert gridView is None
+        assert False, "view argument changed to gridView (make deprecation later)"
+        gridView = view
+    if name is None:
+        name = "tmp"
+
+    if isinstance(expr, Expr): # use the old uflFunction
+        return _uflFunction(gridView=gridView,name=name,order=order,ufl=expr)
+    elif isinstance(expr,str): # this is a cppFunction
+        assert gridView is not None
+        assert name is not None # this must be the C++ function name in the code
+        assert order is not None
+        return cppFunction(gridView, name=name, order=order,
+                     fctName=name,includes=io.StringIO(expr), **kwargs)
+    else: # treat as decorator. Two cases 'expr' is a gridView or a expr is None
+        if expr is not None: # this must be the gridView
+            assert gridView is None, "don't provide also a gridView"
+            gridView = expr
+        assert order is not None, "an order must be provided"
+        def gridFunction_decorator(func):
+            gf = dune.grid.gridFunction(gridView,name=name,order=order)(func)
+            setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
+            setattr(gf.__class__,"integrate", lambda self: _uflFunction(gridView,self.name,order,self).integrate())
+            return gf.as_ufl()
+        return gridFunction_decorator
+
 # this is not going to work - needs fixing
 # def GridFunction(view, name=None):
 #     def GridFunction_decorator(cls):
@@ -67,6 +83,9 @@ def partitionFunction(gridView,name="rank"):
     return Partition(gridView.comm.rank)
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
+                predefined=None, *args, **kwargs):
+    assert False, "just for now, deprecation is required"
+def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     expr = ufl
     import ufl

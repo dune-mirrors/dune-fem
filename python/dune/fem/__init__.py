@@ -1,4 +1,3 @@
-from __future__ import print_function
 import atexit
 
 import dune.common
@@ -96,7 +95,7 @@ registry["function"] = {
          "global"     : function.globalFunction,
          "local"      : function.localFunction,
          "cpp"        : function.cppFunction,
-         "ufl"        : function.uflFunction,
+         # "ufl"        : function.uflFunction,
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
@@ -152,12 +151,11 @@ def evaluate(expression,x,**kwargs):
 
 from dune.grid.grid_generator import _writeVTKDispatcher
 def vtkDispatchUFL(grid,f):
-    from dune.fem.function._functions import uflFunction
+    from dune.fem.function._functions import gridFunction
     order = 5 # needs to be derived from f
-    # gf = uflFunction(grid, "tmp", order, f)
     try:
-        gf = uflFunction(grid, "tmp", order, f).gf
-    except AttributeError:
+        gf = gridFunction(expr=f,gridView=grid, name="tmp", order=order).gf
+    except Exception as e: # AttributeError as e:
         gf = None
     return gf
 _writeVTKDispatcher.append(vtkDispatchUFL)
@@ -227,7 +225,7 @@ def assemble(form,space=None,gridView=None,order=None):
             # so degree( (df-exact)**2 ) = 8 if exact=sin(x.x) independent of degree(df).
             # With for example df linear Lagrange I would assume that integrating with order=5 is more than enough.
             order = estimate_total_polynomial_degree( form )
-        return dune.fem.function.integrate(gridView, form.integrals()[0].integrand(), order=order)
+        return integrate(form.integrals()[0].integrand(), gridView=gridView, order=order)
     else:
         v = args[0]
         if not space:
@@ -247,7 +245,7 @@ def assemble(form,space=None,gridView=None,order=None):
             op = dune.fem.operator.galerkin( [form] + params )
             A = dune.fem.operator.linear(op)
             op.jacobian(space.zero,A)
-            if compute_form_rhs(form):
+            if wasEqn or not compute_form_rhs(form).empty():
                 b = space.zero.copy()
                 op(space.zero,b)
                 b *= -1
@@ -256,8 +254,11 @@ def assemble(form,space=None,gridView=None,order=None):
                 return A
 
 def integrate(expression, gridView=None, order=None):
-    return dune.fem.function.integrate(gridView, expression, order)
+    from dune.fem.function._functions import _integrate
+    return _integrate(gridView, expression, order)
 
+"""
 def uflFunction(expression, name, gridView=None, order=None, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     return dune.fem.function.uflFunction(gridView,name,order,expression,virtualize,scalar,predefined,*args,**kwargs)
+"""
