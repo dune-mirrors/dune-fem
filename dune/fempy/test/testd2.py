@@ -7,7 +7,7 @@ import ufl
 from dune.grid import cartesianDomain
 from dune.fem import parameter
 from dune.ufl import Space
-from dune.fem.function import integrate
+from dune.fem import integrate
 
 import dune.create as create
 
@@ -58,9 +58,9 @@ scheme = create.scheme("galerkin", model, spc, solver="cg",
 solB = spc.interpolate([0],name="solB")
 scheme.solve(solB)
 
-errA_sol = math.sqrt( integrate(grid, (solA-exact)**2, 5) )
-errB_sol = math.sqrt( integrate(grid, (solB-exact)**2, 5) )
-errA_B   = math.sqrt( integrate(grid, (solA-solB)**2, 5) )
+errA_sol = math.sqrt( integrate((solA-exact)**2) )
+errB_sol = math.sqrt( integrate((solB-exact)**2) )
+errA_B   = math.sqrt( integrate((solA-solB)**2) )
 
 print( errA_sol, errB_sol, errA_B ) # 0.0004520603651576     0.013241522498765897 0.012944687615068362
 

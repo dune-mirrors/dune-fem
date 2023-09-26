@@ -1,7 +1,7 @@
 import time
 from dune.grid import structuredGrid
 from dune.fem import parameter
-from dune.fem.function import integrate
+from dune.fem import integrate
 import dune.create as create
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, exp,\
                 dx, grad, inner, as_vector, replace, sqrt, dot,\
@@ -40,14 +40,14 @@ A(arg,destA)
 da   = apply_derivatives(derivative(action(a, ubar), ubar, u))
 dop  = create.operator("galerkin", da, space)
 dop(arg,destB)
-err = integrate(grid, (destA-destB)**2, 5)
+err = integrate((destA-destB)**2, order=5)
 # print("error=",err)
 assert(err < 1e-15)
 
 A = linearOperator(dop)
 dop.jacobian(arg,A)
 A(arg,destC)
-err = integrate(grid, (destA-destC)**2, 5)
+err = integrate((destA-destC)**2, order=5)
 # print("error=",err)
 assert(err < 1e-15)
 
@@ -59,14 +59,14 @@ lina  = ( inner(0.5*dot(ubar,u), v[0]) +
           inner(ubar[0]*grad(u), grad(v)) ) * dx
 linop = create.operator("galerkin", lina, space)
 linop(ubar,destD)
-err = integrate(grid, (destA-destD)**2, 5)
+err = integrate((destA-destD)**2, order=5)
 # print("error=",err)
 assert(err < 1e-15)
 
 A = linearOperator(linop)
 linop.jacobian(arg,A)
 A(ubar,destE)
-err = integrate(grid, (destA-destE)**2, 5)
+err = integrate((destA-destE)**2, order=5)
 # print("error=",err)
 assert(err < 1e-15)
 

@@ -1,6 +1,6 @@
 import dune.fem
 from dune.fem.plotting import plotPointData as plot
-from dune.fem.function import integrate
+from dune.fem import integrate
 import dune.create as create
 from dune.ufl import DirichletBC, Space
 
@@ -47,12 +47,12 @@ def test(operator):
     scheme = create.scheme(operator, model, spc, parameters=parameters)
     solution = spc.interpolate([0,0],name="solution")
     scheme.solve(target=solution)
-    l2errA = sqrt( integrate(grid, (solution-exact)**2, 5) )
+    l2errA = sqrt( integrate((solution-exact)**2) )
     grid.hierarchicalGrid.globalRefine(2)
     # note: without the `clear` the code can fail since the new dofs in 'solution' can be nan
     solution.clear()
     scheme.solve(target=solution)
-    l2errB = sqrt( integrate(grid, (solution-exact)**2, 5) )
+    l2errB = sqrt( integrate((solution-exact)**2) )
     return solution, l2errA,l2errB
 
 solution, l2errA, l2errB = test("galerkin")

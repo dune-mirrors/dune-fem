@@ -2,7 +2,7 @@ from ufl import *
 
 import math
 import dune.fem
-from dune.fem.function import integrate
+from dune.fem import integrate
 import dune.create as create
 from dune.ufl import DirichletBC, Space
 
@@ -15,11 +15,11 @@ x = SpatialCoordinate(uflSpace.cell())
 from math import pi,log,sqrt
 from ufl import cos,sin,as_vector
 exact = as_vector( [sin(3*pi*x[0]), x[1]*x[1], x[0]*x[0], cos(3.*pi*x[1])]+[0]*(dimRange-4) )
-v1 = integrate(grid, exact, 5).two_norm
+v1 = integrate(exact, gridView=grid, order=5).two_norm
 
 space = create.space("Lagrange", grid, dimRange=dimRange, order=1)
 u = space.interpolate(exact,name="u")
-v2 = integrate(grid, u, 5).two_norm
+v2 = integrate(u, order=5).two_norm
 
 print(v1,v2,v1-v2)
-v3 = integrate(grid, inner(grad(u[11]),grad(u[11])), 5)
+v3 = integrate(inner(grad(u[11]),grad(u[11])), order=5)
