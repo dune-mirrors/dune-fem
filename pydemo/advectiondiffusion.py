@@ -10,7 +10,8 @@ from dune.fem.space import dgonb as dgSpace # dglegendre as dgSpace
 from dune.fem.space import lagrange
 from dune.fem.scheme import galerkin as solutionScheme
 from dune.fem.scheme import molGalerkin as molSolutionScheme
-from dune.fem.function import integrate, uflFunction
+from dune.fem import integrate
+from dune.fem.function import gridFunction
 from dune.ufl import Constant, DirichletBC
 from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal
 from ufl import dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional
@@ -26,7 +27,7 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     hbnd = CellVolume(space) / FacetArea(space)
     x    = SpatialCoordinate(space)
 
-    exact = uflFunction( space.gridView, name="exact", order=3, ufl=sin(x[0]*x[1]))
+    exact = gridFunction( sin(x[0]*x[1]), space.gridView, name="exact", order=3 )
     uh = space.interpolate(exact,name="solution")
 
     # diffusion factor
@@ -85,14 +86,14 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
     info = scheme.solve(target=uh)
 
     error = dot(uh-exact,uh-exact)
-    error0 = math.sqrt( integrate(gridView,error,order=5) )
+    error0 = math.sqrt( integrate(error,order=5) )
     print(error0," # output",flush=True)
     for i in range(3):
         gridView.hierarchicalGrid.globalRefine(1)
         uh.interpolate(exact)
         scheme.solve(target=uh)
         error = dot(uh-exact,uh-exact)
-        error1 = math.sqrt( integrate(gridView,error,order=5) )
+        error1 = math.sqrt( integrate(error,order=5) )
         eoc   += [ math.log(error1/error0) / math.log(0.5) ]
         print(i,error0,error1,eoc," # output",flush=True)
         error0 = error1
