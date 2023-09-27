@@ -90,15 +90,17 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
     expr = ufl
     import ufl
     if gridView is None:
-        try:
-            if type(expr) == list or type(expr) == tuple:
-                expr = ufl.as_vector(expr)
-            from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
-            args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-            assert len(cc) > 0, "a 'gridView' has to be provided or the expression must contain a grid function."
-            gridView = cc[0].gridView
-        except:
-            assert False, "a 'gridView' has to be provided or the expression must contain a grid function."
+        if type(expr) == list or type(expr) == tuple:
+            expr = ufl.as_vector(expr)
+        from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
+        args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+        assert len(args) == 0, "no trial or test function should be included in the expression"
+        gridView = set( c.gridView for c in cc if hasattr(c,"gridView") )
+        if len(gridView) == 0:
+            raise AttributeError("a 'gridView' has to be provided or the expression must contain a grid function.")
+        if len(gridView) > 1:
+            raise AttributeError("expression contains grid functions over different views.")
+        gridView = gridView.pop() # there is only one element in this set - the unique gridView
     if order is None:
         try:
             order = ufl.algorithms.estimate_total_polynomial_degree(expr)
