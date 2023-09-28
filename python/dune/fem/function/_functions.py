@@ -4,6 +4,9 @@ import sys, os, io
 import logging
 logger = logging.getLogger(__name__)
 from numpy import dtype as np_dtype
+from warnings import warn
+def _warn(msg):
+    warn(msg, DeprecationWarning, stacklevel=2)
 
 import dune.ufl
 import dune.grid
@@ -15,7 +18,7 @@ import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
 def integrate(grid,expression,order=None):
-    assert False, "just for now, deprecation is required"
+    _warn("dune.fem.function.integrate is deprecated use dune.fem.integrate instead. New signature is (expr, gridView, order)")
     return _integrate(grid,expression,order)
 def _integrate(grid,expression,order=None):
     try:
@@ -30,28 +33,32 @@ def localFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
 # decorators similar to dune.python but with ufl support
-def gridFunction(expr=None,gridView=None,view=None,name=None,order=None, **kwargs):
+def gridFunction(expr=None,gridView=None,name=None,order=None, fctName=None, view=None, **kwargs):
     from ufl.core.expr import Expr
     if view is not None:
         assert gridView is None
-        assert False, "view argument changed to gridView (make deprecation later)"
+        _warn("'view' argument changed to 'gridView' in dune.fem.function.gridFunction")
         gridView = view
     if name is None:
-        name = "tmp"
+        name = "_tmp"
 
     if isinstance(expr, Expr): # use the old uflFunction
         return _uflFunction(gridView=gridView,name=name,order=order,ufl=expr)
     elif isinstance(expr,str): # this is a cppFunction
-        assert gridView is not None
-        assert name is not None # this must be the C++ function name in the code
-        assert order is not None
+        if gridView is None:
+            raise AttributeError("for a function based on a C++ code a 'gridView' must be provided")
+        if name=="_tmp" and fctName is None:
+            raise AttributeError("the name of the C++ function has to be provided either through the 'name' or the 'fctName' parameter")
+        if order is None:
+            raise AttributeError("for a function based on a C++ code a 'order' must be provided")
         return cppFunction(gridView, name=name, order=order,
                      fctName=name,includes=io.StringIO(expr), **kwargs)
     else: # treat as decorator. Two cases 'expr' is a gridView or a expr is None
         if expr is not None: # this must be the gridView
             assert gridView is None, "don't provide also a gridView"
             gridView = expr
-        assert order is not None, "an order must be provided"
+        if order is None:
+            raise AttributeError("for a function based on Python code a 'order' must be provided")
         def gridFunction_decorator(func):
             gf = dune.grid.gridFunction(gridView,name=name,order=order)(func)
             setattr(gf.__class__,"as_ufl", lambda self: dune.ufl.GridFunction(self))
@@ -84,7 +91,7 @@ def partitionFunction(gridView,name="rank"):
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
-    assert False, "just for now, deprecation is required"
+    _warn("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
 def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     expr = ufl
@@ -94,7 +101,8 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
             expr = ufl.as_vector(expr)
         from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
         args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-        assert len(args) == 0, "no trial or test function should be included in the expression"
+        if len(args) > 0:
+            raise AttributeError("no trial or test function should be included in the expression")
         gridView = set( c.gridView for c in cc if hasattr(c,"gridView") )
         if len(gridView) == 0:
             raise AttributeError("a 'gridView' has to be provided or the expression must contain a grid function.")
@@ -105,7 +113,7 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
         try:
             order = ufl.algorithms.estimate_total_polynomial_degree(expr)
         except:
-            assert False, "a 'gridView' has to be provided or the expression must contain a grid function."
+            raise AttributeError("a suitable order could not be determined - provide the order as argument")
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
             expr, renumbering=None,
             virtualize=virtualize,

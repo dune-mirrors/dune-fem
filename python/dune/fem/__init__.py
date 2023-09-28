@@ -253,12 +253,6 @@ def assemble(form,space=None,gridView=None,order=None):
             else:
                 return A
 
-def integrate(expression, gridView=None, order=None):
+def integrate(expr, gridView=None, order=None):
     from dune.fem.function._functions import _integrate
-    return _integrate(gridView, expression, order)
-
-"""
-def uflFunction(expression, name, gridView=None, order=None, virtualize=True, scalar=False,
-                predefined=None, *args, **kwargs):
-    return dune.fem.function.uflFunction(gridView,name,order,expression,virtualize,scalar,predefined,*args,**kwargs)
-"""
+    return _integrate(gridView, expr, order)
