@@ -55,6 +55,7 @@ registry["space"] = {
          "dglagrangelobatto" : space.dglagrangelobatto,
          "finitevolume"      : space.finiteVolume,
          "p1bubble"          : space.p1Bubble,
+         "composite"         : space.composite,
          "combined"          : space.combined,
          "product"           : space.product,
          "bdm"               : space.bdm,

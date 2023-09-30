@@ -529,11 +529,11 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
     return spc.as_ufl()
 
 
-def combined(*spaces, **kwargs):
+def composite(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces.
-       Use to solve a problem over the product of dfferent spaces
-       'monolithicly', i.e. as one big system. To use a similar setup of
-       the problem but to solve it in a decoupled fashion use the 'prodcut'
+       Use to solve a problem over the product of different spaces
+       'monolithically', i.e. as one big system. To use a similar setup of
+       the problem but to solve it in a decoupled fashion use the 'product'
        space.
 
     Args:
@@ -551,18 +551,18 @@ def combined(*spaces, **kwargs):
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
     spaces = tuple([s.__impl__ for s in spaces])
-    combinedStorage = None
-    combinedField = None
+    compositeStorage = None
+    compositeField = None
     for space in spaces:
         storage, _, _, _, _, _ = space.storage
-        if combinedStorage and (combinedStorage != storage):
+        if compositeStorage and (compositeStorage != storage):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
         else:
-            combinedStorage = storage
-        if combinedField and (combinedField != space.field):
+            compositeStorage = storage
+        if compositeField and (compositeField != space.field):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different field types")
         else:
-            combinedField = space.field
+            compositeField = space.field
 
     includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
     for space in spaces:
@@ -594,8 +594,8 @@ def combined(*spaces, **kwargs):
       """)
 
     # subFunction = Method('subFunction', 'this requires exporting SubFunctionStorage first')
-    spc = module(combinedField, includes, typeName, constructor, pickler, # subFunction,
-            storage=combinedStorage,
+    spc = module(compositeField, includes, typeName, constructor, pickler, # subFunction,
+            storage=compositeStorage,
             scalar=scalar, codegen=codegen,
             ctorArgs=[spaces])
     try:
@@ -609,6 +609,10 @@ def combined(*spaces, **kwargs):
     except KeyError:
         pass
     return spc.as_ufl()
+
+# deprecated, add warning at some point
+def combined(*spaces, **kwargs):
+    return composite( *spaces, **kwargs )
 
 def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
