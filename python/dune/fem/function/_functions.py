@@ -4,9 +4,6 @@ import sys, os, io
 import logging
 logger = logging.getLogger(__name__)
 from numpy import dtype as np_dtype
-from warnings import warn
-def _warn(msg):
-    warn(msg, DeprecationWarning, stacklevel=2)
 
 import dune.ufl
 import dune.grid
@@ -17,8 +14,10 @@ from dune.generator import builder
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
+from dune.fem.deprecated import deprecated
+
 def integrate(grid,expression,order=None):
-    _warn("dune.fem.function.integrate is deprecated use dune.fem.integrate instead. New signature is (expr, gridView, order)")
+    deprecated("dune.fem.function.integrate is deprecated use dune.fem.integrate instead. New signature is (expr, gridView, order)")
     return _integrate(grid,expression,order)
 def _integrate(grid,expression,order=None):
     try:
@@ -37,7 +36,7 @@ def gridFunction(expr=None,gridView=None,name=None,order=None, fctName=None, vie
     from ufl.core.expr import Expr
     if view is not None:
         assert gridView is None
-        _warn("'view' argument changed to 'gridView' in dune.fem.function.gridFunction")
+        deprecated("'view' argument changed to 'gridView' in dune.fem.function.gridFunction")
         gridView = view
     if name is None:
         name = "_tmp"
@@ -91,7 +90,7 @@ def partitionFunction(gridView,name="rank"):
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
-    _warn("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
+    deprecated("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
 def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     expr = ufl
