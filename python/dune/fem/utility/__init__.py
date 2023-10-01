@@ -6,17 +6,33 @@ class GridWidth:
     def __init__(self, gridView):
         self._gridView = gridView
         code = """
+#include <memory>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/gridpart/common/gridpartadapter.hh>
 
 template <class GridView>
-double gridWidth(const GridView& gv)
+std::pair<double, int > gridWidth(const GridView& gv, const double h, const int sequence)
 {
+  typedef typename GridView::Grid GridType;
+  typedef Dune::Fem::DofManager<GridType> DofManagerType;
+
   Dune::Fem::GridPartAdapter< GridView > gp( gv );
-  return Dune::Fem::GridWidth::calcGridWidth(gp);
+  const int currentSequence = DofManagerType :: instance( gp.grid() ).sequence();
+  if( currentSequence != sequence )
+  {
+    double newWidth = Dune::Fem::GridWidth::calcGridWidth(gp);
+    return std::make_pair( newWidth, currentSequence );
+  }
+  else
+  {
+    return std::make_pair( h, sequence );
+  }
 }
 """
-        self._gridWidth = algorithm.load("gridWidth", io.StringIO(code), self._gridView )
+        self._h = 0.0
+        self._sequence = -1 # default to trigger re-computation
+        self._gridWidth = algorithm.load("gridWidth", io.StringIO(code), self._gridView, self._h, self._sequence )
 
     def __call__(self):
         """
@@ -24,7 +40,9 @@ double gridWidth(const GridView& gv)
         --------
             h computed as min(|E|/|e|) forall E in gridView
         """
-        return self._gridWidth(self._gridView)
+        # potentially update h if grid has changed
+        self._h, self._sequence = self._gridWidth(self._gridView, self._h, self._sequence )
+        return self._h
 
 def gridWidth( gridView ):
     """
