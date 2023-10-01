@@ -55,6 +55,7 @@ namespace Dune
       // registerSchemeConstructor
       // -------------------------
 
+      // constructor for GalerkinScheme (and derivatives)
       template< class Scheme, class... options >
       inline static auto registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
         -> std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, typename Scheme::ModelType & >::value >
@@ -71,6 +72,26 @@ namespace Dune
             return new Scheme( space, std::ref(model),
                 pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
           } ), "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >() );
+      }
+
+      // constructor for MassLumpingScheme
+      template< class Scheme, class... options >
+      inline static auto registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 2 > )
+        -> std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, typename Scheme::ModelType &, typename Scheme::MassModelType & >::value >
+      {
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Scheme::ModelType                 ModelType;
+        typedef typename Scheme::MassModelType             MassModelType;
+
+        using pybind11::operator""_a;
+
+        cls.def( pybind11::init( [] ( Space &space, ModelType &model, MassModelType &massModel ) {
+            return new Scheme( space, std::ref(model), std::ref(massModel) );
+          } ), "space"_a, "model"_a, "massModel"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 3 >() );
+        cls.def( pybind11::init( [] ( Space &space, ModelType &model, MassModelType &massModel, const pybind11::dict &parameters ) {
+            return new Scheme( space, std::ref(model), std::ref(massModel),
+                pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
+          } ), "space"_a, "model"_a, "massModel"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 3 >() );
       }
 
       template< class Scheme, class... options >

@@ -431,15 +431,6 @@ namespace Dune
             parameter_(parameter)
         {}
 
-        MassLumpingSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
-                                const Integrands &integrands,
-                                const ParameterReader& parameter = Parameter::container() )
-          : dfSpace_( dfSpace ),
-            fullOperator_( dfSpace, dfSpace, std::move( integrands ), std::move( integrands ) ),
-            invOp_(parameter),
-            parameter_(parameter)
-        {}
-
         void setQuadratureOrders(unsigned int interior, unsigned int surface) { fullOperator().setQuadratureOrders(interior,surface); }
 
         const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
