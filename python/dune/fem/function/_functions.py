@@ -91,6 +91,7 @@ def partitionFunction(gridView,name="rank"):
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     deprecated("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
+    return _uflFunction(gridView,name,order,ufl,virtualize,scalar,predefined,*args,**kwargs)
 def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     expr = ufl
