@@ -1,4 +1,3 @@
-from __future__ import print_function
 import atexit
 
 import dune.common
@@ -13,25 +12,25 @@ from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
-# from . import plotting
 
-from warnings import warn
+from dune.fem.deprecated import deprecated
+
 class plotting:
     @staticmethod
     def plotPointData(*args,**kwarg):
-        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
         from dune.fem.plotting import plotPointData
         plotPointData(*args,**kwarg)
     def plotComponents(*args,**kwarg):
-        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
         from dune.fem.plotting import plotComponents
         plotComponents(*args,**kwarg)
     def triangulationOfNetwork(*args,**kwarg):
-        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
         from dune.fem.plotting import triangulationOfNetwork
         triangulationOfNetwork(*args,**kwarg)
     def mayaviPointData(*args,**kwarg):
-        warn("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
         from dune.fem.plotting import mayaviPointData
         mayaviPointData(*args,**kwarg)
 
@@ -56,6 +55,7 @@ registry["space"] = {
          "dglagrangelobatto" : space.dglagrangelobatto,
          "finitevolume"      : space.finiteVolume,
          "p1bubble"          : space.p1Bubble,
+         "composite"         : space.composite,
          "combined"          : space.combined,
          "product"           : space.product,
          "bdm"               : space.bdm,
@@ -96,7 +96,7 @@ registry["function"] = {
          "global"     : function.globalFunction,
          "local"      : function.localFunction,
          "cpp"        : function.cppFunction,
-         "ufl"        : function.uflFunction,
+         # "ufl"        : function.uflFunction,
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
@@ -152,71 +152,108 @@ def evaluate(expression,x,**kwargs):
 
 from dune.grid.grid_generator import _writeVTKDispatcher
 def vtkDispatchUFL(grid,f):
-    from dune.fem.function._functions import uflFunction
+    from dune.fem.function._functions import gridFunction
     order = 5 # needs to be derived from f
-    # gf = uflFunction(grid, "tmp", order, f)
     try:
-        gf = uflFunction(grid, "tmp", order, f).gf
-    except AttributeError:
+        gf = gridFunction(expr=f,gridView=grid, name="tmp", order=order).gf
+    except Exception as e: # AttributeError as e:
         gf = None
     return gf
 _writeVTKDispatcher.append(vtkDispatchUFL)
 
 def assemble(form,space=None,gridView=None,order=None):
+    from dune.ufl import DirichletBC
     import ufl
+    from ufl.log import UFLException
     from ufl.equation import Equation
+    from ufl.algorithms import compute_form_rhs
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
-    try:
+    from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
+    if type(form)==tuple or type(form)==list:
         params = [*form[1:]]
         form = form[0]
-    except TypeError:
-        params = []
-        pass
-    if isinstance(form, Equation):
-        functional = form.rhs
-        form = form.lhs
+        if not (isinstance(form,Equation) or isinstance(form,ufl.Form)):
+            raise ValueError(
+"""If the first argument is a list then the first entry must be either a ufl Form or an Equation"""
+            )
+        if isinstance(form, ufl.core.expr.Expr):
+            raise ValueError("must provide a form or equation not a ufl expression - forgot to multiply with ufl.dx?")
+        if not all([isinstance(x,DirichletBC) for x in params]):
+            raise ValueError(
+"""if the first argument is a list or tuple it must be of the form [ufl_form,DirichletBC,...,DirichletBC]"""
+            )
     else:
-        functional = None
+        params = []
+        if isinstance(form, ufl.core.expr.Expr):
+            raise ValueError("must provide a form or equation not a ufl expression - forgot to multiply with ufl.dx?")
+        if not (isinstance(form,Equation) or isinstance(form,ufl.Form)):
+            raise ValueError(
+"""If the first argument is a list then the first entry must be either a ufl Form or an Equation"""
+            )
+        pass
 
+    if isinstance(form,Equation):
+        form = form.lhs - form.rhs
+        wasEqn = True
+    else:
+        wasEqn = False
     args, cc = extract_arguments_and_coefficients(form)
     arity = len(args)
-    assert arity == 0 or arity == 1 or arity == 2
-    assert functional is None or arity == 2
+    if wasEqn and arity<2:
+        raise ValueError("An equation must have arity 2, i.e., contain a bilinear form")
 
     if arity == 0:
-        assert len(form.integrals()) == 1, "can only integrate forms with single integral"
+        # woud be nice to extend this to multiple integrals
+        # The whole thing could possibly be implemented using a galerkin
+        # operator with test functions in a FV space? This would be similar
+        # to the arity 1 case but would then include summing up the result vector.
+        # Efficiency is the issue but it might provide a way of including
+        # integrals over boundaries or possibly internal boundaries. Or we
+        # define a space with a single constant 1 basis function.
+
+        if len(form.integrals()) > 1:
+            raise ValueError("currently only forms with single integral can be integrated")
         if gridView is None:
-            assert len(cc) > 0, "to integrate a form  a 'gridView' has to be provided"
-            gridView = cc[0].gridView
+            try:
+                gridView = cc[0].gridView
+            except TypeError:
+                raise ValueError(
+"""to integrate an expression a 'gridView' has to be provided or the form must contain a grid function."""
+                )
         if order is None:
-            assert len(cc) > 0, "to integrate an form a quadrature 'order' has to be provided"
-            order = max( gf.order for gf in cc if hasattr(gf,"order") )
-        return dune.fem.function.integrate(gridView,form.integrals()[0].integrand(),order=order)
+            # the ufl estimate is quite high,
+            # e.g. degree(x)=1, degree(x.x)=2, degree(sin(x))=3=degree(x)+2, degree(sin(x.x))=4=degree(x.x)+2
+            # so degree( (df-exact)**2 ) = 8 if exact=sin(x.x) independent of degree(df).
+            # With for example df linear Lagrange I would assume that integrating with order=5 is more than enough.
+            order = estimate_total_polynomial_degree( form )
+        return integrate(form.integrals()[0].integrand(), gridView=gridView, order=order)
     else:
         v = args[0]
         if not space:
             try:
                 space = v.ufl_function_space()
             except:
-                raise AttributeError("can not access space from given form")
+                raise ValueError("can not access space from given form - provide a space as argument")
         if arity == 1:
             # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
-            u = ufl.TrialFunction(space)
-            op = dune.fem.operator.galerkin( [u*v*ufl.dx == form] + params )
+            u = ufl.TrialFunction(space) # this is not good - the space might not be available
+            op = dune.fem.operator.galerkin( [u*v*ufl.dx - form] + params )
             b = space.zero.copy()
             op(space.zero,b)
+            b *= -1 # note: using u*v*ufl.dx + form to avoid the *=-1 fails since the boundary values would have the wrong sign
             return b
         else:
-            if functional is not None:
-                op = dune.fem.operator.galerkin( [form == functional] + params )
-                A = dune.fem.operator.linear(op)
-                op.jacobian(space.zero,A)
+            op = dune.fem.operator.galerkin( [form] + params )
+            A = dune.fem.operator.linear(op)
+            op.jacobian(space.zero,A)
+            if wasEqn or not compute_form_rhs(form).empty():
                 b = space.zero.copy()
                 op(space.zero,b)
                 b *= -1
                 return A,b
             else:
-                op = dune.fem.operator.galerkin( [form] + params )
-                A = dune.fem.operator.linear(op)
-                op.jacobian(space.zero,A)
                 return A
+
+def integrate(expr, gridView=None, order=None):
+    from dune.fem.function._functions import _integrate
+    return _integrate(gridView, expr, order)

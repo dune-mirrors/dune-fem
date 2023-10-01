@@ -319,10 +319,24 @@ namespace Dune
       }
     };
 
-    template< class GridPart, class Intersection>
+
+
+    // BoundaryIdProvider for general GridParts or GridViews
+    // -----------------------------------------------------
+
+    //! this works for both, GridView and GridPart
+    template< class GridView, class Intersection>
     inline static int boundaryId ( const Intersection &intersection )
     {
-      return Dune::Fem::BoundaryIdProvider< typename GridPart::GridType > ::
+      return Dune::Fem::BoundaryIdProvider< typename GridView::Grid > ::
+             boundaryId( intersection );
+    }
+
+    //! this works for both, GridView and GridPart
+    template< class GridView, class Intersection>
+    inline static int boundaryId ( const GridView&, const Intersection &intersection )
+    {
+      return Dune::Fem::BoundaryIdProvider< typename GridView::Grid > ::
              boundaryId( intersection );
     }
 

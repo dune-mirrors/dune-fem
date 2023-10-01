@@ -31,7 +31,7 @@ from dune.fem.space import combined
 from dune.fem.scheme import galerkin as solutionScheme
 from dune.fem.view import adaptiveLeafGridView as adaptive
 from dune.fem.view import filteredGridView as filterGV
-from dune.fem.function import integrate
+from dune.fem import integrate
 from dune.ufl import Constant, DirichletBC
 from ufl import ( TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal,
                   dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional,
@@ -166,7 +166,7 @@ def compute(comm,useAdapt,gridType,
             info = scheme.solve(target=uh1)
             Print(comm, "solver internal:",info["converged"], info["linear_iterations"], info["iterations"], file=outFile)
             if showPlot: uh1.plot(clim=[-1.5,1.5], level=3, partition=Partitions.all)
-            error1 = np.sqrt( integrate(gridView, (uh1[0]-exact)**2, order=6 ))
+            error1 = np.sqrt( integrate((uh1[0]-exact)**2, order=6 ))
             Print(comm, "error:",error1, all=True)
             info1 = scheme.solve(target=uh1)
             if info1["linear_iterations"] > 1:

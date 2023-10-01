@@ -14,6 +14,7 @@ add_python_targets(fem
   _spaceadaptation
   plotting
   view
+  deprecated
 )
 
 dune_add_pybind11_module(NAME _fem)

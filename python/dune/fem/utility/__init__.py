@@ -2,76 +2,47 @@ from __future__ import print_function
 from dune.generator import algorithm, path
 import io
 
-# just an idea
-
-def evaluate(expression, coordinate):
-    assert isinstance(expression, ufl.Expr)
-    return value
-def integrate(form,grid=None):
-    assert check_form_arity(expression, arguments) == 0
-    return value
-def assemble(form,space=None):
-    arity = check_form_arity(form, arguments)
-    assert arity == 1 or arity == 2
-    assert space or hasattr(form.testFunction,"space")
-    if arity == 1:
-        return functional
-    else:
-        return matrix
-def solve(equation,solutionGF):
-    arity = check_form_arity(equation, arguments)
-    assert arity == 1 or arity == 2
-    if arity == 2:
-        return info
-    else:
-        assert solutionGF
-        # assert that solutionGF is a coefficient in equation and replace
-        # it by trialfunction
-        return info
-
-# or all in one?
-def evaluate(expression, grid=None, space=None, target=None, coordinate=None):
-    if isinstance(expression, ufl.Expr):
-        assert coordinate
-        return expression(coordinate)
-    elif isinstance(expression, ufl.Form):
-        if check_form_arity(expression, arguments) == 0:
-            assert grid or space
-            if not grid: grid = space.gridView
-            pass # integrate function
-        if check_form_arity(expression, arguments) == 1:
-            assert space
-            pass # return a df
-        elif check_form_arity(expression, arguments) == 2:
-            assert space
-            pass # return a matrix
-    elif isinstance(expression, ufl.Equation):
-        assert target
-        pass # return solver info
-
 class GridWidth:
     def __init__(self, gridView):
         self._gridView = gridView
         code = """
+#include <memory>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/gridpart/common/gridpartadapter.hh>
 
 template <class GridView>
-double gridWidth(const GridView& gv)
+std::pair<double, int > gridWidth(const GridView& gv, const double h, const int sequence)
 {
+  typedef typename GridView::Grid GridType;
+  typedef Dune::Fem::DofManager<GridType> DofManagerType;
+
   Dune::Fem::GridPartAdapter< GridView > gp( gv );
-  return Dune::Fem::GridWidth::calcGridWidth(gp);
+  const int currentSequence = DofManagerType :: instance( gp.grid() ).sequence();
+  if( currentSequence != sequence )
+  {
+    double newWidth = Dune::Fem::GridWidth::calcGridWidth(gp);
+    return std::make_pair( newWidth, currentSequence );
+  }
+  else
+  {
+    return std::make_pair( h, sequence );
+  }
 }
 """
-        self._gridWidth = algorithm.load("gridWidth", io.StringIO(code), self._gridView )
+        self._h = 0.0
+        self._sequence = -1 # default to trigger re-computation
+        self._gridWidth = algorithm.load("gridWidth", io.StringIO(code), self._gridView, self._h, self._sequence )
 
     def __call__(self):
         """
         Returns:
         --------
-            h computed as min(|E|/|e|) forall E in gridView
+            h computed as min( h_E ) forall E in gridView where h_E = |E| / min(|e|) for all e in E
         """
-        return self._gridWidth(self._gridView)
+        # potentially update h if grid has changed
+        self._h, self._sequence = self._gridWidth(self._gridView, self._h, self._sequence )
+        return self._h
 
 def gridWidth( gridView ):
     """

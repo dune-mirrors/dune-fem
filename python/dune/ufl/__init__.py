@@ -78,7 +78,7 @@ def cell(dimDomainOrGrid):
 
 
 class Space(ufl.FunctionSpace):
-    def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False):
+    def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False, order=1):
         assert not scalar or dimRange is None or dimRange == 1
         if not dimRange:
             try:
@@ -89,9 +89,9 @@ class Space(ufl.FunctionSpace):
                 scalar = True
         self.scalar = scalar
         if scalar:
-            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, 1)
+            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), 1)
         else:
-            ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+            ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), int(dimRange))
         domain = ufl.domain.default_domain(ve.cell())
         ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
@@ -388,7 +388,8 @@ class GridFunction(ufl.Coefficient):
 
         if not hasattr(gf, "gridView"):
             gf.gridView = gf.grid # this is needed to patch dune-grid gf until the 'gridView' attribute is added there as well
-        uflSpace = Space((gf.gridView.dimGrid, gf.gridView.dimWorld), gf.dimRange, scalar=scalar)
+        uflSpace = Space((gf.gridView.dimGrid, gf.gridView.dimWorld),
+                          gf.dimRange, scalar=scalar, order=gf.order )
 
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
@@ -546,8 +547,8 @@ def expression2GF(grid,expression,order,name=None):
             return expression.gf
     except:
         pass
-    from dune.fem.function import localFunction, uflFunction
-    return uflFunction(grid, "expr" if name is None else name, order, expression)
+    from dune.fem.function._functions import _uflFunction
+    return _uflFunction(grid, "expr" if name is None else name, order, expression)
 
 # register markdown formatter for integrands, forms and equations to IPython
 

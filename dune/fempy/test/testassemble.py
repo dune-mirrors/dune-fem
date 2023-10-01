@@ -2,7 +2,7 @@ from ufl import *
 from dune.grid import structuredGrid
 from dune.fem.space import lagrange
 from dune.fem import assemble
-from dune.fem.function import uflFunction
+from dune.fem.function import gridFunction
 g = structuredGrid([0,0],[1,1],[10,10])
 s = lagrange(g)
 x = SpatialCoordinate(s)
@@ -13,7 +13,7 @@ x = SpatialCoordinate(s)
 I = assemble( x[0]*x[1]*dx, gridView=g, order=2 )
 print("integral:", I)
 # the following works:
-f = uflFunction( gridView=g, order=2, name="x", ufl=x[0])
+f = gridFunction(x[0], gridView=g, order=2, name="x")
 I = assemble( f*x[1]*dx )
 print("integral:", I)
 
