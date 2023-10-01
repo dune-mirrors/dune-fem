@@ -77,7 +77,17 @@ namespace Dune
       // GalerkinOperator
       // ----------------
 
-      template< class Integrands >
+      template <class Space>
+      struct DefaultGalerkinOperatorQuadratureSelector
+      {
+        typedef typename Space :: GridPartType GridPartType;
+        typedef CachingQuadrature< GridPartType, 0, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > InteriorQuadratureType;
+        typedef CachingQuadrature< GridPartType, 1, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > SurfaceQuadratureType;
+        // typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
+        // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
+      };
+
+      template< class Integrands, template <class> class QuadSelector = DefaultGalerkinOperatorQuadratureSelector >
       struct GalerkinOperator
       {
         typedef GalerkinOperator<Integrands> ThisType;
@@ -88,14 +98,9 @@ namespace Dune
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
+        // typedef QuadratureSelector
         template <class Space>
-        struct QuadratureSelector
-        {
-          typedef CachingQuadrature< GridPartType, 0, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > InteriorQuadratureType;
-          typedef CachingQuadrature< GridPartType, 1, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > SurfaceQuadratureType;
-        // typedef CachingQuadrature< GridPartType, 0, Dune::FemPy::FempyQuadratureTraits > InteriorQuadratureType;
-        // typedef CachingQuadrature< GridPartType, 1, Dune::FemPy::FempyQuadratureTraits > SurfaceQuadratureType;
-        };
+        using QuadratureSelector = QuadSelector< Space >;
 
         // constructor
         template< class... Args >
@@ -109,7 +114,7 @@ namespace Dune
         {
         }
 
-      private:
+      protected:
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;
         typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
@@ -155,6 +160,7 @@ namespace Dune
             } );
         }
 
+      public:
         template< class LocalFunction, class Quadrature >
         static void evaluateQuadrature ( const LocalFunction &u, const Quadrature &quad, std::vector< typename LocalFunction::RangeType > &phi )
         {
@@ -173,6 +179,7 @@ namespace Dune
           u.hessianQuadrature( quad, phi );
         }
 
+      protected:
         template< class LocalFunction, class Point >
         static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::RangeType &phi )
         {
