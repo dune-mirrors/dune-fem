@@ -38,7 +38,7 @@ std::pair<double, int > gridWidth(const GridView& gv, const double h, const int 
         """
         Returns:
         --------
-            h computed as min(|E|/|e|) forall E in gridView
+            h computed as min( h_E ) forall E in gridView where h_E = |E| / min(|e|) for all e in E
         """
         # potentially update h if grid has changed
         self._h, self._sequence = self._gridWidth(self._gridView, self._h, self._sequence )
