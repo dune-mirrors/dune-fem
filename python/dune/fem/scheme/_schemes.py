@@ -158,7 +158,7 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
 
 def _galerkin(integrands, space=None, solver=None, parameters={},
-              errorMeasure=None, virtualize=None, _schemeName=None ):
+              errorMeasure=None, virtualize=None, _schemeName=None, **kwargs ):
     """
     Parameters:
 
@@ -283,18 +283,18 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     return scheme
 
 def galerkin(integrands, space=None, solver=None, parameters={},
-             errorMeasure=None, virtualize=None):
+             errorMeasure=None, virtualize=None, **kwargs):
     galerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, _schemeName='GalerkinScheme')
+                     virtualize=virtualize, _schemeName='GalerkinScheme', **kwargs)
 
 def molGalerkin(integrands, space=None, solver=None, parameters={},
-                errorMeasure=None, virtualize=None):
+                errorMeasure=None, virtualize=None, **kwargs):
     molGalerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, _schemeName='MethodOfLinesScheme')
+                     virtualize=virtualize, _schemeName='MethodOfLinesScheme', **kwargs)
 
 def massLumpingGalerkin(integrands, mass=None, space=None, solver=None, parameters={},
                         errorMeasure=None, virtualize=None, **kwargs):
