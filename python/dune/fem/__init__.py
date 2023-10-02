@@ -18,19 +18,19 @@ from dune.fem.deprecated import deprecated
 class plotting:
     @staticmethod
     def plotPointData(*args,**kwarg):
-        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first")
         from dune.fem.plotting import plotPointData
         plotPointData(*args,**kwarg)
     def plotComponents(*args,**kwarg):
-        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first")
         from dune.fem.plotting import plotComponents
         plotComponents(*args,**kwarg)
     def triangulationOfNetwork(*args,**kwarg):
-        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first")
         from dune.fem.plotting import triangulationOfNetwork
         triangulationOfNetwork(*args,**kwarg)
     def mayaviPointData(*args,**kwarg):
-        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first", DeprecationWarning, stacklevel=2)
+        deprecated("This use of dune.fem.plotting is deprecated. Import dune.fem.plotting first")
         from dune.fem.plotting import mayaviPointData
         mayaviPointData(*args,**kwarg)
 
