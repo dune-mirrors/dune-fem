@@ -49,9 +49,10 @@ class LumpingQuadrature
     : BaseType(id)
   {
     const auto &refElement = Dune::ReferenceElements< FieldType, dimension >::general( gt );
-    const auto numCorners = refElement.size( dimension );
-    for( auto i = decltype( numCorners ){ 0 }; i < numCorners; ++i )
-      this->addQuadraturePoint( refElement.position( i, dimension ), refElement.volume() / numCorners );
+    const std::size_t numCorners = refElement.size( dimension );
+    const FieldType weight = refElement.volume() / FieldType(numCorners);
+    for( std::size_t i = 0 ; i < numCorners; ++i )
+      this->addQuadraturePoint( refElement.position( i, dimension ), weight );
   }
 
   /** \copydoc QuadratureImp::geometry
