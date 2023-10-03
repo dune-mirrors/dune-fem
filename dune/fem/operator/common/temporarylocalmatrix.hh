@@ -242,6 +242,21 @@ namespace Dune
 
       // return pointer to data array for PetscLinearOperator to avoid copying.
       const RangeFieldType* data() const { return fields_.data(); }
+
+      void print( std::ostream& out ) const
+      {
+        out << "TLM ("<<rows ()<<","<<cols()<<"):"<<std::endl;
+        for( size_type r = 0; r<rows(); ++r )
+        {
+          for( size_type c = 0; c<cols(); ++c )
+          {
+            out << get( r , c ) << " ";
+          }
+          out << std::endl;
+        }
+        out << std::endl << std::endl;
+      }
+
     };
 
   } // namespace Fem
