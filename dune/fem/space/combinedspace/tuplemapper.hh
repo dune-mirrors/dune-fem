@@ -571,11 +571,13 @@ namespace Dune
         SizeType computeNumBlocks ()
         {
           // compute blocks (only needs to be done once)
+          // length of blocks_ is mapperTupleSize + 1
           blocks_[ 0 ] = 0;
           Hybrid::forEach( std::make_index_sequence< mapperTupleSize >{},
             [ & ]( auto i ){ blocks_[ i + 1 ] = blocks_[ i ] + std::get< i >( mapperTuple_ ).numBlocks(); } );
 
-          return blocks_[ mapperTupleSize + 1 ];
+          // last block number determines overall block numbers
+          return blocks_.back();
         }
 
 
