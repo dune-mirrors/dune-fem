@@ -34,10 +34,12 @@ namespace Dune
       typedef typename RangeFunctionType::GridPartType GridPartType;
       typedef ThreadIterator< GridPartType >  ThreadIteratorType;
 
-      typedef Impl::GalerkinOperator< Integrands > GalerkinOperatorImplType;
+      typedef Impl::GalerkinOperator< GridPartType >    GalerkinOperatorImplType;
+      typedef Impl::LocalGalerkinOperator< Integrands > LocalGalerkinOperatorImplType;
+
       typedef typename RangeFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
 
-      typedef typename GalerkinOperatorImplType::template QuadratureSelector<
+      typedef typename LocalGalerkinOperatorImplType::template QuadratureSelector<
             DiscreteFunctionSpaceType > :: InteriorQuadratureType    InteriorQuadratureType;
 
       typedef LocalMassMatrix< DiscreteFunctionSpaceType, InteriorQuadratureType >  LocalMassMatrixType ;
@@ -45,7 +47,8 @@ namespace Dune
       template< class... Args >
       explicit MOLGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
         : iterators_( gridPart ),
-          impl_( gridPart, std::forward< Args >( args )... ),
+          opImpl_( gridPart ),
+          localOp_( gridPart, std::forward< Args >( args )... ),
           gridSizeInterior_( 0 ),
           communicate_( true )
       {
@@ -62,9 +65,9 @@ namespace Dune
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface)
       {
-        size_t size = impl_.size();
+        size_t size = localOp_.size();
         for( size_t i=0; i<size; ++i )
-          impl_[ i ].setQuadratureOrders(interior,surface);
+          localOp_[ i ].setQuadratureOrders(interior,surface);
       }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
@@ -78,25 +81,21 @@ namespace Dune
         evaluate( u, w );
       }
 
-      const GridPartType &gridPart () const { return impl().gridPart(); }
+      const GridPartType &gridPart () const { return op().gridPart(); }
 
       typedef Integrands ModelType;
       typedef Integrands DirichletModelType;
-      ModelType &model() const { return impl().model(); }
-      const GalerkinOperatorImplType& impl() const { return (*impl_); }
+      ModelType &model() const { return localOperator().model(); }
+
+      [[deprecated("Use localOperator instead!")]]
+      const GalerkinOperatorImplType& impl() const { return localOperator(); }
+
+      const LocalGalerkinOperatorImplType& localOperator() const { return (*localOp_); }
 
       std::size_t gridSizeInterior () const { return gridSizeInterior_; }
 
     protected:
-      // update number of interior elements as sum over threads
-      std::size_t gatherGridSizeInterior () const
-      {
-        std::size_t gridSizeInterior = 0;
-        const size_t size = MPIManager::numThreads();
-        for( size_t i=0; i<size; ++i )
-          gridSizeInterior += impl_[ i ].gridSizeInterior();
-        return gridSizeInterior;
-      }
+      const GalerkinOperatorImplType& op() const { return (*opImpl_); }
 
       template <class Iterators>
       void applyInverseMass( const Iterators& iterators, RangeFunctionType& w ) const
@@ -104,7 +103,7 @@ namespace Dune
         // temporary local function
         typedef TemporaryLocalFunction< typename RangeFunctionType::DiscreteFunctionSpaceType > TemporaryLocalFunctionType;
         TemporaryLocalFunctionType wLocal( w.space() );
-        LocalMassMatrixType localMassMatrix( w.space(), impl().interiorQuadratureOrder( w.space().order() ) );
+        LocalMassMatrixType localMassMatrix( w.space(), localOperator().interiorQuadratureOrder( w.space().order() ) );
 
         // iterate over all elements (in the grid or per thread)
         // thread safety is guaranteed through discontinuous data (spaces)
@@ -135,11 +134,12 @@ namespace Dune
         auto doEval = [this, &u, &w, &mutex] ()
         {
           // version with locking
-          this->impl().evaluate( u, w, this->iterators_, mutex );
+          std::tuple< const LocalGalerkinOperatorImplType& > integrands( localOperator() );
+          this->op().evaluate( u, w, this->iterators_, integrands, mutex );
 
           // version without locking
           //RangeFunctionType wTmp( w );
-          //this->impl().evaluate( u, wTmp, this->iterators_ );
+          //this->op().evaluate( u, wTmp, this->iterators_ );
           //std::lock_guard guard ( mutex );
           //w += wTmp;
         };
@@ -150,8 +150,8 @@ namespace Dune
           // execute in parallel
           MPIManager :: run ( doEval );
 
-          // update number of interior elements as sum over threads
-          gridSizeInterior_ = gatherGridSizeInterior();
+          // update grid size interior
+          gridSizeInterior_ = Impl::accumulateGridSize( opImpl_ );
         }
         catch ( const SingleThreadModeError& e )
         {
@@ -182,11 +182,13 @@ namespace Dune
           // reset w from previous entries
           w.clear();
           // re-run in single thread mode if previous attempt failed
-          impl().evaluate( u, w, iterators_ );
-          applyInverseMass( iterators_, w );
+          std::tuple< const LocalGalerkinOperatorImplType& > integrands( localOperator() );
+          op().evaluate( u, w, iterators_, integrands );
 
-          // update number of interior elements
-          gridSizeInterior_ = impl().gridSizeInterior();
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = Impl::accumulateGridSize( opImpl_ );
+
+          applyInverseMass( iterators_, w );
         }
 
         // synchronize data
@@ -196,7 +198,8 @@ namespace Dune
 
       // GalerkinOperator implementation (see galerkin.hh)
       mutable ThreadIteratorType iterators_;
-      ThreadSafeValue< GalerkinOperatorImplType > impl_;
+      ThreadSafeValue< GalerkinOperatorImplType > opImpl_;
+      ThreadSafeValue< LocalGalerkinOperatorImplType > localOp_;
 
       mutable std::size_t gridSizeInterior_;
       bool communicate_;
@@ -222,6 +225,8 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
 
+      typedef typename BaseType::LocalGalerkinOperatorImplType    LocalGalerkinOperatorImplType;
+
       typedef DiagonalAndNeighborStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >  DiagonalAndNeighborStencilType;
       typedef DiagonalStencil< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >             DiagonalStencilType;
 
@@ -238,7 +243,7 @@ namespace Dune
           rangeSpaceSequence_(rSpace.sequence()),
           stencilDAN_(), stencilD_()
       {
-        if( impl().model().hasSkeleton() )
+        if( hasSkeleton() )
           stencilDAN_.reset( new DiagonalAndNeighborStencilType( dSpace_, rSpace_ ) );
         else
           stencilD_.reset( new DiagonalStencilType( dSpace_, rSpace_ ) );
@@ -271,12 +276,19 @@ namespace Dune
       }
 
       using BaseType::gridPart;
+      using BaseType::localOperator;
 
     protected:
-      using BaseType::impl;
-      using BaseType::gatherGridSizeInterior;
+      using BaseType::op;
       using BaseType::iterators_;
       using BaseType::gridSizeInterior_;
+
+      //! returns true if one of the models has a skeleton term
+      bool hasSkeleton() const
+      {
+        std::tuple< const LocalGalerkinOperatorImplType& > integrands( localOperator() );
+        return op().hasSkeleton( integrands );
+      }
 
       void prepare( JacobianOperatorType& jOp ) const
       {
@@ -285,7 +297,7 @@ namespace Dune
         {
           domainSpaceSequence_ = domainSpace().sequence();
           rangeSpaceSequence_ = rangeSpace().sequence();
-          if( impl().model().hasSkeleton() )
+          if( hasSkeleton() )
           {
             assert( stencilDAN_ );
             stencilDAN_->update();
@@ -297,7 +309,7 @@ namespace Dune
           }
         }
 
-        if( impl().model().hasSkeleton() )
+        if( hasSkeleton() )
           jOp.reserve( *stencilDAN_ );
         else
           jOp.reserve( *stencilD_ );
@@ -316,8 +328,9 @@ namespace Dune
 
         auto doAssemble = [this, &u, &jOp, &mutex] ()
         {
+          std::tuple< const LocalGalerkinOperatorImplType& > integrands( localOperator() );
           // assemble Jacobian, same as GalerkinOperator
-          this->impl().assemble( u, jOp, this->iterators_, mutex );
+          this->op().assemble( u, jOp, this->iterators_, integrands, mutex );
         };
 
         try {
@@ -325,7 +338,7 @@ namespace Dune
           MPIManager :: run ( doAssemble );
 
           // update number of interior elements as sum over threads
-          gridSizeInterior_ = gatherGridSizeInterior();
+          gridSizeInterior_ = Impl::accumulateGridSize( this->opImpl_ );
         }
         catch ( const SingleThreadModeError& e )
         {
@@ -339,7 +352,7 @@ namespace Dune
           // method of lines
           auto doInvMass = [this, &getSet] ()
           {
-            applyInverseMass( this->iterators_, getSet, this->impl().model().hasSkeleton() );
+            applyInverseMass( this->iterators_, getSet, this->hasSkeleton() );
           };
 
           try {
@@ -356,15 +369,16 @@ namespace Dune
         {
           // redo matrix assembly since it failed
           jOp.clear();
-          impl().assemble( u, jOp, iterators_ );
+          std::tuple< const LocalGalerkinOperatorImplType& > integrands( localOperator() );
+          op().assemble( u, jOp, iterators_, integrands );
 
-          // update number of interior elements
-          gridSizeInterior_ = impl().gridSizeInterior();
+          // update number of interior elements as sum over threads
+          gridSizeInterior_ = Impl::accumulateGridSize( this->opImpl_ );
 
           GetSetLocalMatrixImpl getSet( jOp );
 
           // apply inverse mass
-          applyInverseMass( iterators_, getSet, impl().model().hasSkeleton() );
+          applyInverseMass( iterators_, getSet, hasSkeleton() );
         }
 
         // note: assembly done without local contributions so need
@@ -444,7 +458,7 @@ namespace Dune
         typedef typename BaseType::LocalMassMatrixType  LocalMassMatrixType;
         JacobianOperatorType& jOp = getSet.jOp_;
 
-        LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), impl().interiorQuadratureOrder( jOp.rangeSpace().order() ) );
+        LocalMassMatrixType localMassMatrix( jOp.rangeSpace(), localOperator().interiorQuadratureOrder( jOp.rangeSpace().order() ) );
 
         TemporaryLocalMatrix< DomainDiscreteFunctionSpaceType, RangeDiscreteFunctionSpaceType >
                   lop(jOp.domainSpace(), jOp.rangeSpace());
