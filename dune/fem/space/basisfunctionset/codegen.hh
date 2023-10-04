@@ -1234,8 +1234,17 @@ namespace Dune
 
       std::set< int > sizes;
       std::set< int > quadNops;
+
+      bool foundReferenceElement = false ;
+
       for( const auto& entity : space )
       {
+        // continue if none, since the code below does not work in that case
+        if( entity.type().isNone() ) continue;
+
+        // store true if at least one element with not isNone was found
+        foundReferenceElement = true;
+
         // only use size of scalar basis function set, i.e. dimRange = 1
         const int scalarSize = space.basisFunctionSet( entity ).size() / dimRange ;
         sizes.insert( scalarSize );
@@ -1250,6 +1259,10 @@ namespace Dune
           }
         }
       }
+
+      // do nothing for grids without reference element
+      //if( ! foundReferenceElement )
+      //  return ;
 
       for( const auto& type : space.indexSet().types(0))
       {
