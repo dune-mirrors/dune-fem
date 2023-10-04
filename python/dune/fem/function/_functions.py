@@ -32,7 +32,7 @@ def localFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
 # decorators similar to dune.python but with ufl support
-def gridFunction(expr=None,gridView=None,name=None,order=None, fctName=None, view=None, **kwargs):
+def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, view=None, **kwargs):
     from ufl.core.expr import Expr
     if view is not None:
         assert gridView is None

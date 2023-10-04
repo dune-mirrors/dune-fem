@@ -15,6 +15,7 @@ from ufl import Form
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 from dune.common.utility import isString
+from dune.fem.deprecated import deprecated
 
 _defaultGenerator = SimpleGenerator("Operator", "Dune::FemPy")
 
@@ -59,6 +60,11 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None,
         addBackend(LinearOperator,backend)
     return module
 
+def _opLinear(self, assemble=True, parameters=None):
+    A = _linear([self.domainSpace,self.rangeSpace], parameters)
+    if assemble:
+        self.jacobian(self.domainSpace.zero, A)
+    return A
 
 def _galerkin(integrands, domainSpace=None, rangeSpace=None,
               virtualize=None, communicate=True,
@@ -164,9 +170,7 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     gridSizeInterior = Method('gridSizeInterior', '''[]( DuneType &self ) { return self.gridSizeInterior(); }''' )
     op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
-    op.__class__.linear = lambda self, parameters=None: (
-        _linear([self.domainSpace,self.rangeSpace], parameters)
-      )
+    op.__class__.linear = _opLinear
     # apply communicate flag
     op.setCommunicate( communicate )
     return op
@@ -311,7 +315,6 @@ def _linear(operator, ubar=None,parameters=None,affineShift=False):
         return lin,b
     else:
         return lin
-"""
-def linear(operator, ubar=None,parameters=None,affineShift=False):
-    return _linear(operator,ubar,parameters,affineShift)
-"""
+def linear(operator, ubar=None,parameters=None):
+    deprecated("dune.fem.operator is deprecated use the ``linear`` method on the scheme/operator  instead.")
+    return _linear(operator,ubar,parameters)
