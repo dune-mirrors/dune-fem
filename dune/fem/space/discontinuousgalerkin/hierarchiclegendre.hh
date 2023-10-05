@@ -62,6 +62,10 @@ namespace Dune
       {
         return interpolation();
       }
+      InterpolationType localInterpolation (const EntityType &entity) const
+      {
+        return interpolation();
+      }
 
 
     };

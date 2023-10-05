@@ -163,7 +163,8 @@ namespace Dune
                                             Space::GridPartType::dimension >  LocalDomainType;
         typedef typename Space::RangeType   RangeType;
         typedef typename Space::JacobianRangeType  JacobianRangeType;
-        typedef typename Space::BlockMapperType          BlockMapperType;
+        typedef typename Space::HessianRangeType   HessianRangeType;
+        typedef typename Space::BlockMapperType    BlockMapperType;
         // this only works when GlobalKeyType is size_t or similar, which it is
         // for all implementations so far
         typedef typename BlockMapperType::GlobalKeyType  GlobalKeyType;
@@ -175,6 +176,8 @@ namespace Dune
         cls.def_property_readonly( "_sizeOfField", [] ( Space &self ) -> unsigned int { return sizeof(typename Space::RangeFieldType); } );
         cls.def_property_readonly( "localBlockSize", [] ( Space &self ) -> unsigned int { return self.localBlockSize; } );
         cls.def("localOrder", [] ( Space &self, const EntityType &e) -> int { return self.order(e); } );
+        // we can deprecate the following method it's can be replaced by
+        // space.mapper(element) which is more flexible
         cls.def("map", [] ( Space &self, const EntityType &e) -> std::vector< GlobalKeyType >
             { std::vector< GlobalKeyType > indices( self.blockMapper().numDofs( e ) );
               // fill vector with dof indices
@@ -199,6 +202,25 @@ namespace Dune
               basisSet.jacobianAll( xLocal, dPhis );
               return dPhis;
             } );
+        #if 0 // the return value here is not convertible to Python so needs some export or we transform it directly to numpy
+        cls.def("hessianBasis", [] ( Space &spc, const EntityType &e, const LocalDomainType& xLocal)
+            -> auto // std::vector< HessianRangeType >
+            {
+              // get basis function set
+              const auto basisSet = spc.basisFunctionSet( e );
+
+              std::vector< HessianRangeType > d2Phis_( basisSet.size() );
+              basisSet.hessianAll( xLocal, d2Phis_ );
+
+              constexpr int dimR = Space::dimRange;
+              constexpr int dimD = Space::FunctionSpaceType::dimDomain;
+              typedef Dune::FieldVector<Dune::FieldMatrix<double, dimD, dimD>, dimR> HesRT;
+              std::vector< HesRT > d2Phis( basisSet.size() );
+              for (std::size_t i=0;i<basisSet.size();++i)
+                d2Phis[i] = d2Phis_[i];
+              return d2Phis;
+            } );
+        #endif
 
         auto regMap = Dune::Python::insertClass< BlockMapperType >
               ( cls, "BlockMapper", Dune::Python::GenerateTypeName(cls,"BlockMapperType"));

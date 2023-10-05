@@ -9,6 +9,8 @@ from ufl.equation import Equation
 from dune.generator import Constructor, Method
 from dune.common.utility import isString
 
+from dune.fem.operator import _linear
+
 logger = logging.getLogger(__name__)
 
 def getSolverStorage(space, solver):
@@ -61,6 +63,13 @@ def femscheme(includes, space, solver, operator, modelType):
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
+def _schemeLinear(self, assemble=True, parameters=None):
+    A = _linear([self.domainSpace,self.rangeSpace],
+                parameters=(self.parameters if parameters is None else parameters))
+    if assemble:
+        self.jacobian(self.domainSpace.zero, A)
+    return A
+
 def femschemeModule(space, model, includes, solver, operator, *args,
         parameters={},
         modelType = None, ctorArgs={}):
@@ -72,6 +81,8 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     mod = module(includes, typeName, *args, backend=backend)
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
+    scheme.parameters = parameters
+    scheme.__class__.linear = _schemeLinear
     return scheme
 
 from dune.fem.scheme.dgmodel import transform
@@ -257,6 +268,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
+
+    from dune.fem.operator import _linear
+    scheme.parameters = parameters
+    scheme.__class__.linear = _schemeLinear
 
     try:
         from dune.fem import parameter

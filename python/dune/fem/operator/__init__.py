@@ -15,6 +15,7 @@ from ufl import Form
 from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 from dune.common.utility import isString
+from dune.fem.deprecated import deprecated
 
 _defaultGenerator = SimpleGenerator("Operator", "Dune::FemPy")
 
@@ -59,6 +60,11 @@ def loadLinear(includes, typeName, *args, backend=None, preamble=None,
         addBackend(LinearOperator,backend)
     return module
 
+def _opLinear(self, assemble=True, parameters=None):
+    A = _linear([self.domainSpace,self.rangeSpace], parameters)
+    if assemble:
+        self.jacobian(self.domainSpace.zero, A)
+    return A
 
 def _galerkin(integrands, domainSpace=None, rangeSpace=None,
               virtualize=None, communicate=True,
@@ -164,6 +170,7 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     gridSizeInterior = Method('gridSizeInterior', '''[]( DuneType &self ) { return self.gridSizeInterior(); }''' )
     op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
+    op.__class__.linear = _opLinear
     # apply communicate flag
     op.setCommunicate( communicate )
     return op
@@ -244,16 +251,25 @@ def h1(model, domainSpace=None, rangeSpace=None):
 
     scheme = load(includes, typeName, constructor).Operator(domainSpace,rangeSpace, model)
     scheme.model = model
+    op.__class__.linear = lambda self, parameters=None: (
+        _linear([self.domainSpace,self.rangeSpace], parameters)
+      )
     return scheme
 
-def linear(operator, ubar=None,parameters={}):
+def _linear(operator, ubar=None,parameters=None,affineShift=False):
     """ operator can be either a dune.fem.operator/scheme or a tuple/list of spaces.
         In the second case ubar needs to be None and the operator is unassembled.
         In the first case the operator will be assembled around 'ubar' or around zero if ubar is None.
+
+        If affineShift is true the function returns both the linearization
+        A and the affine shift, i.e., both L[0] and DL[0]. Note that the
+        `right hand side` returned by `affine` is `b=-L[0]`.
     """
+    if parameters is None:
+        parameters = {}
     try:
-        rangeSpace  = operator[0]
-        domainSpace = operator[1]
+        domainSpace = operator[0]
+        rangeSpace  = operator[1]
         assemble = False
     except TypeError:
         assert hasattr(operator,"jacobian"), "operator does not allow assembly"
@@ -285,9 +301,20 @@ def linear(operator, ubar=None,parameters={}):
     lin = loadLinear(includes, typeName, constructor, backend=(dbackend,rbackend)).LinearOperator(domainSpace,rangeSpace,parameters)
 
     if assemble:
+        try:
+            lin.dirichletBlocks = operator.dirichletBlocks
+        except:
+            pass
         if ubar is None:
-            from dune.fem.function import discreteFunction
-            operator.jacobian(discreteFunction(domainSpace,"tmp"), lin)
+            operator.jacobian(domainSpace.zero, lin)
         else:
-            operator.jacobian(domainSpace.interpolate(ubar,"tmp"), lin)
-    return lin
+            operator.jacobian(ubar, lin)
+    if affineShift:
+        b = rangeSpace.zero.copy()
+        operator(rangeSpace.zero,b)
+        return lin,b
+    else:
+        return lin
+def linear(operator, ubar=None,parameters=None):
+    deprecated("dune.fem.operator is deprecated use the ``linear`` method on the scheme/operator  instead.")
+    return _linear(operator,ubar,parameters)

@@ -20,9 +20,9 @@
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/py/grid/numpy.hh>
-#include <dune/fempy/py/space.hh>
-#include <dune/fempy/py/grid/gridpart.hh>
+// #include <dune/fempy/py/space.hh>
 // #include <dune/fempy/py/function/grid.hh>
+#include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 
 #if HAVE_DUNE_VTK

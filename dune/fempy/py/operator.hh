@@ -61,7 +61,16 @@ namespace Dune
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); jOp.finalize(); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &ubar,
+                 typename Operator::JacobianOperatorType &jOp )
+        { self.jacobian( ubar, jOp ); jOp.finalize(); }
+        , "ubar"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &ubar,
+                 typename Operator::JacobianOperatorType &jOp,
+                 typename Operator::RangeFunctionType &rhs)
+        { self.jacobian( ubar, jOp ); jOp.finalize();
+          self(ubar, rhs); rhs *= -1; }
+        , "ubar"_a, "jOp"_a, "rhs"_a );
       }
       template< class Operator, class... options >
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
@@ -75,7 +84,16 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &u, typename Operator::JacobianOperatorType &jOp ) { self.jacobian( u, jOp ); jOp.finalize(); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &ubar,
+                 typename Operator::JacobianOperatorType &jOp )
+        { self.jacobian( ubar, jOp ); jOp.finalize(); }
+        , "ubar"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &ubar,
+                 typename Operator::JacobianOperatorType &jOp,
+                 typename Operator::RangeFunctionType &rhs)
+        { self.jacobian( ubar, jOp ); jOp.finalize();
+          self(ubar, rhs); rhs *= -1; }
+        , "ubar"_a, "jOp"_a, "rhs"_a );
       }
 
       template< class Operator, class... options >
@@ -101,6 +119,7 @@ namespace Dune
           cls.def( "setConstraints", [] ( Operator &self, DomainFunction &u) { self.setConstraints( u ); } );
           cls.def( "setConstraints", [] ( Operator &self, const typename DomainFunction::RangeType &value, DomainFunction &u) { self.setConstraints( value, u ); } );
           cls.def( "setConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.setConstraints( u,v ); } );
+          cls.def( "setConstraints", [] ( Operator &self, const GeneralGridFunction<DomainFunction> &u, RangeFunction &v) { self.setConstraints( u,v ); } );
           cls.def( "subConstraints", [] ( Operator &self, const DomainFunction &u, RangeFunction &v) { self.subConstraints( u,v ); } );
           using DirichletBlockVector = typename Operator::DirichletBlockVector;
           pybind11::bind_vector<DirichletBlockVector>(cls, "DirichletBlockVector");
