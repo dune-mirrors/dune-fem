@@ -11,22 +11,17 @@ from dune.generator.generator import SimpleGenerator
 from dune.fem import function
 
 from ._spaces import *
-
-try:
-    import ufl
-    from dune.ufl import GridFunction, expression2GF
-except:
-    pass
+import ufl
+from dune.ufl import GridFunction
 
 def _uflToExpr(grid,order,f):
-    if not ufl: return f
     if isinstance(f, list) or isinstance(f, tuple):
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
     if isinstance(f, GridFunction):
         return f
     if isinstance(f, ufl.core.expr.Expr):
-        return expression2GF(grid,f,order).as_ufl()
+        return function.gridFunction(f,gridView=grid,order=order).as_ufl()
     else:
         return f
 
@@ -77,7 +72,7 @@ def dfInterpolate(self, f):
         func = f.gf
         dimExpr = func.dimRange
     elif isinstance(f, ufl.core.expr.Expr):
-        func = expression2GF(self.space.gridView,f,self.space.order).as_ufl()
+        func = function.gridFunction(f,gridView=self.space.gridView,order=self.space.order).as_ufl()
         if func.ufl_shape == ():
             dimExpr = 1
         else:
@@ -126,7 +121,7 @@ def dfProject(self, f):
         func = f.gf
         dimExpr = func.dimRange
     elif isinstance(f, ufl.core.expr.Expr):
-        func = expression2GF(self.space.gridView,f,self.space.order).as_ufl()
+        func = function.gridFunction(f,gridView=self.space.gridView,order=self.space.order).as_ufl()
         if func.ufl_shape == ():
             dimExpr = 1
         else:
