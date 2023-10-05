@@ -3,13 +3,10 @@ __metaclass__ = type
 
 import hashlib, warnings
 
-try:
-    import ufl
-    from dune.ufl import GridFunction, expression2GF
-    from ufl.algorithms.analysis import extract_arguments_and_coefficients
-except ImportError:
-    ufl = None
-
+import ufl
+from dune.ufl import GridFunction
+from dune.fem.function import gridFunction
+from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from dune.generator.generator import SimpleGenerator
 
 _defaultGenerator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
@@ -94,7 +91,7 @@ def mark(indicator, refineTolerance, coarsenTolerance=0.,
             if len(gridView) == 0:
                 raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
             gridView = gridView[0]
-        indicator = expression2GF(gridView,indicator,0)
+        indicator = gridFunction(indicator,gridView=gridView,order=0)
     if gridView is None:
         gridView = indicator.gridView
     try:

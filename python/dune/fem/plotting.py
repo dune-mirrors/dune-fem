@@ -5,6 +5,9 @@ from numpy import amin, amax, linspace, linalg, log, append, zeros, int32
 from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
 
+from dune.fem.deprecated import deprecated
+from ufl.core.expr import Expr
+from dune.fem.function import gridFunction
 from dune.plotting import block, disable
 from ufl import as_vector
 from dune.grid import Partitions
@@ -167,8 +170,6 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                     colors=contourColor, linewidths=contourWidth)
 
 
-from ufl.core.expr import Expr
-from dune.ufl import expression2GF
 def plotPointData(solution, figure=None, linewidth=0.1,
         level=0, gridLines="black", vectors=False,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
@@ -178,21 +179,25 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         block=globalBlock,
         logscale=False, ticks=11,
         *,
-        partition=Partitions.all):
+        gridView=None, partition=Partitions.all):
     if disable: return
+    if grid is not None:
+        assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
+        gridView = grid
+        deprecated("'grid' argument of plotPointData is deprecated use named argument 'gridView' instead")
     try:
-        grid = solution.gridView
+        gridView = solution.gridView
     except AttributeError:
         if isinstance(solution, list) or isinstance(solution,tuple):
             solution = as_vector(solution)
         if isinstance(solution, Expr):
-            assert grid, "need to provide a named grid argument to plot a ufl expression directly"
-            solution = expression2GF(grid, solution, 1)
+            assert gridView, "need to provide a named gridView argument to plot a ufl expression directly"
+            solution = gridFunction(solution, gridView=gridView, order=1)
         else:
-            grid = solution
+            gridView = solution
             solution = None
-    if not grid.dimWorld == 2 and solution is None:
-        print("inline plotting of grid only available for 2d grids")
+    if not gridView.dimWorld == 2 and solution is None:
+        print("inline plotting of gridView only available for 2d grids")
         return
 
     if figure is None:
@@ -210,7 +215,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         except:
             pass
         newFig = False
-    _plotPointData(figure, grid, solution, level, gridLines, linewidth,
+    _plotPointData(figure, gridView, solution, level, gridLines, linewidth,
                     vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
                     logscale, ticks, allowNaN,
@@ -223,19 +228,25 @@ def plotPointData(solution, figure=None, linewidth=0.1,
 def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
-        block=globalBlock, grid=None, colorbar=None, allowNaN=False):
+        block=globalBlock, grid=None, colorbar=None,
+        allowNaN=False,*,
+        gridView=None):
     if disable: return
+    if grid is not None:
+        assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
+        gridView = grid
+        deprecated("'grid' argument of plotPointData is deprecated use named argument 'gridView' instead")
     try:
-        grid = solution.gridView
+        gridView = solution.gridView
     except AttributeError:
         if isinstance(solution, Expr):
-            assert grid, "need to provide a named grid argument to plot a ufl expression directly"
-            solution = expression2GF(grid,solution,1)
+            assert gridView, "need to provide a named gridView argument to plot a ufl expression directly"
+            solution = gridFunction(solution, gridView=gridView, order=1)
         else:
-            grid = solution
+            gridView = solution
             solution = None
-    if not grid.dimWorld == 2 and solution is None:
-        print("inline plotting of grid only available for 2d grids")
+    if not gridView.dimWorld == 2 and solution is None:
+        print("inline plotting of gridView only available for 2d grids")
         return
 
     if not show:
@@ -255,7 +266,7 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
     # first the grid if required
     if (gridLines is not None) and (gridLines != ""):
         pyplot.subplot(subfig)
-        _plotPointData(figure,grid,None,level,gridLines,0.2,False,
+        _plotPointData(figure,gridView,None,level,gridLines,0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar,
                 allowNaN=allowNaN)
@@ -263,7 +274,7 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
     # add the data
     for p in show:
         pyplot.subplot(subfig+offset+p)
-        _plotPointData(figure,grid,solution[p],level,"",0.2,False,
+        _plotPointData(figure,gridView,solution[p],level,"",0.2,False,
                 onlyContours, contours, contourWidth, contourColor,
                 xlim,ylim,clim,cmap,colorbar,
                 allowNaN=allowNaN)

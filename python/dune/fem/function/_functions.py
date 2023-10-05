@@ -41,6 +41,12 @@ def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, v
     if name is None:
         name = "_tmp"
 
+    try:
+        if expr.gf is not None:
+            return expr
+    except AttributeError:
+        pass
+
     if isinstance(expr, Expr): # use the old uflFunction
         return _uflFunction(gridView=gridView,name=name,order=order,ufl=expr)
     elif isinstance(expr,str): # this is a cppFunction

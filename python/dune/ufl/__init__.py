@@ -541,7 +541,9 @@ class CoordWrapper:
         self.glb = e.geometry.toGlobal(x)
     def __getitem__(self,i): return self.glb[i]
 
+from dune.fem.deprecated import deprecated
 def expression2GF(grid,expression,order,name=None):
+    deprecated("dune.ufl.expression2GF is deprecated use ``dune.fem.function.gridFunction`` instead.")
     try:
         if expression.gf is not None:
             return expression.gf
