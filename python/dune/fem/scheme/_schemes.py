@@ -5,6 +5,7 @@ import logging
 import warnings
 
 from ufl.equation import Equation
+from ufl import dx as ufl_dx
 
 from dune.generator import Constructor, Method
 from dune.common.utility import isString
@@ -296,7 +297,7 @@ def molGalerkin(integrands, space=None, solver=None, parameters={},
                      parameters=parameters, errorMeasure=errorMeasure,
                      virtualize=virtualize, _schemeName='MethodOfLinesScheme', **kwargs)
 
-def massLumpingGalerkin(integrands, mass=None, space=None, solver=None, parameters={},
+def massLumpingGalerkin(integrands, space=None, solver=None, parameters={},
                         errorMeasure=None, virtualize=None, **kwargs):
     """
     Parameters:
@@ -317,16 +318,6 @@ def massLumpingGalerkin(integrands, mass=None, space=None, solver=None, paramete
                      re-compilation. (default: True)
     """
 
-    # if no mass was given simply return Galerkin operator
-    if mass is None:
-        return galerkin(integrands, space=space, solver=solver,
-                        parameters=parameters,
-                        errorMeasure=errorMeasure,
-                        virtualize=virtualize)
-
-    massIntegrands = mass
-    _schemeName = "MassLumpingScheme"
-
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -338,6 +329,39 @@ def massLumpingGalerkin(integrands, mass=None, space=None, solver=None, paramete
     if isinstance(integrands, (list, tuple)):
         integrandsParam = integrands[1:]
         integrands = integrands[0]
+
+    mass = None
+    other = None
+    if isinstance(integrands,Equation):
+        # move entire equation to lhs to have a consistent representation
+        form = integrands.lhs - integrands.rhs
+        s = set( [ tuple(i.metadata().items()) for i in form.integrals() ] )
+        formVec = {}
+        lumped = ("quadrature_type", "lumped")
+        for i in form.integrals():
+            formVec[tuple(i.metadata().items())] = formVec.get(tuple(i.metadata()),0) + i.integrand()
+        for dx in s:
+            if len(dx) > 0 and dx[0] == (lumped):
+                mass = formVec[dx]*ufl_dx(metadata=dict(dx))
+            else:
+                if other is None:
+                    other = formVec[dx]*ufl_dx(metadata=dict(dx))
+                else:
+                    other += formVec[dx]*ufl_dx(metadata=dict(dx))
+
+    # if no mass was given simply return Galerkin operator
+    if mass is None:
+        print("Using Galerkin scheme")
+        return galerkin(integrands, space=space, solver=solver,
+                        parameters=parameters,
+                        errorMeasure=errorMeasure,
+                        virtualize=virtualize)
+    else:
+        mass = mass == 0
+        integrands = other == 0
+
+    massIntegrands = mass
+    _schemeName = "MassLumpingScheme"
 
     if isinstance(integrands,Equation):
         if space is None:
