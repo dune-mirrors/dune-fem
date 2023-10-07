@@ -453,7 +453,7 @@ class ModelClass():
         self._constantNames  = ['constant' + str(i) if n is None else n for i, n in enumerate(self._constantNames)]
         if len(self._constantNames) != len(self._constants):
             raise ValueError("Length of constantNames must match length of constants")
-        invalidConstants = [n for n in self._constantNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
+        invalidConstants = [n for n in self._constantNames if n is not None and re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
         if invalidConstants:
             raise ValueError('Constant names are not valid C++ identifiers:' + ', '.join(invalidConstants) + '.')
         self._constantValues = [ None if not hasattr(c,"value") else c.value for c in self.constantList ]
@@ -462,7 +462,7 @@ class ModelClass():
         self._coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(self._coefficientNames)]
         if len(self._coefficientNames) != len(self._coefficients):
             raise ValueError("Length of coefficientNames must match length of coefficients")
-        invalidCoefficients = [n for n in self._coefficientNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
+        invalidCoefficients = [n for n in self._coefficientNames if n is not None and re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
         if invalidCoefficients:
             raise ValueError('Coefficient names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
 

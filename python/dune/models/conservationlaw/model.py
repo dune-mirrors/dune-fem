@@ -88,7 +88,7 @@ class ConservationLawModel:
         return idx
 
     def cppIdentifier(self,name,base,idx):
-        if re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', name) is None:
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name) is None:
             return base+str(idx)
         else:
             return name

@@ -110,8 +110,8 @@ def generateCode(predefined, tensor, tempVars=True):
 def toFileName(value):
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
-    value = unicode(re.sub('[-\s]+', '-', value))
+    value = unicode(re.sub(r'[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub(r'[-\s]+', '-', value))
     return value
 
 def compileUFL(form, patch, *args, **kwargs):
