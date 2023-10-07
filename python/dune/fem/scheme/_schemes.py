@@ -326,7 +326,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         formVec = {}
         lumped = ("quadrature_rule", "lumped")
         for i in form.integrals():
-            formVec[tuple(i.metadata().items())] = formVec.get(tuple(i.metadata()),[]) + [i]
+            formVec[tuple(i.metadata().items())] = formVec.get(tuple(i.metadata().items()),[]) + [i]
 
         for dx in s:
             if len(dx) > 0 and dx[0] == (lumped):
