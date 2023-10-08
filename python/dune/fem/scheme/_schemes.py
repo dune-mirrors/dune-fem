@@ -177,7 +177,6 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
         virtualize   If True, integrands will be virtualized to avoid
                      re-compilation. (default: True)
     """
-
     assert massIntegrands is not None, "Missing mass term for massLumpingGalerkin"
     _schemeName = "MassLumpingScheme"
 
@@ -263,6 +262,10 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, massIntegrands, parameters)
     scheme.model = integrands
     scheme.massModel = massIntegrands
+
+    scheme.parameters = parameters
+    scheme.__class__.linear = _schemeLinear
+
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
 
@@ -329,8 +332,11 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
             formVec[tuple(i.metadata().items())] = formVec.get(tuple(i.metadata().items()),[]) + [i]
 
         for dx in s:
-            if len(dx) > 0 and dx[0] == (lumped):
-                mass = Form(formVec[dx])
+            if len(dx) > 0:
+                if dx[0] == (lumped):
+                    mass = Form(formVec[dx])
+                else:
+                    raise ValueError("currently only quadrature_rule implemented is 'lumped'")
             else:
                 other += formVec[dx]
         other = Form(other)
@@ -426,7 +432,6 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
 
-    from dune.fem.operator import _linear
     scheme.parameters = parameters
     scheme.__class__.linear = _schemeLinear
 
