@@ -186,6 +186,12 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
                 space = integrands.lhs.arguments()[0].ufl_function_space()
             except AttributeError:
                 raise ValueError("no space provided and could not deduce from form provided")
+            except IndexError:
+                from dune.ufl import Constant
+                from ufl import TrialFunction, TestFunction, dx, inner
+                # the following is a hack to avoid issues with a missing 'normal' integrand
+                space = massIntegrands.lhs.arguments()[0].ufl_function_space()
+                integrands = Constant(0)*inner( TrialFunction(space), TestFunction(space) ) * dx == 0
         else:
             try:
                 eqSpace = integrands.lhs.arguments()[0].ufl_function_space()
