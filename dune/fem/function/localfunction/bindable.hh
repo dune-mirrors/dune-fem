@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 
+#include <optional>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/common/coordinate.hh>

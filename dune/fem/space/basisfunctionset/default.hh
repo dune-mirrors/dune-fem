@@ -7,6 +7,7 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <optional>
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
