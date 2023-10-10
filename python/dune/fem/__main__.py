@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import subprocess, os
 
-docHash = "master"
+_docHash = "master"
 
 parser = ArgumentParser(description='Execute DUNE-FEM commands', prog='dune.fem')
 subparsers = parser.add_subparsers(dest='command')
@@ -32,8 +32,9 @@ else: # download tutorial
     TMPNAME=`mktemp -d ./tmptutorial.XXXXXX`
 
     # clone repo without history
-    git clone --quiet --depth 1 -b {docHash} https://gitlab.dune-project.org/dune-fem/dune-fempy.git $TMPNAME
+    git clone --quiet https://gitlab.dune-project.org/dune-fem/dune-fempy.git $TMPNAME
     cd $TMPNAME
+    git checkout --quiet {_docHash}
 
     cp doc/*.py doc/*.ipynb doc/*.hh doc/*.dgf doc/*.msh ..
     cd ../
