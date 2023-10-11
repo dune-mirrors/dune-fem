@@ -4,9 +4,10 @@ from ufl import FiniteElementBase, FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
-from ufl import action, derivative, as_vector
+from ufl import action, derivative, as_vector, replace
 from ufl.classes import Indexed
 from ufl.core.multiindex import FixedIndex, MultiIndex
+from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
@@ -235,6 +236,12 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     integrals = splitForm(form, [phi], boundaryId)
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
+    args, coeffs = extract_arguments_and_coefficients(dform)
+    integrands.nonlinear = ubar in coeffs
+    # this does not work - ufl doesn't simplify the form (dform-dual)
+    # correctly to figure out that the form is zero
+    # dual = replace(dform,{args[0]:args[1],args[1]:args[0]})
+    # integrands.symmetric = (dform-dual).empty()
     linearizedIntegrals = splitForm(dform, [phi, u], boundaryId)
 
     if not set(integrals.keys()) <= {'cell', 'exterior_facet', 'interior_facet'}:

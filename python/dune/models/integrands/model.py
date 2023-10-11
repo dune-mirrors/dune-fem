@@ -49,6 +49,8 @@ class Integrands(codegen.ModelClass):
         self.linearizedBoundary = None
         self.skeleton = None
         self.linearizedSkeleton = None
+        self.nonlinear = False
+        self.symmetric = False
 
         # Added for dirichlet treatment (same as conservationlaw model)
         self.hasDirichletBoundary = False
@@ -69,6 +71,9 @@ class Integrands(codegen.ModelClass):
     def methods(self,code):
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))
         code.append(TypeAlias("RangeValueType", self.rangeValueTuple))
+        code.append(Declaration(Variable("bool", "nonLinear"),
+                        initializer=self.nonlinear,
+                        static=True, constexpr=True))
 
         if self.interior is not None:
             code.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))
