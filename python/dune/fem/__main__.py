@@ -1,7 +1,13 @@
 from argparse import ArgumentParser
 import subprocess, os
 
-_docHash = "master"
+# note: the github actions will insert a
+# __pypi_dochash__ on top of this file
+try:
+    _docHash = __pypi_dochash__
+except NameError:
+    # fallback for default
+    _docHash = "master"
 
 parser = ArgumentParser(description='Execute DUNE-FEM commands', prog='dune.fem')
 subparsers = parser.add_subparsers(dest='command')
@@ -25,6 +31,7 @@ elif args.command == 'readerpath':
     file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "reader")
     print(file_path)
 else: # download tutorial
+    print("Downloading dune-fem tutorial examples, this will take a short time.")
     commands=f'''
     mkdir fem_tutorial
     cd fem_tutorial
