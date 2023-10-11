@@ -1,7 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 from dune.ufl import codegen
-from dune.source.cplusplus import Include, Method, TypeAlias, Variable
+from dune.source.cplusplus import Include, Method, TypeAlias, Variable, Declaration
 from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.fem import fieldTensorType
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
@@ -70,9 +70,8 @@ class Integrands(codegen.ModelClass):
     def methods(self,code):
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))
         code.append(TypeAlias("RangeValueType", self.rangeValueTuple))
-        code.append(Declaration(Variable("bool", "nonLinear"),
-                        initializer=self.nonlinear,
-                        static=True, constexpr=True))
+        code.append(Declaration(Variable("bool", "_nonLinear"), initializer=self.nonlinear, static=True, constexpr=True))
+        code.append(Method('bool', 'nonLinear', args=[], code=["return _nonLinear;"], const=True))
 
         if self.interior is not None:
             code.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))
