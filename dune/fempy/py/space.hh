@@ -163,7 +163,6 @@ namespace Dune
                                             Space::GridPartType::dimension >  LocalDomainType;
         typedef typename Space::RangeType   RangeType;
         typedef typename Space::JacobianRangeType  JacobianRangeType;
-        typedef typename Space::HessianRangeType   HessianRangeType;
         typedef typename Space::BlockMapperType    BlockMapperType;
         // this only works when GlobalKeyType is size_t or similar, which it is
         // for all implementations so far
@@ -203,6 +202,7 @@ namespace Dune
               return dPhis;
             } );
         #if 0 // the return value here is not convertible to Python so needs some export or we transform it directly to numpy
+        typedef typename Space::HessianRangeType   HessianRangeType;
         cls.def("hessianBasis", [] ( Space &spc, const EntityType &e, const LocalDomainType& xLocal)
             -> auto // std::vector< HessianRangeType >
             {

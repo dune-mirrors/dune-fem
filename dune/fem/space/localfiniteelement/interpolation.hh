@@ -5,6 +5,7 @@
 
 #include <utility>
 #include <vector>
+#include <optional>
 
 #include <dune/common/fvector.hh>
 

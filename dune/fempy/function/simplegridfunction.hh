@@ -2,6 +2,7 @@
 #define DUNE_FEMPY_FUNCTION_SIMPLEGRIDFUNCTION_HH
 
 #include <cassert>
+#include <optional>
 
 #include <limits>
 #include <type_traits>

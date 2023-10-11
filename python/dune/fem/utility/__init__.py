@@ -2,6 +2,13 @@ from __future__ import print_function
 from dune.generator import algorithm, path
 import io
 
+###################################################################
+###################################################################
+##
+## GridWidth: Convenience class to compute grid width 'h'.
+##
+###################################################################
+###################################################################
 class GridWidth:
     def __init__(self, gridView):
         self._gridView = gridView
@@ -56,7 +63,37 @@ def gridWidth( gridView ):
     """
     return GridWidth(gridView)()
 
+###################################################################
+###################################################################
+##
+## inspectBoundaryIds: Project boundary ids of a given grid view to
+##                     a piecewise constant function
+##
+###################################################################
+###################################################################
+def inspectBoundaryIds( gridView ):
+    code = """
+#include <dune/fem/misc/boundaryidprovider.hh>
 
+template <class DF>
+void inspectBoundary( DF& df )
+{
+  Dune::Fem::projectBoundaryIds( df );
+}
+"""
+    from dune.fem.space import finiteVolume
+    space = finiteVolume( gridView )
+    bndIds = space.interpolate([0], name="bndId" )
+    algorithm.run("inspectBoundary", io.StringIO(code), bndIds )
+    return bndIds
+
+###################################################################
+###################################################################
+##
+## Sampler: Line, Point, and Boundary sample.
+##
+###################################################################
+###################################################################
 class Sampler:
     def __init__(self, gridFunction ):
         self.gridFunction = gridFunction

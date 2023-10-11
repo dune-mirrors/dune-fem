@@ -13,7 +13,9 @@
 #include <dune/polygongrid/declaration.hh>
 #endif // #if HAVE_DUNE_POLYGONGRID
 
+#include <dune/common/exceptions.hh>
 #include <dune/fem/misc/griddeclaration.hh>
+#include <dune/fem/function/common/localcontribution.hh>
 
 namespace Dune
 {
@@ -338,6 +340,38 @@ namespace Dune
     {
       return Dune::Fem::BoundaryIdProvider< typename GridView::Grid > ::
              boundaryId( intersection );
+    }
+
+
+    /* \brief BoundaryId inspection: project boundary ids to piecewise constant
+              function. Elements with more than one boundary segment will
+              contain the sum of all boundary ids.
+    */
+    template <class DiscreteFunction>
+    void projectBoundaryIds( DiscreteFunction& df )
+    {
+      if( df.space().order() != 0 ) // should be piecewise constant, and FV space
+      {
+        DUNE_THROW(InvalidStateException,"projectBoundaryIds: expect piecewise constant discrete function");
+      }
+
+      df.clear(); // reset all dofs
+
+      const auto& gridPart = df.space().gridPart();
+
+      typedef AddLocalContribution< DiscreteFunction > AddLocalContributionType;
+      AddLocalContributionType localDf( df );
+      for( const auto& element : df.space() )
+      {
+        auto guard = bindGuard( localDf, element );
+        for( const auto& intersection : intersections( gridPart, element ) )
+        {
+          if( intersection.boundary() )
+          {
+            localDf[ 0 ] += boundaryId( gridPart, intersection );
+          }
+        }
+      }
     }
 
   } // namespace Fem

@@ -5,6 +5,7 @@ import logging
 import warnings
 
 from ufl.equation import Equation
+from ufl import dx as ufl_dx, Form
 
 from dune.generator import Constructor, Method
 from dune.common.utility import isString
@@ -156,9 +157,138 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
 
+def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, space=None, solver=None, parameters={},
+                         errorMeasure=None, virtualize=None, **kwargs):
+    """
+    Parameters:
+
+        integrands     Model of the weak form of the PDEs solved by Galerkin scheme
+        massIntegrands Model of the mass terms to be lumped
+        space        Discrete function space
+        solver       String (e.g. 'gmres', 'bicgstab', 'cg'...) or tuple
+                     containing backend and solver name,
+                     e.g. ('petsc', 'gmres') or ('istl', 'bicgstab') or
+                     ('suitesparse', 'umfpack'). See documentation for complete
+                     list.
+        parameters   dictionary with parameters passed to the nonlinear and linear solvers
+        errorMeasure Overloading the nonlinear solver stopping criterion,
+                     i.e. a function `f( w, dw, float )` where w and dw are discrete functions returning a bool whether the
+                     solver has converged or not.
+        virtualize   If True, integrands will be virtualized to avoid
+                     re-compilation. (default: True)
+    """
+    assert massIntegrands is not None, "Missing mass term for massLumpingGalerkin"
+    _schemeName = "MassLumpingScheme"
+
+    if isinstance(integrands,Equation):
+        if space is None:
+            try:
+                space = integrands.lhs.arguments()[0].ufl_function_space()
+            except AttributeError:
+                raise ValueError("no space provided and could not deduce from form provided")
+            except IndexError:
+                from dune.ufl import Constant
+                from ufl import TrialFunction, TestFunction, dx, inner
+                # the following is a hack to avoid issues with a missing 'normal' integrand
+                space = massIntegrands.lhs.arguments()[0].ufl_function_space()
+                integrands = Constant(0)*inner( TrialFunction(space), TestFunction(space) ) * dx == 0
+        else:
+            try:
+                eqSpace = integrands.lhs.arguments()[0].ufl_function_space()
+                if not eqSpace.dimRange == space.dimRange:
+                    raise ValueError("""range of space used for arguments in equation
+                    and the range of space passed to the scheme have to match -
+                    space argument to scheme can be 'None'""")
+            except AttributeError:
+                pass
+        from dune.fem.model._models import integrands as makeIntegrands
+        if integrandsParam:
+            integrands = makeIntegrands(space.gridView,integrands,*integrandsParam)
+        else:
+            integrands = makeIntegrands(space.gridView,integrands)
+    else:
+        try:
+            if not integrands.cppTypeName.startswith("Integrands"):
+                raise ValueError("integrands parameter is not a ufl equation of a integrands model instance")
+        except AttributeError:
+            raise ValueError("first argument should be a ufl equation (not only a form) or an 'integrands' model")
+    if not hasattr(space,"interpolate"):
+        raise ValueError("wrong space given")
+
+    if isinstance(massIntegrands, Equation):
+        from dune.fem.model._models import integrands as makeIntegrands
+        massIntegrands = makeIntegrands(space.gridView, massIntegrands)
+
+    from . import module
+
+    storageStr, dfIncludes, dfTypeName, _, _, _ = space.storage
+
+    # get storage of solver, it could differ from storage of space
+    solverStorage, solver = getSolverStorage(space, solver)
+
+    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
+    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, defaultSolver)
+
+    # check if parameters have an option preconditioning and if this is a callable
+    preconditioning = None
+    precondkey = 'newton.linear.preconditioning.method'
+    if precondkey in parameters:
+        # if preconditioning is callable then store as preconditioning
+        # and remove from parameters
+        if callable(parameters[ precondkey ]):
+            # store as preconditioning object and remove from dict
+            preconditioning = parameters[ precondkey ]
+            parameters.pop( precondkey )
+
+    assert integrands.virtualized and massIntegrands.virtualized, "MassLumping only works with virtualized integrands!"
+    virtualize = True
+
+    includes = [] # integrands.cppIncludes
+    includes += space.cppIncludes + dfIncludes + solverIncludes
+    includes += ["dune/fempy/parameter.hh"]
+    # molgalerkin includes galerkin.hh so it works for both
+    includes += ["dune/fem/schemes/masslumping.hh","dune/fem/schemes/dirichletwrapper.hh"]
+
+    spaceType = space.cppTypeName
+    valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'
+    if virtualize:
+        integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
+        massIntegrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + massIntegrands._domainValueType + ", " + massIntegrands._rangeValueType+ ' >'
+    else:
+        includes += integrands.cppIncludes
+        includes += massIntegrands.cppIncludes
+        integrandsType = integrands.cppTypeName
+        massIntegrandsType = massIntegrands.cppTypeName
+
+    useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
+    typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' + massIntegrandsType + ', ' +\
+            linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
+
+    parameters.update(param)
+    scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, massIntegrands, parameters)
+    scheme.model = integrands
+    scheme.massModel = massIntegrands
+
+    scheme.parameters = parameters
+    scheme.__class__.linear = _schemeLinear
+
+    if not errorMeasure is None:
+        scheme.setErrorMeasure( errorMeasure );
+
+    # if preconditioning was passed as callable then store in scheme, otherwise None is stored
+    scheme.preconditioning = preconditioning
+
+    try:
+        from dune.fem import parameter
+        logTag = parameters["logging"]
+        scheme.parameterLog = lambda: parameter.log()[logTag]
+    except KeyError:
+        pass
+
+    return scheme
 
 def _galerkin(integrands, space=None, solver=None, parameters={},
-              errorMeasure=None, virtualize=None, _schemeName=None ):
+              errorMeasure=None, virtualize=None, _schemeName=None, **kwargs ):
     """
     Parameters:
 
@@ -190,6 +320,45 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     if isinstance(integrands, (list, tuple)):
         integrandsParam = integrands[1:]
         integrands = integrands[0]
+
+    ################################################################
+    ##
+    ## Scan metadata of integrands to detect which scheme to use
+    ##
+    ################################################################
+    mass = None
+    other = []
+    if isinstance(integrands,Equation):
+        # move entire equation to lhs to have a consistent representation
+        form = integrands.lhs - integrands.rhs
+        s = set( [ tuple(i.metadata().items()) for i in form.integrals() ] )
+        formVec = {}
+        lumped = ("quadrature_rule", "lumped")
+        for i in form.integrals():
+            formVec[tuple(i.metadata().items())] = formVec.get(tuple(i.metadata().items()),[]) + [i]
+
+        for dx in s:
+            if len(dx) > 0:
+                if dx[0] == (lumped):
+                    mass = Form(formVec[dx])
+                else:
+                    raise ValueError("currently only quadrature_rule implemented is 'lumped'")
+            else:
+                other += formVec[dx]
+        other = Form(other)
+
+    # if mass was given use _massLumpingGalerkin else continue
+    if mass is not None:
+        mass = mass == 0
+        integrands = other == 0
+        return _massLumpingGalerkin(integrands, integrandsParam=integrandsParam,
+                                    massIntegrands=mass, space=space, solver=solver,
+                                    parameters=parameters,
+                                    errorMeasure=errorMeasure,
+                                    virtualize=virtualize)
+
+    ## GalerkinOperator with one integrand
+
     if isinstance(integrands,Equation):
         if space is None:
             try:
@@ -269,7 +438,6 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
 
-    from dune.fem.operator import _linear
     scheme.parameters = parameters
     scheme.__class__.linear = _schemeLinear
 
@@ -283,18 +451,18 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     return scheme
 
 def galerkin(integrands, space=None, solver=None, parameters={},
-             errorMeasure=None, virtualize=None):
+             errorMeasure=None, virtualize=None, **kwargs):
     galerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, _schemeName='GalerkinScheme')
+                     virtualize=virtualize, _schemeName='GalerkinScheme', **kwargs)
 
 def molGalerkin(integrands, space=None, solver=None, parameters={},
-                errorMeasure=None, virtualize=None):
+                errorMeasure=None, virtualize=None, **kwargs):
     molGalerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,
-                     virtualize=virtualize, _schemeName='MethodOfLinesScheme')
+                     virtualize=virtualize, _schemeName='MethodOfLinesScheme', **kwargs)
 
 
 def h1(model, space=None, solver=None, parameters={}):

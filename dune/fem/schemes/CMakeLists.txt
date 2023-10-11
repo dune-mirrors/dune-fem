@@ -10,6 +10,7 @@ set(HEADERS
   galerkin.hh
   integrands.hh
   linearized.hh
+  masslumping.hh
   molgalerkin.hh
 )
 
