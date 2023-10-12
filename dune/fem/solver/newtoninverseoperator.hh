@@ -574,7 +574,10 @@ namespace Dune
 
       const bool newtonVerbose = verbose();
       if( newtonVerbose )
+      {
+        std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
         std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
+      }
       while( true )
       {
         if( newtonVerbose )
