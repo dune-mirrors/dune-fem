@@ -185,21 +185,31 @@ namespace Dune
         typedef int NonBlockingExchange;
 #endif
 
-        // create an unique tag for the communication
+      protected:
+        static const int initialTagCounter = 665 ;
+
+        // create an unique tag variable for the communication
+        // use int16_t to only allow ranges from 0 to 32768 (MPI specification)
+        DUNE_EXPORT static int16_t& getMTagRef()
+        {
+          static int16_t tagCounter = initialTagCounter ;
+          return tagCounter;
+        }
+
+        // create an unique tag int for the communication
         DUNE_EXPORT static int getMessageTag()
         {
-          enum { initial = 665 };
-          static int tagCounter = initial ;
+          int16_t& tagCounter = getMTagRef() ;
+          // increase counter
           ++ tagCounter;
-          int messageTag = tagCounter ;
 
-          // avoid overflow
-          if( messageTag < 0 )
+          // avoid overflow (valid values from 0 to 32768 (MPI specification))
+          if( tagCounter < 0 )
           {
-            messageTag = initial ;
-            tagCounter = initial ;
+            tagCounter = initialTagCounter ;
           }
-          return messageTag;
+
+          return int(tagCounter);
         }
 
       public:
