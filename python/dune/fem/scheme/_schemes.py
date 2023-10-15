@@ -10,7 +10,7 @@ from ufl import dx as ufl_dx, Form
 from dune.generator import Constructor, Method
 from dune.common.utility import isString
 
-from dune.fem.operator import _linear
+from dune.fem.operator import _linear, _opDirichletIndices
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +271,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
 
     scheme.parameters = parameters
     scheme.__class__.linear = _schemeLinear
+    scheme.__class__.dirichletIndices = _opDirichletIndices
 
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
@@ -440,6 +441,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     scheme.parameters = parameters
     scheme.__class__.linear = _schemeLinear
+    scheme.__class__.dirichletIndices = _opDirichletIndices
 
     try:
         from dune.fem import parameter
