@@ -65,6 +65,13 @@ def _opLinear(self, assemble=True, parameters=None):
     if assemble:
         self.jacobian(self.domainSpace.zero, A)
     return A
+def _opDirichletIndices(self, id=None):
+    if id is None:
+        return [i*len(block)+j for i,block in enumerate(self.dirichletBlocks)
+                               for j,b in enumerate(block) if b>0]
+    else:
+        return [i*len(block)+j for i,block in enumerate(self.dirichletBlocks)
+                               for j,b in enumerate(block) if b==id]
 
 def _galerkin(integrands, domainSpace=None, rangeSpace=None,
               virtualize=None, communicate=True,
@@ -171,6 +178,7 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
     op.__class__.linear = _opLinear
+    op.__class__.dirichletIndices = _opDirichletIndices
     # apply communicate flag
     op.setCommunicate( communicate )
     return op
