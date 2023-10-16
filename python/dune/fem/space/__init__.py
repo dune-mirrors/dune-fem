@@ -64,44 +64,10 @@ def project(space, func, name=None, **kwargs):
     return df
 
 def dfInterpolate(self, f):
-    if isinstance(f, list) or isinstance(f, tuple):
-        if isinstance(f[0], ufl.core.expr.Expr):
-            f = ufl.as_vector(f)
-    dimExpr = 0
-    if isinstance(f, GridFunction):
-        func = f.gf
-        dimExpr = func.dimRange
-    elif isinstance(f, ufl.core.expr.Expr):
-        func = function.gridFunction(f,gridView=self.space.gridView,order=self.space.order).as_ufl()
-        if func.ufl_shape == ():
-            dimExpr = 1
-        else:
-            dimExpr = func.ufl_shape[0]
-    else:
-        try:
-            gl = len(inspect.getfullargspec(f)[0])
-            func = None
-        except TypeError:
-            func = f
-            if isinstance(func,int) or isinstance(func,float):
-                dimExpr = 1
-            else:
-                dimExpr = len(func)
-        if func is None:
-            if gl == 1:   # global function
-                func = function.globalFunction(self.space.gridView, "tmp", self.space.order, f).gf
-            elif gl == 2: # local function
-                func = function.localFunction(self.space.gridView, "tmp", self.space.order, f).gf
-            elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.gridView, "tmp", self.space.order, lambda en,x: f(en,x)).gf
-            dimExpr = func.dimRange
-
-    if dimExpr == 0:
-        raise AttributeError("can not determine if expression shape"\
-                " fits the space's range dimension")
-    elif dimExpr != self.space.dimRange:
+    func = function.gridFunction(f, gridView=self.space.gridView, order=self.space.order).gf
+    if func.dimRange != self.space.dimRange:
         raise AttributeError("trying to interpolate an expression"\
-            " of size "+str(dimExpr)+" into a space with range dimension = "\
+            " of size "+str(func.dimRange)+" into a space with range dimension = "\
             + str(self.space.dimRange))
 
     try:
@@ -113,45 +79,18 @@ def dfInterpolate(self, f):
     return self._interpolate(func)
 
 def dfProject(self, f):
-    if isinstance(f, list) or isinstance(f, tuple):
-        if isinstance(f[0], ufl.core.expr.Expr):
-            f = ufl.as_vector(f)
-    dimExpr = 0
-    if isinstance(f, GridFunction):
-        func = f.gf
-        dimExpr = func.dimRange
-    elif isinstance(f, ufl.core.expr.Expr):
-        func = function.gridFunction(f,gridView=self.space.gridView,order=self.space.order).as_ufl()
-        if func.ufl_shape == ():
-            dimExpr = 1
-        else:
-            dimExpr = func.ufl_shape[0]
-    else:
-        try:
-            gl = len(inspect.getfullargspec(f)[0])
-            func = None
-        except TypeError:
-            func = f
-            if isinstance(func,int) or isinstance(func,float):
-                dimExpr = 1
-            else:
-                dimExpr = len(func)
-        if func is None:
-            if gl == 1:   # global function
-                func = function.globalFunction(self.space.gridView, "tmp", self.space.order, f).gf
-            elif gl == 2: # local function
-                func = function.localFunction(self.space.gridView, "tmp", self.space.order, f).gf
-            elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-                func = function.localFunction(self.space.gridView, "tmp", self.space.order, lambda en,x: f(en,x)).gf
-            dimExpr = func.dimRange
-
-    if dimExpr == 0:
-        raise AttributeError("can not determine if expression shape"\
-                " fits the space's range dimension")
-    elif dimExpr != self.space.dimRange:
+    func = function.gridFunction(f, gridView=self.space.gridView, order=self.space.order).gf
+    if func.dimRange != self.space.dimRange:
         raise AttributeError("trying to interpolate an expression"\
-            " of size "+str(dimExpr)+" into a space with range dimension = "\
+            " of size "+str(func.dimRange)+" into a space with range dimension = "\
             + str(self.space.dimRange))
+
+    try:
+        # API GridView: assert func.gridView == self.gridView, "can only interpolate with same grid views"
+        assert func.gridView == self.gridView, "can only interpolate with same grid views"
+        assert func.dimRange == self.dimRange, "range dimension mismatch"
+    except AttributeError:
+        pass
     return self._project(func)
 
 def dfAssign(self, other):

@@ -6,10 +6,12 @@ from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
 
 from dune.fem.deprecated import deprecated
+
 from ufl.core.expr import Expr
-from dune.fem.function import gridFunction
-from dune.plotting import block, disable
 from ufl import as_vector
+from dune.fem.function import gridFunction
+
+from dune.plotting import block, disable
 from dune.grid import Partitions
 globalBlock = block
 
@@ -179,6 +181,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         block=globalBlock,
         logscale=False, ticks=11,
         *,
+        figsize=None,
         gridView=None, partition=Partitions.all):
     if disable: return
     if grid is not None:
@@ -188,12 +191,9 @@ def plotPointData(solution, figure=None, linewidth=0.1,
     try:
         gridView = solution.gridView
     except AttributeError:
-        if isinstance(solution, list) or isinstance(solution,tuple):
-            solution = as_vector(solution)
-        if isinstance(solution, Expr):
-            assert gridView, "need to provide a named gridView argument to plot a ufl expression directly"
+        try:
             solution = gridFunction(solution, gridView=gridView, order=1)
-        else:
+        except AttributeError:
             gridView = solution
             solution = None
     if not gridView.dimWorld == 2 and solution is None:
@@ -201,7 +201,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         return
 
     if figure is None:
-        figure = pyplot.figure()
+        figure = pyplot.figure(figsize=figsize)
         newFig = True
     else:
         try:

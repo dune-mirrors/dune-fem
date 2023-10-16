@@ -93,10 +93,11 @@ registry["scheme"] = {
          "linearized" : scheme.linearized
      }
 registry["function"] = {
-         "global"     : function.globalFunction,
-         "local"      : function.localFunction,
-         "cpp"        : function.cppFunction,
+         # "global"     : function.globalFunction,
+         # "local"      : function.localFunction,
+         # "cpp"        : function.cppFunction,
          # "ufl"        : function.uflFunction,
+         "gridFunction" : function.gridFunction,
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
