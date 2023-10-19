@@ -41,7 +41,9 @@ def compute(comm,useAdapt,gridType,
             name, dirichlet, dg, storage,
             useCombined=False,
             internal=True, external=(petsc4py is not None),
+            verbose=True,
             showPlot=False, ignore=False):
+    Print = lambda *args,**kwargs: []
     iterations = []
     failure = False
     testName = ("adapt" if useAdapt else "" ) + f"{gridType}-{name}"
@@ -49,7 +51,7 @@ def compute(comm,useAdapt,gridType,
     # outFile = io.StringIO()
     outFile = sys.stdout
 
-    if gridType == "conf" and dg: return               # this can not work due to missing ghosts
+    if gridType == "conf" and dg: return [],[]               # this can not work due to missing ghosts
 
     Print(comm,"--------------------------", file=outFile)
     Print(comm,f"Running: {testName}", file=outFile)
@@ -176,7 +178,10 @@ def compute(comm,useAdapt,gridType,
         except:
             info = {'converged':False}
     else:
+        assert False
+        sys.exit(0)
         Print(comm,"internal not tested", file=outFile)
+        Print(comm,"===================", file=outFile)
         error1 = 0
         info = {'converged':True, "iterations":1}
     if external and storage == "petsc":
@@ -224,6 +229,7 @@ def compute(comm,useAdapt,gridType,
     else:
         petscIter = None
         Print(comm,"external not tested", file=outFile)
+        assert False
 
     if external and internal and storage == "petsc":
         if showPlot: plot(uh1-uh2, grid=gridView)
@@ -327,7 +333,7 @@ def runTest(count=None):
             for e in ex:
                 for g in gridGroup:
                     executor.submit(compute, comm, gridType=g, useAdapt=useAdapt, **e,
-                                    internal=False, external=False)
+                                    internal=False, external=False,verbose=False)
 
     # now the actual computation
     iterations = []
