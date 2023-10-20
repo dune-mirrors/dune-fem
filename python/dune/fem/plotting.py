@@ -6,10 +6,12 @@ from matplotlib.collections import PolyCollection
 from matplotlib.colors import LogNorm
 
 from dune.fem.deprecated import deprecated
+
 from ufl.core.expr import Expr
-from dune.fem.function import gridFunction
-from dune.plotting import block, disable
 from ufl import as_vector
+from dune.fem.function import gridFunction
+
+from dune.plotting import block, disable
 from dune.grid import Partitions
 globalBlock = block
 
@@ -32,7 +34,8 @@ def triangulationOfNetwork(grid, level=0, linewidth=0.01):
         x[t[i][0]], x[t[i][1]] = xs[0] - d, xs[1] - d
     return Triangulation(x[:,0], x[:,1], t)
 
-def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.2, vectors=None,
+def _plotPointData(fig, grid, solution, level=0, gridLines="black",
+        linewidth=0.2, vectors=None,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
         triplot=False, logscale=False, ticks=11, allowNaN=False,
@@ -124,8 +127,8 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
 
             r = maxData-minData
             # avoid some weird 'white' patches when value hits min/max
-            minData -= r*0.01
-            maxData += r*0.01
+            minData -= r*1e-8
+            maxData += r*1e-8
             if clim == None:
                 clim = [minData, maxData]
             # having extend not 'both' does not seem to work (needs fixing)...
@@ -170,7 +173,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black", linewidth=0.
                     colors=contourColor, linewidths=contourWidth)
 
 
-def plotPointData(solution, figure=None, linewidth=0.1,
+def plotPointData(solution, figure=None, linewidth=0.2,
         level=0, gridLines="black", vectors=False,
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None,
@@ -179,6 +182,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         block=globalBlock,
         logscale=False, ticks=11,
         *,
+        figsize=None,
         gridView=None, partition=Partitions.all):
     if disable: return
     if grid is not None:
@@ -188,12 +192,9 @@ def plotPointData(solution, figure=None, linewidth=0.1,
     try:
         gridView = solution.gridView
     except AttributeError:
-        if isinstance(solution, list) or isinstance(solution,tuple):
-            solution = as_vector(solution)
-        if isinstance(solution, Expr):
-            assert gridView, "need to provide a named gridView argument to plot a ufl expression directly"
+        try:
             solution = gridFunction(solution, gridView=gridView, order=1)
-        else:
+        except AttributeError:
             gridView = solution
             solution = None
     if not gridView.dimWorld == 2 and solution is None:
@@ -201,7 +202,7 @@ def plotPointData(solution, figure=None, linewidth=0.1,
         return
 
     if figure is None:
-        figure = pyplot.figure()
+        figure = pyplot.figure(figsize=figsize)
         newFig = True
     else:
         try:
