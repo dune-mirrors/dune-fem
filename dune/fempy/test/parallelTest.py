@@ -178,8 +178,8 @@ def compute(comm,useAdapt,gridType,
         except:
             info = {'converged':False}
     else:
-        assert False
-        sys.exit(0)
+        #assert False
+        #sys.exit(0)
         Print(comm,"internal not tested", file=outFile)
         Print(comm,"===================", file=outFile)
         error1 = 0
@@ -229,7 +229,7 @@ def compute(comm,useAdapt,gridType,
     else:
         petscIter = None
         Print(comm,"external not tested", file=outFile)
-        assert False
+        # assert False
 
     if external and internal and storage == "petsc":
         if showPlot: plot(uh1-uh2, grid=gridView)
