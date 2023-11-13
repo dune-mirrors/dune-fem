@@ -2,6 +2,7 @@
 #define DUNE_FEM_ADAPTATIONMANAGER_HH
 
 //- system includes
+#include <type_traits>
 #include <string>
 
 //- local includes
@@ -141,6 +142,9 @@ namespace Dune
                                 callback = 2 //!< the callback mechanism from AlbertaGrid and ALUGrid is used
                               };
 
+    //! default method is generic
+    static const int defaultMethod = 1;
+
   public:
     /** \brief constructor of AdaptationMethod
        The following optional parameters are used
@@ -153,7 +157,7 @@ namespace Dune
       : adaptationMethod_(generic)
     {
       const bool output = ( Parameter :: verbose( Parameter ::parameterOutput ) && MPIManager::isMainThread() );
-      int am = 1;
+      int am = defaultMethod;
       const std::string methodNames [] = { "none", "generic", "callback" };
       am = parameter.getEnum("fem.adaptation.method", methodNames, am);
       init(am,output);
@@ -161,19 +165,32 @@ namespace Dune
   private:
     void init(int am,const bool output)
     {
-
       // chose adaptation method
       if(am == 2) adaptationMethod_ = callback;
       else if(am == 1) adaptationMethod_ = generic;
       else adaptationMethod_ = none;
 
-      // for structred grid adaptation is disabled
+      // for structured grid adaptation is disabled
       if( ! Capabilities::isLocallyAdaptive<GridType>::v )
       {
         adaptationMethod_ = none;
         if( output )
         {
-          std::cerr << "WARNING: AdaptationMethod: adaptation disabled for structured grid! \n";
+          std::cerr << "WARNING: AdaptationMethod: adaptation disabled for structured grid!"<< std::endl;
+        }
+      }
+
+      static const bool noHierarchy = std::is_same< typename GridType::LevelGridView,
+                                                    typename GridType::LeafGridView > :: value;
+      // for grids without hierarchy generic adaptation is disabled
+      // this is for example the case for P4estGrid. In this case we
+      // assume that Leaf and Level iterators (views) are the same
+      if( noHierarchy && (adaptationMethod_ == generic) )
+      {
+        adaptationMethod_ = callback;
+        if( output )
+        {
+          std::cerr << "WARNING: AdaptationMethod: hierarchy not implemented, switching from 'generic' to 'callback'!" << std::endl;
         }
       }
 

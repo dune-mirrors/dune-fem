@@ -77,24 +77,6 @@ namespace Dune
       static const bool v = false ;
     };
 
-    // implementsHierarchicy
-    // ---------------------
-
-    template< class Grid >
-    struct implementsHierarchy
-    {
-      static const bool v = true;
-    };
-
-#if HAVE_DUNE_P4ESTGRID
-    template< int dim, int dimworld, class ct >
-    struct implementsHierarchy< Dune::P4estGrid< dim, dimworld, ct > >
-    {
-      // P4estGrid does not implement HierarchicIterator and father method.
-      static const bool v = false;
-    };
-#endif
-
   } // namespace Capabilities
 
 

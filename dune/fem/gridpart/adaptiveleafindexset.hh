@@ -160,7 +160,7 @@ namespace Dune
       };
 
       template< int codim >
-      struct CountElements
+      struct CountElements // TODO: hasEntity should be replaced by hasEntityIterator here
         : public CountElementsBase< codim, Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim > :: v >
       {
       };
@@ -374,28 +374,33 @@ namespace Dune
             codimLeafSet_[ codim ].reset( new CodimIndexSetType( grid_, 1 ) );
         }
 
-        /// get geometry types (not working for hybrid grids, like to whole set itself)
         {
           // get level-0 view, this is already used in GridPtr (DFG parser)
-          typedef typename GridType :: LevelGridView MacroViewType;
-          MacroViewType macroView = grid_.levelGridView( 0 );
-          const typename MacroViewType :: IndexSet& indexSet = macroView.indexSet();
-
-          // resize vector of geometry types
-          geomTypes_.resize( dimension+1 );
-          for(int codim=0; codim <= dimension; ++codim )
-          {
-            const int size = indexSet.types( codim ).size();
-            // copy geometry types
-            geomTypes_[ codim ].resize( size );
-            std::copy_n( indexSet.types( codim ).begin(), size, geomTypes_[ codim ].begin() );
-          }
+          auto macroView = grid_.levelGridView( 0 );
+          setupGeomTypes( macroView.indexSet() );
         }
 
         // build index set
         setupIndexSet();
       }
 
+    protected:
+      template <class MacroIndexSet>
+      void setupGeomTypes(const MacroIndexSet& indexSet)
+      {
+        /// get geometry types (not working for hybrid grids, like to whole set itself)
+        // resize vector of geometry types
+        geomTypes_.resize( dimension+1 );
+        for(int codim=0; codim <= dimension; ++codim )
+        {
+          const int size = indexSet.types( codim ).size();
+          // copy geometry types
+          geomTypes_[ codim ].resize( size );
+          std::copy_n( indexSet.types( codim ).begin(), size, geomTypes_[ codim ].begin() );
+        }
+      }
+
+    public:
       //! return type of index set, for GrapeDataIO
       int type () const
       {
@@ -954,15 +959,16 @@ namespace Dune
     AdaptiveIndexSetBase< TraitsImp >
       ::checkHierarchy ( const GridElementType &entity, bool wasNew )
     {
-      bool isNew = wasNew ;
-      typedef typename GridType::HierarchicIterator HierarchicIterator;
-
       // for leaf entities, just insert the index
+      // this certainly the case for grids without hierarchy
       if( entity.isLeaf() )
       {
         insertIndex( entity );
         return;
       }
+
+      bool isNew = wasNew ;
+      typedef typename GridType::HierarchicIterator HierarchicIterator;
 
       if( isNew )
       {
@@ -1066,14 +1072,14 @@ namespace Dune
       }
 
       // get macro iterator
-      typedef typename GridType::LevelGridView LevelGridView;
-      LevelGridView macroView = grid_.levelGridView( 0 );
+      auto macroView = grid_.levelGridView( 0 );
 
-      typedef typename LevelGridView::template Codim< 0 >::template Partition< pt >::Iterator Iterator;
-      const Iterator macroend = macroView.template end< 0, pt >();
-      for( Iterator macroit = macroView.template begin< 0, pt >();
+      const auto macroend = macroView.template end< 0, pt >();
+      for( auto macroit = macroView.template begin< 0, pt >();
            macroit != macroend; ++macroit )
+      {
         checkHierarchy( *macroit, false );
+      }
     }
 
 
