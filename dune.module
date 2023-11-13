@@ -6,5 +6,5 @@ Description: A discretization module providing an implementation of mathematical
 URL: https://gitlab.dune-project.org/dune-fem/dune-fem
 Python-Requires: matplotlib scipy fenics-ufl==2022.2.0 dune-alugrid dune-istl dune-localfunctions
 Depends: dune-grid (>= 2.10) dune-alugrid (>= 2.10) dune-istl (>= 2.10) dune-localfunctions (>= 2.10)
-Suggests: dune-spgrid (>= 2.10) dune-polygongrid
+Suggests: dune-spgrid (>= 2.10) dune-polygongrid dune-p4estgrid
 Whitespace-Hook: Yes

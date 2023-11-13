@@ -43,6 +43,14 @@ namespace Dune
     };
 #endif // #if HAVE_DUNE_ALUGRID
 
+#if HAVE_DUNE_P4ESTGRID
+    template< int dim, int dimworld, class ctype >
+    struct hasHierarchicIndexSet< P4estGrid< dim, dimworld, ctype > >
+    {
+      static const bool v = true;
+    };
+#endif // #if HAVE_DUNE_ALUGRID
+
     template<>
     struct hasHierarchicIndexSet< OneDGrid >
     {
@@ -68,6 +76,24 @@ namespace Dune
       //static const bool v = hasHierarchicIndexSet< HostGrid > :: v;
       static const bool v = false ;
     };
+
+    // implementsHierarchicy
+    // ---------------------
+
+    template< class Grid >
+    struct implementsHierarchy
+    {
+      static const bool v = true;
+    };
+
+#if HAVE_DUNE_P4ESTGRID
+    template< int dim, int dimworld, class ct >
+    struct implementsHierarchy< Dune::P4estGrid< dim, dimworld, ct > >
+    {
+      // P4estGrid does not implement HierarchicIterator and father method.
+      static const bool v = false;
+    };
+#endif
 
   } // namespace Capabilities
 
@@ -121,6 +147,14 @@ namespace Dune
       };
 #endif // #if HAVE_DUNE_ALUGRID
 
+#if HAVE_DUNE_P4ESTGRID
+      template< int dim, int dimworld, class ctype >
+      struct supportsCallbackAdaptation< P4estGrid< dim, dimworld, ctype > >
+      {
+        static const bool v = true;
+      };
+#endif // #if HAVE_DUNE_ALUGRID
+
       template< int dim, int dimworld >
       struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
       {
@@ -165,6 +199,14 @@ namespace Dune
         static const bool v = true;
       };
 #endif //#f HAVE_DUNE_ALUGRID
+
+#if HAVE_DUNE_P4ESTGRID
+      template< int dim, int dimworld, class ctype >
+      struct isLocallyAdaptive< P4estGrid< dim, dimworld, ctype > >
+      {
+        static const bool v = true;
+      };
+#endif // #if HAVE_DUNE_P4ESTGRID
 
       template< int dim, int dimworld >
       struct isLocallyAdaptive< AlbertaGrid< dim, dimworld > >

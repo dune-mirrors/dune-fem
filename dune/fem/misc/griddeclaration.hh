@@ -11,6 +11,10 @@
 #include <dune/grid/spgrid/declaration.hh>
 #endif // #if HAVE_DUNE_SPGRID
 
+#if HAVE_DUNE_P4ESTGRID
+#include <dune/grid/p4estgrid/declaration.hh>
+#endif // #if HAVE_DUNE_P4ESTGRID
+
 #if HAVE_DUNE_METAGRID
 #include <dune/grid/cacheitgrid/declaration.hh>
 #include <dune/grid/cartesiangrid/declaration.hh>

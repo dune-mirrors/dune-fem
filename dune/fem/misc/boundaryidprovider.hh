@@ -5,6 +5,10 @@
 #include <dune/grid/spgrid/declaration.hh>
 #endif // #if HAVE_DUNE_SPGRID
 
+#if HAVE_DUNE_P4ESTGRID
+#include <dune/grid/p4estgrid/declaration.hh>
+#endif // #if HAVE_OPM_GRID
+
 #if HAVE_OPM_GRID
 #include <opm/grid/polyhedralgrid/declaration.hh>
 #endif // #if HAVE_OPM_GRID
@@ -262,6 +266,23 @@ namespace Dune
     struct BoundaryIdProvider< PolygonGrid< ct > >
     {
       typedef PolygonGrid< ct > GridType;
+
+      template< class Intersection >
+      static int boundaryId ( const Intersection &intersection )
+      {
+        return (intersection.boundary() ? (intersection.impl().boundaryId()) : 0);
+      }
+    };
+#endif // #if HAVE_OPM_GRID
+
+    // BoundaryIdProvider for PolygonGrid
+    // ----------------------------------
+
+#if HAVE_DUNE_P4ESTGRID
+    template< int dim, int dimworld, class ct >
+    struct BoundaryIdProvider< P4estGrid<dim, dimworld, ct > >
+    {
+      typedef P4estGrid<dim, dimworld, ct > GridType;
 
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )
