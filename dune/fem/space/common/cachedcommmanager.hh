@@ -828,6 +828,7 @@ namespace Dune
       {
         // check whether we are a sending entity
         const auto myPartitionType = entity.partitionType();
+        // see dune/grid/utility/entitycommhelper.hh
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
 
         if constexpr (isMMesh)
@@ -873,6 +874,7 @@ namespace Dune
 
           // check whether we are a sending entity
           const auto myPartitionType = entity.partitionType();
+          // see dune/grid/utility/entitycommhelper.hh
           const bool receive = EntityCommHelper< CommInterface > :: receive( myPartitionType );
 
           // insert rank of link into set of links
