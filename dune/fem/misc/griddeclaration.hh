@@ -12,8 +12,17 @@
 #endif // #if HAVE_DUNE_SPGRID
 
 #if HAVE_DUNE_P4ESTGRID
-#include <dune/grid/p4estgrid/declaration.hh>
+#include <dune/p4estgrid/declaration.hh>
 #endif // #if HAVE_DUNE_P4ESTGRID
+
+#if HAVE_OPM_GRID
+#include <opm/grid/polyhedralgrid/declaration.hh>
+#endif // #if HAVE_OPM_GRID
+
+#if HAVE_DUNE_POLYGONGRID
+#include <dune/polygongrid/declaration.hh>
+#endif // #if HAVE_DUNE_POLYGONGRID
+
 
 #if HAVE_DUNE_METAGRID
 #include <dune/grid/cacheitgrid/declaration.hh>

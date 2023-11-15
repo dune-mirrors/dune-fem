@@ -1,23 +1,8 @@
 #ifndef DUNE_FEM_MISC_BOUNDARYIDPROVIDER_HH
 #define DUNE_FEM_MISC_BOUNDARYIDPROVIDER_HH
 
-#if HAVE_DUNE_SPGRID
-#include <dune/grid/spgrid/declaration.hh>
-#endif // #if HAVE_DUNE_SPGRID
-
-#if HAVE_DUNE_P4ESTGRID
-#include <dune/grid/p4estgrid/declaration.hh>
-#endif // #if HAVE_OPM_GRID
-
-#if HAVE_OPM_GRID
-#include <opm/grid/polyhedralgrid/declaration.hh>
-#endif // #if HAVE_OPM_GRID
-
-#if HAVE_DUNE_POLYGONGRID
-#include <dune/polygongrid/declaration.hh>
-#endif // #if HAVE_DUNE_POLYGONGRID
-
 #include <dune/common/exceptions.hh>
+// includes all grid declarations known to dune-fem
 #include <dune/fem/misc/griddeclaration.hh>
 #include <dune/fem/function/common/localcontribution.hh>
 
