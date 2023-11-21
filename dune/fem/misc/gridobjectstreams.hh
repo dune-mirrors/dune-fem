@@ -71,6 +71,19 @@ namespace Dune
 #endif // #if HAVE_DUNE_ALUGRID
 
 
+    // GridObjectStreamTraits for P4estGrid
+    // ----------------------------------
+
+#if HAVE_DUNE_P4ESTGRID
+    template< int dim, int dimworld, class ctype >
+    struct GridObjectStreamTraits< P4estGrid< dim, dimworld, ctype > >
+    {
+      typedef typename P4estGrid< dim, dimworld, ctype > :: ObjectStreamType InStreamType;
+      typedef typename P4estGrid< dim, dimworld, ctype > :: ObjectStreamType OutStreamType;
+    };
+#endif // #if HAVE_DUNE_ALUGRID
+
+
 
     // GridObjectStreamTraits for CacheItGrid
     // --------------------------------------
