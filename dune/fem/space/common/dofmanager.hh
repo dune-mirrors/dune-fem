@@ -778,6 +778,9 @@ namespace Dune
       public IsDofManager,
       public LoadBalanceHandleWithReserveAndCompress,
 #endif
+#if HAVE_DUNE_P4ESTGRID
+      public P4estGridLoadBalanceHandleWithReserveAndCompress,
+#endif
       // DofManager behaves like a communication data handle for load balancing
       public CommDataHandleIF< DofManager< Grid >, char >
     {
@@ -1024,8 +1027,9 @@ namespace Dune
       }
 
       /** \brief Removes entity from all index sets added to dof manager. */
-      inline void removeEntity( ConstElementType & element )
+      inline void removeEntity( ConstElementType & element ) const
       {
+        // remove entity from index sets in removeIndices list
         removeIndices_.apply( element );
       }
 
@@ -1140,21 +1144,26 @@ namespace Dune
       size_t size( const Entity& ) const
       {
         DUNE_THROW(NotImplemented,"DofManager::size should not be called!");
-        return 0;
+        return -1;
       }
 
       //! packs all data attached to this entity
       void gather( InlineStreamType& str, ConstElementType& element ) const
       {
+        // pack all data to stream
         dataInliner_.apply(str, element);
 
         // remove entity from index sets
-        const_cast< ThisType & >( *this ).removeEntity( element );
+        //const_cast< ThisType & >( *this ).removeEntity( element );
+        removeEntity( element );
       }
 
       template <class MessageBuffer, class Entity>
       void gather( MessageBuffer& str, const Entity& entity ) const
       {
+        // if this method is called then either the message buffer is
+        // not of the correct type or an entity of higher codimension
+        // was passed along
         DUNE_THROW(NotImplemented,"DofManager::gather( entity ) with codim > 0 not implemented");
       }
 
@@ -1173,6 +1182,9 @@ namespace Dune
       template <class MessageBuffer, class Entity>
       void scatter ( MessageBuffer & str, const Entity& entity, size_t )
       {
+        // if this method is called then either the message buffer is
+        // not of the correct type or an entity of higher codimension
+        // was passed along
         DUNE_THROW(NotImplemented,"DofManager::scatter( entity ) with codim > 0 not implemented");
       }
 

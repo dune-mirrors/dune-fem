@@ -159,7 +159,7 @@ namespace Dune
         if( ! Fem :: MPIManager :: singleThreadMode() )
         {
           assert( Fem :: MPIManager :: singleThreadMode() );
-          DUNE_THROW(InvalidStateException,"LoadBalancer::loadBalance::adapt: only call in single thread mode!");
+          DUNE_THROW(InvalidStateException,"LoadBalancer::loadBalance: only call in single thread mode!");
         }
 
         // get stopwatch
@@ -170,10 +170,15 @@ namespace Dune
           // call grids load balance, only implemented in ALUGrid right now
           changed = grid_.loadBalance( dm_ );
         }
+        catch (const Exception& e)
+        {
+          std::cout << "P[" << grid_.comm().rank() << "] : Caught " << e.what() << " during LoadBalancer::loadBalance()." << std::endl;
+          std::abort();
+        }
         catch (...)
         {
-          std::cout << "P[" << grid_.comm().rank() << "] : Caught an exepction during load balance" << std::endl;
-          abort();
+          std::cout << "P[" << grid_.comm().rank() << "] : Caught a generic exception during LoadBalancer::loadBalance()." << std::endl;
+          std::abort();
         }
 
         // get time

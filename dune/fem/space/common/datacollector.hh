@@ -242,7 +242,7 @@ namespace Dune
       template <class B>
       CombinedLocalDataCollect<LocalOp,B> & operator + (const B & b)
       {
-        std::cout << "operator + of LocalInlinePlus \n";
+        //std::cout << "operator + of LocalInlinePlus \n";
         typedef CombinedLocalDataCollect<LocalOp,B> CombinedType;
         CombinedType * combo = new CombinedType ( asImp() , b );
         this->saveObjPointer( combo );
