@@ -151,16 +151,17 @@ namespace Dune
           # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)
           AdaptationMethod: 1 # default value
        \param grid Grid that adaptation method is read for
-
     */
-    AdaptationMethod ( const GridType &grid, const ParameterReader &parameter = Parameter::container() )
+    AdaptationMethod ( const GridType &grid,
+                       const ParameterReader &parameter = Parameter::container(),
+                       const bool noOutput = false )
       : adaptationMethod_(generic)
     {
-      const bool output = ( Parameter :: verbose( Parameter ::parameterOutput ) && MPIManager::isMainThread() );
+      const bool output = ( ! noOutput && Parameter :: verbose( Parameter ::parameterOutput ) && MPIManager::isMainThread() );
       int am = defaultMethod;
       const std::string methodNames [] = { "none", "generic", "callback" };
       am = parameter.getEnum("fem.adaptation.method", methodNames, am);
-      init(am,output);
+      init(am, output);
     }
   private:
     void init(int am,const bool output)
