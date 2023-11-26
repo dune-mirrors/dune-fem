@@ -694,6 +694,84 @@ def product(*spaces, **kwargs):
                         None,None,None] )
     return spc.as_ufl()
 
+def enriched(*spaces, **kwargs):
+    """create an enriched discrete function space from a tuple of discrete function spaces.
+       Use to solve a over the summation of different spaces.
+
+    Args:
+        spaces: tuple of discrete function spaces
+
+    Returns:
+        Space: the constructed enriched Space
+    """
+
+    from dune.fem.space import module
+
+    scalar = kwargs.get("scalar",False)
+    codegen = kwargs.get("codegen",True)
+
+    if not spaces:
+        raise Exception("Cannot create EnrichedDiscreteFunctionSpace from empty tuple of discrete function spaces")
+    spaces = tuple([s.__impl__ for s in spaces])
+    compositeStorage = None
+    compositeField = None
+    for space in spaces:
+        storage, _, _, _, _, _ = space.storage
+        if compositeStorage and (compositeStorage != storage):
+            raise Exception("Cannot create EnrichedDiscreteFunctionSpace with different types of storage")
+        else:
+            compositeStorage = storage
+        if compositeField and (compositeField != space.field):
+            raise Exception("Cannot create EnrichedDiscreteFunctionSpace with different field types")
+        else:
+            compositeField = space.field
+
+    includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
+    for space in spaces:
+        includes += space.cppIncludes
+    typeName = "Dune::Fem::EnrichedDiscreteFunctionSpace< " + ", ".join([space.cppTypeName for space in spaces]) + " >"
+
+    constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
+                              ['return new DuneType( spaceTuple);'],
+                              ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
+    pickler = Pickler(getterBody=
+      """
+            auto& tsp = self.cast<DuneType&>();
+            /* Return a tuple that fully encodes the state of the object */
+            pybind11::dict d;
+            if (pybind11::hasattr(self, "__dict__")) {
+              d = self.attr("__dict__");
+            }
+            return pybind11::make_tuple(tsp.spaceTuple(),d);
+      """, setterBody=
+      """
+            if (t.size() != 2)
+                throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
+            pybind11::handle pyspaceTuple = t[0];
+            auto spaceTuple = pyspaceTuple.cast<typename DuneType::DiscreteFunctionSpaceTupleType>();
+            /* Create a new C++ instance */
+            DuneType* tsp = new DuneType(spaceTuple);
+            auto py_state = t[1].cast<pybind11::dict>();
+            return std::make_pair(tsp, py_state);
+      """)
+
+    # subFunction = Method('subFunction', 'this requires exporting SubFunctionStorage first')
+    spc = module(compositeField, includes, typeName, constructor, pickler, # subFunction,
+            storage=compositeStorage,
+            scalar=scalar, codegen=codegen,
+            ctorArgs=[spaces])
+    try:
+        spc.componentNames = kwargs["components"]
+        # might be nice to add 'component' attributes to the discrete
+        # functions, e.g., for visualization. This would require exporting
+        # the `SubFunctionStorage` class first which requires a bit (not much) work
+        # but probably can't be done from the Python side.
+        # for i,c in enumerate(spc.componentNames):
+        #     setattr(spc.DiscreteFunction, "c", lambda self,i:self.subFunction(i))
+    except KeyError:
+        pass
+    return spc.as_ufl()
+
 def bdm(gridView, order=1, dimRange=None,
         field="double", storage=None, scalar=False, dimrange=None, codegen=True):
     from dune.fem.space import module

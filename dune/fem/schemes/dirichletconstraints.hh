@@ -109,6 +109,17 @@ public:
     template <class Point>
     void jacobian( const Point& x, JacobianRangeType& ret ) const
     { DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented"); }
+
+    // this will be called for enriched spaces when one of the spaces
+    // is a Discontinuous Galerkin space, the values will be set to zero since
+    // those associated with the interior are not Dirichlet dofs.
+    template <class Quadrature, class Vector>
+    void evaluateQuadrature( const Quadrature& , Vector& values ) const
+    {
+      DUNE_THROW(InvalidStateException,"BoundaryWrapper::evaluateQuadrature: should not be called, since this does not act on boundary dofs!");
+      //std::fill( values.begin(), values.end(), typename Vector::value_type(0) );
+    }
+
   };
 
   DirichletConstraints( ModelType &model, const DiscreteFunctionSpaceType& space )
