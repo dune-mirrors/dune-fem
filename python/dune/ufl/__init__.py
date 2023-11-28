@@ -92,7 +92,9 @@ class Space(ufl.FunctionSpace):
             ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), 1)
         else:
             ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), int(dimRange))
-        domain = ufl.domain.default_domain(ve.cell())
+        # default_domain is deprecated
+        # domain = ufl.domain.default_domain(ve.cell())
+        domain = ufl.domain.affine_mesh(ve.cell())
         ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
         self.field = field

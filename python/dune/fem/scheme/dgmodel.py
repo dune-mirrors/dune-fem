@@ -4,7 +4,7 @@ from dune.ufl.codegen import generateMethod
 from ufl import SpatialCoordinate, Coefficient, replace, diff, as_vector
 from ufl.core.expr import Expr
 from dune.source.cplusplus import Variable, UnformattedExpression, AccessModifier
-from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices, expand_derivatives
+from ufl.algorithms import expand_derivatives, expand_indices, expand_derivatives
 
 def codeDG(self):
     code = self._code()
@@ -18,7 +18,7 @@ def codeDG(self):
         if penalty.ufl_shape == ():
             penalty = as_vector([penalty])
         try:
-            penalty = expand_indices(expand_derivatives(expand_compounds(penalty)))
+            penalty = expand_indices(expand_derivatives(penalty))
         except:
             pass
         assert penalty.ufl_shape == u.ufl_shape

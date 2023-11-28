@@ -4,7 +4,7 @@ from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoor
 from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
-from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
+from ufl.algorithms import expand_derivatives, expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.classes import Indexed
@@ -46,7 +46,7 @@ def splitUFLForm(form):
     flux = ExprTensor(dphi.ufl_shape)
     boundarySource = ExprTensor(phi.ufl_shape)
 
-    form = expand_indices(expand_derivatives(expand_compounds(form)))
+    form = expand_indices(expand_derivatives((form))
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
             fluxExprs = splitMultiLinearExpr(integral.integrand(), [phi])
@@ -201,7 +201,7 @@ def compileUFL(form, patch, *args, **kwargs):
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
-    #expandform = expand_indices(expand_derivatives(expand_compounds(equation.lhs)))
+    #expandform = expand_indices(expand_derivatives(equation.lhs))
     #if expandform == adjoint(expandform):
     #    model.symmetric = 'true'
     model.field = field
