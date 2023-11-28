@@ -5,7 +5,11 @@ import re
 from dune.common.utility import isInteger
 
 from ufl import replace
-from ufl.log import UFLException
+try:
+    from ufl import UFLException
+except ImportError:
+    UFLException = Exception
+
 from ufl.core.expr import Expr
 
 from dune.source.builtin import get, make_shared

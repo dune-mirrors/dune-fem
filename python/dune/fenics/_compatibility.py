@@ -3,7 +3,12 @@ from __future__ import print_function
 import dune.common
 from dune.ufl import *
 from ufl import *
-from ufl.log import UFLException
+
+try:
+    from ufl.log import UFLException
+except ImportError: # UFLException does not exist anymore in newer ufl versions
+    UFLException = Exception
+
 from dune.ufl import DirichletBC, Constant
 from dune.ufl import cell as cell_
 from dune.fem.function import uflFunction

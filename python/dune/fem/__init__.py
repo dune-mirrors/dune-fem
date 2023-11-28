@@ -165,7 +165,6 @@ _writeVTKDispatcher.append(vtkDispatchUFL)
 def assemble(form,space=None,gridView=None,order=None):
     from dune.ufl import DirichletBC
     import ufl
-    from ufl.log import UFLException
     from ufl.equation import Equation
     from ufl.algorithms import compute_form_rhs
     from ufl.algorithms.analysis import extract_arguments_and_coefficients

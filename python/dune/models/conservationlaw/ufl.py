@@ -11,7 +11,6 @@ from ufl.classes import Indexed
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
-from ufl import UFLException
 
 from dune.ufl import DirichletBC, GridFunction
 from dune.ufl import codegen
