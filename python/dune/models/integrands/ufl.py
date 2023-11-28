@@ -13,7 +13,6 @@ from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
 from ufl.equation import Equation
-from ufl import UFLException
 from dune.ufl.tensors import ExprTensor
 from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign, Block, ConstructExpression
 
