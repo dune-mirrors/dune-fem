@@ -242,7 +242,7 @@ namespace Dune
       template <class B>
       CombinedLocalDataCollect<LocalOp,B> & operator + (const B & b)
       {
-        std::cout << "operator + of LocalInlinePlus \n";
+        //std::cout << "operator + of LocalInlinePlus \n";
         typedef CombinedLocalDataCollect<LocalOp,B> CombinedType;
         CombinedType * combo = new CombinedType ( asImp() , b );
         this->saveObjPointer( combo );
@@ -563,12 +563,14 @@ namespace Dune
       //! write all data of all entities blowe this Entity to the stream
       void inlineData (ObjectStreamType & str, const EntityType & entity ) const
       {
-        const int mxlvl = grid_.maxLevel();
-
         // read/write macro element
         inlineLocal(str, entity );
 
+        // if given entity is not leaf then pack entire hierarchy
+        if( ! entity.isLeaf() )
         {
+          const int mxlvl = grid_.maxLevel();
+
           typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
           const HierarchicIteratorType endit  = entity.hend( mxlvl );
           for(HierarchicIteratorType it = entity.hbegin( mxlvl );
@@ -582,12 +584,14 @@ namespace Dune
       //! read all data of all entities blowe this Entity from the stream
       void xtractData (ObjectStreamType & str, const EntityType & entity ) const
       {
-        const int mxlvl = grid_.maxLevel();
-
         // read/write macro element
         xtractLocal(str, entity );
 
+        // if given entity is not leaf then unpack entire hierarchy
+        if( ! entity.isLeaf() )
         {
+          const int mxlvl = grid_.maxLevel();
+
           typedef typename EntityType::HierarchicIterator HierarchicIteratorType;
           const HierarchicIteratorType endit  = entity.hend( mxlvl );
           for(HierarchicIteratorType it = entity.hbegin( mxlvl );

@@ -10,6 +10,8 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 
+#include <dune/grid/common/capabilities.hh>
+
 namespace Dune
 {
 
@@ -100,6 +102,12 @@ namespace Dune
 
           // update currently used thread numbers
           numThreads_  = MPIManager :: numThreads() ;
+          // check that grid is viewThreadSafe otherwise weird bugs can occur
+          if( (numThreads_ > 1) && (! Dune::Capabilities::viewThreadSafe< GridType >:: v) )
+          {
+            DUNE_THROW(InvalidStateException,"ThreadIterator needs a grid with viewThreadSafe capability!");
+          }
+
           const size_t numThreads = numThreads_;
 
           // get end iterator

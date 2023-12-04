@@ -5,6 +5,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dune/grid/common/capabilities.hh>
+
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/domainfilter.hh>
@@ -140,6 +142,12 @@ namespace Dune {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
             abort();
+          }
+
+          // check that grid is viewThreadSafe otherwise weird bugs can occur
+          if( (MPIManager :: numThreads() > 1) && (! Dune::Capabilities::viewThreadSafe< GridType >:: v) )
+          {
+            DUNE_THROW(InvalidStateException,"DomainDecomposedIterator needs a grid with viewThreadSafe capability!");
           }
 
           const int commThread = communicationThread_ ? 1 : 0;
