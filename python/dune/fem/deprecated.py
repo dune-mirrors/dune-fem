@@ -1,4 +1,5 @@
 import warnings
+"""
 warnings.simplefilter("always", category=DeprecationWarning)
 
 # ignore a specific warning caused by the plotting functions:
@@ -8,6 +9,12 @@ warnings.filterwarnings(
     action='ignore',
     category=DeprecationWarning,
     module=r'.*matplotlib_inline/config'
+)
+"""
+warnings.filterwarnings(
+    action='always',
+    category=DeprecationWarning,
+    module=r'dune'
 )
 
 def deprecated(msg):
