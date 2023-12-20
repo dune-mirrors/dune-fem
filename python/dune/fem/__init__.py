@@ -166,7 +166,6 @@ def assemble(form,space=None,gridView=None,order=None):
     from dune.ufl import DirichletBC
     import ufl
     from ufl.equation import Equation
-    from ufl.algorithms import compute_form_rhs
     from ufl.algorithms.analysis import extract_arguments_and_coefficients
     from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
     if type(form)==tuple or type(form)==list:
@@ -245,12 +244,18 @@ def assemble(form,space=None,gridView=None,order=None):
         else:
             op = dune.fem.operator.galerkin( [form] + params )
             A = op.linear()
-            if wasEqn or not compute_form_rhs(form).empty():
+            zeroU = args[1].ufl_function_space().zero
+            if not wasEqn:
+                computeRHS = not (form==0).rhs == 0
+                # computeRHS = not compute_form_rhs(form).empty()
+            else:
+                computeRHS = True
+            if computeRHS:
                 b = space.zero.copy()
-                op.jacobian(space.zero,A,b)
+                op.jacobian(zeroU,A,b)
                 return A,b
             else:
-                op.jacobian(space.zero,A)
+                op.jacobian(zeroU,A)
                 return A
 
 def integrate(expr, gridView=None, order=None):

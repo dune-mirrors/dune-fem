@@ -291,7 +291,7 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp(cplusplus.tanh(x))
 
     def zero(self, expr):
-        return cplusplus.makeExpression(0)
+        return cplusplus.makeExpression(0.)
 
     def _getNumber(self, expr):
         try:
