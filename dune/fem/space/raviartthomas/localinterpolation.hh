@@ -83,7 +83,8 @@ namespace Dune
 
       // 1st order, 2d Simplex
       template< class Domain, class Range >
-      struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, Domain, Range, 2, 1 > >
+      //struct RaviartThomasLocalInterpolationBasis< RaviartThomasLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, Domain, Range, 2, 1 > >
+      struct RaviartThomasLocalInterpolationBasis< Dune::GeometryTypes::simplex(2).Id(), Domain, Range, 2, 1 > >
       {
         using DomainType = FieldVector< Domain, 2 >;
         using FaceDomainType = FieldVector< Domain, 1 >;
