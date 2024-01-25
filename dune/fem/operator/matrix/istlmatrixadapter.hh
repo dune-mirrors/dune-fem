@@ -52,11 +52,6 @@ namespace Dune
       typedef Y range_type;
       typedef typename X::field_type field_type;
 
-#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      //! define the category
-      enum { category=SolverCategory::sequential };
-#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-
     public:
       //! copy constructor
       ISTLParallelMatrixAdapterInterface ( const ISTLParallelMatrixAdapterInterface &org )
