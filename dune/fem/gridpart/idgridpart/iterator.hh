@@ -27,10 +27,6 @@ namespace Dune
       typedef typename Traits::ExtraData ExtraData;
       typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
 
-#if !DUNE_VERSION_NEWER(DUNE_GRID, 2, 6 )
-      static const int codimension = HostIteratorType::codimension;
-#endif
-
       typedef typename Traits::template Codim< codim >::Entity Entity;
 
       IdIterator () = default;
