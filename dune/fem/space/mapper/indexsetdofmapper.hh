@@ -18,6 +18,11 @@
 #include <dune/fem/space/mapper/exceptions.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
+// save diagnostic state
+#pragma GCC diagnostic push
+// turn off the specific warning, caused by code in line 419.
+#pragma GCC diagnostic ignored "-Wattributes"
+
 namespace Dune
 {
 
@@ -785,5 +790,8 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+// turn the warnings back on
+#pragma GCC diagnostic pop
 
 #endif //#ifndef DUNE_FEM_DOFMAPPER_INDEXSETDOFMAPPER_HH
