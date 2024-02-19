@@ -54,7 +54,7 @@ def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, v
 
     # first check if 'expr' is already a grid function wrapper
     try:
-        if expr.gf is not None:
+        if expr.gridView is not None:
             return expr
     except AttributeError:
         pass
