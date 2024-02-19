@@ -189,14 +189,21 @@ def plotPointData(solution, figure=None, linewidth=0.2,
         assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
         gridView = grid
         deprecated("'grid' argument of plotPointData is deprecated use named argument 'gridView' instead")
-    try:
-        gridView = solution.gridView
-    except AttributeError:
+    if gridView is None:
         try:
-            solution = gridFunction(solution, gridView=gridView, order=1)
+            solution = gridFunction(solution)
+            gridView = solution.gridView
         except AttributeError:
             gridView = solution
             solution = None
+    else:
+        try:
+            assert gridView == solution.gridView
+        except AttributeError:
+            try:
+                solution = gridFunction(solution, gridView=gridView, order=1)
+            except AttributeError:
+                raise AttributeError("parameters to plot function not compatible")
     if not gridView.dimWorld == 2 and solution is None:
         print("inline plotting of gridView only available for 2d grids")
         return
