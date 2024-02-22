@@ -26,9 +26,10 @@ dune_project()
 dune_enable_all_packages()
 
 # Create the dune-fem library
-dune_add_library(dunefem
-  EXPORT_NAME Fem
-  LINK_LIBRARIES ${DUNE_LIBS})
+# dune_add_library(dunefem
+#   EXPORT_NAME Fem
+#   LINK_LIBRARIES ${DUNE_LIBS})
+dune_add_library(dunefem)
 
 include(AddMPIFlags)
 
@@ -41,4 +42,4 @@ endif()
 dune_add_subdirs(dune lib doc cmake/modules ${PYDEMO_DIR})
 
 # finalize the dune project, e.g. generating config.h etc.
-finalize_dune_project()
+finalize_dune_project(GENERATE_CONFIG_H)

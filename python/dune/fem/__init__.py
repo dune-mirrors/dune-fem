@@ -99,7 +99,6 @@ registry["function"] = {
          # "ufl"        : function.uflFunction,
          "gridFunction" : function.gridFunction,
          "levels"     : function.levelFunction,
-         "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
      }
 registry["model"] = {

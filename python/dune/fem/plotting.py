@@ -12,7 +12,6 @@ from ufl import as_vector
 from dune.fem.function import gridFunction
 
 from dune.plotting import block, disable
-from dune.grid import Partitions
 globalBlock = block
 
 def triangulationOfNetwork(grid, level=0, linewidth=0.01):
@@ -39,8 +38,7 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black",
         onlyContours=False, contours=None, contourWidth=2, contourColor="black",
         xlim=None, ylim=None, clim=None, cmap=None, colorbar="vertical",
         triplot=False, logscale=False, ticks=11, allowNaN=False,
-        *,
-        partition=Partitions.all):
+        ):
 
     if colorbar == True:
         colorbar = "vertical"
@@ -70,13 +68,13 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black",
             if xlim:
                 fig.gca().set_xlim(xlim)
             fig.tight_layout()
-            triang = grid.tessellate(level, partition=partition)
+            triang = grid.tessellate(level)
             if triang is None: # parition set is empty
                 return
             if solution.dimRange > 1:
-                data = linalg.norm(solution.pointData(level, partition=partition),axis=1)
+                data = linalg.norm(solution.pointData(level),axis=1)
             else:
-                data = solution.pointData(level, partition=partition)[:,0]
+                data = solution.pointData(level)[:,0]
             pyplot.plot(triang[0], data, '-p')
             return
 
@@ -89,10 +87,10 @@ def _plotPointData(fig, grid, solution, level=0, gridLines="black",
                 for j in range(2):
                     data[n+2*i+j] = data[2*i+j]
         else:
-            triangulation = grid.triangulation(level, partition=partition)
+            triangulation = grid.triangulation(level)
             if triangulation is None:
                 return
-            data = solution.pointData(level,partition=partition)
+            data = solution.pointData(level)
 
         try:
             x1 = vectors[0]
@@ -183,7 +181,7 @@ def plotPointData(solution, figure=None, linewidth=0.2,
         logscale=False, ticks=11,
         *,
         figsize=None,
-        gridView=None, partition=Partitions.all):
+        gridView=None):
     if disable: return
     if grid is not None:
         assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
@@ -227,7 +225,7 @@ def plotPointData(solution, figure=None, linewidth=0.2,
                     vectors, onlyContours, contours, contourWidth, contourColor,
                     xlim, ylim, clim, cmap, colorbar, triplot,
                     logscale, ticks, allowNaN,
-                    partition=partition)
+                   )
 
     if newFig and block:
         pyplot.show(block=block)

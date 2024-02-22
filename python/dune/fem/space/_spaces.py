@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
-from dune.generator import Constructor, Method, Pickler
+from dune.generator import Constructor, Method
 logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
@@ -572,26 +572,6 @@ def composite(*spaces, **kwargs):
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
-    pickler = Pickler(getterBody=
-      """
-            auto& tsp = self.cast<DuneType&>();
-            /* Return a tuple that fully encodes the state of the object */
-            pybind11::dict d;
-            if (pybind11::hasattr(self, "__dict__")) {
-              d = self.attr("__dict__");
-            }
-            return pybind11::make_tuple(tsp.spaceTuple(),d);
-      """, setterBody=
-      """
-            if (t.size() != 2)
-                throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
-            pybind11::handle pyspaceTuple = t[0];
-            auto spaceTuple = pyspaceTuple.cast<typename DuneType::DiscreteFunctionSpaceTupleType>();
-            /* Create a new C++ instance */
-            DuneType* tsp = new DuneType(spaceTuple);
-            auto py_state = t[1].cast<pybind11::dict>();
-            return std::make_pair(tsp, py_state);
-      """)
 
     # subFunction = Method('subFunction', 'this requires exporting SubFunctionStorage first')
     spc = module(compositeField, includes, typeName, constructor, pickler, # subFunction,

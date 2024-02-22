@@ -5,9 +5,8 @@ import hashlib
 import importlib
 
 import dune.grid.grid_generator
-from dune.grid import Partitions
 
-from dune.generator import Constructor, Method, Pickler
+from dune.generator import Constructor, Method
 
 def cppBool(value):
     return "true" if value else "false"
@@ -22,7 +21,7 @@ Dune::FemPy::registerGridView ( cls );
     gv._register()
     return gv
 
-def adaptiveLeafGridView(grid, *args, partition=Partitions.all, **kwargs):
+def adaptiveLeafGridView(grid, *args, **kwargs):
     """create an adaptive view of the leaf grid
 
     Args:
@@ -48,44 +47,10 @@ def adaptiveLeafGridView(grid, *args, partition=Partitions.all, **kwargs):
     if not isinstance(grid, getattr(gridModule, "HierarchicalGrid")):
         raise ValueError('Cannot only create an adaptiveLeafGridView from a DUNE grid.')
 
-    partitionType = '' # default partition, All_Partition
-    if partition == Partitions.interiorBorder:
-        partitionType = ', Dune::InteriorBorder_Partition'
-    else:
-        assert partition == Partitions.all
-
-    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + partitionType + " >"
+    gridPartName = "Dune::Fem::AdaptiveLeafGridPart< " + grid.cppTypeName + " >"
     typeName = gridPartName # + "::GridViewType"
     includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh"]
 
-    pickler = Pickler(getterBody=
-      """
-            auto& gv = self.cast<DuneType&>();
-            std::ostringstream stream;
-            Dune::Fem::StandardOutStream outStream(stream);
-            gv.indexSet().write( outStream );
-            pybind11::bytes s(stream.str());
-            /* Return a tuple that fully encodes the state of the object */
-            pybind11::dict d;
-            if (pybind11::hasattr(self, "__dict__")) {
-              d = self.attr("__dict__");
-            }
-            return pybind11::make_tuple(gv.grid(),s,d);
-      """, setterBody=
-      """
-            if (t.size() != 3)
-                throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
-            pybind11::handle pyHg = t[0];
-            auto& hg = pyHg.cast<typename DuneType::GridType&>();
-            /* Create a new C++ instance */
-            DuneType* gv = new DuneType(hg);
-            pybind11::bytes state(t[1]);
-            std::istringstream stream( state );
-            Dune::Fem::StandardInStream inStream(stream);
-            gv->indexSet().read( inStream );
-            auto py_state = t[2].cast<pybind11::dict>();
-            return std::make_pair(gv, py_state);
-      """)
     return setup(includes, typeName, pickler, ctorArgs=[grid])
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):
@@ -142,24 +107,4 @@ Interpolate into a discrete function space or use a
                  # ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["return " + gridPartName + "( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-    pickler = Pickler(getterBody=
-      """
-            auto& gv = self.cast<DuneType&>();
-            /* Return a tuple that fully encodes the state of the object */
-            pybind11::dict d;
-            if (pybind11::hasattr(self, "__dict__")) {
-              d = self.attr("__dict__");
-            }
-            return pybind11::make_tuple(gv.gridFunction(),d);
-      """, setterBody=
-      """
-            if (t.size() != 2)
-                throw std::runtime_error("Invalid state in GeoGV with "+std::to_string(t.size())+"arguments!");
-            pybind11::handle pyGF = t[0];
-            const auto& gf = pyGF.cast<const typename DuneType::GridFunctionType&>();
-            /* Create a new C++ instance */
-            auto py_state = t[1].cast<pybind11::dict>();
-            return std::make_pair(std::make_unique<DuneType>(gf), py_state);
-      """)
-
     return setup(includes, typeName, constructor, pickler, ctorArgs=[coordFunction])
