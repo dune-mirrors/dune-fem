@@ -21,7 +21,7 @@ def _integrate(grid,expression,order=None):
     except AttributeError:
         return _uflFunction(grid,"tmp",order,expression).integrate()
 def integrate(grid,expression,order=None):
-    deprecated("dune.fem.function.integrate is deprecated use dune.fem.integrate instead. New signature is (expr, gridView, order)")
+    # deprecated("dune.fem.function.integrate is deprecated use dune.fem.integrate instead. New signature is (expr, gridView, order)")
     return _integrate(grid,expression,order)
 
 # used to convert python functions with (x) arguments into gridfunctions -
@@ -30,7 +30,7 @@ def _globalFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
 def globalFunction(gridView, name, order, value):
-    deprecated("dune.fem.function.globalFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
+    # deprecated("dune.fem.function.globalFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
     return _globalFunction(gridView, name, order, value)
 
 # used to convert python functions with (e,x) arguments into gridfunctions -
@@ -39,7 +39,7 @@ def _localFunction(gridView, name, order, value):
     gf = gridView.function(value,name=name,order=order)
     return dune.ufl.GridFunction(gf)
 def localFunction(gridView, name, order, value):
-    deprecated("dune.fem.function.localFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
+    # deprecated("dune.fem.function.localFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
     return _localFunction(gridView, name, order, value)
 
 def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, view=None, **kwargs):
@@ -127,7 +127,7 @@ def partitionFunction(gridView,name="rank"):
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
-    deprecated("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
+    # deprecated("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")
     return _uflFunction(gridView,name,order,ufl,virtualize,scalar,predefined,*args,**kwargs)
 def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
