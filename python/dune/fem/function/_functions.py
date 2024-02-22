@@ -116,6 +116,15 @@ def levelFunction(gridView,name="levels"):
         return [e.level]
     return levelFunction
 
+def partitionFunction(gridView,name="rank"):
+    @dune.grid.GridFunction(gridView,name=name,order=0)
+    class Partition(object):
+        def __init__(self,rank):
+            self.rank = rank
+        def __call__(self,en,x):
+            return [self.rank]
+    return Partition(gridView.comm.rank)
+
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
     deprecated("dune.fem.function.uflFunction is deprecated. Use dune.fem.function.gridFunction(expr,gridView,name,order); note that the 'ufl' expression is first.")

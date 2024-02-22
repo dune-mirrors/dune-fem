@@ -97,6 +97,7 @@ registry["function"] = {
          # "local"      : function.localFunction,
          # "cpp"        : function.cppFunction,
          # "ufl"        : function.uflFunction,
+         "partitions" : function.partitionFunction,
          "gridFunction" : function.gridFunction,
          "levels"     : function.levelFunction,
          "discrete"   : function.discreteFunction
