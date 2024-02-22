@@ -6,7 +6,9 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <utility>
+#include <stdexcept>
 
 #include <dune/fem/io/parameter/exceptions.hh>
 #include <dune/fem/io/parameter/parser.hh>
@@ -293,12 +295,21 @@ namespace Dune
           j = -1;
         if( (j < 0) || (j >= (int)values.size()) )
         {
-          std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
-          std::cerr << "Valid values are: ";
+          std::stringstream sstr;
+          if ( value.find("help") == std::string::npos )
+            sstr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
+          else
+            sstr << "Help for parameter '" << key << "':" << std::endl;
+
+          sstr << "Valid values are: ";
           for( unsigned int i = 0; i < values.size(); ++i )
-            std::cerr << values[ i ] << (i < values.size()-1 ? ", " : "");
-          std::cerr << std::endl << std::endl;
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
+            sstr << values[ i ] << (i < values.size()-1 ? ", " : "");
+          sstr << std::endl;
+
+          if ( value.find("help") == std::string::npos )
+            DUNE_THROW( ParameterInvalid, sstr.str() );
+          else
+            throw std::runtime_error(sstr.str());
         }
         return j;
       }
