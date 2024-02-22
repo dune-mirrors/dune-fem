@@ -51,7 +51,7 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     typeName = gridPartName # + "::GridViewType"
     includes = grid.cppIncludes + ["dune/fem/gridpart/adaptiveleafgridpart.hh"]
 
-    return setup(includes, typeName, pickler, ctorArgs=[grid])
+    return setup(includes, typeName, ctorArgs=[grid])
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):
     """create a filtered grid view
@@ -107,4 +107,4 @@ Interpolate into a discrete function space or use a
                  # ["return Dune::FemPy::constructGridPart<"+gridPartName+">( coordFunction );"],
                  ["return " + gridPartName + "( coordFunction );"],
                  ["pybind11::keep_alive< 1, 2 >()"])
-    return setup(includes, typeName, constructor, pickler, ctorArgs=[coordFunction])
+    return setup(includes, typeName, constructor, ctorArgs=[coordFunction])

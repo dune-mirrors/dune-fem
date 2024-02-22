@@ -574,7 +574,7 @@ def composite(*spaces, **kwargs):
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
 
     # subFunction = Method('subFunction', 'this requires exporting SubFunctionStorage first')
-    spc = module(compositeField, includes, typeName, constructor, pickler, # subFunction,
+    spc = module(compositeField, includes, typeName, constructor,
             storage=compositeStorage,
             scalar=scalar, codegen=codegen,
             ctorArgs=[spaces])
