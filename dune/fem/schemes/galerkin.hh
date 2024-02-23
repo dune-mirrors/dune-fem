@@ -652,6 +652,7 @@ namespace Dune
           return integrands();
         }
 
+        bool nonLinear()   const { return model().nonLinear(); }
         bool hasInterior() const { return model().hasInterior(); }
         bool hasSkeleton() const { return model().hasSkeleton(); }
         bool hasBoundary() const { return model().hasBoundary(); }
@@ -1734,7 +1735,7 @@ namespace Dune
 
         SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
         {
-          DiscreteFunctionType rhs0 = rhs;
+          DiscreteFunctionType rhs0 ( rhs );
           setZeroConstraints( rhs0 );
           setModelConstraints( solution );
 
