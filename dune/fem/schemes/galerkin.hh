@@ -1735,40 +1735,52 @@ namespace Dune
 
         SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
         {
+          // setup right hand side
           DiscreteFunctionType rhs0 ( rhs );
           setZeroConstraints( rhs0 );
-          setModelConstraints( solution );
 
+          // bind operator
           invOp_.bind(fullOperator());
-          invOp_( rhs0, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+          return doSolve( rhs0, solution );
         }
 
         SolverInfo solve ( DiscreteFunctionType &solution ) const
         {
+          // setup right hand side
           DiscreteFunctionType bnd( solution );
           bnd.clear();
-          setModelConstraints( solution );
+
+          // bind operator
           invOp_.bind(fullOperator());
-          invOp_( bnd, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+          return doSolve( bnd, solution );
         }
 
         SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
         {
+          // setup right hand side
           DiscreteFunctionType bnd( solution );
           bnd.clear();
-          setModelConstraints( solution );
 
+          // bind operator and preconditioner
           PreconditionerFunctionWrapperType pre( p );
           invOp_.bind(fullOperator(), pre);
-          invOp_( bnd, solution );
+          return doSolve( bnd, solution );
+        }
+
+      protected:
+        SolverInfo doSolve ( const DiscreteFunctionType& rhs, DiscreteFunctionType &solution ) const
+        {
+          // set Dirichlet constrains to solution
+          setModelConstraints( solution );
+
+          // solve system
+          invOp_( rhs, solution );
+          // clean solver
           invOp_.unbind();
           return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
 
+      public:
         template< class GridFunction >
         void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
         {
