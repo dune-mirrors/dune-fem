@@ -145,6 +145,15 @@ namespace Dune
         verbose_ = verb ? 1 : 0;
       }
 
+      // allow to override the automatic choice of nonlinear or linear solver to
+      // force nonlinear all the time
+      virtual bool forceNonLinear () const
+      {
+        bool v = false;
+        v = parameter_.getValue< bool >(keyPrefix_ +  "forcenonlinear", v );
+        return v;
+      }
+
       virtual int maxIterations () const
       {
         if(maxIterations_ < 0)
@@ -332,6 +341,7 @@ namespace Dune
       // main constructor
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const ParameterType &parameter )
         : verbose_( parameter.verbose() ),
+          forceNonLinear_( parameter.forceNonLinear() ),
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
@@ -510,6 +520,7 @@ namespace Dune
       const PreconditionerType* preconditioner_ = nullptr;
 
       const bool verbose_;
+      const bool forceNonLinear_;
       const int maxLineSearchIterations_;
 
       mutable DomainFieldType delta_;
@@ -539,7 +550,7 @@ namespace Dune
       std::fill(timing_.begin(), timing_.end(), 0.0 );
 
       // obtain information about operator to invert
-      const bool nonLinear = op_->nonLinear();
+      const bool nonLinear = op_->nonLinear() || forceNonLinear_ ;
 
       Dune::Timer allTimer;
       DomainFunctionType residual( u );
