@@ -48,7 +48,7 @@ class Integrands(codegen.ModelClass):
         self.linearizedBoundary = None
         self.skeleton = None
         self.linearizedSkeleton = None
-        self.nonlinear = False
+        self.nonlinear = True
         self.symmetric = False
 
         # Added for dirichlet treatment (same as conservationlaw model)
