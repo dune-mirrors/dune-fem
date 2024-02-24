@@ -1366,6 +1366,11 @@ namespace Dune
           localOp_[ i ].setQuadratureOrders(interior,surface);
       }
 
+      virtual bool nonLinear() const final override
+      {
+        return localOperator().nonLinear();
+      }
+
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
         evaluate( u, w );
@@ -1505,6 +1510,7 @@ namespace Dune
       }
 
       using BaseType::localOperator;
+      using BaseType::nonLinear;
 
     protected:
       using BaseType::op;
