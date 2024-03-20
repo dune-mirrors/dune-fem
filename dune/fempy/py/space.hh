@@ -174,6 +174,10 @@ namespace Dune
         cls.def_property_readonly( "auxiliarySize", [] ( Space &self ) -> int { return self.auxiliarySize(); } );
         cls.def_property_readonly( "_sizeOfField", [] ( Space &self ) -> unsigned int { return sizeof(typename Space::RangeFieldType); } );
         cls.def_property_readonly( "localBlockSize", [] ( Space &self ) -> unsigned int { return self.localBlockSize; } );
+
+        // operator __len__
+        cls.def("__len__", [] ( Space &self ) -> int { return self.size(); } );
+
         cls.def("localOrder", [] ( Space &self, const EntityType &e) -> int { return self.order(e); } );
         // we can deprecate the following method it's can be replaced by
         // space.mapper(element) which is more flexible

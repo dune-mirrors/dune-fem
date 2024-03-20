@@ -135,6 +135,9 @@ class FemSpace(Space):
     def __setstate__(self,l):
         self.__init__(l[0],l[1])
 
+    def __len__(self):
+        return len(self.__impl__)
+
     def __getattr__(self, item):
         def tocontainer(func):
             @wraps(func)
