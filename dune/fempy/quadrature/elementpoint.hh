@@ -66,7 +66,8 @@ namespace Dune
       ElementPoint ( const Quadrature &quadrature, std::size_t idx )
         : position_( quadrature.point( idx ) ),
           localPosition_( quadrature.localPoint( idx ) ),
-          intersection_( quadrature.intersection() )
+          intersection_( quadrature.intersection() ),
+          isInside_( quadrature.isInside() )
       {}
 
       template< class Quadrature >
@@ -75,6 +76,7 @@ namespace Dune
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
+      bool isInside() const { return isInside_; }
 
       const CoordinateType &point ( std::size_t qp ) const { return position_; }
       const LocalCoordinateType &localPoint ( std::size_t qp ) const { return localPosition_; }
@@ -88,6 +90,7 @@ namespace Dune
       CoordinateType position_;
       const LocalCoordinateType &localPosition_;
       const IntersectionType &intersection_;
+      const bool isInside_;
     };
 
   } // namespace FemPy

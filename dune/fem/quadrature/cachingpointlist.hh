@@ -266,6 +266,7 @@ namespace Dune
                          const IntersectionType &intersection,
                          const QuadratureKeyType& quadKey, const typename Base :: Side side )
         : Base( getPointList( intersection, quadKey, side ) ),
+          side_(side),
           twist_( getTwist( gridPart, intersection, side ) ),
           mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_) ),
           points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) ),
@@ -280,6 +281,9 @@ namespace Dune
 
       IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
       IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+
+      typename Base :: Side side() const { return side_; }
+      bool isInside() const { return side_ == Base::INSIDE; }
 
       /** \copydoc Dune::Fem::IntegrationPointList::point
        */
@@ -376,6 +380,7 @@ namespace Dune
       }
 
     private:
+      const typename Base :: Side side_;
       const int twist_;
       const MapperPairType &mapper_;
       const PointVectorType &points_;

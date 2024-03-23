@@ -81,7 +81,8 @@ namespace Dune
           idx_( quadrature.cachingPoint( idx ) ),
           position_( quadrature.point( idx ) ),
           localPosition_( quadrature.localPoint( idx ) ),
-          intersection_( quadrature.intersection() )
+          intersection_( quadrature.intersection() ),
+          isInside_( quadrature.isInside() )
       {}
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
@@ -95,6 +96,7 @@ namespace Dune
       {
         return intersection_;
       }
+      bool isInside() const { return isInside_; }
 
       std::size_t id () const { return id_; }
 
@@ -110,6 +112,7 @@ namespace Dune
       const CoordinateType &position_;
       const LocalCoordinateType &localPosition_;
       const IntersectionType &intersection_;
+      const bool isInside_;
     };
 
   } // namespace FemPy
