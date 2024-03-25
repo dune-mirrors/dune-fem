@@ -10,7 +10,6 @@ import dune.fem.space
 import dune.models.localfunction
 from dune.generator import builder
 
-import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
 from dune.fem.deprecated import deprecated

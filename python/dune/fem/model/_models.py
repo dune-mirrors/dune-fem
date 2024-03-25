@@ -4,7 +4,6 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-import dune.common.checkconfiguration as checkconfiguration
 from dune.ufl import DirichletBC
 
 def warnNewCartesianIds(view,*args):

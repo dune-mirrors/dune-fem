@@ -5,8 +5,6 @@ import logging
 from dune.generator import Constructor, Method, Pickler
 logger = logging.getLogger(__name__)
 
-import dune.common.checkconfiguration as checkconfiguration
-
 # dimrange parameter in space creation is deprecated!
 def checkDeprecated_dimrange( dimRange, dimrange ):
     import warnings
