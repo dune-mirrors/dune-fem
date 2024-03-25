@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ in 2d left=1, right=2, bottom=3, top=4. How to get rid of this warning:
 """)
 
 def conservationlaw(view, equation, *args, **kwargs):
-    import ufl
+    #import ufl
     import dune.ufl
     import dune.models.conservationlaw as conservationlaw
 
@@ -59,7 +58,6 @@ def elliptic(view, equation, *args, **kwargs):
     return conservationlaw( view, equation, *args, **kwargs)
 
 def integrands(view, form, *args, **kwargs):
-    import ufl
     import dune.ufl
     import dune.models.integrands as integrands
 

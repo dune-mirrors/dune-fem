@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
-from dune.generator import Constructor, Method, Pickler
+from dune.generator import Constructor, Pickler
 logger = logging.getLogger(__name__)
 
 # dimrange parameter in space creation is deprecated!

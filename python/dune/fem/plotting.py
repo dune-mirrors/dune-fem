@@ -8,7 +8,6 @@ from matplotlib.colors import LogNorm
 from dune.fem.deprecated import deprecated
 
 from ufl.core.expr import Expr
-from ufl import as_vector
 from dune.fem.function import gridFunction
 
 from dune.plotting import block, disable

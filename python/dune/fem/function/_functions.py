@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys, os, io, types, inspect, logging
+import io, types, inspect, logging
 logger = logging.getLogger(__name__)
 from numpy import dtype as np_dtype
 
@@ -8,9 +8,6 @@ import dune.ufl
 import dune.grid
 import dune.fem.space
 import dune.models.localfunction
-from dune.generator import builder
-
-from dune.common.hashit import hashIt
 
 from dune.fem.deprecated import deprecated
 
@@ -135,7 +132,6 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
     if gridView is None:
         if type(expr) == list or type(expr) == tuple:
             expr = ufl.as_vector(expr)
-        from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
         args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
         if len(args) > 0:
             raise AttributeError("no trial or test function should be included in the expression")

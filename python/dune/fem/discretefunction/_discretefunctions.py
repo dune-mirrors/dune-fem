@@ -1,10 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys,os
+import os
 import logging
 logger = logging.getLogger(__name__)
 
-import dune.generator
 from dune.deprecate import deprecated
 from dune.common.utility import isString
 

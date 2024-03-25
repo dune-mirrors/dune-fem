@@ -1,14 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
 import logging
 import warnings
 
 from ufl.equation import Equation
-from ufl import dx as ufl_dx, Form
+from ufl import Form
 
 from dune.generator import Constructor, Method
-from dune.common.utility import isString
 
 from dune.fem.operator import _linear, _opDirichletIndices
 

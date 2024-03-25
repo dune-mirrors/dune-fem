@@ -4,7 +4,6 @@ __metaclass__ = type
 import hashlib, warnings
 
 import ufl
-from dune.ufl import GridFunction
 from dune.fem.function import gridFunction
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from dune.generator.generator import SimpleGenerator
@@ -13,7 +12,7 @@ _defaultGenerator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
 
 modules = {}
 
-import logging, traceback
+import logging
 logger = logging.getLogger(__name__)
 
 def module(grid, generator=_defaultGenerator):
