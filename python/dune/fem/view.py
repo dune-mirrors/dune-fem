@@ -1,13 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 __metaclass__ = type
 
-import hashlib
 import importlib
 
 import dune.grid.grid_generator
 from dune.grid import Partitions
 
-from dune.generator import Constructor, Method, Pickler
+from dune.generator import Constructor, Pickler
 
 def cppBool(value):
     return "true" if value else "false"

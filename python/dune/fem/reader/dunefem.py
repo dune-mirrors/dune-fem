@@ -13,7 +13,7 @@
 ###############################################################################
 
 import numpy as np
-import os,sys,vtk,importlib,glob,json,collections
+import os,sys,vtk,importlib,glob,json
 from importlib.util import spec_from_loader, module_from_spec
 from importlib.machinery import SourceFileLoader
 from paraview.util.vtkAlgorithm import VTKPythonAlgorithmBase

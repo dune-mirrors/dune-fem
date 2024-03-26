@@ -1,30 +1,18 @@
 from __future__ import print_function
 
-import importlib
-import hashlib
-import os
-import sys
-import timeit
-import types
-
 from dune.common.hashit import hashIt
 from dune.generator import builder
 
-from dune.source.cplusplus import Include, Method, UnformattedExpression,\
-     UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_, IfStatement
+from dune.source.cplusplus import Include, Method, TypeAlias, IfStatement
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
-from dune.source.fem import declareFunctionSpace
 import ufl
 from ufl import Coefficient, as_vector, replace
 from ufl import checks
-from ufl.classes import FloatValue, IntValue
-from dune.source.cplusplus import maxEdgeLength, UnformattedExpression,\
-       NameSpace
+from dune.source.cplusplus import maxEdgeLength, NameSpace
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 from dune.ufl import GridFunction, Constant
-from dune.ufl.tensors import ExprTensor
-from dune.ufl.codegen import uflSignature, TooHighDerivative
+from dune.ufl.codegen import uflSignature
 
 from dune.ufl import codegen
 

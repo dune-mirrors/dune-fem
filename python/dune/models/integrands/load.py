@@ -1,7 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
 from ufl import Form, Coefficient, TrialFunction, TestFunction, replace
-from ufl.core.expr import Expr
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 

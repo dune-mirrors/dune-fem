@@ -11,10 +11,9 @@ from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
-from ufl.differentiation import Grad
 from ufl.equation import Equation
 from dune.ufl.tensors import ExprTensor
-from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign, Block, ConstructExpression
+from dune.source.cplusplus import UnformattedExpression, SwitchStatement, Declaration, UnformattedBlock, assign, Block
 
 from dune.source.builtin import make_pair
 from dune.source.cplusplus import InitializerList, Variable
@@ -22,11 +21,9 @@ from dune.source.cplusplus import construct, lambda_, makeExpression,\
                                   maxEdgeLength, minEdgeLength, return_,\
                                   boundaryIdFct
 from dune.source.cplusplus import SourceWriter
-from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
+from dune.source.algorithm.extractvariables import extractVariablesFromExpressions
 
-from dune.common.hashit import hashIt
-
-from dune.ufl import codegen, DirichletBC, Constant, BoundaryId
+from dune.ufl import codegen, DirichletBC, BoundaryId
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors

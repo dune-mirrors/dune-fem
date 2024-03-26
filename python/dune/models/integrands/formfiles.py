@@ -2,7 +2,6 @@ from ufl import Form
 
 import dune.ufl.formfiles
 
-from dune.ufl import DirichletBC
 from dune.ufl.formfiles import readUFLFile
 
 from .ufl import compileUFL

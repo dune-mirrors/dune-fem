@@ -1,18 +1,16 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys,os
+import os
 import logging
 logger = logging.getLogger(__name__)
 
-from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
-import dune.common.checkconfiguration as checkconfiguration
-import dune.generator
 from dune.deprecate import deprecated
 from dune.common.utility import isString
 
 from . import _solvers as solvers
 
 def _storage( dfStorage="numpy", solverStorage=None ):
+    from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
 
     assert isString(dfStorage)
     # if not selected, use same as discrete function
@@ -116,6 +114,7 @@ def eigen():
 
 
 #def eigen():
+#    import dune.checkconfiguration as checkconfiguration
 #    try:
 #        checkconfiguration.preprocessorAssert([ ("#if HAVE_EIGEN","Eigen package is not available") ])
 #    except checkconfiguration.ConfigurationError as err:
