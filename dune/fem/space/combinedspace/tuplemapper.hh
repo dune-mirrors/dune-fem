@@ -8,6 +8,7 @@
 #include <dune/common/hybridutilities.hh>
 
 #include <dune/fem/common/utility.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
@@ -18,11 +19,6 @@ namespace Dune
 
   namespace Fem
   {
-
-    // from adaptationmanager.hh
-    template <class GridType>
-    class AdaptationMethod ;
-
 
     // Internal forward declaration
     // ----------------------------
