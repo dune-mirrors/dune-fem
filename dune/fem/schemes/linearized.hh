@@ -41,7 +41,13 @@ namespace Dune
       typedef typename SchemeType::GridPartType GridPartType;
       typedef typename SchemeType::LinearOperatorType LinearOperatorType;
       typedef typename SchemeType::InverseOperatorType LinearInverseOperatorType;
+      typedef typename LinearInverseOperatorType::SolverParameterType ParameterType;
       typedef typename SchemeType::ModelType ModelType;
+
+      typedef typename SchemeType::JacobianOperatorType JacobianOperatorType;
+      typedef typename SchemeType::DomainFunctionType DomainFunctionType;
+      typedef typename SchemeType::RangeFunctionType RangeFunctionType;
+
       struct SolverInfo
       {
         SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -86,11 +92,39 @@ namespace Dune
       void setup(const DiscreteFunctionType &ubar)
       {
         scheme_.fullOperator().jacobian(ubar, linearOperator_);
-        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linreduction_, linabstol_, maxIter_ );
+        // inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linreduction_, linabstol_, maxIter_ );
+        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
         inverseOperator_->bind(linearOperator_);
         sequence_ = scheme_.space().sequence();
         ubar_.assign(ubar);
       }
+
+      template <class GridFunction>
+      void setup(const GridFunction &ubar)
+      {
+        Fem::interpolate(ubar, ubar_);
+        scheme_.fullOperator().jacobian(ubar_, linearOperator_);
+        // inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linreduction_, linabstol_, maxIter_ );
+        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
+        inverseOperator_->bind(linearOperator_);
+        sequence_ = scheme_.space().sequence();
+      }
+
+      void setup()
+      {
+        ubar_.clear();
+        scheme_.fullOperator().jacobian(ubar_, linearOperator_);
+        // inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linreduction_, linabstol_, maxIter_ );
+        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
+        inverseOperator_->bind(linearOperator_);
+        sequence_ = scheme_.space().sequence();
+      }
+
+      /** Note: this sets the error message of the non-existing
+       *  non-linear solver and must be here in order to make the
+       *  python bindings happy!
+       */
+      void setErrorMeasure() const {}
 
       void constraint ( DiscreteFunctionType &u ) const { scheme_.constraint(u); }
 
@@ -137,6 +171,11 @@ namespace Dune
 
       const GridPartType &gridPart () const { return scheme_.gridPart(); }
       const DiscreteFunctionSpaceType &space() const { return scheme_.space(); }
+
+      const ParameterReader& parameter () const
+      {
+        return parameter_;
+      }
 
     protected:
       void affineShift() const
