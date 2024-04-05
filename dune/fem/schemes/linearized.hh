@@ -48,6 +48,8 @@ namespace Dune
       typedef typename SchemeType::DomainFunctionType DomainFunctionType;
       typedef typename SchemeType::RangeFunctionType RangeFunctionType;
 
+      typedef typename SchemeType::DirichletBlockVector DirichletBlockVector;
+
       struct SolverInfo
       {
         SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -71,8 +73,7 @@ namespace Dune
           parameter_( std::move( parameter ) ),
           ubar_("ubar", scheme.space())
       {
-        ubar_.clear();
-        setup(ubar_);
+        setup();
       }
       LinearizedScheme ( SchemeType &scheme, const DiscreteFunctionType &ubar,
                          Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
@@ -126,7 +127,32 @@ namespace Dune
        */
       void setErrorMeasure() const {}
 
-      void constraint ( DiscreteFunctionType &u ) const { scheme_.constraint(u); }
+      void setConstraints( DomainFunctionType &u ) const
+      {
+        scheme_.setConstraints(u);
+      }
+      void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
+      {
+        scheme_.setConstraints(value, u);
+      }
+      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {
+        scheme_.setConstraints(u, v);
+      }
+      template < class GridFunctionType,
+                 typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
+      void setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
+      {
+        scheme_.setConstraints(u, v);
+      }
+      void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {
+        scheme_.subConstraints(u, v);
+      }
+      const auto& dirichletBlocks() const
+      {
+        return scheme_.dirichletBlocks();
+      }
 
       void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
       {
@@ -145,18 +171,62 @@ namespace Dune
         (*this)(tmp,dest);
       }
 
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
+      /**
+       * additiveConstraints == true:
+       * Solve the system with an additional "rhs". That is, if the
+       * affine-linear operator is not linear (i.e. already has a
+       * "rhs") then the given rhs is added to the already present
+       * rhs, including values set for Dirichlet (or other constraint)
+       * DOFs. In order to, e.g., solve with Dirichlet zero values you
+       * have to install the negative Dirichlet values in the given
+       * rhs.
+       *
+       * additiveConstraints == false
+       * Extrawurst in order to be
+       * backwards-compatible: Ignore the Dirichlet values contained
+       * in rhs. This implies that this variant is not suitable as
+       * solver in e.g. Uzawa methods or Newton iterations as it
+       * enforces the non-homogeneous Dirichlet values from the model.
+       */
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
       {
-        int oldCount = (*inverseOperator_).iterations();
-        constraint(solution);
         assert( sequence_ == scheme_.space().sequence() );
-        (*inverseOperator_)( rhs, solution );
+        int oldCount = (*inverseOperator_).iterations();
+        DiscreteFunctionType sumRhs = rhs;
+        affineShift();
+        if (!additiveConstraints) {
+          setConstraints(typename DiscreteFunctionType::RangeType(0), sumRhs);
+        }
+        sumRhs.axpy(1.0, affineShift_);
+        setConstraints(sumRhs, solution);
+        (*inverseOperator_)( sumRhs, solution );
         return SolverInfo( true, (*inverseOperator_).iterations()-oldCount, 1 );
       }
+
+      /**
+       * This is the "old" solve with rhs which ignores any values of
+       * rhs set for the Constraint DOFs.
+       */
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
+      {
+        return solve(rhs, solution, false);
+      }
+
+      /**
+       * Solve the system defined by the affine-linear operator
+       * without additional rhs, i.e. the rhs is implied by the
+       * "affine shift" of the underlying affine linear
+       * operator. Dirichlet constraints will be enforced if present
+       * in the model.
+       */
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
+        assert( sequence_ == scheme_.space().sequence() );
+        int oldCount = (*inverseOperator_).iterations();
+        setConstraints(solution);
         affineShift();
-        return solve(affineShift_,solution);
+        (*inverseOperator_)( affineShift_, solution );
+        return SolverInfo( true, (*inverseOperator_).iterations()-oldCount, 1 );
       }
 
       template< class GridFunction >
@@ -180,6 +250,10 @@ namespace Dune
     protected:
       void affineShift() const
       {
+        if (affineShiftSequence_ == scheme_.space().sequence()) {
+          return;
+        }
+
         DiscreteFunctionType tmp(ubar_);
         tmp.clear();
 
@@ -187,7 +261,8 @@ namespace Dune
         linearOperator_( ubar_, affineShift_ );
         scheme_.fullOperator()( ubar_, tmp );
         affineShift_ -= tmp;
-        constraint(affineShift_);
+        setConstraints(affineShift_);
+        affineShiftSequence_ = scheme_.space().sequence();
       }
 
       SchemeType &scheme_;
@@ -197,6 +272,7 @@ namespace Dune
       int maxIter_;
       std::shared_ptr<LinearInverseOperatorType> inverseOperator_;
       mutable DiscreteFunctionType affineShift_;
+      mutable int affineShiftSequence_;
       Dune::Fem::ParameterReader parameter_;
       DiscreteFunctionType ubar_;
       int sequence_;
