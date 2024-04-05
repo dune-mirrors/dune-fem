@@ -174,6 +174,15 @@ namespace Dune
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         using pybind11::operator""_a;
 
+        cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution, bool additiveConstraints ) {
+            auto info = self.solve( rhs, solution, additiveConstraints );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
+            return ret;
+          } );
         cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
             auto info = self.solve( rhs, solution );
             pybind11::dict ret;

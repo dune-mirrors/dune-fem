@@ -13,15 +13,17 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, target, rhs=None ):
+def solve( scheme, target, rhs=None, additiveConstraints=None ):
     if rhs is None:
         if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
             assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
             return scheme._solve(target, scheme.preconditioning)
         else:
             return scheme._solve(target)
-    else:
+    elif additiveConstraints is None:
         return scheme._solve(rhs, target)
+    else:
+        return scheme._solve(rhs, target, additiveConstraints)
 
 
 _defaultGenerator = SimpleGenerator("Scheme", "Dune::FemPy")
