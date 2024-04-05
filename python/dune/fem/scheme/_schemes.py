@@ -521,7 +521,10 @@ def linearized(scheme, ubar=None, parameters={}):
     from . import module
     schemeType = scheme.cppTypeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
-    includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme.cppIncludes
+    includes = [
+        "dune/fem/schemes/linearized.hh",
+        "dune/fempy/parameter.hh",
+    ] + scheme.cppIncludes
 
     constructor1 = Constructor(['typename DuneType::SchemeType &scheme', 'typename DuneType::DiscreteFunctionType &ubar', 'const pybind11::dict &parameters'],
                                ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
@@ -529,9 +532,10 @@ def linearized(scheme, ubar=None, parameters={}):
     constructor2 = Constructor(['typename DuneType::SchemeType &scheme', 'const pybind11::dict &parameters'],
                                ['return new DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
                                ['"scheme"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
-    setup = Method('setup', '&DuneType::setup')
+    setup1 = Method('setup', 'static_cast<void (DuneType::*)(const typename DuneType::DiscreteFunctionType &)>(&DuneType::setup)')
+    setup2 = Method('setup', 'static_cast<void (DuneType::*)()>(&DuneType::setup)')
 
-    m = module(includes, typeName, constructor1, constructor2, setup)
+    m = module(includes, typeName, constructor1, constructor2, setup1, setup2)
     if ubar:
         return m.Scheme(scheme, ubar, parameters)
     else:
