@@ -537,6 +537,8 @@ def linearized(scheme, ubar=None, parameters={}):
 
     m = module(includes, typeName, constructor1, constructor2, setup1, setup2)
     if ubar:
-        return m.Scheme(scheme, ubar, parameters)
+        linearizedScheme = m.Scheme(scheme, ubar, parameters)
     else:
-        return m.Scheme(scheme, parameters)
+        linearizedScheme = m.Scheme(scheme, parameters)
+    linearizedScheme.nonLinearModel = scheme.model
+    return linearizedScheme
