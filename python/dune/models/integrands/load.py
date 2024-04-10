@@ -311,4 +311,6 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         Model._setConstant = module.Integrands.__dict__['setConstant']
         setattr(Model, 'setConstant', setConstant)
 
+    Model.dirichletConditions = dirichletBCs
+
     return Model
