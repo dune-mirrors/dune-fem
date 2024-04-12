@@ -63,11 +63,55 @@ def femscheme(includes, space, solver, operator, modelType):
     return includes, typeName
 
 def _schemeLinear(self, assemble=True, parameters=None):
-    A = _linear([self.domainSpace,self.rangeSpace],
+    A = _linear([self.domainSpace,self.rangeSpace],assemble,
                 parameters=(self.parameters if parameters is None else parameters))
-    if assemble:
-        self.jacobian(self.domainSpace.zero, A)
     return A
+
+def linearized(scheme, ubar=None, assemble=True, parameters={},
+               addAffine=True):
+    if assemble and not ubar:
+        ubar = scheme.space.zero
+    if ubar:
+        assemble=True
+    from . import module
+    schemeType = scheme.cppTypeName
+    typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
+    includes = [
+        "dune/fem/schemes/linearized.hh",
+        "dune/fempy/parameter.hh",
+    ] + scheme.cppIncludes
+
+    constructor1 = Constructor(['typename DuneType::SchemeType &scheme', 'typename DuneType::DiscreteFunctionType &ubar', 'const pybind11::dict &parameters'],
+                               ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['"scheme"_a', '"ubar"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
+    constructor2 = Constructor(['typename DuneType::SchemeType &scheme', 'const pybind11::dict &parameters'],
+                               ['return new DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['"scheme"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
+    if addAffine:
+        setup1 = Method('setup', 'static_cast<void (DuneType::*)(const typename DuneType::DiscreteFunctionType &)>(&DuneType::setup)')
+        setup2 = Method('setup', 'static_cast<void (DuneType::*)()>(&DuneType::setup)')
+    else:
+        setup1, setup2 = None,None
+
+    m = module(includes, typeName, constructor1, constructor2, setup1,
+                   setup2, baseClasses=["DuneType::SchemeType::LinearOperatorType"])
+
+    from dune.fem.space import addBackend
+    _,_,_,_,_, backend = scheme.space.storage
+    if hasattr(m.Scheme,"_backend") and backend is not None:
+        if backend == 'as_numpy':
+            from scipy.sparse import csr_matrix
+        addBackend(m.Scheme,backend)
+
+    linearizedScheme = m.Scheme(scheme, parameters)
+    linearizedScheme.nonLinearModel = scheme.model
+
+    if assemble:
+        if addAffine:
+            linearizedScheme.setup(ubar)
+        else:
+            scheme.jacobian(ubar, linearizedScheme)
+    return linearizedScheme
 
 def femschemeModule(space, model, includes, solver, operator, *args,
         parameters={},
@@ -81,7 +125,8 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     scheme.parameters = parameters
-    scheme.__class__.linear = _schemeLinear
+    # scheme.__class__.linear = _schemeLinear
+    scheme.__class__.linear = linearized
     return scheme
 
 from dune.fem.scheme.dgmodel import transform
@@ -268,7 +313,8 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     scheme.massModel = massIntegrands
 
     scheme.parameters = parameters
-    scheme.__class__.linear = _schemeLinear
+    # scheme.__class__.linear = _schemeLinear
+    scheme.__class__.linear = linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 
     if not errorMeasure is None:
@@ -438,7 +484,12 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     scheme.preconditioning = preconditioning
 
     scheme.parameters = parameters
-    scheme.__class__.linear = _schemeLinear
+    # '_schemeLinear' returns an object without 'solve' method
+    # scheme.__class__.linear = _schemeLinear
+    # 'linearized' returns an object from which we
+    # - can not extract the underlying matrix
+    # - can not pass to scheme.jacobian to reassemble
+    scheme.__class__.linear = linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 
     try:
@@ -515,30 +566,3 @@ def h1Galerkin(space, model, solver=None, parameters={}):
             ",".join([linOp,"Dune::Fem::ConservationLawModelIntegrands<"+model+">"]) + ">"
 
     return femschemeModule(space,model,includes,solver,operator,parameters=parameters)
-
-
-def linearized(scheme, ubar=None, parameters={}):
-    from . import module
-    schemeType = scheme.cppTypeName
-    typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
-    includes = [
-        "dune/fem/schemes/linearized.hh",
-        "dune/fempy/parameter.hh",
-    ] + scheme.cppIncludes
-
-    constructor1 = Constructor(['typename DuneType::SchemeType &scheme', 'typename DuneType::DiscreteFunctionType &ubar', 'const pybind11::dict &parameters'],
-                               ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
-                               ['"scheme"_a', '"ubar"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
-    constructor2 = Constructor(['typename DuneType::SchemeType &scheme', 'const pybind11::dict &parameters'],
-                               ['return new DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
-                               ['"scheme"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
-    setup1 = Method('setup', 'static_cast<void (DuneType::*)(const typename DuneType::DiscreteFunctionType &)>(&DuneType::setup)')
-    setup2 = Method('setup', 'static_cast<void (DuneType::*)()>(&DuneType::setup)')
-
-    m = module(includes, typeName, constructor1, constructor2, setup1, setup2)
-    if ubar:
-        linearizedScheme = m.Scheme(scheme, ubar, parameters)
-    else:
-        linearizedScheme = m.Scheme(scheme, parameters)
-    linearizedScheme.nonLinearModel = scheme.model
-    return linearizedScheme
