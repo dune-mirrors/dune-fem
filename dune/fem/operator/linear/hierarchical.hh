@@ -167,7 +167,7 @@ namespace Dune
         rangeSpace().blockMapper().mapEach( rangeEntity, makePairFunctor( domainSpace().blockMapper(), domainEntity, std::move( f ) ) );
       }
 
-      void clear () { clear( matrix_ ); }
+      virtual void clear () { clear( matrix_ ); }
       template <class I>
       void unitRow( const I localRow, const double diag = 1.0 )
       {

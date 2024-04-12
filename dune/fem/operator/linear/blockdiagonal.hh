@@ -115,7 +115,7 @@ namespace Dune
         assert( wit == w.leakPointer() + w.size() );
       }
 
-      void clear ()
+      virtual void clear ()
       {
         for( auto& entry : diagonal_ )
           entry = RangeFieldType( 0 );
