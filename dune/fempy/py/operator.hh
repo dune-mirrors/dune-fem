@@ -127,72 +127,6 @@ namespace Dune
         }
       }
 
-      template< class Operator, class... options >
-      inline static auto registerBasicOperator ( pybind11::class_< Operator, options... > cls )
-      {
-        typedef typename Operator::DomainFunctionType DomainFunction;
-        typedef typename Operator::RangeFunctionType RangeFunction;
-
-        using pybind11::operator""_a;
-
-        cls.def( "__call__", [] ( Operator &self, const DomainFunction &u, RangeFunction &w ) { self( u, w ); }, "u"_a, "w"_a );
-        registerGeneralOperatorCall( cls, PriorityTag< 42 >() );
-      }
-
-      // registerOperatorSetQuadrtureOrder
-      // ---------------------------------
-
-      template< class Operator, class... options >
-      inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
-        -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
-      {
-        cls.def( "setQuadratureOrders", [](Operator &self, unsigned int interior, unsigned int surface)
-            { self.setQuadratureOrders(interior,surface); } );
-      }
-
-      template< class Operator, class... options >
-      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class Operator, class... options >
-      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls )
-      {
-        registerOperatorQuadratureOrders( cls, PriorityTag< 42 >() );
-      }
-
-      template< class Operator, class... options,
-        decltype( std::declval< const Operator & >().domainSpace(), 0 ) = 0 >
-      inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<1> )
-      {
-        cls.def_property_readonly( "domainSpace", [] ( Operator &self ) -> auto& { return self.domainSpace(); } );
-        cls.def_property_readonly( "rangeSpace", [] ( Operator &self) -> auto& { return self.rangeSpace(); } );
-      }
-      template< class Operator, class... options >
-      inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<0> )
-      {}
-
-      // registerOperator
-      // ----------------
-
-      template< class Operator, class... options >
-      inline static void registerOperator ( pybind11::module module, pybind11::class_< Operator, options... > cls )
-      {
-        using pybind11::operator""_a;
-
-        registerBasicOperator(cls);
-
-        registerOperatorJacobian( cls, PriorityTag< 42 >() );
-        registerGeneralOperatorJacobian( cls, PriorityTag< 42 >() );
-        registerOperatorConstraints( cls );
-        registerOperatorQuadratureOrders ( cls );
-
-        registerOperatorSpaces( cls, PriorityTag< 42 >() );
-      }
-
-      //////////////////////////////////////////////////////////////
-      //////////////////////////////////////////////////////////////
-      //////////////////////////////////////////////////////////////
-
       // AddMatrixBackend
       // ----------------
 
@@ -266,6 +200,74 @@ namespace Dune
           }, pybind11::keep_alive<0,1>() );
       }
 
+
+      template< class Operator, class... options >
+      inline static auto registerBasicOperator ( pybind11::class_< Operator, options... > cls )
+      {
+        typedef typename Operator::DomainFunctionType DomainFunction;
+        typedef typename Operator::RangeFunctionType RangeFunction;
+
+        using pybind11::operator""_a;
+
+        cls.def( "__call__", [] ( Operator &self, const DomainFunction &u, RangeFunction &w ) { self( u, w ); }, "u"_a, "w"_a );
+        registerGeneralOperatorCall( cls, PriorityTag< 42 >() );
+        addMatrixBackend(cls, PriorityTag< 42 >());
+      }
+
+      // registerOperatorSetQuadrtureOrder
+      // ---------------------------------
+
+      template< class Operator, class... options >
+      inline static auto registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
+        -> void_t< decltype( std::declval< Operator >().setQuadratureOrders(0,0) ) >
+      {
+        cls.def( "setQuadratureOrders", [](Operator &self, unsigned int interior, unsigned int surface)
+            { self.setQuadratureOrders(interior,surface); } );
+      }
+
+      template< class Operator, class... options >
+      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class Operator, class... options >
+      inline static void registerOperatorQuadratureOrders ( pybind11::class_< Operator, options... > cls )
+      {
+        registerOperatorQuadratureOrders( cls, PriorityTag< 42 >() );
+      }
+
+      template< class Operator, class... options,
+        decltype( std::declval< const Operator & >().domainSpace(), 0 ) = 0 >
+      inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<1> )
+      {
+        cls.def_property_readonly( "domainSpace", [] ( Operator &self ) -> auto& { return self.domainSpace(); } );
+        cls.def_property_readonly( "rangeSpace", [] ( Operator &self) -> auto& { return self.rangeSpace(); } );
+      }
+      template< class Operator, class... options >
+      inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<0> )
+      {}
+
+      // registerOperator
+      // ----------------
+
+      template< class Operator, class... options >
+      inline static void registerOperator ( pybind11::module module, pybind11::class_< Operator, options... > cls )
+      {
+        using pybind11::operator""_a;
+
+        registerBasicOperator(cls);
+
+        registerOperatorJacobian( cls, PriorityTag< 42 >() );
+        registerGeneralOperatorJacobian( cls, PriorityTag< 42 >() );
+        registerOperatorConstraints( cls );
+        registerOperatorQuadratureOrders ( cls );
+
+        registerOperatorSpaces( cls, PriorityTag< 42 >() );
+      }
+
+      //////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////////
+
       // registerLinearOperator
       // ----------------------
 
@@ -273,18 +275,6 @@ namespace Dune
       inline static auto registerLinearOperator ( pybind11::handle scope, pybind11::class_< Operator, options... > cls )
       {
         registerBasicOperator(cls);
-
-#if 0 // linear operators are always assembled
-        typedef typename Operator::DomainFunctionType DomainFunction;
-        typedef typename Operator::RangeFunctionType RangeFunction;
-
-        // check whether Operator is of type
-        // AssembledOperator and thus offers a method matrix.
-        static constexpr std::size_t priority =
-            std::is_base_of< Dune::Fem::AssembledOperator< DomainFunction, RangeFunction>,
-                           Operator > :: value ? 42 : 0;
-#endif
-        addMatrixBackend(cls, PriorityTag< 42 >());
       }
 
     } // namespace detail
