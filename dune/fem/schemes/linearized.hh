@@ -68,7 +68,6 @@ namespace Dune
           inverseOperator_( nullptr ),
           affineShift_( "affine shift", scheme.space() ),
           isBound_(false),
-          useAffineShift_(false),
           parameter_( std::move( parameter ) ),
           ubar_("ubar", scheme.space())
       {
@@ -81,7 +80,6 @@ namespace Dune
           inverseOperator_( nullptr ),
           affineShift_( "affine shift", scheme.space() ),
           isBound_(false),
-          useAffineShift_(false),
           parameter_( std::move( parameter ) ),
           ubar_("ubar", scheme.space())
       {
@@ -145,9 +143,6 @@ namespace Dune
         BaseType::clear();
         affineShift_.clear();
         inverseOperator_->unbind();
-        // no affine shift available and scheme.jacobian could be called
-        // instead of setup providing no affine shift discrete function
-        useAffineShift_ = false;
         isBound_ = false;
       }
 
@@ -248,31 +243,35 @@ namespace Dune
           inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
         scheme_.fullOperator().jacobian(ubar_, *this);
         sequence_ = scheme_.space().sequence();
-        useAffineShift_ = true;
         affineShift();
         inverseOperator_->bind(*this);
         isBound_ = true;
       }
 
+      // this method is called from the 'setup' method and
+      // computes 'b' in (with u=ubar):
+      // L[w] = DS[u](w-u) + S[u]
+      //      = DS[u]w + S[u] - DS[u]u
+      //      = DS[u]w + b
+      // compute 'b = S[u] - DS[u]u'
       void affineShift() const
       {
-        if (!useAffineShift_)
-          return;
-
         DiscreteFunctionType tmp(ubar_);
         tmp.clear();
-
         affineShift_.clear();
+
+        // compute DS[u]u
         BaseType::operator()( ubar_, affineShift_ );
+        // compute S[u]
         scheme_.fullOperator()( ubar_, tmp );
         affineShift_ -= tmp;
+        // ???? affineShift_ *= -1;
         setConstraints(affineShift_);
       }
 
       SchemeType &scheme_;
       mutable std::shared_ptr<LinearInverseOperatorType> inverseOperator_;
       mutable DiscreteFunctionType affineShift_;
-      bool useAffineShift_;
       bool isBound_;
       Dune::Fem::ParameterReader parameter_;
       DiscreteFunctionType ubar_;
