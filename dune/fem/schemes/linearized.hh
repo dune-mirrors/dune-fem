@@ -90,36 +90,21 @@ namespace Dune
 
       void setup(const DiscreteFunctionType &ubar)
       {
-        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
-        scheme_.fullOperator().jacobian(ubar, *this);
-        inverseOperator_->bind(*this);
-        sequence_ = scheme_.space().sequence();
         ubar_.assign(ubar);
-        useAffineShift_ = true;
-        isBound_ = true;
+        setup_();
       }
 
       template <class GridFunction>
       void setup(const GridFunction &ubar)
       {
         Fem::interpolate(ubar, ubar_);
-        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
-        scheme_.fullOperator().jacobian(ubar_, *this);
-        inverseOperator_->bind(*this);
-        sequence_ = scheme_.space().sequence();
-        useAffineShift_ = true;
-        isBound_ = true;
+        setup_();
       }
 
       void setup()
       {
         ubar_.clear();
-        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
-        scheme_.fullOperator().jacobian(ubar_, *this);
-        inverseOperator_->bind(*this);
-        sequence_ = scheme_.space().sequence();
-        useAffineShift_ = true;
-        isBound_ = true;
+        setup_();
       }
 
       /** Note: this sets the error message of the non-existing
@@ -169,7 +154,6 @@ namespace Dune
       void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
       {
         assert( sequence_ == scheme_.space().sequence() );
-        affineShift();
         BaseType::operator()(u,w);
         w += affineShift_;
       }
@@ -204,10 +188,7 @@ namespace Dune
       {
         if (!isBound_)
           inverseOperator_->bind(*this);
-        sequence_ = scheme_.space().sequence();
-        assert( sequence_ == scheme_.space().sequence() );
         DiscreteFunctionType sumRhs = rhs;
-        affineShift();
         if (!additiveConstraints) {
           setConstraints(typename DiscreteFunctionType::RangeType(0), sumRhs);
         }
@@ -237,10 +218,7 @@ namespace Dune
       {
         if (!isBound_)
           inverseOperator_->bind(*this);
-        sequence_ = scheme_.space().sequence();
-        assert( sequence_ == scheme_.space().sequence() );
         setConstraints(solution);
-        affineShift();
         (*inverseOperator_)( affineShift_, solution );
         return SolverInfo( true, (*inverseOperator_).iterations(), 0 );
       }
@@ -264,14 +242,22 @@ namespace Dune
       }
 
     protected:
+      void setup_()
+      {
+        if (!inverseOperator_)
+          inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
+        scheme_.fullOperator().jacobian(ubar_, *this);
+        sequence_ = scheme_.space().sequence();
+        useAffineShift_ = true;
+        affineShift();
+        inverseOperator_->bind(*this);
+        isBound_ = true;
+      }
+
       void affineShift() const
       {
-        if (not useAffineShift_)
+        if (!useAffineShift_)
           return;
-        // testing for version without shift
-        if (affineShiftSequence_ == scheme_.space().sequence()) {
-          return;
-        }
 
         DiscreteFunctionType tmp(ubar_);
         tmp.clear();
@@ -281,7 +267,6 @@ namespace Dune
         scheme_.fullOperator()( ubar_, tmp );
         affineShift_ -= tmp;
         setConstraints(affineShift_);
-        affineShiftSequence_ = scheme_.space().sequence();
       }
 
       SchemeType &scheme_;
@@ -289,7 +274,6 @@ namespace Dune
       mutable DiscreteFunctionType affineShift_;
       bool useAffineShift_;
       bool isBound_;
-      mutable int affineShiftSequence_;
       Dune::Fem::ParameterReader parameter_;
       DiscreteFunctionType ubar_;
       mutable int sequence_;
