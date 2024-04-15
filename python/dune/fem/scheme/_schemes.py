@@ -71,7 +71,7 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
     schemeType = scheme.cppTypeName
     if onlyLinear:
         typeName = "Dune::Fem::LinearScheme< " + ", ".join([schemeType]) + " >"
-        baseClasses = ["DuneType::SchemeType::LinearOperatorType"]
+        baseClasses = ["DuneType::BaseType"]
     else:
         typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
         baseClasses = []
@@ -504,6 +504,13 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
 def galerkin(integrands, space=None, solver=None, parameters={},
              errorMeasure=None, virtualize=None, **kwargs):
+    domainSpace = kwargs.get("domainSpace",space)
+    rangeSpace = kwargs.get("rangeSpace",space)
+    if space is None:
+        space = domainSpace
+    if domainSpace != rangeSpace or domainSpace != space:
+        raise ValueError("provided spaces not compatible")
+
     galerkin.__doc__ = _galerkin.__doc__
     return _galerkin(integrands, space=space, solver=solver,
                      parameters=parameters, errorMeasure=errorMeasure,

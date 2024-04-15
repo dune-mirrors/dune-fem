@@ -83,6 +83,7 @@ namespace Dune
           zero_( "zero", scheme.space() )
       {
         zero_.clear();
+        scheme.jacobian(ubar,*this);
       }
 
       /** Note: this sets the error message of the non-existing
@@ -208,7 +209,7 @@ namespace Dune
 
       const GridPartType &gridPart () const { return scheme_.gridPart(); }
       const DiscreteFunctionSpaceType &space() const { return scheme_.space(); }
-      const SchemeType &scheme() { return scheme_; }
+      const SchemeType &scheme() const { return scheme_; }
 
       const ParameterReader& parameter () const { return parameter_; }
 
