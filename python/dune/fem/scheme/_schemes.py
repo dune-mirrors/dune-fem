@@ -8,7 +8,7 @@ from ufl import Form
 
 from dune.generator import Constructor, Method
 
-from dune.fem.operator import _linear, _opDirichletIndices
+from dune.fem.operator import _opDirichletIndices
 
 logger = logging.getLogger(__name__)
 
@@ -62,56 +62,64 @@ def femscheme(includes, space, solver, operator, modelType):
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
-def _schemeLinear(self, assemble=True, parameters=None):
-    A = _linear([self.domainSpace,self.rangeSpace],assemble,
-                parameters=(self.parameters if parameters is None else parameters))
-    return A
-
-def linearized(scheme, ubar=None, assemble=True, parameters={},
-               addAffine=True):
+def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True):
     if assemble and not ubar:
         ubar = scheme.space.zero
     if ubar:
         assemble=True
     from . import module
     schemeType = scheme.cppTypeName
-    typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
+    if onlyLinear:
+        typeName = "Dune::Fem::LinearScheme< " + ", ".join([schemeType]) + " >"
+        baseClasses = ["DuneType::SchemeType::LinearOperatorType"]
+    else:
+        typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
+        baseClasses = []
     includes = [
         "dune/fem/schemes/linearized.hh",
         "dune/fempy/parameter.hh",
     ] + scheme.cppIncludes
 
     constructor1 = Constructor(['typename DuneType::SchemeType &scheme', 'typename DuneType::DiscreteFunctionType &ubar', 'const pybind11::dict &parameters'],
-                               ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );'],
                                ['"scheme"_a', '"ubar"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
     constructor2 = Constructor(['typename DuneType::SchemeType &scheme', 'const pybind11::dict &parameters'],
-                               ['return new DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['return new DuneType( scheme, Dune::FemPy::pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );'],
                                ['"scheme"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
-    if addAffine:
+    if not onlyLinear:
         setup1 = Method('setup', 'static_cast<void (DuneType::*)(const typename DuneType::DiscreteFunctionType &)>(&DuneType::setup)')
         setup2 = Method('setup', 'static_cast<void (DuneType::*)()>(&DuneType::setup)')
     else:
         setup1, setup2 = None,None
 
-    m = module(includes, typeName, constructor1, constructor2, setup1,
-                   setup2, baseClasses=["DuneType::SchemeType::LinearOperatorType"])
+    m = module(includes, typeName, constructor1, constructor2, setup1, setup2, baseClasses=baseClasses)
 
-    from dune.fem.space import addBackend
-    _,_,_,_,_, backend = scheme.space.storage
-    if hasattr(m.Scheme,"_backend") and backend is not None:
-        if backend == 'as_numpy':
-            from scipy.sparse import csr_matrix
-        addBackend(m.Scheme,backend)
+    if onlyLinear:
+        from dune.fem.space import addBackend
+        _,_,_,_,_, backend = scheme.space.storage
+        if hasattr(m.Scheme,"_backend") and backend is not None:
+            if backend == 'as_numpy':
+                from scipy.sparse import csr_matrix
+            addBackend(m.Scheme,backend)
 
-    linearizedScheme = m.Scheme(scheme, parameters)
-    linearizedScheme.nonLinearModel = scheme.model
+    # Remove a Prefix in Python
+    rmPre = lambda txt,pre: txt if not txt.startswith(pre) else txt[len(pre):]
+    p = dict( [[rmPre(k,"newton.linear."),v] for k,v in scheme.parameters.items()] )
+    params = { **p, **parameters }
 
     if assemble:
-        if addAffine:
-            linearizedScheme.setup(ubar)
-        else:
-            scheme.jacobian(ubar, linearizedScheme)
+        linearizedScheme = m.Scheme(scheme, ubar=ubar, parameters=params)
+    else:
+        linearizedScheme = m.Scheme(scheme, parameters=params)
+
+    linearizedScheme.nonLinearModel = scheme.model
+    linearizedScheme.parameters = params
+    linearizedScheme.__class__.dirichletIndices = _opDirichletIndices
+
     return linearizedScheme
+
+def linearized(scheme, ubar=None, assemble=True, parameters={}):
+    return _linearized(scheme,ubar,assemble,parameters,onlyLinear=False)
 
 def femschemeModule(space, model, includes, solver, operator, *args,
         parameters={},
@@ -125,7 +133,6 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     scheme.parameters = parameters
-    # scheme.__class__.linear = _schemeLinear
     scheme.__class__.linear = linearized
     return scheme
 
@@ -313,8 +320,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     scheme.massModel = massIntegrands
 
     scheme.parameters = parameters
-    # scheme.__class__.linear = _schemeLinear
-    scheme.__class__.linear = linearized
+    scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 
     if not errorMeasure is None:
@@ -484,12 +490,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     scheme.preconditioning = preconditioning
 
     scheme.parameters = parameters
-    # '_schemeLinear' returns an object without 'solve' method
-    # scheme.__class__.linear = _schemeLinear
-    # 'linearized' returns an object from which we
-    # - can not extract the underlying matrix
-    # - can not pass to scheme.jacobian to reassemble
-    scheme.__class__.linear = linearized
+    scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 
     try:
