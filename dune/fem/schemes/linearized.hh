@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/io/parameter.hh>
 
