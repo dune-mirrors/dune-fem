@@ -20,13 +20,27 @@ namespace Dune
   {
     /*
       Idea is to setup the first two terms in the Taylor expansion:
-        L[w] = DS[u](w-u) + S[u]
-             = DS[u]w + S[u] - DS[u]u
+        L[w] = S[u] + DS[u](w-u)
+             = S[u] - DS[u]u + DS[u]w
              = DS[u]w + b
-        So 'b = S[u] - DS[u]u'
-        and 'L[w] = DS[u]w + b'
-        The solve method with rhs=f computed the solution to
-        'L[w] = f <=> L[w] = f-b'
+
+        So b = S[u] - DS[u]u
+        and L[w] = DS[u]w + b
+
+        The solve method with rhs=f computs the solution w to
+        L[w] = f <=> DS[u]w = f-b
+
+        With Dirichlet BCs:
+        From consturction of the underlying scheme we have
+        S[u] = u - g and DS[u]w = w on the boundary.
+
+        Therefore on the boundary we have
+        b = S[u] - DS[u]u = u - g - u = -g
+        and L[w] = DS[u]w + b = w - g
+        and solving L[w] = f is the same as DS[u]w = f-b or w = f-b = f+g on the boundary
+
+        Note: we store -b in the LinearizedScheme, the LinearScheme
+              represents the above but with b=0
     */
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -165,12 +179,9 @@ namespace Dune
           inverseOperator_->bind(*this);
           isBound_ = true;
         }
-        DiscreteFunctionType sumRhs = rhs;
-        if (!additiveConstraints) {
-          setConstraints(typename DiscreteFunctionType::RangeType(0), sumRhs);
-        }
-        setConstraints(sumRhs, solution);
-        (*inverseOperator_)( sumRhs, solution );
+
+        setConstraints(rhs, solution);
+        (*inverseOperator_)(rhs, solution );
         return SolverInfo( true, (*inverseOperator_).iterations(), 0);
       }
 
@@ -273,7 +284,7 @@ namespace Dune
       void setup()
       {
         ubar_.clear();
-        setup_();
+        setup_(true); // provide info that `ubar=0`
       }
 
       /** Note: this sets the error message of the non-existing
@@ -340,10 +351,9 @@ namespace Dune
       SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
       {
         DiscreteFunctionType sumRhs = rhs;
-        if (!additiveConstraints)
-          setConstraints(typename DiscreteFunctionType::RangeType(0), sumRhs);
         sumRhs.axpy(1.0, rhs_);
-        setConstraints(sumRhs, solution);
+        // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
+        // solution = u - DS[u]^{-1}(rhs+S[u]) and = rhs+g on the boundary
         return linOp_.solve( rhs, solution, additiveConstraints );
       }
 
@@ -365,7 +375,9 @@ namespace Dune
        */
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
-        return solve(rhs_, solution, false);
+        // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
+        // solution = u - DS[u]^{-1}S[u] and = g on the boundary
+        return linOp_.solve( rhs_, solution );
       }
 
       bool mark ( double tolerance ) { return linOp_.mark( tolerance ); }
@@ -377,21 +389,23 @@ namespace Dune
       const ParameterReader& parameter () const { return linOp_.parameter(); }
 
     protected:
-      void setup_()
+      void setup_(bool isZero=false)
       {
         scheme().jacobian(ubar_, linOp_);
 
         // compute rhs
         DiscreteFunctionType tmp(ubar_);
+        // compute tmp = S[u] (tmp = u-g on boundary)
         tmp.clear();
-        rhs_.clear();
-
-        // compute DS[u]u
-        linOp_( ubar_, rhs_ );
-        // compute S[u]
         scheme()( ubar_, tmp );
+
+        // compute rhs_ = DS[u]u (rhs_ = u on boundary)
+        rhs_.clear();
+        if (!isZero)
+          linOp_( ubar_, rhs_ );
+
+        // compute rhs_ -= tmp = DS[u]u-S[u] and u-(u-g)=g on boundary
         rhs_ -= tmp;
-        setConstraints(rhs_);
       }
 
       LinearOperatorType linOp_;
