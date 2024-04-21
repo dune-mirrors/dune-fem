@@ -152,18 +152,35 @@ namespace Dune
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         using pybind11::operator""_a;
 
+        /* using rightHandSide=space.zero() on the Python side
         cls.def( "_solve", [] ( Scheme &self,
                                 DiscreteFunction &solution,
-                                const typename Scheme::PreconditionerFunctionType& pre
+                                const typename Scheme::PreconditionerFunctionType& preconditioning
                               ) {
-            auto info = self.solve( solution, pre );
+            auto info = self.solve( solution, preconditioning );
             pybind11::dict ret;
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             ret["timing"] = pybind11::cast(info.timing);
             return ret;
-          } );
+          }, pybind11::arg("solution"), pybind11::kw_only(), pybind11::arg("preconditioning") );
+        */
+
+        cls.def( "_solve", [] ( Scheme &self,
+                                DiscreteFunction &solution,
+                                const DiscreteFunction &rightHandSide,
+                                const typename Scheme::PreconditionerFunctionType& preconditioning
+                              ) {
+            auto info = self.solve( solution, preconditioning );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
+            return ret;
+          }, pybind11::arg("solution"), pybind11::kw_only(),
+             pybind11::arg("rightHandSide"), pybind11::arg("preconditioning") );
       }
       template< class Scheme, class... options >
       inline static void registerPrecondSolve ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
@@ -174,26 +191,35 @@ namespace Dune
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         using pybind11::operator""_a;
 
-        cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution, bool additiveConstraints ) {
-            auto info = self.solve( rhs, solution, additiveConstraints );
+        cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution,
+                                              const DiscreteFunction &rightHandSide ) {
+            auto info = self.solve( rightHandSide, solution );
             pybind11::dict ret;
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
             ret["linear_iterations"] = pybind11::cast(info.linearIterations);
             ret["timing"] = pybind11::cast(info.timing);
             return ret;
-          } );
-        cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
-            auto info = self.solve( rhs, solution );
-            pybind11::dict ret;
-            ret["converged"]  = pybind11::cast(info.converged);
-            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
-            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
-            ret["timing"] = pybind11::cast(info.timing);
-            return ret;
-          } );
+          }, pybind11::arg("solution"), pybind11::kw_only(), pybind11::arg("rightHandSide") );
+
+        /* using rightHandSide=space.zero() on the Python side
         cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
             auto info = self.solve( solution );
+            pybind11::dict ret;
+            ret["converged"]  = pybind11::cast(info.converged);
+            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
+            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
+            ret["timing"] = pybind11::cast(info.timing);
+            return ret;
+          }, pybind11::arg("solution") );
+        */
+
+        // TODO: this method is deprecated
+        cls.def( "__solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
+            // TODO: change `rhs` so that it is `-g` on the boundary then the new
+            // `solve` method on the scheme leads to `u=rhs+g=0` on the
+            // boundary which is what the old version did.
+            auto info = self.solve( rhs, solution );
             pybind11::dict ret;
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);

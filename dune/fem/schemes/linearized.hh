@@ -127,6 +127,18 @@ namespace Dune
       {
         scheme_.subConstraints(u, v);
       }
+      void subConstraints( DiscreteFunctionType &v ) const
+      {
+        scheme_.subConstraints(v);
+      }
+      void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {
+        scheme_.addConstraints(u, v);
+      }
+      void addConstraints( DiscreteFunctionType &v ) const
+      {
+        scheme_.addConstraints(v);
+      }
       const auto& dirichletBlocks() const
       {
         return scheme_.dirichletBlocks();
@@ -153,24 +165,7 @@ namespace Dune
         (*this)(tmp,dest);
       }
 
-      /**
-       * additiveConstraints == true:
-       * Solve the system with an additional "rhs". That is, if the
-       * affine-linear operator is not linear (i.e. already has a
-       * "rhs") then the given rhs is added to the already present
-       * rhs, including values set for Dirichlet (or other constraint)
-       * DOFs. In order to, e.g., solve with Dirichlet zero values you
-       * have to install the negative Dirichlet values in the given
-       * rhs.
-       *
-       * additiveConstraints == false
-       * Extrawurst in order to be
-       * backwards-compatible: Ignore the Dirichlet values contained
-       * in rhs. This implies that this variant is not suitable as
-       * solver in e.g. Uzawa methods or Newton iterations as it
-       * enforces the non-homogeneous Dirichlet values from the model.
-       */
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
         if (!inverseOperator_)
           inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
@@ -180,18 +175,11 @@ namespace Dune
           isBound_ = true;
         }
 
-        setConstraints(rhs, solution);
-        (*inverseOperator_)(rhs, solution );
-        return SolverInfo( true, (*inverseOperator_).iterations(), 0);
-      }
+        DiscreteFunctionType rhs0 = rhs;
+        setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
 
-      /**
-       * This is the "old" solve with rhs which ignores any values of
-       * rhs set for the Constraint DOFs.
-       */
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
-      {
-        return solve(rhs, solution, false);
+        (*inverseOperator_)(rhs0, solution );
+        return SolverInfo( true, (*inverseOperator_).iterations(), 0);
       }
 
       /**
@@ -210,7 +198,8 @@ namespace Dune
           inverseOperator_->bind(*this);
           isBound_ = true;
         }
-        setConstraints(solution);
+        zero_.clear();
+        setConstraints(typename DiscreteFunctionType::RangeType(0), solution);
         (*inverseOperator_)( zero_, solution );
         return SolverInfo( true, (*inverseOperator_).iterations(), 0 );
       }
@@ -314,6 +303,18 @@ namespace Dune
       {
         linOp_.subConstraints(u, v);
       }
+      void subConstraints( DiscreteFunctionType &v ) const
+      {
+        linOp_.subConstraints(v);
+      }
+      void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+      {
+        linOp_.addConstraints(u, v);
+      }
+      void addConstraints( DiscreteFunctionType &v ) const
+      {
+        linOp_.addConstraints(v);
+      }
       const auto& dirichletBlocks() const
       {
         return linOp_.dirichletBlocks();
@@ -331,39 +332,13 @@ namespace Dune
         dest -= rhs_;
       }
 
-      /**
-       * additiveConstraints == true:
-       * Solve the system with an additional "rhs". That is, if the
-       * affine-linear operator is not linear (i.e. already has a
-       * "rhs") then the given rhs is added to the already present
-       * rhs, including values set for Dirichlet (or other constraint)
-       * DOFs. In order to, e.g., solve with Dirichlet zero values you
-       * have to install the negative Dirichlet values in the given
-       * rhs.
-       *
-       * additiveConstraints == false
-       * Extrawurst in order to be
-       * backwards-compatible: Ignore the Dirichlet values contained
-       * in rhs. This implies that this variant is not suitable as
-       * solver in e.g. Uzawa methods or Newton iterations as it
-       * enforces the non-homogeneous Dirichlet values from the model.
-       */
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
         DiscreteFunctionType sumRhs = rhs;
         sumRhs.axpy(1.0, rhs_);
         // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
         // solution = u - DS[u]^{-1}(rhs+S[u]) and = rhs+g on the boundary
-        return linOp_.solve( rhs, solution, additiveConstraints );
-      }
-
-      /**
-       * This is the "old" solve with rhs which ignores any values of
-       * rhs set for the Constraint DOFs.
-       */
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
-      {
-        return solve(rhs, solution, false);
+        return linOp_.solve( sumRhs, solution);     // don't add constraints again
       }
 
       /**
@@ -404,7 +379,7 @@ namespace Dune
         if (!isZero)
           linOp_( ubar_, rhs_ );
 
-        // compute rhs_ -= tmp = DS[u]u-S[u] and u-(u-g)=g on boundary
+        // compute rhs_ - tmp = DS[u]u-S[u] and u-(u-g)=g on boundary
         rhs_ -= tmp;
       }
 

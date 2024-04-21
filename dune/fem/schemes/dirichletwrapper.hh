@@ -63,6 +63,22 @@ struct DirichletWrapperOperator
     // subtract boundary values from solution
     constraints()( u, w, ConstraintsType::Operation::sub );
   }
+  void subConstraints( RangeFunctionType &w ) const
+  {
+    // subtract boundary values from solution
+    constraints()( w, ConstraintsType::Operation::sub );
+  }
+  template <class GF>
+  void addConstraints( const GF &u, RangeFunctionType &w ) const
+  {
+    // add boundary values to solution
+    constraints()( u, w, ConstraintsType::Operation::add );
+  }
+  void addConstraints( RangeFunctionType &w ) const
+  {
+    // add boundary values to solution
+    constraints()( w, ConstraintsType::Operation::add );
+  }
   const auto &dirichletBlocks() const
   {
     return constraints().dirichletBlocks();

@@ -153,6 +153,24 @@ public:
   }
   template <typename O = Operator>
   std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  subConstraints( DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.subConstraints( v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.addConstraints( u, v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
+  addConstraints( DiscreteFunctionType &v ) const
+  {
+    implicitOperator_.addConstraints( v );
+  }
+  template <typename O = Operator>
+  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
   setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
   {
     implicitOperator_.setConstraints( value, u );
@@ -192,21 +210,11 @@ public:
   {
     invOp_.setErrorMeasure(errorMeasure);
   }
-  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
+  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
   {
     DiscreteFunctionType rhs0 = rhs;
-    if (additiveConstraints) {
-      // Kludgy. The goal is to install the sum of the model
-      // constraints and the constraints supplied by the RHS into the solution vector.
-      rhs0.clear();
-      setConstraints(rhs0); // set model constraints
-      rhs0.axpy(1.0, rhs);  // add rhs constraints
-      setConstraints(rhs0, solution); // copy the sum to solution
-      setConstraints(rhs, rhs0); // restore rhs constraints in rhs0
-    } else {
-      setZeroConstraints( rhs0 );
-      setModelConstraints( solution );
-    }
+    addConstraints(rhs0); // add the model constraints
+    setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
 
     invOp_.bind( implicitOperator_ );
     invOp_( rhs0, solution );

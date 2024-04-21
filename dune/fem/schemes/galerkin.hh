@@ -1732,32 +1732,26 @@ namespace Dune
           invOp_.setErrorMeasure(errorMeasure);
         }
 
-        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, bool additiveConstraints ) const
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
         {
-          DiscreteFunctionType rhs0(rhs);
-          if (additiveConstraints) {
-            // Kludgy. The goal is to install the sum of the model
-            // constraints and the constraints supplied by the RHS into the solution vector.
-            rhs0.clear();
-            setConstraints(rhs0); // set model constraints
-            rhs0.axpy(1.0, rhs);  // add rhs constraints
-            setConstraints(rhs0, solution); // copy the sum to solution
-            setConstraints(rhs, rhs0); // restore rhs constraints in rhs0
-          } else {
-            // just ignore the constraints subspace values supplied by rhs
-            setZeroConstraints( rhs0 );
-            setConstraints( solution );
-          }
+          DiscreteFunctionType rhs0 = rhs;
+          setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
 
           invOp_.bind(fullOperator());
           invOp_( rhs0, solution );
           invOp_.unbind();
           return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
-
-        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
         {
-          return solve ( rhs, solution, false );
+          DiscreteFunctionType rhs0 = rhs;
+          setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
+
+          PreconditionerFunctionWrapperType pre( p );
+          invOp_.bind(fullOperator(), pre);
+          invOp_( rhs0, solution );
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
 
         SolverInfo solve ( DiscreteFunctionType &solution ) const
@@ -1820,6 +1814,21 @@ namespace Dune
         {
           if constexpr (addDirichletBC)
             fullOperator().subConstraints( u, v );
+        }
+        void subConstraints( DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().subConstraints( v );
+        }
+        void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().addConstraints( u, v );
+        }
+        void addConstraints( DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().addConstraints( v );
         }
         const auto& dirichletBlocks() const
         {
