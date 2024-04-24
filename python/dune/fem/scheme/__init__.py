@@ -11,11 +11,19 @@ import re
 from dune.deprecate import deprecated
 from ._schemes import *
 
+from dune.fem.deprecated import deprecated
 from dune.generator.generator import SimpleGenerator
 
 def solve( scheme, target, rhs=None, *, rightHandSide=None ):
     if rhs is not None:
-        # TODO: this is deprecated!
+        deprecated("""
+The `solve` method with argument `rhs` is deprecated, used named argument ``rightHandSide`` instead.
+Note that the behavior has changed if dirichlet boundary constraints are present.
+When using `rhs` argument the result on the boundary is `target=g`
+while the new behavior leads to `target=rightHandSide+g`.
+
+See changelog entry in tutorial for more details.
+""")
         try:
             scheme.setConstraints(0,rhs) # this is what was implemented originally in the scheme
         except:
