@@ -541,17 +541,6 @@ namespace Dune
           if constexpr (addDirichletBC)
             return fullOperator().dirichletBlocks();
         }
-
-        const ParameterReader& parameter () const
-        {
-          return parameter_;
-        }
-
-        const auto& dirichletBlocks() const
-        {
-          if constexpr (addDirichletBC)
-            return fullOperator().dirichletBlocks();
-        }
         const ParameterReader& parameter () const
         {
           return parameter_;
