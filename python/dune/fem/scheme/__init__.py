@@ -16,6 +16,10 @@ from dune.generator.generator import SimpleGenerator
 def solve( scheme, target, rhs=None, *, rightHandSide=None ):
     if rhs is not None:
         # TODO: this is deprecated!
+        try:
+            scheme.setConstraints(0,rhs) # this is what was implemented originally in the scheme
+        except:
+            pass # no constraints available
         if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
             assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
             return scheme.__solve(rhs,target, scheme.preconditioning)

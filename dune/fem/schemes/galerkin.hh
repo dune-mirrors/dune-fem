@@ -1734,48 +1734,30 @@ namespace Dune
 
         SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
         {
-          DiscreteFunctionType rhs0 = rhs;
-          setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
-
           invOp_.bind(fullOperator());
-          invOp_( rhs0, solution );
+          _solve(rhs,solution);
           invOp_.unbind();
           return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
         SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
         {
-          DiscreteFunctionType rhs0 = rhs;
-          setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
-
           PreconditionerFunctionWrapperType pre( p );
           invOp_.bind(fullOperator(), pre);
-          invOp_( rhs0, solution );
+          _solve(rhs,solution);
           invOp_.unbind();
           return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
-
         SolverInfo solve ( DiscreteFunctionType &solution ) const
         {
-          DiscreteFunctionType bnd( solution );
-          bnd.clear();
-          setModelConstraints( solution );
-          invOp_.bind(fullOperator());
-          invOp_( bnd, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution);
         }
-
         SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
         {
-          DiscreteFunctionType bnd( solution );
-          bnd.clear();
-          setModelConstraints( solution );
-
-          PreconditionerFunctionWrapperType pre( p );
-          invOp_.bind(fullOperator(), pre);
-          invOp_( bnd, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution,p);
         }
 
         template< class GridFunction >
@@ -1842,15 +1824,12 @@ namespace Dune
         }
 
       protected:
-        void setZeroConstraints( DiscreteFunctionType &u ) const
+        SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
         {
-          if constexpr (addDirichletBC)
-            fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u );
-        }
-        void setModelConstraints( DiscreteFunctionType &u ) const
-        {
-          if constexpr (addDirichletBC)
-            fullOperator().setConstraints( u );
+          setConstraints(solution);
+          addConstraints(rhs,solution);
+          invOp_( rhs, solution );
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
         const DiscreteFunctionSpaceType &dfSpace_;
         DifferentiableOperatorType fullOperator_;

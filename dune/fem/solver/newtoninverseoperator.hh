@@ -260,6 +260,12 @@ namespace Dune
      *  \note Verbosity of the NewtonInverseOperator is controlled via the
      *        paramter <b>fem.solver.newton.verbose</b>; it defaults to
      *        <b>fem.solver.verbose</b>.
+     *
+     *  \note Similar to CG solver the initial guess should take the
+     *        constraints into account. In this case we need the initial
+     *        residual to be zero on the boundary, i.e., when calling
+     *        operator()(u,w) then w=g+u should hold on the Dirichlet boundary.
+     *        This way we do not explicitly need to call the constraints here.
      */
     template< class JacobianOperator, class LInvOp >
     class NewtonInverseOperator
@@ -568,7 +574,7 @@ namespace Dune
       linearIterations_ = 0;
       // compute initial residual
       (*op_)( w, residual );   // r=S[w],   r=w-g on bnd
-      residual -= u;           // r=S[w]-u, r=w-g-u on bnd
+      residual -= u;           // r=S[w]-u, r=w-g-u on bnd (note: we should start with w=g+u on bnd so r=0)
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
       updateLinearTolerance();
 
