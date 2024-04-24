@@ -24,7 +24,7 @@ dune-fem can be installed using the Package Index of Python (pip).
 pip install dune-fem
 ```
 
-See https://dune-project.org/doc/installation-pip/ for a more detailed
+See https://dune-project.org/sphinx/content/sphinx/dune-fem/installation.html for a more detailed
 description.
 
 **From source**
