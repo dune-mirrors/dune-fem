@@ -1726,6 +1726,15 @@ namespace Dune
         {
           fullOperator()( u, w );
         }
+        template< class GridFunction >
+        void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
+        {
+          fullOperator().jacobian( ubar, linearOp );
+        }
+
+        const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
+        const GridPartType &gridPart () const { return space().gridPart(); }
+        ModelType &model() const { return fullOperator().model(); }
 
         void setErrorMeasure(ErrorMeasureType &errorMeasure) const
         {
@@ -1759,16 +1768,6 @@ namespace Dune
           zero.clear();
           return solve(zero,solution,p);
         }
-
-        template< class GridFunction >
-        void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
-        {
-          fullOperator().jacobian( ubar, linearOp );
-        }
-
-        const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
-        const GridPartType &gridPart () const { return space().gridPart(); }
-        ModelType &model() const { return fullOperator().model(); }
 
         void setConstraints( DomainFunctionType &u ) const
         {
@@ -1822,7 +1821,6 @@ namespace Dune
         {
           return parameter_;
         }
-
       protected:
         SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
         {
