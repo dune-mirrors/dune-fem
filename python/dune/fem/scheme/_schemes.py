@@ -133,7 +133,8 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     scheme.parameters = parameters
-    scheme.__class__.linear = linearized
+    scheme.__class__.linear = _linearized
+    scheme.__class__.dirichletIndices = _opDirichletIndices
     return scheme
 
 from dune.fem.scheme.dgmodel import transform

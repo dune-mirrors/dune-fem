@@ -55,7 +55,7 @@ namespace Dune
       typedef typename SchemeType::DiscreteFunctionType DiscreteFunctionType;
       typedef typename SchemeType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename SchemeType::GridPartType GridPartType;
-      typedef typename SchemeType::InverseOperatorType LinearInverseOperatorType;
+      typedef typename SchemeType::LinearInverseOperatorType LinearInverseOperatorType;
       typedef typename LinearInverseOperatorType::SolverParameterType ParameterType;
       typedef typename SchemeType::ModelType ModelType;
 

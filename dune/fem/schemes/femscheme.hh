@@ -40,19 +40,9 @@
 #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
 #define DUNE_FEM_SCHEMES_FEMSCHEME_HH
 
-#include <type_traits>
-#include <utility>
-#include <iostream>
-#include <memory>
 #include <dune/common/typeutilities.hh>
-
-// include discrete function space
-#include <dune/fem/space/lagrange.hh>
-
 #include <dune/fem/operator/common/differentiableoperator.hh>
-
-#include <dune/fem/io/file/dataoutput.hh>
-#include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/parameter/reader.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 #include <dune/fem/solver/preconditionfunctionwrapper.hh>
 
@@ -115,16 +105,31 @@ public:
   using DirichletBlockVector = typename AddDirichletBC<Operator,DomainFunctionType>::DirichletBlockVector;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  //! constructor with one model
+  FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model,
+              const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : space_( space ),
     // the elliptic operator (implicit)
-    implicitOperator_( space, space, model, parameter ),
+    fullOperator_( space, space, model, parameter ),
     // create linear operator (domainSpace,rangeSpace)
     invOp_( parameter )
   {}
 
-  const DifferentiableOperatorType &fullOperator() const { return implicitOperator_; }
-  DifferentiableOperatorType &fullOperator() { return implicitOperator_; }
+  //! constructor for derived classes (GalerkinScheme and MassLumpingScheme) with a list of models
+  template < class... Models >
+  FemScheme ( const DiscreteFunctionSpaceType &space,      // discrete function space
+              const Dune::Fem::ParameterReader &parameter, // parameters
+              Models &&... models )                        // list of models, could be more than one
+  : space_( space ),
+    // the full discretized operator
+    fullOperator_( space, space, std::forward< Models >( models )... ), // why not pass parameters?
+    // create inverse operator to invert the operator
+    invOp_( parameter )
+  {}
+
+
+  const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
+  DifferentiableOperatorType &fullOperator() { return fullOperator_; }
 
   template <typename O = DifferentiableOperatorType>
   auto setQuadratureOrders(unsigned int interior, unsigned int surface)
@@ -177,18 +182,18 @@ public:
   const auto &dirichletBlocks() const
   {
     if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
-      return implicitOperator_.dirichletBlocks();
+      return fullOperator().dirichletBlocks();
   }
 
   void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
   {
-    implicitOperator_( arg, dest );
+    fullOperator()( arg, dest );
   }
   template <class GridFunction>
   auto operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
   -> Dune::void_t<decltype(std::declval<const Operator&>()(arg,dest))>
   {
-    implicitOperator_( arg, dest );
+    fullOperator()( arg, dest );
   }
 
   struct SolverInfo
@@ -207,33 +212,33 @@ public:
     invOp_.setErrorMeasure(errorMeasure);
   }
 
-        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
-        {
-          invOp_.bind(fullOperator());
-          _solve(rhs,solution);
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-        }
-        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
-        {
-          PreconditionerFunctionWrapperType pre( p );
-          invOp_.bind(fullOperator(), pre);
-          _solve(rhs,solution);
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-        }
-        SolverInfo solve ( DiscreteFunctionType &solution ) const
-        {
-          DiscreteFunctionType zero( solution );
-          zero.clear();
-          return solve(zero,solution);
-        }
-        SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
-        {
-          DiscreteFunctionType zero( solution );
-          zero.clear();
-          return solve(zero,solution,p);
-        }
+  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+  {
+    invOp_.bind(fullOperator());
+    _solve(rhs,solution);
+    invOp_.unbind();
+    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+  }
+  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+  {
+    PreconditionerFunctionWrapperType pre( p );
+    invOp_.bind(fullOperator(), pre);
+    _solve(rhs,solution);
+    invOp_.unbind();
+    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+  }
+  SolverInfo solve ( DiscreteFunctionType &solution ) const
+  {
+    DiscreteFunctionType zero( solution );
+    zero.clear();
+    return solve(zero,solution);
+  }
+  SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
+  {
+    DiscreteFunctionType zero( solution );
+    zero.clear();
+    return solve(zero,solution,p);
+  }
 
   template< class GridFunction, std::enable_if_t<
         std::is_same< decltype(
@@ -244,7 +249,7 @@ public:
     >
   void jacobian( const GridFunction &ubar, JacobianOperatorType &linOp ) const
   {
-    implicitOperator_.jacobian(ubar, linOp);
+    fullOperator().jacobian(ubar, linOp);
   }
 
   const GridPartType &gridPart () const { return space().gridPart(); }
@@ -252,11 +257,11 @@ public:
 
   const ModelType &model() const
   {
-    return implicitOperator_.model();
+    return fullOperator().model();
   }
   ModelType &model()
   {
-    return implicitOperator_.model();
+    return fullOperator().model();
   }
 protected:
   SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
@@ -266,9 +271,10 @@ protected:
     invOp_( rhs, solution );
     return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
   }
-  const DiscreteFunctionSpaceType &space_; // discrete function space
-  DifferentiableOperatorType implicitOperator_;
-  mutable InverseOperatorType invOp_;
+
+  const DiscreteFunctionSpaceType &space_;  // discrete function space
+  DifferentiableOperatorType fullOperator_; // full operator to be inverted by invOp
+  mutable InverseOperatorType invOp_;       // non linear solver
 };
 
 #endif // #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
