@@ -229,6 +229,11 @@ namespace Dune
         return parameter_.getValue< bool >( keyPrefix_ + "threading", true );
       }
 
+      virtual bool knollTrick() const
+      {
+        return parameter_.getValue< bool >( keyPrefix_ + "knolltrick", false );
+      }
+
      private:
       virtual double absoluteTol__ ( )  const
       {
