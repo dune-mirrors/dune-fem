@@ -19,8 +19,8 @@ namespace Dune
     class PetscLinearOperator ;
 #endif
 
-    // GalerkinOperator
-    // ----------------
+    // MassLumpingOperator
+    // -------------------
 
     template< class Integrands, class MassIntegrands, class DomainFunction, class RangeFunction = DomainFunction >
     struct MassLumpingOperator
@@ -48,7 +48,7 @@ namespace Dune
         typedef CachingQuadrature< GridPartType, 1, Capabilities::DefaultQuadrature< Space > :: template DefaultQuadratureTraits  > SurfaceQuadratureType;
       };
 
-      // define Galerkin operator with different quadratures
+      // define Galerkin operator with different quadratures (i.e. LumpingQuadrature)
       typedef Impl::LocalGalerkinOperator< MassIntegrands, LumpingQuadratureSelector > MassOperatorImplType;
 
       typedef typename RangeFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
@@ -182,8 +182,8 @@ namespace Dune
 
 
 
-    // DifferentiableGalerkinOperator
-    // ------------------------------
+    // DifferentiableMassLumpingOperator
+    // ---------------------------------
 
     template< class Integrands, class MassIntegrands, class JacobianOperator >
     class MassLumpingDifferentiableOperator
@@ -348,8 +348,8 @@ namespace Dune
 
 
 
-    // AutomaticDifferenceGalerkinOperator
-    // -----------------------------------
+    // AutomaticDifferenceMassLumpingOperator
+    // --------------------------------------
 
     template< class Integrands, class DomainFunction, class RangeFunction >
     class MassLumpingAutomaticDifferenceGalerkinOperator
@@ -376,7 +376,7 @@ namespace Dune
       // MassLumpingSchemeImpl
       // ---------------------
       template< class Integrands, class MassIntegrands,
-                class LinearOperator, class InverseOperator, bool addDirichletBC,
+                class LinearOperator, bool addDirichletBC,
                 template <class,class,class> class DifferentiableGalerkinOperatorImpl >
       struct MassLumpingSchemeTraits
       {
@@ -401,19 +401,22 @@ namespace Dune
       // MassLumpingSchemeImpl
       // ---------------------
       template< class Integrands, class MassIntegrands,
-                class LinearOperator, class InverseOperator, bool addDirichletBC,
+                class LinearOperator, class LinearInverseOperator, bool addDirichletBC,
                 template <class,class,class> class DifferentiableGalerkinOperatorImpl = MassLumpingDifferentiableOperator >
       struct MassLumpingSchemeImpl : public FemScheme< typename  MassLumpingSchemeTraits< Integrands, MassIntegrands, LinearOperator,
-                                      InverseOperator, addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
-                                      InverseOperator > // LinearInverseOperator
+                                       addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
+                                      LinearInverseOperator > // LinearInverseOperator
       {
         typedef FemScheme< typename MassLumpingSchemeTraits< Integrands, MassIntegrands, LinearOperator,
-                                   InverseOperator, addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
-                                   InverseOperator > // LinearInverseOperator
+                                   addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
+                                   LinearInverseOperator > // LinearInverseOperator
                         BaseType;
 
+        // type of discrete function space used with this scheme
         typedef typename BaseType :: DiscreteFunctionSpaceType    DiscreteFunctionSpaceType;
-        typedef MassIntegrands  MassModelType; // needed for registerSchemeConstructor (Python export)
+
+        // needed for registerSchemeConstructor (Python export)
+        typedef MassIntegrands  MassModelType;
 
         MassLumpingSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
                                 const Integrands &integrands,

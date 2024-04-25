@@ -225,7 +225,7 @@ namespace Dune
         {
           Dune::FemPy::detail::registerBasicOperator(clsInvOp.first);
           clsInvOp.first.def("bind",[] (typename Scheme::LinearInverseOperatorType &self,
-                                  typename Scheme::JacobianOperatorType &jOp) {
+                                        typename Scheme::JacobianOperatorType &jOp) {
               self.bind(jOp);
           });
           clsInvOp.first.def_property_readonly("iterations",[]( typename Scheme::LinearInverseOperatorType &self) {

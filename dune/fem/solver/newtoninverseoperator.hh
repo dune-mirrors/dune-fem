@@ -16,6 +16,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
+#include <dune/fem/solver/inverseoperatorinterface.hh>
 
 namespace Dune
 {
@@ -326,6 +327,9 @@ namespace Dune
 
       typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
 
+      //! performance info about last solver call
+      typedef Impl::SolverInfo SolverInfoType;
+
       /** constructor
        *
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
@@ -500,6 +504,9 @@ namespace Dune
 
       //! returns [overall, jacobian, solve] timings in seconds for last operator () call.
       const std::vector<double>& timing() const { return timing_; }
+
+      //! return performance information about last solver run */
+      SolverInfoType info() const { return SolverInfoType( converged(), linearIterations(), iterations(), timing() ); }
 
     protected:
       void bindOperatorAndPreconditioner( JacobianOperatorType& jOp ) const

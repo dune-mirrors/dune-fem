@@ -10,6 +10,26 @@
 namespace Dune {
   namespace Fem {
 
+    namespace Impl {
+      //! class containing some performance information about solvers
+      struct SolverInfo
+      {
+        SolverInfo(bool pconverged,int plinearIterations,int pnonlinearIterations, const std::vector<double>& ptiming)
+          : converged(pconverged), linearIterations(plinearIterations),
+            nonlinearIterations(pnonlinearIterations), timing(ptiming)
+        {}
+
+        SolverInfo(bool pconverged,int plinearIterations)
+          : SolverInfo(pconverged, plinearIterations, 0, std::vector<double> ())
+        {}
+
+        bool converged;
+        int linearIterations;
+        int nonlinearIterations;
+        std::vector<double> timing;
+      };
+    }
+
     template <class Traits>
     class InverseOperatorInterface :
       public Dune::Fem::Operator< typename Traits::DiscreteFunctionType, typename Traits::DiscreteFunctionType >,
@@ -31,6 +51,11 @@ namespace Dune {
       typedef typename Traits :: AssembledOperatorType        AssembledOperatorType;
       typedef typename Traits :: PreconditionerType           PreconditionerType;
       typedef typename Traits :: SolverParameterType          SolverParameterType;
+
+      typedef Impl::SolverInfo SolverInfoType;
+
+      //! type of error measure (used by NewtonInverseOperator primnarily)
+      typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
 
       /** \brief true if a preconditioner type is exported and can be set using bind( op, p ) */
       static const bool preconditioningAvailable = true;
@@ -104,6 +129,9 @@ namespace Dune {
 
       /** \brief return number of iterations used in previous call of application operator */
       int iterations () const { return iterations_; }
+
+      /** \brief Return performance info about last solver call */
+      virtual SolverInfoType info() const { return SolverInfoType( true, iterations () ); }
 
       /** \brief set number of max linear iterations to be used before an exception is thrown
        *  \param iter  number of max linear iterations

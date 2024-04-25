@@ -1,42 +1,3 @@
-/**************************************************************************
-
-  The dune-fem module is a module of DUNE (see www.dune-project.org).
-  It is based on the dune-grid interface library
-  extending the grid interface by a number of discretization algorithms
-  for solving non-linear systems of partial differential equations.
-
-  Copyright (C) 2003 - 2015 Robert Kloefkorn
-  Copyright (C) 2003 - 2010 Mario Ohlberger
-  Copyright (C) 2004 - 2015 Andreas Dedner
-  Copyright (C) 2005        Adrian Burri
-  Copyright (C) 2005 - 2015 Mirko Kraenkel
-  Copyright (C) 2006 - 2015 Christoph Gersbacher
-  Copyright (C) 2006 - 2015 Martin Nolte
-  Copyright (C) 2011 - 2015 Tobias Malkmus
-  Copyright (C) 2012 - 2015 Stefan Girke
-  Copyright (C) 2013 - 2015 Claus-Justus Heine
-  Copyright (C) 2013 - 2014 Janick Gerstenberger
-  Copyright (C) 2013        Sven Kaulman
-  Copyright (C) 2013        Tom Ranner
-  Copyright (C) 2015        Marco Agnese
-  Copyright (C) 2015        Martin Alkaemper
-
-
-  The dune-fem module is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License as
-  published by the Free Software Foundation; either version 2 of
-  the License, or (at your option) any later version.
-
-  The dune-fem module is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write to the Free Software Foundation, Inc.,
-  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-**************************************************************************/
 #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
 #define DUNE_FEM_SCHEMES_FEMSCHEME_HH
 
@@ -45,6 +6,11 @@
 #include <dune/fem/io/parameter/reader.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 #include <dune/fem/solver/preconditionfunctionwrapper.hh>
+
+namespace Dune
+{
+  namespace Fem
+  {
 
 // FemScheme
 //----------
@@ -63,8 +29,9 @@ struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declva
   using DirichletBlockVector = typename Op::DirichletBlockVector;
 };
 
-
-template< class Operator, class LinearInverseOperator >
+template< class Operator, class LinearInverseOperator,
+          class InverseOperator = Dune::Fem::NewtonInverseOperator< typename Operator::JacobianOperatorType,
+                                                                    LinearInverseOperator > >
 class FemScheme
 {
 public:
@@ -82,7 +49,7 @@ public:
   static_assert( std::is_same< typename DiscreteFunctionSpaceType::GridPartType, GridPartType >::value,
         "GridPart of Space has to be identical to GridPart of Model class" );
 
-  //! type of underyling hierarchical grid needed for data output
+  //! type of underlying hierarchical grid needed for data output
   typedef typename GridPartType::GridType GridType;
 
   //! type of function space (scalar functions, \f$ f: \Omega -> R) \f$
@@ -90,7 +57,10 @@ public:
 
   typedef typename Operator::JacobianOperatorType JacobianOperatorType;
   typedef typename Operator::JacobianOperatorType LinearOperatorType;
-  typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
+
+  // type of inverse operator (could be nonlinear or linear depending on the derived class)
+  typedef InverseOperator InverseOperatorType;
+
   typedef typename InverseOperatorType::ErrorMeasureType ErrorMeasureType;
 
   typedef Dune::Fem::PreconditionerFunctionWrapper<
@@ -105,13 +75,17 @@ public:
   using DirichletBlockVector = typename AddDirichletBC<Operator,DomainFunctionType>::DirichletBlockVector;
   /*********************************************************/
 
+  //! type of solver statistics reported (defined in inverseoperatorinterface.hh)
+  typedef typename InverseOperatorType::SolverInfoType  SolverInfoType;
+
   //! constructor with one model
   FemScheme ( const DiscreteFunctionSpaceType &space, ModelType &model,
               const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : space_( space ),
-    // the elliptic operator (implicit)
-    fullOperator_( space, space, model, parameter ),
-    // create linear operator (domainSpace,rangeSpace)
+    // the full discretized operator
+    fullOpPtr_( new DifferentiableOperatorType(space, space, model, parameter) ),
+    fullOperator_( *fullOpPtr_ ),
+    // create inverse operator to invert the operator
     invOp_( parameter )
   {}
 
@@ -122,11 +96,22 @@ public:
               Models &&... models )                        // list of models, could be more than one
   : space_( space ),
     // the full discretized operator
-    fullOperator_( space, space, std::forward< Models >( models )... ), // why not pass parameters?
+    fullOpPtr_( new DifferentiableOperatorType( space, space, std::forward< Models >( models )... )),
+    fullOperator_( *fullOpPtr_ ),
     // create inverse operator to invert the operator
     invOp_( parameter )
   {}
 
+  //! constructor for derived classes (LinearScheme and LinearizedScheme)
+  FemScheme ( DifferentiableOperatorType& fullOp,
+              const Dune::Fem::ParameterReader &parameter) // parameters
+  : space_( fullOp.space() ),
+    fullOpPtr_(), // empty here since fullOp reference is provided
+    // the full discretized operator
+    fullOperator_( fullOp ),
+    // create inverse operator to invert the operator
+    invOp_( parameter )
+  {}
 
   const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
   DifferentiableOperatorType &fullOperator() { return fullOperator_; }
@@ -195,45 +180,33 @@ public:
   {
     fullOperator()( arg, dest );
   }
-
-  struct SolverInfo
-  {
-    SolverInfo(bool pconverged,int plinearIterations,int pnonlinearIterations, const std::vector<double>& ptiming)
-      : converged(pconverged), linearIterations(plinearIterations),
-        nonlinearIterations(pnonlinearIterations), timing(ptiming)
-    {}
-    bool converged;
-    int linearIterations;
-    int nonlinearIterations;
-    std::vector<double> timing;
-  };
   void setErrorMeasure(ErrorMeasureType &errorMeasure) const
   {
     invOp_.setErrorMeasure(errorMeasure);
   }
 
-  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+  SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
   {
     invOp_.bind(fullOperator());
     _solve(rhs,solution);
     invOp_.unbind();
-    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+    return invOp_.info();
   }
-  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+  SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
   {
     PreconditionerFunctionWrapperType pre( p );
     invOp_.bind(fullOperator(), pre);
     _solve(rhs,solution);
     invOp_.unbind();
-    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+    return invOp_.info();
   }
-  SolverInfo solve ( DiscreteFunctionType &solution ) const
+  SolverInfoType solve ( DiscreteFunctionType &solution ) const
   {
     DiscreteFunctionType zero( solution );
     zero.clear();
     return solve(zero,solution);
   }
-  SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
+  SolverInfoType solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
   {
     DiscreteFunctionType zero( solution );
     zero.clear();
@@ -264,17 +237,20 @@ public:
     return fullOperator().model();
   }
 protected:
-  SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+  SolverInfoType _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
   {
     setConstraints(solution);
     addConstraints(rhs,solution);
     invOp_( rhs, solution );
-    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+    return invOp_.info();
   }
 
-  const DiscreteFunctionSpaceType &space_;  // discrete function space
-  DifferentiableOperatorType fullOperator_; // full operator to be inverted by invOp
-  mutable InverseOperatorType invOp_;       // non linear solver
+  const DiscreteFunctionSpaceType &space_;   // discrete function space
+  std::shared_ptr< DifferentiableOperatorType > fullOpPtr_; // full operator object storage
+  DifferentiableOperatorType& fullOperator_; // reference to fullOperator (could be provided by derived class)
+  mutable InverseOperatorType invOp_;        // non linear solver
 };
+} // end namespace Fem
 
+} // end namespace Dune
 #endif // #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH

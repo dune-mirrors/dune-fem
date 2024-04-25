@@ -1650,7 +1650,7 @@ namespace Dune
 
       // GalerkinSchemeImpl
       // ------------------
-      template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC,
+      template< class Integrands, class LinearOperator, bool addDirichletBC,
                 template <class,class> class DifferentiableGalerkinOperatorImpl >
       struct GalerkinSchemeTraits
       {
@@ -1670,16 +1670,16 @@ namespace Dune
         typedef DifferentiableOperatorType type;
       };
 
-      template< class Integrands, class LinearOperator, class InverseOperator, bool addDirichletBC,
+      template< class Integrands, class LinearOperator, class LinearInverseOperator, bool addDirichletBC,
                 template <class,class> class DifferentiableGalerkinOperatorImpl = DifferentiableGalerkinOperator >
       struct GalerkinSchemeImpl : public FemScheme< typename
                                   GalerkinSchemeTraits< Integrands, LinearOperator,
-                                      InverseOperator, addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
-                                      InverseOperator > // LinearInverseOperator
+                                       addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
+                                      LinearInverseOperator > // LinearInverseOperator
       {
         typedef FemScheme< typename GalerkinSchemeTraits< Integrands, LinearOperator,
-                               InverseOperator, addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
-                               InverseOperator > // LinearInverseOperator
+                               addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
+                               LinearInverseOperator > // LinearInverseOperator
                         BaseType;
 
         typedef typename BaseType :: DiscreteFunctionSpaceType    DiscreteFunctionSpaceType;

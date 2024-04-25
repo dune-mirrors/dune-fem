@@ -59,7 +59,7 @@ def femscheme(includes, space, solver, operator, modelType):
               spaceType + "::dimRange, " +\
               "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType, modelType)
-    typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
+    typeName = "Dune::Fem::FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
 def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True):
