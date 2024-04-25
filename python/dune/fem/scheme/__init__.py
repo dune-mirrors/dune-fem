@@ -11,18 +11,37 @@ import re
 from dune.deprecate import deprecated
 from ._schemes import *
 
+from dune.fem.deprecated import deprecated
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, target, rhs=None ):
-    if rhs is None:
+def solve( scheme, target, rhs=None, *, rightHandSide=None ):
+    if rhs is not None:
+        deprecated("""
+The `solve` method with argument `rhs` is deprecated, used named argument ``rightHandSide`` instead.
+Note that the behavior has changed if dirichlet boundary constraints are present.
+When using `rhs` argument the result on the boundary is `target=g`
+while the new behavior leads to `target=rightHandSide+g`.
+
+See changelog entry in tutorial for more details.
+""")
+        try:
+            scheme.setConstraints(0,rhs) # this is what was implemented originally in the scheme
+        except:
+            pass # no constraints available
         if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
             assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
-            return scheme._solve(target, scheme.preconditioning)
+            return scheme.__solve(rhs,target, scheme.preconditioning)
         else:
-            return scheme._solve(target)
-    else:
-        return scheme._solve(rhs, target)
+            return scheme.__solve(rhs,target)
 
+    if rightHandSide is None:
+        rightHandSide = scheme.space.zero
+
+    if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
+        return scheme._solve(solution=target,rightHandSide=rightHandSide,
+                             preconditioning=scheme.preconditioning)
+    else:
+        return scheme._solve(solution=target, rightHandSide=rightHandSide)
 
 _defaultGenerator = SimpleGenerator("Scheme", "Dune::FemPy")
 
@@ -32,11 +51,12 @@ def addAttr(module, cls):
 fileBase = "femscheme"
 
 def module(includes, typeName, *args, backend=None,
-           generator=_defaultGenerator):
+           generator=_defaultGenerator,
+           baseClasses=None):
     from dune.fem.space import addBackend
     includes = includes + ["dune/fempy/py/scheme.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True)
+    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True, baseClasses=baseClasses)
     addAttr(module, module.Scheme)
     JacobianOperator = getattr(module.Scheme,"JacobianOperator",None)
     if JacobianOperator is not None and hasattr(JacobianOperator,"_backend") and backend is not None:

@@ -54,6 +54,7 @@
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/solver/preconditionfunctionwrapper.hh>
 
 // FemScheme
 //----------
@@ -102,6 +103,12 @@ public:
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
   typedef typename InverseOperatorType::ErrorMeasureType ErrorMeasureType;
 
+  typedef Dune::Fem::PreconditionerFunctionWrapper<
+          typename LinearOperatorType::RangeFunctionType,
+          typename LinearOperatorType::DomainFunctionType >  PreconditionerFunctionWrapperType;
+  // std::function to represents the Python function passed as potential preconditioner
+  typedef typename PreconditionerFunctionWrapperType::PreconditionerFunctionType  PreconditionerFunctionType ;
+
   typedef typename FunctionSpaceType::RangeType RangeType;
   static const int dimRange = FunctionSpaceType::dimRange;
   static constexpr bool addDirichletBC = AddDirichletBC<Operator,DomainFunctionType>::value;
@@ -126,40 +133,47 @@ public:
     fullOperator().setQuadratureOrders(interior,surface);
   }
 
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setConstraints( DomainFunctionType &u ) const
+  void setConstraints( DomainFunctionType &u ) const
   {
-    implicitOperator_.setConstraints( u );
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().setConstraints( u );
   }
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
   {
-    implicitOperator_.setConstraints( u, v );
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().setConstraints( u,v );
   }
-  template <class GridFunctionType, typename O = Operator,
-            typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
+  template <class GridFunctionType>
+  void setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
   {
-    implicitOperator_.setConstraints( u, v );
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().setConstraints( u, v );
   }
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  void setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
   {
-    implicitOperator_.subConstraints( u, v );
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().setConstraints( value, u );
   }
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setConstraints( const RangeType &value, DiscreteFunctionType &u ) const
+  void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
   {
-    implicitOperator_.setConstraints( value, u );
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().subConstraints( u, v );
   }
-  // template <typename O = Operator>
-  // std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,
-  //    const decltype(implicitOperator_.dirichletBlocks())&>
+  void subConstraints( DiscreteFunctionType &v ) const
+  {
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().subConstraints( v );
+  }
+  void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+  {
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().addConstraints( u, v );
+  }
+  void addConstraints( DiscreteFunctionType &v ) const
+  {
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().addConstraints( v );
+  }
   const auto &dirichletBlocks() const
   {
     if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
@@ -192,26 +206,34 @@ public:
   {
     invOp_.setErrorMeasure(errorMeasure);
   }
-  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
-  {
-    invOp_.bind( implicitOperator_ );
-    DiscreteFunctionType rhs0 = rhs;
-    setZeroConstraints( rhs0 );
-    setModelConstraints( solution );
-    invOp_( rhs0, solution );
-    invOp_.unbind();
-    return SolverInfo(invOp_.converged(),invOp_.linearIterations(),invOp_.iterations(), invOp_.timing() );
-  }
-  SolverInfo solve ( DiscreteFunctionType &solution ) const
-  {
-    DiscreteFunctionType bnd( solution );
-    bnd.clear();
-    setModelConstraints( solution );
-    invOp_.bind(fullOperator());
-    invOp_( bnd, solution );
-    invOp_.unbind();
-    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-  }
+
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+        {
+          invOp_.bind(fullOperator());
+          _solve(rhs,solution);
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+        }
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+        {
+          PreconditionerFunctionWrapperType pre( p );
+          invOp_.bind(fullOperator(), pre);
+          _solve(rhs,solution);
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+        }
+        SolverInfo solve ( DiscreteFunctionType &solution ) const
+        {
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution);
+        }
+        SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
+        {
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution,p);
+        }
 
   template< class GridFunction, std::enable_if_t<
         std::is_same< decltype(
@@ -237,16 +259,13 @@ public:
     return implicitOperator_.model();
   }
 protected:
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setZeroConstraints( DiscreteFunctionType &u ) const { implicitOperator_.setConstraints( RangeType(0), u ); }
-  template<class...Args>
-  void setZeroConstraints(Args&&...) const { }
-  template <typename O = Operator>
-  std::enable_if_t<AddDirichletBC<O,DomainFunctionType>::value,void>
-  setModelConstraints( DiscreteFunctionType &u ) const { fullOperator().setConstraints( u ); }
-  template<class...Args>
-  void setModelConstraints(Args&&... ) const { }
+  SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+  {
+    setConstraints(solution);
+    addConstraints(rhs,solution);
+    invOp_( rhs, solution );
+    return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+  }
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DifferentiableOperatorType implicitOperator_;
   mutable InverseOperatorType invOp_;

@@ -376,7 +376,7 @@ namespace Dune
         status_ = statAssembled ;
       }
 
-      void clear ()
+      virtual void clear ()
       {
         flushAssembly();
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );

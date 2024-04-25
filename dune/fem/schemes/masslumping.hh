@@ -451,48 +451,6 @@ namespace Dune
         {
           fullOperator()( u, w );
         }
-
-        void setErrorMeasure(ErrorMeasureType &errorMeasure) const
-        {
-          invOp_.setErrorMeasure(errorMeasure);
-        }
-
-        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
-        {
-          DiscreteFunctionType rhs0 = rhs;
-          setZeroConstraints( rhs0 );
-          setModelConstraints( solution );
-
-          invOp_.bind(fullOperator());
-          invOp_( rhs0, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-        }
-
-        SolverInfo solve ( DiscreteFunctionType &solution ) const
-        {
-          DiscreteFunctionType bnd( solution );
-          bnd.clear();
-          setModelConstraints( solution );
-          invOp_.bind(fullOperator());
-          invOp_( bnd, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-        }
-
-        SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
-        {
-          DiscreteFunctionType bnd( solution );
-          bnd.clear();
-          setModelConstraints( solution );
-
-          PreconditionerFunctionWrapperType pre( p );
-          invOp_.bind(fullOperator(), pre);
-          invOp_( bnd, solution );
-          invOp_.unbind();
-          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
-        }
-
         template< class GridFunction >
         void jacobian( const GridFunction &ubar, LinearOperatorType &linearOp) const
         {
@@ -502,6 +460,39 @@ namespace Dune
         const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
         const GridPartType &gridPart () const { return space().gridPart(); }
         ModelType &model() const { return fullOperator().model(); }
+
+        void setErrorMeasure(ErrorMeasureType &errorMeasure) const
+        {
+          invOp_.setErrorMeasure(errorMeasure);
+        }
+
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+        {
+          invOp_.bind(fullOperator());
+          _solve(rhs,solution);
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+        }
+        SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+        {
+          PreconditionerFunctionWrapperType pre( p );
+          invOp_.bind(fullOperator(), pre);
+          _solve(rhs,solution);
+          invOp_.unbind();
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
+        }
+        SolverInfo solve ( DiscreteFunctionType &solution ) const
+        {
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution);
+        }
+        SolverInfo solve ( DiscreteFunctionType &solution, const PreconditionerFunctionType& p ) const
+        {
+          DiscreteFunctionType zero( solution );
+          zero.clear();
+          return solve(zero,solution,p);
+        }
 
         void setConstraints( DomainFunctionType &u ) const
         {
@@ -530,28 +521,40 @@ namespace Dune
           if constexpr (addDirichletBC)
             fullOperator().subConstraints( u, v );
         }
+        void subConstraints( DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().subConstraints( v );
+        }
+        void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().addConstraints( u, v );
+        }
+        void addConstraints( DiscreteFunctionType &v ) const
+        {
+          if constexpr (addDirichletBC)
+            fullOperator().addConstraints( v );
+        }
         const auto& dirichletBlocks() const
         {
           if constexpr (addDirichletBC)
             return fullOperator().dirichletBlocks();
         }
-
         const ParameterReader& parameter () const
         {
           return parameter_;
         }
 
       protected:
-        void setZeroConstraints( DiscreteFunctionType &u ) const
+        SolverInfo _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
         {
-          if constexpr (addDirichletBC)
-            fullOperator().setConstraints( typename DiscreteFunctionType::RangeType(0), u );
+          setConstraints(solution);
+          addConstraints(rhs,solution);
+          invOp_( rhs, solution );
+          return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations(), invOp_.timing() );
         }
-        void setModelConstraints( DiscreteFunctionType &u ) const
-        {
-          if constexpr (addDirichletBC)
-            fullOperator().setConstraints( u );
-        }
+
         const DiscreteFunctionSpaceType &dfSpace_;
         DifferentiableOperatorType fullOperator_;
         mutable NewtonOperatorType invOp_;

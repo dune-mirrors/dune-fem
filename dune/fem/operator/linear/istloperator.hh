@@ -46,6 +46,8 @@ namespace Dune
         : BaseType( domainSpace, rangeSpace, param )
       {}
 
+      virtual void clear() { BaseType::clear(); }
+
       virtual void operator()( const DomainFunction &arg, RangeFunction &dest ) const
       {
         apply( arg, dest );

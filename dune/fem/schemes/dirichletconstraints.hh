@@ -59,7 +59,7 @@ template < class Model, class DiscreteFunctionSpace >
 class DirichletConstraints
 {
 public:
-  enum Operation { set = 0, sub = 1 };
+  enum Operation { set = 0, sub = 1, add = 2 };
   typedef Model ModelType;
   typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
@@ -198,12 +198,17 @@ public:
    *
    *   \note A LagrangeDiscreteFunctionSpace is implicitly assumed.
    *
-   *   \param[in]  u   discrete function providing the constraints
    *   \param[out] w   discrete function the constraints are applied to
    */
   template < class DiscreteFunctionType >
-  void operator ()( DiscreteFunctionType& w ) const
+  void operator ()( DiscreteFunctionType& w, Operation op=Operation::set ) const
   {
+    if (op != Operation::set)
+    {
+      DiscreteFunctionType u = w;
+      return (*this)(u,w,op);
+    }
+
     updateDirichletDofs();
 
     if( hasDirichletDofs_ )
@@ -230,7 +235,7 @@ public:
   template < class GridFunctionType, class DiscreteFunctionType,
            typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
   void operator ()( const GridFunctionType &u,
-                    DiscreteFunctionType& w, Operation op=Operation::setDF ) const
+                    DiscreteFunctionType& w, Operation op=Operation::set ) const
   {
     updateDirichletDofs();
 
@@ -247,7 +252,7 @@ public:
         auto iGuard = bindGuard( interpolation, entity );
 
         // interpolate dirichlet dofs
-        if (op == Operation::sub)
+        if (op == Operation::sub || op == Operation::add)
           model_.init(entity);
         dirichletDofTreatment( interpolation, uLocal, wLocal, op );
       }
@@ -343,7 +348,7 @@ public:
 protected:
   //! set the Dirichlet points to exact values
   template< class LocalInterpolationType, class LocalFunctionType >
-  void dirichletDofTreatment( const LocalInterpolationType& interpolation, LocalFunctionType &wLocal ) const
+  void dirichletDofTreatment( const LocalInterpolationType& interpolation, LocalFunctionType &wLocal) const
   {
     // get entity
     const typename LocalFunctionType::EntityType &entity = wLocal.entity();
@@ -412,6 +417,11 @@ protected:
           {
             interpolation(BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), valuesModel);
             values[ localDof ] -= valuesModel[ localDof ];
+          }
+          else if (op == Operation::add)
+          {
+            interpolation(BoundaryWrapper(model_, entity, wLocal.order(), dirichletBlocks_[global][l]), valuesModel);
+            values[ localDof ] += valuesModel[ localDof ];
           }
           // store result
           assert( (unsigned int)localDof < wLocal.size() );

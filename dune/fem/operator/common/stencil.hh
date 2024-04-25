@@ -72,6 +72,7 @@ namespace Dune
         , rangeBlockMapper_( rSpace.blockMapper() )
       {
       }
+      virtual ~Stencil() {}
 
       const DomainSpace &domainSpace() const
       {
@@ -361,6 +362,7 @@ namespace Dune
       {
         setupStencil();
       }
+      virtual ~DiagonalStencil() {}
 
     protected:
       virtual void setupStencil () const override
@@ -400,6 +402,7 @@ namespace Dune
       {
         setupStencil();
       }
+      virtual ~DiagonalAndNeighborStencil() {}
 
     protected:
       virtual void setupStencil() const override
