@@ -196,7 +196,7 @@ public:
 
       LumpingQuadratureType lumpQuad( entity, order_ );
       const int quadNop = lumpQuad.nop();
-      if( quadNop != int(geo.corners()) )
+      if( quadNop != int(geo.corners()) && lumpQuad.order() == 1)
       {
         std::cout << " Error: nops not equal: lumpQuad = " << quadNop
                   << "   geo.corners = " << geo.corners() << std::endl;
@@ -282,6 +282,7 @@ int main(int argc, char ** argv)
 
     const double eps = 1e-8;
 
+
     for(int l=0; l<=maxlevel; ++l )
     {
       {
@@ -306,8 +307,9 @@ int main(int argc, char ** argv)
         testCaching.runTest();
       }
       {
-        std::cout << "Testing DUNE CachingLumpiongQuadrature: " << std::endl;
-        TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, quadOrder, eps);
+        std::cout << "Testing DUNE CachingLumpingQuadrature: " << std::endl;
+        // this test requires order 1
+        TestCaching<GridPartType,true, DuneQuadratures> testCaching(gridPart, /*quadOrder*/ 1, eps);
         testCaching.testLumpingQuadrature();
       }
       grid.globalRefine( 1 );
