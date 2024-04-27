@@ -136,12 +136,9 @@ namespace Dune
           isBound_ = true;
         }
 
-        //DiscreteFunctionType rhs0 (rhs);
-        DiscreteFunctionType& rhs0 = tmp_;
-        rhs0.assign( rhs );
-        setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
-
-        invOp_(rhs0, solution );
+        // copy Dirichlet constraints from rhs to solution
+        setConstraints(rhs, solution);
+        invOp_(rhs, solution );
         return invOp_.info();
       }
 
@@ -169,6 +166,7 @@ namespace Dune
       const SchemeType &scheme() const { return fullOperator(); }
       const ParameterReader& parameter () const { return parameter_; }
 
+      DiscreteFunctionType& temporaryData() const { return tmp_; }
     protected:
       using FSBaseType :: invOp_;
       mutable bool isBound_;
@@ -201,8 +199,7 @@ namespace Dune
                          const Dune::Fem::ParameterReader& parameter = Dune::Fem::Parameter::container() )
         : linOp_( scheme, parameter ),
           rhs_( "affine shift", scheme.space() ),
-          ubar_( "ubar", scheme.space() ),
-          tmp_( "temporary data", scheme.space() )
+          ubar_( "ubar", scheme.space() )
       {
         setup();
       }
@@ -210,8 +207,7 @@ namespace Dune
                          const Dune::Fem::ParameterReader& parameter = Dune::Fem::Parameter::container() )
         : linOp_( scheme, ubar, parameter ),
           rhs_( "affine shift", scheme.space() ),
-          ubar_( "ubar", scheme.space() ),
-          tmp_( "temporary data", scheme.space() )
+          ubar_( "ubar", scheme.space() )
       {
         setup(ubar);
       }
@@ -292,7 +288,7 @@ namespace Dune
 
       SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
-        DiscreteFunctionType& sumRhs = tmp_;
+        DiscreteFunctionType& sumRhs = linOp_.temporaryData();
         sumRhs.assign(rhs);
         sumRhs += rhs_;
 
@@ -326,7 +322,7 @@ namespace Dune
         scheme().jacobian(ubar_, linOp_);
 
         // compute rhs
-        DiscreteFunctionType& tmp = tmp_;
+        DiscreteFunctionType& tmp = linOp_.temporaryData();
 
         // compute tmp = S[u] (tmp = u-g on boundary)
         tmp.clear();
@@ -344,7 +340,6 @@ namespace Dune
       LinearOperatorType linOp_;
       DiscreteFunctionType rhs_;
       DiscreteFunctionType ubar_;
-      mutable DiscreteFunctionType tmp_;
     };
 
   } // namespace Fem
