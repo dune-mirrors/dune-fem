@@ -11,6 +11,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/schemes/femscheme.hh>
 
 
 namespace Dune
@@ -31,7 +32,7 @@ namespace Dune
         L[w] = f <=> DS[u]w = f-b
 
         With Dirichlet BCs:
-        From consturction of the underlying scheme we have
+        From construction of the underlying scheme we have
         S[u] = u - g and DS[u]w = w on the boundary.
 
         Therefore on the boundary we have
@@ -48,56 +49,56 @@ namespace Dune
     // This class implements the Jacobian part of a scheme, i.e., L[w] = DS[u]w
     // without the rhs 'b'.
     template< class Scheme >
-    struct LinearScheme : public Scheme::LinearOperatorType
+    struct LinearScheme : public Scheme::LinearOperatorType,
+                          public FemScheme< Scheme, typename Scheme::LinearInverseOperatorType, typename Scheme::LinearInverseOperatorType >
     {
-      typedef typename Scheme::LinearOperatorType BaseType;
       typedef Scheme SchemeType;
+      typedef typename SchemeType::LinearInverseOperatorType LinearInverseOperatorType;
+
+      // base types
+      typedef typename SchemeType::LinearOperatorType BaseType;
+      typedef FemScheme< SchemeType, LinearInverseOperatorType, LinearInverseOperatorType > FSBaseType;
+
       typedef typename SchemeType::DiscreteFunctionType DiscreteFunctionType;
       typedef typename SchemeType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename SchemeType::GridPartType GridPartType;
-      typedef typename SchemeType::InverseOperatorType LinearInverseOperatorType;
       typedef typename LinearInverseOperatorType::SolverParameterType ParameterType;
-      typedef typename SchemeType::ModelType ModelType;
+      typedef typename SchemeType::ModelType             ModelType;
 
-      typedef typename SchemeType::JacobianOperatorType JacobianOperatorType;
-      typedef typename SchemeType::DomainFunctionType DomainFunctionType;
-      typedef typename SchemeType::RangeFunctionType RangeFunctionType;
+      typedef typename SchemeType::JacobianOperatorType  JacobianOperatorType;
+      typedef typename SchemeType::DomainFunctionType    DomainFunctionType;
+      typedef typename SchemeType::RangeFunctionType     RangeFunctionType;
 
-      typedef typename SchemeType::DirichletBlockVector DirichletBlockVector;
+      typedef typename SchemeType::DirichletBlockVector  DirichletBlockVector;
 
-      struct SolverInfo
-      {
-        SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
-          : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
-        {}
+      using FSBaseType :: fullOperator;
+      using FSBaseType :: setConstraints;
+      using FSBaseType :: space;
 
-        bool converged;
-        int linearIterations, nonlinearIterations;
-        std::vector<double> timing;
-      };
+      // from femscheme.hh
+      typedef typename LinearInverseOperatorType::SolverInfoType  SolverInfoType ;
 
+      //! \todo @docme
       LinearScheme ( SchemeType &scheme,
                      Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : BaseType( "linearized Op", scheme.space(), scheme.space() ),
-          scheme_( scheme ),
-          inverseOperator_( nullptr ),
+          FSBaseType( scheme, parameter ),
           isBound_(false),
           parameter_( std::move( parameter ) ),
-          zero_( "zero", scheme.space() )
+          tmp_( "LS::tmp", scheme.space() )
       {
-        zero_.clear();
       }
+
+      //! \todo @docme
       LinearScheme ( SchemeType &scheme, const DiscreteFunctionType &ubar,
                      Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : BaseType( "linearized Op", scheme.space(), scheme.space() ),
-          scheme_( scheme ),
-          inverseOperator_( nullptr ),
+          FSBaseType( scheme, parameter ),
           isBound_(false),
           parameter_( std::move( parameter ) ),
-          zero_( "zero", scheme.space() )
+          tmp_( "LS::tmp", scheme.space() )
       {
-        zero_.clear();
-        scheme.jacobian(ubar,*this);
+        fullOperator().jacobian(ubar,*this);
       }
 
       /** Note: this sets the error message of the non-existing
@@ -105,81 +106,40 @@ namespace Dune
        *  python bindings happy!
        */
       void setErrorMeasure() const {}
-      void setConstraints( DomainFunctionType &u ) const
-      {
-        scheme_.setConstraints(u);
-      }
-      void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
-      {
-        scheme_.setConstraints(value, u);
-      }
-      void setConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        scheme_.setConstraints(u, v);
-      }
-      template < class GridFunctionType,
-                 typename = std::enable_if_t< std::is_base_of<Dune::Fem::HasLocalFunction, GridFunctionType>::value > >
-      void setConstraints( const GridFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        scheme_.setConstraints(u, v);
-      }
-      void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        scheme_.subConstraints(u, v);
-      }
-      void subConstraints( DiscreteFunctionType &v ) const
-      {
-        scheme_.subConstraints(v);
-      }
-      void addConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
-      {
-        scheme_.addConstraints(u, v);
-      }
-      void addConstraints( DiscreteFunctionType &v ) const
-      {
-        scheme_.addConstraints(v);
-      }
-      const auto& dirichletBlocks() const
-      {
-        return scheme_.dirichletBlocks();
-      }
 
       virtual void clear() override
       {
         BaseType::clear();
-        if (inverseOperator_)
-          inverseOperator_->unbind();
+        invOp_.unbind();
         isBound_ = false;
       }
 
       void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const override
       {
+        // use linear op (instead of fullOperator)
         BaseType::operator()(u,w);
       }
 
       template <class GridFunction>
       void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
       {
-        DiscreteFunctionType tmp(dest);
-        Fem::interpolate(arg,tmp);
-        (*this)(tmp,dest);
+        Fem::interpolate(arg, tmp_);
+        // apply operator (i.e. matvec)
+        (*this)(tmp_, dest);
       }
 
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+      SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
-        if (!inverseOperator_)
-          inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
         if (!isBound_)
         {
-          inverseOperator_->bind(*this);
+          invOp_.bind(*this);
           isBound_ = true;
         }
 
-        DiscreteFunctionType rhs0 = rhs;
-        setConstraints(rhs0, solution); // copy the sum to solution for iterative solvers
-
-        (*inverseOperator_)(rhs0, solution );
-        return SolverInfo( true, (*inverseOperator_).iterations(), 0);
+        // copy Dirichlet constraints from rhs to solution
+        setConstraints(rhs, solution);
+        invOp_(rhs, solution );
+        return invOp_.info();
       }
 
       /**
@@ -189,36 +149,29 @@ namespace Dune
        * operator. Dirichlet constraints will be enforced if present
        * in the model.
        */
-      SolverInfo solve ( DiscreteFunctionType &solution ) const
+      SolverInfoType solve ( DiscreteFunctionType &solution ) const
       {
-        if (!inverseOperator_)
-          inverseOperator_ = std::make_shared<LinearInverseOperatorType>(ParameterType(parameter()));
         if (!isBound_)
         {
-          inverseOperator_->bind(*this);
+          invOp_.bind(*this);
           isBound_ = true;
         }
-        zero_.clear();
+        DiscreteFunctionType& zero = tmp_;
+        zero.clear();
         setConstraints(typename DiscreteFunctionType::RangeType(0), solution);
-        (*inverseOperator_)( zero_, solution );
-        return SolverInfo( true, (*inverseOperator_).iterations(), 0 );
+        invOp_( zero, solution );
+        return invOp_.info();
       }
 
-      bool mark ( double tolerance ) { return scheme_.mark( tolerance ); }
-      double estimate ( const DiscreteFunctionType &solution ) { return scheme_.estimate( solution ); }
-
-      const GridPartType &gridPart () const { return scheme_.gridPart(); }
-      const DiscreteFunctionSpaceType &space() const { return scheme_.space(); }
-      const SchemeType &scheme() const { return scheme_; }
-
+      const SchemeType &scheme() const { return fullOperator(); }
       const ParameterReader& parameter () const { return parameter_; }
 
+      DiscreteFunctionType& temporaryData() const { return tmp_; }
     protected:
-      SchemeType &scheme_;
-      mutable std::shared_ptr<LinearInverseOperatorType> inverseOperator_;
+      using FSBaseType :: invOp_;
       mutable bool isBound_;
       Dune::Fem::ParameterReader parameter_;
-      DiscreteFunctionType zero_;
+      mutable DiscreteFunctionType tmp_;
     };
 
     // This class stores a 'LinearScheme' and defines 'setup' methods that
@@ -231,7 +184,7 @@ namespace Dune
       typedef typename SchemeType::DiscreteFunctionType DiscreteFunctionType;
       typedef typename SchemeType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename SchemeType::GridPartType GridPartType;
-      typedef typename SchemeType::InverseOperatorType LinearInverseOperatorType;
+      typedef typename SchemeType::LinearInverseOperatorType LinearInverseOperatorType;
       typedef typename SchemeType::ModelType ModelType;
 
       typedef typename SchemeType::JacobianOperatorType JacobianOperatorType;
@@ -240,10 +193,10 @@ namespace Dune
 
       typedef typename SchemeType::DirichletBlockVector DirichletBlockVector;
       typedef LinearScheme<SchemeType> LinearOperatorType;
-      typedef typename LinearOperatorType::SolverInfo SolverInfo;
+      typedef typename LinearOperatorType::SolverInfoType SolverInfoType;
 
       LinearizedScheme ( SchemeType &scheme,
-                         Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
+                         const Dune::Fem::ParameterReader& parameter = Dune::Fem::Parameter::container() )
         : linOp_( scheme, parameter ),
           rhs_( "affine shift", scheme.space() ),
           ubar_( "ubar", scheme.space() )
@@ -251,7 +204,7 @@ namespace Dune
         setup();
       }
       LinearizedScheme ( SchemeType &scheme, const DiscreteFunctionType &ubar,
-                         Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
+                         const Dune::Fem::ParameterReader& parameter = Dune::Fem::Parameter::container() )
         : linOp_( scheme, ubar, parameter ),
           rhs_( "affine shift", scheme.space() ),
           ubar_( "ubar", scheme.space() )
@@ -264,6 +217,7 @@ namespace Dune
         ubar_.assign(ubar);
         setup_();
       }
+
       template <class GridFunction>
       void setup(const GridFunction &ubar)
       {
@@ -326,16 +280,18 @@ namespace Dune
         w -= rhs_;
       }
       template <class GridFunction>
-      void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
+      void operator() ( const GridFunction &arg, DiscreteFunctionType &w ) const
       {
-        linOp_(arg,dest);
-        dest -= rhs_;
+        linOp_(arg, w);
+        w -= rhs_;
       }
 
-      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
+      SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
-        DiscreteFunctionType sumRhs = rhs;
-        sumRhs.axpy(1.0, rhs_);
+        DiscreteFunctionType& sumRhs = linOp_.temporaryData();
+        sumRhs.assign(rhs);
+        sumRhs += rhs_;
+
         // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
         // solution = u - DS[u]^{-1}(rhs+S[u]) and = rhs+g on the boundary
         return linOp_.solve( sumRhs, solution);     // don't add constraints again
@@ -348,15 +304,12 @@ namespace Dune
        * operator. Dirichlet constraints will be enforced if present
        * in the model.
        */
-      SolverInfo solve ( DiscreteFunctionType &solution ) const
+      SolverInfoType solve ( DiscreteFunctionType &solution ) const
       {
         // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
         // solution = u - DS[u]^{-1}S[u] and = g on the boundary
         return linOp_.solve( rhs_, solution );
       }
-
-      bool mark ( double tolerance ) { return linOp_.mark( tolerance ); }
-      double estimate ( const DiscreteFunctionType &solution ) { return linOp_.estimate( solution ); }
 
       const GridPartType &gridPart () const { return linOp_.gridPart(); }
       const DiscreteFunctionSpaceType &space() const { return linOp_.space(); }
@@ -369,7 +322,8 @@ namespace Dune
         scheme().jacobian(ubar_, linOp_);
 
         // compute rhs
-        DiscreteFunctionType tmp(ubar_);
+        DiscreteFunctionType& tmp = linOp_.temporaryData();
+
         // compute tmp = S[u] (tmp = u-g on boundary)
         tmp.clear();
         scheme()( ubar_, tmp );

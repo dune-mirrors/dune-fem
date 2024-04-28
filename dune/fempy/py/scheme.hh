@@ -152,21 +152,6 @@ namespace Dune
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         using pybind11::operator""_a;
 
-        /* using rightHandSide=space.zero() on the Python side
-        cls.def( "_solve", [] ( Scheme &self,
-                                DiscreteFunction &solution,
-                                const typename Scheme::PreconditionerFunctionType& preconditioning
-                              ) {
-            auto info = self.solve( solution, preconditioning );
-            pybind11::dict ret;
-            ret["converged"]  = pybind11::cast(info.converged);
-            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
-            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
-            ret["timing"] = pybind11::cast(info.timing);
-            return ret;
-          }, pybind11::arg("solution"), pybind11::kw_only(), pybind11::arg("preconditioning") );
-        */
-
         cls.def( "_solve", [] ( Scheme &self,
                                 DiscreteFunction &solution,
                                 const DiscreteFunction &rightHandSide,
@@ -202,31 +187,6 @@ namespace Dune
             return ret;
           }, pybind11::arg("solution"), pybind11::kw_only(), pybind11::arg("rightHandSide") );
 
-        /* using rightHandSide=space.zero() on the Python side
-        cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
-            auto info = self.solve( solution );
-            pybind11::dict ret;
-            ret["converged"]  = pybind11::cast(info.converged);
-            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
-            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
-            ret["timing"] = pybind11::cast(info.timing);
-            return ret;
-          }, pybind11::arg("solution") );
-        */
-
-        // TODO: this method is deprecated
-        cls.def( "__solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
-            // TODO: change `rhs` so that it is `-g` on the boundary then the new
-            // `solve` method on the scheme leads to `u=rhs+g=0` on the
-            // boundary which is what the old version did.
-            auto info = self.solve( rhs, solution );
-            pybind11::dict ret;
-            ret["converged"]  = pybind11::cast(info.converged);
-            ret["iterations"] = pybind11::cast(info.nonlinearIterations);
-            ret["linear_iterations"] = pybind11::cast(info.linearIterations);
-            ret["timing"] = pybind11::cast(info.timing);
-            return ret;
-          } );
           registerPrecondSolve ( cls, PriorityTag< 42 >() );
       }
 
@@ -265,7 +225,7 @@ namespace Dune
         {
           Dune::FemPy::detail::registerBasicOperator(clsInvOp.first);
           clsInvOp.first.def("bind",[] (typename Scheme::LinearInverseOperatorType &self,
-                                  typename Scheme::JacobianOperatorType &jOp) {
+                                        typename Scheme::JacobianOperatorType &jOp) {
               self.bind(jOp);
           });
           clsInvOp.first.def_property_readonly("iterations",[]( typename Scheme::LinearInverseOperatorType &self) {

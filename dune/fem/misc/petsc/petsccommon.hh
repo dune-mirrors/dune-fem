@@ -216,6 +216,7 @@ namespace Dune
     inline static void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits )
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
     inline static void KSPSetInitialGuessNonzero( KSP ksp, PetscBool flg ) { ErrorCheck( ::KSPSetInitialGuessNonzero( ksp, flg ) ); };
+    inline static void KSPSetInitialGuessKnoll( KSP ksp, PetscBool flg ) { ErrorCheck( ::KSPSetInitialGuessKnoll( ksp, flg ) ); };
     inline static void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
     inline static void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 

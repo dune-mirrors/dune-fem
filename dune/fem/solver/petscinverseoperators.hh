@@ -290,6 +290,10 @@ namespace Dune
           default:
             DUNE_THROW(InvalidStateException,"PetscInverseOperator: invalid solver choosen." );
         }
+        if ( parameter_->knollTrick() )
+        {
+          ::Dune::Petsc::KSPSetInitialGuessKnoll( ksp(), PETSC_TRUE );
+        }
 
         /////////////////////////////////////////////
         //  preconditioning

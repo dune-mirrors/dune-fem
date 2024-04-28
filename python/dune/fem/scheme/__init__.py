@@ -24,15 +24,11 @@ while the new behavior leads to `target=rightHandSide+g`.
 
 See changelog entry in tutorial for more details.
 """)
+        rightHandSide = rhs.copy()
         try:
-            scheme.setConstraints(0,rhs) # this is what was implemented originally in the scheme
+            scheme.setConstraints(0,rightHandSide) # this is what was implemented originally in the scheme
         except:
             pass # no constraints available
-        if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
-            assert callable(scheme.preconditioning), "scheme.preconditioning needs to be a callable object: pre( u, v)!"
-            return scheme.__solve(rhs,target, scheme.preconditioning)
-        else:
-            return scheme.__solve(rhs,target)
 
     if rightHandSide is None:
         rightHandSide = scheme.space.zero
