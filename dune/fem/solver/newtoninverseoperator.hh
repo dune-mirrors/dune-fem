@@ -8,6 +8,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <regex>
 #include <utility>
 
 #include <dune/common/timer.hh>
@@ -98,6 +99,16 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"Keyprefix 'newton' is deprecated, replace with 'nonlinear'!");
         }
       }
+
+      std::string replaceNonLinearWithLinear( const std::string& keyPrefix ) const
+      {
+        if( keyPrefix.find( "nonlinear" ) != std::string::npos )
+        {
+          return std::regex_replace(keyPrefix, std::regex("nonlinear"), "linear" );
+        }
+        else
+          return keyPrefix;
+      }
     public:
       NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( static_cast< SolverParam* > (baseParameter.clone()) ),
@@ -118,7 +129,8 @@ namespace Dune
 
       template <class ParamReader, std::enable_if_t<!std::is_same<ParamReader,SolverParam>::value && std::is_same<ParamReader,ParameterReader>::value,int> i=0>
       NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.nonlinear." )
-        : baseParam_( std::make_shared<SolverParam>( keyPrefix + "linear.", parameter) ),
+          // pass keyprefix for linear solvers, which is the same as keyprefix with nonlinear replaced by linear
+        : baseParam_( std::make_shared<SolverParam>( replaceNonLinearWithLinear(keyPrefix), parameter) ),
           keyPrefix_( keyPrefix),
           parameter_( parameter )
       {
@@ -237,14 +249,15 @@ namespace Dune
 
       virtual LinearToleranceStrategy linearToleranceStrategy () const
       {
+        std::cout << "keyPrefix_ = " << keyPrefix_ << std::endl;
         const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        return static_cast< LinearToleranceStrategy>( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy, 0 ) );
+        return static_cast< LinearToleranceStrategy>( parameter_.getEnum( keyPrefix_ + "tolerance.strategy", linearToleranceStrategy, 0 ) );
       }
 
       virtual void setLinearToleranceStrategy ( const LinearToleranceStrategy strategy )
       {
         const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        Parameter::append( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
+        Parameter::append( keyPrefix_ + "tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
       }
 
       //! return true if simplified Newton is to be used

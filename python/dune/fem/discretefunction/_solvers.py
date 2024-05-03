@@ -16,7 +16,7 @@ def femsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::KrylovInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
+    parameter = {"linear.method":solverType} if solverType is not None else {}
     return "fem",includes,typeName, parameter
 
 def istlsolver(storage,solverType=None):
@@ -25,7 +25,7 @@ def istlsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::ISTLInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
+    parameter = {"linear.method":solverType} if solverType is not None else {}
     return "istl",includes,typeName, parameter
 
 def suitesparsesolver(storage,solverType="umfpack"):
@@ -79,7 +79,7 @@ def petscsolver(storage,solverType=None):
     operator = lambda df,_: "Dune::Fem::PetscInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
+    parameter = {"nonlinear.linear.method":solverType} if solverType is not None else {}
     return "petsc",includes,typeName, parameter
 
 def amgxsolver(storage,solverType="gmres"):
@@ -89,5 +89,5 @@ def amgxsolver(storage,solverType="gmres"):
     operator = lambda df,_: "Dune::Fem::AMGXInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
-    parameter = {"newton.linear.method":solverType} if solverType is not None else {}
+    parameter = {"nonlinear.linear.method":solverType} if solverType is not None else {}
     return "amgx",includes,typeName, parameter
