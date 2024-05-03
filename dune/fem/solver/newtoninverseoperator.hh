@@ -11,6 +11,7 @@
 #include <utility>
 
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
@@ -73,31 +74,56 @@ namespace Dune
     protected:
 
       std::shared_ptr<SolverParam> baseParam_;
-      // key prefix, default is fem.solver.newton. (can be overloaded by user)
+      // key prefix, default is fem.solver.nonlinear. (can be overloaded by user)
       const std::string keyPrefix_;
 
       ParameterReader parameter_;
 
+      void checkDeprecatedParameters() const
+      {
+        const std::string newton("newton.");
+        const std::size_t pos = keyPrefix_.find( newton );
+        if( pos != std::string::npos )
+        {
+          DUNE_THROW(InvalidStateException,"Keyprefix 'newton' is deprecated, replace with 'nonlinear'!");
+        }
+
+        const std::string params[]
+          = { "tolerance", "lineSearch", "maxterations", "linear", "maxlinesearchiterations" };
+        for( const auto& p : params )
+        {
+          std::string key( "fem.solver.newton." );
+          key += p;
+          if( parameter_.exists( key ) )
+            DUNE_THROW(InvalidStateException,"Keyprefix 'newton' is deprecated, replace with 'nonlinear'!");
+        }
+      }
     public:
-      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
+      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( static_cast< SolverParam* > (baseParameter.clone()) ),
           keyPrefix_( keyPrefix ),
           parameter_( baseParameter.parameter() )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       template <class Parameter, std::enable_if_t<!std::is_base_of<SolverParam,Parameter>::value && !std::is_same<Parameter,ParameterReader>::value,int> i=0>
-      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.newton." )
+      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( new SolverParam(solverParameter) ),
           keyPrefix_( keyPrefix ),
           parameter_( solverParameter.parameter() )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       template <class ParamReader, std::enable_if_t<!std::is_same<ParamReader,SolverParam>::value && std::is_same<ParamReader,ParameterReader>::value,int> i=0>
-      NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.newton." )
+      NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( std::make_shared<SolverParam>( keyPrefix + "linear.", parameter) ),
           keyPrefix_( keyPrefix),
           parameter_( parameter )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       const ParameterReader &parameter () const { return parameter_; }
       const SolverParam& solverParameter () const { return *baseParam_; }
@@ -274,7 +300,7 @@ namespace Dune
      *  \tparam  LInvOp  linear inverse operator
      *
      *  \note Verbosity of the NewtonInverseOperator is controlled via the
-     *        paramter <b>fem.solver.newton.verbose</b>; it defaults to
+     *        paramter <b>fem.solver.nonlinear.verbose</b>; it defaults to
      *        <b>fem.solver.verbose</b>.
      *
      *  \note Similar to CG solver the initial guess should take the
@@ -350,7 +376,7 @@ namespace Dune
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
 
       /** constructor
@@ -359,7 +385,7 @@ namespace Dune
        *  \param[in]  epsilon     tolerance for norm of residual
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
 
       // main constructor
@@ -376,7 +402,7 @@ namespace Dune
       {
         if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
           if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
-            DUNE_THROW( InvalidStateException, "Parameter `newton.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
+            DUNE_THROW( InvalidStateException, "Parameter `nonlinear.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
           }
         }
       }
@@ -385,7 +411,7 @@ namespace Dune
       /** constructor
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
       explicit NewtonInverseOperator ( const ParameterType &parameter = ParameterType( Parameter::container() ) )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
@@ -420,7 +446,7 @@ namespace Dune
        *  \param[in]  op       operator to invert
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 

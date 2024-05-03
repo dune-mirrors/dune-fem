@@ -29,14 +29,14 @@ fem.solver.errormeasure: absolute
 fem.solver.gmres.restart: 15
 fem.solver.maxiterations: 100
 
-# parameter for the newton solver test
-fem.solver.newton.verbose: false
-fem.solver.newton.linear.verbose: false
-fem.solver.newton.linear.method: gmres  # this is fixed to gmres in the test
-fem.solver.newton.linear.tolerance: 1e-12
-fem.solver.newton.linear.gmres.restart: 15
-fem.solver.newton.linear.maxiterations: 100
-#fem.solver.newton.linear.preconditioning: kspoptions
+# parameter for the nonlinear solver test
+fem.solver.nonlinear.verbose: false
+fem.solver.nonlinear.linear.verbose: false
+fem.solver.nonlinear.linear.method: gmres  # this is fixed to gmres in the test
+fem.solver.nonlinear.linear.tolerance: 1e-12
+fem.solver.nonlinear.linear.gmres.restart: 15
+fem.solver.nonlinear.linear.maxiterations: 100
+#fem.solver.nonlinear.linear.preconditioning: kspoptions
 #fem.solver.preconditioning.method: kspoptions
 #fem.solver.kspoptions: -pc_type hypre -pc_hypre_type boomeramg -ksp_error_if_not_converged -ksp_level 0
 

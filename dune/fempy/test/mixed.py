@@ -8,7 +8,7 @@ from dune.ufl import DirichletBC, Space
 dune.fem.parameter.append("parameter")
 dune.fem.parameter.append( {"fem.verboserank": -1} )
 
-newtonParameter = {"tolerance": 1e-5, "verbose": "true",
+nonlinearParameter = {"tolerance": 1e-5, "verbose": "true",
                    "linear.absolutetol": 1e-6, "linear.reductiontol": 1e-6,
                    "linear.preconditioning.method": "ilu",
                    "linear.preconditioning.iterations": 1, "linear.preconditioning.relaxation": 1.2,
@@ -42,7 +42,7 @@ def test(operator):
             DirichletBC(uflSpace, [exact[0],None], 3),      # top
             DirichletBC(uflSpace, [None,None], 4),          # left
             DirichletBC(uflSpace, exact, 1)]                # right
-    parameters={"newton." + k: v for k, v in newtonParameter.items()}
+    parameters={"nonlinear." + k: v for k, v in nonlinearParameter.items()}
 
     scheme = create.scheme(operator, model, spc, parameters=parameters)
     solution = spc.interpolate([0,0],name="solution")

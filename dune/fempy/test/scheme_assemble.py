@@ -74,7 +74,7 @@ def test(space):
         """
         preconditioner = algorithm.load('preconditioner', io.StringIO(code), numpy_h,numpy_h)
 
-        solverParameters = { "newton.linear.preconditioning.method": preconditioner }
+        solverParameters = { "nonlinear.linear.preconditioning.method": preconditioner }
         numpyScheme = create.scheme("galerkin", model, numpySpace, parameters=solverParameters)
 
         numpyScheme.solve(target=numpy_h)
