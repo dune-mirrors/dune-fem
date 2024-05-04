@@ -286,7 +286,7 @@ int main( int argc, char **argv )
 
   // Newton with line search
   {
-    Dune::Fem::Parameter::append("fem.solver.nonlinear.lineSearch","simple");
+    Dune::Fem::Parameter::append("fem.solver.nonlinear.linesearch","simple");
     FunctionType sol("sol", { 2, 2, 2, 2, 2 }), rhs("rhs", { -1.57, -1.5, 0, 1.5, 1.57 });
     run( sol, rhs, true );
   }

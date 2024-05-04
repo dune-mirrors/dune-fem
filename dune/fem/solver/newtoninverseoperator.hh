@@ -14,6 +14,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/common/staticlistofint.hh>
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -30,7 +31,7 @@ namespace Dune
      *
      * \brief Adaptive tolerance selection for linear solver.
      *
-     * \note Prevents oversolving linear systems far away from solution.
+     * \note Prevents over-solving linear systems far away from solution.
      *       Source: "Globally Convergent Inexact Newton Methods", Stanley C. Eisenstat and Homer F. Walker, https://doi.org/10.1137/0804022.
     */
     class EisenstatWalkerStrategy
@@ -225,39 +226,46 @@ namespace Dune
         maxLineSearchIterations_ = maxLineSearchIter;
       }
 
-      enum class LineSearchMethod {
-          none   = 0,
-          simple = 1
-        };
+      // LineSearchMethod: none, simple
+      LIST_OF_INT(LineSearchMethod,
+                  none=0,
+                  simple=1);
 
-      virtual LineSearchMethod lineSearch () const
+      virtual int lineSearch () const
       {
-        const std::string lineSearchMethods[] = { "none", "simple" };
-        return static_cast< LineSearchMethod>( parameter_.getEnum( keyPrefix_ + "lineSearch", lineSearchMethods, 0 ) );
+        if( parameter_.exists( keyPrefix_ + "lineSearch" ) )
+        {
+          std::cout << "WARNING: using old parameter name '" << keyPrefix_ + "lineSearch" << "',\n"
+                    << "please switch to '" << keyPrefix_ + "linesearch" << "' (all lower caps)!" <<std::endl;
+          return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "lineSearch", LineSearchMethod::names(), LineSearchMethod::none ) );
+        }
+        return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "linesearch", LineSearchMethod::names(), LineSearchMethod::none ) );
       }
 
-      virtual void setLineSearch ( const LineSearchMethod method )
+      virtual void setLineSearch ( const int method )
       {
-        const std::string lineSearchMethods[] = { "none", "simple" };
-        Parameter::append( keyPrefix_ + "lineSearch", lineSearchMethods[int(method)], true );
+        Parameter::append( keyPrefix_ + "linesearch", LineSearchMethod::to_string(method), true );
       }
 
-      enum class LinearToleranceStrategy {
-        none = 0,
-        eisenstatwalker = 1
-      };
+      // Forcing: none, eisenstatwalker
+      LIST_OF_INT(Forcing,
+                  none  =  0, // the provided linear solver tol is used in every iteration
+                  eisenstatwalker=1); // Eistenstat-Walker criterion
 
-      virtual LinearToleranceStrategy linearToleranceStrategy () const
+      virtual int forcing () const
       {
-        std::cout << "keyPrefix_ = " << keyPrefix_ << std::endl;
-        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        return static_cast< LinearToleranceStrategy>( parameter_.getEnum( keyPrefix_ + "tolerance.strategy", linearToleranceStrategy, 0 ) );
+        if( parameter_.exists( keyPrefix_ + "linear.tolerance.strategy" ) )
+        {
+          std::cout << "WARNING: using old parameter name '" << keyPrefix_ + "linear.tolerance.strategy" << "',\n"
+                    << "please switch to '" << keyPrefix_ + "forcing" << "'!" <<std::endl;
+          return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", Forcing::names(), Forcing::none ) );
+        }
+        return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "forcing", Forcing::names(), Forcing::none ) );
       }
 
-      virtual void setLinearToleranceStrategy ( const LinearToleranceStrategy strategy )
+      virtual void setForcing ( const int strategy )
       {
-        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        Parameter::append( keyPrefix_ + "tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
+        Parameter::append( keyPrefix_ + "forcing", Forcing::to_string( strategy ), true );
       }
 
       //! return true if simplified Newton is to be used
@@ -409,11 +417,11 @@ namespace Dune
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
-          linearToleranceStrategy_ ( parameter.linearToleranceStrategy() ),
+          forcing_ ( parameter.forcing() ),
           eisenstatWalker_ ( epsilon ),
           timing_(3, 0.0)
       {
-        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+        if (forcing_ == ParameterType::Forcing::eisenstatwalker) {
           if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
             DUNE_THROW( InvalidStateException, "Parameter `nonlinear.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
           }
@@ -485,7 +493,7 @@ namespace Dune
       int linearIterations () const { return linearIterations_; }
       void setMaxLinearIterations ( int maxLinearIterations ) { parameter_.setMaxLinearIterations( maxLinearIterations ); }
       void updateLinearTolerance () const {
-        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+        if (forcing_ == ParameterType::Forcing::eisenstatwalker) {
           double newTol = eisenstatWalker_.nextLinearTolerance( delta_ );
           jInv_.parameter().setTolerance( newTol );
         }
@@ -601,9 +609,9 @@ namespace Dune
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
       ParameterType parameter_;
       mutable int stepCompleted_;
-      typename ParameterType::LineSearchMethod lsMethod_;
+      const int lsMethod_;
       ErrorMeasureType finished_;
-      typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
+      const int forcing_;
       EisenstatWalkerStrategy eisenstatWalker_;
 
       mutable std::vector<double> timing_;
@@ -648,7 +656,7 @@ namespace Dune
       const bool newtonVerbose = verbose() && nonlinear;
       if( newtonVerbose )
       {
-        std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
+        std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (forcing = " << ParameterType::Forcing::to_string(forcing_) << " | linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
         std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
       }
       while( true )

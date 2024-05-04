@@ -25,6 +25,10 @@ def _checkNewtonInParameters( params ):
     warned_linear = False
     parameters = params.copy()
     for key,value in params.items():
+        # skip forcing here, warning will appear in NewtonInverseOperator
+        if key.find('linear.tolerance.strategy') != -1:
+            continue
+
         if key.find('newton.linear') != -1 or key.find('nonlinear.linear') != -1:
             keypref = ''
             if key.find('newton.') != -1:
