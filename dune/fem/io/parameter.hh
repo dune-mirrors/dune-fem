@@ -408,6 +408,16 @@ namespace Dune
         return container().getEnum( key, values, defaultValue );
       }
 
+      static int getEnum ( const std::string &key, const std::vector<std::string> &values )
+      {
+        return container().getEnum( key, values );
+      }
+
+      static int getEnum ( const std::string &key, const std::vector<std::string> &values, int defaultValue )
+      {
+        return container().getEnum( key, values, defaultValue );
+      }
+
       /** \brief obtain common output path
        *
        *  For parallel jobs you need two different output paths:
