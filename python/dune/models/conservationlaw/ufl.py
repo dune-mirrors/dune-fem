@@ -323,9 +323,10 @@ def compileUFL(form, patch, *args, **kwargs):
                     domain[key] = Indexed(bc.subDomain, MultiIndex(tuple(FixedIndex(k) for k in key)))
                 codeDomains.append( (value,neuman,domain) )
         defaultCode = []
-        defaultCode.append(Declaration(Variable('int', 'domainId')))
-        defaultCode.append(Declaration(Variable('auto', 'tmp0'),
-            initializer=UnformattedExpression('auto','intersection.geometry().center()')))
+        if len(codeDomains) > 0:
+            defaultCode.append(Declaration(Variable('int', 'domainId')))
+            defaultCode.append(Declaration(Variable('auto', 'tmp0'),
+                initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
             defaultCode.append(
