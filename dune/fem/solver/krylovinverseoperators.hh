@@ -123,6 +123,14 @@ namespace Dune
         if( verbose_ && Parameter :: verbose( Parameter::solverStatistics ) )
         {
           os = &std::cout;
+          if( method_ == SolverParameter::gmres )
+            std::cout << "Fem::GMRES";
+          else if ( method_ == SolverParameter::bicgstab )
+            std::cout << "Fem::BiCGstab";
+          else if ( method_ == SolverParameter::cg )
+            std::cout << "Fem::CG";
+
+          std::cout << " preconditioning="<< SolverParameter::preconditionMethodTable( precondMethod_ ) << std::endl;
         }
 
         int numIter = 0;
