@@ -45,7 +45,8 @@ def _checkNewtonInParameters( params ):
 
             newkey = key.replace(keypref, '')
             if newkey in parameters:
-                parameters.pop(key)
+                # parameters.pop(key)
+                raise KeyError(f"""Parameter dict contains keys '{newkey}' and '{key}'. Mixing new and old parameter keys is not allowed""")
             else:
                 parameters[newkey] = parameters.pop(key)
 
