@@ -1,6 +1,37 @@
 from __future__ import print_function
 from dune.generator import algorithm, path
 import io
+from dune.common import comm
+
+class EmptyResult:
+    def __init__(self, obj):
+        self.obj = obj
+    def result(self):
+        return self.obj
+
+# empty class making code work that uses ThreadPoolExecutor
+class EmmptyThreadPoolExecutor:
+    def __init__(self,*args, **kwargs):
+        pass
+
+    # return instance of this class upon entering the with statement
+    def __enter__(self, *args, **kwargs):
+        return EmmptyThreadPoolExecutor()
+
+    # do nothing here
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    # return an object holding the result
+    def submit(self, function, *args, **kwargs):
+        return EmptyResult( function(*args, **kwargs) )
+
+# in serial runs use ThreadPoolExecutor, otherwise the empty dummy
+if comm.size == 1:
+    from concurrent.futures import ThreadPoolExecutor as FemThreadPoolExecutor
+else:
+    # for parallel runs this seems not to work, so avoid it
+    FemThreadPoolExecutor = EmmptyThreadPoolExecutor
 
 ###################################################################
 ###################################################################
