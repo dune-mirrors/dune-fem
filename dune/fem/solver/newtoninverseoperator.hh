@@ -221,6 +221,12 @@ namespace Dune
         Parameter::append( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
       }
 
+      //! return true if simplified Newton is to be used
+      virtual bool simplified () const
+      {
+        return parameter_.getValue< bool >( keyPrefix_ + "simplified", 0 );
+      }
+
     private:
       mutable double tolerance_ = -1;
       mutable int verbose_ = -1;
@@ -585,6 +591,10 @@ namespace Dune
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
       updateLinearTolerance();
 
+      // this is true for Newton, and false simplified Newton after first iteration
+      bool computeJacobian = true;
+      const bool simplifiedNewton = parameter_.simplified();
+
       const bool newtonVerbose = verbose();
       if( newtonVerbose )
       {
@@ -595,13 +605,16 @@ namespace Dune
       {
         if( newtonVerbose )
           std::cout << std::endl;
-        // evaluate operator's Jacobian
-        jacTimer.reset();
-        (*op_).jacobian( w, jOp );
 
-        // David: With this factor, the tolerance of CGInverseOp is the absolute
-        //        rather than the relative error
-        //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
+        if( computeJacobian )
+        {
+          // evaluate operator's Jacobian
+          jacTimer.reset();
+          (*op_).jacobian( w, jOp );
+
+          // if simplified Newton is activated do not compute Jacobian again
+          computeJacobian = ! simplifiedNewton;
+        }
 
         // bind jOp to jInv including preconditioner if enabled and set
         bindOperatorAndPreconditioner( jOp );
