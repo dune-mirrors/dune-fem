@@ -34,8 +34,13 @@ See changelog entry in tutorial for more details.
         rightHandSide = scheme.space.zero
 
     if hasattr(scheme,"preconditioning") and scheme.preconditioning is not None:
-        return scheme._solve(solution=target,rightHandSide=rightHandSide,
-                             preconditioning=scheme.preconditioning)
+        try:
+            # if this call fails then because the SFINAE in fempy/py/scheme.h has failed
+            return scheme._solve(solution=target,
+                                 rightHandSide=rightHandSide,
+                                 preconditioning=scheme.preconditioning)
+        except:
+            raise Exception("scheme.solve with Python based preconditioning failed!")
     else:
         return scheme._solve(solution=target, rightHandSide=rightHandSide)
 
