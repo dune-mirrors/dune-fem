@@ -111,7 +111,8 @@ namespace Dune
        */
       void setErrorMeasure() const {}
 
-      virtual void clear()
+      using BaseType::clear;
+      virtual void clear() override
       {
         BaseType::clear();
         invOp_.unbind();
