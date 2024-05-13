@@ -71,6 +71,10 @@ namespace Dune
 
       typedef typename SchemeType::DirichletBlockVector  DirichletBlockVector;
 
+      typedef Dune::Fem::PreconditionerFunctionWrapper<RangeFunctionType,DomainFunctionType >  PreconditionerFunctionWrapperType;
+      // std::function to represents the Python function passed as potential preconditioner
+      typedef typename PreconditionerFunctionWrapperType::PreconditionerFunctionType  PreconditionerFunctionType;
+
       using FSBaseType :: fullOperator;
       using FSBaseType :: setConstraints;
       using FSBaseType :: space;
@@ -107,7 +111,7 @@ namespace Dune
        */
       void setErrorMeasure() const {}
 
-      virtual void clear() override
+      virtual void clear()
       {
         BaseType::clear();
         invOp_.unbind();
@@ -140,6 +144,20 @@ namespace Dune
         setConstraints(rhs, solution);
         invOp_(rhs, solution );
         return invOp_.info();
+      }
+
+      SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+      {
+        if (isBound_)
+          invOp_.unbind();
+
+        PreconditionerFunctionWrapperType pre( p );
+        invOp_.bind(*this, pre);
+        isBound_ = true;
+        auto info = solve( rhs, solution );
+        invOp_.unbind();
+        isBound_ = false;
+        return info;
       }
 
       /**
@@ -194,6 +212,12 @@ namespace Dune
       typedef typename SchemeType::DirichletBlockVector DirichletBlockVector;
       typedef LinearScheme<SchemeType> LinearOperatorType;
       typedef typename LinearOperatorType::SolverInfoType SolverInfoType;
+
+      typedef Dune::Fem::PreconditionerFunctionWrapper<
+          typename LinearOperatorType::RangeFunctionType,
+          typename LinearOperatorType::DomainFunctionType >  PreconditionerFunctionWrapperType;
+      // std::function to represents the Python function passed as potential preconditioner
+      typedef typename PreconditionerFunctionWrapperType::PreconditionerFunctionType  PreconditionerFunctionType;
 
       LinearizedScheme ( SchemeType &scheme,
                          const Dune::Fem::ParameterReader& parameter = Dune::Fem::Parameter::container() )
@@ -288,13 +312,13 @@ namespace Dune
 
       SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
       {
-        DiscreteFunctionType& sumRhs = linOp_.temporaryData();
-        sumRhs.assign(rhs);
-        sumRhs += rhs_;
+        return _solve(rhs, solution, nullptr );
+      }
 
-        // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
-        // solution = u - DS[u]^{-1}(rhs+S[u]) and = rhs+g on the boundary
-        return linOp_.solve( sumRhs, solution);     // don't add constraints again
+      SolverInfoType solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType& p) const
+      {
+        // TODO: Pass preconditioning to solver !
+        return _solve( rhs, solution, &p );
       }
 
       /**
@@ -317,6 +341,20 @@ namespace Dune
       const ParameterReader& parameter () const { return linOp_.parameter(); }
 
     protected:
+      SolverInfoType _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType* p) const
+      {
+        DiscreteFunctionType& sumRhs = linOp_.temporaryData();
+        sumRhs.assign(rhs);
+        sumRhs += rhs_;
+
+        // rhs_ = DS[u]u-S[u] and = u-(u-g) = g on boundary so
+        // solution = u - DS[u]^{-1}(rhs+S[u]) and = rhs+g on the boundary
+        if( p )
+          return linOp_.solve( sumRhs, solution, *p); // don't add constraints again
+        else
+          return linOp_.solve( sumRhs, solution);     // don't add constraints again
+      }
+
       void setup_(bool isZero=false)
       {
         scheme().jacobian(ubar_, linOp_);

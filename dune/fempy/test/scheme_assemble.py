@@ -5,7 +5,6 @@ import numpy as np
 import dune.grid
 import dune.fem
 import dune.create as create
-from dune.fem.operator import linear as linearOperator
 from dune.generator import algorithm
 
 from dune.ufl import Space
@@ -78,10 +77,10 @@ def test(space):
         solverParameters = { "newton.linear.preconditioning.method": preconditioner }
         numpyScheme = create.scheme("galerkin", model, numpySpace, parameters=solverParameters)
 
-        numpyScheme.solve(numpy_h)
+        numpyScheme.solve(target=numpy_h)
         start= time.time()
         for i in range(testLoop):
-            linOp   = linearOperator(numpyScheme)
+            linOp   = numpyScheme.linear()
             numpyScheme.jacobian(numpy_h,linOp)
             numpy_mat = linOp.as_numpy
         end = time.time()
@@ -100,7 +99,7 @@ def test(space):
         # istlScheme.solve(target = istl_h)
         start= time.time()
         for i in range(testLoop):
-            linOp = linearOperator(istlScheme)
+            linOp = istlScheme.linear()
             istlScheme.jacobian(istl_h,linOp)
             istl_mat = linOp.as_istl
         end= time.time()

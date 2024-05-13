@@ -144,9 +144,10 @@ namespace Dune
       template< class Scheme, class... options, std::enable_if_t<
           std::is_same_v<
                 decltype( std::declval< const Scheme & >().solve(
+                  std::declval< const typename Scheme::DiscreteFunctionType& >(),
                   std::declval< typename Scheme::DiscreteFunctionType& >(),
                   std::declval< const typename Scheme::PreconditionerFunctionType& >() ) ),
-                typename Scheme::SolverInfo>, int > _i=0 >
+                  typename Scheme::SolverInfoType>, int > _i=0 >
       inline static void registerPrecondSolve ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
@@ -157,7 +158,7 @@ namespace Dune
                                 const DiscreteFunction &rightHandSide,
                                 const typename Scheme::PreconditionerFunctionType& preconditioning
                               ) {
-            auto info = self.solve( solution, preconditioning );
+            auto info = self.solve( rightHandSide, solution, preconditioning );
             pybind11::dict ret;
             ret["converged"]  = pybind11::cast(info.converged);
             ret["iterations"] = pybind11::cast(info.nonlinearIterations);
@@ -187,7 +188,7 @@ namespace Dune
             return ret;
           }, pybind11::arg("solution"), pybind11::kw_only(), pybind11::arg("rightHandSide") );
 
-          registerPrecondSolve ( cls, PriorityTag< 42 >() );
+        registerPrecondSolve ( cls, PriorityTag< 42 >() );
       }
 
       // registerScheme
