@@ -11,6 +11,9 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from matplotlib import pyplot
 
+#from dune.common import comm
+#print = functools.partial(print, flush=True) if comm.rank == 0 else lambda *a, **kw: None
+
 def Print(comm,*args,**kwargs):
     allRanks = kwargs.pop("all",False)
     if comm.Get_rank() == 0 or allRanks:
@@ -19,9 +22,12 @@ def Print(comm,*args,**kwargs):
     if allRanks:
         comm.barrier()
 
+def emptyPrint(comm,*args,**kwargs):
+    pass
+
 from dune.commands import makegenerated
 from dune.generator import algorithm, requiredModules
-from dune.grid import structuredGrid, cartesianDomain, Partitions
+from dune.grid import yaspGrid, cartesianDomain, Partitions
 from dune.alugrid import aluConformGrid as confGrid
 from dune.alugrid import aluSimplexGrid as simpGrid
 from dune.alugrid import aluCubeGrid as cubeGrid
@@ -43,7 +49,11 @@ def compute(comm,useAdapt,gridType,
             internal=True, external=(petsc4py is not None),
             verbose=True,
             showPlot=False, ignore=False):
-    Print = lambda *args,**kwargs: []
+
+    global Print
+    if not verbose:
+        Print = emptyPrint
+
     iterations = []
     failure = False
     testName = ("adapt" if useAdapt else "" ) + f"{gridType}-{name}"
@@ -60,15 +70,10 @@ def compute(comm,useAdapt,gridType,
         Print(comm,"--------------------------", file=outFile)
         return
 
-    domain = [-1, -1], [1, 1], [21, 21]
-    if gridType == "yasp":
-        gridView = structuredGrid(*domain, overlap=1) # , comm=comm)
-    elif gridType == "conf":
-        gridView = confGrid( cartesianDomain( *domain )) # , comm=comm )
-    elif gridType == "simp":
-        gridView = simpGrid( cartesianDomain( *domain )) # , comm=comm )
-    elif gridType == "cube":
-        gridView = cubeGrid( cartesianDomain( *domain )) # , comm=comm )
+    domain = cartesianDomain( [-1, -1], [1, 1], [21, 21], overlap=1)
+    gridName = gridType + "Grid"
+    # create grid view, i.e. yaspGrid, cubeGrid, confGrid, simpGrid
+    gridView = eval(gridName)(domain)
 
     if useAdapt:
         gridView = adaptive( gridView ) # , partition=Partitions.interiorBorder )
@@ -204,19 +209,22 @@ def compute(comm,useAdapt,gridType,
             ksp.setInitialGuessNonzero(True)
             if dirichlet: # I don't understand why this fails with weak Dirichlet
                 scheme.setConstraints(uh2)
-            if False: # need to communicate on continuous spaces
+            # not sure why these tests work without the communications
+            continuous = False
+            if continuous: # need to communicate on continuous spaces
                 code = "template <class DF> void prepare(DF &df) { df.dofVector().clearGhost(); }"
                 clearGhost = algorithm.load('prepare', io.StringIO(code), uh1)
                 clearGhost(uh2)
             ksp.solve(b.as_petsc,uh2.as_petsc)
-            if False: # need to communicate on continuous spaces
+            if continuous: # need to communicate on continuous spaces
                 communicate(uh2)
             return len(ksp.getConvergenceHistory())
 
+
         uh2 = space.interpolate(dimR*[14], name="solution")
         # this does not work as expected
-        # uh2.as_petsc.getArray()[:] = rng.standard_normal(dofSize)
-        # communicate(uh2)
+        #uh2.as_petsc.getArray()[:] = rng.standard_normal(dofSize)
+        #communicate(uh2)
         petscIter = petscSolver()
         if showPlot: uh2.plot(allowNaN=True, clim=[-1.5,1.5])
         # pyplot.semilogy(ksp.getConvergenceHistory())
@@ -381,6 +389,7 @@ def main():
     print(iterations)
     print(failures)
 
+    Print(comm,"*** main finished! ***")
     requiredModules("tmp.txt")
     if comm.Get_rank() == 0:
         if useAdapt:
