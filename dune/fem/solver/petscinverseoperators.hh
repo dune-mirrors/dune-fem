@@ -120,6 +120,11 @@ namespace Dune
         initialize( *parameter_ );
       }
 
+      void bind ( const OperatorType &op, const PreconditionerType& p )
+      {
+        DUNE_THROW(NotImplemented,"PetscInverseOperator::bind: preconditioners cannot be set from outside!");
+      }
+
       void unbind ()
       {
         BaseType :: unbind();
