@@ -45,7 +45,8 @@ def _storage( dfStorage="numpy", solverStorage=None ):
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
 
     # as_numpy, as_istl, as_petsc
-    asStorage = "as_" + dfStorage
+    usedStorage = solverStorage if solverStorage else dfStorage
+    asStorage = "as_" + usedStorage
 
     if solverStorage == "numpy":
         return lambda space, rspace=None:[\
@@ -98,6 +99,7 @@ def petsc():
 
 @deprecated(name="storage=petscadapt",msg="'storage=\"petscadapt\" for the space is deprecated, use `storage=\"numpy\" instead")
 def petscadapt():
+    assert False, "Use `storage=\"numpy\" instead for discrete function and 'petsc' for schemes!"
     return _storage(dfStorage="numpy", solverStorage="petsc")
 
 @deprecated(name="storage=fem",msg="'storage=\"fem\" for the space is deprecated, use `storage=\"numpy\" instead")
