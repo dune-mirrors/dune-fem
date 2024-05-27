@@ -44,8 +44,11 @@ def getSolver(solver, storage, default):
             return default(storage,solver[0])
 
 def femscheme(includes, space, solver, operator, modelType):
-    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, backend = space.storage
-    _, solverIncludes, solverTypeName,param = getSolver(solver,space.storage,defaultSolver)
+    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, _ = space.storage
+    # get storage of solver, it could differ from storage of space
+    solverStorage, solver = getSolverStorage(space, solver)
+    _, _, _, _, defaultSolver, backend = solverStorage
+    _, solverIncludes, solverTypeName,param = getSolver(solver,solverStorage,defaultSolver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
                 space.cppIncludes + dfIncludes + solverIncludes +\
@@ -96,7 +99,12 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
 
     if onlyLinear:
         from dune.fem.space import addBackend
-        _,_,_,_,_, backend = scheme.space.storage
+        # this might differ from space storage
+        try:
+            backend = scheme._solverBackend
+        except AttributeError:
+            # if backend has not been added use backend from space
+            _,_,_,_,_, backend = scheme.space.storage
         if hasattr(m.Scheme,"_backend") and backend is not None:
             if backend == 'as_numpy':
                 from scipy.sparse import csr_matrix
@@ -125,14 +133,18 @@ def femschemeModule(space, model, includes, solver, operator, *args,
         parameters={},
         modelType = None, ctorArgs={}):
     from . import module
-    _, _, _, _, defaultSolver, backend = space.storage
-    _, _, _, param = getSolver(solver,space.storage,defaultSolver)
+    _, _, _, _, defaultSolver, _ = space.storage
+    # get storage of solver, it could differ from storage of space
+    solverStorage, solver = getSolverStorage(space, solver)
+    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
+    _, _, _, param = getSolver(solver, solverStorage, defaultSolver)
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
     mod = module(includes, typeName, *args, backend=backend)
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     scheme.parameters = parameters
+    scheme._solverBackend = backend
     scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
     return scheme
@@ -272,7 +284,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
 
     from . import module
 
-    storageStr, dfIncludes, dfTypeName, _, _, _ = space.storage
+    _, dfIncludes, dfTypeName, _, _, _ = space.storage
 
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
@@ -319,8 +331,10 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, massIntegrands, parameters)
     scheme.model = integrands
     scheme.massModel = massIntegrands
-
+    # store solver backend
+    scheme._solverBackend = backend
     scheme.parameters = parameters
+
     scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 
@@ -441,7 +455,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         raise ValueError("wrong space given")
     from . import module
 
-    storageStr, dfIncludes, dfTypeName, _, _, _ = space.storage
+    _, dfIncludes, dfTypeName, _, _, _ = space.storage
 
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
@@ -489,8 +503,11 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
+    # store solver backend
+    scheme._solverBackend = backend
 
     scheme.parameters = parameters
+
     scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
 

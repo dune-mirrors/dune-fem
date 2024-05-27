@@ -3,6 +3,7 @@ import inspect
 import sys
 import os
 import functools
+import numpy as np
 
 from dune.deprecate import deprecated
 import dune.common.module
@@ -151,7 +152,6 @@ def addBackend(Df,backend):
         except:
             pass # still try numpy
         try:
-            import numpy as np
             return np.array( self.dofVector, copy=False )
         except:
             pass
