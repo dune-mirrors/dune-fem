@@ -714,16 +714,21 @@ class ModelClass():
             initEntity = Method('bool', 'init', args=[entity])
             initEntity.append(assign(insideEntity, entity))
             uninitEntity = Method('void', 'unbind')
+            initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
+            initIntersection.append(assign(insideEntity, entity))
         if self.skeleton is None:
             for i, c in enumerate(self._coefficients):
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( this->entity() )', uses=[entity, coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( )', uses=[coefficients_]))
+                initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( this->entity() )', uses=[entity, coefficients_]))
         else:
             for i, c in enumerate(self._coefficients):
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).unbind( )', uses=[coefficients_]))
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).unbind( )', uses=[coefficients_]))
+                initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
+                initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
         initEntity.append(self.init)
         if not self.bindable:
             initEntity.append(return_(True))
