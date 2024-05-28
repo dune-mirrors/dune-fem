@@ -72,6 +72,11 @@ namespace Dune
 
         std::false_type hasInterior ( ... );
 
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().nonLinear() ), bool >::value, int > = 0 >
+        std::true_type hasNonLinear ( const Integrands & );
+
+        std::false_type hasNonLinear ( ... );
+
 
         template< class Integrands >
         std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
@@ -115,6 +120,8 @@ namespace Dune
       typedef Impl::IntegrandsTraits::EntityType< Integrands > EntityType;
       typedef Impl::IntegrandsTraits::IntersectionType< Integrands > IntersectionType;
 
+      static const bool hasNonLinear = decltype( Impl::IntegrandsTraits::hasNonLinear( std::declval< const Integrands & >() ) )::value;
+
       static const bool interior = decltype( Impl::IntegrandsTraits::interior( std::declval< const Integrands & >() ) )::value;
       static const bool hasInterior = decltype( Impl::IntegrandsTraits::hasInterior( std::declval< const Integrands & >() ) )::value;
 
@@ -150,6 +157,19 @@ namespace Dune
       typedef typename IntegrandsTraits< Integrands >::IntersectionType IntersectionType;
 
     private:
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasNonLinear, int > = 0 >
+      static bool nonLinear ( const T &integrands )
+      {
+        return integrands.nonLinear();
+      }
+
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasNonLinear, int > = 0 >
+      static bool nonLinear ( const T &integrands )
+      {
+        // default for nonLinear is true assuming that the model needs nonlinear solver
+        return true;
+      }
+
       template< class T, std::enable_if_t< IntegrandsTraits< T >::hasInterior, int > = 0 >
       static bool hasInterior ( const T &integrands )
       {
@@ -270,6 +290,8 @@ namespace Dune
       bool init ( const EntityType &entity ) { return integrands().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return integrands().init( intersection ); }
       void unbind ( ) { integrands().unbind( ); }
+
+      bool nonLinear() const { return nonLinear( integrands() ); }
 
       bool hasInterior () const { return hasInterior( integrands() ); }
 
@@ -418,6 +440,8 @@ namespace Dune
         virtual bool init ( const IntersectionType &intersection ) = 0;
         virtual void unbind ( ) = 0;
 
+        virtual bool nonLinear() const = 0;
+
         virtual bool hasInterior () const = 0;
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
         virtual RangeValueType interior ( const InteriorElementPointType &x, const DomainValueType &u ) const = 0;
@@ -453,6 +477,8 @@ namespace Dune
         virtual bool init ( const EntityType &entity ) override { return impl().init( entity ); }
         virtual bool init ( const IntersectionType &intersection ) override { return impl().init( intersection ); }
         virtual void unbind ( ) override { impl().unbind( ); }
+
+        virtual bool nonLinear () const override { return impl().nonLinear(); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
@@ -514,6 +540,8 @@ namespace Dune
       bool init ( const EntityType &entity ) { return impl().init( entity ); }
       bool init ( const IntersectionType &intersection ) { return impl().init( intersection ); }
       void unbind ( ) { impl().unbind( ); }
+
+      bool nonLinear() const { return impl().nonLinear(); }
 
       bool hasInterior () const { return impl().hasInterior(); }
 

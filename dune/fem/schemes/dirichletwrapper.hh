@@ -84,6 +84,9 @@ struct DirichletWrapperOperator
     return constraints().dirichletBlocks();
   }
 
+  // return true if operator is based on nonlinear model
+  virtual bool nonLinear () const { return op_.nonLinear(); }
+
   //! application operator
   virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
   {
