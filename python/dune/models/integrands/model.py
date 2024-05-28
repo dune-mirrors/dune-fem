@@ -70,8 +70,8 @@ class Integrands(codegen.ModelClass):
     def methods(self,code):
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))
         code.append(TypeAlias("RangeValueType", self.rangeValueTuple))
-        code.append(Declaration(Variable("bool", "_nonLinear"), initializer=self.nonlinear, static=True, constexpr=True))
-        code.append(Method('bool', 'nonLinear', args=[], code=["return _nonLinear;"], const=True))
+        code.append(Declaration(Variable("bool", "_nonlinear"), initializer=self.nonlinear, static=True, constexpr=True))
+        code.append(Method('bool', 'nonlinear', args=[], code=["return _nonlinear;"], const=True))
 
         if self.interior is not None:
             code.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))

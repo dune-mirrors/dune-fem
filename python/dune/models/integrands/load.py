@@ -304,6 +304,8 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
             init(self,integrands,*args,**kwargs)
             for c in integrands.constantList:
                 c.registerModel(self)
+            # store nonlinear information in Model
+            self.nonlinear = integrands.nonlinear
 
     setattr(Model, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
     if renumbering is not None:

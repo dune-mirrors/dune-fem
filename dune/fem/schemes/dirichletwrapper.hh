@@ -85,7 +85,7 @@ struct DirichletWrapperOperator
   }
 
   // return true if operator is based on nonlinear model
-  virtual bool nonLinear () const { return op_.nonLinear(); }
+  virtual bool nonlinear () const { return op_.nonlinear(); }
 
   //! application operator
   virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const

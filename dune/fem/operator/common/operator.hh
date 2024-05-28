@@ -61,7 +61,7 @@ namespace Dune
       virtual void finalize () {}
 
       /**Return @c true if the Operator is nonlinear and @c false otherwise (default is true). */
-      virtual bool nonLinear () const { return true; }
+      virtual bool nonlinear () const { return true; }
     };
 
     /** \class LinearOperator
@@ -99,8 +99,8 @@ namespace Dune
 	      return false;
       }
 
-      /* \copydoc Dune::Fem::Operator::nonLinear */
-      virtual bool nonLinear () const
+      /* \copydoc Dune::Fem::Operator::nonlinear */
+      virtual bool nonlinear () const
       {
         return false;
       }
@@ -251,7 +251,7 @@ namespace Dune
 
     using BaseType::operator();
     using BaseType::finalize;
-    using BaseType::nonLinear;
+    using BaseType::nonlinear;
 
   protected:
     /** \brief The method apply calls the application operator. The method

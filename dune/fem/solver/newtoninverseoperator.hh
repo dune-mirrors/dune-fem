@@ -582,7 +582,7 @@ namespace Dune
       std::fill(timing_.begin(), timing_.end(), 0.0 );
 
       // obtain information about operator to invert
-      const bool nonLinear = true; // op_->nonLinear() || parameter_.forceNonLinear();
+      const bool nonlinear = true; // op_->nonlinear() || parameter_.forceNonLinear();
 
       Dune::Timer allTimer;
       DomainFunctionType residual( u );
@@ -606,7 +606,7 @@ namespace Dune
       bool computeJacobian = true;
       const bool simplifiedNewton = parameter_.simplified();
 
-      const bool newtonVerbose = verbose() && nonLinear;
+      const bool newtonVerbose = verbose() && nonlinear;
       if( newtonVerbose )
       {
         std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
@@ -648,7 +648,7 @@ namespace Dune
                                 // w = g+u
 
         // the following only for nonlinear problems
-        if( nonLinear )
+        if( nonlinear )
         {
           // compute new residual
           (*op_)( w, residual );
