@@ -113,9 +113,8 @@ namespace Dune
         double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction,
                         const Operation& operation )
         {
-          // on serial runs: do nothing
-          if( space_.gridPart().comm().size() <= 1 )
-            return 0.0;
+          // for Petsc this is needed also in serial
+          // since it completes the vector setup
 
           // get stopwatch
           Dune::Timer exchangeT;
@@ -245,10 +244,6 @@ namespace Dune
       inline void exchange ( DiscreteFunction &discreteFunction,
                              const Operation &operation ) const
       {
-        // on serial runs: do nothing
-        if( space_.gridPart().comm().size() <= 1 )
-          return;
-
         NonBlockingCommunicationType nbc( space_, interface_, dir_ );
 
         // send data (probably done in receive)

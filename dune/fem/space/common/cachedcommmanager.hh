@@ -249,6 +249,20 @@ namespace Dune
           dependencyCache_.detachComm() ;
         }
 
+        //! skip communication for serial runs
+        template < class DiscreteFunction, class Comm >
+        static bool skip( const DiscreteFunction&, const Comm& comm )
+        {
+          return comm.size() <= 1;
+        }
+
+        //! for Petsc the communicate is needed in any case because it completes the vector setup.
+        template <class DiscreteFunctionSpace, class Comm>
+        static bool skip( const PetscDiscreteFunction< DiscreteFunctionSpace >&, const Comm& )
+        {
+          return false;
+        }
+
         template < class DiscreteFunctionSpace >
         void send( const PetscDiscreteFunction< DiscreteFunctionSpace >& discreteFunction )
         {
@@ -1040,8 +1054,9 @@ namespace Dune
     inline void DependencyCache< BlockMapper >
     :: exchange( const Space& space, DiscreteFunction &discreteFunction, const Operation& operation )
     {
-      // on serial runs: do nothing
-      if( space.gridPart().comm().size() <= 1 ) return;
+      // on serial runs: do nothing expect for PetscDiscreteFunction
+      if( NonBlockingCommunicationType::skip( discreteFunction, space.gridPart().comm() ) )
+        return ;
 
       // create non-blocking communication object
       NonBlockingCommunicationType nbc( space, *this );
