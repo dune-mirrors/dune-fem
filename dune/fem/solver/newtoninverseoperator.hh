@@ -629,7 +629,7 @@ namespace Dune
       std::fill(timing_.begin(), timing_.end(), 0.0 );
 
       // obtain information about operator to invert
-      const bool nonlinear = true; // op_->nonlinear() || parameter_.forceNonLinear();
+      const bool nonlinear = op_->nonlinear() || parameter_.forceNonLinear();
 
       Dune::Timer allTimer;
       DomainFunctionType residual( u );
