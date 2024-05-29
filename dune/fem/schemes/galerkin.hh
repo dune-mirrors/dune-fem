@@ -650,7 +650,7 @@ namespace Dune
         {
           return integrands();
         }
-
+        bool nonlinear()   const { return model().nonlinear(); }
         bool hasInterior() const { return model().hasInterior(); }
         bool hasSkeleton() const { return model().hasSkeleton(); }
         bool hasBoundary() const { return model().hasBoundary(); }
@@ -1364,6 +1364,11 @@ namespace Dune
           localOp_[ i ].setQuadratureOrders(interior,surface);
       }
 
+      virtual bool nonlinear() const final override
+      {
+        return localOperator().nonlinear();
+      }
+
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
         evaluate( u, w );
@@ -1503,6 +1508,7 @@ namespace Dune
       }
 
       using BaseType::localOperator;
+      using BaseType::nonlinear;
 
     protected:
       using BaseType::op;

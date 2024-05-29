@@ -59,6 +59,9 @@ namespace Dune
        *  \note The default implementation is empty.
        */
       virtual void finalize () {}
+
+      /**Return @c true if the Operator is nonlinear and @c false otherwise (default is true). */
+      virtual bool nonlinear () const { return true; }
     };
 
     /** \class LinearOperator
@@ -94,6 +97,12 @@ namespace Dune
       virtual bool positiveDefinite() const
       {
 	      return false;
+      }
+
+      /* \copydoc Dune::Fem::Operator::nonlinear */
+      virtual bool nonlinear () const
+      {
+        return false;
       }
     };
 
@@ -242,6 +251,7 @@ namespace Dune
 
     using BaseType::operator();
     using BaseType::finalize;
+    using BaseType::nonlinear;
 
   protected:
     /** \brief The method apply calls the application operator. The method

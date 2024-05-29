@@ -227,6 +227,15 @@ namespace Dune
         return parameter_.getValue< bool >( keyPrefix_ + "simplified", 0 );
       }
 
+      // allow to override the automatic choice of nonlinear or linear solver to
+      // force nonlinear all the time
+      virtual bool forceNonLinear () const
+      {
+        bool v = false;
+        v = parameter_.getValue< bool >(keyPrefix_ +  "forcenonlinear", v );
+        return v;
+      }
+
     private:
       mutable double tolerance_ = -1;
       mutable int verbose_ = -1;
@@ -378,12 +387,6 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      /*
-      explicit NewtonInverseOperator ( const ParameterType &parameter )
-        : NewtonInverseOperator( parameter.tolerance(), parameter )
-      {}
-      */
-
       explicit NewtonInverseOperator ( const ParameterType &parameter = ParameterType( Parameter::container() ) )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
       {
@@ -392,7 +395,8 @@ namespace Dune
 
       /** constructor
        *
-       *  \param[in]  epsilon  tolerance for norm of residual
+       *  \param[in]  epsilon     tolerance for norm of residual
+       *  \param[in]  parameter   parameter set for solver config.
        */
       NewtonInverseOperator ( const DomainFieldType &epsilon, const ParameterType &parameter )
         : NewtonInverseOperator(
@@ -400,6 +404,11 @@ namespace Dune
             epsilon, parameter )
       {}
 
+      /** constructor
+       *
+       *  \param[in]  epsilon     tolerance for norm of residual
+       *  \param[in]  parameter   parameter set for solver config.
+       */
       NewtonInverseOperator ( const DomainFieldType &epsilon,
                               const ParameterReader &parameter = Parameter::container() )
         : NewtonInverseOperator( epsilon, ParameterType( parameter ) )
@@ -413,7 +422,6 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 
       EisenstatWalkerStrategy& eisenstatWalker () { return eisenstatWalker_; }
@@ -573,6 +581,9 @@ namespace Dune
       assert( op_ );
       std::fill(timing_.begin(), timing_.end(), 0.0 );
 
+      // obtain information about operator to invert
+      const bool nonlinear = true; // op_->nonlinear() || parameter_.forceNonLinear();
+
       Dune::Timer allTimer;
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
@@ -595,7 +606,7 @@ namespace Dune
       bool computeJacobian = true;
       const bool simplifiedNewton = parameter_.simplified();
 
-      const bool newtonVerbose = verbose();
+      const bool newtonVerbose = verbose() && nonlinear;
       if( newtonVerbose )
       {
         std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
@@ -636,25 +647,36 @@ namespace Dune
         w -= dw;                // w = w - DS[w]^{-1}(S[w]-u)
                                 // w = g+u
 
-        (*op_)( w, residual );
-        residual -= u;
-        int ls = lineSearch(w,dw,u,residual);
-        stepCompleted_ = ls >= 0;
-        updateLinearTolerance();
-        ++iterations_;
-        if( newtonVerbose )
-          std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
-        // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
-        if ( (finished_(w, dw, delta_)) || !converged())
+        // the following only for nonlinear problems
+        if( nonlinear )
         {
+          // compute new residual
+          (*op_)( w, residual );
+          residual -= u;
+
+          // line search if enabled
+          int ls = lineSearch(w,dw,u,residual);
+          stepCompleted_ = ls >= 0;
+          updateLinearTolerance();
+          ++iterations_;
+
           if( newtonVerbose )
+            std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
+          // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
+          if ( (finished_(w, dw, delta_)) || !converged())
           {
-            std::cout << std::endl;
-            std::cout << "Linear iterations: " << linearIterations_ << std::endl;
+            if( newtonVerbose )
+            {
+              std::cout << std::endl;
+              std::cout << "Linear iterations: " << linearIterations_ << std::endl;
+            }
+            break;
           }
-          break;
         }
+        else // in linear case do not continue
+          break ;
       } // end Newton loop
+
       if( newtonVerbose )
         std::cout << std::endl;
 
