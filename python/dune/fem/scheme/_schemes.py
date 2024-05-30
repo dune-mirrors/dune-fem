@@ -12,6 +12,14 @@ from dune.fem.operator import _opDirichletIndices
 
 logger = logging.getLogger(__name__)
 
+
+def _inColor( s, color=None ):
+    if color is None:
+        return s
+    endcolor = '\033[0m'
+    return f"{color}{s}{endcolor}"
+
+
 def _checkNewtonInParameters( params ):
     """
     Args: params a dictionary with parameters
@@ -20,6 +28,9 @@ def _checkNewtonInParameters( params ):
     the same value for a key containing 'nonlinear', unless the same key existed
     before.
     """
+
+    inRed = lambda s :  _inColor(s, '\033[91m')
+    inGreen = lambda s : _inColor(s, '\033[92m')
 
     # check for deprecated use of 'newton.linear' or 'nonlinear.linear'
     warned_linear = False
@@ -34,11 +45,11 @@ def _checkNewtonInParameters( params ):
             if key.find('newton.') != -1:
                 keypref = 'newton.'
                 if not warned_linear:
-                    warnings.warn("Warning: the parameter key 'newton.linear' is deprecated. Simply remove 'newton.' to avoid this warning!")
+                    warnings.warn(f"""Warning: the parameter key '{inRed("newton.linear")}' is deprecated. Simply remove '{inRed("newton.")}' to avoid this warning!""")
             if key.find('nonlinear.') != -1:
                 keypref = 'nonlinear.'
                 if not warned_linear:
-                    warnings.warn("Warning: the parameter key 'nonlinear.linear' is deprecated. Simply remove 'nonlinear.' to avoid this warning!")
+                    warnings.warn(f"""Warning: the parameter key '{inRed("nonlinear.linear")}' is deprecated. Simply remove '{inRed("nonlinear.")}' to avoid this warning!""")
             # issue warning if this combination has been found
             warned_linear = True
             assert keypref != ''
@@ -57,7 +68,7 @@ def _checkNewtonInParameters( params ):
         if key.find('newton') != -1:
             # issue warning if newton has been found
             if not warned:
-                warnings.warn("Warning: the parameter key 'newton' is deprecated. Replace with 'nonlinear' to avoid this warning!")
+                warnings.warn(f"""Warning: the parameter key '{inRed("newton")}' is deprecated. Replace with '{inGreen("nonlinear")}' to avoid this warning!""")
                 warned = True
 
             newkey = key.replace('newton', 'nonlinear')
