@@ -2,6 +2,7 @@
 #define DUNE_FEM_SOLVERPARAMETER_HH
 
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/common/staticlistofint.hh>
 
 namespace Dune
 {
@@ -30,38 +31,40 @@ namespace Dune
 
     public:
       // identifier for Fem, ISTL and Petsc solvers
-      static const int cg       = 1 ; // CG
-      static const int bicgstab = 2 ; // BiCGStab
-      static const int gmres    = 3 ; // GMRES
-      static const int minres   = 4 ; // MinRes
-      static const int gradient = 5 ; // GradientSolver
-      static const int loop     = 6 ; // LoopSolver
-      static const int superlu  = 7 ; // SuperLUSolver
-      static const int bicg     = 8 ; // BiCG
-      static const int preonly  = 9 ; // only preconder
-      static const std::string solverMethodTable(int i)
+      LIST_OF_INT_FORWARDED(Solvers,
+                   cg       = 1,  // CG
+                   bicgstab = 2,  // BiCGStab
+                   gmres    = 3,  // GMRES
+                   minres   = 4,  // MinRes
+                   gradient = 5,  // GradientSolver
+                   loop     = 6,  // LoopSolver
+                   superlu  = 7,  // SuperLUSolver
+                   bicg     = 8,  // BiCG
+                   preonly  = 9); // only preconder
+
+      static const std::string solverMethodTable(int id)
       {
-        std::string methods[] =
-           { "cg", "bicgstab", "gmres", "minres", "gradient", "loop", "superlu", "bicg", "preonly"  };
-        return methods[i-1]; // starting to count from 1,...
+        return Solvers::to_string( id );
       }
 
-      static const int none         = 1 ; // no preconditioner
-      static const int ssor         = 2 ; // SSOR preconditioner
-      static const int sor          = 3 ; // SOR preconditioner
-      static const int ilu          = 4 ; // ILU preconditioner
-      static const int gauss_seidel = 5 ; // Gauss-Seidel preconditioner
-      static const int jacobi       = 6 ; // Jacobi preconditioner
-      static const int amg_ilu      = 7 ; // AMG with ILU-0 smoother (deprecated)
-      static const int amg_jacobi   = 8 ; // AMG with Jacobi smoother
-      static const int ildl         = 9 ; // ILDL from istl
-      static const int oas          = 10; // Overlapping Additive Schwarz
-      static const int icc          = 11; // Incomplete Cholesky factorization
-      static const std::string preconditionMethodTable(int i)
+      // identifier for Fem, ISTL and Petsc preconditioner
+      // Note: underscores in variable names will be replaced with dash in the string of the name
+      // e.g. amg_jacobi --> amg-jacobi as string
+      LIST_OF_INT_FORWARDED(Preconditioners,
+                            none         = 1 , // no preconditioner
+                            ssor         = 2 , // SSOR preconditioner
+                            sor          = 3 , // SOR preconditioner
+                            ilu          = 4 , // ILU preconditioner
+                            gauss_seidel = 5 , // Gauss-Seidel preconditioner
+                            jacobi       = 6 , // Jacobi preconditioner
+                            amg_ilu      = 7 , // AMG with ILU-0 smoother (deprecated)
+                            amg_jacobi   = 8 , // AMG with Jacobi smoother
+                            ildl         = 9 , // ILDL from istl
+                            oas          = 10, // Overlapping Additive Schwarz
+                            icc          = 11);// Incomplete Cholesky factorization
+      static const std::string preconditionMethodTable(int id)
       {
-        static const std::string methods[]
-          = { "none", "ssor", "sor", "ilu", "gauss-seidel", "jacobi", "amg-ilu", "amg-jacobi", "ildl", "oas", "icc" };
-        return methods[i-1]; // starting to count from 1,...
+        return Preconditioners::to_string( id );
       }
 
       SolverParameter ( const ParameterReader &parameter = Parameter::container() )

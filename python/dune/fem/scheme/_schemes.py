@@ -12,6 +12,74 @@ from dune.fem.operator import _opDirichletIndices
 
 logger = logging.getLogger(__name__)
 
+
+def _inColor( s, color=None ):
+    if color is None:
+        return s
+    endcolor = '\033[0m'
+    return f"{color}{s}{endcolor}"
+
+
+def _checkNewtonInParameters( params ):
+    """
+    Args: params a dictionary with parameters
+
+    Returns: a dictionary where every entry containing 'newton' is replaced with
+    the same value for a key containing 'nonlinear', unless the same key existed
+    before.
+    """
+
+    inRed = lambda s :  _inColor(s, '\033[91m')
+    inGreen = lambda s : _inColor(s, '\033[92m')
+
+    # check for deprecated use of 'newton.linear' or 'nonlinear.linear'
+    warned_linear = False
+    parameters = params.copy()
+    for key,value in params.items():
+        # skip forcing here, warning will appear in NewtonInverseOperator
+        if key.find('linear.tolerance.strategy') != -1:
+            continue
+
+        if key.find('newton.linear') != -1 or key.find('nonlinear.linear') != -1:
+            keypref = ''
+            if key.find('newton.') != -1:
+                keypref = 'newton.'
+                if not warned_linear:
+                    warnings.warn(f"""Warning: the parameter key '{inRed("newton.linear")}' is deprecated. Simply remove '{inRed("newton.")}' to avoid this warning!""")
+            if key.find('nonlinear.') != -1:
+                keypref = 'nonlinear.'
+                if not warned_linear:
+                    warnings.warn(f"""Warning: the parameter key '{inRed("nonlinear.linear")}' is deprecated. Simply remove '{inRed("nonlinear.")}' to avoid this warning!""")
+            # issue warning if this combination has been found
+            warned_linear = True
+            assert keypref != ''
+
+            newkey = key.replace(keypref, '')
+            if newkey in parameters and newkey != "linear.verbose":
+                # parameters.pop(key)
+                raise KeyError(f"""Parameter dict contains keys '{newkey}' and '{key}'. Mixing new and old parameter keys is not allowed""")
+            else:
+                parameters[newkey] = parameters.pop(key)
+
+    # check again now for newton only
+    warned = False
+    params = parameters.copy()
+    for key,value in params.items():
+        if key.find('newton') != -1:
+            # issue warning if newton has been found
+            if not warned:
+                warnings.warn(f"""Warning: the parameter key '{inRed("newton")}' is deprecated. Replace with '{inGreen("nonlinear")}' to avoid this warning!""")
+                warned = True
+
+            newkey = key.replace('newton', 'nonlinear')
+
+            if newkey in parameters:
+                parameters.pop(key)
+            else:
+                parameters[newkey] = parameters.pop(key)
+
+    return parameters
+
 def getSolverStorage(space, solver):
     """
     Return storage that fits chosen solver (default: space.storage)
@@ -66,6 +134,10 @@ def femscheme(includes, space, solver, operator, modelType):
     return includes, typeName
 
 def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True):
+
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
+
     if assemble and not ubar:
         ubar = scheme.space.zero
     if ubar:
@@ -112,7 +184,7 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
 
     # Remove a Prefix in Python
     rmPre = lambda txt,pre: txt if not txt.startswith(pre) else txt[len(pre):]
-    p = dict( [[rmPre(k,"newton.linear."),v] for k,v in scheme.parameters.items()] )
+    p = dict( [[rmPre(k,"linear."),v] for k,v in scheme.parameters.items()] )
     params = { **p, **parameters }
 
     if assemble:
@@ -132,6 +204,10 @@ def linearized(scheme, ubar=None, assemble=True, parameters={}):
 def femschemeModule(space, model, includes, solver, operator, *args,
         parameters={},
         modelType = None, ctorArgs={}):
+
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
+
     from . import module
     _, _, _, _, defaultSolver, _ = space.storage
     # get storage of solver, it could differ from storage of space
@@ -159,6 +235,10 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
     Returns:
         Scheme: the constructed scheme
     """
+
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
+
     if hasattr(model,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -243,6 +323,9 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     assert massIntegrands is not None, "Missing mass term for massLumpingGalerkin"
     _schemeName = "MassLumpingScheme"
 
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
+
     if isinstance(integrands,Equation):
         if space is None:
             try:
@@ -294,7 +377,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
 
     # check if parameters have an option preconditioning and if this is a callable
     preconditioning = None
-    precondkey = 'newton.linear.preconditioning.method'
+    precondkey = 'linear.preconditioning.method'
     if precondkey in parameters:
         # if preconditioning is callable then store as preconditioning
         # and remove from parameters
@@ -372,6 +455,9 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         virtualize   If True, integrands will be virtualized to avoid
                      re-compilation. (default: True)
     """
+
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
 
     if _schemeName is None:
         raise Exception("_galerkin needs a scheme Name: GalerkinScheme or MethodOfLinesScheme")
@@ -465,7 +551,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     # check if parameters have an option preconditioning and if this is a callable
     preconditioning = None
-    precondkey = 'newton.linear.preconditioning.method'
+    precondkey = 'linear.preconditioning.method'
     if precondkey in parameters:
         # if preconditioning is callable then store as preconditioning
         # and remove from parameters
@@ -550,6 +636,7 @@ def h1(model, space=None, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+
     if hasattr(model,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.

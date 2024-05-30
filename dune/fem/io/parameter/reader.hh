@@ -262,6 +262,18 @@ namespace Dune
       template< int n >
       static int getEnumeration ( const std::string &key, const std::string& value, const std::string (&values)[ n ] )
       {
+        return getEnumeration( key, value, values, n );
+      }
+
+      static int getEnumeration ( const std::string &key, const std::string& value, const std::vector<std::string>& values )
+      {
+        return getEnumeration( key, value, values, values.size() );
+      }
+
+      // implementation of getEnumeration
+      template <class StringVector>
+      static int getEnumeration ( const std::string &key, const std::string& value, const StringVector &values, const int n )
+      {
         for( int i = 0; i < n; ++i )
         {
           if( value == values[ i ] )
@@ -273,28 +285,6 @@ namespace Dune
           j = -1;
         if( (j < 0) || (j >= n) )
         {
-          std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
-          std::cerr << "Valid values are: ";
-          for( int i = 0; i < n; ++i )
-            std::cerr << values[ i ] << (i < n-1 ? ", " : "");
-          std::cerr << std::endl << std::endl;
-          DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-        }
-        return j;
-      }
-      static int getEnumeration ( const std::string &key, const std::string& value, const std::vector<std::string> &values )
-      {
-        for( unsigned int i = 0; i < values.size(); ++i )
-        {
-          if( value == values[ i ] )
-            return i;
-        }
-
-        int j = -1;
-        if( !ParameterParser< int >::parse( value, j ) )
-          j = -1;
-        if( (j < 0) || (j >= (int)values.size()) )
-        {
           std::stringstream sstr;
           if ( value.find("help") == std::string::npos )
             sstr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
@@ -302,8 +292,8 @@ namespace Dune
             sstr << "Help for parameter '" << key << "':" << std::endl;
 
           sstr << "Valid values are: ";
-          for( unsigned int i = 0; i < values.size(); ++i )
-            sstr << values[ i ] << (i < values.size()-1 ? ", " : "");
+          for( int i = 0; i < n; ++i )
+            sstr << values[ i ] << (i < n-1 ? ", " : "");
           sstr << std::endl;
 
           if ( value.find("help") == std::string::npos )

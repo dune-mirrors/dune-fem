@@ -43,8 +43,8 @@ a = (inner((u)/dt, v) + inner(u, v))*dx
 exact = as_vector( [exp(-2*t)*(initial - 1) + 1,]*dimR )
 b = replace(a, {u: exact})
 
-solverParam = {"newton.verbose": 0,
-               "newton.linear.verbose": 0}
+solverParam = {"nonlinear.verbose": 0,
+               "nonlinear.linear.verbose": 0}
 scheme = create.scheme("galerkin", a==b, space, solver='cg',
                        parameters = solverParam)
 scheme.setQuadratureOrders(quadOrder,quadOrder)

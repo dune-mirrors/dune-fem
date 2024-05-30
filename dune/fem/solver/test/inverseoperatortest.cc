@@ -193,7 +193,7 @@ struct Algorithm
         std::cout << designation << " NewtonInvOp(NewSParam)\n" << dist << "\n" << std::endl;
 
       Dune::Fem::NewtonInverseOperator<LinearOperatorType,InverseOperatorType>
-        newtonInvOpB( Dune::Fem::parameterDict( "fem.solver.newton.", "linear.method","cg" ) );
+        newtonInvOpB( Dune::Fem::parameterDict( "fem.solver.nonlinear.", "linear.method","cg" ) );
       newtonInvOpB.bind( affineMassOperator );
       newtonInvOpB( rhs, u );
       dist = l2norm.distance( f_, u );
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
     designation1 = std::string(" === KrylovInverseOperator + SparseRowLinearOperator + SolverParameter === ");
     Dune::Fem::SolverParameter param( Dune::Fem::parameterDict(
             "fem.solver.",
-            "method","cg", "newton.linear.method","gmres"));
+            "method","cg", "nonlinear.linear.method","gmres"));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver, &param);
 
     using CgInverseOperator = Dune::Fem::CgInverseOperator< DiscreteFunction >;

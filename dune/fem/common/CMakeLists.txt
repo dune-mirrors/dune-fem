@@ -13,6 +13,7 @@ dune_install( bindguard.hh
               memory.hh
               referencevector.hh
               stackallocator.hh
+              staticlistofint.hh
               tupletypetraits.hh
               tupleutility.hh
               typeindexedtuple.hh

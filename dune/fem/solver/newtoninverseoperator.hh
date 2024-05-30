@@ -8,10 +8,13 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <regex>
 #include <utility>
 
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 
+#include <dune/fem/common/staticlistofint.hh>
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -28,7 +31,7 @@ namespace Dune
      *
      * \brief Adaptive tolerance selection for linear solver.
      *
-     * \note Prevents oversolving linear systems far away from solution.
+     * \note Prevents over-solving linear systems far away from solution.
      *       Source: "Globally Convergent Inexact Newton Methods", Stanley C. Eisenstat and Homer F. Walker, https://doi.org/10.1137/0804022.
     */
     class EisenstatWalkerStrategy
@@ -73,31 +76,67 @@ namespace Dune
     protected:
 
       std::shared_ptr<SolverParam> baseParam_;
-      // key prefix, default is fem.solver.newton. (can be overloaded by user)
+      // key prefix, default is fem.solver.nonlinear. (can be overloaded by user)
       const std::string keyPrefix_;
 
       ParameterReader parameter_;
 
+      void checkDeprecatedParameters() const
+      {
+        const std::string newton("newton.");
+        const std::size_t pos = keyPrefix_.find( newton );
+        if( pos != std::string::npos )
+        {
+          DUNE_THROW(InvalidStateException,"Keyprefix 'newton' is deprecated, replace with 'nonlinear'!");
+        }
+
+        const std::string params[]
+          = { "tolerance", "lineSearch", "maxterations", "linear", "maxlinesearchiterations" };
+        for( const auto& p : params )
+        {
+          std::string key( "fem.solver.newton." );
+          key += p;
+          if( parameter_.exists( key ) )
+            DUNE_THROW(InvalidStateException,"Keyprefix 'newton' is deprecated, replace with 'nonlinear'!");
+        }
+      }
+
+      std::string replaceNonLinearWithLinear( const std::string& keyPrefix ) const
+      {
+        if( keyPrefix.find( "nonlinear" ) != std::string::npos )
+        {
+          return std::regex_replace(keyPrefix, std::regex("nonlinear"), "linear" );
+        }
+        else
+          return keyPrefix;
+      }
     public:
-      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
+      NewtonParameter( const SolverParam& baseParameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( static_cast< SolverParam* > (baseParameter.clone()) ),
           keyPrefix_( keyPrefix ),
           parameter_( baseParameter.parameter() )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       template <class Parameter, std::enable_if_t<!std::is_base_of<SolverParam,Parameter>::value && !std::is_same<Parameter,ParameterReader>::value,int> i=0>
-      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.newton." )
+      NewtonParameter( const Parameter& solverParameter, const std::string keyPrefix = "fem.solver.nonlinear." )
         : baseParam_( new SolverParam(solverParameter) ),
           keyPrefix_( keyPrefix ),
           parameter_( solverParameter.parameter() )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       template <class ParamReader, std::enable_if_t<!std::is_same<ParamReader,SolverParam>::value && std::is_same<ParamReader,ParameterReader>::value,int> i=0>
-      NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.newton." )
-        : baseParam_( std::make_shared<SolverParam>( keyPrefix + "linear.", parameter) ),
+      NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.nonlinear." )
+          // pass keyprefix for linear solvers, which is the same as keyprefix with nonlinear replaced by linear
+        : baseParam_( std::make_shared<SolverParam>( replaceNonLinearWithLinear(keyPrefix), parameter) ),
           keyPrefix_( keyPrefix),
           parameter_( parameter )
-      {}
+      {
+        checkDeprecatedParameters();
+      }
 
       const ParameterReader &parameter () const { return parameter_; }
       const SolverParam& solverParameter () const { return *baseParam_; }
@@ -187,38 +226,54 @@ namespace Dune
         maxLineSearchIterations_ = maxLineSearchIter;
       }
 
-      enum class LineSearchMethod {
-          none   = 0,
-          simple = 1
-        };
+      // LineSearchMethod: none, simple
+      LIST_OF_INT(LineSearchMethod,
+                  none=0,
+                  simple=1);
 
-      virtual LineSearchMethod lineSearch () const
+      virtual int lineSearch () const
       {
-        const std::string lineSearchMethods[] = { "none", "simple" };
-        return static_cast< LineSearchMethod>( parameter_.getEnum( keyPrefix_ + "lineSearch", lineSearchMethods, 0 ) );
+        if( parameter_.exists( keyPrefix_ + "lineSearch" ) )
+        {
+          std::cout << "WARNING: using old parameter name '" << keyPrefix_ + "lineSearch" << "',\n"
+                    << "please switch to '" << keyPrefix_ + "linesearch" << "' (all lower caps)!" <<std::endl;
+          return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "lineSearch", LineSearchMethod::names(), LineSearchMethod::none ) );
+        }
+        return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "linesearch", LineSearchMethod::names(), LineSearchMethod::none ) );
       }
 
-      virtual void setLineSearch ( const LineSearchMethod method )
+      virtual void setLineSearch ( const int method )
       {
-        const std::string lineSearchMethods[] = { "none", "simple" };
-        Parameter::append( keyPrefix_ + "lineSearch", lineSearchMethods[int(method)], true );
+        Parameter::append( keyPrefix_ + "linesearch", LineSearchMethod::to_string(method), true );
       }
 
-      enum class LinearToleranceStrategy {
-        none = 0,
-        eisenstatwalker = 1
-      };
+      // Forcing: none, eisenstatwalker
+      LIST_OF_INT(Forcing,
+                  none  =  0, // the provided linear solver tol is used in every iteration
+                  eisenstatwalker=1); // Eistenstat-Walker criterion
 
-      virtual LinearToleranceStrategy linearToleranceStrategy () const
+      virtual int forcing () const
       {
-        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        return static_cast< LinearToleranceStrategy>( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy, 0 ) );
+        if( parameter_.exists( keyPrefix_ + "linear.tolerance.strategy" ) )
+        {
+          std::string keypref( keyPrefix_ );
+          std::string femsolver("fem.solver.");
+          size_t pos = keypref.find( femsolver );
+          if (pos != std::string::npos)
+          {
+            // If found then erase it from string
+            keypref.erase(pos, femsolver.length());
+          }
+          std::cout << "WARNING: using old parameter name '" << keypref + "linear.tolerance.strategy" << "',\n"
+                    << "please switch to '" << keypref + "forcing" << "'!" <<std::endl;
+          return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", Forcing::names(), Forcing::none ) );
+        }
+        return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "forcing", Forcing::names(), Forcing::none ) );
       }
 
-      virtual void setLinearToleranceStrategy ( const LinearToleranceStrategy strategy )
+      virtual void setForcing ( const int strategy )
       {
-        const std::string linearToleranceStrategy[] = { "none", "eisenstatwalker" };
-        Parameter::append( keyPrefix_ + "linear.tolerance.strategy", linearToleranceStrategy[int(strategy)], true );
+        Parameter::append( keyPrefix_ + "forcing", Forcing::to_string( strategy ), true );
       }
 
       //! return true if simplified Newton is to be used
@@ -274,7 +329,7 @@ namespace Dune
      *  \tparam  LInvOp  linear inverse operator
      *
      *  \note Verbosity of the NewtonInverseOperator is controlled via the
-     *        paramter <b>fem.solver.newton.verbose</b>; it defaults to
+     *        paramter <b>fem.solver.nonlinear.verbose</b>; it defaults to
      *        <b>fem.solver.verbose</b>.
      *
      *  \note Similar to CG solver the initial guess should take the
@@ -350,7 +405,7 @@ namespace Dune
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
 
       /** constructor
@@ -359,7 +414,7 @@ namespace Dune
        *  \param[in]  epsilon     tolerance for norm of residual
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
 
       // main constructor
@@ -370,13 +425,13 @@ namespace Dune
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
-          linearToleranceStrategy_ ( parameter.linearToleranceStrategy() ),
+          forcing_ ( parameter.forcing() ),
           eisenstatWalker_ ( epsilon ),
           timing_(3, 0.0)
       {
-        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+        if (forcing_ == ParameterType::Forcing::eisenstatwalker) {
           if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
-            DUNE_THROW( InvalidStateException, "Parameter `newton.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
+            DUNE_THROW( InvalidStateException, "Parameter `nonlinear.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
           }
         }
       }
@@ -385,7 +440,7 @@ namespace Dune
       /** constructor
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
       explicit NewtonInverseOperator ( const ParameterType &parameter = ParameterType( Parameter::container() ) )
         : NewtonInverseOperator( parameter.tolerance(), parameter )
@@ -420,7 +475,7 @@ namespace Dune
        *  \param[in]  op       operator to invert
        *
        *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.newton.tolerance</b>
+       *        <b>fem.solver.nonlinear.tolerance</b>
        */
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 
@@ -446,7 +501,7 @@ namespace Dune
       int linearIterations () const { return linearIterations_; }
       void setMaxLinearIterations ( int maxLinearIterations ) { parameter_.setMaxLinearIterations( maxLinearIterations ); }
       void updateLinearTolerance () const {
-        if (linearToleranceStrategy_ == ParameterType::LinearToleranceStrategy::eisenstatwalker) {
+        if (forcing_ == ParameterType::Forcing::eisenstatwalker) {
           double newTol = eisenstatWalker_.nextLinearTolerance( delta_ );
           jInv_.parameter().setTolerance( newTol );
         }
@@ -562,9 +617,9 @@ namespace Dune
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
       ParameterType parameter_;
       mutable int stepCompleted_;
-      typename ParameterType::LineSearchMethod lsMethod_;
+      const int lsMethod_;
       ErrorMeasureType finished_;
-      typename ParameterType::LinearToleranceStrategy linearToleranceStrategy_;
+      const int forcing_;
       EisenstatWalkerStrategy eisenstatWalker_;
 
       mutable std::vector<double> timing_;
@@ -582,7 +637,7 @@ namespace Dune
       std::fill(timing_.begin(), timing_.end(), 0.0 );
 
       // obtain information about operator to invert
-      const bool nonlinear = true; // op_->nonlinear() || parameter_.forceNonLinear();
+      const bool nonlinear = op_->nonlinear() || parameter_.forceNonLinear();
 
       Dune::Timer allTimer;
       DomainFunctionType residual( u );
@@ -609,7 +664,7 @@ namespace Dune
       const bool newtonVerbose = verbose() && nonlinear;
       if( newtonVerbose )
       {
-        std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
+        std::cout << "Start Newton: tol = " << parameter_.tolerance() << " (forcing = " << ParameterType::Forcing::to_string(forcing_) << " | linear tol = " << parameter_.linear().tolerance() << ")"<<std::endl;
         std::cout << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
       }
       while( true )

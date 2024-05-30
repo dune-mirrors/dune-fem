@@ -47,17 +47,17 @@ first argument and the solver to use as second, e.g.,
 
 The detailed behavior of the schemes can be customized by providing a
 `parameters` dictionary to the scheme constructor, e.g.,
-   {"newton.tolerance": 1e-3, # tolerance for newton solver
-    "newton.verbose": False,  # toggle iteration output
-    "newton.linear.tolerance": 1e-5, # tolerance for linear solver
-    "newton.linear.errormeasure": "absolute", # or "relative" or "residualreduction"
-    "newton.linear.preconditioning.method": "jacobi", # (see table below)
-    "newton.linear.preconditioning.hypre.method": "boomeramg", #  "pilu-t" "parasails"
-    "newton.linear.preconditioning.iteration": 3, # iterations for preconditioner
-    "newton.linear.preconditioning.relaxation": 1.0, # omega for SOR and ILU
-    "newton.linear.maxiterations":1000, # max number of linear iterations
-    "newton.linear.verbose": False,     # toggle linear iteration output
-    "newton.linear.preconditioning.level": 0} # fill-in level for ILU preconditioning
+   {"nonlinear.tolerance": 1e-3, # tolerance for newton solver
+    "nonlinear.verbose": False,  # toggle iteration output
+    "nonlinear.linear.tolerance": 1e-5, # tolerance for linear solver
+    "nonlinear.linear.errormeasure": "absolute", # or "relative" or "residualreduction"
+    "nonlinear.linear.preconditioning.method": "jacobi", # (see table below)
+    "nonlinear.linear.preconditioning.hypre.method": "boomeramg", #  "pilu-t" "parasails"
+    "nonlinear.linear.preconditioning.iteration": 3, # iterations for preconditioner
+    "nonlinear.linear.preconditioning.relaxation": 1.0, # omega for SOR and ILU
+    "nonlinear.linear.maxiterations":1000, # max number of linear iterations
+    "nonlinear.linear.verbose": False,     # toggle linear iteration output
+    "nonlinear.linear.preconditioning.level": 0} # fill-in level for ILU preconditioning
 )doc"
 + str.second +
 R"doc(

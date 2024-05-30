@@ -129,13 +129,13 @@ def compute(comm,useAdapt,gridType,
 
     eqn = (form == forcing*v[0]*dx)
     scheme = solutionScheme([eqn, *dbcs], solver="cg",
-                parameters={"newton.linear.preconditioning.method":"jacobi",
-                            "newton.linear.verbose":False,
-                            "newton.verbose":False,
-                            "newton.maxiterations":10,
-                            "newton.linear.tolerance":1e-10,
-                            "newton.linear.gmres.restart":100,
-                            "newton.linear.maxiterations":5000})
+                parameters={"nonlinear.linear.preconditioning.method":"jacobi",
+                            "nonlinear.linear.verbose":False,
+                            "nonlinear.verbose":False,
+                            "nonlinear.maxiterations":10,
+                            "nonlinear.linear.tolerance":1e-10,
+                            "nonlinear.linear.gmres.restart":100,
+                            "nonlinear.linear.maxiterations":5000})
 
     uh1 = space.interpolate(dimR*[14], name="solution")
 
