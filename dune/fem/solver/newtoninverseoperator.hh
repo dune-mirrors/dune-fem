@@ -256,8 +256,16 @@ namespace Dune
       {
         if( parameter_.exists( keyPrefix_ + "linear.tolerance.strategy" ) )
         {
-          std::cout << "WARNING: using old parameter name '" << keyPrefix_ + "linear.tolerance.strategy" << "',\n"
-                    << "please switch to '" << keyPrefix_ + "forcing" << "'!" <<std::endl;
+          std::string keypref( keyPrefix_ );
+          std::string femsolver("fem.solver.");
+          size_t pos = keypref.find( femsolver );
+          if (pos != std::string::npos)
+          {
+            // If found then erase it from string
+            keypref.erase(pos, femsolver.length());
+          }
+          std::cout << "WARNING: using old parameter name '" << keypref + "linear.tolerance.strategy" << "',\n"
+                    << "please switch to '" << keypref + "forcing" << "'!" <<std::endl;
           return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "linear.tolerance.strategy", Forcing::names(), Forcing::none ) );
         }
         return Forcing::to_id( parameter_.getEnum( keyPrefix_ + "forcing", Forcing::names(), Forcing::none ) );
