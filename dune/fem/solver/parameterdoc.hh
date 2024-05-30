@@ -47,17 +47,23 @@ first argument and the solver to use as second, e.g.,
 
 The detailed behavior of the schemes can be customized by providing a
 `parameters` dictionary to the scheme constructor, e.g.,
-   {"nonlinear.tolerance": 1e-3, # tolerance for newton solver
-    "nonlinear.verbose": False,  # toggle iteration output
-    "nonlinear.linear.tolerance": 1e-5, # tolerance for linear solver
-    "nonlinear.linear.errormeasure": "absolute", # or "relative" or "residualreduction"
-    "nonlinear.linear.preconditioning.method": "jacobi", # (see table below)
-    "nonlinear.linear.preconditioning.hypre.method": "boomeramg", #  "pilu-t" "parasails"
-    "nonlinear.linear.preconditioning.iteration": 3, # iterations for preconditioner
-    "nonlinear.linear.preconditioning.relaxation": 1.0, # omega for SOR and ILU
-    "nonlinear.linear.maxiterations":1000, # max number of linear iterations
-    "nonlinear.linear.verbose": False,     # toggle linear iteration output
-    "nonlinear.linear.preconditioning.level": 0} # fill-in level for ILU preconditioning
+   {"nonlinear.tolerance": 1e-3,       # tolerance for newton solver
+    "nonlinear.verbose": False,        # toggle iteration output
+    "nonlinear.maxiterations": maxInt, # max number of nonlinear iterations
+    "nonlinear.linesearch": True,      # use a simple bisection line search
+    "nonlinear.forcing": "none",       # can switch to eisenstatwalker
+    "nonlinear.simplified": False,     # use a quasi Newton method with single Jacobian evaluation
+
+    "linear.tolerance": 1e-5,          # tolerance for linear solver
+    "linear.verbose": False,           # toggle linear iteration output
+    "linear.maxiterations":1000,       # max number of linear iterations
+    "linear.errormeasure": "absolute", # or "relative" or "residualreduction"
+
+    "linear.preconditioning.method": "jacobi",          # (see table below)
+    "linear.preconditioning.hypre.method": "boomeramg", #  "pilu-t" "parasails"
+    "linear.preconditioning.iteration": 3,              # iterations for preconditioner
+    "linear.preconditioning.relaxation": 1.0,           # omega for SOR and ILU
+    "linear.preconditioning.level": 0}                  # fill-in level for ILU preconditioning
 )doc"
 + str.second +
 R"doc(
