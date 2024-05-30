@@ -55,7 +55,7 @@ def _checkNewtonInParameters( params ):
             assert keypref != ''
 
             newkey = key.replace(keypref, '')
-            if newkey in parameters:
+            if newkey in parameters and newkey != "linear.verbose":
                 # parameters.pop(key)
                 raise KeyError(f"""Parameter dict contains keys '{newkey}' and '{key}'. Mixing new and old parameter keys is not allowed""")
             else:
