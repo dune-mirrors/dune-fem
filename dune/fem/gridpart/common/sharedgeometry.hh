@@ -37,6 +37,9 @@ namespace Dune
     typedef typename Implementation::JacobianTransposed JacobianTransposed;
     typedef typename Implementation::JacobianInverseTransposed JacobianInverseTransposed;
 
+    typedef typename Implementation::Jacobian Jacobian;
+    typedef typename Implementation::JacobianInverse JacobianInverse;
+
     SharedGeometry () = default;
 
     template< class... Args, std::enable_if_t< std::is_constructible< Impl, Args &&... >::value, int > = 0 >
@@ -101,6 +104,9 @@ namespace Dune
 
     JacobianTransposed jacobianTransposed ( const LocalCoordinate &local ) const { return impl().jacobianTransposed( local ); }
     JacobianInverseTransposed jacobianInverseTransposed ( const LocalCoordinate &local ) const { return impl().jacobianInverseTransposed( local ); }
+
+    Jacobian jacobian ( const LocalCoordinate &local ) const { return impl().jacobian( local ); }
+    JacobianInverse jacobianInverse ( const LocalCoordinate &local ) const { return impl().jacobianInverse( local ); }
 
     Allocator allocator () const { return allocator_; }
 

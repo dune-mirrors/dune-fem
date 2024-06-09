@@ -36,6 +36,9 @@ namespace Dune
       typedef typename HostGeometryType::JacobianTransposed JacobianTransposed;
       typedef typename HostGeometryType::JacobianInverseTransposed JacobianInverseTransposed;
 
+      typedef typename HostGeometryType::Jacobian Jacobian;
+      typedef typename HostGeometryType::JacobianInverse JacobianInverse;
+
       IdBasicGeometry ( const HostGeometryType &hostGeometry )
       : hostGeometry_( hostGeometry )
       {}
@@ -63,6 +66,16 @@ namespace Dune
       JacobianInverseTransposed jacobianInverseTransposed ( const LocalVector &local ) const
       {
         return hostGeometry_.jacobianInverseTransposed( local );
+      }
+
+      Jacobian jacobian ( const LocalVector &local ) const
+      {
+        return hostGeometry_.jacobian( local );
+      }
+
+      JacobianInverse jacobianInverse ( const LocalVector &local ) const
+      {
+        return hostGeometry_.jacobianInverse( local );
       }
 
     private:
