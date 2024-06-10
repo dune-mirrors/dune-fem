@@ -55,7 +55,7 @@ class LumpingQuadrature
     : BaseType(id),
       order_( order )
   {
-    assert( order_ <= maxOrder() && order_ >= 1 );
+    assert( order_ <= maxOrder_ && order_ >= 1 );
 
     // create Lagrange points to define quadrature
     typedef LagrangePointListImplementation< FieldType, Dune::GeometryType(geometryId).id(), dimension, maxOrder_ > LP;

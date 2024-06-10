@@ -6,6 +6,7 @@
 
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/transpose.hh>
 
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/quadraturerules.hh>
@@ -33,7 +34,9 @@ namespace Dune
 
     typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
     typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
+
     typedef JacobianInverseTransposed Jacobian;
+    typedef JacobianTransposed        JacobianInverse;
 
     // Helper class to compute a matrix pseudo inverse
     typedef Impl::FieldMatrixHelper< ctype > MatrixHelper;
@@ -68,6 +71,16 @@ namespace Dune
       JacobianInverseTransposed jacInverseTransposed( 0 );
       MatrixHelper::template rightInvA< mydimension, coorddimension >( jacobianTransposed( local ), jacInverseTransposed );
       return jacInverseTransposed;
+    }
+
+    Jacobian jacobian ( const LocalCoordinate &local ) const
+    {
+      return transpose( jacobianTransposed( local ) );
+    }
+
+    JacobianInverse jacobianInverse ( const LocalCoordinate &local ) const
+    {
+      return transpose( jacobianInverseTransposed( local ) );
     }
 
     ctype integrationElement ( const LocalCoordinate &local ) const

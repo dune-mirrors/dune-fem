@@ -61,7 +61,7 @@ static int length() { return entries().second.size(); }\
 static std::string to_string(int value){\
   auto it = entries().first.find( value );\
   assert( it != entries().first.end() );\
-  assert( it->second < entries().second.size() );\
+  assert( it->second < int(entries().second.size()) );\
   return entries().second[ it->second ];\
 }\
 };
