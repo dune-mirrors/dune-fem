@@ -226,30 +226,45 @@ namespace Dune
             } );
         #endif
 
-        auto regMap = Dune::Python::insertClass< BlockMapperType >
-              ( cls, "BlockMapper", Dune::Python::GenerateTypeName(cls,"BlockMapperType"));
-        if( regMap.second )
+        // Note: we need to construct a `NonBlockMapper`.
+        // Reason: For example the `BlockedMapper` for `LagrangeSpaces` with
+        // different `dimRange` values is always the same type (and the
+        // same object even). We can only register this type once. In the
+        // registered `__call__` method we then don't have any access
+        // anymore to the local block size (`dimRange`) of the space for
+        // which the `mapper` was called. To solve this `space.mapper` on
+        // the Python side returns a `NonBlockedMapper`.
+        typedef Dune::Fem::NonBlockMapper< BlockMapperType, Space::localBlockSize >
+                MapperType;
+        auto nbMap = Dune::Python::insertClass< MapperType >
+              ( module, "NonBlockMapper", Dune::Python::GenerateTypeName(cls,"BlockMapperType"));
+        if( nbMap.second )
         {
-          auto clsMap = regMap.first;
-          clsMap.def_property_readonly( "localBlockSize", [] ( BlockMapperType &self ) -> unsigned int { return Space::localBlockSize; } );
-          clsMap.def("block", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
-              { std::vector< GlobalKeyType > indices( self.numDofs( e ) );
+          auto clsMap = nbMap.first;
+          clsMap.def_property_readonly( "localBlockSize", [] ( MapperType &self )
+              -> unsigned int { return MapperType::blockSize; } );
+          clsMap.def("block", [] ( MapperType &self, const EntityType &e)
+              -> std::vector< GlobalKeyType >
+              { const BlockMapperType &bm = self.blockMapper();
+                std::vector< GlobalKeyType > indices( bm.numDofs( e ) );
                 // fill vector with dof indices
-                self.mapEach(e, [&indices]( const int local, GlobalKeyType global ) { indices[ local ] = global; });
+                bm.mapEach(e, [&indices]( const int local, GlobalKeyType global )
+                    { indices[ local ] = global; });
                 return indices;
               } );
-          clsMap.def("__call__", [] ( BlockMapperType &self, const EntityType &e) -> std::vector< GlobalKeyType >
+          clsMap.def("__call__", [] ( MapperType &self, const EntityType &e)
+              -> std::vector< GlobalKeyType >
               {
-                typedef Dune::Fem::NonBlockMapper< BlockMapperType, Space::localBlockSize > MapperType;
-                MapperType mapper( self );
-                std::vector< GlobalKeyType > indices;
+                std::vector< GlobalKeyType > indices(self.size());
                 // fill vector with dof indices
-                mapper.map( e, indices );
+                self.map( e, indices );
                 return indices;
               } );
         }
-        cls.def_property_readonly( "mapper", [] ( Space &self ) -> auto&
-        { return self.blockMapper(); } );
+        cls.def( "mapper", [] ( Space &self ) -> auto
+            { return MapperType(self.blockMapper()); },
+          pybind11::keep_alive<0,1>()
+        );
 
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
