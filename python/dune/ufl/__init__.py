@@ -5,6 +5,14 @@ import numpy
 import ufl
 import ufl.domain
 import ufl.equation
+import ufl.finiteelement
+uflFE = lambda cell,order,rdim: (
+    ufl.finiteelement.FiniteElement(
+        "Lagrange", cell, order,
+        (rdim,) if rdim>0 else (),
+        ufl.identity_pullback, ufl.H1)
+    )
+
 
 from dune.deprecate import deprecated
 
@@ -48,7 +56,27 @@ def _patchufl4d():
         ufl_elements.pop("CG")
         register_element("Lagrange", "CG", 0, H1, "identity", (1, None), ufl.finiteelement.elementlist.any_cell)
 
-def cell(dimDomainOrGrid):
+# this is now more a 'domain' in the ufl context
+def _cell(dimWorld,dimDomain):
+    if dimDomain == 1:
+        ucell = ufl.interval
+    elif dimDomain == 2:
+        ucell = ufl.triangle
+    elif dimDomain == 3:
+        ucell = ufl.tetrahedron
+    elif dimDomain == 4:
+        raise NotImplementedError("TODO: still needs fixing")
+        # add 4d cell types to ufl data structures until supported by UFL
+        _patchufl4d()
+        return ufl.Cell("pentatope", dimWorld)
+    else:
+        raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
+    return ufl.Mesh( uflFE(ucell, order=1, rdim=dimWorld) )
+# TODO: only up to 3d at the moment
+_uniqueCellPerDimension = [[_cell(w,d) for d in range(1,w+1)] for w in range(1,4)]
+
+# dimDonainOrGrid is either a gridView or a tuple with (dimDomain,dimWorld)
+def domain(dimDomainOrGrid):
     if isinstance(dimDomainOrGrid,ufl.Cell):
         return dimDomainOrGrid
     try:
@@ -63,19 +91,9 @@ def cell(dimDomainOrGrid):
             dimDomain = dimDomain[0]
         else:
             dimWorld = int(dimDomain)
-    if dimDomain == 1:
-        return ufl.Cell("interval", dimWorld)
-    elif dimDomain == 2:
-        return ufl.Cell("triangle", dimWorld)
-    elif dimDomain == 3:
-        return ufl.Cell("tetrahedron", dimWorld)
-    elif dimDomain == 4:
-        # add 4d cell types to ufl data structures until supported by UFL
-        _patchufl4d()
-        return ufl.Cell("pentatope", dimWorld)
-    else:
-        raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
-
+    return _uniqueCellPerDimension[dimWorld-1][dimDomain-1]
+def cell(dimDomainOrGrid):
+    return domain(dimDomainOrGrid)
 
 class Space(ufl.FunctionSpace):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False, order=1):
@@ -88,17 +106,16 @@ class Space(ufl.FunctionSpace):
                 dimRange = 1
                 scalar = True
         self.scalar = scalar
+        domain = cell(dimDomainOrGridOrSpace)
+        ucell = domain.ufl_cell()
         if scalar:
-            ve = ufl.FiniteElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), 1)
+            ve = uflFE(ucell, order=max(order,1), rdim=0)
         else:
-            ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), max(order,1), int(dimRange))
-        # default_domain is deprecated
-        # domain = ufl.domain.default_domain(ve.cell())
-        domain = ufl.domain.affine_mesh(ve.cell())
-        ufl.FunctionSpace.__init__(self,domain, ve)
+            ve = uflFE(ucell, order=max(order,1), rdim=int(dimRange))
+        ufl.FunctionSpace.__init__(self, domain, ve)
         self.dimRange = dimRange
+        self._cell = ve.cell
         self.field = field
-        self._cell = ve.cell()
     def cell(self):
         return self._cell
     def toVectorSpace(self):
@@ -181,7 +198,7 @@ def isNumber(x):
     except:
         return False
 # the following is an adapted version of the code in fenics
-class Constant(ufl.Coefficient):
+class Constant(ufl.Constant):
     constCount = 0
     def __init__(self, value, name=None, cell=None):
         """
@@ -219,6 +236,8 @@ class Constant(ufl.Coefficient):
         # grad(c) be undefined.
         if cell is not None:
             cell = ufl.as_cell(cell)
+        else:
+            cell = domain(2) # TODO: this does not work - e.g. mcf.py needs (2,3) here
         ufl_domain = None
 
         array = numpy.array(value)
@@ -227,18 +246,18 @@ class Constant(ufl.Coefficient):
 
         # Create UFL element and initialize constant
         if rank == 0:
-            ufl_element = ufl.FiniteElement("Real", cell, 0)
+            shape=()
             self.scalar = True
         elif rank == 1:
-            ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
+            shape=(len(floats),)
             self.scalar = False
         else:
-            ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
+            shape=array.shape
             self.scalar = False
 
         # Initialize base classes
-        ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
-        ufl.Coefficient.__init__(self, ufl_function_space)
+        ufl.Constant.__init__(self, domain=cell, shape=shape)
+
         if name is None:
             self.name = "c"+str(Constant.constCount)
             Constant.constCount += 1
@@ -251,7 +270,7 @@ class Constant(ufl.Coefficient):
         self.models = []
 
     def cell(self):
-        return self.ufl_element().cell()
+        return self.ufl_domain().cell()
 
     def values(self):
         if isNumber(self._value):

@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoordinate
+from ufl import Coefficient, Form, AbstractFiniteElement, FunctionSpace, SpatialCoordinate
 from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
@@ -167,7 +167,7 @@ def compileUFL(form, patch, *args, **kwargs):
     d2ubar = Grad(dubar)
     dimDomain = u.ufl_shape[0]
 
-    x = SpatialCoordinate(form.ufl_cell())
+    x = SpatialCoordinate(form.ufl_domain())
 
     field = kwargs.get("field", None)
     if field is None:
@@ -299,11 +299,11 @@ def compileUFL(form, patch, *args, **kwargs):
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
-            if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
+            if not isinstance(bc.functionSpace, (FunctionSpace, AbstractFiniteElement)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
             if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
                 raise Exception('Space of trial function and dirichlet boundary function must be the same - note that boundary conditions on subspaces are not available, yet')
-            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
+            if isinstance(bc.functionSpace, AbstractFiniteElement) and (bc.functionSpace != u.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 
             if isinstance(bc.value, list):

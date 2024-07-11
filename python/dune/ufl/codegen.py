@@ -2,9 +2,12 @@ from __future__ import division, print_function
 
 import re
 
-from ufl import replace
+from ufl import replace, Constant
 from ufl.algorithms import expand_indices
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
+from ufl.algorithms.analysis import (
+     extract_arguments_and_coefficients, extract_arguments,
+     extract_coefficients, extract_constants
+     )
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.corealg.map_dag import map_expr_dags
@@ -34,7 +37,6 @@ from dune.source.cplusplus import SourceWriter, ListWriter, StringWriter
 
 from ufl import SpatialCoordinate,TestFunction,TrialFunction,Coefficient,\
         as_vector, as_matrix,dx,ds,grad,inner,zero,FacetNormal,dot
-# from ufl.algorithms.analysis import extract_arguments_and_coefficients as coeff
 from ufl.differentiation import Grad
 
 def translateIndex(index):
@@ -89,7 +91,7 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.atan))
         return self._makeTmp(cplusplus.atan(x))
 
-    def atan_2(self, expr, x, y):
+    def atan2(self, expr, x, y):
         self.using.add(Using(cplusplus.atan2))
         return self._makeTmp(cplusplus.atan2(x, y))
 
@@ -98,6 +100,21 @@ class CodeGenerator(MultiFunction):
     cell_volume = _require_predefined
 
     def coefficient(self, expr):
+        try:
+            return self._makeTmp(self.predefined[expr], True)
+        except KeyError:
+            pass
+
+        idx = str(self._getNumber(expr))
+        if expr.is_cellwise_constant():
+            var = Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx)
+            self.code.append(Declaration(var, 'constant< ' + idx + ' >()'))
+        else:
+            var = Variable('CoefficientRangeType< ' + idx + ' >', 'c' + idx)
+            self.code.append(Declaration(var))
+            self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
+        return var
+    def constant(self, expr):
         try:
             return self._makeTmp(self.predefined[expr], True)
         except KeyError:
@@ -346,6 +363,9 @@ def fieldVectorType(shape, field = None, useScalar = False):
         except AttributeError:
             field = 'double'
         shape = shape.ufl_shape
+    elif isinstance(shape, Constant):
+        shape = shape.ufl_shape
+        field = 'double'
     else:
         field = 'double' if field is None else field
 
@@ -401,9 +421,9 @@ class ModelClass():
         coefficients = set()
         for expr in uflExpr:
             try:
-                coefficients |= set(expr.coefficients())
+                coefficients |= set(expr.coefficients()+expr.constants())
             except:
-                _, cc = extract_arguments_and_coefficients(expr)
+                cc = extract_coefficients(expr) + extract_constants(expr)
                 coefficients |= set(cc)
         extracedAll = False
         while not extracedAll:
@@ -414,7 +434,7 @@ class ModelClass():
                 except AttributeError:
                     continue
                 for expr in predef.values():
-                    _, cc = extract_arguments_and_coefficients(expr)
+                    cc = extract_coefficients(expr) + extract_constants(expr)
                     cc = set(cc)
                     if not cc.issubset(coefficients):
                        coefficients |= cc
@@ -811,13 +831,13 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined):
                 expr = as_vector([expr])
             dimR = expr.ufl_shape[0]
 
-        _, coeff = extract_arguments_and_coefficients(expr)
+        coeff = extract_coefficients(expr) + extract_constants(expr)
         coeff = {c : c.toVectorCoefficient()[0] for c in coeff if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
         expr = replace(expr, coeff)
 
         t = ExprTensor(expr.ufl_shape) # , exprTensorApply(lambda u: u, expr.ufl_shape, expr))
         expression = [expr[i] for i in t.keys()]
-        u = extract_arguments_and_coefficients(expr)[0]
+        u = extract_arguments(expr)
         if u != []:
             u = u[0]
             du = Grad(u)
@@ -881,7 +901,7 @@ def uflSignature(form,*args):
     sig = ''
     hashList  = [str(arg) for arg in args if not isinstance(arg,ufl.core.expr.Expr)]
     #   the following fails in the ufl algorithm in the rentrant corner problem:
-    #   phi = atan_2(x[1], x[0]) + conditional(x[1] < 0, 2*math.pi, 0)
+    #   phi = atan2(x[1], x[0]) + conditional(x[1] < 0, 2*math.pi, 0)
     #   create.function("ufl",gridview=grid,name="tmp",order=1,ufl=phi)
     # hashList += [str(renumber_indices(arg)) for arg in args if isinstance(arg,ufl.core.expr.Expr)]
     for arg in args:

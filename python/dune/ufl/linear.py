@@ -121,7 +121,7 @@ class MultiLinearExprSplitter(Transformer):
         return {self.empty: tensor}
 
     atan = terminal
-    atan_2 = terminal
+    atan2 = terminal
     abs = terminal
     cos = terminal
     cosh = terminal

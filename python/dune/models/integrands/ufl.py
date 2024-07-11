@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import FiniteElementBase, FunctionSpace, dx
+from ufl import AbstractFiniteElement, FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
@@ -203,16 +203,16 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     if len(form.arguments()) < 2:
         raise ValueError("Integrands model requires form with at least two arguments.")
 
-    x = SpatialCoordinate(form.ufl_cell())
-    n = FacetNormal(form.ufl_cell())
+    x = SpatialCoordinate(form.ufl_domain())
+    n = FacetNormal(form.ufl_domain())
 
-    cellVolume = CellVolume(form.ufl_cell())
-    maxCellEdgeLength = MaxCellEdgeLength(form.ufl_cell())
-    minCellEdgeLength = MinCellEdgeLength(form.ufl_cell())
+    cellVolume = CellVolume(form.ufl_domain())
+    maxCellEdgeLength = MaxCellEdgeLength(form.ufl_domain())
+    minCellEdgeLength = MinCellEdgeLength(form.ufl_domain())
 
-    facetArea = FacetArea(form.ufl_cell())
-    maxFacetEdgeLength = MaxFacetEdgeLength(form.ufl_cell())
-    minFacetEdgeLength = MinFacetEdgeLength(form.ufl_cell())
+    facetArea = FacetArea(form.ufl_domain())
+    maxFacetEdgeLength = MaxFacetEdgeLength(form.ufl_domain())
+    minFacetEdgeLength = MinFacetEdgeLength(form.ufl_domain())
 
     phi, u = form.arguments()
     ubar = Coefficient(u.ufl_function_space())
@@ -223,7 +223,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    boundaryId = BoundaryId( form.ufl_cell() )
+    boundaryId = BoundaryId( form.ufl_domain() )
 
     try:
         integrands.field = u.ufl_function_space().field
@@ -343,11 +343,11 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
-            if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
+            if not isinstance(bc.functionSpace, (FunctionSpace, AbstractFiniteElement)):
                 raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
             if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != phi.ufl_function_space()):
                 raise Exception('Space of trial function and dirichlet boundary function must be the same - note that boundary conditions on subspaces are not available, yet')
-            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != phi.ufl_element()):
+            if isinstance(bc.functionSpace, AbstractFiniteElement) and (bc.functionSpace != phi.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 
             if isinstance(bc.value, list):
