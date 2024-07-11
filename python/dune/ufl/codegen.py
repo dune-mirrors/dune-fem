@@ -421,7 +421,7 @@ class ModelClass():
         coefficients = set()
         for expr in uflExpr:
             try:
-                coefficients |= set(expr.coefficients()+expr.constants())
+                coefficients |= set(list(expr.coefficients())+list(expr.constants()))
             except:
                 cc = extract_coefficients(expr) + extract_constants(expr)
                 coefficients |= set(cc)

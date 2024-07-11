@@ -5,7 +5,7 @@ from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
 from ufl.algorithms import expand_derivatives, expand_indices
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
+from ufl.algorithms.analysis import extract_coefficients, extract_constants
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.classes import Indexed
 from ufl.differentiation import Grad
@@ -131,7 +131,7 @@ def compileUFL(form, patch, *args, **kwargs):
         form = replace(form,{u_:u[0]})
     else:
         u = u_
-    _, coeff_ = extract_arguments_and_coefficients(form)
+    coeff_ = extract_coefficients(form) + extract_constants(form)
     coeff_ = set(coeff_)
 
     # added for dirichlet treatment same as conservationlaw model
@@ -139,12 +139,12 @@ def compileUFL(form, patch, *args, **kwargs):
     # remove the dirichletBCs
     arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
     for dBC in dirichletBCs:
-        _, coeff__ = extract_arguments_and_coefficients(dBC.ufl_value)
+        coeff__ = extract_coefficients(dBC.ufl_value) + extract_constants(dBC.ufl_value)
         coeff_ |= set(coeff__)
     if patch is not None:
         for a in patch:
             try:
-                _, coeff__ = extract_arguments_and_coefficients(a)
+                coeff__ = extract_coefficients(a) + extract_constants(a)
                 coeff_ |= set(coeff__)
             except:
                 pass # a might be a float/int and not a ufl expression
@@ -211,14 +211,14 @@ def compileUFL(form, patch, *args, **kwargs):
     # if "dirichlet" in kwargs:
     #     dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
 
-    uflCoefficients = set(form.coefficients())
+    uflCoefficients = set(list(form.coefficients()) + list(form.constants()))
     for bc in dirichletBCs:
-        _, c = extract_arguments_and_coefficients(bc.ufl_value)
+        c = extract_coefficients(bc.ufl_value) + extract_constants(bc.ufl_value)
         uflCoefficients |= set(c)
     if patch is not None:
         for a in patch:
             if isinstance(a, Expr):
-                _, c = extract_arguments_and_coefficients(a)
+                c = extract_coefficients(a) + extract_constants(a)
                 uflCoefficients |= set(c)
 
     # sort coefficients according to creation number to avoid re-compilation
