@@ -46,7 +46,7 @@ def splitUFLForm(form):
     flux = ExprTensor(dphi.ufl_shape)
     boundarySource = ExprTensor(phi.ufl_shape)
 
-    form = expand_indices(expand_derivatives((form))
+    form = expand_indices(expand_derivatives(form))
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
             fluxExprs = splitMultiLinearExpr(integral.integrand(), [phi])
