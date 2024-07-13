@@ -1,6 +1,10 @@
 from __future__ import division, print_function, unicode_literals
 
-from ufl import AbstractFiniteElement, FunctionSpace, dx
+try: # ufl 2024 and newer
+    from ufl import AbstractFiniteElement
+except ImportError: # older ufl versions
+    from ufl import FiniteElementBase as AbstractFiniteElement
+from ufl import FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength

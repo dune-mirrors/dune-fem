@@ -6,13 +6,30 @@ import ufl
 import ufl.domain
 import ufl.equation
 import ufl.finiteelement
-uflFE = lambda cell,order,rdim: (
-    ufl.finiteelement.FiniteElement(
-        "Lagrange", cell, order,
-        (rdim,) if rdim>0 else (),
-        ufl.identity_pullback, ufl.H1)
-    )
 
+try:
+    # check for ufl 2024 or newer
+    from ufl import AbstractFiniteElement
+    uflFE = lambda cell,order,rdim: (
+        ufl.finiteelement.FiniteElement(
+            "Lagrange", cell, order,
+            (rdim,) if rdim>0 else (),
+            ufl.identity_pullback, ufl.H1)
+        )
+    # return ufl domain given a cell
+    _uflDomain = lambda ucell,dimWorld : ufl.Mesh( uflFE(ucell, order=1, rdim=dimWorld) )
+    _ufl2024AndNewer = True
+except ImportError:
+    # disable FutureWarning from ufl.domain since default_domain is deprecated
+    import warnings
+    warnings.filterwarnings("ignore", category=FutureWarning,
+                                      module="ufl.domain")
+    uflFE = lambda cell,order,rdim: \
+            ufl.FiniteElement("Lagrange", cell, max(order,1), 1) if rdim == 0 else \
+            ufl.VectorElement("Lagrange", cell, max(order,1), int(rdim))
+    # return ufl domain given a cell
+    _uflDomain = lambda cell,dimWorld : ufl.domain.default_domain(cell)
+    _ufl2024AndNewer = False
 
 from dune.deprecate import deprecated
 
@@ -25,7 +42,7 @@ from dune.deprecate import deprecated
 def _patchufl4d():
     from ufl.sobolevspace import H1
     from ufl.finiteelement.elementlist import ufl_elements, any_cell, register_element
-    from ufl.cell import num_cell_entities, cellname2facetname, _simplex_dim2cellname, _hypercube_dim2cellname
+    from ufl.cell import num_cell_entities, _simplex_dim2cellname, _hypercube_dim2cellname
 
     ## check if this has been added before
     if not 'pentatope' in ufl.cell.num_cell_entities:
@@ -36,9 +53,6 @@ def _patchufl4d():
 
         # recompute cell name to dimension mapping
         ufl.cell.cellname2dim = dict((k, len(v) - 1) for k, v in ufl.cell.num_cell_entities.items())
-
-        ufl.cell.cellname2facetname["pentatope"] = "tetrahedron"
-        ufl.cell.cellname2facetname["tesseract"] = "hexahedron"
 
         ufl.cell._simplex_dim2cellname[4]   = "pentatope"
         ufl.cell._hypercube_dim2cellname[4] = "tesseract"
@@ -58,22 +72,43 @@ def _patchufl4d():
 
 # this is now more a 'domain' in the ufl context
 def _cell(dimWorld,dimDomain):
-    if dimDomain == 1:
-        ucell = ufl.interval
-    elif dimDomain == 2:
-        ucell = ufl.triangle
-    elif dimDomain == 3:
-        ucell = ufl.tetrahedron
-    elif dimDomain == 4:
-        raise NotImplementedError("TODO: still needs fixing")
-        # add 4d cell types to ufl data structures until supported by UFL
-        _patchufl4d()
-        return ufl.Cell("pentatope", dimWorld)
-    else:
-        raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
-    return ufl.Mesh( uflFE(ucell, order=1, rdim=dimWorld) )
-# TODO: only up to 3d at the moment
-_uniqueCellPerDimension = [[_cell(w,d) for d in range(1,w+1)] for w in range(1,4)]
+
+    ucell = None
+    # built-in cell types from ufl don't know about their geometric_dimension
+    # and assume it to be the same as the topological_dimension which leads to
+    # error in cases where dimDomain < dimWorld
+    if dimWorld == dimDomain or _ufl2024AndNewer:
+        if dimDomain == 1:
+            ucell = ufl.interval
+        elif dimDomain == 2:
+            ucell = ufl.triangle
+        elif dimDomain == 3:
+            ucell = ufl.tetrahedron
+        elif dimDomain == 4:
+            try:
+                ucell = ufl.pentatope
+            except AttributeError:
+                # add 4d cell types to ufl data structures until supported by UFL
+                _patchufl4d()
+                ucell = ufl.Cell("pentatope", dimWorld)
+        else:
+            raise NotImplementedError('UFL cell not implemented for dimension ' + str(dimDomain) + '.')
+    elif dimDomain < dimWorld:
+        assert dimDomain <= 4, "Cell types for d > 4 not implemented in ufl!"
+        if dimDomain == 4:
+            try:
+                ufl.pentatope
+            except AttributeError:
+                # add 4d cell types to ufl data structures until supported by UFL
+                _patchufl4d()
+
+        cellname = ["interval", "triangle", "tetrahedron", "pentatope"]
+        ucell = ufl.Cell(cellname[dimDomain-1], geometric_dimension=dimWorld)
+    # return ufl domain using the cell
+    return _uflDomain( ucell, dimWorld )
+
+# unique cells for 1 to 4 dimensions
+_uniqueCellPerDimension = [[_cell(w,d) for d in range(1,w+1)] for w in range(1,5)]
 
 # dimDonainOrGrid is either a gridView or a tuple with (dimDomain,dimWorld)
 def domain(dimDomainOrGrid):
@@ -95,6 +130,9 @@ def domain(dimDomainOrGrid):
 def cell(dimDomainOrGrid):
     return domain(dimDomainOrGrid)
 
+################################################################################
+## Space
+################################################################################
 class Space(ufl.FunctionSpace):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double", scalar=False, order=1):
         assert not scalar or dimRange is None or dimRange == 1
@@ -106,13 +144,13 @@ class Space(ufl.FunctionSpace):
                 dimRange = 1
                 scalar = True
         self.scalar = scalar
-        domain = cell(dimDomainOrGridOrSpace)
-        ucell = domain.ufl_cell()
+        ufldomain = domain(dimDomainOrGridOrSpace)
+        ucell = ufldomain.ufl_cell()
         if scalar:
             ve = uflFE(ucell, order=max(order,1), rdim=0)
         else:
             ve = uflFE(ucell, order=max(order,1), rdim=int(dimRange))
-        ufl.FunctionSpace.__init__(self, domain, ve)
+        ufl.FunctionSpace.__init__(self, ufldomain, ve)
         self.dimRange = dimRange
         self._cell = ve.cell
         self.field = field
@@ -197,8 +235,10 @@ def isNumber(x):
         return 0 == x*0
     except:
         return False
+
 # the following is an adapted version of the code in fenics
-class Constant(ufl.Constant):
+ConstantBase = ufl.Constant if _ufl2024AndNewer else ufl.Coefficient
+class Constant(ConstantBase):
     constCount = 0
     def __init__(self, value, name=None, cell=None):
         """
@@ -236,7 +276,8 @@ class Constant(ufl.Constant):
         # grad(c) be undefined.
         if cell is not None:
             cell = ufl.as_cell(cell)
-        else:
+        # TODO: for ufl2024 needs fixing of Constant issue
+        elif _ufl2024AndNewer:
             cell = domain(2) # TODO: this does not work - e.g. mcf.py needs (2,3) here
         ufl_domain = None
 
@@ -244,19 +285,29 @@ class Constant(ufl.Constant):
         rank = len(array.shape)
         floats = list(map(float, array.flat))
 
-        # Create UFL element and initialize constant
-        if rank == 0:
-            shape=()
-            self.scalar = True
-        elif rank == 1:
-            shape=(len(floats),)
-            self.scalar = False
-        else:
-            shape=array.shape
-            self.scalar = False
+        # True if rank is zero, otherwise False
+        self.scalar = rank == 0
 
         # Initialize base classes
-        ufl.Constant.__init__(self, domain=cell, shape=shape)
+        if _ufl2024AndNewer:
+            # Create UFL element and initialize constant
+            if rank == 0:
+                shape=()
+            elif rank == 1:
+                shape=(len(floats),)
+            else:
+                shape=array.shape
+            ConstantBase.__init__(self, domain=cell, shape=shape)
+        else:
+            # Create UFL element and initialize constant
+            if rank == 0:
+                ufl_element = ufl.FiniteElement("Real", cell, 0)
+            elif rank == 1:
+                ufl_element = ufl.VectorElement("Real", cell, 0, dim=len(floats))
+            else:
+                ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
+            ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
+            ConstantBase.__init__(self, ufl_function_space)
 
         if name is None:
             self.name = "c"+str(Constant.constCount)

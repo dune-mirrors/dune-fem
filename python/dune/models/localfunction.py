@@ -64,7 +64,14 @@ class UFLFunctionSource(codegen.ModelClass):
             args=['const Point &x'],
             targs=['class Point'], const=True,
             predefined=predefined)
-        if False: # TODO checks.is_globally_constant(self.expr) is not available anymore:
+
+        # is not available anymore in ufl 2024 and newer
+        try:
+            isGloballyConstant = checks.is_globally_constant(self.expr)
+        except AttributeError:
+            isGloballyConstant = False
+
+        if isGloballyConstant:
             code.append( Method('void', 'jacobian', targs=['class Point'],
                 args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
                 code=['result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))

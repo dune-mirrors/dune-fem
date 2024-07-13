@@ -95,6 +95,10 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.atan2))
         return self._makeTmp(cplusplus.atan2(x, y))
 
+    # version 2022 and older, simply forward to new name
+    def atan_2(self, expr, x, y):
+        return self.atan2(expr, x, y)
+
     boundary_id = _require_predefined
 
     cell_volume = _require_predefined

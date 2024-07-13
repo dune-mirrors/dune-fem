@@ -1,6 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ufl import Coefficient, Form, AbstractFiniteElement, FunctionSpace, SpatialCoordinate
+try: # ufl 2024 and newer
+    from ufl import AbstractFiniteElement
+except ImportError: # older ufl versions
+    from ufl import FiniteElementBase as AbstractFiniteElement
+from ufl import Coefficient, Form, FunctionSpace, SpatialCoordinate
 from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
