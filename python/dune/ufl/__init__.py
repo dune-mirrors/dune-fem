@@ -152,7 +152,8 @@ class Space(ufl.FunctionSpace):
             ve = uflFE(ucell, order=max(order,1), rdim=int(dimRange))
         ufl.FunctionSpace.__init__(self, ufldomain, ve)
         self.dimRange = dimRange
-        self._cell = ve.cell
+        # in ufl 2024 cell is a property and not a method !
+        self._cell = ve.cell if _ufl2024AndNewer else ve.cell()
         self.field = field
     def cell(self):
         return self._cell
