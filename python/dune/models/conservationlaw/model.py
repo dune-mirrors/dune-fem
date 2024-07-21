@@ -106,9 +106,6 @@ class ConservationLawModel:
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
 
-    def constant(self, idx):
-        return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
-
     def coefficient(self, idx, x):
         coefficient = []
         for t, n in (('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')):

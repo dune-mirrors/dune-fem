@@ -225,7 +225,6 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme.__class__.dirichletIndices = _opDirichletIndices
     return scheme
 
-from dune.fem.scheme.dgmodel import transform
 def dg(model, space=None, penalty=1, solver=None, parameters={},
        penaltyClass=None):
     """create a scheme for solving second order pdes with discontinuous finite elements
@@ -236,6 +235,7 @@ def dg(model, space=None, penalty=1, solver=None, parameters={},
         Scheme: the constructed scheme
     """
 
+    from dune.fem.scheme.dgmodel import transform
     # check for newton in parameters
     parameters = _checkNewtonInParameters( parameters )
 

@@ -11,7 +11,8 @@ from ufl import Coefficient, as_vector, replace
 from ufl import checks
 from dune.source.cplusplus import maxEdgeLength, NameSpace
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
-from dune.ufl import GridFunction, Constant
+from dune.ufl import GridFunction, Constant, cell
+import dune.ufl
 from dune.ufl.codegen import uflSignature
 
 from dune.ufl import codegen
@@ -31,6 +32,7 @@ class UFLFunctionSource(codegen.ModelClass):
         codegen.ModelClass.__init__(self,"UFLLocalFunction",[expr],
           virtualize,dimRange=dimRange, predefined=predefined)
 
+        self.uflDomain = dune.ufl.domain(grid)
         self.evalCode = []
         self.jacCode = []
         self.hessCode = []
@@ -53,7 +55,7 @@ class UFLFunctionSource(codegen.ModelClass):
 
     def methods(self,code):
         predefined = {}
-        x = ufl.SpatialCoordinate(ufl.triangle) # NOTE: to do get right dimension
+        x = ufl.SpatialCoordinate(self.uflDomain)
         predefined[x] = self.spatialCoordinate('x')
         self.predefineCoefficients(predefined, False)
         codegen.generateMethod(code, self.expr,
@@ -62,7 +64,14 @@ class UFLFunctionSource(codegen.ModelClass):
             args=['const Point &x'],
             targs=['class Point'], const=True,
             predefined=predefined)
-        if checks.is_globally_constant(self.expr):
+
+        # is not available anymore in ufl 2024 and newer
+        try:
+            isGloballyConstant = checks.is_globally_constant(self.expr)
+        except AttributeError:
+            isGloballyConstant = False
+
+        if isGloballyConstant:
             code.append( Method('void', 'jacobian', targs=['class Point'],
                 args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
                 code=['result=typename FunctionSpaceType::JacobianRangeType(0);'], const=True))

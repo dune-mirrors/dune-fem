@@ -20,7 +20,7 @@ class Expr2Latex(Transformer):
     def atan(self, expr, arg):
         return "\\atan\\left(" + arg + "\\right)"
 
-    def atan_2(self, expr, left, right):
+    def atan2(self, expr, left, right):
         return "\\atan\\left(\\frac{" + left + "}{" + right + "}\\right)"
 
     def coefficient(self, expr):
