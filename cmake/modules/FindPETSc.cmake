@@ -37,6 +37,7 @@ if(PETSC_FOUND)
   # set includes variable which differs from pkg-config and cmake finder
   set(PETSC_INCLUDES ${PETSC_INCLUDE_DIRS})
   set(PETSC_LIBRARIES ${PETSC_LINK_LIBRARIES})
+  set(PETSC_DIR ${PETSC_PREFIX})
   message(STATUS "Found PETSc path: ${PETSC_INCLUDE_DIRS}")
   message(STATUS "Found PETSc libs: ${PETSC_LIBRARIES}")
 else()
@@ -189,7 +190,6 @@ show :
   petsc_get_variable (PETSC_EXTERNAL_LIB_BASIC petsc_libs_external)
   petsc_get_variable (PETSC_CCPPFLAGS          petsc_cpp_line)
   petsc_get_variable (PETSC_INCLUDE            petsc_include)
-  petsc_get_variable (PETSC_COMPILER           petsc_cc)
   petsc_get_variable (PCC                      petsc_cc)
   petsc_get_variable (PCC_FLAGS                petsc_cc_flags)
   petsc_get_variable (MPIEXEC                  petsc_mpiexec)
@@ -310,7 +310,7 @@ int main(int argc,char *argv[]) {
   find_path (PETSC_INCLUDE_DIR petscts.h HINTS "${PETSC_DIR}" PATH_SUFFIXES include NO_DEFAULT_PATH)
   find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}" NO_DEFAULT_PATH)
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
-  set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR} ${MPI_DUNE_INCLUDE_PATH})
+  set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR} ${MPI_C_HEADER_DIR})
 
   petsc_test_runs ("${petsc_includes_minimal}" "${PETSC_LIBRARIES_TS}" petsc_works_minimal)
   if (petsc_works_minimal)
@@ -358,6 +358,7 @@ int main(int argc,char *argv[]) {
   # change these, you are telling the system to trust you that they
   # work.  It is likely that you will end up with a broken build.
   mark_as_advanced (PETSC_INCLUDES PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC PETSC_EXECUTABLE_RUNS)
+  set (PETSC_DIR "${PETSC_DIR}" CACHE STRING "PETSc prefix path" FORCE)
 endif ()
 
 include (FindPackageHandleStandardArgs)

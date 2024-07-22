@@ -18,7 +18,7 @@
           pybind11::dict petscInfo =
                     pybind11::module::import("petsc4py").attr("get_config")();
           std::string petsc4pyDir = petscInfo["PETSC_DIR"].cast<std::string>();
-          if (petsc4pyDir != PETSC_DIR)
+          if (petsc4pyDir != PETSC_DIR && PETSC_DIR != "${PETSC_DIR}")
           {
             throw pybind11::import_error(
   "petsc4py uses Petsc from "+petsc4pyDir+
