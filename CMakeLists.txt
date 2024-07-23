@@ -8,6 +8,11 @@ project("dune-fem" C CXX)
 set(BUILD_DOCS 1)
 set(DUNE_REENABLE_ADD_TEST TRUE)
 
+# if DUNE_ENABLE_PYTHONBINDINGS was NOT explicitly disabled then Python is required!
+if(DEFINED DUNE_ENABLE_PYTHONBINDINGS AND NOT ${DUNE_ENABLE_PYTHONBINDINGS})
+  set(DUNE_PYTHONBINDINGS_REQUIRED TRUE)
+endif()
+
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
         "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
     string(REPLACE  ${CMAKE_PROJECT_NAME} dune-common dune-common_DIR
@@ -31,6 +36,11 @@ dune_add_library(dunefem
   LINK_LIBRARIES ${DUNE_LIBS})
 
 include(AddMPIFlags)
+
+# if Python s required (see above) then explicitly check Python vars here
+if( DEFINED DUNE_PYTHONBINDINGS_REQUIRED AND ((NOT Python3_INCLUDE_DIRS) OR (NOT Python3_Interpreter_FOUND)))
+  message(FATAL_ERROR "Pyhton bindings not found and not explicitly disabled, exiting!")
+endif()
 
 # if Python bindings are enabled, include necessary sub directories.
 if( DUNE_ENABLE_PYTHONBINDINGS )
