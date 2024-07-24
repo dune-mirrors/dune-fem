@@ -236,7 +236,7 @@ def assemble(form,space=None,gridView=None,order=None):
         if arity == 1:
             # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
             u = ufl.TrialFunction(space) # this is not good - the space might not be available
-            op = dune.fem.operator.galerkin( [u*v*ufl.dx - form] + params )
+            op = dune.fem.operator.galerkin( [ufl.inner(u,v)*ufl.dx - form] + params )
             b = space.zero.copy()
             op(space.zero,b)
             b *= -1 # note: using u*v*ufl.dx + form to avoid the *=-1 fails since the boundary values would have the wrong sign
