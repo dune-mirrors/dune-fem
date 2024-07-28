@@ -2,7 +2,6 @@ import time,sys
 import dune
 import dune.create as create
 
-from dune.fem.operator import linear as linearOperator
 def jacobian(scheme,uh,A):
     scheme.jacobian(uh,A)
 
@@ -39,7 +38,7 @@ def test(model,spaceName,dimD,dimR,storage):
     uD.clear()
     start = time.time()
     for i in range(testLoop):
-        A = linearOperator(scheme) # , parameters={"petsc.blockedmode":False})
+        A = scheme.linear() # , parameters={"petsc.blockedmode":False})
     end = time.time()
     # print( "setup+assembly:",(end-start)/testLoop, flush=True )
     start = time.time()
