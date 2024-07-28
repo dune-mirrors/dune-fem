@@ -92,7 +92,8 @@ namespace Dune
     {
       GlobalCoordinate center( 0 );
       ctype volume( 0 );
-      for( const auto &qp : QuadratureRules< ctype, mydimension >::rule( type(), order_+1 ) )
+      auto quadrule = QuadratureRules< ctype, mydimension >::rule( type(), order_+1 );
+      for( const auto &qp : quadrule )
       {
         const ctype weight = qp.weight() * integrationElement( qp.position() );
         center.axpy( weight, global( qp.position() ) );
