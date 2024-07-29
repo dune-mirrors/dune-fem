@@ -56,8 +56,8 @@ def compute(comm,useAdapt,gridType,
 
     iterations = []
     failure = False
-    testName = ("adapt" if useAdapt else "" ) + f"{gridType}-{name}"
 
+    testName = ("adapt" if useAdapt else "" ) + f"{gridType}-{name}"
     # outFile = io.StringIO()
     outFile = sys.stdout
 
@@ -134,13 +134,13 @@ def compute(comm,useAdapt,gridType,
 
     eqn = (form == forcing*v[0]*dx)
     scheme = solutionScheme([eqn, *dbcs], solver="cg",
-                parameters={"nonlinear.linear.preconditioning.method":"jacobi",
-                            "nonlinear.linear.verbose":False,
-                            "nonlinear.verbose":False,
+                parameters={"nonlinear.verbose":False,
                             "nonlinear.maxiterations":10,
-                            "nonlinear.linear.tolerance":1e-10,
-                            "nonlinear.linear.gmres.restart":100,
-                            "nonlinear.linear.maxiterations":5000})
+                            "linear.preconditioning.method":"jacobi",
+                            "linear.verbose":False,
+                            "linear.tolerance":1e-10,
+                            "linear.gmres.restart":100,
+                            "linear.maxiterations":5000})
 
     uh1 = space.interpolate(dimR*[14], name="solution")
 
