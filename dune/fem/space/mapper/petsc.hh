@@ -39,9 +39,9 @@ namespace Dune
       template< class Mapper >
       struct MapperFactory
       {
-        static std::pair< Mapper, int > *createObject ( std::pair< GridPartType *, typename Mapper::BaseMapperType * > key, int sequence )
+        static std::pair< Mapper, int > *createObject ( std::pair< GridPartType *, typename Mapper::BaseMapperType * > key, const InterfaceType commif, int sequence )
         {
-          return new std::pair< Mapper, int >( std::piecewise_construct, std::tie( *key.first, *key.second ), std::make_tuple( sequence ) );
+          return new std::pair< Mapper, int >( std::piecewise_construct, std::tie( *key.first, *key.second, commif ), std::make_tuple( sequence ) );
         }
 
         static void deleteObject ( std::pair< Mapper, int > *object ) { delete object; }
@@ -60,13 +60,17 @@ namespace Dune
       {
         const int sequence = space_.sequence();
 
-        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence-1 ) );
-        // update anyway here because of comm interface for Lagrange spaces
-        update( *ghostMapper_, sequence, space );
+        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), communicationInterface(), sequence-1 ) );
+        checkCommunicationInterface( *ghostMapper_, communicationInterface() );
 
-        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence-1 ) );
         // update anyway here because of comm interface for Lagrange spaces
-        update( *parallelMapper_, sequence, space );
+        update( *ghostMapper_, sequence, communicationInterface() );
+
+        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), communicationInterface(), sequence-1 ) );
+        checkCommunicationInterface( *parallelMapper_, communicationInterface() );
+
+        // update anyway here because of comm interface for Lagrange spaces
+        update( *parallelMapper_, sequence, communicationInterface() );
       }
 
       //! copy constructor obtaining pointers for mapper objects
@@ -75,8 +79,11 @@ namespace Dune
       {
         const int sequence = space_.sequence();
 
-        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence ) );
-        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence ) );
+        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), communicationInterface(), sequence ) );
+        checkCommunicationInterface( *ghostMapper_, communicationInterface() );
+
+        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), communicationInterface(), sequence ) );
+        checkCommunicationInterface( *parallelMapper_, communicationInterface() );
       }
 
       const DiscreteFunctionSpaceType &space () const { return space_; }
@@ -102,25 +109,37 @@ namespace Dune
         const int sequence = space().sequence();
 
         assert( ghostMapper_ );
-        update( *ghostMapper_, sequence, space() );
+        update( *ghostMapper_, sequence, communicationInterface() );
 
         assert( parallelMapper_ );
-        update( *parallelMapper_, sequence, space() );
+        update( *parallelMapper_, sequence, communicationInterface() );
       }
 
     private:
-      template< class Mapper >
-      static void update ( std::pair< Mapper, int > &mapper, int sequence, const DiscreteFunctionSpaceType& space )
+      InterfaceType communicationInterface() const
       {
+        // TODO: For Lagrange spaces the comm interface needs to be InteriorBorder_InteriorBorder_Interface
+        // otherwise the petsc solvers don't work.
+        // This is only a temporary fix and need further investigation.
+        return space().continuous() ? InteriorBorder_InteriorBorder_Interface : space().communicationInterface();
+      }
+
+      template< class Mapper >
+      static void checkCommunicationInterface( std::pair< Mapper, int > &mapper, const InterfaceType commInterface )
+      {
+        if( commInterface != mapper.first.communicationInterface() )
+        {
+          DUNE_THROW(InvalidStateException,"PetscMappers: communication interfaces do not match!");
+        }
+      }
+
+      template< class Mapper >
+      static void update ( std::pair< Mapper, int > &mapper, int sequence, const InterfaceType commInterface )
+      {
+        checkCommunicationInterface( mapper, commInterface );
         if( mapper.second != sequence )
         {
-          // TODO: For Lagrange spaces the comm interface needs to be InteriorBorder_InteriorBorder_Interface
-          // otherwise the petsc solvers don't work.
-          // This is only a temporary fix and need further investigation.
-          const InterfaceType commIf =
-            space.continuous() ? InteriorBorder_InteriorBorder_Interface : space.communicationInterface();
-
-          mapper.first.update( commIf );
+          mapper.first.update();
           mapper.second = sequence;
         }
       }

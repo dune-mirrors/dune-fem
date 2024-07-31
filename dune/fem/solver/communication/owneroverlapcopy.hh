@@ -113,7 +113,7 @@ namespace Dune
         LocalMapperType &localMapper = dfSpace.blockMapper();
 
         // create global index mapping
-        Dune::Fem::ParallelDofMapper< GridPartType, LocalMapperType, GlobalId > globalMapper( gridPart, localMapper );
+        Dune::Fem::ParallelDofMapper< GridPartType, LocalMapperType, GlobalId > globalMapper( gridPart, localMapper, dfSpace.communicationInterface() );
 
         // construct local attributes
         std::vector< typename LocalIndexType::Attribute > attribute( localMapper.size(), Dune::OwnerOverlapCopyAttributeSet::owner );

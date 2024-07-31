@@ -96,8 +96,8 @@ namespace Dune
 
       typedef typename BaseMapperType::ElementType ElementType;
 
-      ParallelDofMapper ( const GridPartType &gridPart, const BaseMapperType &baseMapper )
-        : gridPart_( gridPart ), baseMapper_( baseMapper )
+      ParallelDofMapper ( const GridPartType &gridPart, const BaseMapperType &baseMapper, const InterfaceType commInterface )
+        : gridPart_( gridPart ), baseMapper_( baseMapper ), commInterface_( commInterface )
       {
         update();
       }
@@ -174,6 +174,8 @@ namespace Dune
 
       SizeType size () const { return size_; }
 
+      InterfaceType communicationInterface() const { return commInterface_; }
+
       // adaptation interface
 
       bool consecutive () const { return false; }
@@ -187,8 +189,7 @@ namespace Dune
 
       // update
 
-      // TODO: default interface should come out of space
-      void update ( const InterfaceType commInterface = InteriorBorder_All_Interface )
+      void update ( )
       {
         AuxiliaryDofs< GridPartType, BaseMapperType > auxiliaryDofs( gridPart(), baseMapper() );
         auxiliaryDofs.rebuild();
@@ -209,7 +210,7 @@ namespace Dune
         assert( next == static_cast< GlobalKeyType >( offset_ + primarySize ) );
 
         __ParallelDofMapper::BuildDataHandle< GridPartType, BaseMapperType, GlobalKeyType > dataHandle( baseMapper(), auxiliaryDofs, mapping_ );
-        gridPart().communicate( dataHandle, commInterface, ForwardCommunication );
+        gridPart().communicate( dataHandle, communicationInterface(), ForwardCommunication );
       }
 
       const GridPartType &gridPart () const { return gridPart_; }
@@ -236,6 +237,7 @@ namespace Dune
 
       const GridPartType &gridPart_;
       const BaseMapperType &baseMapper_;
+      const InterfaceType commInterface_;
       std::vector< GlobalKeyType > mapping_;
       SizeType offset_, size_;
     };

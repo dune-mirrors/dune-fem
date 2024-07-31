@@ -163,8 +163,8 @@ namespace Dune
 
       typedef typename BaseMapperType::ElementType ElementType;
 
-      GhostDofMapper ( const GridPartType &gridPart, BaseMapperType &baseMapper )
-        : gridPart_( gridPart ), baseMapper_( baseMapper )
+      GhostDofMapper ( const GridPartType &gridPart, BaseMapperType &baseMapper, const InterfaceType commInterface )
+        : gridPart_( gridPart ), baseMapper_( baseMapper ), commInterface_(commInterface)
       {
         update();
       }
@@ -244,6 +244,8 @@ namespace Dune
 
       SizeType size () const { return interiorSize() + ghostSize(); }
 
+      InterfaceType communicationInterface() const { return commInterface_; }
+
       // adaptation interface
 
       bool consecutive () const { return false; }
@@ -257,8 +259,7 @@ namespace Dune
 
       // update
 
-      // TODO: default comm interface should come out of space
-      void update ( const InterfaceType commInterface  = InteriorBorder_All_Interface )
+      void update ()
       {
         std::size_t baseSize = baseMapper().size();
         mapping_.resize( baseSize );
@@ -270,7 +271,7 @@ namespace Dune
         const int rank = gridPart().comm().rank();
         __GhostDofMapper::BuildDataHandle< BaseMapper > dataHandle( rank, baseMapper_, masters );
 
-        gridPart().communicate( dataHandle, commInterface, ForwardCommunication );
+        gridPart().communicate( dataHandle, communicationInterface(), ForwardCommunication );
         // at this point all shared DoFs are assigned to their master rank
         // all other DoFs (with rank -1) are not shared at all
 
@@ -311,6 +312,7 @@ namespace Dune
     private:
       const GridPartType &gridPart_;
       BaseMapperType &baseMapper_;
+      const InterfaceType commInterface_;
       std::vector< GlobalKeyType > mapping_;
       SizeType interiorSize_, ghostSize_;
     };
