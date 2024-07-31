@@ -79,3 +79,15 @@ debian:11--gcc-10-20:headercheck:
   variables:
     DUNECI_TOOLCHAIN: gcc-10-20
   tags: [duneci]
+
+# test minimal compiler requirement, which is gcc 10
+torture-20.04-gcc-10-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:20.04
+  when: manual
+  allow_failure: true
+  script:
+    - DUNECI_CMAKE_FLAGS+="-DFEM_TORTURE_TESTS=ON"
+    - duneci-standard-test
+  variables:
+    DUNECI_TOOLCHAIN: gcc-10-20
+  tags: [duneci]
