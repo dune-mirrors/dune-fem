@@ -50,12 +50,14 @@ def run(restore=False):
     df = space.interpolate([0],name="test")
     checkPointer.add(df)
 
-    spc = lagrange(grid, storage='istl')
+    spc = space.clone(storage='istl')
     df_istl = spc.interpolate([0],name="test_istl")
 
     # test discrete function assignment
     df.assign( df_istl )
     df_istl.assign( df )
+    # make sure this is actually an istl function
+    assert df_istl.as_istl
 
     if not restore:
         print("interpolating grid function")

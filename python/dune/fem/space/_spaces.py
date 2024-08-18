@@ -1,9 +1,43 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import inspect
 import sys
 import logging
+from collections import ChainMap
 from dune.generator import Constructor, Pickler
 logger = logging.getLogger(__name__)
+
+# returns a clone function for spaces
+def _clone(defaultKWArgs: dict):
+    # get calling function
+    _ctor = globals()[inspect.currentframe().f_back.f_code.co_name]
+    # get keyword arguments
+    _kwargs = dict([(parameter.name, defaultKWArgs[parameter.name])
+                    for parameter in inspect.signature(_ctor).parameters.values() if parameter != 'spaces'])
+
+    # get arguments (only composite and product space)
+    _args = defaultKWArgs['spaces'] if 'spaces' in defaultKWArgs else list()
+
+    # create same space with potentially new parameters
+    def clone(*args, **kwargs):
+        """
+        Returns same space with potentially different parameters.
+
+        KWArgs:
+            same as the previous space but can be overridden
+
+        Returns:
+
+            The constructed space object.
+        """
+        newargs = set(args)
+        for i in _args:
+            newargs.add(i)
+        # merge given kwargs and default args
+        newkwargs = dict(ChainMap(kwargs, _kwargs))
+        # return new space
+        return _ctor(*list(newargs), **newkwargs)
+    return clone
 
 # dimrange parameter in space creation is deprecated!
 def checkDeprecated_dimrange( dimRange, dimrange ):
@@ -28,6 +62,7 @@ def _checkDimRangeScalarOrderField(dimRange, scalar, order, field, methodName = 
 
     if dimRange > 1 and scalar:
         raise KeyError("In '" + methodName + "': trying to set up a scalar space with dimRange = " +str(dimRange) + ">1")
+
     if dimRange < 1:
         raise KeyError(\
             "Parameter error in '" + methodName + "' with "+
@@ -65,6 +100,7 @@ def storageType(codegen):
             "codege=" + codegen + ": " +\
             "codegen needs to be in [True,False,'codegen','caching','simple'")
 
+
 def dgonb(gridView, order=1, dimRange=None, field="double",
           storage=None, scalar=False, dimrange=None, codegen=True):
     """create a discontinuous galerkin space with elementwise orthonormal basis functions
@@ -80,6 +116,7 @@ def dgonb(gridView, order=1, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -96,6 +133,7 @@ def dgonb(gridView, order=1, dimRange=None, field="double",
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
 
     return spc.as_ufl()
@@ -114,6 +152,7 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -130,6 +169,7 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
@@ -149,6 +189,7 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -174,6 +215,7 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
     ctorArgs = [gridView]
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=ctorArgs)
     return spc.as_ufl()
 
@@ -194,6 +236,7 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -216,6 +259,7 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
@@ -238,6 +282,7 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -267,6 +312,7 @@ def dganisotropic(gridView, order=1, dimRange=None, field="double",
 
     spc = module(field, includes, typeName, constructor, storage=storage,
                  scalar=scalar, codegen=codegen,
+                 clone=_clone(_kwargs),
                  ctorArgs = [gridView, order] if isAniso else [gridView])
     return spc.as_ufl()
 
@@ -284,6 +330,7 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -342,6 +389,7 @@ def dglagrange(gridView, order=1, dimRange=None, field="double", storage=None,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=ctorArgs)
     return spc.as_ufl()
 
@@ -371,6 +419,7 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -399,8 +448,10 @@ def lagrange(gridView, order=1, dimRange=None, field="double", storage=None,
                    "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order)
 
     spcTypeName = typeName + ", " + storageType(codegen) + ">"
+
     spc = module(field, includes, spcTypeName, storage=storage,
                  scalar=scalar, codegen=codegen,
+                 clone=_clone(_kwargs),
                  ctorArgs=[gridView, order])
 
     return spc.as_ufl()
@@ -419,6 +470,7 @@ def lagrangehp(gridView, order=1, dimRange=None, field="double", storage=None,
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -447,6 +499,7 @@ def lagrangehp(gridView, order=1, dimRange=None, field="double", storage=None,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView,order])
     return spc.as_ufl()
 
@@ -467,6 +520,7 @@ def finiteVolume(gridView, dimRange=None, field="double",
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -483,6 +537,7 @@ def finiteVolume(gridView, dimRange=None, field="double",
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
@@ -500,6 +555,7 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
 
@@ -523,6 +579,7 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
@@ -540,11 +597,13 @@ def composite(*spaces, **kwargs):
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list including spaces
 
     from dune.fem.space import module
 
     scalar = kwargs.get("scalar",False)
     codegen = kwargs.get("codegen",True)
+
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
@@ -595,6 +654,7 @@ def composite(*spaces, **kwargs):
     spc = module(compositeField, includes, typeName, constructor, pickler, # subFunction,
             storage=compositeStorage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[spaces])
     try:
         spc.componentNames = kwargs["components"]
@@ -624,6 +684,8 @@ def product(*spaces, **kwargs):
     Returns:
         Space: the constructed Space
     """
+    _kwargs = locals() # store parameter list including spaces
+
     from dune.fem.space import module, addStorage
     from dune.fem.function import tupleDiscreteFunction
 
@@ -661,6 +723,7 @@ def product(*spaces, **kwargs):
                         None,None,None]
     spc = module(combinedField, includes, typeName, constructor, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[spaces])
     try:
         spc.componentNames = kwargs["components"]
@@ -694,6 +757,8 @@ def product(*spaces, **kwargs):
 
 def bdm(gridView, order=1, dimRange=None,
         field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+    _kwargs = locals() # store parameter list
+
     from dune.fem.space import module
 
     # BDM are always vector valued (vector field)
@@ -726,11 +791,14 @@ def bdm(gridView, order=1, dimRange=None,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
 def raviartThomas(gridView, order=0, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+    _kwargs = locals() # store parameter list
+
     from dune.fem.space import module
 
     # RT are always vector valued (vector field)
@@ -763,11 +831,14 @@ def raviartThomas(gridView, order=0, dimRange=None,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
 
 def rannacherTurek(gridView, dimRange=None,
                    field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+    _kwargs = locals() # store parameter list
+
     from dune.fem.space import module
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
@@ -786,5 +857,6 @@ def rannacherTurek(gridView, dimRange=None,
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
+            clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
