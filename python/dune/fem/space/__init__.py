@@ -257,17 +257,21 @@ def addDiscreteFunction(space, storage):
     dfIncludes += ["dune/fempy/py/discretefunction.hh"]
     return dfIncludes, dfTypeName, backend, ctor
 
-def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend):
+def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     addAttr(module, spc, field, scalar, codegen)
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
+    # add clone function if provided
+    if clone is not None:
+        setattr(spc,"clone",clone)
     addStorage(spc,storage)
-    # is called now from C++ registring function: addDFAttr(module, module.DiscreteFunction)
+    # is called now from C++ registering function: addDFAttr(module, module.DiscreteFunction)
     if not backend is None:
         addBackend(module.DiscreteFunction, backend)
 
 def module(field, includes, typeName, *args,
-           storage=None, scalar=False, codegen=False, ctorArgs,
-           generator=_defaultGenerator):
+           storage=None, scalar=False, codegen=False, clone=None,
+           ctorArgs, generator=_defaultGenerator):
+
     includes = includes + ["dune/fempy/py/space.hh"]
     defines = []
 
@@ -288,7 +292,7 @@ def module(field, includes, typeName, *args,
                             defines=defines)
 
     spc = module.Space(*ctorArgs)
-    addSpaceAttr(module,spc,field,scalar,codegen,storage,backend)
+    addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone)
     return spc
 
 def _codegen(space,moduleName,interiorQuadratureOrders, skeletonQuadratureOrders):
