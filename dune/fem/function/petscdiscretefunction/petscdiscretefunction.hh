@@ -87,6 +87,7 @@ namespace Dune
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
+      typedef typename BaseType :: EntityType                 EntityType;
 
       // generic assign method
       using BaseType::assign;
@@ -196,6 +197,28 @@ namespace Dune
 
       /** \brief obtain a pointer to the underlying PETSc Vec */
       Vec* petscVec () { return dofVector().getVector(); }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::setLocalDofs */
+      template< class LocalDofs >
+      void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        typedef typename BlockMapperType :: GlobalKeyType GlobalKeyType;
+        std::vector< GlobalKeyType > indices;
+        this->space().blockMapper().map( entity, indices );
+
+        dofVector().setLocalDofs(indices, localDofs);
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::addLocalDofs */
+      template< class LocalDofs >
+      void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        typedef typename BlockMapperType :: GlobalKeyType GlobalKeyType;
+        std::vector< GlobalKeyType > indices;
+        this->space().blockMapper().map( entity, indices );
+
+        dofVector().addLocalDofs(indices, localDofs);
+      }
 
     protected:
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
@@ -320,6 +343,7 @@ namespace Dune
         discreteFunction_.assign( adaptiveFunction_ );
         initialized_ = false ;
       }
+
 
     protected:
       using BaseType::calcWeight;

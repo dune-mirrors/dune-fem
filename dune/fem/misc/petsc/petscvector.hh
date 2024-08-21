@@ -553,7 +553,42 @@ namespace Dune
         DUNE_THROW(NotImplemented,"copyContent is to be implemented");
       }
 
+      // assign from other given SimpleBlockVector with same block size
+      template <class GlobalKey, class LocalDofs>
+      void setLocalDofs( const std::vector< GlobalKey >& blocks, const LocalDofs& localDofs )
+      {
+        modifyLocalDofsImpl( blocks, localDofs, INSERT_VALUES );
+      }
+
+      // assign from other given SimpleBlockVector with same block size
+      template <class GlobalKey, class LocalDofs>
+      void addLocalDofs( const std::vector< GlobalKey >& blocks, const LocalDofs& localDofs )
+      {
+        modifyLocalDofsImpl( blocks, localDofs, ADD_VALUES );
+      }
     protected:
+      // assign from other given SimpleBlockVector with same block size
+      template <class GlobalKey, class LocalDofs, class Mode>
+      void modifyLocalDofsImpl( const std::vector< GlobalKey >& blocks, const LocalDofs& localDofs, const Mode mode )
+      {
+        Vec& vec = *getGhostedVector();
+
+        // use mapping from the ghost mapper which removes duplicate dofs
+        const auto& mapping = mappers_.ghostMapper().mapping();
+        // const size_t blocks = mapping.size();
+        // assert( blocks == other.size() );
+        size_t lb = 0;
+        for( const auto& b : blocks )
+        {
+          PetscInt block = mapping[ b ];
+          const PetscScalar* values = static_cast< const PetscScalar* > (&localDofs[ lb*blockSize ]);
+          ::Dune::Petsc::VecSetValuesBlocked( vec, 1, &block, values, mode );
+        }
+        ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
+
+        updateGhostRegions();
+      }
+
       // setup vector according to mapping sizes
       void init()
       {
