@@ -20,7 +20,11 @@
 
 
 template< class Operator,
-  class Constraints = Dune::DirichletConstraints< typename Operator::ModelType, typename Operator::RangeDiscreteFunctionSpaceType >
+  class Constraints = Dune::DirichletConstraints< typename Operator::ModelType,
+                              typename Operator::RangeDiscreteFunctionSpaceType,
+                              std::is_same_v<typename Operator::DomainFunctionType::DiscreteFunctionSpaceType,
+                                             typename Operator::RangeFunctionType::DiscreteFunctionSpaceType >
+                       >
   >
 struct DirichletWrapperOperator
 : public Dune::Fem::DifferentiableOperator< typename Operator::JacobianOperatorType >
@@ -32,13 +36,14 @@ struct DirichletWrapperOperator
   typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
   typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeDiscreteFunctionSpaceType;
   typedef typename Operator::JacobianOperatorType JacobianOperatorType;
-  typedef typename RangeDiscreteFunctionSpaceType::RangeType DomainRangeType;
+  typedef typename DomainDiscreteFunctionSpaceType::RangeType DomainRangeType;
   typedef Constraints ConstraintsType;
   typedef typename ConstraintsType::DirichletBlockVector DirichletBlockVector;
 
   template <class... Args>
   DirichletWrapperOperator ( Args&... args )
-    : op_( std::forward<Args&>(args)... ) , constraints_( op_.model(), op_.rangeSpace() )
+    : op_( std::forward<Args&>(args)... ) ,
+      constraints_( op_.model(), op_.rangeSpace() )
   {}
 
   void setConstraints( DomainFunctionType &u ) const
