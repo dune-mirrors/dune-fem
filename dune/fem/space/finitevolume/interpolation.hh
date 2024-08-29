@@ -39,11 +39,8 @@ namespace Dune
       void bind( const EntityType &entity ) {}
       void unbind() {}
 
-      /*
       explicit FiniteVolumeLocalInterpolation ( const EntityType &entity )
-        : entity_( entity )
-      {}
-      */
+      { bind(entity); }
 
       /** \} */
 
