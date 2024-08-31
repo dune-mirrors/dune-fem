@@ -105,6 +105,8 @@ namespace Dune
         template< class Integrands >
         using RRangeType = typename Get<Integrands>::RRangeType;
         template< class Integrands >
+        using RJacobianRangeType = typename Get<Integrands>::RJacobianRangeType;
+        template< class Integrands >
         using DirichletComponentType = typename Get<Integrands>::DirichletComponentType;
       } // namespace IntegrandsTraits
 
@@ -138,6 +140,7 @@ namespace Dune
       static const bool isFull = hasInterior && hasBoundary && hasSkeleton;
 
       typedef Impl::IntegrandsTraits::RRangeType< Integrands > RRangeType;
+      typedef Impl::IntegrandsTraits::RJacobianRangeType< Integrands > RJacobianRangeType;
       typedef Impl::IntegrandsTraits::DirichletComponentType< Integrands > DirichletComponentType;
     };
 
@@ -349,6 +352,7 @@ namespace Dune
 
     public:
       typedef typename IntegrandsTraits< Integrands >::RRangeType RRangeType;
+      typedef typename IntegrandsTraits< Integrands >::RJacobianRangeType RJacobianRangeType;
       typedef typename IntegrandsTraits< Integrands >::DirichletComponentType DirichletComponentType;
       bool hasDirichletBoundary () const
       {
@@ -362,6 +366,11 @@ namespace Dune
       void dirichlet( int bndId, const Point &x, RRangeType &value) const
       {
         return integrands().dirichlet(bndId,x,value);
+      }
+      template <class Point>
+      void dDirichlet( int bndId, const Point &x, RJacobianRangeType &value) const
+      {
+        return integrands().dDirichlet(bndId,x,value);
       }
     };
 
@@ -378,18 +387,24 @@ namespace Dune
       struct GetDimRange<Dune::FieldVector<FT,r>>
       {
         typedef Dune::FieldVector<FT,r> type;
+        template <int dim>
+        using dtype = Dune::FieldMatrix<FT,r,dim>;
         static const int value = r;
       };
       template <class FT,int r,int c>
       struct GetDimRange<Dune::FieldMatrix<FT,r,c>>
       {
         typedef Dune::FieldVector<FT,r> type;
+        template <int dim>
+        using dtype = Dune::FieldMatrix<FT,r,dim>;
         static const int value = r;
       };
       template <class FT,int r,int c>
       struct GetDimRange<Dune::Fem::ExplicitFieldVector<Dune::FieldMatrix<FT,c,c>,r>>
       {
         typedef Dune::FieldVector<FT,r> type;
+        template <int dim>
+        using dtype = Dune::FieldMatrix<FT,r,dim>;
         static const int value = r;
       };
     }
@@ -408,6 +423,7 @@ namespace Dune
       typedef typename GridPartType::IntersectionType IntersectionType;
 
       using RRangeType = typename detail::GetDimRange<std::tuple_element_t<0,RangeValueType>>::type;
+      using RJacobianRangeType = typename detail::GetDimRange<std::tuple_element_t<0,RangeValueType>>::template dtype<GridPart::dimension>;
       typedef std::array<int,RRangeType::dimension> DirichletComponentType;
       typedef typename EntityType::Geometry::LocalCoordinate DomainType;
 
@@ -463,6 +479,7 @@ namespace Dune
         virtual bool hasDirichletBoundary () const = 0;
         virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const = 0;
         virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const = 0;
+        virtual void dDirichlet( int bndId, const DomainType &x,RJacobianRangeType &value) const = 0;
       };
 
       template< class Impl >
@@ -501,6 +518,7 @@ namespace Dune
         virtual bool hasDirichletBoundary () const override { return impl().hasDirichletBoundary(); }
         virtual bool isDirichletIntersection( const IntersectionType& inter, DirichletComponentType &dirichletComponent ) const override { return impl().isDirichletIntersection(inter,dirichletComponent); }
         virtual void dirichlet( int bndId, const DomainType &x,RRangeType &value) const override { impl().dirichlet(bndId,x,value); }
+        virtual void dDirichlet( int bndId, const DomainType &x,RJacobianRangeType &value) const override { impl().dDirichlet(bndId,x,value); }
 
       private:
         const auto &impl () const { return std::cref( impl_ ).get(); }
@@ -632,6 +650,10 @@ namespace Dune
       void dirichlet( int bndId, const DomainType &x,RRangeType &value) const
       {
         return impl().dirichlet(bndId,x,value);
+      }
+      void dDirichlet( int bndId, const DomainType &x,RJacobianRangeType &value) const
+      {
+        return impl().dDirichlet(bndId,x,value);
       }
 
     private:

@@ -55,10 +55,12 @@ class Integrands(codegen.ModelClass):
         self.hasDirichletBoundary = False
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = None # [return_(False)]
-        self.dirichlet = None # [assign(self.arg_r, construct("RRangeType", 0))]
+        self.dirichlet = None
+        self.dDirichlet = None
         self.arg_i = Variable("const IntersectionType &", "intersection")
         self.arg_bndId = Variable("int", "bndId")
         self.arg_r = Variable("RRangeType &", "result")
+        self.arg_dr = Variable("RJacobianRangeType &", "result")
         self.arg_x = Variable("const Point &", "x")
 
         self.baseName = 'integrands'
@@ -88,6 +90,7 @@ class Integrands(codegen.ModelClass):
         # added for dirichlet treatment - same as conservationlaw model
         if self.hasDirichletBoundary is not None:
             code.append(TypeAlias("RRangeType",'Dune::FieldVector< double, '+ str(self.dimRange) + ' > '))
+            code.append(TypeAlias("RJacobianRangeType",'Dune::FieldMatrix< double, ' + str(self.dimRange) + ', GridPartType::dimension > '))
             code.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
             # code.append(TypeAlias("BoundaryIdProviderType",\ "Dune::Fem::BoundaryIdGetter< typename GridPartType::GridType >"))
             # idGetter = Variable('BoundaryIdProviderType', "boundaryIdGetter_")
@@ -100,6 +103,7 @@ class Integrands(codegen.ModelClass):
                      [return_(False)],
                 const=True))
             code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))
+            code.append(Method('void', 'dDirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_dr], code=self.dDirichlet, const=True))
 
     def includes(self):
         incs = set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])

@@ -587,6 +587,14 @@ class DirichletBC:
         else:
             self.ufl_value = value
         assert self.ufl_value.ufl_shape[0] == functionSpace.dimRange
+        args, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(self.ufl_value)
+        assert len(args) == 0,\
+        """
+Error: the ufl expression used for Dirichlet conditions should not use a `Test` or `Trial` function.
+        """
+        coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+        self.ufl_value = ufl.replace(self.ufl_value,coeff)
+
     def __str__(self):
         return str(self.value)+str(self.subDomain)
     def replace(self,dictionary):

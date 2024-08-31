@@ -277,10 +277,10 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
     args, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
     assert len(args) == 0,\
     """
-Error: the ufl expression used to define a function should not used a `Test` or `Trial` function.
+Error: the ufl expression used to define a function should not use a `Test` or `Trial` function.
     """
 
-    coeff   = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
+    coeff = {c : c.toVectorCoefficient()[0] for c in coeff_ if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
     expr = replace(expr,coeff)
 
     if len(expr.ufl_shape) > 1:
