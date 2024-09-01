@@ -80,6 +80,8 @@ namespace Dune
 
       /** \brief local interpolation type */
       typedef FiniteVolumeLocalInterpolation< GridPart, typename BasisFunctionSetType::RangeType > InterpolationType;
+      typedef InterpolationType LocalInterpolationType;
+      typedef LocalInterpolationType InterpolationImplType;
 
       explicit FiniteVolumeSpace ( GridPartType &gridPart,
                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -100,6 +102,11 @@ namespace Dune
       static InterpolationType interpolation ( const EntityType &entity )
       {
         return InterpolationType();
+      }
+
+      LocalInterpolationType localInterpolation ( const EntityType &entity ) const
+      {
+        return LocalInterpolationType(entity);
       }
 
       /** \brief extend size of space beyond what the index set is delivering */
