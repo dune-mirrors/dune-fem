@@ -3,9 +3,31 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import inspect
 import sys
 import logging
+import functools
 from collections import ChainMap
 from dune.generator import Constructor, Pickler
 logger = logging.getLogger(__name__)
+
+
+# create same space with potentially new parameters
+def clone(_ctor, _args, _kwargs, *args, **kwargs):
+    """
+    Returns same space with potentially different parameters.
+
+    KWArgs:
+        same as the previous space but can be overridden
+
+    Returns:
+
+        The constructed space object.
+    """
+    newargs = set(args)
+    for i in _args:
+        newargs.add(i)
+    # merge given kwargs and default args
+    newkwargs = dict(ChainMap(kwargs, _kwargs))
+    # return new space
+    return _ctor(*list(newargs), **newkwargs)
 
 # returns a clone function for spaces
 def _clone(defaultKWArgs: dict):
@@ -18,26 +40,7 @@ def _clone(defaultKWArgs: dict):
     # get arguments (only composite and product space)
     _args = defaultKWArgs['spaces'] if 'spaces' in defaultKWArgs else list()
 
-    # create same space with potentially new parameters
-    def clone(*args, **kwargs):
-        """
-        Returns same space with potentially different parameters.
-
-        KWArgs:
-            same as the previous space but can be overridden
-
-        Returns:
-
-            The constructed space object.
-        """
-        newargs = set(args)
-        for i in _args:
-            newargs.add(i)
-        # merge given kwargs and default args
-        newkwargs = dict(ChainMap(kwargs, _kwargs))
-        # return new space
-        return _ctor(*list(newargs), **newkwargs)
-    return clone
+    return functools.partial(clone,_ctor,_args,_kwargs)
 
 # dimrange parameter in space creation is deprecated!
 def checkDeprecated_dimrange( dimRange, dimrange ):
