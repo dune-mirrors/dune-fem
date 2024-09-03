@@ -8,7 +8,7 @@ from ufl import FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
-from ufl import action, derivative, as_vector, replace
+from ufl import action, derivative, as_vector, replace, grad
 from ufl.classes import Indexed
 from ufl.core.multiindex import FixedIndex, MultiIndex
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
@@ -362,16 +362,24 @@ def _compileUFL(integrands, form, *args, tempVars=True):
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
                 value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
+
+            dvalue = ExprTensor(grad(u).ufl_shape)
+            for key in dvalue.keys():
+                if bc.ufl_value.ufl_domain():
+                    dvalue[key] = Indexed(grad(bc.ufl_value),
+                                          MultiIndex(tuple(FixedIndex(k) for k in key)))
+                else:
+                    dvalue[key] = Indexed(Zero(grad(u).ufl_shape), MultiIndex(tuple(FixedIndex(k) for k in key)))
             if bc.subDomain is None:
-                wholeDomain = value,neuman
+                wholeDomain = value,dvalue,neuman
             elif isinstance(bc.subDomain,int):
-                bySubDomain[bc.subDomain] = value,neuman
+                bySubDomain[bc.subDomain] = value,dvalue,neuman
                 maxId = max(maxId, bc.subDomain)
             else:
                 domain = ExprTensor(())
                 for key in domain.keys():
                     domain[key] = Indexed(bc.subDomain, MultiIndex(tuple(FixedIndex(k) for k in key)))
-                codeDomains.append( (value,neuman,domain) )
+                codeDomains.append( (value,dvalue,neuman,domain) )
         defaultCode = []
         if len(codeDomains)>0:
             defaultCode.append(Declaration(Variable('int', 'domainId')))
@@ -379,20 +387,20 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         #     initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
-            block.append(generateDirichletDomainCode(predefined, v[2], tempVars=tempVars))
+            block.append(generateDirichletDomainCode(predefined, v[3], tempVars=tempVars))
             block.append('if (domainId)')
             ifBlock = UnformattedBlock()
             ifBlock.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+i+2) + ' );')
-            if len(v[1])>0:
-                [ifBlock.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            if len(v[2])>0:
+                [ifBlock.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[2]]
             ifBlock.append('return true;')
             block.append(ifBlock)
             defaultCode.append(block)
         if wholeDomain is not None:
             block = UnformattedBlock()
             block.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + str(maxId+1) + ' );')
-            if len(wholeDomain[1])>0:
-                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in wholeDomain[1]]
+            if len(wholeDomain[2])>0:
+                [block.append('dirichletComponent[' + str(c) + '] = 0;') for c in wholeDomain[2]]
             block.append('return true;')
             defaultCode.append(block)
         defaultCode.append(return_(False))
@@ -403,8 +411,8 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         switch = SwitchStatement(bndId, default=defaultCode)
         for i,v in bySubDomain.items():
             code = []
-            if len(v[1])>0:
-                [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
+            if len(v[2])>0:
+                [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[2]]
             code.append(return_(True))
             switch.append(i, code)
         integrands.isDirichletIntersection = [Declaration(bndId, initializer=getBndId),
@@ -413,6 +421,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
                                         ]
 
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + integrands.arg_x.name + ' ) )')
+
         if wholeDomain is None:
             defaultCode = assign(integrands.arg_r, construct("RRangeType", 0))
         else:
@@ -423,6 +432,17 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         for i,v in enumerate(codeDomains):
             switch.append(i+maxId+2, generateDirichletCode(predefined, v[0], tempVars=tempVars))
         integrands.dirichlet = [switch]
+
+        if wholeDomain is None:
+            defaultCode = assign(integrands.arg_r, construct("RJacobianRangeType", 0))
+        else:
+            defaultCode = generateDirichletCode(predefined, wholeDomain[1], tempVars=tempVars)
+        switch = SwitchStatement(integrands.arg_bndId, default=defaultCode)
+        for i, v in bySubDomain.items():
+            switch.append(i, generateDirichletCode(predefined, v[1], tempVars=tempVars))
+        for i,v in enumerate(codeDomains):
+            switch.append(i+maxId+2, generateDirichletCode(predefined, v[1], tempVars=tempVars))
+        integrands.dDirichlet = [switch]
 
     return integrands
 
