@@ -55,7 +55,7 @@ namespace Fem {
 class HasLocalFunction;
 }
 
-template < class Model, class DiscreteFunctionSpace >
+template < class Model, class DiscreteFunctionSpace, bool useIdentity >
 class DirichletConstraints
 {
 public:
@@ -309,20 +309,16 @@ public:
         globalDofs.resize(localBlocks * localBlockSize);
         mapper.map( entity, globalDofs );
 
-        /*
-        unitRows.reserve( globalDofs.size() );
-        unitRows.clear();
-        auxRows.reserve( globalDofs.size() );
-        auxRows.clear();
-        */
-
         // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
         int localDof = 0;
         // iterate over face dofs and set unit row
         for( int localBlockDof = 0 ; localBlockDof < localBlocks; ++ localBlockDof )
         {
           int global = globalBlockDofs[localBlockDof];
-          std::set<std::size_t>& rows = auxiliaryDofs.contains( global ) ? auxRows : unitRows;
+          // all diagonals were set to one anyway independent of auxDof or not
+          // so don't need this distinction anymore
+          // std::set<std::size_t>& rows = auxiliaryDofs.contains( global ) ? auxRows : unitRows;
+          std::set<std::size_t>& rows = useIdentity ?  unitRows : auxRows;
           for( int l = 0; l < localBlockSize; ++ l, ++ localDof )
           {
             if( dirichletBlocks_[global][l] )
@@ -397,10 +393,11 @@ protected:
     // map local to global BlockDofs
     std::vector< GlobalKeyType > globalBlockDofs(localBlocks);
     space_.blockMapper().map(entity,globalBlockDofs);
-    std::vector<double> values( localBlocks*localBlockSize );
+    std::vector<double> values( localBlocks*localBlockSize,0 );
     std::vector<double> valuesModel( localBlocks*localBlockSize );
 
-    interpolation( uLocal, values );
+    if constexpr ( useIdentity )
+      interpolation( uLocal, values );
 
     int localDof = 0;
 
@@ -563,8 +560,8 @@ protected:
   class DirichletBuilder;
 };
 
-template < class Model, class Space >
-class DirichletConstraints< Model,Space > :: DirichletBuilder
+template < class Model, class Space, bool useIdentity >
+class DirichletConstraints< Model,Space, useIdentity > :: DirichletBuilder
     : public CommDataHandleIF< DirichletBuilder, int >
 {
 public:
@@ -579,7 +576,7 @@ public:
   const int myRank_;
   const int mySize_;
 
-  typedef DirichletConstraints< Model,Space > DirichletType;
+  typedef DirichletConstraints< Model,Space, useIdentity > DirichletType;
   const DirichletType &dirichlet_;
 
   const SpaceType &space_;
