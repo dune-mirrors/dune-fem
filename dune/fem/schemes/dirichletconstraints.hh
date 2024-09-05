@@ -290,7 +290,7 @@ public:
 
       const auto& space = space_; // linearOperator.rangeSpace();
       // get auxiliary dof structure (for parallel runs)   /*@LST0S@*/
-      const auto &auxiliaryDofs = space.auxiliaryDofs();
+      //const auto &auxiliaryDofs = space.auxiliaryDofs();
 
       const IteratorType end = space_.end();
       for( IteratorType it = space_.begin(); it != end; ++it )
