@@ -67,6 +67,16 @@ namespace Dune
       {
         if( mass().hasSkeleton() )
           DUNE_THROW(InvalidStateException,"MassLumpingOperator: Mass model cannot have a skeleton term");
+
+        // volume order (same as space for lumping)
+        auto interiorOrder = [] (const int order) { return order; };
+        // surface order does not matter for this part
+        auto surfaceOrder  = [] (const int order) { return 0; };
+
+        // set quadrature orders mass part to be fixed!
+        size_t size = mass_.size();
+        for( size_t i=0; i<size; ++i )
+          mass_[ i ].setQuadratureOrderFunctions( interiorOrder, surfaceOrder );
       }
 
       void setCommunicate( const bool communicate )
@@ -403,8 +413,10 @@ namespace Dune
       template< class Integrands, class MassIntegrands,
                 class LinearOperator, class LinearInverseOperator, bool addDirichletBC,
                 template <class,class,class> class DifferentiableGalerkinOperatorImpl = MassLumpingDifferentiableOperator >
-      struct MassLumpingSchemeImpl : public FemScheme< typename  MassLumpingSchemeTraits< Integrands, MassIntegrands, LinearOperator,
-                                       addDirichletBC, DifferentiableGalerkinOperatorImpl>::type, // Operator
+      struct MassLumpingSchemeImpl : public FemScheme<
+                     typename MassLumpingSchemeTraits< Integrands, MassIntegrands, LinearOperator,
+                                                       addDirichletBC, DifferentiableGalerkinOperatorImpl
+                                                     > :: type, // Operator
                                       LinearInverseOperator > // LinearInverseOperator
       {
         typedef FemScheme< typename MassLumpingSchemeTraits< Integrands, MassIntegrands, LinearOperator,
