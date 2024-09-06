@@ -646,6 +646,13 @@ namespace Dune
           surfaceQuadOrder_  = surface;
         }
 
+        void setQuadratureOrderFunctions( std::function<int(const int)> interiorOrder,
+                                          std::function<int(const int)> surfaceOrder )
+        {
+          defaultInteriorOrder_ = interiorOrder;
+          defaultSurfaceOrder_  = surfaceOrder;
+        }
+
         IntegrandsType& model() const
         {
           return integrands();
