@@ -238,9 +238,9 @@ public:
   }
 protected:
   SolverInfoType _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution) const
-  {
-    setConstraints(solution);
-    addConstraints(rhs,solution);
+  {                                     // setup for Newton scheme
+    setConstraints(solution);           // sol=g     on bnd
+    addConstraints(rhs,solution);       // sol=g+rhs on bnd
     invOp_( rhs, solution );
     return invOp_.info();
   }
