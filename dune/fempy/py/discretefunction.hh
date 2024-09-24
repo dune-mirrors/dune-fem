@@ -126,7 +126,13 @@ namespace Dune
         cls.def_property_readonly("indexSet", [] (DF &self )
         {
           testPetsc4PyCompatibility();
+          std::cout << "get indexsets: "
+            << self.dofVector().mappers().parallelMapper().mapping().size()
+            << " "
+            << self.dofVector().mappers().ghostMapper().mapping().size()
+            << std::endl;
           return self.dofVector().mappers().parallelMapper().mapping();
+          // return self.dofVector().mappers().ghostMapper().mapping();
         }, pybind11::keep_alive<0,1>());
       }
 #endif

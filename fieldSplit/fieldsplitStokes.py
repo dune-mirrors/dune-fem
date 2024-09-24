@@ -37,6 +37,10 @@ from dune.fem.function import gridFunction
 from dune.fem.space import lagrange, composite
 from dune.fem import assemble
 
+print_ = print
+def print(*args,**kwargs):
+    print_(PETSc.COMM_WORLD.rank,*args,**kwargs,flush=True)
+
 # %%
 gridView = structuredGrid([0, 0], [1, 1], [7, 7])
 
@@ -100,9 +104,9 @@ ksp.setType(PETSc.KSP.Type.TFQMR)
 
 ##############
 
-print("=========== FieldSplit")
-
 communicator = PETSc.COMM_WORLD
+
+print("=========== IndexSets")
 
 tmpV = space_velocity.interpolate([0,0],name="velo")
 veloSize = tmpV.as_petsc.getSizes()[0]
@@ -110,28 +114,47 @@ tmpP = space_pressure.interpolate(0,name="press")
 pressureSize = tmpP.as_petsc.getSizes()[0]
 tmpU = taylor_hood_space.function(name="solution_vector_petsc")
 compSize = tmpU.as_petsc.getSizes()[0]
-print(veloSize,pressureSize,"=",veloSize+pressureSize,compSize)
 
-if False:
-    idxVelo = PETSc.IS().createStride(comm=communicator,size=veloSize, first=0, step=1).allGather()
-    idxPres = PETSc.IS().createStride(comm=communicator,size=pressureSize, first=veloSize, step=1).allGather()
-    idxVelo = idxVelo.sort()
-    idxPres = idxPres.sort()
-else:
-    vIdx_ = tmpV.indexSet
-    pIdx = tmpP.indexSet
-    uIdx = tmpU.indexSet
-    vIdx = 2*len(vIdx_)*[0]
-    for i,idx in enumerate(vIdx_):
-        vIdx[2*i] = 2*idx
-        vIdx[2*i+1] = 2*idx+1
-    maxvIdx = max(vIdx)
-    for i in range(len(pIdx)):
-        pIdx[i] += maxvIdx
-    idxVelo = PETSc.IS().createGeneral(comm=communicator,indices=vIdx)
-    idxPres = PETSc.IS().createGeneral(comm=communicator,indices=pIdx)
-    idxVelo.sort()
-    idxPres.sort()
+vIdx_ = tmpV.indexSet
+pIdx = tmpP.indexSet
+uIdx = tmpU.indexSet
+
+"""
+vIdx = 2*len(vIdx_)*[0]
+# the mapper is 'blocked' so need to 'unblock' it
+for i,idx in enumerate(vIdx_):
+    vIdx[2*i] = 2*idx
+    vIdx[2*i+1] = 2*idx+1
+# the pressure indices need to be shifted
+maxvIdx = max(vIdx)
+for i in range(len(pIdx)):
+    pIdx[i] += maxvIdx+1
+
+# print(vIdx)
+# print(pIdx)
+# assert False
+"""
+
+vIdx = uIdx[0:veloSize]
+pIdx = uIdx[veloSize:compSize]
+print("len(vIdx)=",len(vIdx),
+      "len(pIdx)=",len(pIdx),
+      "len(uIdx)=",len(uIdx),
+      "\n\t",
+      "veloVec",veloSize,"pressVec",pressureSize," = ",
+      "(velo+press)Vec",veloSize+pressureSize,
+      "\n\t",
+      "compositeVec",compSize,
+      "composite space size=",taylor_hood_space.size,
+      "U_h size",tmpU.size)
+# now setup the index set
+idxVelo = PETSc.IS().createGeneral(comm=communicator,indices=vIdx)
+idxPres = PETSc.IS().createGeneral(comm=communicator,indices=pIdx)
+# need to be sorted...
+idxVelo.sort()
+idxPres.sort()
+
+print("=========== FieldSplit")
 
 pc = ksp.getPC()
 pc.setType(PETSc.PC.Type.FIELDSPLIT)
@@ -147,17 +170,15 @@ ksp.setFromOptions()
 
 print("************** SOLVE")
 
-(x_, _) = A.getVecs()
+solution_vector_cg = taylor_hood_space.function(name="solution_vector_petsc")
+x = solution_vector_cg.as_petsc
+print("solution vector size",x.getSizes(),
+      "rhs vector size",b.getSizes(),
+      "A.getVecs sizes",A.getVecs()[0].getSizes())
 
-# solution_vector_cg = taylor_hood_space.function(name="solution_vector_petsc")
-# x = solution_vector_cg.as_petsc
-x = x_
-print("solution size",x.getSizes(),x_.getSizes())
 ksp.solve(b, x)
 
-assert False
-
-# solution_vector_cg = taylor_hood_space.function(name="solution_vector_petsc", dofVector=x)
+print("************** Done")
 
 # %%
 fig = pyplot.figure()
