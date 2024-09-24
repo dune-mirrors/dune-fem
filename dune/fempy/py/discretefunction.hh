@@ -119,8 +119,14 @@ namespace Dune
           testPetsc4PyCompatibility();
 
           Vec vec = self.dofVector().array();
+          // Vec vec = *self.dofVector().getGhostedVector();
           pybind11::handle petsc_vec(PyPetscVec_New(vec));
           return petsc_vec;
+        }, pybind11::keep_alive<0,1>());
+        cls.def_property_readonly("indexSet", [] (DF &self )
+        {
+          testPetsc4PyCompatibility();
+          return self.dofVector().mappers().parallelMapper().mapping();
         }, pybind11::keep_alive<0,1>());
       }
 #endif
