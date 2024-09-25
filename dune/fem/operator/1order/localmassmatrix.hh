@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_LOCALMASSMATRIX_HH
 #define DUNE_FEM_LOCALMASSMATRIX_HH
 
+#include <memory>
+#include <vector>
+
 //- dune-common includes
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/fmatrix.hh>
@@ -58,6 +61,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: EntityType  EntityType;
       typedef typename EntityType :: Geometry  Geometry;
 
+      static const bool hasSingleGeometryType = Dune :: Capabilities :: hasSingleGeometryType< GridType > :: v;
+
       typedef VolumeQuadrature VolumeQuadratureType;
 
       typedef Fem::GeometryAffinityCheck<VolumeQuadratureType>  GeometryAffinityCheckType;
@@ -90,6 +95,9 @@ namespace Dune
 
       mutable std::vector< RangeType > phi_;
       mutable std::vector< RangeType > phiMass_;
+
+      mutable std::vector< std::shared_ptr< VolumeQuadratureType > > volumeQuadratures_;
+      mutable std::mutex mutex_;
 
       typedef std::pair< std::unique_ptr< MatrixType >, std::unique_ptr< VectorType > > MatrixPairType;
       typedef std::map< const int, MatrixPairType > MassMatrixStorageType;
@@ -146,7 +154,10 @@ namespace Dune
           it = insertPair.first;
           insertPair.first->second.first.reset( new MatrixType( numBasisFct, numBasisFct, 0.0 ));
           MatrixType& matrix = insertPair.first->second.first.operator *();
-          VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+
+          auto volQuadPtr = getVolumeQuadrature( entity, volumeQuadratureOrder( entity ) );
+          const VolumeQuadratureType& volQuad = *volQuadPtr;
+
           buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, matrix, false );
           try {
             matrix.invert();
@@ -229,11 +240,13 @@ namespace Dune
         , rhs_(), row_(), matrix_()
         , phi_( maxNumDofs() )
         , phiMass_( maxNumDofs() )
+        , volumeQuadratures_( std::max(20, 4*spc.order()+4) ) // 19 is the highest order for gauss quadratures currently implemented
         , localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) )
         , lastEntityIndex_( -1 )
         , lastTopologyId_( ~0u )
         , sequence_( -1 )
-      {}
+      {
+      }
 
       //! copy constructor
       LocalMassMatrixImplementation ( const ThisType &other )
@@ -245,11 +258,43 @@ namespace Dune
         rhs_( other.rhs_ ), row_( other.row_ ), matrix_( other.matrix_ ),
         phi_( other.phi_ ),
         phiMass_( other.phiMass_ ),
+        volumeQuadratures_( other.volumeQuadratures_ ),
         localInverseMassMatrix_( GlobalGeometryTypeIndex :: size( GridType::dimension ) ),
         lastEntityIndex_( other.lastEntityIndex_ ),
         lastTopologyId_( other.lastTopologyId_ ),
         sequence_( other.sequence_ )
       {}
+
+      std::shared_ptr< VolumeQuadratureType >
+      getVolumeQuadrature( const EntityType& entity, const int order ) const
+      {
+        std::shared_ptr< VolumeQuadratureType > volQuadPtr;
+        // for single geometry types cache quadratures
+        // since these are expensive to create
+        if constexpr ( hasSingleGeometryType )
+        {
+          assert( order < int(volumeQuadratures_.size()) );
+          // caching does only work for normal geometry types
+          assert( ! entity.type().isNone() );
+          if( ! volumeQuadratures_[ order ] )
+          {
+            std::lock_guard< std::mutex > guard( mutex_ );
+            // check again since the state may have changed
+            if( ! volumeQuadratures_[ order ] )
+            {
+              volumeQuadratures_[ order ].reset( new VolumeQuadrature( entity, order ) );
+            }
+          }
+          volQuadPtr = volumeQuadratures_[ order ];
+        }
+        else
+        {
+          // this call needs the entity (not just the type) since it might be an
+          // agglomeration quadrature
+          volQuadPtr.reset( new VolumeQuadrature( entity, order ) );
+        }
+        return volQuadPtr;
+      }
 
     public:
       //! returns true if geometry mapping is affine
@@ -283,8 +328,8 @@ namespace Dune
         if constexpr ( quadPointSetId == basePointSetId )
         {
           const unsigned int numShapeFunctions = bfs.size() / dimRange;
-          return VolumeQuadratureType( bfs.entity(), volumeQuadratureOrder( bfs.entity() ) )
-                     .isInterpolationQuadrature(numShapeFunctions);
+          auto volQuadPtr = getVolumeQuadrature( bfs.entity(), volumeQuadratureOrder( bfs.entity() ) );
+          return volQuadPtr->isInterpolationQuadrature(numShapeFunctions);
         }
         return false;
       }
@@ -589,7 +634,8 @@ namespace Dune
           const VectorType& diagonal = *matrixPair.second;
           assert( int(diagonal.size()) == numDofs );
 
-          VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+          auto volQuadPtr = getVolumeQuadrature( entity, volumeQuadratureOrder( entity ) );
+          const VolumeQuadratureType& volQuad = *volQuadPtr;
 
           const int nop = volQuad.nop();
           assert(nop*dimRange == numDofs);
@@ -627,7 +673,8 @@ namespace Dune
 
         assert( int(refElemDiagonal.size()) == cols );
 
-        VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+        auto volQuadPtr = getVolumeQuadrature( entity, volumeQuadratureOrder( entity ) );
+        const VolumeQuadratureType& volQuad = *volQuadPtr;
 
         VectorType& elementDiagonal = rhs_;
         elementDiagonal.resize( cols );
@@ -788,7 +835,8 @@ namespace Dune
         matrix = 0;
 
         // create quadrature
-        VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
+        auto volQuadPtr = getVolumeQuadrature( entity, volumeQuadratureOrder( entity ) );
+        const VolumeQuadratureType& volQuad = *volQuadPtr;
 
         if( caller.hasMass() )
           buildMatrixWithMassFactor( caller, entity, geo, set, volQuad, numDofs, matrix );
