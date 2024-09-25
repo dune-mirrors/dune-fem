@@ -43,6 +43,8 @@ namespace Dune
       const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
+      const typename MPIManager::ThreadPoolType& threadPool_;
+
       int sequence_;
       int numThreads_;
 
@@ -61,18 +63,19 @@ namespace Dune
         : gridPart_( gridPart )
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
+        , threadPool_( MPIManager::threadPool() )
         , sequence_( -1 )
-        , numThreads_( MPIManager::numThreads() )
-        , iterators_( MPIManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
-        , threadId_( MPIManager::maxThreads() )
-        , filters_( MPIManager::maxThreads() )
+        , numThreads_( threadPool_.numThreads() )
+        , iterators_( threadPool_.maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
+        , threadId_( threadPool_.maxThreads() )
+        , filters_( threadPool_.maxThreads() )
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
-                    &&  Fem :: MPIManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
+                    &&  threadPool_.maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
         threadNum_.setMemoryFactor( 1.1 );
-        for(int thread=0; thread < Fem :: MPIManager :: maxThreads(); ++thread )
+        for(int thread=0; thread < threadPool_.maxThreads(); ++thread )
         {
           filters_[ thread ].reset( new FilterType( gridPart_, threadNum_, thread ) );
         }
@@ -91,9 +94,9 @@ namespace Dune
       {
         const int sequence = dofManager_.sequence();
         // if grid got updated also update iterators
-        if( sequence_ != sequence || numThreads_ != MPIManager :: numThreads() )
+        if( sequence_ != sequence || numThreads_ != threadPool_.numThreads() )
         {
-          if( ! MPIManager :: singleThreadMode() )
+          if( ! threadPool_.singleThreadMode() )
           {
             std::cerr << "Don't call ThreadIterator::update in a parallel environment!" << std::endl;
             assert( false );
@@ -101,7 +104,7 @@ namespace Dune
           }
 
           // update currently used thread numbers
-          numThreads_  = MPIManager :: numThreads() ;
+          numThreads_  = threadPool_.numThreads() ;
           // check that grid is viewThreadSafe otherwise weird bugs can occur
           if( (numThreads_ > 1) && (! Dune::Capabilities::viewThreadSafe< GridType >:: v) )
           {
@@ -198,15 +201,15 @@ namespace Dune
       //! return begin iterator for current thread
       IteratorType begin() const
       {
-        if( MPIManager :: singleThreadMode() )
+        if( threadPool_.singleThreadMode() )
         {
           return gridPart_.template begin< 0, pitype >();
         }
         // in multi thread mode return iterators for each thread
         else
         {
-          assert( MPIManager :: thread() < numThreads_ );
-          return iterators_[ MPIManager :: thread() ];
+          assert( threadPool_.thread() < numThreads_ );
+          return iterators_[ threadPool_.thread() ];
         }
       }
       IteratorType begin(int thread) const
@@ -217,15 +220,15 @@ namespace Dune
       //! return end iterator for current thread
       IteratorType end() const
       {
-        if( MPIManager :: singleThreadMode() )
+        if( threadPool_.singleThreadMode() )
         {
           return gridPart_.template end< 0, pitype >();
         }
         // in multi thread mode return iterators for each thread
         else
         {
-          assert( MPIManager :: thread() < numThreads_ );
-          return iterators_[ MPIManager :: thread() + 1 ];
+          assert( threadPool_.thread() < numThreads_ );
+          return iterators_[ threadPool_.thread() + 1 ];
         }
       }
       IteratorType end(int thread) const
@@ -249,10 +252,16 @@ namespace Dune
       //! return thread number this entity belongs to
       int thread( const EntityType& entity ) const
       {
-        if( MPIManager::singleThreadMode() )
+        if( threadPool_.singleThreadMode() )
           return 0;
         else
           return threadParallel(entity);
+      }
+
+      //! return thread number of running thread
+      int thread() const
+      {
+        return threadPool_.thread();
       }
 
       //! set ratio between master thread and other threads in comp time
@@ -274,7 +283,7 @@ namespace Dune
       void checkConsistency( const size_t totalElements )
       {
 #ifndef NDEBUG
-        const int numThreads = MPIManager :: numThreads() ;
+        const int numThreads = threadPool_.numThreads() ;
         std::set< int > indices ;
         for( int thread = 0; thread < numThreads; ++ thread )
         {

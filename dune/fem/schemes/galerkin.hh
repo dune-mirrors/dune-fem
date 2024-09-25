@@ -872,7 +872,7 @@ namespace Dune
           template <class Iterators>
           InsideEntity(const Space &space, const Iterators& iterators)
           : space_(space), dofThread_(space.size(),-1)
-          , thread_(MPIManager::thread())
+          , thread_( iterators.thread() )
           {
             const auto& mapper = space_.blockMapper();
             for (const auto &entity : space_)
