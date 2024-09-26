@@ -18,16 +18,14 @@ namespace Dune
 
     template <class ct, int dim>
     void PointProvider<ct, dim, 0>::
-    registerQuadrature(const QuadratureType& quad)
+    registerQuadratureImpl(const QuadratureType& quad)
     {
       QuadratureKeyType key( quad.geometryType(), quad.id() );
-
-      PointContainerType& points_ = points();
 
       if (points_.find( key ) == points_.end() )
       {
         // only register when in single thread mode
-        if( ! Fem :: MPIManager :: singleThreadMode() )
+        if( ! threadPool_.singleThreadMode() )
         {
           DUNE_THROW(SingleThreadModeError, "PointProvider::registerQuadrature: only call in single thread mode!");
         }
@@ -47,11 +45,9 @@ namespace Dune
 
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 0>::GlobalPointVectorType&
-    PointProvider<ct, dim, 0>::getPoints(const size_t id, const GeometryType& elementGeo)
+    PointProvider<ct, dim, 0>::getPointsImpl(const size_t id, const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, id );
-
-      PointContainerType& points_ = points();
 
       typename PointContainerType::const_iterator pos = points_.find( key );
 #ifndef NDEBUG
@@ -69,12 +65,10 @@ namespace Dune
 
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 1>::MapperVectorPairType&
-    PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
-                                          const GeometryType& elementGeo)
+    PointProvider<ct, dim, 1>::getMappersImpl(const QuadratureType& quad,
+                                              const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo , quad.id() );
-
-      MapperContainerType& mappers_ = mappers();
 
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end())
@@ -84,7 +78,7 @@ namespace Dune
         {
           pts[i] = quad.point(i);
         }
-        it = addEntry(quad, pts, elementGeo);
+        it = addEntryImpl(quad, pts, elementGeo);
       }
 
       return it->second;
@@ -92,17 +86,15 @@ namespace Dune
 
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 1>::MapperVectorPairType&
-    PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
-                                          const LocalPointVectorType& pts,
-                                          const GeometryType& elementGeo)
+    PointProvider<ct, dim, 1>::getMappersImpl(const QuadratureType& quad,
+                                              const LocalPointVectorType& pts,
+                                              const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, quad.id() );
 
-      MapperContainerType& mappers_ = mappers();
-
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
-        it = addEntry(quad, pts, elementGeo);
+        it = addEntryImpl(quad, pts, elementGeo);
       }
 
       return it->second;
@@ -110,23 +102,22 @@ namespace Dune
 
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 1>::GlobalPointVectorType&
-    PointProvider<ct, dim, 1>::getPoints(const size_t id, const GeometryType& elementGeo)
+    PointProvider<ct, dim, 1>::getPointsImpl(const size_t id, const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, id );
 
-      PointContainerType& points_ = points();
       assert(points_.find(key) != points_.end());
       return points_.find(key)->second;
     }
 
     template <class ct, int dim>
     typename PointProvider<ct, dim, 1>::MapperIteratorType
-    PointProvider<ct, dim, 1>::addEntry(const QuadratureType& quad,
-                                        const LocalPointVectorType& pts,
-                                        GeometryType elementGeo)
+    PointProvider<ct, dim, 1>::addEntryImpl(const QuadratureType& quad,
+                                            const LocalPointVectorType& pts,
+                                            GeometryType elementGeo)
     {
       // only addEntry when in single thread mode
-      if( ! Fem :: MPIManager :: singleThreadMode() )
+      if( ! threadPool_.singleThreadMode() )
       {
         DUNE_THROW(SingleThreadModeError, "PointProvider::addEntry: only call in single thread mode!");
       }
@@ -140,12 +131,9 @@ namespace Dune
       const int numFaces = refElem.size(codim);
       const int numGlobalPoints = numFaces*numLocalPoints;
 
-
-      PointContainerType& points_ = points();
       PointIteratorType pit =
         points_.insert(std::make_pair(key,
                                       GlobalPointVectorType(numGlobalPoints))).first;
-      MapperContainerType& mappers_ = mappers();
       MapperIteratorType mit =
         mappers_.insert(std::make_pair(key,
                                        std::make_pair(MapperVectorType(numFaces), MapperVectorType(numFaces) ))).first;
