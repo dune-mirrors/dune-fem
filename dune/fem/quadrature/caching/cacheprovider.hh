@@ -195,31 +195,6 @@ namespace Dune
 
       typedef std::pair< MapperType, MapperType > MapperPairType;
 
-    public:
-      template <class QuadratureImpl>
-      static const MapperPairType& getMapper(const QuadratureImpl& quadImpl,
-                                             GeometryType elementGeometry,
-                                             int faceIndex,
-                                             int faceTwist)
-      {
-        // get quadrature implementation
-        const QuadratureType& quad = quadImpl.ipList();
-
-        // create key
-        const QuadratureKeyType key (elementGeometry, quad.id() );
-
-        MapperContainerType& mappers_ = mappers();
-        MapperIteratorType it = mappers_.find( key );
-
-        if( it == mappers_.end() )
-        {
-          std::integral_constant< bool, hasTwists > i2t;
-          it = CacheProvider<GridPart, 1>::createMapper( quad, elementGeometry, i2t );
-        }
-
-        return it->second.getMapper(faceIndex, faceTwist);
-      }
-
     private:
       typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType;
       typedef typename Traits::MapperVectorType MapperVectorType;
@@ -227,22 +202,52 @@ namespace Dune
       typedef std::unordered_map<const QuadratureKeyType, CacheStorageType> MapperContainerType;
       typedef typename MapperContainerType::iterator MapperIteratorType;
 
+    public:
+      template <class QuadratureImpl>
+      const MapperPairType& getMapperImpl(const QuadratureImpl& quadImpl,
+                                          const GeometryType elementGeometry,
+                                          const int faceIndex,
+                                          const int faceTwist,
+                                          const bool registerQuadrature = true )
+      {
+        // get quadrature implementation
+        const QuadratureType& quad = quadImpl.ipList();
+
+        // create key
+        const QuadratureKeyType key (elementGeometry, quad.id() );
+
+        MapperIteratorType it = mappers_.find( key );
+
+        assert( ! registerQuadrature ? it != mappers_.end() : true );
+        if( registerQuadrature && (it == mappers_.end()) )
+        {
+          std::integral_constant< bool, hasTwists > i2t;
+          it = CacheProvider<GridPart, 1>::createMapper( quad, elementGeometry, i2t, mappers_ );
+        }
+
+        return it->second.getMapper(faceIndex, faceTwist);
+      }
+
+      template <class QuadratureImpl>
+      static const MapperPairType& getMapper(const QuadratureImpl& quadImpl,
+                                             const GeometryType elementGeometry,
+                                             const int faceIndex,
+                                             const int faceTwist)
+      {
+        return instance().getMapperImpl( quadImpl, elementGeometry, faceIndex, faceTwist );
+      }
+
     private:
       static MapperIteratorType
-      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, true > );
+      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, true >, MapperContainerType& );
 
       static MapperIteratorType
-      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
+      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false >, MapperContainerType& );
 
       // mapper container holding mappings for different quads
       MapperContainerType mappers_;
 
-    private:
-      static MapperContainerType& mappers()
-      {
-        return instance().mappers_;
-      }
-
+    public:
       static ThisType& instance()
       {
         return Singleton< ThisType >::instance();

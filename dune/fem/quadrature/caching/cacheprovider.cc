@@ -7,7 +7,8 @@ namespace Dune
     typename CacheProvider<GridPart, 1>::MapperIteratorType
     CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
                                              GeometryType elementGeometry,
-                                             std::integral_constant< bool, true > )
+                                             std::integral_constant< bool, true >,
+                                             MapperContainerType& mappers )
     {
       // make sure we work in single thread mode
       if( ! Fem :: MPIManager :: singleThreadMode() )
@@ -31,7 +32,7 @@ namespace Dune
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
 
-      MapperContainerType& mappers_ = mappers();
+      MapperContainerType& mappers_ = mappers;
 
       MapperIteratorType it = mappers_.insert
         (std::make_pair( key,
@@ -57,7 +58,8 @@ namespace Dune
     typename CacheProvider<GridPart, 1>::MapperIteratorType
     CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
                                              GeometryType elementGeometry,
-                                             std::integral_constant< bool, false > )
+                                             std::integral_constant< bool, false >,
+                                             MapperContainerType& mappers )
     {
       // make sure we work in single thread mode
       if( ! Fem :: MPIManager :: singleThreadMode() )
@@ -72,7 +74,7 @@ namespace Dune
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
 
-      MapperContainerType& mappers_ = mappers();
+      MapperContainerType& mappers_ = mappers;
 
       MapperIteratorType it
         = mappers_.insert(std::make_pair(key, CacheStorageType(numFaces))).first;

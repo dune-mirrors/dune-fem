@@ -97,7 +97,7 @@ namespace Dune
         int activeThreads_;
 
         std::vector<std::thread> threads_;
-        std::unordered_map<std::thread::id,int> numbers_; // still used for possible debugging can be removed if thread_local thread number works
+        mutable std::unordered_map<std::thread::id,int> numbers_; // still used for possible debugging can be removed if thread_local thread number works
         std::condition_variable_any waitA_;
         std::shared_mutex lockA_;
         std::condition_variable_any waitB_;
@@ -194,7 +194,13 @@ namespace Dune
 #endif
         }
 
-        public:
+      protected:
+        // this is singleton that should not be copied
+        ThreadPool( const ThreadPool& ) = delete;
+
+      public:
+        // default constructor (should be protected but the Singleton
+        // construction makes friendship relations difficult to formulate)
         ThreadPool()
         : maxThreads_( std::max(1u, detail::getEnvNumberThreads( std::thread::hardware_concurrency() )) )
         , numThreads_( detail::getEnvNumberThreads(1) )
@@ -234,6 +240,7 @@ namespace Dune
 #endif
         }
 
+      public:
         template<typename F, typename... Args>
         void run(F&& f, Args&&... args)
         {
@@ -289,10 +296,10 @@ namespace Dune
           }
         }
 
-        int numThreads() { return numThreads_; }
-        int maxThreads() { return maxThreads_; }
+        int numThreads() const { return numThreads_; }
+        int maxThreads() const { return maxThreads_; }
 #if 0
-        int threadNumber()
+        int thread()
         {
           // if (singleThreadMode())
           //   return 0;
@@ -301,7 +308,8 @@ namespace Dune
           return t;
         }
 #else
-        int threadNumber()
+        //! return number of current thread
+        int thread() const
         {
 #ifdef _OPENMP
           if constexpr(! useStdThreads )
@@ -315,9 +323,12 @@ namespace Dune
           // return numbers_.at(std::this_thread::get_id());
         }
 #endif
+        [[deprecated("Use method thread instead!")]]
+        int threadNumber() const { return thread(); }
+
         void initSingleThreadMode() { activeThreads_ = 1; }
         void initMultiThreadMode() { activeThreads_ = numThreads_; }
-        bool singleThreadMode() { return activeThreads_ == 1; }
+        bool singleThreadMode() const { return activeThreads_ == 1; }
         void setNumThreads( int use )
         {
           if ( !singleThreadMode() )
@@ -332,7 +343,7 @@ namespace Dune
           }
           numThreads_ = use;
         }
-        bool isMainThread() { return threadNumber() == 0; }
+        bool isMainThread() const { return thread() == 0; }
       };
 
     } // end namespace detail
@@ -342,6 +353,8 @@ namespace Dune
     {
       typedef Dune::Communication< MPIHelper::MPICommunicator >
         Communication;
+
+      typedef detail::ThreadPool ThreadPoolType;
     private:
       static MPIManager &instance ()
       {
@@ -413,6 +426,9 @@ namespace Dune
         return comm().size();
       }
 
+      //! \brief return reference to ThreadPool instance (for caching and efficiency purposes)
+      static const ThreadPoolType& threadPool() { return instance().pool_; }
+
       //! \brief initialize single thread mode (when in multithread mode)
       static inline void initSingleThreadMode() { instance().pool_.initSingleThreadMode(); }
 
@@ -426,7 +442,7 @@ namespace Dune
       static int numThreads() { return instance().pool_.numThreads(); }
 
       //! \brief return thread number
-      static int thread() { return instance().pool_.threadNumber(); }
+      static int thread() { return instance().pool_.thread(); }
 
       //! \brief return true if the current thread is the main thread (i.e. thread 0)
       static bool isMainThread() { return instance().pool_.isMainThread(); }
@@ -451,10 +467,13 @@ namespace Dune
 #if HAVE_PETSC
       bool petscWasInitializedHere_ = false ;
 #endif
-      detail::ThreadPool pool_;
+      ThreadPoolType pool_;
     };
 
     using ThreadManager = MPIManager;
+
+    // this should be removed, not needed anyway
+    //[deprecated]]
     using ThreadPool = MPIManager;
 
   } // namespace Fem
