@@ -101,11 +101,16 @@ namespace Dune
         verbose_ = verb ? 1 : 0;
       }
 
+      // default value is 'absolute' except when using Eisenstat-Walker
+      // in that case the 'default' should be 'residualreduction'
+      int defaultErrorMeasure = 0;
+      virtual void setDefaultErrorMeasure(int def) { defaultErrorMeasure = def; }
       virtual int errorMeasure() const
       {
         const std::string errorTypeTable[] =
         { "absolute", "relative", "residualreduction" };
-        const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
+        const int errorType = parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable,
+                              defaultErrorMeasure );
         return errorType ;
       }
 

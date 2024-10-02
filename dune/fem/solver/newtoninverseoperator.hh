@@ -117,6 +117,7 @@ namespace Dune
           parameter_( baseParameter.parameter() )
       {
         checkDeprecatedParameters();
+        checkForcingErrorMeasure();
       }
 
       template <class Parameter, std::enable_if_t<!std::is_base_of<SolverParam,Parameter>::value && !std::is_same<Parameter,ParameterReader>::value,int> i=0>
@@ -126,16 +127,28 @@ namespace Dune
           parameter_( solverParameter.parameter() )
       {
         checkDeprecatedParameters();
+        checkForcingErrorMeasure();
       }
 
       template <class ParamReader, std::enable_if_t<!std::is_same<ParamReader,SolverParam>::value && std::is_same<ParamReader,ParameterReader>::value,int> i=0>
       NewtonParameter( const ParamReader &parameter, const std::string keyPrefix = "fem.solver.nonlinear." )
           // pass keyprefix for linear solvers, which is the same as keyprefix with nonlinear replaced by linear
         : baseParam_( std::make_shared<SolverParam>( replaceNonLinearWithLinear(keyPrefix), parameter) ),
-          keyPrefix_( keyPrefix),
+          keyPrefix_( keyPrefix ),
           parameter_( parameter )
       {
         checkDeprecatedParameters();
+        checkForcingErrorMeasure();
+      }
+
+      void checkForcingErrorMeasure()
+      {
+        if (forcing() == Forcing::eisenstatwalker)
+        {
+          baseParam_->setDefaultErrorMeasure(2);
+          if (baseParam_->errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction)
+            DUNE_THROW( InvalidStateException, "Parameter `linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
+        }
       }
 
       const ParameterReader &parameter () const { return parameter_; }
@@ -429,11 +442,6 @@ namespace Dune
           eisenstatWalker_ ( epsilon ),
           timing_(3, 0.0)
       {
-        if (forcing_ == ParameterType::Forcing::eisenstatwalker) {
-          if (parameter_.linear().errorMeasure() != LinearSolver::ToleranceCriteria::residualReduction) {
-            DUNE_THROW( InvalidStateException, "Parameter `nonlinear.linear.errormeasure` selecting the tolerance criteria in the linear solver must be `residualreduction` when using Eisenstat-Walker." );
-          }
-        }
       }
 
 
@@ -692,7 +700,7 @@ namespace Dune
 
         dw.clear();
         jInv_( residual, dw );  // dw = DS[w]^{-1}(S[w]-u)
-                                // dw=w-g-u on bnd
+                                // dw = w-g-u on bnd
         if (jInv_.iterations() < 0) // iterations are negative if solver didn't converge
         {
           linearIterations_ = jInv_.iterations();
@@ -706,8 +714,10 @@ namespace Dune
         if( nonlinear )
         {
           // compute new residual
-          (*op_)( w, residual );
-          residual -= u;
+          (*op_)( w, residual ); // res = S[w]
+                                 // res = w-g = g+u-g = u
+          residual -= u;         // res = S[w] - u
+                                 // res = 0
 
           // line search if enabled
           int ls = lineSearch(w,dw,u,residual);
