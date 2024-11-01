@@ -79,27 +79,8 @@ namespace Dune
       // makePyLocalGridFunction
       // -----------------------
 
-      template< class GridPart, int dimRange >
-      inline static auto makePyLocalGridFunction ( const GridPart &gridPart, std::string name, int order, pybind11::function evaluate, std::integral_constant< int, dimRange > )
-      {
-        typedef typename GridPart::template Codim< 0 >::EntityType Entity;
-        typedef typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate Coordinate;
-        return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Entity &entity, const Coordinate &x ) {
-            pybind11::gil_scoped_acquire acq;
-            pybind11::object v( evaluate( entity, x ) );
-            try { return v.template cast< FieldVector< double, dimRange > >(); }
-            catch(std::exception& e) { std::cout << e.what() << " in LocalGridFunction::evaluate" << std::endl; throw pybind11::cast_error("error converting return value in localGridFunction"); }
-            return FieldVector<double,dimRange>(0);
-          }, order );
-      }
-
-
-
-      template< class GridPart, int dimRange >
-      auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > );
-
-
-
+      template< class GridPart, int dimRange, class GridFunction >
+      inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name );
 
       // registerGridFunctionName
       // ------------------------
@@ -122,8 +103,6 @@ namespace Dune
       {
         registerGridFunctionName( cls, PriorityTag< 42 >() );
       }
-
-
 
       // registerGridFunction
       // --------------------
@@ -165,16 +144,26 @@ namespace Dune
           }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >(),
              pybind11::return_value_policy::take_ownership );
 
-        typedef decltype( makePyLocalGridFunction( std::declval< GridPartType >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, 1 >() ) ) ScalarLocalGridFunction;
+        typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
+        typedef decltype( simpleGridFunction(std::declval< std::string >(),
+                          std::declval< const GridPartType& >(),
+                          std::declval< std::function<
+                            double(const Entity &entity, const LocalCoordinate &x)
+                          > >(),
+                          std::declval< int >()
+                        ) ) ScalarLocalGridFunction;
         if (!pybind11::already_registered<ScalarLocalGridFunction>())
-          registerPyLocalGridFunction<GridPartType>( cls, "LocalGridFunction", std::integral_constant< int, 1 >() );
+          registerPyLocalGridFunction<GridPartType,1,ScalarLocalGridFunction>( cls, "LocalGridFunction1");
 
-        cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c ) {
+        cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c )
+        -> ScalarLocalGridFunction {
             const auto pself = &self; // make sure reference is correctly capture in lambda and doesn't go out of scope
-            return makePyLocalGridFunction( self.gridPart(), self.name() + "_" + std::to_string(c), self.space().order(),
-                pybind11::cpp_function( [ pself, c ] ( const Entity &e, const typename Entity::Geometry::LocalCoordinate &x ) {
-                    return Fem::ConstLocalFunction<GridFunction>(e,*pself).evaluate(x)[c];
-                  } ), std::integral_constant< int, 1 >() );
+            std::function< double(const Entity &entity, const LocalCoordinate &x) >
+                  caller = [ pself,c ] ( const Entity &entity, const LocalCoordinate &x ) {
+                      return Fem::ConstLocalFunction<GridFunction>(entity,*pself).evaluate(x)[c];
+                  };
+            return simpleGridFunction( self.name()+"_"+std::to_string(c), self.gridPart(),
+                      caller, self.space().order() );
           }, pybind11::keep_alive< 0, 1 >() );
 
         cls.def( "integrate", [] ( pybind11::handle self )
@@ -215,7 +204,6 @@ namespace Dune
       }
 
     } // namespace detail
-
 
 
     // registerGridFunction
@@ -291,8 +279,6 @@ namespace Dune
           }, order );
       }
 
-
-
       // registerPyGlobalGridFunction
       // ----------------------------
 
@@ -316,8 +302,6 @@ namespace Dune
         return gfClass.first;
       };
 
-
-
       // pyGlobalGridFunction
       // --------------------
 
@@ -335,14 +319,12 @@ namespace Dune
       // registerPyLocalGridFunction
       // ---------------------------
 
-      template< class GridPart, int dimRange >
-      inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
+      template< class GridPart, int dimRange, class GridFunction >
+      inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name )
       {
-        typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
-        const std::string clsName = name + std::to_string( dimRange );
         std::string adapt = Python::GenerateTypeName("Dune::Fem::GridPartAdapter",
             Dune::MetaType<typename GridPart::GridViewType>()).name();
-        auto gfClass = Python::insertClass<GridFunction>(scope,name+std::to_string(dimRange),
+        auto gfClass = Python::insertClass<GridFunction>(scope,name,
             Python::GenerateTypeName("Dune::FemPy::VirtualizedGridFunction",
               adapt,
               "Dune::FieldVector<double,"+std::to_string(dimRange)+">"),
@@ -356,8 +338,6 @@ namespace Dune
         }
         return gfClass.first;
       };
-
-
 
       // pyLocalGridFunction
       // --------------------
