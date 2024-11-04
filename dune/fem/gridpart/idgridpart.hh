@@ -165,6 +165,8 @@ namespace Dune
         indexSet_( hostGridPart_.indexSet() )
       {}
 
+      IdGridPart& operator= ( const IdGridPart& other ) = default;
+
       explicit IdGridPart ( const HostGridPartType &hostGridPart )
       : BaseType( const_cast< GridType& > ( hostGridPart.grid() ) ),
         hostGridPart_( hostGridPart ),
