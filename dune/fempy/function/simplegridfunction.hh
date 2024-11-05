@@ -35,7 +35,7 @@ namespace Dune
     public:
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
-      typedef std::decay_t< std::result_of_t< LocalEvaluator( EntityType, LocalCoordinateType ) > > Value_;
+      typedef std::decay_t< std::invoke_result_t< LocalEvaluator, EntityType, LocalCoordinateType > > Value_;
       typedef std::conditional_t<std::is_same_v<Value_,double>, Dune::FieldVector<double,1>, Value_ > Value;
 
       typedef Fem::FunctionSpace< typename GridPart::ctype, typename FieldTraits< Value >::field_type, GridPart::dimensionworld, Value::dimension > FunctionSpaceType;
