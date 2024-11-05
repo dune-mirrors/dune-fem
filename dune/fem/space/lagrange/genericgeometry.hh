@@ -320,6 +320,8 @@ namespace Dune
       LocalCoordinate ()
       {}
 
+      LocalCoordinate (const LocalCoordinate& ) = default;
+
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
       : myCoordinate_( x[ index ] ),
@@ -440,6 +442,8 @@ namespace Dune
 
       LocalCoordinate ()
       {}
+
+      LocalCoordinate( const LocalCoordinate& ) = default;
 
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
