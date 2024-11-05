@@ -25,12 +25,12 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
 # test minimal compiler requirement, which is gcc 10  
-ubuntu-20.04-gcc-10-20:
-  image: registry.dune-project.org/docker/ci/ubuntu:20.04
+ubuntu-24.04-gcc-14-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:24.04
   script:
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-10-20
+    DUNECI_TOOLCHAIN: gcc-14-20
     # DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
     # DUNE_CMAKE_FLAGS:  "-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_GRID_GRIDTYPE_SELECTOR=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=FALSE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
@@ -69,25 +69,25 @@ ubuntu:20.04-clang-10-20:
     DUNECI_TOOLCHAIN: clang-10-20
   tags: [duneci]
 
-debian:11--gcc-10-20:headercheck:
-  image: registry.dune-project.org/docker/ci/debian:11
+ubuntu:24.04--gcc-14-20:headercheck:
+  image: registry.dune-project.org/docker/ci/ubuntu:24.04
   script:
     - DUNECI_CMAKE_FLAGS="-DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
     - make headercheck
   variables:
-    DUNECI_TOOLCHAIN: gcc-10-20
+    DUNECI_TOOLCHAIN: gcc-14-20
   tags: [duneci]
 
 # test minimal compiler requirement, which is gcc 10
-torture-20.04-gcc-10-20:
-  image: registry.dune-project.org/docker/ci/ubuntu:20.04
+torture-24.04-gcc-14-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:24.04
   when: manual
   allow_failure: true
   script:
     - DUNECI_CMAKE_FLAGS+="-DFEM_TORTURE_TESTS=ON"
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-10-20
+    DUNECI_TOOLCHAIN: gcc-14-20
   tags: [duneci]
