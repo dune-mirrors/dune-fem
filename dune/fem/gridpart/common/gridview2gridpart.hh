@@ -137,6 +137,8 @@ namespace Dune
         assert( storeCopy );
       }
 
+      GridView2GridPart& operator= (const GridView2GridPart& other ) = default;
+
       GridView2GridPart ( const ThisType &rhs )
         : gridView_( rhs.gridView_ ),
           indexSet_( &gridView().indexSet() )

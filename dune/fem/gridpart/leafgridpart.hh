@@ -38,6 +38,8 @@ namespace Dune
           grid_( other.grid_ )
       {}
 
+      LeafGridPart& operator= ( const LeafGridPart& ) = default;
+
       /** \} */
 
       /** \name Public member methods
