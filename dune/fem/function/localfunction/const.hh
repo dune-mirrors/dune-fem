@@ -361,6 +361,7 @@ namespace Dune
           using GF::LocalFunctionType::hessian;
           using GF::LocalFunctionType::init;
           using GF::LocalFunctionType::entity;
+          using GF::LocalFunctionType::geometry;
 
           //! evaluate local function
           template< class Point >

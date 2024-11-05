@@ -40,12 +40,12 @@ namespace Dune
 
       explicit OrthonormalLocalRieszProjection ( const BasisFunctionSetType &basisFunctionSet )
         : basisFunctionSet_( std::forward< BasisFunctionSetType >( basisFunctionSet ) ),
-          factor_( ratio( basisFunctionSet.entity().geometry() ) )
+          factor_( ratio( basisFunctionSet.geometry() ) )
       {}
 
       explicit OrthonormalLocalRieszProjection ( BasisFunctionSetType &&basisFunctionSet )
         : basisFunctionSet_( std::forward< BasisFunctionSetType >( basisFunctionSet ) ),
-          factor_( ratio( basisFunctionSet.entity().geometry() ) )
+          factor_( ratio( basisFunctionSet.geometry() ) )
       {}
 
       /** \} */

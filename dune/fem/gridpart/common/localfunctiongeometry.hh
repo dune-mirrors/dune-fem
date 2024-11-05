@@ -53,7 +53,7 @@ namespace Dune
 
       JacobianTransposed jacobianTransposed ( const LocalCoordinate &local ) const
       {
-        const auto gradFT = localFunction().entity().geometry().jacobianTransposed( local );
+        const auto gradFT = localFunction().geometry().jacobianTransposed( local );
 
         typename LocalFunction::FunctionSpaceType::JacobianRangeType gradPhi;
 

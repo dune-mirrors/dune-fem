@@ -31,6 +31,115 @@ namespace Dune
 
   namespace Fem
   {
+    template< class Entity, class ShapeFunctionSet >
+    class BasisFunctionSetStorage
+    {
+      typedef BasisFunctionSetStorage< Entity, ShapeFunctionSet > ThisType;
+
+    public:
+      //! \brief entity type
+      typedef Entity EntityType;
+
+      //! \brief type of geometry
+      typedef typename EntityType::Geometry Geometry ;
+
+      //! \brief type of coordinate field
+      typedef typename Geometry::ctype ctype;
+
+      //! \brief shape function set type
+      typedef ShapeFunctionSet  ShapeFunctionSetType;
+
+      // if underlying shape function set was created with storage CodegenStorage
+      // then this value should be true (see selectcaching.hh)
+      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ShapeFunctionSetType >::value;
+
+      //! \brief type of reference element
+      typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
+
+      static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType >::value;
+
+      //! \brief constructor
+      BasisFunctionSetStorage () {}
+
+      //! \brief constructor
+      explicit BasisFunctionSetStorage( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
+        : entity_( entity ),
+          shapeFunctionSet_( shapeFunctionSet )
+      {
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        geometry_.emplace( entity.geometry() );
+      }
+
+      BasisFunctionSetStorage ( const BasisFunctionSetStorage &other )
+        : entity_( other.entity_ ),
+          shapeFunctionSet_( other.shapeFunctionSet_ )
+      {
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        if( other.geometry_ )
+          geometry_.emplace( other.geometry_.value() );
+      }
+
+      BasisFunctionSetStorage &operator= ( const BasisFunctionSetStorage &other )
+      {
+        entity_ = other.entity_;
+        shapeFunctionSet_ = other.shapeFunctionSet_;
+
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        if( other.geometry_ )
+          geometry_.emplace( other.geometry_.value() );
+        return *this;
+      }
+
+      //! \brief return entity
+      const Entity &entity () const
+      {
+        assert( valid() );
+        return entity_.value();
+      }
+
+      //! \brief return true if entity pointer is set
+      bool valid () const { return bool(entity_); }
+
+      //! \brief return geometry
+      const Geometry& geometry () const { return geometry_.value(); }
+
+      //! \brief return geometry type
+      Dune::GeometryType type () const { return entity().type(); }
+
+      // Non-interface methods
+      // ---------------------
+
+      //! \brief return shape function set
+      const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
+
+      // Basis Function Set Interface Methods
+      // ------------------------------------
+
+      //! \brief return order of basis function set
+      int order () const { return shapeFunctionSet().order(); }
+
+      //! \brief return size of basis function set
+      std::size_t size () const { return shapeFunctionSet().size(); }
+
+      //! \brief return reference element
+      auto referenceElement () const
+        -> decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
+      {
+        return Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( type() );
+      }
+
+    protected:
+      std::optional< EntityType > entity_;
+      ShapeFunctionSetType shapeFunctionSet_;
+      std::optional< Geometry > geometry_;
+    };
+
 
     // DefaultBasisFunctionSet
     // -----------------------
@@ -50,18 +159,27 @@ namespace Dune
      */
     template< class Entity, class ShapeFunctionSet >
     class DefaultBasisFunctionSet
+      : public BasisFunctionSetStorage< Entity, ShapeFunctionSet >
     {
+      typedef BasisFunctionSetStorage< Entity, ShapeFunctionSet > BaseType;
       typedef DefaultBasisFunctionSet< Entity, ShapeFunctionSet > ThisType;
 
     public:
       //! \brief entity type
-      typedef Entity EntityType;
+      typedef typename BaseType::EntityType  EntityType;
+
+      //! \brief geometry
+      typedef typename BaseType::Geometry    Geometry ;
+
+      //! \brief type of coordinate field
+      typedef typename Geometry::ctype       ctype;
+
       //! \brief shape function set type
-      typedef ShapeFunctionSet ShapeFunctionSetType;
+      typedef typename BaseType::ShapeFunctionSetType  ShapeFunctionSetType;
 
       // if underlying shape function set was created with storage CodegenStorage
       // then this value should be true (see selectcaching.hh)
-      static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ShapeFunctionSetType >::value;
+      using BaseType :: codegenShapeFunctionSet;
 
     protected:
       typedef typename ShapeFunctionSetType::FunctionSpaceType   LocalFunctionSpaceType;
@@ -70,9 +188,6 @@ namespace Dune
 
       typedef typename LocalFunctionSpaceType::RangeFieldType RangeFieldType;
 
-      typedef typename EntityType::Geometry Geometry ;
-
-      typedef typename Geometry::ctype ctype;
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
@@ -102,54 +217,20 @@ namespace Dune
 
       //! \brief constructor
       explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-        : entity_( entity ),
-          shapeFunctionSet_( shapeFunctionSet )
+        : BaseType( entity, shapeFunctionSet )
       {
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        geometry_.emplace( entity.geometry() );
       }
 
-      DefaultBasisFunctionSet ( const DefaultBasisFunctionSet &other )
-        : entity_( other.entity_ ),
-          shapeFunctionSet_( other.shapeFunctionSet_ )
-      {
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        if( other.geometry_ )
-          geometry_.emplace( other.geometry_.value() );
-      }
+      DefaultBasisFunctionSet ( const DefaultBasisFunctionSet &other ) = default;
+      DefaultBasisFunctionSet &operator= ( const DefaultBasisFunctionSet &other ) = default;
 
-      DefaultBasisFunctionSet &operator= ( const DefaultBasisFunctionSet &other )
-      {
-        entity_ = other.entity_;
-        shapeFunctionSet_ = other.shapeFunctionSet_;
-
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        if( other.geometry_ )
-          geometry_.emplace( other.geometry_.value() );
-        return *this;
-      }
-
-      // Basis Function Set Interface Methods
-      // ------------------------------------
-
-      //! \brief return order of basis function set
-      int order () const { return shapeFunctionSet().order(); }
-
-      //! \brief return size of basis function set
-      std::size_t size () const { return shapeFunctionSet().size(); }
-
-      //! \brief return reference element
-      auto referenceElement () const
-        -> decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
-      {
-        return Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( type() );
-      }
+      using BaseType :: entity;
+      using BaseType :: geometry;
+      using BaseType :: type;
+      using BaseType :: shapeFunctionSet;
+      using BaseType :: order;
+      using BaseType :: size;
+      using BaseType :: referenceElement;
 
       /** \brief evaluate all basis function and multiply with given
        *         values and add to dofs
@@ -382,26 +463,6 @@ namespace Dune
         AssignFunctor< HessianRangeArray, Transformation > f( hessians, transformation );
         shapeFunctionSet().hessianEach( x, f );
       }
-
-      //! \brief return entity
-      const Entity &entity () const
-      {
-        assert( valid() );
-        return entity_.value();
-      }
-
-      //! \brief return true if entity pointer is set
-      bool valid () const { return bool(entity_); }
-
-      //! \brief return geometry type
-      Dune::GeometryType type () const { return entity().type(); }
-
-      // Non-interface methods
-      // ---------------------
-
-      //! \brief return shape function set
-      const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
-
     protected:
       //! \brief evaluate all basis function and multiply with given values and add to dofs
       template< class QuadratureType, class RangeArray, class DofVector >
@@ -515,13 +576,6 @@ namespace Dune
       {
         return shapeFunctionSet().scalarShapeFunctionSet().impl().jacobianCache( quad );
       }
-
-    protected:
-      Geometry geometry () const { return geometry_.value(); }
-
-      std::optional< EntityType > entity_;
-      ShapeFunctionSetType shapeFunctionSet_;
-      std::optional< Geometry > geometry_;
     };
 
   } // namespace Fem

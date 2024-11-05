@@ -102,7 +102,7 @@ namespace Dune
         assert( matrix.N() == basisFunctionSet.size() );
         assert( matrix.M() == basisFunctionSet.size() );
 
-        const auto &geometry = basisFunctionSet.entity().geometry();
+        const auto &geometry = basisFunctionSet.geometry();
         const Quadrature quadrature( geometry.type(), 2*basisFunctionSet.order() );
         const std::size_t nop = quadrature.nop();
         for( std::size_t qp = 0; qp < nop; ++qp )

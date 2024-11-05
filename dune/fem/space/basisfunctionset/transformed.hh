@@ -11,6 +11,7 @@
 
 // dune-fem includes
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -41,17 +42,23 @@ namespace Dune
      */
     template< class Entity, class ShapeFunctionSet, class Transformation >
     class TransformedBasisFunctionSet
+      : public BasisFunctionSetStorage< Entity, ShapeFunctionSet >
     {
+      typedef BasisFunctionSetStorage< Entity, ShapeFunctionSet > BaseType;
       typedef TransformedBasisFunctionSet< Entity, ShapeFunctionSet, Transformation > ThisType;
 
     public:
       //! \brief entity type
-      typedef Entity EntityType;
+      typedef typename BaseType :: EntityType  EntityType;
+
+      //! \brief geometry
+      typedef typename BaseType :: Geometry    Geometry;
+
       //! \brief shape function set type
-      typedef ShapeFunctionSet ShapeFunctionSetType;
+      typedef typename BaseType :: ShapeFunctionSetType  ShapeFunctionSetType;
 
     protected:
-      typedef typename EntityType::Geometry GeometryType;
+      typedef Geometry GeometryType;
       typedef typename GeometryType::ctype ctype;
       typedef typename GeometryType::JacobianTransposed JacobianTransposed;
 
@@ -71,35 +78,27 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
       //! \brief type of reference element
-      typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
+      typedef typename BaseType :: ReferenceElementType  ReferenceElementType;
 
       //! \brief constructor
-      TransformedBasisFunctionSet ()
-        : entity_( nullptr )
-      {}
+      TransformedBasisFunctionSet () {}
 
       //! \brief constructor
       explicit TransformedBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-        : entity_( &entity ),
-          shapeFunctionSet_( shapeFunctionSet )
-      {}
-
-
-      // Basis Function Set Interface Methods
-      // ------------------------------------
-
-      //! \brief return order of basis function set
-      int order () const { return shapeFunctionSet().order(); }
-
-      //! \brief return size of basis function set
-      std::size_t size () const { return shapeFunctionSet().size(); }
-
-      //! \brief return reference element
-      auto referenceElement () const
-        -> decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
+        : BaseType( entity, shapeFunctionSet )
       {
-        return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
       }
+
+      TransformedBasisFunctionSet ( const TransformedBasisFunctionSet &other ) = default;
+      TransformedBasisFunctionSet &operator= ( const TransformedBasisFunctionSet &other ) = default;
+
+      using BaseType :: entity;
+      using BaseType :: geometry;
+      using BaseType :: type;
+      using BaseType :: shapeFunctionSet;
+      using BaseType :: order;
+      using BaseType :: size;
+      using BaseType :: referenceElement;
 
       /** \brief evaluate all basis function and multiply with given
        *         values and add to dofs
@@ -149,7 +148,7 @@ namespace Dune
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
         typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
-        const GeometryType &geo = geometry();
+        const Geometry &geo = geometry();
         const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
         JacobianRangeType tmpJacobianFactor( RangeFieldType( 0 ) );
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
@@ -229,7 +228,7 @@ namespace Dune
         JacobianRangeType localJacobian( RangeFieldType( 0 ) );
         AxpyFunctor< DofVector, JacobianRangeType > f( dofs, localJacobian );
         shapeFunctionSet().jacobianEach( x, f );
-        const GeometryType &geo = geometry();
+        const Geometry &geo = geometry();
         JacobianTransformation< GeometryType >( geo, coordinate( x ) )( localJacobian, jacobian );
         jacobian = transformation( coordinate( x ) ).apply( jacobian );
       }
@@ -239,7 +238,7 @@ namespace Dune
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
         assert( jacobians.size() >= size() );
-        const GeometryType &geo = geometry();
+        const Geometry &geo = geometry();
         typedef JacobianTransformation< GeometryType > JacobianTransformation;
         JacobianTransformation jacobianTransformation( geo, coordinate( x ) );
         AssignFunctor< JacobianRangeArray, JacobianTransformation > f( jacobians, jacobianTransformation );
@@ -266,37 +265,13 @@ namespace Dune
         DUNE_THROW( NotImplemented, "hessianAll for TransformedBasisFunctionSet not implemented." );
       }
 
-      //! \brief return entity
-      const Entity &entity () const
-      {
-        assert( entity_ );
-        return *entity_;
-      }
-
-      //! \brief return true if entity pointer is set
-      bool valid () const { return bool(entity_); }
-
-      //! \brief return geometry type
-      Dune::GeometryType type () const { return entity().type(); }
-
-
       // Non-interface methods
       // ---------------------
-
-      //! \brief return shape function set
-      const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
       Transformation transformation ( const DomainType& x ) const
       {
         return Transformation( geometry(), x );
       }
-
-    protected:
-      GeometryType geometry () const { return entity().geometry(); }
-
-    private:
-      const EntityType *entity_;
-      ShapeFunctionSetType shapeFunctionSet_;
     };
 
   } // namespace Fem

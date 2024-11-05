@@ -233,6 +233,7 @@ namespace Dune
 
       //! entity type
       typedef typename Traits::EntityType EntityType;
+      typedef typename EntityType::Geometry Geometry;
       typedef typename Traits::IntersectionType IntersectionType;
       //! local coordinate type
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
@@ -326,6 +327,11 @@ namespace Dune
       {
         assert( entity_ );
         return *entity_;
+      }
+
+      Geometry geometry () const
+      {
+        return entity().geometry();
       }
 
     protected:

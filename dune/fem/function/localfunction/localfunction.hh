@@ -94,6 +94,9 @@ namespace Dune
       //! type of the entity, the local function lives on is given by the space
       typedef typename BasisFunctionSetType::EntityType EntityType;
 
+      //! type of the geometry, the local function lives on is given by the space
+      typedef typename EntityType::Geometry  Geometry;
+
       //! type of functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
@@ -111,7 +114,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! type of local coordinates
-      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+      typedef typename Geometry::LocalCoordinate LocalCoordinateType;
 
       //! dimension of the domain
       static const int dimDomain = FunctionSpaceType::dimDomain;
@@ -300,6 +303,12 @@ namespace Dune
        *  \returns reference to the entity
        */
       const EntityType &entity () const { return basisFunctionSet().entity(); }
+
+      /** \brief obtain the geometry, this local function lives on
+       *
+       *  \returns reference to the geometry
+       */
+      const Geometry &geometry () const { return basisFunctionSet().geometry(); }
 
 
       /** \brief evaluate the local function

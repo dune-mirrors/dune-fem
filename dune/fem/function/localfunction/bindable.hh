@@ -82,7 +82,7 @@ namespace Dune
       template <class Point>
       DomainType global(const Point &x) const
       {
-        return geometry_.value().global( Dune::Fem::coordinate(x) );
+        return geometry().global( Dune::Fem::coordinate(x) );
       }
 
       // this method needs to be overloaded in the derived class
