@@ -417,6 +417,7 @@ namespace Dune
           typedef std::decay_t<GF> GridFunctionDecayType;
           typedef typename GridFunctionDecayType::GridPartType GridPartType;
           typedef typename GridFunctionDecayType::EntityType EntityType;
+          typedef typename EntityType::Geometry  Geometry;
           typedef typename GridFunctionDecayType::RangeFieldType RangeFieldType;
           typedef typename GridFunctionDecayType::DomainType DomainType;
           typedef typename GridFunctionDecayType::RangeType RangeType;
@@ -543,6 +544,11 @@ namespace Dune
           const EntityType& entity() const
           {
             return gridFunction_.entity();
+          }
+
+          const Geometry& geometry () const
+          {
+            return gridFunction_.geometry();
           }
 
           const GridFunctionDecayType &gridFunction () const { return gridFunction_; }

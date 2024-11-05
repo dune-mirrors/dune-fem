@@ -13,6 +13,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
+#include <dune/fem/storage/entitygeometry.hh>
 #include <dune/fem/space/shapefunctionset/caching.hh>
 
 // dune-fem includes
@@ -32,19 +33,16 @@ namespace Dune
   namespace Fem
   {
     template< class Entity, class ShapeFunctionSet >
-    class BasisFunctionSetStorage
+    class BasisFunctionSetStorage : public EntityGeometryStorage< Entity >
     {
+      typedef EntityGeometryStorage< Entity >  BaseType;
       typedef BasisFunctionSetStorage< Entity, ShapeFunctionSet > ThisType;
 
     public:
       //! \brief entity type
-      typedef Entity EntityType;
-
+      typedef typename BaseType :: EntityType  EntityType;
       //! \brief type of geometry
-      typedef typename EntityType::Geometry Geometry ;
-
-      //! \brief type of coordinate field
-      typedef typename Geometry::ctype ctype;
+      typedef typename BaseType :: Geometry    Geometry;
 
       //! \brief shape function set type
       typedef ShapeFunctionSet  ShapeFunctionSetType;
@@ -53,9 +51,6 @@ namespace Dune
       // then this value should be true (see selectcaching.hh)
       static constexpr bool codegenShapeFunctionSet = detail::IsCodegenShapeFunctionSet< ShapeFunctionSetType >::value;
 
-      //! \brief type of reference element
-      typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
-
       static const int pointSetId = detail::SelectPointSetId< ShapeFunctionSetType >::value;
 
       //! \brief constructor
@@ -63,54 +58,29 @@ namespace Dune
 
       //! \brief constructor
       explicit BasisFunctionSetStorage( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-        : entity_( entity ),
+        : BaseType( entity ),
           shapeFunctionSet_( shapeFunctionSet )
       {
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        geometry_.emplace( entity.geometry() );
       }
 
       BasisFunctionSetStorage ( const BasisFunctionSetStorage &other )
-        : entity_( other.entity_ ),
+        : BaseType( other ),
           shapeFunctionSet_( other.shapeFunctionSet_ )
       {
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        if( other.geometry_ )
-          geometry_.emplace( other.geometry_.value() );
       }
 
       BasisFunctionSetStorage &operator= ( const BasisFunctionSetStorage &other )
       {
-        entity_ = other.entity_;
+        BaseType::operator=(other);
         shapeFunctionSet_ = other.shapeFunctionSet_;
-
-        // Note that this should be geometry_ = entity.geometry()
-        // But Dune::Geometries are not assignable ...
-        geometry_.reset();
-        if( other.geometry_ )
-          geometry_.emplace( other.geometry_.value() );
         return *this;
       }
 
-      //! \brief return entity
-      const Entity &entity () const
-      {
-        assert( valid() );
-        return entity_.value();
-      }
-
-      //! \brief return true if entity pointer is set
-      bool valid () const { return bool(entity_); }
-
-      //! \brief return geometry
-      const Geometry& geometry () const { return geometry_.value(); }
-
-      //! \brief return geometry type
-      Dune::GeometryType type () const { return entity().type(); }
+      using BaseType :: entity;
+      using BaseType :: valid;
+      using BaseType :: geometry;
+      using BaseType :: type;
+      using BaseType :: referenceElement;
 
       // Non-interface methods
       // ---------------------
@@ -127,17 +97,8 @@ namespace Dune
       //! \brief return size of basis function set
       std::size_t size () const { return shapeFunctionSet().size(); }
 
-      //! \brief return reference element
-      auto referenceElement () const
-        -> decltype( Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
-      {
-        return Dune::ReferenceElements< ctype, Geometry::coorddimension >::general( type() );
-      }
-
     protected:
-      std::optional< EntityType > entity_;
       ShapeFunctionSetType shapeFunctionSet_;
-      std::optional< Geometry > geometry_;
     };
 
 
@@ -382,8 +343,7 @@ namespace Dune
           if( baseEval )
           {
             // call appropriate axpyJacobian method
-            const Geometry &geo = geometry();
-            baseEval->evaluateJacobians( quad, geo, dofs, jacobians );
+            baseEval->evaluateJacobians( quad, geometry(), dofs, jacobians );
             return ;
           }
         }
@@ -407,8 +367,7 @@ namespace Dune
         shapeFunctionSet().jacobianEach( x, f );
 
         typedef JacobianTransformation< Geometry > Transformation;
-        const Geometry &geo = geometry();
-        Transformation transformation( geo, coordinate( x ) );
+        Transformation transformation( geometry(), coordinate( x ) );
         transformation( localJacobian, jacobian );
       }
 
@@ -418,9 +377,8 @@ namespace Dune
       {
         assert( jacobians.size() >= size() );
         typedef JacobianTransformation< Geometry > Transformation;
-        const Geometry &geo = geometry();
 
-        Transformation transformation( geo, coordinate( x ) );
+        Transformation transformation( geometry(), coordinate( x ) );
         AssignFunctor< JacobianRangeArray, Transformation > f( jacobians, transformation );
         shapeFunctionSet().jacobianEach( x, f );
       }
@@ -447,8 +405,7 @@ namespace Dune
         shapeFunctionSet().hessianEach( x, f );
 
         typedef HessianTransformation< Geometry > Transformation;
-        const Geometry &geo = geometry();
-        Transformation transformation( geo, coordinate( x ) );
+        Transformation transformation( geometry(), coordinate( x ) );
         transformation( localHessian, hessian );
       }
 
@@ -458,8 +415,7 @@ namespace Dune
       {
         assert( hessians.size() >= size() );
         typedef HessianTransformation< Geometry > Transformation;
-        const Geometry &geo = geometry();
-        Transformation transformation( geo, coordinate( x ) );
+        Transformation transformation( geometry(), coordinate( x ) );
         AssignFunctor< HessianRangeArray, Transformation > f( hessians, transformation );
         shapeFunctionSet().hessianEach( x, f );
       }
@@ -515,8 +471,7 @@ namespace Dune
           if( baseEval )
           {
             // call appropriate axpyRanges method
-            const Geometry &geo = geometry();
-            baseEval->axpyJacobians( quad, geo, jacobianFactors, dofs );
+            baseEval->axpyJacobians( quad, geometry(), jacobianFactors, dofs );
             return ;
           }
         }

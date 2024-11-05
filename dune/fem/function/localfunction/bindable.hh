@@ -1,7 +1,8 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 
-#include <optional>
+#include <dune/fem/storage/entitygeometry.hh>
+
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/common/coordinate.hh>
@@ -15,10 +16,15 @@ namespace Dune
     struct BindableFunction : public HasLocalFunction {};
 
     template <class GridPart, class Range>
-    struct BindableGridFunction : public BindableFunction
+    struct BindableGridFunction
+      : public EntityGeometryStorage< typename GridPart::template Codim<0>::EntityType >,
+        public BindableFunction
     {
       typedef GridPart GridPartType;
       typedef typename GridPart::template Codim<0>::EntityType   EntityType;
+
+      typedef EntityGeometryStorage< EntityType > BaseType;
+
       typedef typename GridPart::IntersectionType                IntersectionType;
       typedef typename EntityType::Geometry                      Geometry;
       typedef typename Geometry::GlobalCoordinate                DomainType;
@@ -28,54 +34,20 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType      JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType       HessianRangeType;
       BindableGridFunction(const GridPart &gridPart)
-      : gridPart_(gridPart)
-#ifdef TESTTHREADING
-      , thread_(-1)
-#endif
+      : BaseType(),
+        gridPart_(gridPart)
       {}
 
-      void bind(const EntityType &entity)
-      {
-#ifdef TESTTHREADING
-        if (thread_==-1) thread_ = MPIManager::thread();
-        if (thread_ != MPIManager::thread())
-        {
-          std::cout << "wrong thread number\n";
-          assert(0);
-          std::abort();
-        }
-        if (entity_ || geometry_)
-        {
-          std::cout << "BindableGF: bind called on object before unbind was called\n";
-          std::abort();
-        }
-        assert(!entity_ && !geometry_); // this will fail with dune-fem-dg
-#endif
-        unbind();
-
-        entity_.emplace( entity );
-        geometry_.emplace( this->entity().geometry() );
-      }
-
-      void unbind()
-      {
-#ifdef TESTTHREADING
-        if (thread_ != MPIManager::thread())
-        {
-          std::cout << "wrong thread number\n";
-          assert(0);
-          std::abort();
-        }
-#endif
-        geometry_.reset();
-        entity_.reset();
-      }
+      using BaseType :: bind;
+      using BaseType :: unbind;
+      using BaseType :: entity;
+      using BaseType :: geometry;
 
       void bind(const IntersectionType &intersection, IntersectionSide side)
       {
         // store local copy to avoid problems with casting to temporary types
         const EntityType entity = side==IntersectionSide::in? intersection.inside(): intersection.outside();
-        bind( entity );
+        BaseType::bind( entity );
       }
 
       bool continuous() const { return true; }
@@ -101,16 +73,9 @@ namespace Dune
       }
 
       const GridPart& gridPart() const { return gridPart_; }
-      const EntityType &entity() const { return entity_.value(); }
-      const Geometry& geometry() const { return geometry_.value(); }
 
     protected:
-      std::optional< EntityType > entity_;
-      std::optional< Geometry > geometry_;
       const GridPart &gridPart_;
-#ifdef TESTTHREADING
-      int thread_;
-#endif
     };
 
     template <class GridPart, class Range>

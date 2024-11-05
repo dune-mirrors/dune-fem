@@ -15,6 +15,7 @@
 #include <dune/python/grid/function.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fem/common/intersectionside.hh>
 
@@ -29,7 +30,9 @@ namespace Dune
 
     template< class GridPart, class LocalEvaluator >
     class SimpleLocalFunction
+      : public Dune::Fem::EntityGeometryStorage< typename GridPart::template Codim< 0 >::EntityType >
     {
+      typedef Dune::Fem::EntityGeometryStorage< typename GridPart::template Codim< 0 >::EntityType > Base;
       typedef SimpleLocalFunction< GridPart, LocalEvaluator > This;
 
     public:
@@ -51,16 +54,20 @@ namespace Dune
 
       template< class GridFunction, std::enable_if_t< std::is_same< This, typename GridFunction::LocalFunctionType >::value, int > = 0 >
       SimpleLocalFunction ( const GridFunction &gridFunction )
-        : localEvaluator_( gridFunction.localEvaluator() ), order_( gridFunction.order() )
+        : Base(), localEvaluator_( gridFunction.localEvaluator() ), order_( gridFunction.order() )
       {}
 
       SimpleLocalFunction ( const EntityType &entity, LocalEvaluator localEvaluator, int order )
-        : entity_(), localEvaluator_( std::move( localEvaluator ) ), order_( order )
+        : Base( entity ), localEvaluator_( std::move( localEvaluator ) ), order_( order )
       {
-        init( entity );
       }
 
-      void init ( const EntityType &entity ) { entity_.emplace( entity ); }
+      using Base::bind;
+      using Base::unbind;
+      using Base::entity;
+      using Base::geometry;
+
+      void init ( const EntityType &entity ) { bind( entity ); }
 
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const
@@ -104,12 +111,7 @@ namespace Dune
 
       int order () const { return order_; }
 
-      const EntityType &entity () const { assert( entity_ ); return entity_.value(); }
-
     private:
-      std::optional< EntityType > entity_;
-      // this will fail when bind with intersection was called
-      //const EntityType *entity_ = nullptr;
       LocalEvaluator localEvaluator_;
       int order_;
     };

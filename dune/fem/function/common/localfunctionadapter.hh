@@ -10,6 +10,7 @@
 #include <dune/common/hybridutilities.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/storage/entitygeometry.hh>
 
 namespace Dune
 {
@@ -469,7 +470,8 @@ namespace Dune
       typedef typename Traits::HessianRangeType HessianRangeType;
 
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
-      typedef typename Traits::EntityType EntityType;
+      typedef typename Traits::EntityType    EntityType;
+      typedef typename EntityType::Geometry  Geometry;
 
       typedef typename Traits::LocalFuncStorageType LocalFuncStorageType;
 
@@ -552,14 +554,18 @@ namespace Dune
       void init( const EntityType& entity )
       {
         localFunctionImpl().init( entity );
-        entity_ = &entity;
       }
 
       //! get entity
       const EntityType& entity() const
       {
-        assert( entity_ );
-        return *entity_;
+        return localFunctionImpl().entity();
+      }
+
+      //! get entity
+      const Geometry& geometry() const
+      {
+        return localFunctionImpl().geometry();
       }
 
       template <class ArgumentType>
@@ -597,7 +603,7 @@ namespace Dune
         return localFunctionImpl_;
       }
 
-      EntityType const* entity_ = nullptr;
+      //EntityType const* entity_ = nullptr;
       const DiscreteFunctionType &adapter_;
       LocalFuncStorageType localFunctionImpl_;
     };
@@ -627,7 +633,9 @@ namespace Dune
      */
     template<class DiscreteFunctionSpaceImpl>
     class LocalAnalyticalFunctionBinder
+      : public EntityGeometryStorage< typename DiscreteFunctionSpaceImpl::EntityType >
     {
+      typedef EntityGeometryStorage< typename DiscreteFunctionSpaceImpl::EntityType >  BaseType;
     public:
       typedef DiscreteFunctionSpaceImpl DiscreteFunctionSpaceType;
       typedef LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType> ThisType;
@@ -652,14 +660,19 @@ namespace Dune
       LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f=[](const auto& ,auto ,const auto& ){return RangeType(0.0);},
                                     const AnalyticalJacobianType& j=[](const auto& ,auto ,const auto& ){return JacobianRangeType(0.0);},
                                     const AnalyticalHessianType& h=[](const auto& ,auto ,const auto& ){return HessianRangeType(0.0);},
-                                    double t=0.0):
-        f_(f),j_(j),h_(h),t_(t)
+                                    double t=0.0)
+        : BaseType(), f_(f),j_(j),h_(h),t_(t)
       {}
 
       LocalAnalyticalFunctionBinder(const ThisType& )=default;
       LocalAnalyticalFunctionBinder(ThisType&& )=default;
       ThisType& operator=(const ThisType& )=default;
       ThisType& operator=(ThisType&& )=default;
+
+      using BaseType :: entity;
+      using BaseType :: geometry;
+      using BaseType :: bind;
+      using BaseType :: unbind;
 
       //! get local function
       AnalyticalFunctionType& function()
@@ -701,27 +714,27 @@ namespace Dune
       template<class PointType>
       void evaluate(const PointType& x,RangeType& ret) const
       {
-        ret=f_(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=f_(geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate jacobian local function
       template<class PointType>
       void jacobian(const PointType& x,JacobianRangeType& ret) const
       {
-        ret=j_(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=j_(geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate hessian local function
       template<class PointType>
       void hessian(const PointType& x,HessianRangeType& ret ) const
       {
-        ret=h_(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=h_(geometry().global(coordinate(x)),t_,entity());
       }
 
       //! initialize entity
       void init(const EntityType& entity)
       {
-        entity_=&entity;
+        bind( entity );
       }
 
       //! initialize time
@@ -731,13 +744,6 @@ namespace Dune
         t_=time;
       }
 
-      //! get entity
-      const EntityType& entity() const
-      {
-        assert(entity_);
-        return *entity_;
-      }
-
       //! get time
       double time() const
       {
@@ -745,7 +751,6 @@ namespace Dune
       }
 
     private:
-      EntityType const* entity_;
       AnalyticalFunctionType f_;
       AnalyticalJacobianType j_;
       AnalyticalHessianType h_;

@@ -217,6 +217,11 @@ namespace Dune
       //! type of Entity the basis function set is initialized on
       typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::EntityType EntityType;
 
+      static_assert( Std::are_all_same< typename BasisFunctionSets::Geometry ... >::value,
+          "TupleBasisFunctionSet needs common Geometry" );
+      //! type of Geometry the basis function set is initialized on
+      typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::Geometry  Geometry;
+
       static_assert( Std::are_all_same< typename BasisFunctionSets::ReferenceElementType ... >::value,
           "TupleBasisFunctionSet needs ReferenceElementType" );
       //! type of reference element for this BasisFunctionSet
@@ -274,6 +279,12 @@ namespace Dune
       const EntityType &entity () const
       {
         return std::get< 0 >( basisFunctionSetTuple_ ).entity();
+      }
+
+      //! \copydoc BasisFunctionSet::geometry
+      const Geometry &geometry () const
+      {
+        return std::get< 0 >( basisFunctionSetTuple_ ).geometry();
       }
 
       //! \copydoc BasisFunctionSet::entity

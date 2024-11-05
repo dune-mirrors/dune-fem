@@ -37,6 +37,7 @@ namespace Dune
 
       //! \brief entity type
       typedef typename LocalFunctionSetType::EntityType EntityType;
+      typedef typename LocalFunctionSetType::Geometry   Geometry;
       typedef typename LocalFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
       //! \brief range type
@@ -220,9 +221,11 @@ namespace Dune
         localFunctionSet().hessianEach( x, functor );
       }
 
-      //! please doc me
+      //! return entity this basis function set was initialized on
       const EntityType &entity () const { return localFunctionSet().entity(); }
 
+      //! return geometry this basis function set was initialized on
+      const Geometry &geometry () const { return localFunctionSet().geometry(); }
 
       // Non-interface methods
       // ---------------------

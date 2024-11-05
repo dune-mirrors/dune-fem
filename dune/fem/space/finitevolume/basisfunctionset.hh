@@ -10,6 +10,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
+#include <dune/fem/storage/entitygeometry.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 namespace Dune
@@ -23,9 +24,15 @@ namespace Dune
 
     template< class Entity, class Range >
     struct FiniteVolumeBasisFunctionSet
+      : public EntityGeometryStorage< Entity >
     {
+    protected:
+      typedef EntityGeometryStorage< Entity >  BaseType;
+
+    public:
       /** \copydoc Dune::Fem::BasisFunctionSet::EntityType */
-      typedef Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
+      typedef typename BaseType::Geometry   Geometry;
 
       /** \copydoc Dune::Fem::BasisFunctionSet::FunctionSpaceType */
       typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type,
@@ -48,10 +55,10 @@ namespace Dune
        *  \{
        */
 
-      FiniteVolumeBasisFunctionSet () : entity_( nullptr ) {}
+      FiniteVolumeBasisFunctionSet () {}
 
       explicit FiniteVolumeBasisFunctionSet ( const EntityType &entity )
-        : entity_( &entity )
+        : BaseType( entity )
       {}
 
       /** \} */
@@ -59,6 +66,11 @@ namespace Dune
       /** \name Public member methods
        *  \{
        */
+      using BaseType::entity;
+      using BaseType::valid;
+      using BaseType::geometry;
+      using BaseType::referenceElement;
+      using BaseType::type;
 
       /** \copydoc Dune::Fem::BasisFunctionSet::order */
       static constexpr int order () { return 0; }
@@ -198,29 +210,6 @@ namespace Dune
         for( int i = 0; i < RangeType::dimension; ++i )
           hessians[ i ] = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
       }
-
-      /** \copydoc Dune::Fem::BasisFunctionSet::entity */
-      const EntityType &entity () const
-      {
-        assert( entity_ );
-        return *entity_;
-      }
-
-      /** \copydoc Dune::Fem::BasisFunctionSet::referenceElementType */
-      auto referenceElement () const
-        -> decltype( Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
-      {
-        return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( type() );
-      }
-
-      /** \copydoc Dune::Fem::BasisFunctionSet::type */
-      Dune::GeometryType type () const { return entity().type(); }
-
-      //! \brief return true if entity pointer is set
-      bool valid () const { return bool(entity_); }
-
-    private:
-      const EntityType *entity_;
     };
 
     /** \} */
