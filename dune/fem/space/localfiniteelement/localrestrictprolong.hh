@@ -50,7 +50,7 @@ namespace Dune
         }
 
         const EntityType& entity () const { return lfFather_.entity(); }
-        const unsigned int order () const { return lfFather_.order(); }
+        unsigned int order () const { return lfFather_.order(); }
 
       private:
         const LocalGeometryType &localGeo_;
@@ -113,7 +113,7 @@ namespace Dune
             evaluate( quadrature[ qp ], values[ qp ]);
         }
         const EntityType& entity () const { return father_; }
-        const unsigned int order () const { return order_; }
+        unsigned int order () const { return order_; }
 
       private:
         const EntityType &father_;
