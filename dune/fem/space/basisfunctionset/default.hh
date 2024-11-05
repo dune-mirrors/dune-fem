@@ -102,7 +102,7 @@ namespace Dune
 
       //! \brief constructor
       explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-        : entity_( &entity ),
+        : entity_( entity ),
           shapeFunctionSet_( shapeFunctionSet )
       {
         // Note that this should be geometry_ = entity.geometry()
@@ -387,7 +387,7 @@ namespace Dune
       const Entity &entity () const
       {
         assert( valid() );
-        return *entity_;
+        return entity_.value();
       }
 
       //! \brief return true if entity pointer is set
@@ -519,7 +519,7 @@ namespace Dune
     protected:
       Geometry geometry () const { return geometry_.value(); }
 
-      const EntityType *entity_ = nullptr;
+      std::optional< EntityType > entity_;
       ShapeFunctionSetType shapeFunctionSet_;
       std::optional< Geometry > geometry_;
     };
