@@ -48,13 +48,13 @@ ubuntu-24.04-gcc-14-20:
 #    DUNECI_TOOLCHAIN: gcc-10-20
 #  tags: [duneci]
 
-debian-11-gcc-10-20-minimal-no-petsc:
-  image: registry.dune-project.org/docker/ci/debian:11
+debian-12-gcc-12-20-minimal-no-petsc:
+  image: registry.dune-project.org/docker/ci/debian:12
   script:
     - DUNECI_CMAKE_FLAGS+="-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=OFF"
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-10-20
+    DUNECI_TOOLCHAIN: gcc-12-20
   tags: [duneci]
 
 ubuntu:20.04-clang-10-20:
