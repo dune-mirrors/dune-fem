@@ -60,7 +60,7 @@ namespace Dune
       /** \brief read environment variables DUNE_NUM_THREADS and OMP_NUM_THREADS
        * (in that order) to obtain the maximal available number of threads.
        */
-      static inline const unsigned int getEnvNumberThreads (unsigned int defaultValue)
+      static inline unsigned int getEnvNumberThreads (unsigned int defaultValue)
       {
 #ifdef USE_SMP_PARALLEL
         unsigned int maxThreads = defaultValue;
