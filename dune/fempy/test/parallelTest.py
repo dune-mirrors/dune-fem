@@ -145,7 +145,7 @@ def compute(comm,useAdapt,gridType,
     uh1 = space.interpolate(dimR*[14], name="solution")
 
     # check storage presence
-    assert hasattr( uh, "as_"+storage ), f"as_{storage} should be present if storage {storage} was chosen!"
+    assert hasattr( uh1, "as_"+storage ), f"as_{storage} should be present if storage {storage} was chosen!"
 
     code = "template <class DF> void finalize(DF &df) { df.communicate(); }"
     communicate = algorithm.load('finalize', io.StringIO(code), uh1)
