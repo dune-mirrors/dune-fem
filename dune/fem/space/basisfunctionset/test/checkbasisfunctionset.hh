@@ -30,12 +30,14 @@ namespace Dune
       typedef typename BasisFunctionSet::JacobianRangeType JacobianRangeType;
       typedef typename BasisFunctionSet::HessianRangeType HessianRangeType;
       typedef typename BasisFunctionSet::EntityType EntityType;
+      typedef typename BasisFunctionSet::Geometry   Geometry;
 
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
       static const int dimRange = FunctionSpaceType::dimRange;
 
       const EntityType &entity = basisFunctionSet.entity();
+      const Geometry& geometry = basisFunctionSet.geometry();
       const auto refElement = basisFunctionSet.referenceElement();
 
       if( entity.type() != refElement.type() )

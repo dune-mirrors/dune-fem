@@ -282,7 +282,8 @@ namespace Dune
     public:
       typedef ScalarBasisFunctionSet ScalarBasisFunctionSetType;
 
-      typedef typename ScalarBasisFunctionSetType::EntityType EntityType;
+      typedef typename ScalarBasisFunctionSetType::EntityType  EntityType;
+      typedef typename EntityType::Geometry                    Geometry;
       typedef typename ScalarBasisFunctionSetType::ReferenceElementType ReferenceElementType;
 
     private:
@@ -323,6 +324,7 @@ namespace Dune
       std::size_t size () const { return dimRange*scalarBasisFunctionSet().size(); }
 
       const ReferenceElementType &referenceElement () const { return scalarBasisFunctionSet().referenceElement(); }
+      Dune::GeometryType type() const { return scalarBasisFunctionSet().type(); }
 
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
@@ -430,6 +432,7 @@ namespace Dune
       }
 
       const EntityType &entity () const { return scalarBasisFunctionSet().entity(); }
+      const Geometry& geometry () const { return scalarBasisFunctionSet().geometry(); }
       bool valid () const { return scalarBasisFunctionSet().valid(); }
 
       DofAlignmentType dofAlignment () const { return dofAlignment_ ; }

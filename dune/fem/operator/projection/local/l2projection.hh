@@ -189,7 +189,7 @@ namespace Dune
                        "RangeType and LocalFunction::RangeType have to be the same type" );
 
         const BasisFunctionSetType basisFunctionSet = this->basisFunctionSet();
-        const auto geometry = basisFunctionSet.entity().geometry();
+        const auto geometry = basisFunctionSet.geometry();
 
         f_.resize( basisFunctionSet.size() );
         f_ = static_cast< RangeFieldType >( 0 );

@@ -53,7 +53,7 @@ namespace Dune
       //       global, we need to fill in all DoFs anyway.
       //       As we need to compute the global mass matrix, we only add our
       //       interior contibutions, though.
-      for( const auto entity : elements( v.gridPart(), Partitions::interior ) )
+      for( const auto& entity : elements( v.gridPart(), Partitions::interior ) )
       {
         const auto geometry = entity.geometry();
 

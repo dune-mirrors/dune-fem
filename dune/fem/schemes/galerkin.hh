@@ -315,7 +315,7 @@ namespace Dune
           if( !integrands().init( u.entity() ) )
             return;
 
-          const auto geometry = u.entity().geometry();
+          const auto& geometry = u.geometry();
 
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: InteriorQuadratureType  InteriorQuadratureType;
           const InteriorQuadratureType quadrature( u.entity(), interiorQuadratureOrder(maxOrder(u, w)) );
@@ -345,7 +345,7 @@ namespace Dune
           if( !integrands().init( u.entity() ) )
             return;
 
-          const auto geometry = u.entity().geometry();
+          const auto &geometry = u.geometry();
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 

@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/storage/entitygeometry.hh>
 
 namespace Dune
 {
@@ -24,9 +25,18 @@ namespace Dune
      */
     template< class Entity, class FunctionSet >
     struct LocalFunctionSetAdapter
+      : public EntityGeometryStorage< Entity >
     {
+    protected:
+      typedef EntityGeometryStorage< Entity > BaseType;
+
+    public:
       //! \brief entity type
-      typedef Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
+
+      //! \brief geometry
+      typedef typename BaseType::Geometry  Geometry;
+
       //! \brief function set type
       typedef FunctionSet FunctionSetType;
 
@@ -43,22 +53,21 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       explicit LocalFunctionSetAdapter ( const FunctionSet &functionSet = FunctionSet() )
-        : functionSet_( functionSet )
+        : BaseType(),
+          functionSet_( functionSet )
       {}
 
       explicit LocalFunctionSetAdapter ( const Entity &entity, const FunctionSet &functionSet = FunctionSet() )
-        : entity_( &entity ), functionSet_( functionSet )
+        : BaseType( entity ), functionSet_( functionSet )
       {}
 
       /** \copydoc Dune::Fem::LocalFunctionSet::order() const */
       int order () const { return functionSet_.order(); }
 
-      /** \copydoc Dune::Fem::LocalFunctionSet::entity() const */
-      const EntityType &entity () const
-      {
-        assert( entity_ );
-        return *entity_;
-      }
+      using BaseType :: entity;
+      using BaseType :: geometry;
+      using BaseType :: bind;
+      using BaseType :: unbind;
 
       /** \copydoc Dune::Fem::LocalFunctionSet::size() const */
       std::size_t size () const { return functionSet().size(); }
@@ -87,7 +96,6 @@ namespace Dune
         functionSet().hessianEach( y, functor );
       }
 
-
       // Non-interface methods
       // ---------------------
 
@@ -95,9 +103,6 @@ namespace Dune
       const FunctionSetType functionSet () const { return functionSet_; }
 
     private:
-      typename EntityType::Geometry geometry () const { return entity().geometry(); }
-
-      const EntityType *entity_ = nullptr;
       FunctionSetType functionSet_;
     };
 

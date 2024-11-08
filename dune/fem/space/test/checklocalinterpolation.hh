@@ -20,6 +20,7 @@ struct LocalBasis
   typedef typename DiscreteSpace::RangeFieldType RangeFieldType;
 
   typedef typename BasisFunctionSetType::EntityType EntityType;
+  typedef typename EntityType::Geometry  Geometry;
 
   LocalBasis ( const BasisFunctionSetType &bSet, int i )
     : bSet_( bSet ),
@@ -74,6 +75,7 @@ struct LocalBasis
 
   int order () const { return bSet_.order(); }
   const EntityType &entity () const { return bSet_.entity(); }
+  const Geometry& geometry () const { return bSet_.geometry(); }
 
 private:
   template< class QuadratureType, class Vector >

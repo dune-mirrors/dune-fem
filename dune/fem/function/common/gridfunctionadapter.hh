@@ -10,6 +10,7 @@
 #include <dune/fem/version.hh>
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/storage/entitygeometry.hh>
 
 // for compatibility
 #include <dune/fem/function/common/localfunctionadapter.hh>
@@ -205,7 +206,9 @@ namespace Dune
 
     template< class Function, class GridPart >
     class BasicGridFunctionAdapter< Function, GridPart >::LocalFunction
+      : public EntityGeometryStorage< typename Traits::EntityType >
     {
+      typedef EntityGeometryStorage< typename Traits::EntityType > BaseType;
       typedef LocalFunction ThisType;
       typedef BasicGridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
 
@@ -233,6 +236,7 @@ namespace Dune
 
       //! entity type
       typedef typename Traits::EntityType EntityType;
+      typedef typename EntityType::Geometry Geometry;
       typedef typename Traits::IntersectionType IntersectionType;
       //! local coordinate type
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
@@ -241,16 +245,21 @@ namespace Dune
 
       //! constructor initializing local function
       LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
-      : function_( &df.function_ ),
-        entity_( &entity ),
+      : BaseType( entity ),
+        function_( &df.function_ ),
         order_( df.space().order() )
       {}
 
       LocalFunction ( const DiscreteFunctionType &df )
-      : function_( &df.function_ ),
-        entity_( 0 ),
+      : BaseType(),
+        function_( &df.function_ ),
         order_( df.space().order() )
       {}
+
+      using BaseType :: entity;
+      using BaseType :: geometry;
+      using BaseType :: bind;
+      using BaseType :: unbind;
 
       //! copy constructor
       LocalFunction ( const LocalFunction &other ) = default;
@@ -259,8 +268,7 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
-        const auto geometry = entity().geometry();
-        auto global = geometry.global( coordinate( x ) );
+        auto global = geometry().global( coordinate( x ) );
         function().evaluate( global, ret );
       }
       template< class PointType >
@@ -275,8 +283,8 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        const auto geometry = entity().geometry();
-        auto global = geometry.global( coordinate( x ) );
+        const auto &geom = geometry();
+        auto global = geom.global( coordinate( x ) );
         function().jacobian( global, ret );
 
         if( dimLocal != dimDomain )
@@ -287,8 +295,8 @@ namespace Dune
           // tangential space of the reference elment, and then
           // projecting back to the ambient space.
 
-          const auto gjt = geometry.jacobianTransposed( coordinate( x ) );
-          const auto gjit = geometry.jacobianInverseTransposed( coordinate( x ) );
+          const auto gjt = geom.jacobianTransposed( coordinate( x ) );
+          const auto gjit = geom.jacobianInverseTransposed( coordinate( x ) );
 
           FieldVector< RangeFieldType, dimLocal > tmp;
           for( auto i = 0; i < dimRange; ++i )
@@ -319,13 +327,7 @@ namespace Dune
       //! init local function
       void init ( const EntityType &entity )
       {
-        entity_ = &entity;
-      }
-
-      const EntityType &entity () const
-      {
-        assert( entity_ );
-        return *entity_;
+        BaseType::bind( entity );
       }
 
     protected:
@@ -351,7 +353,6 @@ namespace Dune
       }
 
       const FunctionType *function_;
-      const EntityType *entity_;
       int order_;
     };
 

@@ -72,14 +72,19 @@ namespace Dune
         typedef typename LocalFunction::RangeType RangeType;
 
         LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset )
-          : lf_( lf ), geometry_( lf_.entity().geometry() ), bset_( bset ) {}
+          : lf_( lf ), bset_( bset )
+        {
+          bset_.geometry();
+        }
 
         template< class Arg >
         void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
         {
           typename Traits::RangeType help;
           lf_.evaluate( x, help );
-          typename Transformation::InverseTransformationType transf( geometry_, x );
+          // geometry needs to come from local function. For some reasons the
+          // geometry from the basis set was invalid. Something to investigate.
+          typename Transformation::InverseTransformationType transf( lf_.geometry(), x );
           y = transf.apply( help );
         }
         template< class Arg >
@@ -92,7 +97,6 @@ namespace Dune
 
       private:
         const LocalFunction &lf_;
-        const typename Entity::Geometry geometry_;
         const BasisFunctionSetType &bset_;
       };
 

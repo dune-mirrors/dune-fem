@@ -1,3 +1,9 @@
+# use PETSC_* (old policy) instead of PETSc_* (new policy).
+# This needs to be fixed.
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 OLD)
+endif()
+
 include(CheckIncludeFileCXX)
 
 #find endian headers
@@ -66,12 +72,6 @@ else()
 endif()
 
 include(FindPkgConfig)
-
-# use PETSC_* (old policy) instead of PETSc_* (new policy).
-# This needs to be fixed.
-if(POLICY CMP0144)
-  cmake_policy(SET CMP0144 OLD)
-endif()
 
 # PETSC_ROOT overrules PETSC_DIR which overrules ENV PETSC_DIR
 if( PETSC_ROOT )

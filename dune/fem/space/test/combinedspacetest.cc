@@ -244,9 +244,13 @@ void checkInterpolation ( const EntityType &entity, const DiscreteFunctionSpaceT
   ldv.resize( space.basisFunctionSet( entity ).size() );
 
   DummyLocalFunction lf( entity );
-  space.interpolation( entity ) ( lf, ldv );
 
-  //TODO check wether interpolation is successfull
+  Dune::Fem::LocalInterpolation< DiscreteFunctionSpaceType > interpolation( space );
+  // bind interpolation to entity
+  auto iGuard = Dune::Fem::bindGuard( interpolation, entity );
+
+  // perform local interpolation
+  interpolation( lf, ldv );
 }
 
 

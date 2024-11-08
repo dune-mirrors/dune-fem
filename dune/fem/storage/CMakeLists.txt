@@ -1,5 +1,6 @@
 dune_install(dynamicarray.hh
              eigenvector.hh
+             entitygeometry.hh
              envelope.hh
              objectstack.hh
              referencecounter.hh
