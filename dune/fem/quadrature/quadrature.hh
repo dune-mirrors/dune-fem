@@ -267,10 +267,7 @@ namespace Dune
      *
      *  \param[in]  org  integration point list to be copied
      */
-    inline IntegrationPointList ( const IntegrationPointList &org )
-    : ipListPtr_( org.ipListPtr_ )
-    {
-    }
+    inline IntegrationPointList ( const IntegrationPointList &org ) = default;
 
     const QuadraturePointWrapperType operator[] ( unsigned int i ) const
     {
