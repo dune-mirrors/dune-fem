@@ -120,7 +120,7 @@ namespace Dune
         return inside().localPoint( qp );
       }
 
-      const RealType &weight ( const int qp ) const
+      auto weight ( const int qp ) const
       {
         assert( inside().weight( qp ) == outside().weight( qp ) );
         return inside().weight( qp );
