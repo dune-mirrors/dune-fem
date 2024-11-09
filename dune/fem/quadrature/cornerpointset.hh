@@ -3,7 +3,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune
 {

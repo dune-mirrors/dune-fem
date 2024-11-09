@@ -79,6 +79,7 @@ public:
         }
         // false here forces the weights and points to be computed
         ElementQuadratureType quad( entity, order_, false );
+
         const int quadNop = quad.nop();
         // integrate function over element
         for( int qp=0; qp<quadNop; ++qp )

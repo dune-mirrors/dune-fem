@@ -68,7 +68,7 @@ namespace Dune
 
     unsigned int index () const { return index_; }
     const CoordinateType &position () const { return quadrature().point( index() ); }
-    const RealType &weight () const { return quadrature().weight( index() ); }
+    auto weight () const { return quadrature().weight( index() ); }
     const LocalCoordinateType &localPosition () const { return quadrature().localPoint( index() ); }
   };
 
@@ -179,9 +179,6 @@ namespace Dune
     //! type of coordinate
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
-    //! type of key to identify quadrature on user side (default the order of the quadrature)
-    typedef typename Traits :: QuadratureKeyType  QuadratureKeyType;
-
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
     typedef std::shared_ptr< const IntegrationPointListType >  IntegrationPointListStorageType;
@@ -203,23 +200,34 @@ namespace Dune
     /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
+     *  is capable of integrating polynomials up the given order exactly.
      *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType  geometry type of the requested quadrature
      *  \param[in]  order         order of the requested quadrature
      */
+    template <class FactoryTraits>
+    inline IntegrationPointList ( const FactoryTraits traits,
+                                  const GeometryType &geometryType,
+                                  const typename FactoryTraits::QuadratureKeyType& quadKey )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ), NoDelete() )
+    //: ipListPtr_( &QuadratureProviderType :: getQuadrature( traits, geometryType, quadKey ), NoDelete() )
+    {
+    }
+
+    template <class QuadratureKeyType>
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const QuadratureKeyType& quadKey )
-    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ), NoDelete() )
+    : IntegrationPointList( DefaultQuadratureTraits< FieldType, dimension > (),
+                            geometryType, quadKey )
     {
     }
 
     /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
+     *  is capable of integrating polynomials up the given order exactly.
      *
      *  \note The order of the quadrature may be higher than the requested one.
      *
@@ -228,10 +236,22 @@ namespace Dune
      *              quadrature is used for (in case of face quadratures)
      *  \param[in]  order            order of the requested quadrature
      */
+    template <class FactoryTraits>
+    inline IntegrationPointList ( const FactoryTraits traits,
+                                  const GeometryType &geometryType,
+                                  const GeometryType &elementGeometry,
+                                  const typename FactoryTraits::QuadratureKeyType& quadKey )
+    //: ipListPtr_( &QuadratureProviderType :: getQuadrature( traits, geometryType, elementGeometry, quadKey ), NoDelete() )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ), NoDelete() )
+    {
+    }
+
+    template <class QuadratureKeyType>
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const GeometryType &elementGeometry,
                                   const QuadratureKeyType& quadKey )
-    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ), NoDelete() )
+    : IntegrationPointList( DefaultQuadratureTraits< FieldType, dimension > (),
+                            geometryType, elementGeometry, quadKey )
     {
     }
 

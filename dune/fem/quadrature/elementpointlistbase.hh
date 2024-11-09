@@ -39,20 +39,24 @@ namespace Dune
       //! dimension of the grid
       static const int dimension = GridPartType::dimension;
 
+      //! type of entity
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+
       //! type of the integration point list
       typedef typename IntegrationTraits::IntegrationPointListType IntegrationPointListType;
 
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
-      typedef typename IntegrationPointListType :: QuadratureKeyType  QuadratureKeyType;
+      //typedef typename IntegrationPointListType :: QuadratureKeyType  QuadratureKeyType;
 
       /** \brief constructor
        *
        *  \param[in]  geometry  geometry type, the quadrature lives on
        *  \param[in]  order     desired minimal order of the quadrature
        */
-      ElementPointListBase ( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+      template <class QuadratureKey>
+      ElementPointListBase ( const GeometryType &geometry, const QuadratureKey& quadKey )
       : quad_( geometry, quadKey )
       {}
 
@@ -211,8 +215,6 @@ namespace Dune
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
-      typedef typename IntegrationPointListType :: QuadratureKeyType  QuadratureKeyType;
-
       /** \brief constructor
        *
        *  \param[in]  elementGeo      geometry type of the element
@@ -220,6 +222,7 @@ namespace Dune
        *  \param[in]  localFaceIndex  index of the subentity
        *  \param[in]  order           desired order of the quadrature
        */
+      template <class QuadratureKeyType>
       ElementPointListBase ( const GeometryType &elementGeo,
                              const GeometryType &faceGeo,
                              const int localFaceIndex,
@@ -235,6 +238,7 @@ namespace Dune
        *  \param[in]  localFaceIndex  index of the subentity
        *  \param[in]  order           desired order of the quadrature
        */
+      template <class QuadratureKeyType>
       ElementPointListBase ( const GeometryType &elementGeo,
                              const int localFaceIndex,
                              const QuadratureKeyType& quadKey )

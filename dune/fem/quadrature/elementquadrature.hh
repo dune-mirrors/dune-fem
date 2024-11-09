@@ -1,12 +1,8 @@
 #ifndef DUNE_FEM_ELEMENTQUADRATURE_HH
 #define DUNE_FEM_ELEMENTQUADRATURE_HH
 
-#include <dune/geometry/quadraturerules.hh>
-
-#include <dune/fem/common/utility.hh>
-
-#include "quadrature.hh"
-#include "elementpointlist.hh"
+#include <dune/fem/quadrature/elementpointlistbase.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
 
 namespace Dune
 {
@@ -17,6 +13,25 @@ namespace Dune
     template< typename GridPartImp, class IntegrationPointList >
     class Agglomeration;
 
+    template< class GridPartImp, int codim, template< class, int > class QuadratureTraits >
+    struct ElementQuadratureTraits
+    {
+      // type of single coordinate
+      typedef typename GridPartImp :: ctype ctype;
+
+      // dimension of quadrature
+      enum { dimension = GridPartImp ::  dimension };
+
+      // codimension of quadrature
+      enum { codimension = codim };
+
+      // type of used integration point list
+      typedef Quadrature< ctype, dimension-codim, QuadratureTraits > IntegrationPointListType;
+
+      // type of local coordinate (with respect to the codim-0 entity)
+      typedef typename Quadrature< ctype, dimension, QuadratureTraits > :: CoordinateType
+        CoordinateType;
+    };
 
     /*! \class ElementQuadrature
      *  \ingroup Quadrature
@@ -51,78 +66,40 @@ namespace Dune
      *        quadrature points (see also CachingQuadrature).
      *
      *  For the actual implementations, see
-     *  - ElementQuadrature<GridPartImp,0>
-     *  - ElementQuadrature<GridPartImp,1>
+     *  - ElementQuadratureImpl<GridPartImp,0>
+     *  - ElementQuadratureImpl<GridPartImp,1>
      */
-    template< typename GridPartImp, int codim, template <class, int> class QuadratureTraits = DefaultQuadratureTraits >
-    class ElementQuadrature;
+    template< class GridPartImp, int codim, class IntegrationTraits, bool isQuadrature >
+    class ElementQuadratureImpl;
 
 
-
-    template< class GridPartImp, int codim, template< class, int > class QuadratureTraits >
-    struct ElementQuadratureTraits
+    /** \copydoc ElementQuadratureImpl */
+    template< class GridPartImp, class IntegrationTraits, bool isQuadrature >
+    class ElementQuadratureImpl< GridPartImp, 0, IntegrationTraits, isQuadrature >
+    : public ElementPointListBase< GridPartImp, 0, IntegrationTraits >
     {
-      // type of single coordinate
-      typedef typename GridPartImp :: ctype ctype;
-
-      // dimension of quadrature
-      enum { dimension = GridPartImp ::  dimension };
-
-      // codimension of quadrature
-      enum { codimension = codim };
-
-      // type of used integration point list
-      typedef Quadrature< ctype, dimension-codim, QuadratureTraits > IntegrationPointListType;
-
-      // type of local coordinate (with respect to the codim-0 entity)
-      typedef typename Quadrature< ctype, dimension, QuadratureTraits > :: CoordinateType
-        CoordinateType;
-    };
-
-
-
-    /** \copydoc ElementQuadrature */
-    template< typename GridPartImp, template< class, int > class QuadratureTraits >
-    class ElementQuadrature< GridPartImp, 0, QuadratureTraits >
-    : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > >
-    {
-      typedef ElementQuadrature< GridPartImp, 0, QuadratureTraits > ThisType;
+      typedef ElementQuadratureImpl< GridPartImp, 0, IntegrationTraits, isQuadrature > This;
+      typedef ElementPointListBase< GridPartImp, 0, IntegrationTraits >  Base;
 
     public:
-      typedef ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > IntegrationTraits;
-      typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
-
-      //! type of the grid partition
-      typedef GridPartImp GridPartType;
-
-      //! codimension of the element quadrature
-      enum { codimension = 0 };
-
-      //! dimension of the world
-      enum { dimension = GridPartType :: dimension };
-
-      //! type for reals (usually double)
-      typedef typename GridPartType :: ctype RealType;
+      //! type of grid part
+      typedef typename Base :: GridPartType  GridPartType;
 
       //! type for coordinates in the codim-0 reference element
-      typedef typename IntegrationTraits :: CoordinateType CoordinateType;
-
-      //! type of quadrature identifier on user side (default is the order of quadrature)
-      typedef typename BaseType :: QuadratureKeyType QuadratureKeyType;
+      typedef typename Base::CoordinateType  CoordinateType;
 
       //! type of the quadrature point
-      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
       //! type of iterator
-      typedef QuadraturePointIterator< ThisType > IteratorType;
+      typedef QuadraturePointIterator< This > IteratorType;
 
       // for compatibility
-      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename Base :: EntityType     EntityType;
 
-      typedef typename BaseType :: IntegrationPointListType  IntegrationPointListType;
+      typedef typename Base :: IntegrationPointListType  IntegrationPointListType;
 
     protected:
-      using BaseType::quadImp;
-
+      template <class QuadratureKeyType>
       IntegrationPointListType createQuadrature(  const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType )
       {
         const GeometryType geomType = entity.type();
@@ -138,42 +115,34 @@ namespace Dune
         }
       }
 
+      using Base::quadImp;
+
     public:
-      using BaseType::nop;
+      using Base::localPoint;
+      using Base::nop;
 
-      /*! \brief constructor
+      /** \brief constructor
        *
-       *  \param[in]  entity  entity, on whose reference element the quadrature
-       *                      lives
-       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
+       *  \param[in]  geometry  geometry type, the quadrature lives on
+       *  \param[in]  order     desired minimal order of the quadrature
+       *  \param[in]  checkGeomType if true geometry type is checked for isNone.
        */
-      ElementQuadrature( const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType = true )
-      : BaseType( createQuadrature( entity, quadKey, checkGeomType ) )
+      template <class QuadratureKeyType>
+      ElementQuadratureImpl( const EntityType &entity, const QuadratureKeyType& quadKey, const bool checkGeomType = isQuadrature )
+      : Base( createQuadrature( entity, quadKey, checkGeomType ) )
       {}
 
-      /*! \brief constructor
+      /** \brief constructor
        *
-       *  \param[in]  type    geometry type, on whose reference element the quadrature
-       *                      lives
-       *  \param[in]  quadKey desired minimal order of the quadrature or other means of quadrature identification
+       *  \param[in]  geometry  geometry type, the quadrature lives on
+       *  \param[in]  order     desired minimal order of the quadrature
        */
-      ElementQuadrature( const GeometryType &type, const QuadratureKeyType& quadKey )
-      : BaseType( type, quadKey )
-      {
-        // when type is none then entity has to be passed in order to create
-        // the sub triangulation etc.
-        // assert( ! type.isNone() );
-      }
-
-      /** \brief copy constructor
-       *
-       *  \param[in]  org  element quadrature to copy
-       */
-      ElementQuadrature( const ThisType &org )
-      : BaseType( org )
+      template <class QuadratureKeyType>
+      ElementQuadratureImpl( const GeometryType &geometry, const QuadratureKeyType& quadKey )
+      : Base( geometry, quadKey )
       {}
 
-      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      const QuadraturePointWrapperType operator[] ( const size_t i ) const
       {
         return QuadraturePointWrapperType( *this, i );
       }
@@ -181,8 +150,14 @@ namespace Dune
       IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
       IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
-      /** \copydoc Dune::Fem::Quadrature::weight */
-      const RealType &weight( size_t i ) const
+      /** \copydoc Dune::Fem::IntegrationPointList::point */
+      const CoordinateType &point ( const size_t i ) const
+      {
+        return localPoint( i );
+      }
+
+      /** \copydoc Dune::Fem::IntegrationPointList::weight */
+      auto weight( size_t i ) const
       {
         return quadImp().weight( i );
       }
@@ -190,107 +165,133 @@ namespace Dune
 
 
 
-    /** \copydoc ElementQuadrature */
-    template< class GridPartImp, template< class, int > class QuadratureTraits >
-    class ElementQuadrature< GridPartImp, 1, QuadratureTraits >
-    : public ElementIntegrationPointList
-      < GridPartImp, 1, ElementQuadratureTraits< GridPartImp, 1, QuadratureTraits > >
+    /** \copydoc ElementQuadratureImpl  */
+    template< class GridPartImp, class IntegrationTraits, bool isQuadrature >
+    class ElementQuadratureImpl< GridPartImp, 1, IntegrationTraits, isQuadrature >
+    : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >
     {
+      typedef ElementQuadratureImpl< GridPartImp, 1, IntegrationTraits, isQuadrature > This;
+      typedef ElementPointListBase< GridPartImp, 1, IntegrationTraits > Base;
+
     public:
       //! type of the grid partition
       typedef GridPartImp GridPartType;
 
-      //! codimension of the quadrature
-      enum { codimension = 1 };
+      static const int dimension = Base::dimension;
 
-    private:
-      typedef ElementQuadratureTraits< GridPartType, codimension, QuadratureTraits > IntegrationTraits;
+      //! Type of coordinates in codim-0 reference element
+      typedef typename Base::CoordinateType CoordinateType;
 
-      typedef ElementQuadrature< GridPartType, codimension, QuadratureTraits > ThisType;
-      typedef ElementIntegrationPointList< GridPartType, 1, IntegrationTraits >
-        BaseType;
-
-    protected:
-      using BaseType :: quadImp;
-
-    public:
-      //! dimension of the world
-      enum { dimension = GridPartType :: dimension };
-
-      //! type for reals (usually double)
-      typedef typename GridPartType :: ctype RealType;
-
-      //! type of the intersection iterator
-      typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-      typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-
-      //! type of coordinates in codim-0 reference element
-      typedef typename IntegrationTraits :: CoordinateType CoordinateType;
-
-      //! type of quadrature identifier on user side (default is the order of quadrature)
-      typedef typename BaseType :: QuadratureKeyType QuadratureKeyType;
+      //! Type of the intersection iterator
+      typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       //! type of the quadrature point
-      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
       //! type of iterator
-      typedef QuadraturePointIterator< ThisType > IteratorType;
+      typedef QuadraturePointIterator< This > IteratorType;
 
-      //! type of coordinate in codim-1 reference element
-      typedef typename IntegrationTraits :: IntegrationPointListType :: CoordinateType
-        LocalCoordinateType;
+      //! type quadrature for use on non-conforming intersections
+      typedef This NonConformingQuadratureType;
 
-      //! type of quadrature for use on non-conforming intersections
-      typedef ThisType NonConformingQuadratureType;
 
-    public:
-      using BaseType::nop;
+      // for compatibility
+      typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
+      typedef IntersectionIteratorType IntersectionIterator;
 
-      /*! \brief constructor
+
+      using Base::localPoint;
+      using Base::elementGeometry;
+      using Base::nop;
+
+      /** \brief constructor
        *
        *  \param[in]  gridPart      grid partition (a dummy here)
        *  \param[in]  intersection  intersection
        *  \param[in]  quadKey       quadrature key, i.e. desired order of the quadrature
        *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
+       *
+       *  \note This code assumes that the codim-0 entity is either a simplex or
+       *        a cube (otherwise elementGeometry() returns a wrong geometry).
        */
-      ElementQuadrature ( const GridPartType &gridPart,
-                          const IntersectionType &intersection,
-                          const QuadratureKeyType& quadKey,
-                          typename BaseType :: Side side )
-      : BaseType( gridPart, intersection, quadKey, side )
+      template <class QuadratureKeyType>
+      ElementQuadratureImpl( const GridPartType &gridPart,
+                                       const IntersectionType &intersection,
+                                       const QuadratureKeyType& quadKey,
+                                       const typename Base :: Side side )
+      : Base( getPointList( intersection, quadKey, side ) ),
+        side_(side),
+        intersection_(intersection),
+        referenceGeometry_( side == Base::INSIDE ?  intersection.geometryInInside() : intersection.geometryInOutside())
       {}
 
-      /*! \brief copy constructor
-       *
-       *  \param[in]  org  element quadrature to copy
-       */
-      ElementQuadrature( const ElementQuadrature &org )
-      : BaseType( org )
-      {
-      }
-
-      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      const QuadraturePointWrapperType operator[] ( size_t i ) const
       {
         return QuadraturePointWrapperType( *this, i );
       }
 
       IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
       IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+      typename Base :: Side side() const { return side_; }
+      bool isInside() const { return side_ == Base::INSIDE; }
 
-      /*! obtain the weight of the i-th quadrature point
-       *
-       *  \note The quadrature weights sum up to the volume of the corresponding
-       *        reference element.
-       *
-       *  \param[in]  i  index of the quadrature point
-       *
-       *  \returns weight of the i-th quadrature point within the quadrature
-       */
-      const RealType &weight( size_t i ) const
+      /** \copydoc Dune::Fem::IntegrationPointList::point */
+      const CoordinateType &point ( size_t i ) const
+      {
+        dummy_ = referenceGeometry_.global( localPoint( i ) );
+        return dummy_;
+      }
+
+      /** \copydoc Dune::Fem::IntegrationPointList::weight */
+      auto weight( size_t i ) const
       {
         return quadImp().weight( i );
       }
+
+      using Base::localFaceIndex;
+
+      const IntersectionType &intersection() const
+      {
+        return intersection_;
+      }
+
+    protected:
+      using Base::quadImp;
+
+      Base getPointList ( const IntersectionType &intersection, const int order,
+                          const typename Base :: Side side )
+      {
+        switch( side )
+        {
+          case Base :: INSIDE:
+            return Base( TwistUtilityType::elementGeometry( intersection, true ),
+                         intersection.type(), intersection.indexInInside(), order );
+
+          case Base ::OUTSIDE:
+            return Base( TwistUtilityType::elementGeometry( intersection, false ),
+                         intersection.type(), intersection.indexInOutside(), order );
+
+          default:
+            DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
+        }
+      }
+
+    private:
+      typedef typename IntersectionIteratorType::Intersection::LocalGeometry ReferenceGeometry;
+
+      const typename Base :: Side side_;
+      const IntersectionType &intersection_;
+      ReferenceGeometry referenceGeometry_;
+      mutable CoordinateType dummy_;
     };
+
+    /** \copydoc ElementQuadratureImpl< GridPart, codim, IntegrationTraits > */
+    template< class GridPart, int codim, template <class, int> class IntegrationTraits = DefaultQuadratureTraits >
+    using ElementIntegrationPointList = ElementQuadratureImpl< GridPart, codim, ElementQuadratureTraits< GridPart, codim, IntegrationTraits>, false >;
+
+    template< class GridPart, int codim, template <class, int> class IntegrationTraits = DefaultQuadratureTraits >
+    using ElementQuadrature = ElementQuadratureImpl< GridPart, codim, ElementQuadratureTraits< GridPart, codim, IntegrationTraits>, true >;
 
     template<class GridPart, class Entity>
     static inline auto elementQuadrature(const GridPart& gridPart, const Entity& entity, unsigned quadOrder)
