@@ -676,6 +676,7 @@ class ModelClass():
         code.append(TypeAlias("GridView", "typename GridPartType::GridViewType"))
         code.append(TypeAlias("ctype", "typename GridView::ctype"))
         if self.bindable:
+            code.append(TypeAlias("BaseType", self.bindableBase))
             code.append(TypeAlias("FunctionSpaceType", "Dune::Fem::GridFunctionSpace<GridPartType,Dune::Dim<"+str(self.dimRange)+">>"))
 
         code.append(TypeAlias("EntityType", "typename GridPartType::template Codim< 0 >::EntityType"))
@@ -768,8 +769,8 @@ class ModelClass():
             if self.needMinFacetEdgeLength:
                 minFacetEdgeLength_ = Variable('ctype', 'minFacetEdgeLength_')
         else:
-            code.append(Using(self.bindableBase+'::entity'))
-            code.append(Using(self.bindableBase+'::geometry'))
+            code.append(Using('BaseType::entity'))
+            code.append(Using('BaseType::geometry'))
 
         constants_ = Variable("ConstantTupleType", "constants_")
         coefficientsTupleType = 'std::tuple< ' + ', '.join('Dune::Fem::ConstLocalFunction< ' + n + ' >' for n in self.coefficientTypes) + ' >'
@@ -790,7 +791,7 @@ class ModelClass():
             args = []
         args += self.ctor_args + [Variable('const ' + t + ' &', n) for t, n in zip(self.coefficientTypes, self.coefficientNames)]
         if self.bindable:
-            init = [self.bindableBase+'(gridPart,name,order)']
+            init = ['BaseType(gridPart,name,order)']
         else:
             init = []
         if self._coefficients:
@@ -814,11 +815,11 @@ class ModelClass():
         intersection = Variable('const IntersectionType &', 'intersection')
         if self.bindable:
             initEntity = Method('void', 'bind', args=[entity])
-            initEntity.append(self.bindableBase+'::bind(entity);')
+            initEntity.append('BaseType::bind(entity);')
             uninitEntity = Method('void', 'unbind')
-            uninitEntity.append(self.bindableBase+'::unbind();')
+            uninitEntity.append('BaseType::unbind();')
             initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
-            initIntersection.append(self.bindableBase+'::bind(intersection,side);')
+            initIntersection.append('BaseType::bind(intersection, side);')
             code.append(initIntersection)
         else:
             initEntity = Method('bool', 'init', args=[entity])
@@ -838,7 +839,7 @@ class ModelClass():
         if self.skeleton is None:
             for i, c in enumerate(self._coefficients):
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( this->entity() )', uses=[entity, coefficients_]))
-                uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ').unbind( )', uses=[coefficients_]))
+                uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).unbind()', uses=[coefficients_]))
                 initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).bind( this->entity() )', uses=[entity, coefficients_]))
         else:
             for i, c in enumerate(self._coefficients):
