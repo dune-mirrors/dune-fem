@@ -153,7 +153,7 @@ def compute(comm,useAdapt,gridType,
     rng = np.random.default_rng()
     if storage == "numpy":
         dofSize = uh1.as_numpy[:].shape[0]
-    elif storage == "petsc":
+    elif external and storage == "petsc":
         try:
             dofSize = uh1.as_petsc.getArray().shape[0]
         except AttributeError: # ci gives numpy.ndarray object has no attribute getArray
