@@ -87,6 +87,8 @@ torture-24.04-gcc-14-20:
   allow_failure: true
   script:
     - DUNECI_CMAKE_FLAGS+="-DFEM_TORTURE_TESTS=ON"
+    - python3 -m venv --system-site-packages dune-env
+    - source dune-env/bin/activate
     - duneci-standard-test
   variables:
     DUNECI_TOOLCHAIN: gcc-14-20
