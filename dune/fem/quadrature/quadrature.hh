@@ -68,7 +68,7 @@ namespace Dune
 
     unsigned int index () const { return index_; }
     const CoordinateType &position () const { return quadrature().point( index() ); }
-    const RealType &weight () const { return quadrature().weight( index() ); }
+    auto weight () const { return quadrature().weight( index() ); }
     const LocalCoordinateType &localPosition () const { return quadrature().localPoint( index() ); }
   };
 
@@ -152,7 +152,8 @@ namespace Dune
    *        that quadratures have weights.
    */
   template< typename FieldImp, int dim,
-            template< class, int > class IntegrationTraits >
+            template< class, int > class IntegrationTraits,
+            bool isQuadrature = false >
   class IntegrationPointList
   {
   public:
@@ -168,15 +169,15 @@ namespace Dune
     typedef QuadratureProvider< FieldType, dimension, IntegrationTraits >
       QuadratureProviderType;
 
+    typedef typename std::conditional< isQuadrature,
+                             const FieldType&,
+                             FieldType > :: type WeightReturnType;
   public:
     //! type of integration point list implementation
     typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
 
     //! type of coordinate
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
-
-    //! type of key to identify quadrature on user side (default the order of the quadrature)
-    typedef typename Traits :: QuadratureKeyType  QuadratureKeyType;
 
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
@@ -199,23 +200,34 @@ namespace Dune
     /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
+     *  is capable of integrating polynomials up the given order exactly.
      *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType  geometry type of the requested quadrature
      *  \param[in]  order         order of the requested quadrature
      */
+    template <class FactoryTraits>
+    inline IntegrationPointList ( const FactoryTraits traits,
+                                  const GeometryType &geometryType,
+                                  const typename FactoryTraits::QuadratureKeyType& quadKey )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ), NoDelete() )
+    //: ipListPtr_( &QuadratureProviderType :: getQuadrature( traits, geometryType, quadKey ), NoDelete() )
+    {
+    }
+
+    template <class QuadratureKeyType>
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const QuadratureKeyType& quadKey )
-    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, quadKey ), NoDelete() )
+    : IntegrationPointList( DefaultQuadratureTraits< FieldType, dimension > (),
+                            geometryType, quadKey )
     {
     }
 
     /** \brief create a quadrature for a given geometry type and order
      *
      *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
+     *  is capable of integrating polynomials up the given order exactly.
      *
      *  \note The order of the quadrature may be higher than the requested one.
      *
@@ -224,10 +236,22 @@ namespace Dune
      *              quadrature is used for (in case of face quadratures)
      *  \param[in]  order            order of the requested quadrature
      */
+    template <class FactoryTraits>
+    inline IntegrationPointList ( const FactoryTraits traits,
+                                  const GeometryType &geometryType,
+                                  const GeometryType &elementGeometry,
+                                  const typename FactoryTraits::QuadratureKeyType& quadKey )
+    //: ipListPtr_( &QuadratureProviderType :: getQuadrature( traits, geometryType, elementGeometry, quadKey ), NoDelete() )
+    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ), NoDelete() )
+    {
+    }
+
+    template <class QuadratureKeyType>
     inline IntegrationPointList ( const GeometryType &geometryType,
                                   const GeometryType &elementGeometry,
                                   const QuadratureKeyType& quadKey )
-    : ipListPtr_( &QuadratureProviderType :: getQuadrature( geometryType, elementGeometry, quadKey ), NoDelete() )
+    : IntegrationPointList( DefaultQuadratureTraits< FieldType, dimension > (),
+                            geometryType, elementGeometry, quadKey )
     {
     }
 
@@ -263,10 +287,7 @@ namespace Dune
      *
      *  \param[in]  org  integration point list to be copied
      */
-    inline IntegrationPointList ( const IntegrationPointList &org )
-    : ipListPtr_( org.ipListPtr_ )
-    {
-    }
+    inline IntegrationPointList ( const IntegrationPointList &org ) = default;
 
     const QuadraturePointWrapperType operator[] ( unsigned int i ) const
     {
@@ -373,8 +394,31 @@ namespace Dune
     {
       return ipList().isFaceInterpolationQuadrature( numShapeFunctions );
     }
-  };
 
+    /** \brief obtain weight of i-th integration point (if quadrature, else 1.0)
+     *
+     *  This method returns the weight of the i-th integration point for
+     *  0 <= i < nop() within the quadrature.
+     *
+     *  \note The integration point can be obtained via the point() method.
+     *
+     *  \note The quadrature weights sum up to the volume of the reference
+     *        element.
+     *
+     *  \param[in]  i  number of the integration point, 0 <= i < nop()
+     *
+     *  \returns weight of the i-th integration point
+     */
+    WeightReturnType weight( size_t i ) const
+    {
+      if constexpr ( isQuadrature )
+      {
+        return ipList().weight( i );
+      }
+      else
+        return 1.0;
+    }
+  };
 
 
   /** \class Quadrature
@@ -396,135 +440,8 @@ namespace Dune
    */
   template< class FieldImp, int dim,
             template< class, int > class QuadratureTraits = DefaultQuadratureTraits >
-  class Quadrature
-  : public IntegrationPointList< FieldImp, dim, QuadratureTraits >
-  {
-  public:
-    typedef FieldImp FieldType;
+  using Quadrature = IntegrationPointList< FieldImp, dim, QuadratureTraits, true >;
 
-    static const unsigned int dimension = dim ;
-
-    typedef QuadratureTraits< FieldType, dimension > Traits;
-
-  private:
-    typedef Quadrature< FieldType, dimension, QuadratureTraits > ThisType;
-    typedef IntegrationPointList< FieldType, dimension, QuadratureTraits > BaseType;
-
-    typedef QuadratureProvider< FieldType, dimension, QuadratureTraits >
-      QuadratureProviderType;
-
-  public:
-    using BaseType :: ipList;
-
-    typedef typename BaseType::IntegrationPointListStorageType  IntegrationPointListStorageType;
-
-    //! type of the implementation (this must actually be a quadrature implementation)
-    typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
-
-    //! type of local coordinate vectors
-    typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
-
-    //! type of key to identify the quadrature
-    typedef typename Traits :: QuadratureKeyType  QuadratureKeyType;
-
-    //! to be revised, look at caching quad
-    enum { codimension = 0 };
-
-  public:
-    /** \brief create a quadrature for a given geometry and order
-     *
-     *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
-     *
-     *  \note The order of the quadrature may be higher than the requested one.
-     *
-     *  \param[in]  geometryType  geometry type of the requested quadrature
-     *  \param[in]  key           key to identify the quadrature (default = order)
-     */
-    inline Quadrature( const GeometryType &geometryType, const QuadratureKeyType &key )
-    : BaseType( geometryType, key )
-    {
-    }
-
-    /** \brief create a quadrature for a given geometry and order
-     *
-     *  This constructor creates a quadrature for the specified geometry which
-     *  is capable of integrating polynoms up the given order exactly.
-     *
-     *  \note The order of the quadrature may be higher than the requested one.
-     *
-     *  \param[in]  geometryType     geometry type of the requested quadrature
-     *  \param[in]  elementGeometry  geometry type of element that resulting
-     *              quadrature is used for (in case of face quadratures)
-     *  \param[in]  key              key to identify the quadrature (default = order)
-     *
-     *  \note This is a specialized constructor for constructing
-     *  face quadratures for UGGrid.
-     */
-    inline Quadrature ( const GeometryType &geometryType,
-                        const GeometryType &elementGeometry,
-                        const QuadratureKeyType &key )
-    : BaseType( geometryType, elementGeometry, key )
-    {
-    }
-
-    /** \brief create an integration point list from an implementation
-     *
-     *  This constructor creates an integration point list from a given
-     *  implementation.
-     *
-     *  \note This constructor is provided mainly for testing purposes.
-     *
-     *  \param[in]  ipList  implementation of the integration point list
-     */
-    inline explicit Quadrature( const IntegrationPointListType& ipList )
-    : BaseType( ipList )
-    {
-    }
-
-    /** \brief create an integration point list from an implementation
-     *
-     *  This constructor creates an integration point list from a given
-     *  implementation.
-     *
-     *  \note This constructor is provided mainly for agglomeration quadratures.
-     *
-     *  \param[in]  ipListPtr  shared_ptr of implementation of the integration point list
-     */
-    inline explicit Quadrature( const IntegrationPointListStorageType& ipListPtr )
-    : BaseType( ipListPtr )
-    {
-    }
-
-    /** \brief copy constructor
-     *
-     *  \param[in]  org  quadrature to be copied
-     */
-   //! Copy constructor
-    inline Quadrature( const Quadrature &org )
-    : BaseType( org )
-    {
-    }
-
-    /** \brief obtain weight of i-th integration point
-     *
-     *  This method returns the weight of the i-th integration point for
-     *  0 <= i < nop() within the quadrature.
-     *
-     *  \note The integration point can be obtained via the point() method.
-     *
-     *  \note The quadrature weights sum up to the volume of the reference
-     *        element.
-     *
-     *  \param[in]  i  number of the integration point, 0 <= i < nop()
-     *
-     *  \returns weight of the i-th integration point
-     */
-    const FieldType &weight( size_t i ) const
-    {
-      return ipList().weight( i );
-    }
-  };
 
 
   /** \class SelectQuadraturePointSetId

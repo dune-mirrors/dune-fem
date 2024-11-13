@@ -13,7 +13,7 @@
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
-#include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 #include <dune/fem/storage/dynamicarray.hh>

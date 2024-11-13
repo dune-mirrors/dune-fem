@@ -20,7 +20,7 @@
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/shapefunctionset/caching.hh>
-#include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/version.hh>
 

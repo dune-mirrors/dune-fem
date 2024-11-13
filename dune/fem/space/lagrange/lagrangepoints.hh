@@ -10,7 +10,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 // dune-fem includes
-#include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/mapper/localkey.hh>
 
 // local includes

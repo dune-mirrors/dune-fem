@@ -299,331 +299,201 @@ namespace Dune
      *  - QuadratureProvider<FieldImp,2,QuadratureTraits>
      *  - QuadratureProvider<FieldImp,3,QuadratureTraits>
      */
-    template< typename FieldImp, int dim, template< class, int > class QuadratureTraits >
+    template< typename FieldImp, int dim, template< class, int > class IntegrationTraits >
     class QuadratureProvider
     {
     public:
       typedef FieldImp FieldType;
 
-      enum { dimension = dim };
+      static const int dimension = dim;
 
     private:
-      typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
+      typedef QuadratureProvider< FieldType, dimension, IntegrationTraits > ThisType;
 
-      typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
+      typedef IntegrationTraits< FieldType, dimension > QuadratureTraits;
 
-    public:
-      //! type for cube quadrature
-      typedef typename QuadratureTraitsType :: CubeQuadratureType CubeQuadratureType;
+      // to be removed
+      typedef QuadratureTraits FactoryTraits;
 
-      //! type of integration point list implementation
-      typedef typename QuadratureTraitsType :: IntegrationPointListType
-        IntegrationPointListType;
-
-      //! key for access of quadratures in the storage
-      typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
-
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() );
-        return QuadCreator< 0 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey );
-      }
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const GeometryType &elementGeometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        return getQuadrature( geometry, quadKey );
-      }
-
-      QuadratureProvider() = delete;
-      QuadratureProvider( const ThisType& ) = delete;
-      QuadratureProvider &operator=( const ThisType& ) = delete;
-    };
-
-
-
-    /** \copydoc Dune::Fem::QuadratureProvider */
-    template< typename FieldImp, template< class, int > class QuadratureTraits >
-    class QuadratureProvider< FieldImp, 0, QuadratureTraits >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-      enum { dimension = 0 };
-
-    private:
-      typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
-
-      typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
-
-    public:
-      //! type of point quadrature
-      typedef typename QuadratureTraitsType :: PointQuadratureType PointQuadratureType;
-
-      //! type of integration point list implementation
-      typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
-
-      //! key for access of quadratures in the storage
-      typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
-
-      class PointQuadratureStorage : public PointQuadratureType
+      template <class PointQuadrature, class QuadratureKey>
+      class PointQuadratureStorage : public PointQuadrature
       {
       public:
         // only call IdProvider ::instance().newId() when object is created
-        PointQuadratureStorage( const GeometryType &geometry, const QuadratureKeyType& quadKey )
-          : PointQuadratureType( geometry, quadKey, IdProvider::instance().newId() )
+        PointQuadratureStorage( const GeometryType &geometry, const QuadratureKey& quadKey )
+          : PointQuadrature( geometry, quadKey, IdProvider::instance().newId() )
         {}
       };
 
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() || geometry.isSimplex() );
-        return Singleton< PointQuadratureStorage > :: instance( geometry, quadKey );
-      }
-
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const GeometryType &elementGeometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        return getQuadrature(geometry, quadKey);
-      }
-
-      QuadratureProvider() = delete;
-      QuadratureProvider( const ThisType& ) = delete;
-      QuadratureProvider &operator=( const ThisType& ) = delete;
-    };
-
-
-
-    /** \copydoc Dune::Fem::QuadratureProvider */
-    template< class FieldImp, template< class, int > class QuadratureTraits >
-    class QuadratureProvider< FieldImp, 1, QuadratureTraits >
-    {
     public:
-      typedef FieldImp FieldType;
-
-      enum { dimension = 1 };
-
-    private:
-      typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
-
-      typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
-
-    public:
-      //! type of line quadrature
-      typedef typename QuadratureTraitsType :: LineQuadratureType LineQuadratureType;
-
       //! type of integration point list implementation
-      typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
-
-      //! key for access of quadratures in the storage
-      typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
+      typedef typename QuadratureTraits::IntegrationPointListType  QuadratureImplementationType;
 
       //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const QuadratureKeyType& quadKey )
+#if 0
+      template <class FactoryTraits>
+      static const QuadratureImplementationType &getQuadrature( const FactoryTraits traits,
+                                                            const GeometryType &geometry,
+                                                            const typename FactoryTraits::QuadratureKeyType& quadKey )
+#else
+      static const QuadratureImplementationType &getQuadrature( const GeometryType &geometry,
+                                                                const typename FactoryTraits::QuadratureKeyType& quadKey )
+#endif
       {
-        assert( geometry.isCube() || geometry.isSimplex() );
-        return QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey );
-      }
+        static_assert( std::is_same< QuadratureImplementationType,
+                                     typename FactoryTraits::IntegrationPointListType> :: value );
 
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const GeometryType &elementGeometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() || geometry.isSimplex() );
-        // we need here to distinguish between the basic types
-        // otherwise the this won't work for UGGrid
-        return ( elementGeometry.isSimplex() ) ?
-          QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey ) :
-          QuadCreator< 1 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey ) ;
-      }
-
-      QuadratureProvider() = delete;
-      QuadratureProvider( const ThisType& ) = delete;
-      QuadratureProvider &operator=( const ThisType& ) = delete;
-    };
-
-
-
-    /** \copydoc Dune::Fem::QuadratureProvider */
-    template< class FieldImp, template< class, int > class QuadratureTraits >
-    class QuadratureProvider< FieldImp, 2, QuadratureTraits >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-      enum { dimension = 2 };
-
-    private:
-      typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
-
-      typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
-
-    public:
-      //! type of simplex quadrature
-      typedef typename QuadratureTraitsType :: SimplexQuadratureType SimplexQuadratureType;
-      //! type of cube quadrature
-      typedef typename QuadratureTraitsType :: CubeQuadratureType CubeQuadratureType;
-
-      //! type of integration point list implementation
-      typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
-
-      //! key for access of quadratures in the storage
-      typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
-
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() || geometry.isSimplex() || geometry.isNone() );
-
-        if( geometry.isSimplex() )
+        // for 0d point quadratures
+        if constexpr ( dimension == 0 )
         {
-          return QuadCreator< 0 > ::
-            template provideQuad< SimplexQuadratureType > ( geometry, quadKey );
+          typedef typename FactoryTraits :: PointQuadratureType PointQuadratureType;
+          typedef typename FactoryTraits :: QuadratureKeyType  QuadratureKeyType;
+
+          typedef PointQuadratureStorage< PointQuadratureType, QuadratureKeyType > PointQuadratureStorageType;
+
+          assert( geometry.isCube() || geometry.isSimplex() );
+          return Singleton< PointQuadratureStorageType > :: instance( geometry, quadKey );
         }
-        else if( geometry.isCube() )
+        else // all other cases
         {
-          return QuadCreator< 1 > ::
-            template provideQuad< CubeQuadratureType >    ( geometry, quadKey ) ;
-        }
-        else // type == None
-        {
-          // dummy return for polygonal grid cells, i.e. geometry type none
-          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, 0 );
-        }
-      }
+          // for 1d return LineQuadrature
+          if constexpr ( dimension == 1 )
+          {
+            typedef typename FactoryTraits::LineQuadratureType  LineQuadratureType;
+            assert( geometry.isCube() || geometry.isSimplex() );
+            return QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey );
+          }
 
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const GeometryType &elementGeometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() || geometry.isSimplex() );
+          // for 2d Simplex and Cube
+          if constexpr ( dimension >= 2 )
+          {
+            typedef typename FactoryTraits::SimplexQuadratureType SimplexQuadratureType;
+            typedef typename FactoryTraits::CubeQuadratureType    CubeQuadratureType;
+            if( geometry.isSimplex() )
+            {
+              return QuadCreator< 0 > ::
+                template provideQuad< SimplexQuadratureType > ( geometry, quadKey );
+            }
 
-        // if geometry is simplex return simplex quadrature
-        if ( geometry.isSimplex() )
-        {
-          // check element geometry to provide quadratures with different ids
-          if( elementGeometry.isSimplex() )
-            return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isCube() )
-            return QuadCreator< 1 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isPrism() )
-            return QuadCreator< 2 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isPyramid() )
-            return QuadCreator< 3 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
+            if( geometry.isCube() )
+            {
+              return QuadCreator< 1 > ::
+                template provideQuad< CubeQuadratureType >    ( geometry, quadKey ) ;
+            }
+
+            if( geometry.isNone() )
+            {
+              // dummy return for polygonal grid cells, i.e. geometry type none
+              return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, 0 );
+            }
+
+            if constexpr ( dimension == 3 )
+            {
+              typedef typename FactoryTraits::PrismQuadratureType    PrismQuadratureType;
+              typedef typename FactoryTraits::PyramidQuadratureType  PyramidQuadratureType;
+
+              if( geometry.isPrism() )
+                return QuadCreator< 2 > :: template provideQuad< PrismQuadratureType >
+                  ( geometry, quadKey );
+              if( geometry.isPyramid() )
+                return QuadCreator< 3 > :: template provideQuad< PyramidQuadratureType >
+                  ( geometry, quadKey );
+            }
+          }
+
+          DUNE_THROW( RangeError, "Element type not available for dimension " << dimension );
+          // dummy return
+          if constexpr ( dimension == 1 )
+          {
+            typedef typename FactoryTraits::LineQuadratureType  LineQuadratureType;
+            return QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey, 0 );
+          }
           else
-            DUNE_THROW( RangeError, "Element type not available for dimension 3" );
+          {
+            typedef typename FactoryTraits::SimplexQuadratureType  SimplexQuadratureType;
+            return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey, 0 );
+          }
+        } // else not dimension 0
+      }
+
+#if 0
+      //! Access to the quadrature implementations.
+      template <class FactoryTraits>
+      static const QuadratureImplementationType &getQuadrature( const FactoryTraits traits,
+                                                            const GeometryType &geometry,
+                                                            const GeometryType &elementGeometry,
+                                                            const typename FactoryTraits::QuadratureKeyType& quadKey )
+#else
+      //! Access to the quadrature implementations.
+      static const QuadratureImplementationType &getQuadrature( const GeometryType &geometry,
+                                                                const GeometryType &elementGeometry,
+                                                                const typename FactoryTraits::QuadratureKeyType& quadKey )
+#endif
+      {
+        if constexpr ( dimension == 0 )
+        {
+          return getQuadrature(geometry, quadKey);
         }
         else
         {
-          // return cube quadrature
-          // check element geometry to provide quadratures with different ids
-          if( elementGeometry.isSimplex() )
-            return QuadCreator< 4 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isCube() )
-            return QuadCreator< 5 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isPrism() )
-            return QuadCreator< 6 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
-          else if( elementGeometry.isPyramid() )
-            return QuadCreator< 7 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
-          else
-            DUNE_THROW( RangeError, "Element type not available for dimension 3" );
+          if constexpr ( dimension == 1 )
+          {
+            typedef typename FactoryTraits::LineQuadratureType  LineQuadratureType;
+            assert( geometry.isCube() || geometry.isSimplex() );
+            // we need here to distinguish between the basic types
+            // otherwise the this won't work for UGGrid
+            return ( elementGeometry.isSimplex() ) ?
+              QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey ) :
+              QuadCreator< 1 > :: template provideQuad< LineQuadratureType > ( geometry, quadKey ) ;
+          }
+
+          if constexpr ( dimension == 2 )
+          {
+            typedef typename FactoryTraits::SimplexQuadratureType  SimplexQuadratureType;
+            typedef typename FactoryTraits::CubeQuadratureType     CubeQuadratureType;
+            assert( geometry.isCube() || geometry.isSimplex() );
+
+            // if geometry is simplex return simplex quadrature
+            if ( geometry.isSimplex() )
+            {
+              // check element geometry to provide quadratures with different ids
+              if( elementGeometry.isSimplex() )
+                return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isCube() )
+                return QuadCreator< 1 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isPrism() )
+                return QuadCreator< 2 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isPyramid() )
+                return QuadCreator< 3 > :: template provideQuad< SimplexQuadratureType > ( geometry, quadKey ) ;
+              else
+                DUNE_THROW( RangeError, "Element type not available for dimension 3" );
+            }
+            else
+            {
+              // return cube quadrature
+              // check element geometry to provide quadratures with different ids
+              if( elementGeometry.isSimplex() )
+                return QuadCreator< 4 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isCube() )
+                return QuadCreator< 5 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isPrism() )
+                return QuadCreator< 6 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
+              else if( elementGeometry.isPyramid() )
+                return QuadCreator< 7 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey ) ;
+              else
+                DUNE_THROW( RangeError, "Element type not available for dimension 3" );
+            }
+          }
+
+          if constexpr ( dimension >= 3 )
+          {
+            typedef typename FactoryTraits::SimplexQuadratureType  SimplexQuadratureType;
+            DUNE_THROW( RangeError, "QuadProvider::getQuadrature not implemented for 3d face quadratures!" );
+            // dummy return
+            return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
+              ( geometry, quadKey, 0 );
+          }
         }
-
-        DUNE_THROW( RangeError, "Element type not available for dimension 2" );
-        // dummy return
-        return QuadCreator< 0 > ::
-          template provideQuad< SimplexQuadratureType >( geometry, quadKey, 0 );
-      }
-
-      QuadratureProvider() = delete;
-      QuadratureProvider( const ThisType& ) = delete;
-      QuadratureProvider &operator=( const ThisType& ) = delete;
-    };
-
-
-
-    /** \copydoc Dune::Fem::QuadratureProvider */
-    template< class FieldImp, template< class, int > class QuadratureTraits >
-    class QuadratureProvider< FieldImp, 3, QuadratureTraits >
-    {
-    public:
-      typedef FieldImp FieldType;
-
-      enum { dimension = 3 };
-
-    private:
-      typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
-
-      typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
-
-    public:
-      //! type of simplex quadrature
-      typedef typename QuadratureTraitsType :: SimplexQuadratureType SimplexQuadratureType;
-      //! type of cube quadrature
-      typedef typename QuadratureTraitsType :: CubeQuadratureType CubeQuadratureType;
-      //! type of prims quadrature
-      typedef typename QuadratureTraitsType :: PrismQuadratureType PrismQuadratureType;
-      //! type of pyramid quadrature
-      typedef typename QuadratureTraitsType :: PyramidQuadratureType PyramidQuadratureType;
-
-      //! type of integration point list implementation
-      typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
-
-      //! key for access of quadratures in the storage
-      typedef typename QuadratureTraitsType :: QuadratureKeyType  QuadratureKeyType;
-
-      //! Access to the quadrature implementations.
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        assert( geometry.isCube() || geometry.isSimplex() ||  geometry.isNone()
-             || geometry.isPrism() || geometry.isPyramid() );
-
-        if( geometry.isSimplex() )
-          return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
-            ( geometry, quadKey );
-        if( geometry.isCube() )
-          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType >
-            ( geometry, quadKey );
-
-        if( geometry.isPrism() )
-          return QuadCreator< 2 > :: template provideQuad< PrismQuadratureType >
-            ( geometry, quadKey );
-        if( geometry.isPyramid() )
-          return QuadCreator< 3 > :: template provideQuad< PyramidQuadratureType >
-            ( geometry, quadKey );
-
-        if( geometry.isNone() )
-        {
-          // dummy return for polyhedral grid cells
-          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, quadKey, 0 );
-        }
-
-        DUNE_THROW( RangeError, "Element type not available for dimension 3" );
-        // dummy return
-        return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
-          ( geometry, quadKey, 0 );
-      }
-
-      static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
-                                                            const GeometryType &elementGeometry,
-                                                            const QuadratureKeyType& quadKey )
-      {
-        DUNE_THROW( RangeError, "QuadProvider::getQuadrature not implemented for 3d face quadratures!" );
-        // dummy return
-        return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
-          ( geometry, quadKey, 0 );
       }
 
       QuadratureProvider() = delete;

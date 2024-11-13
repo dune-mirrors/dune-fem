@@ -40,7 +40,7 @@ namespace Dune
       const Geometry& geometry = basisFunctionSet.geometry();
       const auto refElement = basisFunctionSet.referenceElement();
 
-      if( entity.type() != refElement.type() )
+      if( entity.type() != refElement.type() || geometry.type() != refElement.type() )
         DUNE_THROW( Dune::InvalidStateException, "GeometryType of referenceElement and entity mismatch for this basisFunctionSet" );
 
       int order = basisFunctionSet.order();

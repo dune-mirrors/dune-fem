@@ -8,6 +8,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
+#include <dune/fem/quadrature/intersectionquadrature.hh>
 
 #include <dune/fem/quadrature/dunequadratures.hh>
 #include <dune/fem/quadrature/lumpingquadrature.hh>
@@ -138,13 +139,17 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
+          IntersectionQuadrature< FaceQuadratureType, true > interQuad( gridPart_, intersection, order_, true );
           EntityType inside = intersection.inside();
-          FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
-              FaceQuadratureType::INSIDE);
+          const FaceQuadratureType& faceQuadInner = interQuad.inside();
+
+          //FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
+          //    FaceQuadratureType::INSIDE);
 
           EntityType outside = intersection.outside();
-          FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
-              FaceQuadratureType::OUTSIDE);
+          const FaceQuadratureType& faceQuadOuter = interQuad.outside();
+          //FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
+          //    FaceQuadratureType::OUTSIDE);
 
           const int faceQuadInner_nop = faceQuadInner.nop();
           for (int qp = 0; qp < faceQuadInner_nop; ++qp)

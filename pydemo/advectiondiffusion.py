@@ -66,16 +66,18 @@ def compute(space,epsilon,weakBnd,skeleton, mol=None):
 
     if space.storage[0] == "numpy":
         solver={"solver":("suitesparse","umfpack"),
-                "parameters":{"newton.verbose": True,
-                              "newton.linear.verbose": False,
-                              "newton.linear.tolerance":1e-5,
+                "parameters":{"nonlinear.verbose": True,
+                              "linear.verbose": False,
+                              "linear.tolerance":1e-5,
                 }
                }
     else:
         solver={"solver":"bicgstab",
-                "parameters":{"newton.linear.preconditioning.method":"ilu",
-                              "newton.linear.tolerance":1e-13,
-                              "newton.verbose": True, "newton.linear.verbose": False}
+                "parameters":{"linear.preconditioning.method":"ilu",
+                              "linear.tolerance":1e-13,
+                              "linear.verbose": False,
+                              "nonlinear.verbose": True,
+                              }
                }
     if mol == 'mol':
         scheme = molSolutionScheme([form==rhs,strongBC], **solver)

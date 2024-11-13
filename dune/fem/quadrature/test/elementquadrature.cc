@@ -82,7 +82,7 @@ ctype analyticalSolution (Dune::GeometryType t, int p, int direction )
 
 
 template<class Quadrature>
-bool checkIntegration(const Quadrature &quad)
+bool checkIntegration(const Quadrature &quad, const bool knownToFail)
 {
   typedef typename Quadrature::RealType ctype;
   const unsigned int dim = Quadrature::dimension;
@@ -108,11 +108,12 @@ bool checkIntegration(const Quadrature &quad)
     if (relativeError > maxRelativeError)
       maxRelativeError = relativeError;
   }
+
   ctype epsilon = std::pow(2.0,double(p))*p*std::numeric_limits<double>::epsilon();
   if (p==0)
     epsilon = 2.0*std::numeric_limits<double>::epsilon();
-  if (maxRelativeError > epsilon) {
-    std::cerr << "Error: Quadrature for " << t << " and order=" << p << " failed" << std::endl;
+  if (maxRelativeError > epsilon ) {
+    std::cerr << "Error: Quadrature for " << t << " and order=" << p << " failed (known to fail: " << knownToFail << ")"<< std::endl;
     for (unsigned int d=0; d<dim; d++)
     {
       ctype exact = analyticalSolution<ctype,dim>(t,p,d);
@@ -120,14 +121,14 @@ bool checkIntegration(const Quadrature &quad)
                             (std::abs(integral[d])+std::abs(exact));
       std::cerr << "       relative error " << relativeError << " in direction " << d << " (exact = " << exact << " numerical = " << integral[d] << ")" << std::endl;
     }
-    return false;
+    return knownToFail;
   }
   return true;
 }
 
 
 template< int dim, template <class,int> class QuadTraits = Dune::Fem::DefaultQuadratureTraits >
-void checkQuadraturePoints ( Dune::GeometryType type, int order )
+void checkQuadraturePoints ( Dune::GeometryType type, int order, const bool knownToFail = false )
 {
   std::cout << ">>> Checking ElementQuadrature for type " << type << " and order " << order << "..." << std::endl;
 
@@ -149,7 +150,8 @@ void checkQuadraturePoints ( Dune::GeometryType type, int order )
   if( std::abs( sum - refElement.volume() ) > 1e-8 )
       DUNE_THROW( Dune::RangeError, "Weights don't sum up to 1");
 
-  checkIntegration( quadrature );
+  if ( ! checkIntegration( quadrature, knownToFail ) )
+    DUNE_THROW( Dune::Exception, "Integration failed!");
 }
 
 
@@ -172,7 +174,7 @@ try
   for( int order = 0; order < 11; ++order )
     checkQuadraturePoints< 3 >( Dune::GeometryTypes::prism, order );
   for( int order = 0; order < 3; ++order )
-    checkQuadraturePoints< 3 >( Dune::GeometryTypes::pyramid, order );
+    checkQuadraturePoints< 3 >( Dune::GeometryTypes::pyramid, order, true);
 
   std::cout << "****  Checking DuneQuadratureTraits  ****" << std::endl;
   for( int order = 0; order < 12; ++order )
@@ -188,7 +190,7 @@ try
   for( int order = 0; order < 11; ++order )
     checkQuadraturePoints< 3, Dune::Fem::DuneQuadratureTraits >( Dune::GeometryTypes::prism, order );
   for( int order = 0; order < 3; ++order )
-    checkQuadraturePoints< 3, Dune::Fem::DuneQuadratureTraits >( Dune::GeometryTypes::pyramid, order );
+    checkQuadraturePoints< 3, Dune::Fem::DuneQuadratureTraits >( Dune::GeometryTypes::pyramid, order, true );
 
 #if HAVE_DUNE_LOCALFUNCTIONS
   std::cout << "****  Checking GaussLobattoQuadratureTraits  ****" << std::endl;

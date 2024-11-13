@@ -6,7 +6,7 @@
 #include <dune/common/ftraits.hh>
 #include <dune/common/fvector.hh>
 
-#include <dune/fem/quadrature/cachingpointlist.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune
 {
