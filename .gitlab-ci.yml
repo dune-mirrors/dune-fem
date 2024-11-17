@@ -16,6 +16,8 @@ variables:
   REGURL:             "https://gitlab.dune-project.org/api/v4/projects/302/packages/generic"
 
 before_script:
+  - python3 -m venv --system-site-packages dune-env
+  - source dune-env/bin/activate
   - source /duneci/bin/duneci-init-job
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
   - duneci-install-module https://gitlab.dune-project.org/core/dune-geometry.git

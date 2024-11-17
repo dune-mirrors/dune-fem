@@ -5,8 +5,21 @@ try:
     import petsc4py
     petsc4py.init(sys.argv)
     from petsc4py import PETSc
+    print("""***************************************************
+*** parallelTest.py: petsc4py enabled!
+***************************************************
+          """)
 except:
     petsc4py = None
+    print("""***************************************************
+***   WARNING:
+***
+***   parallelTest.py: petsc4py was disabled due to ImportError!
+***************************************************
+          """)
+
+assert petsc4py is not None, "test whether petsc4py is really imported!"
+
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from matplotlib import pyplot
