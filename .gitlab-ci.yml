@@ -39,17 +39,6 @@ ubuntu-24.04-gcc-14-20:
   tags: [duneci]
 
 
-## TODO: Fix this pipline
-#debian-11-gcc-10-20:
-#  image: registry.dune-project.org/docker/ci/debian:11
-#  script:
-#    - duneci-standard-test
-#  variables:
-#    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
-#    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
-#    DUNECI_TOOLCHAIN: gcc-10-20
-#  tags: [duneci]
-
 debian-12-gcc-12-20-minimal-no-petsc:
   image: registry.dune-project.org/docker/ci/debian:12
   script:
@@ -59,8 +48,8 @@ debian-12-gcc-12-20-minimal-no-petsc:
     DUNECI_TOOLCHAIN: gcc-12-20
   tags: [duneci]
 
-ubuntu:20.04-clang-10-20:
-  image: registry.dune-project.org/docker/ci/ubuntu:20.04
+debian-12-clang-14-20:
+  image: registry.dune-project.org/docker/ci/debian:12
   script:
     - duneci-standard-test
   variables:
@@ -68,7 +57,7 @@ ubuntu:20.04-clang-10-20:
     # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
     # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
     # bug in CI clang-10-17 and clang-10-20 are mixed up
-    DUNECI_TOOLCHAIN: clang-10-20
+    DUNECI_TOOLCHAIN: clang-14-20
   tags: [duneci]
 
 ubuntu:24.04--gcc-14-20:headercheck:
