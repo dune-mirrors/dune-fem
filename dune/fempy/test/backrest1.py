@@ -17,6 +17,8 @@ class CheckPointer:
             self.hgrid = hgrid
             pickle.dump(self.hgrid,self.file)
         self.items = []
+    def __del__(self):
+        self.file.close()
 
     def hierarchicalGrid(self):
         return self.hgrid
@@ -72,6 +74,7 @@ def run(restore=False):
     if not restore:
         checkPointer.backup()
 
+    del checkPointer
 
 if __name__ == "__main__":
     run(False)
