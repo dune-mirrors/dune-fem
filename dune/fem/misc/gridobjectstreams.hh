@@ -75,11 +75,11 @@ namespace Dune
     // ----------------------------------
 
 #if HAVE_DUNE_P4ESTGRID
-    template< int dim, int dimworld, class ctype >
-    struct GridObjectStreamTraits< P4estGrid< dim, dimworld, ctype > >
+    template< int dim, int dimworld, P4estType elType, class ctype >
+    struct GridObjectStreamTraits< P4estGrid< dim, dimworld, elType, ctype > >
     {
-      typedef typename P4estGrid< dim, dimworld, ctype > :: ObjectStreamType InStreamType;
-      typedef typename P4estGrid< dim, dimworld, ctype > :: ObjectStreamType OutStreamType;
+      typedef typename P4estGrid< dim, dimworld, elType, ctype > :: ObjectStreamType InStreamType;
+      typedef typename P4estGrid< dim, dimworld, elType, ctype > :: ObjectStreamType OutStreamType;
     };
 #endif // #if HAVE_DUNE_ALUGRID
 

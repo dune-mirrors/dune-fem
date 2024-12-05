@@ -264,10 +264,10 @@ namespace Dune
     // ----------------------------------
 
 #if HAVE_DUNE_P4ESTGRID
-    template< int dim, int dimworld, class ct >
-    struct BoundaryIdProvider< P4estGrid<dim, dimworld, ct > >
+    template< int dim, int dimworld, P4estType elType, class ct >
+    struct BoundaryIdProvider< P4estGrid<dim, dimworld, elType, ct > >
     {
-      typedef P4estGrid<dim, dimworld, ct > GridType;
+      typedef P4estGrid<dim, dimworld, elType, ct > GridType;
 
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )

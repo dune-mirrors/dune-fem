@@ -44,8 +44,8 @@ namespace Dune
 #endif // #if HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_P4ESTGRID
-    template< int dim, int dimworld, class ctype >
-    struct hasHierarchicIndexSet< P4estGrid< dim, dimworld, ctype > >
+    template< int dim, int dimworld, P4estType elType, class ctype >
+    struct hasHierarchicIndexSet< P4estGrid< dim, dimworld, elType, ctype > >
     {
       static const bool v = true;
     };
@@ -130,8 +130,8 @@ namespace Dune
 #endif // #if HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_P4ESTGRID
-      template< int dim, int dimworld, class ctype >
-      struct supportsCallbackAdaptation< P4estGrid< dim, dimworld, ctype > >
+      template< int dim, int dimworld, P4estType elType, class ctype >
+      struct supportsCallbackAdaptation< P4estGrid< dim, dimworld, elType, ctype > >
       {
         static const bool v = true;
       };
@@ -183,8 +183,8 @@ namespace Dune
 #endif //#f HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_P4ESTGRID
-      template< int dim, int dimworld, class ctype >
-      struct isLocallyAdaptive< P4estGrid< dim, dimworld, ctype > >
+      template< int dim, int dimworld, P4estType elType, class ctype >
+      struct isLocallyAdaptive< P4estGrid< dim, dimworld, elType, ctype > >
       {
         static const bool v = true;
       };
