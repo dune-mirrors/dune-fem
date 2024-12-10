@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import io, types, inspect, logging
+import io, types, inspect, logging, functools
 logger = logging.getLogger(__name__)
+import numpy as np
 from numpy import dtype as np_dtype
 
 import dune.ufl

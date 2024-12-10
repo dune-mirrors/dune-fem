@@ -518,7 +518,11 @@ namespace Dune
           return stream.str();
           } );
         auto addHAttr = pybind11::module::import( "dune.fem.space").attr("addDFAttr");
-        addHAttr(module,cls);
+        #ifdef BACKENDNAME
+        addHAttr(module,cls,pybind11::str(BACKENDNAME));
+        #else
+        addHAttr(module,cls,pybind11::str("_genericBackendName"));
+        #endif
       }
 
     } // namespace detail
@@ -537,5 +541,4 @@ namespace Dune
   } // namespace FemPy
 
 } // namespace Dune
-
 #endif // #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
