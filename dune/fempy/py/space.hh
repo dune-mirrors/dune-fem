@@ -46,6 +46,7 @@ namespace Dune
             pybind11::dict d;
             if (pybind11::hasattr(self, "__dict__")) {
               d = self.attr("__dict__");
+              d[pybind11::str("_zero")] = pybind11::none();
             }
             return pybind11::make_tuple(spc.gridPart().gridView(),d);
           },
@@ -81,6 +82,7 @@ namespace Dune
             pybind11::dict d;
             if (pybind11::hasattr(self, "__dict__")) {
               d = self.attr("__dict__");
+              d[pybind11::str("_zero")] = pybind11::none();
             }
             return pybind11::make_tuple(spc.gridPart().gridView(), spc.order(), d);
           },

@@ -128,7 +128,21 @@ def localContribution(self, assembly):
 
 def dummyPlot(*args,**kwargs):
     print("problem importing plotting utility - possibly matplotlib is missing?")
-def addDFAttr(module, cls):
+
+def backendProp(self):
+    try:
+        return self._backend
+    except ImportError as ex:
+        raise ex
+    except:
+        pass # still try numpy
+    try:
+        return np.array( self.dofVector, copy=False )
+    except:
+        pass
+    return None
+
+def addDFAttr(module, cls, backendName):
     cls._storage = property( lambda self: self._space.storage)
     cls.space = property( lambda self: self._space.as_ufl() )
     setattr(cls, "interpolate", dfInterpolate )
@@ -142,8 +156,19 @@ def addDFAttr(module, cls):
         setattr(cls, "plot", plotPointData)
     except ImportError:
         setattr(cls, "plot", dummyPlot)
+    setattr(cls, backendName, property(backendProp))
 
+# Issue: this property added later to the space will not be pickled
+# so after loading the 'df' calling 'df.as_numpy' or similar will fail.
+# Alternative is implemented above using the 'addDFAttr' during the
+# DF class registration - those properties will be pickled.
+# The problem is getting the passing in the correct backend name, e.g.,
+# 'as_numpy' from the C++ code. A #define is used for that now but a better
+# solution should be found in the future.
+# Note: if the define is not set then the old approach is used.
 def addBackend(Df,backend):
+    if hasattr(Df,backend): # new approach has been used
+        return
     def backend_(self):
         try:
             return self._backend
@@ -170,11 +195,14 @@ def spcFunction(self,*args,**kwargs):
     return function.discreteFunction(self,*args,**kwargs)
 def zeroDF(space):
     try:
-        return space._zero
+        if space._zero is not None:
+            return space._zero
+        raise AttributeError
     except AttributeError:
         space._zero = space.function(name="zero")
         space._zero.clear()
         return space._zero
+
 def addAttr(module, self, field, scalar, codegen):
     setattr(self, "field", field)
     setattr(self, "scalar", scalar)
@@ -259,14 +287,15 @@ def addDiscreteFunction(space, storage):
 
 def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     addAttr(module, spc, field, scalar, codegen)
+    spc._backend = backend
     setattr(spc,"DiscreteFunction",module.DiscreteFunction)
     # add clone function if provided
     if clone is not None:
         setattr(spc,"clone",clone)
     addStorage(spc,storage)
-    # is called now from C++ registering function: addDFAttr(module, module.DiscreteFunction)
     if not backend is None:
         addBackend(module.DiscreteFunction, backend)
+
 
 def module(field, includes, typeName, *args,
            storage=None, scalar=False, codegen=False, clone=None,
@@ -280,6 +309,8 @@ def module(field, includes, typeName, *args,
         cppIncludes = includes
     DummySpace.field = field
     dfIncludes, dfTypeName,  backend, dfArgs = addDiscreteFunction(DummySpace, storage)
+
+    defines += [f"BACKENDNAME \"{backend}\""]
 
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest() \
                           + "_" + hashlib.md5(dfTypeName.encode('utf-8')).hexdigest()
