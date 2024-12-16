@@ -83,6 +83,7 @@ namespace Dune
         }
 
         const EntityType &entity() const { return entity_; }
+        bool valid () const { return geoIn_ != nullptr; }
 
         int order() const { return order_; }
 
