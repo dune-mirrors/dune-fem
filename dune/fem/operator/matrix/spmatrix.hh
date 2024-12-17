@@ -406,18 +406,20 @@ namespace Dune
       {
         bool runParallel = threading_ && (&xold != &xnew) ; // only for Jacobi
 
-        auto doIterate = [this, &diagInv, &b, &xold, &xnew, &w, &direction] ()
+        auto doIterate = [this, &diagInv, &b, &xold, &xnew, &w, &direction, &runParallel] ()
         {
-          // compute slice to be worked on depending on direction
-          const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), direction );
+          // compute slice to be worked on depending on direction depending on parallel mode
+          const auto slice = runParallel ?
+                  sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), direction ) :
+                  sliceBeginEnd( 0, 1, direction ) ;
 
           doParallelIterative( diagInv.dofVector().find( slice.first ), // still O(1) operation just like for begin()
                                b.dofVector().find( slice.first ),
                                xold,
                                xnew.dofVector().find( slice.first ),
                                w,
-                               slice.first, // row begin
-                               slice.second,   // row end
+                               slice.first,  // row begin
+                               slice.second, // row end
                                direction );
         };
 
