@@ -2,12 +2,16 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import logging
+from collections import namedtuple
+
 logger = logging.getLogger(__name__)
 
 from dune.deprecate import deprecated
 from dune.common.utility import isString
 
 from . import _solvers as solvers
+
+StorageContainer = namedtuple("StorageContainer", ['name', 'includes', 'type', 'linopIncludes', 'linopType', 'solver', 'backend'])
 
 def _storage( dfStorage="numpy", solverStorage=None ):
     from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
@@ -44,29 +48,30 @@ def _storage( dfStorage="numpy", solverStorage=None ):
 
     rdfType = lambda space,rspace: dfType(space if rspace is None else rspace)
 
+
     # as_numpy, as_istl, as_petsc
     usedStorage = solverStorage if solverStorage else dfStorage
     asStorage = "as_" + usedStorage
 
     if solverStorage == "numpy":
-        return lambda space, rspace=None:[\
+        return lambda space, rspace=None:StorageContainer(\
             dfStorage,\
-            headers + ["dune/fem/operator/linear/spoperator.hh"] + space.cppIncludes,\
+            headers + space.cppIncludes,\
             dfType(space),\
+            ["dune/fem/operator/linear/spoperator.hh"],\
             "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," +\
             rdfType(space,rspace) + "," + "Dune::Fem::SparseRowMatrix<" + space.field + ",int>" ">",\
             solvers.femsolver,\
-            asStorage
-            ]
+            asStorage)
     elif solverStorage == "istl":
-        return lambda space,rspace=None:[\
+        return lambda space,rspace=None:StorageContainer(\
             dfStorage,\
-            headers + ["dune/fem/operator/linear/istloperator.hh"] + space.cppIncludes,\
+            headers + space.cppIncludes,\
             dfType(space),\
+            ["dune/fem/operator/linear/istloperator.hh"],\
             "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">",
             solvers.istlsolver,\
-            asStorage
-            ]
+            asStorage)
     elif solverStorage == "petsc":
         petscheader = []
         try:
@@ -77,14 +82,14 @@ def _storage( dfStorage="numpy", solverStorage=None ):
 
         def equalSpaces(space,rspace):
             return "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + rdfType(space,rspace) + ">"
-        return lambda space, rspace=None:[\
+        return lambda space, rspace=None:StorageContainer(\
             dfStorage,\
-            headers + ["dune/fem/operator/linear/petscoperator.hh"] + petscheader + space.cppIncludes,\
+            headers + space.cppIncludes,\
             dfType(space),\
+            ["dune/fem/operator/linear/petscoperator.hh"] + petscheader,\
             equalSpaces(space,rspace),\
             solvers.petscsolver,\
-            asStorage
-        ]
+            asStorage)
     else:
         raise ValueError(f"_storage: wrong discrete function storage {dfStorage}. Valid are 'numpy','petsc','istl'")
 

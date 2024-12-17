@@ -232,11 +232,14 @@ fileBase = "femspace"
 
 def addDiscreteFunction(space, storage):
     from dune.generator import Constructor
-    storage, dfIncludes, dfTypeName, _, _,backend = addStorage(space,storage)
+
+    storage = addStorage(space,storage)
+
+    dfIncludes = storage.includes
 
     ctor = ()
     spaceType = space.cppTypeName
-    if storage == "petsc":
+    if storage.name == "petsc":
         try:
             import petsc4py
             dfIncludes += [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"]
@@ -262,14 +265,14 @@ def addDiscreteFunction(space, storage):
                      'return new DuneType(name,space);'],
                     ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
                    ]
-    elif storage == "numpy" or storage == "fem":
+    elif storage.name == "numpy" or storage.name == "fem":
         ctor = [Constructor(['const std::string &name', 'const ' +
             spaceType + '&space', 'pybind11::array_t<'+space.field+'> dofVector'],
                 [space.field + ' *dof = static_cast< '+space.field+'* >( dofVector.request(false).ptr );',
                  'return new DuneType(name,space,dof);'],
                 ['"name"_a', '"space"_a', '"dofVector"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
             ]
-    elif storage == "istl":
+    elif storage.name == "istl":
         ctor = [Constructor(['const std::string &name', 'const ' +
             spaceType + '&space', 'typename DuneType::DofContainerType &dofVector'],
                 ['return new DuneType(name,space,dofVector);'],
@@ -283,7 +286,7 @@ def addDiscreteFunction(space, storage):
                 ['"name"_a', '"space"_a', '"vec"_a', 'pybind11::keep_alive< 1, 3 >()', 'pybind11::keep_alive< 1, 4 >()'])
                ]
     dfIncludes += ["dune/fempy/py/discretefunction.hh"]
-    return dfIncludes, dfTypeName, backend, ctor
+    return dfIncludes, storage.type, storage.backend, ctor
 
 def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     addAttr(module, spc, field, scalar, codegen)

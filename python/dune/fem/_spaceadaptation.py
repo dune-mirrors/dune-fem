@@ -10,14 +10,14 @@ _defaultGenerator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
 modules = {}
 
 def module(space, generator=_defaultGenerator):
-    storage, dfIncludes, dfTypeName, _, _, _ = space.storage
+
     try:
         return modules[dfTypeName]
     except KeyError:
         pass
 
-    typeName = "Dune::FemPy::SpaceAdaptation< " + dfTypeName + " >"
-    includes = dfIncludes + ["dune/fempy/py/spaceadapt.hh"]
+    typeName = "Dune::FemPy::SpaceAdaptation< " + space.storage.type + " >"
+    includes = space.storage.includes + ["dune/fempy/py/spaceadapt.hh"]
     moduleName = "spaceadapt_" + hashlib.md5(typeName.encode('utf8')).hexdigest()
 
     module = generator.load(includes, typeName, moduleName)
