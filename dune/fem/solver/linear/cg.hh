@@ -3,6 +3,7 @@
 
 #include <type_traits>
 #include <vector>
+#include <cmath>
 
 #include <dune/common/ftraits.hh>
 #include <dune/fem/solver/parameter.hh>
@@ -55,23 +56,23 @@ namespace LinearSolver
       s.assign( q );
     }
 
-    RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
-    RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+    RangeFieldType prevResidual = 0;    // note that these will be real_type but require scalar product evaluation
+    RangeFieldType residual = p.scalarProductDofs( q );//<p,Bp>
 
     const RealType tolerance = epsilon * epsilon * (
       toleranceCriteria == ToleranceCriteria::relative ? b.normSquaredDofs( ) :
-      toleranceCriteria == ToleranceCriteria::residualReduction ? std::real(residuum) :
+      toleranceCriteria == ToleranceCriteria::residualReduction ? std::real(residual) :
       // absolute tolerance
       1.0
     );
 
     int iterations = 0;
-    for( iterations = 0; (std::real(residuum) > tolerance) && (iterations < maxIterations); ++iterations )
+    for( iterations = 0; (std::real(residual) > tolerance) && (iterations < maxIterations); ++iterations )
     {
       if( iterations > 0 )
       {
-        assert( residuum/prevResiduum == residuum/prevResiduum );
-        const RangeFieldType beta= residuum / prevResiduum;
+        assert( residual/prevResidual == residual/prevResidual );
+        const RangeFieldType beta= residual / prevResidual;
         q *= beta;
         if( preconditioner )
         {
@@ -86,7 +87,7 @@ namespace LinearSolver
       op( q, h );
 
       RangeFieldType qdoth = q.scalarProductDofs( h );
-      const RangeFieldType alpha = residuum / qdoth;//<p,Bp>/<q,Aq>
+      const RangeFieldType alpha = residual / qdoth;//<p,Bp>/<q,Aq>
       assert( !std::isnan( alpha ) );
       x.axpy( alpha, q );
 
@@ -95,20 +96,20 @@ namespace LinearSolver
         p.axpy( -alpha, h );//r_k
         (*preconditioner)( p, s); //B*r_k
 
-        prevResiduum = residuum;//<rk-1,B*rk-1>
-        residuum = p.scalarProductDofs( s );//<rk,B*rk>
+        prevResidual = residual;//<rk-1,B*rk-1>
+        residual = p.scalarProductDofs( s );//<rk,B*rk>
       }
       else
       {
         r.axpy( alpha, h );
 
-        prevResiduum = residuum;
-        residuum = r.normSquaredDofs( );
+        prevResidual = residual;
+        residual = r.normSquaredDofs( );
       }
 
       if( os )
       {
-        (*os) << "Fem::CG it: " << iterations << " : sqr(residuum) " << residuum << std::endl;
+        (*os) << "Fem::CG it: " << iterations << " : residual " << std::sqrt(residual) << std::endl;
       }
     }
 
