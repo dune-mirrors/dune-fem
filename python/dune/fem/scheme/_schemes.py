@@ -112,14 +112,14 @@ def getSolver(solver, storage, default):
             return default(storage,solver[0])
 
 def femscheme(includes, space, solver, operator, modelType):
-    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, _ = space.storage
+
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
-    _, _, _, _, defaultSolver, backend = solverStorage
-    _, solverIncludes, solverTypeName,param = getSolver(solver,solverStorage,defaultSolver)
+
+    _, solverIncludes, solverTypeName,param = getSolver(solver,solverStorage, solverStorage.solver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
-                space.cppIncludes + dfIncludes + solverIncludes +\
+                space.cppIncludes + solverStorage.includes + solverIncludes +\
                 ["dune/fempy/parameter.hh"]
     spaceType = space.cppTypeName
     if modelType is None:
@@ -129,7 +129,7 @@ def femscheme(includes, space, solver, operator, modelType):
               spaceType + "::dimRange, " +\
               spaceType + "::dimRange, " +\
               "typename " + spaceType + "::RangeFieldType >"
-    operatorType = operator(linearOperatorType, modelType)
+    operatorType = operator(solverStorage.linopType, modelType)
     typeName = "Dune::Fem::FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
@@ -176,7 +176,7 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
             backend = scheme._solverBackend
         except AttributeError:
             # if backend has not been added use backend from space
-            _,_,_,_,_, backend = scheme.space.storage
+            backend = scheme.space.storage.backend
         if hasattr(m.Scheme,"_backend") and backend is not None:
             if backend == 'as_numpy':
                 from scipy.sparse import csr_matrix
@@ -209,18 +209,17 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     parameters = _checkNewtonInParameters( parameters )
 
     from . import module
-    _, _, _, _, defaultSolver, _ = space.storage
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
-    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
-    _, _, _, param = getSolver(solver, solverStorage, defaultSolver)
+    *_, param = getSolver(solver, solverStorage, solverStorage.solver)
+
     includes, typeName = femscheme(includes, space, solver, operator, modelType)
     parameters.update(param)
-    mod = module(includes, typeName, *args, backend=backend)
+    mod = module(includes, typeName, *args, backend=solverStorage.backend)
     scheme = mod.Scheme(space, model, parameters=parameters, **ctorArgs)
     scheme.model = model
     scheme.parameters = parameters
-    scheme._solverBackend = backend
+    scheme._solverBackend = solverStorage.backend
     scheme.__class__.linear = _linearized
     scheme.__class__.dirichletIndices = _opDirichletIndices
     return scheme
@@ -367,13 +366,10 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
 
     from . import module
 
-    _, dfIncludes, dfTypeName, _, _, _ = space.storage
-
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
 
-    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
-    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, defaultSolver)
+    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, solverStorage.solver)
 
     # check if parameters have an option preconditioning and if this is a callable
     preconditioning = None
@@ -390,7 +386,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     virtualize = True
 
     includes = [] # integrands.cppIncludes
-    includes += space.cppIncludes + dfIncludes + solverIncludes
+    includes += space.cppIncludes + space.storage.includes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
     # molgalerkin includes galerkin.hh so it works for both
     includes += ["dune/fem/schemes/masslumping.hh","dune/fem/schemes/dirichletwrapper.hh"]
@@ -408,14 +404,14 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
     typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' + massIntegrandsType + ', ' +\
-            linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
+            solverStorage.linopType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
     parameters.update(param)
-    scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, massIntegrands, parameters)
+    scheme = module(includes, typeName, backend=solverStorage.backend).Scheme(space, integrands, massIntegrands, parameters)
     scheme.model = integrands
     scheme.massModel = massIntegrands
     # store solver backend
-    scheme._solverBackend = backend
+    scheme._solverBackend = solverStorage.backend
     scheme.parameters = parameters
 
     scheme.__class__.linear = _linearized
@@ -541,13 +537,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         raise ValueError("wrong space given")
     from . import module
 
-    _, dfIncludes, dfTypeName, _, _, _ = space.storage
-
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
 
-    _, _, _, linearOperatorType, defaultSolver, backend = solverStorage
-    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, defaultSolver)
+    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, solverStorage.solver)
 
     # check if parameters have an option preconditioning and if this is a callable
     preconditioning = None
@@ -564,7 +557,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         virtualize = integrands.virtualized
 
     includes = [] # integrands.cppIncludes
-    includes += space.cppIncludes + dfIncludes + solverIncludes
+    includes += space.cppIncludes + space.storage.includes + solverIncludes
     includes += ["dune/fempy/parameter.hh"]
     # molgalerkin includes galerkin.hh so it works for both
     includes += ["dune/fem/schemes/molgalerkin.hh","dune/fem/schemes/dirichletwrapper.hh"]
@@ -579,10 +572,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
     typeName = 'Dune::Fem::'+_schemeName+'< ' + integrandsType + ', ' +\
-            linearOperatorType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
+            solverStorage.linopType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
     parameters.update(param)
-    scheme = module(includes, typeName, backend=backend).Scheme(space, integrands, parameters)
+    scheme = module(includes, typeName, backend=solverStorage.backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
@@ -590,7 +583,7 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
     scheme.preconditioning = preconditioning
     # store solver backend
-    scheme._solverBackend = backend
+    scheme._solverBackend = solverStorage.backend
 
     scheme.parameters = parameters
 

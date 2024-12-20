@@ -4,9 +4,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 def solvers(includes, storage, operator):
-    _, dfIncludes, dfTypeName, linearOperatorType, _, _ = storage
-    includes += dfIncludes + ["dune/fempy/parameter.hh"]
-    typeName = operator(dfTypeName,linearOperatorType)
+    includes += storage.includes + storage.linopIncludes +["dune/fempy/parameter.hh"]
+    typeName = operator(storage.type, storage.linopType)
     return includes, typeName
 
 

@@ -16,6 +16,7 @@ from dune.generator import Constructor, Method
 from dune.generator.generator import SimpleGenerator
 from dune.common.utility import isString
 from dune.fem.deprecated import deprecated
+from dune.fem.discretefunction import _storage
 
 _defaultGenerator = SimpleGenerator("Operator", "Dune::FemPy")
 
@@ -128,8 +129,15 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
     domainSpaceType = domainSpace.cppTypeName
     rangeSpaceType  = rangeSpace.cppTypeName
 
-    storage, domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
-    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
+    storage                = domainSpace.storage.name
+    domainFunctionIncludes = domainSpace.storage.includes
+    domainFunctionType     = domainSpace.storage.type
+    dbackend               = domainSpace.storage.backend
+
+    rstorage               = rangeSpace.storage.name
+    rangeFunctionIncludes  = rangeSpace.storage.includes
+    rangeFunctionType      = rangeSpace.storage.type
+    rbackend               = rangeSpace.storage.backend
 
     # use storage of discrete function if not specified
     if jacobianStorage is None:
@@ -150,6 +158,13 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
         includes += integrands.cppIncludes
         integrandsType = integrands.cppTypeName
 
+    # get storage depending on choices
+    solverstorage  = _storage( dfStorage=storage, solverStorage=jacobianStorage)(domainSpace,rangeSpace)
+    linearOperator = solverstorage.linopType
+
+    # add extra includes for linear operator
+    includes += solverstorage.linopIncludes
+
     if not rstorage == storage:
         typeName = 'Dune::Fem::' + operatorPrefix + 'GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
         constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
@@ -159,13 +174,7 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
                                   ['return new DuneType( dSpace.gridPart(), integrands );'],
                                   ['pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
     else:
-        from dune.fem.discretefunction import _storage
         # get storage depending on choices
-        _, linopincludes, _, linearOperator, _, _ = _storage( dfStorage=storage, solverStorage=jacobianStorage)(domainSpace,rangeSpace)
-        # add extra includes in case storages differ
-        if jacobianStorage != storage:
-            includes += linopincludes
-
         typeName = 'Dune::Fem::' + operatorPrefix + 'DifferentiableGalerkinOperator< ' + integrandsType + ', ' + linearOperator + ' >'
         constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace', integrandsType + ' &integrands'],
                                   ['return new DuneType( dSpace, rSpace, integrands );'],
@@ -231,8 +240,16 @@ def h1(model, domainSpace=None, rangeSpace=None):
     domainSpaceType = domainSpace.cppTypeName
     rangeSpaceType = rangeSpace.cppTypeName
 
-    storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
-    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
+    storage                = domainSpace.storage.name
+    domainFunctionIncludes = domainSpace.storage.includes
+    domainFunctionType     = domainSpace.storage.type
+    dbackend               = domainSpace.storage.backend
+
+    rstorage               = rangeSpace.storage.name
+    rangeFunctionIncludes  = rangeSpace.storage.includes
+    rangeFunctionType      = rangeSpace.storage.type
+    rbackend               = rangeSpace.storage.backend
+
     if not rstorage == storage:
         raise ValueError("storage for both spaces must be identical to construct operator")
 
@@ -242,7 +259,7 @@ def h1(model, domainSpace=None, rangeSpace=None):
     includes += ["dune/fem/schemes/conservationlawmodel.hh", "dune/fempy/parameter.hh"]
 
     import dune.create as create
-    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+    linearOperator = create.discretefunction(storage)(domainSpace,rangeSpace).linopType
 
     modelType = "ConservationLawModel< " +\
           "typename " + domainSpaceType + "::GridPartType, " +\
@@ -288,17 +305,26 @@ def _linear(operator, ubar=None,parameters=None,affineShift=False):
     domainSpaceType = domainSpace.cppTypeName
     rangeSpaceType = rangeSpace.cppTypeName
 
-    storage,  domainFunctionIncludes, domainFunctionType, _, _, dbackend = domainSpace.storage
-    rstorage, rangeFunctionIncludes,  rangeFunctionType,  _, _, rbackend = rangeSpace.storage
+    storage                = domainSpace.storage.name
+    domainFunctionIncludes = domainSpace.storage.includes
+    domainFunctionType     = domainSpace.storage.type
+    dbackend               = domainSpace.storage.backend
+
+    rstorage               = rangeSpace.storage.name
+    rangeFunctionIncludes  = rangeSpace.storage.includes
+    rangeFunctionType      = rangeSpace.storage.type
+    rbackend               = rangeSpace.storage.backend
+
     if not rstorage == storage:
         raise ValueError("storage for both spaces must be identical to construct operator")
 
     includes = ["dune/fempy/py/grid/gridpart.hh"]
     includes += domainSpace.cppIncludes + domainFunctionIncludes
     includes += rangeSpace.cppIncludes + rangeFunctionIncludes
+    includes += domainSpace.storage.linopIncludes
 
     import dune.create as create
-    typeName = create.discretefunction(storage)(domainSpace,rangeSpace)[3]
+    typeName = create.discretefunction(storage)(domainSpace,rangeSpace).linopType
 
     constructor = Constructor(['const '+domainSpaceType+'& dSpace','const '+rangeSpaceType+' &rSpace',
                                'const pybind11::dict &parameters'],

@@ -614,7 +614,7 @@ def composite(*spaces, **kwargs):
     compositeStorage = None
     compositeField = None
     for space in spaces:
-        storage, _, _, _, _, _ = space.storage
+        storage = space.storage.name
         if compositeStorage and (compositeStorage != storage):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
         else:
@@ -705,7 +705,7 @@ def product(*spaces, **kwargs):
     combinedField = None
     combinedIncludes = None
     for space in spaces:
-        storage, _, _, _, _, _ = space.storage
+        storage = space.storage.name
         if combinedField and (combinedField != space.field):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different field types")
         else:
