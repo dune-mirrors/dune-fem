@@ -125,7 +125,12 @@ namespace Dune
         explicit WeightLocalFunction ( Weight &weight, int order )
           : BaseType(), weight_( weight ), order_(order) {}
 
-        using BaseType :: bind;
+        void bind ( const EntityType &entity )
+        {
+          BaseType::bind(entity);
+          weight_.setEntity( entity );
+        }
+
         using BaseType :: unbind;
         using BaseType :: entity;
 
