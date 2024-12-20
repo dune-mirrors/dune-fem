@@ -77,6 +77,12 @@ struct LocalBasis
   const EntityType &entity () const { return bSet_.entity(); }
   const Geometry& geometry () const { return bSet_.geometry(); }
 
+  bool valid () const { return bSet_.valid(); }
+  void bind( const EntityType& entity )
+  {
+    assert( entity == bSet_.entity() );
+  }
+
 private:
   template< class QuadratureType, class Vector >
   void evaluateQuadrature( const QuadratureType &quad, Vector& vec, const RangeType&  ) const

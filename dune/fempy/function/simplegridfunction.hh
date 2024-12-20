@@ -347,7 +347,7 @@ namespace Dune
       return simpleGridFunction(gridPart,gridFunction.localEvaluator(),order);
     }
     template <class GridPart, class GridFunction>
-    auto getGridFunction( const GridPart &gridPart, const GridFunction &gridFunction, int order, PriorityTag<0>)
+    const auto& getGridFunction( const GridPart &gridPart, const GridFunction &gridFunction, int order, PriorityTag<0>)
     {
       return gridFunction;
     }

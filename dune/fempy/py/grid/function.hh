@@ -62,10 +62,11 @@ namespace Dune
           lf.hessian( x, hessian );
           return hessian;
         } );
-      cls.def( "__call__", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
+      cls.def( "__call__", [] ( pybind11::handle pylf, const LocalCoordinate &x ) {
+          const LocalFunction& lf = pylf.cast<const LocalFunction&>();
           typename LocalFunction::RangeType value;
           lf.evaluate( x, value );
-          bool scalar = pybind11::cast(lf).attr("scalar").template cast<bool>();
+          bool scalar = pylf.attr("scalar").template cast<bool>();
           return scalar? pybind11::cast(value[0]) : pybind11::cast(value);
         } );
       Dune::Python::registerLocalView< Element >( cls );

@@ -444,6 +444,14 @@ namespace Dune
             bind(entity);
           }
 
+          Type ( const Type& other )
+            :  gridFunction_( other.gridFunction_ )
+          {
+            if (other.gridFunction_.valid())
+              bind(other.gridFunction_.entity());
+          }
+          Type ( Type&& other ) = default;
+
           template <class Point>
           void evaluate(const Point &x, RangeType &ret) const
           {
@@ -550,6 +558,11 @@ namespace Dune
           {
             return gridFunction_.geometry();
           }
+
+          const GridPartType& gridPart() const { return gridFunction_.gridPart(); }
+          const std::string& name() const { return gridFunction_.name(); }
+
+          bool valid () const { return gridFunction_.valid(); }
 
           const GridFunctionDecayType &gridFunction () const { return gridFunction_; }
 

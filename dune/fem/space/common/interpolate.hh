@@ -11,6 +11,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/common/bindguard.hh>
+#include <dune/fem/storage/entitygeometry.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
@@ -101,9 +102,11 @@ namespace Dune
     {
 
       template< class Entity, class FunctionSpace, class Weight >
-      struct WeightLocalFunction
+      struct WeightLocalFunction : public EntityStorage< Entity >
       {
         typedef Entity EntityType;
+        typedef EntityStorage< EntityType >  BaseType;
+
         typedef FunctionSpace FunctionSpaceType;
 
         typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
@@ -119,12 +122,17 @@ namespace Dune
         static constexpr int dimDomain = FunctionSpaceType::dimDomain;
         static constexpr int dimRange = FunctionSpaceType::dimRange;
 
-        explicit WeightLocalFunction ( Weight &weight, int order ) : weight_( weight ), order_(order) {}
+        explicit WeightLocalFunction ( Weight &weight, int order )
+          : BaseType(), weight_( weight ), order_(order) {}
 
-        void bind ( const EntityType &entity ) { entity_ = entity; weight_.setEntity( entity ); }
-        void unbind () {}
+        void bind ( const EntityType &entity )
+        {
+          BaseType::bind(entity);
+          weight_.setEntity( entity );
+        }
 
-        const EntityType entity() const { return entity_; }
+        using BaseType :: unbind;
+        using BaseType :: entity;
 
         template< class Point >
         void evaluate ( const Point &x, RangeType &value ) const
@@ -149,12 +157,10 @@ namespace Dune
             evaluate( qp, values[ qp.index() ] );
         }
 
-        int order() const
-        { return order_; }
+        int order() const { return order_; }
       private:
         Weight &weight_;
         int order_;
-        Entity entity_;
       };
 
     } // namespace Impl

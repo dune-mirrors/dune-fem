@@ -136,10 +136,12 @@ namespace Dune
 
       typedef typename std::tuple_element< 0, std::tuple< Spaces ... > >::type::EntityType EntityType;
 
+      /*
       TupleSpaceInterpolation ( std::tuple< const Spaces & ... > tuple, const EntityType &entity )
         : interpolation_( interpolationTuple( tuple, entity ) ),
           basisFunctionSet_( basisFunctionSetTuple( tuple, entity ) )
       {}
+      */
 
       TupleSpaceInterpolation ( const Spaces & ... spaces, const EntityType &entity )
         : interpolation_( std::make_tuple( spaces.localInterpolation( entity ) ... ) ),
