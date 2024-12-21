@@ -149,12 +149,14 @@ namespace Dune
       {
         bool runParallel = threading_;
 
-        auto doApply = [this, &f, &ret]()
+        auto doApply = [this, &f, &ret, &runParallel]()
         {
           constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
 
-          // compute slice of rows to be worked on
-          const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), std::true_type() );
+          // compute slice to be worked on in forward direction
+          const auto slice = runParallel ?
+                  sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads(), std::true_type() ) :
+                  sliceBeginEnd( 0, 1, std::true_type() ) ;
 
           // same as begin just with a row not necessarily zero
           auto ret_it = ret.dofVector().find( slice.first );
