@@ -28,7 +28,6 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/operator/matrix/spmatrix.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/storage/objectstack.hh>
