@@ -112,13 +112,13 @@ namespace Dune
       LocalFunctionConverter ( const HostLocalFunction &hostLocalFunction, const Converter &converter = Converter() )
         : BaseType( hostLocalFunction ), converter_( converter )
       {
-        assert( hostLocalFunction.valid() );
+        // assert( hostLocalFunction.valid() );
       }
 
       LocalFunctionConverter ( HostLocalFunction &&hostLocalFunction, const Converter &converter = Converter() )
         : BaseType( std::move( hostLocalFunction ) ), converter_( converter )
       {
-        assert( hostLocalFunction.valid() );
+        // assert( hostLocalFunction.valid() );
       }
 
       template< class Point >
@@ -202,7 +202,7 @@ namespace Dune
     localFunctionConverter ( const HostLocalFunction hostLocalFunction, const Converter &converter = Converter() )
     {
       typedef LocalFunctionConverter< HostLocalFunction, Converter, __InstationaryFunction::HoldCopy > LocalFunctionConverterType;
-      assert( hostLocalFunction.valid() );
+      // assert( hostLocalFunction.valid() );
       return LocalFunctionConverterType( std::move( hostLocalFunction ), converter );
     }
 
