@@ -85,7 +85,7 @@ int main ()
   C c;
 
   MappingType m = a + b * 2.0 + a / 2.0 + b - 3.0 * a;
-  DomainType arg = 1.0;
+  DomainType arg(1.0);
   DomainType dest;
 
   MappingType m1;

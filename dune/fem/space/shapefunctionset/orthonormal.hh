@@ -157,7 +157,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
 #if HAVE_DUNE_LOCALFUNCTIONS
-      typedef OrthonormalLocalFiniteElement< dimension, DomainType, RangeType>  OrthonormalLocalFiniteElementType;
+      typedef OrthonormalLocalFiniteElement< dimension, DomainFieldType, RangeFieldType>  OrthonormalLocalFiniteElementType;
       static const bool haveLocalFunctions_ = true;
 #else
       typedef int OrthonormalLocalFiniteElementType;

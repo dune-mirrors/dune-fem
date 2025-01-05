@@ -199,7 +199,7 @@ namespace Dune
         template< class T >
         FieldVector< T, 1 > operator() ( const FieldVector< T, dimRange > &in ) const
         {
-          return in[ range_ ];
+          return FieldVector< T, 1 >(in[ range_ ]);
         }
 
         template< class T, int j >
