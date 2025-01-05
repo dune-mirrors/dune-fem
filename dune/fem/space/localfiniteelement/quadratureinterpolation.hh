@@ -105,7 +105,7 @@ namespace Dune
       {
         // remove corner points if part of the quadrature - are added in by
         // topology construction of points
-        Field p = field_cast<Field>(quad[i].position());
+        Field p = field_cast<Field>(quad[i].position()[0]);
         Field q = p-1.;
         if (std::abs(p)<1e-12 || std::abs(q)<1e-12)
         {
