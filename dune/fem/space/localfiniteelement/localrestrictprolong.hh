@@ -52,6 +52,8 @@ namespace Dune
         const EntityType& entity () const { return lfFather_.entity(); }
         unsigned int order () const { return lfFather_.order(); }
 
+        bool valid () const { return lfFather_.valid(); }
+
       private:
         const LocalGeometryType &localGeo_;
         const LocalFunctionType &lfFather_;
@@ -114,6 +116,8 @@ namespace Dune
         }
         const EntityType& entity () const { return father_; }
         unsigned int order () const { return order_; }
+
+        bool valid() const { return true; }
 
       private:
         const EntityType &father_;
