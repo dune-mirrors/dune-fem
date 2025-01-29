@@ -16,6 +16,10 @@ StorageContainer = namedtuple("StorageContainer", ['name', 'includes', 'type', '
 def _storage( dfStorage="numpy", solverStorage=None ):
     from dune.common.checkconfiguration import assertCMakeHave, ConfigurationError
 
+    # this is the case for product spaces
+    if not isinstance(dfStorage, str):
+        dfStorage="numpy"
+
     assert isString(dfStorage)
     # if not selected, use same as discrete function
     if solverStorage is None:
