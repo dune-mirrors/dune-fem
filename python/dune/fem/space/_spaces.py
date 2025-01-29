@@ -8,7 +8,6 @@ from collections import ChainMap
 from dune.generator import Constructor, Pickler
 logger = logging.getLogger(__name__)
 
-
 # create same space with potentially new parameters
 def clone(_ctor, _args, _kwargs, *args, **kwargs):
     """
@@ -691,6 +690,7 @@ def product(*spaces, **kwargs):
 
     from dune.fem.space import module, addStorage
     from dune.fem.function import tupleDiscreteFunction
+    from dune.fem.discretefunction import StorageContainer
 
     scalar  = kwargs.get("scalar",False)
     codegen = kwargs.get("codegen",False)
@@ -721,9 +721,10 @@ def product(*spaces, **kwargs):
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
 
-    storage = lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
+    # there is no obvious operator associated with the TupleDF used for this space
+    storage = lambda _: StorageContainer(None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
-                        None,None,None]
+                        None,None,None,None)
     spc = module(combinedField, includes, typeName, constructor, storage=storage,
             scalar=scalar, codegen=codegen,
             clone=_clone(_kwargs),
@@ -732,7 +733,9 @@ def product(*spaces, **kwargs):
         spc.componentNames = kwargs["components"]
     except KeyError:
         pass
-    def interpolate(space, func, name=None, **kwargs):
+
+    # overload function attribute to return tuple df
+    def _interpolate(space, func, name=None, **kwargs):
         """interpolate a function into a discrete function space
 
         Args:
@@ -750,12 +753,25 @@ def product(*spaces, **kwargs):
         #     df = tupleDiscreteFunction(space, name=name, **kwargs)
         df.interpolate(func)
         return df
-    setattr(spc, "interpolate", lambda *args,**kwargs: interpolate(spc,*args,**kwargs))
+    setattr(spc, "interpolate", lambda *args,**kwargs: _interpolate(spc,*args,**kwargs))
 
-    # there is no obvious operator associated with the TupleDF used for this space
-    addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
-                        "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
-                        None,None,None] )
+    # overload function attribute to return tuple df
+    def _function(space, name=None, **kwargs):
+        """Return a function object for this discrete function space
+
+        Args:
+            space: discrete function space to interpolate into
+            name:  name of the resulting discrete function
+
+        Returns:
+            DiscreteFunction: the constructed discrete function
+        """
+        df = tupleDiscreteFunction(space, name=name, components=space.componentNames,**kwargs)
+        df.clear()
+        return df
+    setattr(spc, "function", lambda *args,**kwargs: _function(spc,*args,**kwargs))
+
+    addStorage(spc, storage)
     return spc.as_ufl()
 
 def bdm(gridView, order=1, dimRange=None,

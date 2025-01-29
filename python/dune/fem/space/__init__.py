@@ -232,8 +232,12 @@ fileBase = "femspace"
 
 def addDiscreteFunction(space, storage):
     from dune.generator import Constructor
+    from dune.fem.discretefunction import StorageContainer
 
     storage = addStorage(space,storage)
+
+    # make sure storage is of type StorageContainer for consistency
+    assert isinstance(storage, StorageContainer)
 
     dfIncludes = storage.includes
 
