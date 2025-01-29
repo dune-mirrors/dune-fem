@@ -56,6 +56,20 @@ def _adaptArguments(first,*args):
     return hgrid,args
 
 def adapt(first, *args):
+    """ Adapt the underlying hierarchical grid of the discrete function passed
+        as arguments.
+
+    Args:
+        (first, *args): a single discrete function or a list or tuple of
+        discrete functions which should be projected to the new grid.
+
+    Note: All discrete functions have to belong to the same hierarchical grid.
+
+    Returns:
+        None
+    """
+
+
     hgrid,args = _adaptArguments(first,*args)
 
     # make sure all args are over the same grid
@@ -67,8 +81,7 @@ def adapt(first, *args):
         # adapt &= not any([a.space.storage[0]=="petsc" for a in args])
     except AttributeError:
         adapt = False
-    assert adapt,\
-            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view also `petsc' storage can not be used at this point in time"
+    assert adapt, "the grid views for all discrete functions need to support adaptivity"
 
     module(hgrid).gridAdaptation(hgrid).adapt(args)
 
