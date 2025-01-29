@@ -7,6 +7,9 @@
 #include <type_traits>
 #include <new>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+
 #include <dune/common/fvector.hh>
 
 #include <dune/geometry/referenceelements.hh>
@@ -257,5 +260,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#pragma GCC diagnostic pop
 
 #endif // #ifndef DUNE_FEM_LINESEGMENTSAMPLER_HH
