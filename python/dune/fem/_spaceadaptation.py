@@ -11,6 +11,7 @@ modules = {}
 
 def module(space, generator=_defaultGenerator):
 
+    dfTypeName = space.storage.type
     try:
         return modules[dfTypeName]
     except KeyError:
