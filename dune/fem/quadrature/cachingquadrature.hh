@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_CACHINGQUADRATURE_HH
 #define DUNE_FEM_CACHINGQUADRATURE_HH
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+
 //- Dune includes
 #include <dune/common/math.hh>
 
@@ -422,5 +425,7 @@ namespace Dune
   } //namespace Fem
 
 } //namespace Dune
+
+#pragma GCC diagnostic pop
 
 #endif // #ifndef DUNE_FEM_CACHINGQUADRATURE_HH
