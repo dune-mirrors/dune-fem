@@ -63,7 +63,8 @@ class UFLFunctionSource(codegen.ModelClass):
             returnResult=False,
             args=['const Point &x'],
             targs=['class Point'], const=True,
-            predefined=predefined)
+            predefined=predefined,
+            tempVars=self.tempVars)
 
         # is not available anymore in ufl 2024 and newer
         try:
@@ -85,7 +86,8 @@ class UFLFunctionSource(codegen.ModelClass):
                     returnResult=False,
                     args=['const Point &x'],
                     targs=['class Point'], const=True,
-                    predefined=predefined)
+                    predefined=predefined,
+                    tempVars=self.tempVars)
             except Exception as e:
                 code.append( Method('void', 'jacobian', targs=['class Point'],
                     args=['const Point &x','typename FunctionSpaceType::JacobianRangeType &result'],
@@ -98,7 +100,9 @@ class UFLFunctionSource(codegen.ModelClass):
                     returnResult=False,
                     args=['const Point &x'],
                     targs=['class Point'], const=True,
-                    predefined=predefined)
+                    predefined=predefined,
+                    tempVars=self.tempVars
+                    )
             except Exception as e:
                 code.append( Method('void', 'hessian', targs=['class Point'],
                     args=['const Point &x','typename FunctionSpaceType::HessianRangeType &result'],
