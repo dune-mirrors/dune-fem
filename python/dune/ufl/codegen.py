@@ -971,7 +971,7 @@ class ModelClass():
 
         return code
 
-def generateMethodBody(cppType, expr, returnResult, default, predefined):
+def generateMethodBody(cppType, expr, returnResult, default, predefined, tempVars=True):
     if expr is not None and not expr == [None]:
         try:
             dimR = expr.ufl_shape[0]
@@ -997,7 +997,7 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined):
             arg_du = Variable("const JacobianRangeType &", "du")
             arg_d2u = Variable("const HessianRangeType &", "d2u")
             predefined.update( {u: arg_u, du: arg_du, d2u: arg_d2u} )
-        code, results = generateCode(predefined, expression, tempVars=False)
+        code, results = generateCode(predefined, expression, tempVars=tempVars)
         result = Variable(cppType, 'result')
         if cppType == 'double':
             code = code + [assign(result, results[0])]
@@ -1017,7 +1017,8 @@ def generateMethod(struct,expr, cppType, name,
         targs=None, args=None, static=False, const=False, volatile=False,
         inline=False,
         evalSwitch=True,
-        predefined=None):
+        predefined=None,
+        tempVars=True):
     if predefined is None:
         predefined = {}
     if not returnResult:
@@ -1033,12 +1034,12 @@ def generateMethod(struct,expr, cppType, name,
             for id, e in expr.items():
                 code.append(id,
                         [generateMethodBody('RangeType', e, False, defaultReturn,
-                            predefined), return_(True)])
+                            predefined, tempVars=tempVars), return_(True)])
         else:
             code = UnformattedBlock()
         code = [code]
     else:
-        code = generateMethodBody(cppType, expr, returnResult, defaultReturn, predefined)
+        code = generateMethodBody(cppType, expr, returnResult, defaultReturn, predefined, tempVars=tempVars)
 
     meth = clsMethod(returnType, name,
             code=code,
