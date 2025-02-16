@@ -106,6 +106,12 @@ namespace Dune
         static const bool v = true;
       };
 
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isPAdaptiveSpace< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
 
       template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct threadSafe< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >

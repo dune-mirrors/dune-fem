@@ -798,7 +798,7 @@ namespace Dune
     // AdaptationManager
     // -----------------
 
-    /** \brief Manages the testriction and prolongation of discrete functions in \f$(h)p\f$-adaptive computations
+    /** \brief Manages the restriction and prolongation of discrete functions in \f$(h)p\f$-adaptive computations
      *
      *  \tparam  DiscreteFunctionSpace  an adaptive discrete function space
      *  \tparam  DataProjection  a DataProjection type

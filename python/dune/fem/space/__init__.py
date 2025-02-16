@@ -292,6 +292,13 @@ def addDiscreteFunction(space, storage):
     dfIncludes += ["dune/fempy/py/discretefunction.hh"]
     return dfIncludes, storage.type, storage.backend, ctor
 
+def addSpaceAdapt( spc ):
+    from dune.fem._spaceadaptation import _spaceAdapt, _spaceMark
+    setattr(spc,"mark", lambda *args, **kwargs: _spaceMark(spc.as_ufl(), *args, **kwargs))
+    spc.mark.__doc__ = _spaceMark.__doc__
+    setattr(spc,"adapt", lambda *args, **kwargs: _spaceAdapt(spc.as_ufl(), *args, **kwargs))
+    spc.adapt.__doc__ = _spaceAdapt.__doc__
+
 def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     addAttr(module, spc, field, scalar, codegen)
     spc._backend = backend
@@ -303,6 +310,8 @@ def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     if not backend is None:
         addBackend(module.DiscreteFunction, backend)
 
+    if spc.canAdapt:
+        addSpaceAdapt( spc )
 
 def module(field, includes, typeName, *args,
            storage=None, scalar=False, codegen=False, clone=None,

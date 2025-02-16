@@ -3,8 +3,10 @@
 
 #include <dune/common/hybridutilities.hh>
 
+#include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/codegen.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/marking/default.hh>
 
 #include <dune/python/common/dynmatrix.hh>
 #include <dune/python/common/dynvector.hh>
@@ -12,6 +14,7 @@
 #include <dune/python/common/fvector.hh>
 
 #include <dune/fempy/py/grid/gridpart.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 
 #include <dune/fempy/pybind11/pybind11.hh>
 
@@ -271,6 +274,24 @@ namespace Dune
 
         registerSpaceConstructor( cls );
         registerSubSpace( cls );
+
+        cls.def_property_readonly("canAdapt",[](Space &self){
+            return Dune::Fem::Capabilities::isPAdaptiveSpace< Space >::v;
+          });
+
+        // if p-adaptive space add marking routine
+        if constexpr( Dune::Fem::Capabilities::isPAdaptiveSpace< Space >::v )
+        {
+          typedef typename Space::GridPartType GridPart;
+          typedef FemPy::VirtualizedGridFunction<GridPart,Dune::FieldVector<double,1>> Indicator;
+          cls.def( "_mark", []( Space &self, Indicator &indicator,
+                   const double refineTolerance, const double coarsenTolerance,
+                   const int minOrder, const int maxOrder, const bool markNeighbors, const bool statistics )
+                   {
+                     return Dune::Fem::SpaceAdaptation::
+                        mark( self, indicator, refineTolerance, coarsenTolerance, minOrder, maxOrder, markNeighbors, statistics );
+                   });
+        }
 
         cls.def( "_generateQuadratureCode", []( Space &self,
                  const std::vector<unsigned int> &interiorOrders,

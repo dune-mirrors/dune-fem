@@ -688,7 +688,7 @@ def product(*spaces, **kwargs):
     """
     _kwargs = locals() # store parameter list including spaces
 
-    from dune.fem.space import module, addStorage
+    from dune.fem.space import module, addStorage, addSpaceAdapt
     from dune.fem.function import tupleDiscreteFunction
     from dune.fem.discretefunction import StorageContainer
 
@@ -770,6 +770,20 @@ def product(*spaces, **kwargs):
         df.clear()
         return df
     setattr(spc, "function", lambda *args,**kwargs: _function(spc,*args,**kwargs))
+
+    # add _mark method for p-adaptive spaces
+    canAdapt = spaces[0].canAdapt
+    for space in spaces:
+        canAdapt = canAdapt and space.canAdapt
+    if canAdapt:
+        from dune.fem._spaceadaptation import _spaceAdapt, _spaceMark
+        uniqueSpaces = set([*spaces])
+        def _mark(space, *args, **kwargs):
+            for s in uniqueSpaces:
+                s._mark( *args, *kwargs )
+
+        setattr(spc, "_mark", lambda *args,**kwargs: _mark(spc,*args,**kwargs))
+        addSpaceAdapt( spc )
 
     addStorage(spc, storage)
     return spc.as_ufl()

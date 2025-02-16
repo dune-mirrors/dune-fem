@@ -89,10 +89,7 @@ def loadBalance(first, *args):
     hgrid,args = _adaptArguments(first,*args)
     module(hgrid).gridAdaptation(hgrid).loadBalance(args)
 
-def mark(indicator, refineTolerance, coarsenTolerance=0.,
-         minLevel=0, maxLevel=None, minVolume=-1.0, maxVolume=-1.0,
-         gridView=None,
-         markNeighbors=False):
+def _indicatorToGridFunction( indicator, gridView=None ):
     if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
         indicator = ufl.as_vector(indicator)
     if ufl and isinstance(indicator, ufl.core.expr.Expr):#
@@ -104,6 +101,36 @@ def mark(indicator, refineTolerance, coarsenTolerance=0.,
                 raise ValueError("if a ufl expression is passed as indicator then the 'gridView' must also be provided")
             gridView = gridView[0]
         indicator = gridFunction(indicator,gridView=gridView,order=0)
+    return indicator
+
+def mark(indicator, refineTolerance, coarsenTolerance=0.,
+         minLevel=0, maxLevel=None,
+         minVolume=-1.0, maxVolume=-1.0,
+         gridView=None,
+         markNeighbors=False,
+         statistics = False ):
+    """
+    Mark elements of the underlying hierarchical grid for refinement or
+    coarsening. The function fem.adapt has to be called subsequently.
+
+    Args:
+        indicator         A piecewise constant grid function (or ufl expression) holding the estimated error (or indicator value)
+        refineTolerance   An element E will be marked for refinement if indicator(E) > refineTolerance.
+        coarsenTolerance  An element E will be marked for coarsening if indicator(E) < coarsenTolerance.
+        minLevel          An element E will only be marked for coarsening if E.level > minLevel.
+        maxLevel          An element E will only be marked for refinement if E.level < maxLevel.
+        minVolume         An element E will only be marked for refinement if E.geometry.volume > minVolume.
+        maxVolume         An element E will only be marked for coarsening if E.geometry.volume < maxVolume.
+        gridView          gridView (and hierarchical grid) if it cannot be extracted from indicator.
+        markNeighbors     If True, for an element E that is marked for refinement all it's neighbors will be marked for refinement also.
+        statistics        If True, the returned tuple contains the number of elements marked for refinement and coarsening, respectively.
+
+    Returns:
+        tuple( int, int )
+
+    """
+    indicator = _indicatorToGridFunction( indicator, gridView )
+
     if gridView is None:
         gridView = indicator.gridView
     try:
@@ -130,6 +157,22 @@ def markNeighbors(indicator, refineTolerance, coarsenTolerance=0.0,
                 markNeighbors=True)
 
 def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
+    """
+    Mark elements of the underlying hierarchical grid for refinement or
+    coarsening based on the Doerfler strategy. The function fem.adapt has to be called subsequently.
+    See also: W. Dörfler, A Convergent Adaptive Algorithm for Poisson's Equation,
+    SIAM J. Numer. Anal. 33 (3), 1106-1124, 1996.
+
+    Args:
+        indicator         A piecewise constant grid function holding the estimated error (or indicator value)
+        theta             Tolerance for sum estimator value.
+        maxLevel          An element E will only be marked for refinement if E.level < maxLevel (default is None).
+        layered           Parameter for layered Doerfler marking (default is 0.05).
+
+    Returns:
+        tuple( int, int )
+
+    """
     try:
         if not indicator.space.gridView.canAdapt:
             raise AttributeError("indicator function must be over grid view that supports adaptation")
