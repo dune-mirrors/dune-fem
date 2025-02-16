@@ -23,6 +23,9 @@ namespace Dune
       cls.def( "adapt", [] ( SpaceAdapt &self, std::function<int(Element)> marker, const std::list< std::reference_wrapper<DF> > &dfList ) {
           self.adapt( marker, dfList.begin(), dfList.end() );
         } );
+      cls.def( "adaptWithoutMarking", [] ( SpaceAdapt &self, const std::list< std::reference_wrapper<DF> > &dfList ) {
+          self.adapt( dfList.begin(), dfList.end() );
+        } );
     }
 
   } // namespace FemPy

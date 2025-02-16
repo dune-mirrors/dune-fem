@@ -4,6 +4,7 @@ __metaclass__ = type
 import hashlib
 
 from dune.generator.generator import SimpleGenerator
+from dune.fem.deprecated import deprecated
 
 _defaultGenerator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
 
@@ -26,7 +27,7 @@ def module(space, generator=_defaultGenerator):
     return module
 
 
-def spaceAdapt(space, marker, dfs):
+def spaceAdapt(space, dfs, marker=None):
     """ Adapt the polynomial order according to the provided marker
         of the given discrete function space belonging to
         the discrete function or list of discrete functions. This function needs
@@ -34,8 +35,9 @@ def spaceAdapt(space, marker, dfs):
 
     Args:
         space: discrete function space to be adapted
-        marker: marker function (same marker for all discrete functions)
         dfs:    discrete function or list of discrete functions belonging to space
+        marker: marker function (same marker for all discrete functions).
+                If marker is None it is assumed that marking was done already (by a user routine).
 
     Note: All discrete functions have to belong to the same space object.
           To adapt other discrete functions and spaces call spaceAdapt again.
@@ -44,6 +46,10 @@ def spaceAdapt(space, marker, dfs):
     Returns:
         None
     """
+    if not isinstance(dfs, (list,tuple)) and not hasattr(dfs, "space"):
+        deprecated("spaceAdapt: old signature is used. Flip marker and discrete functions!")
+        marker, dfs = dfs, marker
+
     if not isinstance(dfs, (list,tuple)):
         dfs = [dfs]
 
@@ -65,5 +71,10 @@ def spaceAdapt(space, marker, dfs):
                 dfDict[df.space] = [df]
 
     # adapt all dfs at once for one space
-    for s,df in dfDict.items(): # if we really have different spaces then there is still the problem that the marker doesn't know which space we are on
-        module(s).SpaceAdaptation(s).adapt(marker, df)
+    # if we really have different spaces then there is still the problem that the marker doesn't know which space we are on
+    if marker is None:
+        for s,df in dfDict.items():
+            module(s).SpaceAdaptation(s).adaptWithoutMarking(df)
+    else:
+        for s,df in dfDict.items():
+            module(s).SpaceAdaptation(s).adapt(marker, df)
