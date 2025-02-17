@@ -53,6 +53,17 @@ def _adaptArguments(first,*args):
               passing in the hierarchical grid as first argument to the
               'dune.fem.adapt' function is not required and deprecated.
               """)
+
+    # make sure all args are over the same grid
+    assert all([a.space.gridView.hierarchicalGrid==hgrid for a in args]),\
+            "all discrete functions must be over the same hierarchical grid"
+    # make sure all gridview can be adapted
+    try:
+        adapt  = all([a.space.gridView.canAdapt==True for a in args])
+        # adapt &= not any([a.space.storage[0]=="petsc" for a in args])
+    except AttributeError:
+        adapt = False
+    assert adapt, "the grid views for all discrete functions need to support adaptivity"
     return hgrid,args
 
 def adapt(first, *args):
@@ -68,25 +79,23 @@ def adapt(first, *args):
     Returns:
         None
     """
-
-
     hgrid,args = _adaptArguments(first,*args)
-
-    # make sure all args are over the same grid
-    assert all([a.space.gridView.hierarchicalGrid==hgrid for a in args]),\
-            "all discrete functions must be over the same hierarchical grid"
-    # make sure all gridview can be adapted
-    try:
-        adapt  = all([a.space.gridView.canAdapt==True for a in args])
-        # adapt &= not any([a.space.storage[0]=="petsc" for a in args])
-    except AttributeError:
-        adapt = False
-    assert adapt, "the grid views for all discrete functions need to support adaptivity"
-
     module(hgrid).gridAdaptation(hgrid).adapt(args)
 
 def loadBalance(first, *args):
-    hgrid,args = _adaptArguments(first,*args)
+    """ Balance the underlying hierarchical grid such that the work load is as
+        good as possible distributed to the available MPI processes.
+
+    Args:
+        (first, *args): a single discrete function or a list or tuple of
+        discrete functions which should be projected to the new grid.
+
+    Note: All discrete functions have to belong to the same hierarchical grid.
+
+    Returns:
+        None
+    """
+    hgrid, args = _adaptArguments(first,*args)
     module(hgrid).gridAdaptation(hgrid).loadBalance(args)
 
 def _indicatorToGridFunction( indicator, gridView=None ):
@@ -183,23 +192,24 @@ def doerflerMark(indicator, theta, maxLevel=None, layered=0.05):
     return indicator.space.gridView.doerflerMark(indicator,theta,maxLevel,layered)
 
 def globalRefine(level, first, *args):
+    """ Adapt the underlying hierarchical grid uniformly by the level and adjust
+        the discrete function passed as arguments.
+
+    Args:
+        level: Number of global refinements
+        (first, *args): a single discrete function or a list or tuple of
+        discrete functions which should be projected to the new grid.
+
+    Note: All discrete functions have to belong to the same hierarchical grid.
+
+    Returns:
+        None
+    """
     hgrid,args = _adaptArguments(first,*args)
 
     if len(args) == 0:
         hgrid.globalRefine(level)
         return
-
-    # make sure all args are over the same grid
-    assert all([a.gridView.hierarchicalGrid==hgrid for a in args]),\
-            "all discrete functions must be over the same hierarchical grid"
-    # make sure all gridview can be adapted
-    try:
-        adapt  = all([a.gridView.canAdapt==True for a in args])
-    except AttributeError:
-        adapt = False
-    assert adapt,\
-            "the grid views for all discrete functions need to support adaptivity e.g. `adpative` view"
-
     module(hgrid).gridAdaptation(hgrid).globalRefine(level, args)
 
 if __name__ == "__main__":

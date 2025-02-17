@@ -3,7 +3,7 @@ import atexit
 import dune.common
 from ._fem import *
 from ._adaptation import adapt, loadBalance, mark, markNeighbors, globalRefine, doerflerMark
-from ._spaceadaptation import spaceAdapt
+from ._spaceadaptation import spaceAdapt, SpaceMarker
 
 from . import view as view
 from . import space as space
