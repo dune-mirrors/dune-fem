@@ -33,9 +33,9 @@ def module(grid, generator=_defaultGenerator):
 class AdaptationMarkerBase:
     @staticmethod
     def indicatorToGridFunction( indicator, gridView=None ):
-        if ufl and (isinstance(indicator, list) or isinstance(indicator, tuple)):
+        if isinstance(indicator, (list, tuple)):
             indicator = ufl.as_vector(indicator)
-        if ufl and isinstance(indicator, ufl.core.expr.Expr):#
+        if isinstance(indicator, ufl.core.expr.Expr):
             if gridView is None:
                 _, coeff_ = extract_arguments_and_coefficients(indicator)
                 gridView = [c.grid for c in coeff_ if hasattr(c,"grid")]
