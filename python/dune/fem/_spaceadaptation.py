@@ -5,7 +5,7 @@ import hashlib
 
 from dune.generator.generator import SimpleGenerator
 from dune.fem.deprecated import deprecated
-from dune.fem._adaptation import _indicatorToGridFunction
+from dune.fem._adaptation import AdaptationMarkerBase
 
 _defaultGenerator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
 
@@ -27,7 +27,7 @@ def module(space, generator=_defaultGenerator):
     modules[dfTypeName] = module
     return module
 
-class SpaceMarker:
+class SpaceMarker(AdaptationMarkerBase):
     def __init__(self, indicator, refineTolerance, coarsenTolerance=0.,
                  minOrder = 0,
                  maxOrder = -1,
@@ -50,24 +50,10 @@ class SpaceMarker:
             tuple( int, int )
 
         """
-        self._setIndicator(indicator)
-        self.refineTolerance  = refineTolerance
-        self.coarsenTolerance = coarsenTolerance
-        self.minOrder         = minOrder
-        self.maxOrder         = maxOrder
-        self.markNeighbors    = markNeighbors
-        self.statistics       = statistics
+        super().__init__(indicator, refineTolerance, coarsenTolerance, markNeighbors, statistics)
 
-    def _getIndicator(self):
-        return self._indicator
-
-    def _setIndicator(self, indicator):
-        self._indicator = indicator
-        # if indicator changes reset gridFunction
-        self._indicatorGF = None
-
-    # indicator attribute
-    indicator = property(fget=_getIndicator, fset=_setIndicator)
+        self.minOrder = minOrder
+        self.maxOrder = maxOrder
 
     def __call__(self, space):
         """ Perform marking of given space
@@ -79,17 +65,13 @@ class SpaceMarker:
             tuple( int, int ) if statistics was set to True.
 
         """
-
         assert space.canAdapt, "Provided space does not support p-adaptation!"
-        # turn indicator into gridFunction if not already gridFunction
-        if not self._indicatorGF:
-            self._indicatorGF = _indicatorToGridFunction( self.indicator, space.gridView )
 
         assert self.minOrder >= 0 and self.minOrder <= space.order, "Invalid value for minOrder, must be between 0 and space.order, including!"
         if self.maxOrder == -1: self.maxOrder = space.order
         assert self.maxOrder >= self.minOrder and self.maxOrder <= space.order, "Invalid value for maxOrder, must be between minOrder and space.order, including!"
 
-        return space._mark(self._indicatorGF, self.refineTolerance, self.coarsenTolerance,
+        return space._mark(self.indicatorGF(space.gridView), self.refineTolerance, self.coarsenTolerance,
                            self.minOrder, self.maxOrder,
                            self.markNeighbors, self.statistics )
 
