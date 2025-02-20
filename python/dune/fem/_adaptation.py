@@ -7,6 +7,7 @@ import ufl
 from dune.fem.function import gridFunction
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from dune.generator.generator import SimpleGenerator
+from dune.fem.deprecated import deprecated
 
 _defaultGenerator = SimpleGenerator("GridAdaptation", "Dune::FemPy")
 
@@ -167,7 +168,7 @@ def _adaptArguments(first,*args):
     assert adapt, "the grid views for all discrete functions need to support adaptivity"
     return hgrid,args
 
-def adapt(marker, *args):
+def gridAdapt(marker, *args):
     """ Adapt the underlying hierarchical grid of the discrete function passed
         as arguments.
 
@@ -204,6 +205,10 @@ def adapt(marker, *args):
 
     # perform adaptation step
     module(hgrid).gridAdaptation(hgrid).adapt(args)
+
+def adapt(marker, *args):
+    # deprecated("adapt: call gridAdapt instead!")
+    return gridAdapt( marker, *args )
 
 
 def loadBalance(first, *args):
