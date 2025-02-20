@@ -71,18 +71,18 @@ class SpaceMarker(AdaptationMarkerBase):
         if self.maxOrder == -1: self.maxOrder = space.order
         assert self.maxOrder >= self.minOrder and self.maxOrder <= space.order, "Invalid value for maxOrder, must be between minOrder and space.order, including!"
 
-        return space._mark(self.indicatorGF(space.gridView), self.refineTolerance, self.coarsenTolerance,
-                           self.minOrder, self.maxOrder,
-                           self.markNeighbors, self.statistics )
+        return space.mark(self.indicatorGF(space.gridView), self.refineTolerance, self.coarsenTolerance,
+                          self.minOrder, self.maxOrder,
+                          self.markNeighbors, self.statistics )
 
 
-def spaceAdapt(marker, dfs, *args, **kwargs):
+def spaceAdapt(marker, *args, **kwargs):
     """ Adapt the polynomial order of the discrete function space according to the provided marker (or a
         previously set marking). The discrete functions provided will be adjusted accordingly.
 
     Args:
         marker: marker function (same marker for all discrete functions).
-        dfs:    discrete function or list of discrete functions belonging to space
+        *args:  discrete function or list of discrete functions belonging whose spaces will be adapted
 
     Note: To adapt discrete functions with different markers call this routine
           multiple times with different lists of discrete functions.
@@ -91,14 +91,21 @@ def spaceAdapt(marker, dfs, *args, **kwargs):
         None.
     """
 
-    from dune.ufl import FemSpace
+    from dune.ufl import FemSpace, GridFunction
     if isinstance(marker, FemSpace):
         deprecated("spaceAdapt: old signature used. Do not pass space anymore, use spaceAdapt( marker, dfs )!")
-        assert len(args) == 1, "Signature failure"
-        return spaceAdapt( dfs, args[0] )
+        return spaceAdapt( *args, **kwargs )
 
-    if not isinstance(dfs, (list,tuple)):
-        dfs = [dfs]
+    # check if marker is discrete function and if so call with marker=None
+    if marker is not None and (not callable(marker) or isinstance(marker, GridFunction)):
+        return spaceAdapt(None, marker, *args, **kwargs)
+
+    if not isinstance(args, (list,tuple)):
+        dfs = [args]
+    elif isinstance(args, tuple) and isinstance(args[0], (list,tuple)) and len(args) == 1:
+        dfs = args[0] # this case is produced by the line above where spaceAdapt is called
+    else:
+        dfs = args
 
     # untangle all different spaces for the list of dfs
     dfDict = {}
@@ -124,10 +131,15 @@ def spaceAdapt(marker, dfs, *args, **kwargs):
             marker( spc )
             # adapt space and dfs
             module(spc).SpaceAdaptation(spc).adapt(dfList)
-    else:
+    elif marker is not None:
         def _adapt( spc, dfList ):
-            assert s.canAdapt, "Provided space or sub-space is not p-adaptive!"
-            module(s).SpaceAdaptation(s).adapt(marker, dfList)
+            assert spc.canAdapt, "Provided space or sub-space is not p-adaptive!"
+            module(spc).SpaceAdaptation(spc).adapt(marker, dfList)
+    else:
+        # if marker is None just call adapt
+        def _adapt(spc, dfList):
+            # adapt space and dfs
+            module(spc).SpaceAdaptation(spc).adapt(dfList)
 
     # perform adaptation
     for s,dfList in dfDict.items():
