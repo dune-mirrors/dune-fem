@@ -21,6 +21,7 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/common/localinterpolation.hh>
+#include <dune/fem/space/common/capabilities.hh>
 
 namespace Dune
 {
@@ -289,6 +290,18 @@ namespace Dune
         return localInterpolation( entity, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
+      typedef int KeyType;
+      KeyType getMark( const EntityType &entity ) const
+      {
+        DUNE_THROW(NotImplemented,"TupleDiscreteFunctionSpaceImpl::getMark: This method has to be called on the subspaces!");
+        return KeyType(-1);
+      }
+
+      void mark( const KeyType& key, const EntityType &entity ) const
+      {
+        DUNE_THROW(NotImplemented,"TupleDiscreteFunctionSpaceImpl::mark: This method has to be called on the subspaces!");
+      }
+
     protected:
       template< std::size_t ... i >
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( std::index_sequence< i ... > ) const
@@ -303,6 +316,101 @@ namespace Dune
       }
     };
 
+    namespace Capabilities
+    {
+      namespace detail
+      {
+        template< template <class> class capability, class ... DiscreteFunctionSpaces >
+        struct LogicAnd
+        {
+          typedef std::tuple< DiscreteFunctionSpaces ... > SpaceTuple;
+          static const int length = std::tuple_size< SpaceTuple >::value;
+
+          template < int i, bool prev >
+          static constexpr bool acc()
+          {
+            if constexpr( i >= length )
+            {
+              return prev;
+            }
+            else
+            {
+              return acc< i+1, prev && capability< typename std::tuple_element< i, SpaceTuple >::type >::v >();
+            }
+          }
+
+          static const bool v = acc<0, true>();
+        };
+
+        template< template <class> class capability, class ... DiscreteFunctionSpaces >
+        struct PolOrder
+        {
+          typedef std::tuple< DiscreteFunctionSpaces ... > SpaceTuple;
+          static const int length = std::tuple_size< SpaceTuple >::value;
+
+          template < int i, int p >
+          static constexpr int acc()
+          {
+            if constexpr( i >= length )
+            {
+              return p;
+            }
+            else
+            {
+              return acc< i+1, (p == capability< typename std::tuple_element< i, SpaceTuple >::type >::order) ? p : -1 >();
+            }
+          }
+
+          static const int order = acc<0, capability< typename std::tuple_element< 0, SpaceTuple >::type >::order>();
+          static const bool v = (order >= 0) ? true : false ;
+        };
+      } // end namespace detail
+
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct hasFixedPolynomialOrder< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< hasFixedPolynomialOrder, DiscreteFunctionSpaces ... >::v;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct hasStaticPolynomialOrder< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        typedef detail::PolOrder< hasStaticPolynomialOrder, DiscreteFunctionSpaces ... > PolOrder;
+        static const bool v = PolOrder :: v;
+        static const int order = PolOrder :: order;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct isContinuous< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< isContinuous, DiscreteFunctionSpaces ... >::v;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct isLocalized< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< isLocalized, DiscreteFunctionSpaces ... >::v;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct isAdaptive< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< isAdaptive, DiscreteFunctionSpaces ... >::v;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct isPAdaptiveSpace< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< isPAdaptiveSpace, DiscreteFunctionSpaces ... >::v;
+      };
+
+      template< class CombineOp, class ... DiscreteFunctionSpaces >
+      struct threadSafe< TupleDiscreteFunctionSpaceImpl< CombineOp, DiscreteFunctionSpaces ... > >
+      {
+        static const bool v = detail::LogicAnd< threadSafe, DiscreteFunctionSpaces ... >::v;
+      };
+    }
 
 
     // DifferentDiscreteFunctionSpace
