@@ -303,6 +303,8 @@ def addSpaceAttr(module,spc,field,scalar,codegen,storage,backend,clone):
     if not backend is None:
         addBackend(module.DiscreteFunction, backend)
 
+    if spc.canAdapt:
+        setattr(spc,"mark", spc._mark)
 
 def module(field, includes, typeName, *args,
            storage=None, scalar=False, codegen=False, clone=None,

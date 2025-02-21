@@ -117,8 +117,22 @@ namespace Dune
       std::vector< DataProjection > vec_; // vector holding data projection objects
     };
 
+    // SpaceAdaptationMarker
+    // ---------------------
+
+    template <class Space>
+    struct SpaceAdaptationMarker
+    {
+      const Space& space_;
+      SpaceAdaptationMarker( const Space& space ) : space_( space ) {}
+
+      typedef typename Space::EntityType Element;
+      virtual int operator()( const Element& element ) const { return 1; }
+    };
+
+
     // SpaceAdaptation
-    // --------------
+    // ---------------
 
     template< class DF >
     struct SpaceAdaptation
@@ -139,13 +153,20 @@ namespace Dune
       template< class Marking, class Iterator >
       void adapt (const Marking &marking, Iterator begin, Iterator end )
       {
-        // add discrete functions to data projection list
-        for( Iterator it = begin; it != end; ++it )
-          adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
-
         // mark new polynomial orders for space
         for( const auto& element : space_ )
           space_.mark( marking(element), element );
+
+        // perform adaptation
+        adapt( begin, end );
+      }
+
+      template< class Iterator >
+      void adapt ( Iterator begin, Iterator end )
+      {
+        // add discrete functions to data projection list
+        for( Iterator it = begin; it != end; ++it )
+          adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
 
         // adapt the polynomial orders of the space and adjust
         // and project the discrete functions to the new space

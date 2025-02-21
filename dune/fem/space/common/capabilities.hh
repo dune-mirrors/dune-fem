@@ -83,6 +83,17 @@ namespace Dune
       };
 
 
+      /** \class isPAdaptiveSpace
+       *
+       *  \brief specialize with \b true if space can be used with
+       *         p-adaptation
+       */
+      template< class DiscreteFunctionSpace >
+      struct isPAdaptiveSpace
+      {
+        static const bool v = false;
+      };
+
 
       /** \class threadSafe
        *
@@ -200,6 +211,12 @@ namespace Dune
       struct isAdaptive< const DiscreteFunctionSpace >
       {
         static const bool v = isAdaptive< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isPAdaptiveSpace< const DiscreteFunctionSpace >
+      {
+        static const bool v = isPAdaptiveSpace< DiscreteFunctionSpace >::v;
       };
 
       template< class DiscreteFunctionSpace >

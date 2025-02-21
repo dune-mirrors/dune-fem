@@ -747,10 +747,7 @@ def product(*spaces, **kwargs):
             DiscreteFunction: the constructed discrete function
         """
         if name is None: name = func.name
-        # try:
         df = tupleDiscreteFunction(space, name=name, components=space.componentNames,**kwargs)
-        # except AttributeError:
-        #     df = tupleDiscreteFunction(space, name=name, **kwargs)
         df.interpolate(func)
         return df
     setattr(spc, "interpolate", lambda *args,**kwargs: _interpolate(spc,*args,**kwargs))
@@ -770,6 +767,19 @@ def product(*spaces, **kwargs):
         df.clear()
         return df
     setattr(spc, "function", lambda *args,**kwargs: _function(spc,*args,**kwargs))
+
+    # add _mark method for p-adaptive spaces
+    canAdapt = spaces[0].canAdapt
+    for space in spaces:
+        canAdapt = canAdapt and space.canAdapt
+    if canAdapt:
+        uniqueSpaces = set([*spaces])
+        def _mark(space, *args, **kwargs):
+            for s in uniqueSpaces:
+                s._mark( *args, *kwargs )
+
+        # override mark methods since we need to perform this on each subspace separately
+        setattr(spc, "mark", lambda *args,**kwargs: _mark(spc,*args,**kwargs))
 
     addStorage(spc, storage)
     return spc.as_ufl()

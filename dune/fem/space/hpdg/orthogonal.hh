@@ -181,6 +181,12 @@ namespace Dune
       };
 
       template< class FunctionSpace, class GridPart, int polOrder, class Storage >
+      struct isPAdaptiveSpace< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, class Storage >
       struct viewThreadSafe< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;

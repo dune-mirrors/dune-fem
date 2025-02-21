@@ -27,10 +27,10 @@ namespace Dune
                        Indicator &indicator,
                        double refineTolerance, double coarsenTolerance,
                        int minLevel, int maxLevel,
-                       double minVolume, double maxVolume, bool markNeighbors ) {
+                       double minVolume, double maxVolume, bool markNeighbors, bool statistics ) {
             typename GridView::Grid &grid = const_cast<typename GridView::Grid&>(self.grid());
             return Dune::Fem::GridAdaptation::
-                      mark( grid, indicator, refineTolerance, coarsenTolerance, minLevel, maxLevel, minVolume, maxVolume, markNeighbors);
+                      mark( grid, indicator, refineTolerance, coarsenTolerance, minLevel, maxLevel, minVolume, maxVolume, markNeighbors, statistics);
           });
         cls.def("doerflerMark",[](GridView &self, Indicator &indicator, double tolerance, int maxLevel,
                                   double layered) {
