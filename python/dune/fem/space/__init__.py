@@ -16,9 +16,20 @@ import ufl
 from dune.ufl import GridFunction
 
 def _uflToExpr(grid,order,f):
-    if isinstance(f, list) or isinstance(f, tuple):
+    # if interpolate has been called with 0 or 0.
+    # return None to avoid interpolation
+    # the comparison with == is in this case ok
+    if isinstance(f, (int, float)) and abs(f) == 0:
+        return None # this will create a discrete function with zero entries
+
+    if isinstance(f, (list, tuple)):
+        if all(isinstance(item, (int, float)) for item in f):
+            if sum([abs(item) for item in f]) == 0:
+                  return None # this will create a discrete function with zero entries
+
         if isinstance(f[0], ufl.core.expr.Expr):
             f = ufl.as_vector(f)
+
     if isinstance(f, GridFunction):
         return f
     if isinstance(f, ufl.core.expr.Expr):
@@ -56,7 +67,7 @@ def project(space, func, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
-    expr = _uflToExpr(space.gridView,space.order,func)
+    expr = _uflToExpr(space.gridView,space.order,func, space.dimRange, space.scalar)
     if name is None:
         name = func.name
     # assert func.dimRange == space.dimRange, "range dimension mismatch"
