@@ -127,7 +127,7 @@ auto checkLocalInterpolation ( const Space &space )
     {
       LocalBasisType local( bSet, i );
 
-      std::vector< typename Space::RangeFieldType > phii( bSet.size(), 0 );
+      Dune::DynamicVector< typename Space::RangeFieldType > phii( bSet.size(), 0 );
       interpolation( local, phii );
 
       for( std::size_t j = 0; j < phii.size(); ++j )
