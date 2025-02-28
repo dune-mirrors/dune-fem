@@ -127,7 +127,12 @@ auto checkLocalInterpolation ( const Space &space )
     {
       LocalBasisType local( bSet, i );
 
+#ifdef DUNE_CHECK_BOUNDS
+      // the check bounds only works with a vector fulfilling the DenseVector interface
       Dune::DynamicVector< typename Space::RangeFieldType > phii( bSet.size(), 0 );
+#else
+      std::vector< typename Space::RangeFieldType > phii( bSet.size(), 0 );
+#endif
       interpolation( local, phii );
 
       for( std::size_t j = 0; j < phii.size(); ++j )
