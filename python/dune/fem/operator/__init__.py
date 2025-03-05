@@ -183,11 +183,13 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
         typeName = 'DirichletWrapperOperator< ' + typeName + ' >'
 
     setCommunicate = Method('setCommunicate', '''[]( DuneType &self, const bool communicate ) { self.setCommunicate( communicate ); }''' )
-    gridSizeInterior = Method('gridSizeInterior', '''[]( DuneType &self ) { return self.gridSizeInterior(); }''' )
-    op = load(includes, typeName, setCommunicate, gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
+    _gridSizeInterior = Method('_gridSizeInterior', '''[]( DuneType &self ) { return self.gridSizeInterior(); }''' )
+
+    op = load(includes, typeName, setCommunicate, _gridSizeInterior, constructor).Operator(domainSpace,rangeSpace,integrands)
     op.model = integrands
     op.__class__.linear = _opLinear
     op.__class__.dirichletIndices = _opDirichletIndices
+    op.gridSizeInterior = property( lambda self: self._gridSizeInterior() )
     # apply communicate flag
     op.setCommunicate( communicate )
     return op

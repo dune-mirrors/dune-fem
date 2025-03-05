@@ -116,6 +116,8 @@ public:
   const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
   DifferentiableOperatorType &fullOperator() { return fullOperator_; }
 
+  std::size_t gridSizeInterior () const { return fullOperator().gridSizeInterior(); }
+
   template <typename O = DifferentiableOperatorType>
   auto setQuadratureOrders(unsigned int interior, unsigned int surface)
   -> Dune::void_t< decltype( std::declval< O >().setQuadratureOrders(0,0) ) >

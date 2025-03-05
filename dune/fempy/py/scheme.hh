@@ -219,6 +219,7 @@ namespace Dune
         cls.def_property_readonly( "space", [] ( Scheme &self ) -> auto& { return self.space(); } );
         cls.def_property_readonly( "domainSpace", [] ( Scheme &self ) -> auto& { return self.space(); } );
         cls.def_property_readonly( "rangeSpace", [] ( Scheme &self ) -> auto& { return self.space(); } );
+        cls.def_property_readonly( "gridSizeInterior", [] ( const Scheme &self ) -> size_t { return self.gridSizeInterior(); } );
 
         auto clsInvOp = Dune::Python::insertClass< typename Scheme::LinearInverseOperatorType >
               ( cls, "LinearInverseOperator", Dune::Python::GenerateTypeName(cls,"LinearInverseOperatorType"));
