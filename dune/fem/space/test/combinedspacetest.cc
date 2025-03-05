@@ -233,6 +233,8 @@ struct DummyLocalFunction
 
   void init ( const EntityType &entity ) {}
 
+  bool valid() const { return true; }
+
 protected:
   const EntityType &entity_;
 };
