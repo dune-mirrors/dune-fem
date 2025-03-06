@@ -246,6 +246,17 @@ namespace Dune
       inline static void registerOperatorSpaces ( pybind11::class_< Operator, options... > cls, PriorityTag<0> )
       {}
 
+      template< class Operator, class... options, decltype( std::declval< const Operator & >().gridSizeInterior(), 0 ) = 0 >
+      inline static void registerOperatorGridSizeInterior ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
+      {
+        using pybind11::operator""_a;
+        cls.def_property_readonly( "gridSizeInterior", [] ( const Operator &self ) -> size_t { return self.gridSizeInterior(); } );
+      }
+
+      template< class Operator, class... options >
+      inline static void registerOperatorGridSizeInterior ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
+      {}
+
       // registerOperator
       // ----------------
 
@@ -260,6 +271,7 @@ namespace Dune
         registerGeneralOperatorJacobian( cls, PriorityTag< 42 >() );
         registerOperatorConstraints( cls );
         registerOperatorQuadratureOrders ( cls );
+        registerOperatorGridSizeInterior( cls, PriorityTag< 42 >() );
 
         registerOperatorSpaces( cls, PriorityTag< 42 >() );
       }
