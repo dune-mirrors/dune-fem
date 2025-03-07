@@ -112,7 +112,8 @@ public:
                        const ModelType &model,
                        const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
-    penalty_( space, parameter.getValue< double >( "penalty", 40 ) )
+    penalty_( space, parameter.getValue< double >( "penalty", 40 ) ),
+    grdSzeInt_( 0 )
   {
     // std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
   }
@@ -122,7 +123,8 @@ public:
                        const ModelType &model,
                        const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
-    penalty_( dSpace, parameter.getValue< double >( "penalty", 40 ) )
+    penalty_( dSpace, parameter.getValue< double >( "penalty", 40 ) ),
+    grdSzeInt_( 0 )
   {
     // std::cout << "dg operator with penalty:" << penalty_.factor() << std::endl;
   }
@@ -133,13 +135,16 @@ public:
   template <class GF>
   void apply( const GF &u, RangeDiscreteFunctionType &w ) const;
 
+  size_t gridSizeInterior() const { return grdSzeInt_; }
+
 protected:
   const ModelType &model () const { return model_; }
   Penalty penalty() const { return penalty_; }
 
-private:
+protected:
   const ModelType &model_;
   Penalty penalty_;
+  mutable size_t grdSzeInt_;
 };
 
 // DifferentiableDGEllipticOperator
@@ -217,6 +222,7 @@ public:
 protected:
   using BaseType::model;
   using BaseType::penalty;
+  using BaseType::grdSzeInt_;
 };
 
 // Implementation of DGEllipticOperator
@@ -236,12 +242,17 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Penalty >
   Dune::Fem::ConstLocalFunction< GF > uOutLocal( u );
   Dune::Fem::AddLocalContribution< RangeDiscreteFunctionType > wLocal( w );
 
+  grdSzeInt_ = 0;
+
   // iterate over grid
   const IteratorType end = dfSpace.end();
   for( IteratorType it = dfSpace.begin(); it != end; ++it )
   {
     // get entity (here element)
     const EntityType &entity = *it;
+
+    // increase element counter
+    ++grdSzeInt_;
 
     bool needsCalculation = model().init( entity );
     if (! needsCalculation )
@@ -476,11 +487,16 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Penalty >
   std::vector< RangeType > phiNb( numDofs );
   std::vector< JacobianRangeType > dphiNb( numDofs );
 
+  grdSzeInt_ = 0;
+
   // std::cout << "   in assembly: start element loop size=" << rangeSpace.gridPart().grid().size(0) << " time=  " << timer.elapsed() << std::endl;;
   const IteratorType end = rangeSpace.end();
   for( IteratorType it = rangeSpace.begin(); it != end; ++it )
   {
     const EntityType &entity = *it;
+
+    // count interior elements
+    ++grdSzeInt_;
 
     bool needsCalculation = model().init( entity );
     if (! needsCalculation )
