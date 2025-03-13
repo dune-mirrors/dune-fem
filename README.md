@@ -11,7 +11,7 @@ to the DUNE-FEM [bugtracker][6] instead.
 Tutorial
 --------
 
-A [tutorial][18] for the recently added Python bindings can be found [here][18].
+A [tutorial][18] for the available Python bindings can be found [here][18].
 
 Installation
 ------------
