@@ -162,7 +162,7 @@ namespace Dune
       template< class LocalFunction, class Dof >
       void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
       {
-        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
+        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet_ );
         localInterpolation().interpolate( wrapper, localDofVector );
       }
 
