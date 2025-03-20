@@ -84,7 +84,8 @@ namespace Dune
           lf_.evaluate( x, help );
           // geometry needs to come from local function. For some reasons the
           // geometry from the basis set was invalid. Something to investigate.
-          typename Transformation::InverseTransformationType transf( lf_.geometry(), x );
+          // typename Transformation::InverseTransformationType transf( lf_.geometry(), x );
+          typename Transformation::InverseTransformationType transf( bset_.geometry(), x );
           y = transf.apply( help );
         }
         template< class Arg >
