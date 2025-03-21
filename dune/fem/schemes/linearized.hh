@@ -85,7 +85,7 @@ namespace Dune
       //! \todo @docme
       LinearScheme ( SchemeType &scheme,
                      Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
-        : BaseType( "linearized Op", scheme.space(), scheme.space() ),
+        : BaseType( "linearized Op", scheme.space(), scheme.space(), parameter ),
           FSBaseType( scheme, parameter ),
           isBound_(false),
           parameter_( std::move( parameter ) ),
@@ -96,7 +96,7 @@ namespace Dune
       //! \todo @docme
       LinearScheme ( SchemeType &scheme, const DiscreteFunctionType &ubar,
                      Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
-        : BaseType( "linearized Op", scheme.space(), scheme.space() ),
+        : BaseType( "linearized Op", scheme.space(), scheme.space(), parameter ),
           FSBaseType( scheme, parameter ),
           isBound_(false),
           parameter_( std::move( parameter ) ),
