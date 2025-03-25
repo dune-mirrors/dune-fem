@@ -30,7 +30,7 @@ before_script:
 ubuntu-24.04-gcc-14-20-debug:
   image: registry.dune-project.org/docker/ci/ubuntu:24.04
   script:
-    - DUNECI_CMAKE_FLAGS+="-DCMAKE_BUILD_TYPE=Debug"
+    - DUNECI_CMAKE_FLAGS+="-DCMAKE_CXX_FLAGS=\"-O3 -DDEBUG\" -DCMAKE_BUILD_TYPE=None"
     - duneci-standard-test
   variables:
     DUNECI_TOOLCHAIN: gcc-14-20
