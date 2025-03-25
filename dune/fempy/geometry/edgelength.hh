@@ -5,8 +5,10 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
 
 namespace Dune
 {
@@ -87,5 +89,8 @@ namespace Dune
 
 } // namespace Dune
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic pop
+#endif
+
 #endif // #ifndef DUNE_FEMPY_GEOMETRY_EDGELENGTH_HH

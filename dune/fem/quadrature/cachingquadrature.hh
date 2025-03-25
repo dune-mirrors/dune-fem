@@ -1,8 +1,10 @@
 #ifndef DUNE_FEM_CACHINGQUADRATURE_HH
 #define DUNE_FEM_CACHINGQUADRATURE_HH
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
 
 //- Dune includes
 #include <dune/common/math.hh>
@@ -426,6 +428,8 @@ namespace Dune
 
 } //namespace Dune
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic pop
+#endif
 
 #endif // #ifndef DUNE_FEM_CACHINGQUADRATURE_HH

@@ -14,10 +14,13 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/misc/functor.hh>
 
+#if __GNUC__ >= 13
 // save diagnostic state
 #pragma GCC diagnostic push
 // turn off the specific warning, caused by code in line 419.
 #pragma GCC diagnostic ignored "-Wattributes"
+#endif
+
 
 namespace Dune
 {
@@ -657,7 +660,9 @@ namespace Dune
 
 } // namespace Dune
 
+#if __GNUC__ >= 13
 // turn the warnings back on
 #pragma GCC diagnostic pop
+#endif // #if defined(__GNUC__)
 
 #endif // #ifndef DUNE_FEM_SPACE_COMBINEDSPACE_TUPLEMAPPER_HH
