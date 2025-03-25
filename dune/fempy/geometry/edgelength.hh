@@ -5,6 +5,9 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+
 namespace Dune
 {
 
@@ -84,4 +87,5 @@ namespace Dune
 
 } // namespace Dune
 
+#pragma GCC diagnostic pop
 #endif // #ifndef DUNE_FEMPY_GEOMETRY_EDGELENGTH_HH
