@@ -10,7 +10,10 @@
 
 #include <dune/fem/quadrature/idprovider.hh>
 
+//#define USE_DUNE_QUADRATURES
+
 #include "femquadratures.hh"
+#include "dunequadratures.hh"
 
 namespace Dune
 {
@@ -18,6 +21,7 @@ namespace Dune
   namespace Fem
   {
 
+#ifndef USE_DUNE_QUADRATURES
     // default defines for used quadratures
     template< typename FieldType, int dim >
     struct DefaultQuadratureImplementationTraits
@@ -97,6 +101,11 @@ namespace Dune
 
       typedef int QuadratureKeyType ;
     };
+
+#else
+    template < class FieldType, int dim >
+    using DefaultQuadratureTraits = DuneQuadratureTraits< FieldType, dim >;
+#endif
 
   } // namespace Fem
 

@@ -6,12 +6,15 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
+#include <dune/fem/quadrature/femquadratures.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
+
+
 
     /** \class QuadratureRulesFactory
      *  \ingroup Quadrature
@@ -111,6 +114,7 @@ namespace Dune
     {
       typedef QuadratureRulesFactory< FieldType, dim > SimplexQuadratureType;
       typedef QuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
+      typedef PolyhedronQuadrature< FieldType, dim > PolyhedronQuadratureType;
 
       typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
 
@@ -145,6 +149,8 @@ namespace Dune
 
       typedef QuadratureRulesFactory< FieldType, 3 > PrismQuadratureType;
       typedef QuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
+
+      typedef PolyhedronQuadrature< FieldType, 3 > PolyhedronQuadratureType;
 
       typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
 
