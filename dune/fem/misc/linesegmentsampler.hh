@@ -7,8 +7,10 @@
 #include <type_traits>
 #include <new>
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
 
 #include <dune/common/fvector.hh>
 
@@ -261,6 +263,8 @@ namespace Dune
 
 } // namespace Dune
 
+#if __GNUC__ >= 13
 #pragma GCC diagnostic pop
+#endif
 
 #endif // #ifndef DUNE_FEM_LINESEGMENTSAMPLER_HH

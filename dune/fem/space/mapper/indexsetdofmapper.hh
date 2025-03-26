@@ -18,10 +18,12 @@
 #include <dune/fem/space/mapper/exceptions.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
+#if __GNUC__ >= 13
 // save diagnostic state
 #pragma GCC diagnostic push
 // turn off the specific warning, caused by code in line 419.
 #pragma GCC diagnostic ignored "-Wattributes"
+#endif
 
 namespace Dune
 {
@@ -791,7 +793,10 @@ namespace Dune
 
 } // namespace Dune
 
+#if __GNUC__ >= 13
 // turn the warnings back on
 #pragma GCC diagnostic pop
+#endif
+
 
 #endif //#ifndef DUNE_FEM_DOFMAPPER_INDEXSETDOFMAPPER_HH
