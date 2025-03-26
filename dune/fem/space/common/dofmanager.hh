@@ -893,10 +893,10 @@ namespace Dune
         }
       }
 
+    public:
       //! Desctructor, removes all MemObjects and IndexSetObjects
       ~DofManager ();
 
-    public:
       DofManager( const ThisType& ) = delete;
 
       //! return factor to over estimate new memory allocation
@@ -1250,8 +1250,20 @@ namespace Dune
        */
       static inline ThisType& instance( const GridType& grid )
       {
+        auto dmPtr = grid.template getUserData< ThisType >();
+        if( dmPtr )
+          return *dmPtr;
+        else
+        {
+          std::shared_ptr< ThisType > dmPtr(new ThisType( &grid ) );
+          grid.registerUserData( dmPtr );
+          return *dmPtr;
+        }
+
+        /*
         typedef DofManagerFactory< ThisType > DofManagerFactoryType;
         return DofManagerFactoryType :: instance( grid );
+        */
       }
     };
 
