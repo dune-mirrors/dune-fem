@@ -893,10 +893,10 @@ namespace Dune
         }
       }
 
+    public:
       //! Desctructor, removes all MemObjects and IndexSetObjects
       ~DofManager ();
 
-    public:
       DofManager( const ThisType& ) = delete;
 
       //! return factor to over estimate new memory allocation
@@ -1241,7 +1241,15 @@ namespace Dune
       //********************************************************
       // Interface for DofManager access
       //********************************************************
+    protected:
+      //! return string key for dof manager identification on grid user data
+      static const std::string& dmKey()
+      {
+        static const std::string key("DuneFem::DM");
+        return key;
+      }
 
+    public:
       /** \brief obtain a reference to the DofManager for a given grid
        *
        *  \param[in]  grid  grid for which the DofManager is desired
@@ -1250,8 +1258,31 @@ namespace Dune
        */
       static inline ThisType& instance( const GridType& grid )
       {
-        typedef DofManagerFactory< ThisType > DofManagerFactoryType;
-        return DofManagerFactoryType :: instance( grid );
+        // obtain dof manager from grid if supported
+        if constexpr ( requires{ grid.userData(); } )
+        {
+          auto& userData = grid.userData();
+          const std::string& key = ThisType::dmKey();
+          auto it = userData.find( key );
+          typedef std::shared_ptr< ThisType > DofManagerPtrType;
+          if( it == userData.end() )
+          {
+            DofManagerPtrType dmPtr( new ThisType( &grid ) );
+            userData[ key ] = dmPtr;
+            return *dmPtr;
+          }
+          else
+          {
+            DofManagerPtrType dmPtr = std::any_cast< DofManagerPtrType > ( it->second );
+            return *dmPtr;
+          }
+        }
+        else
+        {
+          // fallback if grid does not have userData
+          typedef DofManagerFactory< ThisType > DofManagerFactoryType;
+          return DofManagerFactoryType :: instance( grid );
+        }
       }
     };
 
@@ -1264,6 +1295,8 @@ namespace Dune
     template <class GridType>
     inline DofManager<GridType>::~DofManager ()
     {
+      // this method is called, when the grid is destroyed (by deleting the userData)
+
       // enable output if verbosity level is debugOutput
       const bool verbose = Parameter::verbose( Parameter::debugOutput );
       if(memList_.size() > 0)
