@@ -340,6 +340,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &space() const { return linOp_.space(); }
       const SchemeType &scheme() { return linOp_.scheme(); }
       const ParameterReader& parameter () const { return linOp_.parameter(); }
+      const LinearOperatorType& linearScheme () const { return linOp_; }
 
     protected:
       SolverInfoType _solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution, const PreconditionerFunctionType* p) const
