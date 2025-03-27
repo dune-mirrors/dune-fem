@@ -1,6 +1,12 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_COMPOSITEGEOMETRY_HH
 #define DUNE_FEM_GRIDPART_COMMON_COMPOSITEGEOMETRY_HH
 
+#if __GNUC__ >= 13
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
+
 #include <type_traits>
 #include <utility>
 
@@ -117,5 +123,10 @@ namespace Dune
   };
 
 } // namespace Dune
+
+
+#if __GNUC__ >= 13
+#pragma GCC diagnostic pop
+#endif
 
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_GEOMETRY_HH
