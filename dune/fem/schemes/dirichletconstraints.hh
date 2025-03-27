@@ -101,6 +101,7 @@ public:
     static const int dimRange = RangeType::dimension;
     BoundaryWrapper( const ModelType& impl, const EntityType& entity, const int order, int bndId )
     : impl_( impl ), entity_(entity), order_(order), bndId_(bndId) {}
+    bool valid() const { return true; }
     const EntityType& entity() const { return entity_; }
     const int order () const { return order_; }
     template <class Point>
