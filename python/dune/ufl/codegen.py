@@ -6,8 +6,10 @@ from ufl import replace, Constant
 from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import (
      extract_arguments_and_coefficients, extract_arguments,
-     extract_coefficients, extract_constants
+     extract_coefficients, extract_type
      )
+from ufl.algorithms.analysis import extract_constants as ufl_extract_constants
+from ufl.utils.sorting import sorted_by_count
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.corealg.map_dag import map_expr_dags
@@ -28,6 +30,7 @@ from dune.source.cplusplus import assign, construct, coordinate, dereference, la
 from .applyrestrictions import applyRestrictions
 
 from dune.ufl.tensors import ExprTensor
+from dune.ufl import Constant as DuneConstant
 from dune.ufl.tensors import apply as exprTensorApply
 from dune.source.cplusplus import assign, construct, TypeAlias, Declaration, Variable,\
         UnformattedBlock, UnformattedExpression, Struct, return_,\
@@ -133,6 +136,9 @@ class CodeGenerator(MultiFunction):
             self.code.append(Declaration(var))
             self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
         return var
+
+    def constantvalue(self, expr):
+        return self.constant(expr)
 
     def conditional(self, expr, cond, true, false):
         return ConditionalExpression('auto', cond, true, false)
@@ -367,7 +373,7 @@ def fieldVectorType(shape, field = None, useScalar = False):
         except AttributeError:
             field = 'double'
         shape = shape.ufl_shape
-    elif isinstance(shape, Constant):
+    elif isinstance(shape, (Constant, DuneConstant)):
         shape = shape.ufl_shape
         field = 'double'
     else:
@@ -398,6 +404,14 @@ def gridPartType(gf):
     else:
         return 'Dune::FemPy::GridPart<'+gvType[0]+'>'
 
+def extract_constants_ext(a):
+    """Build a sorted list of all constants in a.
+
+    Args:
+        a: A BaseForm, Integral or Expr
+    """
+    # this first one extracts all Constant and second all dune.ufl.Constant
+    return ufl_extract_constants(a) + sorted_by_count(extract_type(a, DuneConstant))
 
 class ModelClass():
     def __init__(self, name, uflExpr, virtualize, dimRange=None, predefined=None):
@@ -452,9 +466,9 @@ class ModelClass():
         coefficients = set()
         for expr in uflExpr:
             try:
-                coefficients |= set(list(expr.coefficients())+list(expr.constants()))
+                coefficients |= set(list(expr.coefficients())+extract_constants_ext(expr))
             except:
-                cc = extract_coefficients(expr) + extract_constants(expr)
+                cc = extract_coefficients(expr) + extract_constants_ext(expr)
                 coefficients |= set(cc)
         extracedAll = False
         while not extracedAll:
@@ -465,7 +479,7 @@ class ModelClass():
                 except AttributeError:
                     continue
                 for expr in predef.values():
-                    cc = extract_coefficients(expr) + extract_constants(expr)
+                    cc = extract_coefficients(expr) + extract_constants_ext(expr)
                     cc = set(cc)
                     if not cc.issubset(coefficients):
                        coefficients |= cc
@@ -982,7 +996,7 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined, tempVar
                 expr = as_vector([expr])
             dimR = expr.ufl_shape[0]
 
-        coeff = extract_coefficients(expr) + extract_constants(expr)
+        coeff = extract_coefficients(expr) + extract_constants_ext(expr)
         coeff = {c : c.toVectorCoefficient()[0] for c in coeff if len(c.ufl_shape) == 0 and not c.is_cellwise_constant()}
         expr = replace(expr, coeff)
 

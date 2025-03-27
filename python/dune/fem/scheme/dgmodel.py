@@ -31,7 +31,7 @@ def codeDG(self):
         dmPenalty = None
 
     code.append(AccessModifier("public"))
-    x = SpatialCoordinate(self.space.cell())
+    x = SpatialCoordinate(self.space)
     predefined = {}
     self.predefineCoefficients(predefined,x)
     spatial = Variable('const auto', 'y')

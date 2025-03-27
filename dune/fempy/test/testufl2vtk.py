@@ -1,5 +1,6 @@
 import ufl
-x = ufl.SpatialCoordinate(ufl.triangle)
+import dune.ufl
+x = ufl.SpatialCoordinate(dune.ufl.cell(2))
 u=ufl.sin(x[0]*x[1])
 import dune.grid
 grid=dune.grid.structuredGrid([0,0],[1,1],[10,10])

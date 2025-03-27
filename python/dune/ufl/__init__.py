@@ -237,69 +237,225 @@ def isNumber(x):
     except:
         return False
 
-# the following is an adapted version of the code in fenics
-ConstantBase = ufl.Constant if _ufl2024AndNewer else ufl.Coefficient
-class Constant(ConstantBase):
-    constCount = 0
-    def __init__(self, value, name=None, cell=None):
-        """
-        Create constant-valued function with given value.
+if _ufl2024AndNewer:
+    from ufl.core.ufl_type import UFLType
+    from ufl.utils.counted import Counted
+    # the following is an adapted version of the code in fenics
+    class Constant(ufl.constantvalue.ConstantValue, Counted):
+        _ufl_typecode_ = UFLType._ufl_num_typecodes_
+        _ufl_handler_name_ = "ufl_type"
+        #constCount = 0
+        def __init__(self, value, name=None, cell=None, count=None):
+            """
+            Create constant-valued function with given value.
 
-        *Arguments*
-            value
-                The value may be either a single scalar value, or a
-                tuple/list of values for vector-valued functions, or
-                nested lists or a numpy array for tensor-valued
-                functions.
-            cell
-                Optional argument. A :py:class:`Cell
-                <ufl.Cell>` which defines the geometrical
-                dimensions the Constant is defined for.
-            name
-                Optional argument. A str which overrules the default
-                name of the Constant.
+            *Arguments*
+                value
+                    The value may be either a single scalar value, or a
+                    tuple/list of values for vector-valued functions, or
+                    nested lists or a numpy array for tensor-valued
+                    functions.
+                name
+                    Optional argument. A str which overrules the default
+                    name of the Constant.
 
-        The data type Constant represents a constant value that is
-        unknown at compile-time. Its values can thus be changed
-        without requiring re-generation and re-compilation of C++
-        code.
+            The data type Constant represents a constant value that is
+            unknown at compile-time. Its values can thus be changed
+            without requiring re-generation and re-compilation of C++
+            code.
 
-        *Examples of usage*
+            *Examples of usage*
 
-            .. code-block:: python
+                .. code-block:: python
 
-                p = Constant(pi/4)              # scalar
-                C = Constant((0.0, -1.0, 0.0))  # constant vector
+                    p = Constant(pi/4)              # scalar
+                    C = Constant((0.0, -1.0, 0.0))  # constant vector
 
-        """
+            """
 
-        # TODO: Either take mesh instead of cell, or drop cell and let
-        # grad(c) be undefined.
-        if cell is not None:
-            cell = ufl.as_cell(cell)
-        # TODO: for ufl2024 needs fixing of Constant issue
-        elif _ufl2024AndNewer:
-            cell = domain(2) # TODO: this does not work - e.g. mcf.py needs (2,3) here
-        ufl_domain = None
+            # TODO: Either take mesh instead of cell, or drop cell and let
+            # grad(c) be undefined.
+            if cell is not None:
+                print("deprecated, Constant does not need cell")
+            ufl_domain = None
 
-        array = numpy.array(value)
-        rank = len(array.shape)
-        floats = list(map(float, array.flat))
+            array = numpy.array(value)
+            rank = len(array.shape)
+            floats = list(map(float, array.flat))
 
-        # True if rank is zero, otherwise False
-        self.scalar = rank == 0
+            # True if rank is zero, otherwise False
+            self.scalar = rank == 0
 
-        # Initialize base classes
-        if _ufl2024AndNewer:
-            # Create UFL element and initialize constant
+            # Compute shape
             if rank == 0:
                 shape=()
             elif rank == 1:
                 shape=(len(floats),)
             else:
                 shape=array.shape
-            ConstantBase.__init__(self, domain=cell, shape=shape)
-        else:
+
+            # Initialize base classes
+            super().__init__()
+            Counted.__init__(self, count, Counted)
+            self._ufl_shape = shape
+
+            # set name
+            if name is None:
+                self.name = "c"+str(self.count())
+            else:
+                self.name = name
+
+            if isNumber(value):
+                self._value = float(value)
+            else:
+                self._value = [float(v) for v in value]
+            # list of models that hold a reference of this object
+            self.models = []
+
+        def __repr__(self):
+            return f"Constant({self.values()}, name='{self.name}', count={self._count})"
+
+        def _ufl_signature_data_(self, renumbering):
+            return (type(self).__name__, renumbering[self])
+
+        def __hash__(self):
+            return hash((type(self), self.count()))
+
+        def __eq__(self, other):
+            return type(self) == type(other) and self.count() == other.count()
+
+        @property
+        def ufl_shape(self):
+            return self._ufl_shape
+
+        def count(self):
+            return self._count
+
+        def function_space(self):
+            """Return a null function space."""
+            return None
+
+        def cell_node_map(self, bcs=None):
+            """Return a null cell to node map."""
+            if bcs is not None:
+                raise RuntimeError("Can't apply boundary conditions to a Constant")
+            return None
+
+        def interior_facet_node_map(self, bcs=None):
+            """Return a null interior facet to node map."""
+            if bcs is not None:
+                raise RuntimeError("Can't apply boundary conditions to a Constant")
+            return None
+
+        def exterior_facet_node_map(self, bcs=None):
+            """Return a null exterior facet to node map."""
+            if bcs is not None:
+                raise RuntimeError("Can't apply boundary conditions to a Constant")
+            return None
+
+        def zero(self):
+            """Set the value of this constant to zero."""
+            return self.assign(0)
+
+        def __iadd__(self, o):
+            raise NotImplementedError("Augmented assignment to Constant not implemented")
+
+        def __isub__(self, o):
+            raise NotImplementedError("Augmented assignment to Constant not implemented")
+
+        def __imul__(self, o):
+            raise NotImplementedError("Augmented assignment to Constant not implemented")
+
+        def __itruediv__(self, o):
+            raise NotImplementedError("Augmented assignment to Constant not implemented")
+
+        def __str__(self):
+            return str(self.values())
+
+        def values(self):
+            if isNumber(self._value):
+                return numpy.array([self._value])
+            else:
+                return self._value
+        def __float__(self):
+            return self._value
+
+        @property
+        def value(self):
+            return self._value
+
+        @value.setter
+        def value(self,v):
+            self.assign(v)
+
+        def assign(self,v):
+            if isNumber(v):
+                v = float(v)
+            else:
+                v = [float(vv) for vv in v]
+            assert type(self._value) == type(v)
+            self._value = v
+            for m in self.models:
+                if hasattr(m,self.name):
+                    setattr(m,self.name,v)
+                else:
+                    m.setConstant(self,v)
+        # register a model that uses this object
+        def registerModel(self,model):
+            self.models += [model]
+            if hasattr(model,self.name):
+                setattr(model,self.name,self._value)
+            else:
+                model.setConstant(self,self._value)
+
+else: # older ufl
+    class Constant(ufl.Coefficient):
+        constCount = 0
+        def __init__(self, value, name=None, cell=None):
+            """
+            Create constant-valued function with given value.
+
+            *Arguments*
+                value
+                    The value may be either a single scalar value, or a
+                    tuple/list of values for vector-valued functions, or
+                    nested lists or a numpy array for tensor-valued
+                    functions.
+                cell
+                    Optional argument. A :py:class:`Cell
+                    <ufl.Cell>` which defines the geometrical
+                    dimensions the Constant is defined for.
+                name
+                    Optional argument. A str which overrules the default
+                    name of the Constant.
+
+            The data type Constant represents a constant value that is
+            unknown at compile-time. Its values can thus be changed
+            without requiring re-generation and re-compilation of C++
+            code.
+
+            *Examples of usage*
+
+                .. code-block:: python
+
+                    p = Constant(pi/4, name="pressure")       # scalar
+                    C = Constant((0.0, -1.0, 0.0), name="C")  # constant vector
+
+            """
+
+            # TODO: Either take mesh instead of cell, or drop cell and let
+            # grad(c) be undefined.
+            if cell is not None:
+                cell = ufl.as_cell(cell)
+            ufl_domain = None
+
+            array = numpy.array(value)
+            rank = len(array.shape)
+            floats = list(map(float, array.flat))
+
+            # True if rank is zero, otherwise False
+            self.scalar = rank == 0
+
             # Create UFL element and initialize constant
             if rank == 0:
                 ufl_element = ufl.FiniteElement("Real", cell, 0)
@@ -308,70 +464,53 @@ class Constant(ConstantBase):
             else:
                 ufl_element = ufl.TensorElement("Real", cell, 0, shape=array.shape)
             ufl_function_space = ufl.FunctionSpace(ufl_domain, ufl_element)
-            ConstantBase.__init__(self, ufl_function_space)
+            super().__init__(ufl_function_space)
 
-        if name is None:
-            self.name = "c"+str(Constant.constCount)
-            Constant.constCount += 1
-        else:
-            self.name = name
-        if isNumber(value):
-            self._value = float(value)
-        else:
-            self._value = [float(v) for v in value]
-        self.models = []
-
-    def cell(self):
-        return self.ufl_domain().cell()
-
-    def values(self):
-        if isNumber(self._value):
-            return numpy.array([self._value])
-        else:
-            return self._value
-    def __float__(self):
-        return self._value
-    @property
-    def value(self):
-        return self._value
-    @value.setter
-    def value(self,v):
-        self.assign(v)
-    def assign(self,v):
-        if isNumber(v):
-            v = float(v)
-        else:
-            v = [float(vv) for vv in v]
-        assert type(self._value) == type(v)
-        self._value = v
-        for m in self.models:
-            if hasattr(m,self.name):
-                setattr(m,self.name,v)
+            if name is None:
+                self.name = "c"+str(Constant.constCount)
+                Constant.constCount += 1
             else:
-                m.setConstant(self,v)
-    def registerModel(self,model):
-        self.models += [model]
-        if hasattr(model,self.name):
-            setattr(model,self.name,self._value)
-        else:
-            model.setConstant(self,self._value)
-    # def __eq__(self, other):
-    #     return self._value == other._value
-    # def __ne__(self, other):
-    #     return not self == other
-    # def __radd__(self, other):
-    #     return self.__add__(other)
-    # def __add__(self, other):
-    #     return self._value += other._value
-    # def __sub__(self, other):
-    #     return self + (-other)
-    # def __rsub__(self, other):
-    #     return other + (-self)
-    # def __rmul__(self, scalar):
-    #     return self.__mul__(scalar)
-    # def __mul__(self, scalar):
-    #     for i in range(len(self._value)):
-    #        self._value[i] *= scalar
+                self.name = name
+            if isNumber(value):
+                self._value = float(value)
+            else:
+                self._value = [float(v) for v in value]
+            self.models = []
+
+        def cell(self):
+            return self.ufl_domain().cell()
+
+        def values(self):
+            if isNumber(self._value):
+                return numpy.array([self._value])
+            else:
+                return self._value
+        def __float__(self):
+            return self._value
+        @property
+        def value(self):
+            return self._value
+        @value.setter
+        def value(self,v):
+            self.assign(v)
+        def assign(self,v):
+            if isNumber(v):
+                v = float(v)
+            else:
+                v = [float(vv) for vv in v]
+            assert type(self._value) == type(v)
+            self._value = v
+            for m in self.models:
+                if hasattr(m,self.name):
+                    setattr(m,self.name,v)
+                else:
+                    m.setConstant(self,v)
+        def registerModel(self,model):
+            self.models += [model]
+            if hasattr(model,self.name):
+                setattr(model,self.name,self._value)
+            else:
+                model.setConstant(self,self._value)
 
 @deprecated("replace NamedConstant with Constant - the first argument can "\
             "now also be the initial value, e.g.,a float or list/tuple of floats")
@@ -470,9 +609,11 @@ class GridFunction(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
     def ufl_function_space(self):
         try:
-            return self.gf.space # as_ufl()
-        except TypeError or AttributeError:
-            return Space(self.gf.gridView,self.gf.dimRange,scalar=False)
+            spc = self.gf.space
+            return spc
+        except (AttributeError, TypeError):
+            return Space(self.gf.gridView, self.gf.dimRange,scalar=False)
+
     def toVectorCoefficient(self):
         if not self.scalar:
             return self

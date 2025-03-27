@@ -52,7 +52,7 @@ from dune.fem.view import adaptiveLeafGridView as adaptive
 from dune.fem.view import filteredGridView as filterGV
 from dune.fem import integrate
 from dune.ufl import Constant, DirichletBC
-from ufl import ( TestFunction, TrialFunction, SpatialCoordinate, triangle, FacetNormal,
+from ufl import ( TestFunction, TrialFunction, SpatialCoordinate, FacetNormal,
                   dx, ds, grad, div, grad, dot, inner, sqrt, exp, conditional,
                   as_vector, avg, jump, dS, CellVolume, FacetArea, atan )
 

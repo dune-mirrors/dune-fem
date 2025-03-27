@@ -9,7 +9,7 @@ from ufl.core.expr import Expr
 from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl import replace, TestFunction, TrialFunction
 from ufl.algorithms import expand_derivatives, expand_indices
-from ufl.algorithms.analysis import extract_coefficients, extract_constants
+from ufl.algorithms.analysis import extract_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.classes import Indexed
 from ufl.differentiation import Grad
@@ -20,6 +20,7 @@ from dune.ufl import DirichletBC
 from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
+from dune.ufl.codegen import extract_constants_ext
 
 from dune.source.cplusplus import UnformattedExpression, Block
 from dune.source.cplusplus import Declaration, NameSpace, SwitchStatement, TypeAlias, UnformattedBlock, Variable
@@ -135,7 +136,7 @@ def compileUFL(form, patch, *args, **kwargs):
         form = replace(form,{u_:u[0]})
     else:
         u = u_
-    coeff_ = extract_coefficients(form) + extract_constants(form)
+    coeff_ = extract_coefficients(form) + extract_constants_ext(form)
     coeff_ = set(coeff_)
 
     # added for dirichlet treatment same as conservationlaw model
@@ -143,12 +144,12 @@ def compileUFL(form, patch, *args, **kwargs):
     # remove the dirichletBCs
     arg = [arg for arg in args if not isinstance(arg, DirichletBC)]
     for dBC in dirichletBCs:
-        coeff__ = extract_coefficients(dBC.ufl_value) + extract_constants(dBC.ufl_value)
+        coeff__ = extract_coefficients(dBC.ufl_value) + extract_constants_ext(dBC.ufl_value)
         coeff_ |= set(coeff__)
     if patch is not None:
         for a in patch:
             try:
-                coeff__ = extract_coefficients(a) + extract_constants(a)
+                coeff__ = extract_coefficients(a) + extract_constants_ext(a)
                 coeff_ |= set(coeff__)
             except:
                 pass # a might be a float/int and not a ufl expression
@@ -215,14 +216,14 @@ def compileUFL(form, patch, *args, **kwargs):
     # if "dirichlet" in kwargs:
     #     dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
 
-    uflCoefficients = set(list(form.coefficients()) + list(form.constants()))
+    uflCoefficients = set(list(form.coefficients()) + extract_constants_ext(form))
     for bc in dirichletBCs:
-        c = extract_coefficients(bc.ufl_value) + extract_constants(bc.ufl_value)
+        c = extract_coefficients(bc.ufl_value) + extract_constants_ext(bc.ufl_value)
         uflCoefficients |= set(c)
     if patch is not None:
         for a in patch:
             if isinstance(a, Expr):
-                c = extract_coefficients(a) + extract_constants(a)
+                c = extract_coefficients(a) + extract_constants_ext(a)
                 uflCoefficients |= set(c)
 
     # sort coefficients according to creation number to avoid re-compilation
