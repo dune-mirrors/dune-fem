@@ -576,7 +576,7 @@ def p1Bubble(gridView, dimRange=None, field="double", order=1,
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::BubbleElementSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " > >, " +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
