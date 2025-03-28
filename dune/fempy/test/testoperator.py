@@ -3,7 +3,7 @@ from dune.grid import structuredGrid
 from dune.fem import parameter
 from dune.fem import integrate
 import dune.create as create
-from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, exp,\
+from ufl import TestFunction, TrialFunction, SpatialCoordinate, exp,\
                 dx, grad, inner, as_vector, replace, sqrt, dot,\
                 derivative, action
 from ufl.algorithms.apply_derivatives import apply_derivatives

@@ -1,6 +1,11 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH
 #define DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH
 
+#if __GNUC__ >= 13
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
 // C++ includes
 #include <map>
 
@@ -131,5 +136,9 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#if __GNUC__ >= 13
+#pragma GCC diagnostic pop
+#endif
 
 #endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_RESTRICTPROLONG_HH

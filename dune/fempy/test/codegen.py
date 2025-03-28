@@ -5,7 +5,7 @@ from dune.grid import structuredGrid
 from dune.fem import parameter
 from dune.fem.operator import linear as linearOperator
 import dune.create as create
-from ufl import TestFunction, TrialFunction, SpatialCoordinate, triangle, exp,\
+from ufl import TestFunction, TrialFunction, SpatialCoordinate, exp,\
                 dx, grad, inner, as_vector, replace, sqrt
 from dune.ufl import Constant
 

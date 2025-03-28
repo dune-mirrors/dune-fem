@@ -7,11 +7,11 @@ from dune.grid import cartesianDomain, yaspGrid
 domain = cartesianDomain([0, 0], [1, 0.25], [12, 3])
 yaspView = yaspGrid(domain)
 
-x = ufl.SpatialCoordinate( ufl.triangle )
+space = dune.create.space("lagrange", yaspView, order=1, dimRange=1)
+x = ufl.SpatialCoordinate( space )
 function = ufl.as_vector([ ufl.cos(2*ufl.pi/(0.3+x[0]*x[1])) ])
 # function = dune.create.function("global",gridview=yaspView, name="gl",order=5,
 #            value=lambda x: [math.cos(2*math.pi/(0.3+x[0]*x[1]))] )
-space = dune.create.space("lagrange", yaspView, order=1, dimRange=1)
 uh = space.interpolate( function, name="uh" )
 error = dune.create.function("ufl",gridView=yaspView,name="error",order=5,ufl=uh-function,
         virtualize=True)

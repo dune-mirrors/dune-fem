@@ -39,7 +39,7 @@ p = 1.7
 uflSpace = Space((2,2),1)
 u = TrialFunction(uflSpace)
 v = TestFunction(uflSpace)
-x = SpatialCoordinate(uflSpace.cell())
+x = SpatialCoordinate(uflSpace)
 
 rhs = (x[0] + x[1]) * v[0]
 a = (pow(d + inner(grad(u), grad(u)), (p-2)/2)*inner(grad(u), grad(v)) + grad(u[0])[0]*v[0]) * dx + 10*inner(u, v) * ds
@@ -74,7 +74,7 @@ def test(space):
         """
         preconditioner = algorithm.load('preconditioner', io.StringIO(code), numpy_h,numpy_h)
 
-        solverParameters = { "nonlinear.linear.preconditioning.method": preconditioner }
+        solverParameters = { "linear.preconditioning.method": preconditioner }
         numpyScheme = create.scheme("galerkin", model, numpySpace, parameters=solverParameters)
 
         numpyScheme.solve(target=numpy_h)
