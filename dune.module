@@ -4,7 +4,7 @@ Author: The Dune-Fem developer team
 Maintainer: dune-fem@lists.dune-project.org
 Description: A discretization module providing an implementation of mathematical abstractions to solve PDEs on parallel computers including local grid adaptivity, dynamic load balancing, and higher order discretization schemes Discontinuous Galerkin for evolution problems and virtual element methods are available as additional dune modules
 URL: https://gitlab.dune-project.org/dune-fem/dune-fem
-Python-Requires: matplotlib scipy fenics-ufl==2022.2.0 dune-alugrid dune-istl dune-localfunctions
+Python-Requires: matplotlib scipy fenics-ufl==2024.2.0 dune-alugrid dune-istl dune-localfunctions
 Depends: dune-grid (>= 2.11) dune-alugrid (>= 2.11) dune-istl (>= 2.11) dune-localfunctions (>= 2.11)
 Suggests: dune-spgrid dune-polygongrid dune-p4estgrid
 Whitespace-Hook: Yes
