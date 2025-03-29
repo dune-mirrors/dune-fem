@@ -26,50 +26,13 @@ namespace Dune
 
   namespace Fem
   {
+    constexpr int factorial(unsigned int n) { return n <= 1 ? 1 : n * factorial(n-1); }
 
-    template< class FunctionSpace >
-    struct LocalBubbleElementInterpolation
-    {
-      typedef typename FunctionSpace::DomainType DomainType;
-      typedef typename FunctionSpace::RangeType RangeType;
-      static const int dimDomain = FunctionSpace::dimDomain;
-      static const int dimRange = FunctionSpace::dimRange;
+    // The following would normalize the max of the bubble to 1
+    // std::pow( dimDomain + 1.0, dimDomain + 1.0 );
 
-      LocalBubbleElementInterpolation ()
-        : points_( dimDomain + 2, DomainType( 0.0 ) )
-      {
-        for( int i = 0; i < dimDomain; ++i )
-          points_[ i + 1 ][ i ] = 1.0;
-
-        points_[ dimDomain +1 ] = DomainType( 1.0 / ( dimDomain + 1.0 ) );
-      }
-
-      LocalBubbleElementInterpolation ( const LocalBubbleElementInterpolation & ) = default;
-      LocalBubbleElementInterpolation ( LocalBubbleElementInterpolation && ) = default;
-
-      //! [Evaluation of local interpolations]
-      template< class LocalFunction, class LocalDofVector >
-      void operator() ( const LocalFunction &lf, LocalDofVector &ldv ) const
-      //! [Evaluation of local interpolations]
-      {
-        int k = 0;
-        for( const DomainType &x : points_ )
-        {
-          RangeType phi;
-          lf.evaluate( x, phi );
-          for( int i = 0; i < dimRange; ++i )
-            ldv[ k++ ] = phi[ i ];
-        }
-      }
-
-      template <class Entity>
-      void bind( const Entity & ) {}
-      void unbind() {}
-
-    private:
-      std::vector< DomainType > points_;
-    };
-
+    // This normalizes the bubble to have mean-value 1 on the refernce element.
+    constexpr int bubbleNormalization(int dimDomain) { return factorial(2*dimDomain + 1); }
 
     template< int dim >
     struct BubbleElementLocalKeyMap
@@ -151,7 +114,7 @@ namespace Dune
           phi[ 0 ] *= xRef[ i ] ;
         }
 
-        phi[ 0 ] *= phi0[ 0 ] / std::pow( ( dimDomain + 1.0 ), dimDomain + 1.0 );
+        phi[ 0 ] *= phi0[ 0 ] / bubbleNormalization(dimDomain); //  std::pow( ( dimDomain + 1.0 ), dimDomain + 1.0 );
         functor( 0, phi0 );
         functor( dimDomain +1, phi );
       }
@@ -180,7 +143,7 @@ namespace Dune
 
         for( int i=0; i< dimDomain; ++i )
           jac0[ 0 ][ i ] *= -(phi0[ 0 ] - xRef[ i ]);
-        jac0[ 0 ] *= 1.0 / std::pow( dimDomain + 1.0, dimDomain + 1.0 );
+        jac0[ 0 ] *= 1.0 / bubbleNormalization(dimDomain); // ::pow( dimDomain + 1.0, dimDomain + 1.0 );
         functor( dimDomain +1, jac0 );
       }
 
@@ -355,6 +318,73 @@ namespace Dune
       };
     };
 
+    template< class FunctionSpace, class GridPart, class Storage >
+    struct LocalBubbleElementInterpolation
+    {
+      typedef BubbleElementSpaceTraits< FunctionSpace, GridPart, Storage > TraitsType;
+
+      typedef typename FunctionSpace::DomainType DomainType;
+      typedef typename FunctionSpace::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpace::RangeType RangeType;
+      static const int dimDomain = FunctionSpace::dimDomain;
+      static const int dimRange = FunctionSpace::dimRange;
+
+      LocalBubbleElementInterpolation ()
+        : points_( dimDomain + 2, DomainType( 0.0 ) )
+      {
+        for ( int i = 0; i < dimDomain; ++i )
+          points_[ i + 1 ][ i ] = 1.0;
+
+        points_[ dimDomain +1 ] = DomainType( 1.0 / ( dimDomain + 1.0 ) );
+      }
+
+      LocalBubbleElementInterpolation ( const LocalBubbleElementInterpolation & ) = default;
+      LocalBubbleElementInterpolation ( LocalBubbleElementInterpolation && ) = default;
+
+      //! [Evaluation of local interpolations]
+      template< class LocalFunction, class LocalDofVector >
+      void operator() ( const LocalFunction &lf, LocalDofVector &ldv ) const
+      //! [Evaluation of local interpolations]
+      {
+        static_assert( TraitsType::topologyId == 0, "p1Bubble interpolation is only implemented for simplicial grids.");
+
+        RangeType mean(0);
+
+        // standard Lagrange P1 interpolation on the vertices
+        for (int dof = 0; dof < dimDomain + 1; ++dof) {
+          const auto& x = points_[dof];
+          RangeType phi;
+          lf.evaluate( x, phi );
+          for( int i = 0; i < dimRange; ++i ) {
+            ldv[ dimRange * dof + i ] = phi[ i ];
+            mean[i] += phi[i];
+          }
+        }
+
+        // Now for the bubble. If we assume that the bubble is used
+        // for the sole purpose to implement the so called
+        // Mini-Element, then we should have a look at the proof for
+        // its stability. There it show that the bubble DOF is used in
+        // order to ensured that the interpolant of a function f has
+        // the same mean-value on each element as f.
+        RangeType centerValue;
+        lf.evaluate(points_[dimDomain+1], centerValue);
+        int dof = dimDomain + 1;
+        for( int i = 0; i < dimRange; ++i ) {
+          // explicit mid-point rule
+          ldv[ dimRange * dof + i ] = centerValue[i]  - mean[i] / (dimDomain + 1.0);
+        }
+      }
+
+      template <class Entity>
+      void bind( const Entity& entity ) {}
+      void unbind() {}
+
+    private:
+      std::vector< DomainType > points_;
+      mutable DomainFieldType entityVolume_;
+    };
+
     // BubbleElementSpace
     // ----------------
 
@@ -381,7 +411,7 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       // type of local interpolation
-      typedef LocalBubbleElementInterpolation< FunctionSpace > InterpolationType;
+      typedef LocalBubbleElementInterpolation< FunctionSpace, GridPart, Storage > InterpolationType;
 
       // static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
       static const InterfaceType defaultInterface = GridPartType::indexSetInterfaceType;
@@ -476,11 +506,99 @@ namespace Dune
     class DefaultLocalRestrictProlong < BubbleElementSpace< FunctionSpace, GridPart, Storage > >
     : public EmptyLocalRestrictProlong< BubbleElementSpace< FunctionSpace, GridPart, Storage > >
     {
+      typedef typename FunctionSpace::DomainType DomainType;
+      typedef typename FunctionSpace::RangeType RangeType;
+      static const int dimDomain = FunctionSpace::dimDomain;
+      static const int dimRange = FunctionSpace::dimRange;
+
       typedef EmptyLocalRestrictProlong< BubbleElementSpace< FunctionSpace, GridPart, Storage > > BaseType;
+
+      typedef BubbleElementSpaceTraits< FunctionSpace, GridPart, Storage > SpaceTraitsType;
+
       public:
       DefaultLocalRestrictProlong( const BubbleElementSpace< FunctionSpace, GridPart, Storage > &space )
-        : BaseType()
-      {}
+      : BaseType(), points_( dimDomain + 2, DomainType( 0.0 ) ), childCounter_(-1)
+      {
+        for ( int i = 0; i < dimDomain; ++i )
+          points_[ i + 1 ][ i ] = 1.0;
+
+        points_[ dimDomain +1 ] = DomainType( 1.0 / ( dimDomain + 1.0 ) );
+      }
+
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather,
+                           const LFSon &lfSon,
+                           const LocalGeometry &geometryInFather,
+                           const bool initialize ) const
+      {
+        static_assert( SpaceTraitsType::topologyId == 0, "p1Bubble restriction and prolongation is only implemented for simplicial grids.");
+
+        // Lagrange P1 on a simplex: restriction just means: forget
+
+        // now for the bubble, if used as Stokes discretization the
+        // bubble should adjust the local mean-value. Mmmh. Ok. Let's
+        // just do something which is not too far off the mark but
+        // much simpler ... the value of the center DOF of the parent
+        // is just the mean value of two center DOFs of the
+        // children. This way refinement and coarsening which directly
+        // follow each other result in just the same function
+        // (although the fine-grid function is not identical to the
+        // course grid function)
+        int dof = dimDomain + 1;
+        if (initialize) {
+          childCounter_ = 1;
+          for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+            lfFather[ dimRange * dof + coordinate ] = lfSon[ dimRange * dof + coordinate ];
+          }
+        } else {
+          ++ childCounter_;
+          for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+            lfFather[ dimRange * dof + coordinate ] += lfSon[ dimRange * dof + coordinate ];
+          }
+        }
+      }
+
+      template< class LFFather >
+      void restrictFinalize ( LFFather &lfFather ) const
+      {
+        int dof = dimDomain + 1;
+        for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+          lfFather[ dimRange * dof + coordinate ] /= (double)childCounter_;
+        }
+#ifndef NDEBUG
+        childCounter_ = -1;
+#endif
+      }
+
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
+                          const LocalGeometry &geometryInFather,
+                          bool initialize ) const
+      {
+        static_assert( SpaceTraitsType::topologyId == 0, "p1Bubble restriction and prolongation is only implemented for simplicial grids.");
+
+        // P1 Lagrange prolongation: need to install coordinates into the son LF
+        for ( int dof = 0; dof < dimDomain + 1; ++dof) {
+          const DomainType &pointInSon = points_[dof];
+          const DomainType pointInFather = geometryInFather.global( pointInSon );
+          RangeType phi;
+          lfFather.evaluate( pointInFather, phi );
+          for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+            lfSon[ dimRange * dof + coordinate ] = phi[ coordinate ];
+          }
+        }
+
+        // but now for the bubble: just copy the DOF value to the children
+        int dof = dimDomain + 1;
+        for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
+          lfSon[ dimRange * dof + coordinate ] = lfFather[ dimRange * dof + coordinate ];
+        }
+      }
+
+      bool needCommunication () const { return true; }
+    private:
+      std::vector< DomainType > points_;
+      mutable int childCounter_;
     };
 
   } // namespace Fem
