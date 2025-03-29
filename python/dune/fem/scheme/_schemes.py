@@ -133,6 +133,14 @@ def femscheme(includes, space, solver, operator, modelType):
     typeName = "Dune::Fem::FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
+def _augmentLinearizedScheme(linearizedScheme, originalScheme, parameters):
+    linearizedScheme.nonLinearModel = originalScheme.model
+    linearizedScheme.parameters = parameters
+    linearizedScheme.__class__.dirichletIndices = _opDirichletIndices
+    # @todo assemble and parameters are ignored, perhaps add some checks.
+    linearizedScheme.__class__.linear = lambda self, ubar=None, assemble=True, parameters={}, onlyLinear=True: _augmentLinearizedScheme(self.linearScheme(), originalScheme, parameters) if onlyLinear else self
+    return linearizedScheme
+
 def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True):
 
     # check for newton in parameters
@@ -144,9 +152,11 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
         assemble=True
     from . import module
     schemeType = scheme.cppTypeName
+    linearTypeName = "Dune::Fem::LinearScheme< " + ", ".join([schemeType]) + " >"
+    linearBaseClasses = ["DuneType::BaseType"]
     if onlyLinear:
-        typeName = "Dune::Fem::LinearScheme< " + ", ".join([schemeType]) + " >"
-        baseClasses = ["DuneType::BaseType"]
+        typeName = linearTypeName
+        baseClasses = linearBaseClasses
     else:
         typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
         baseClasses = []
@@ -161,26 +171,18 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
     constructor2 = Constructor(['typename DuneType::SchemeType &scheme', 'const pybind11::dict &parameters'],
                                ['return new DuneType( scheme, Dune::FemPy::pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );'],
                                ['"scheme"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()'])
+
+    linearLinearScheme = Method('linearScheme', '[]( const DuneType &self) { return pybind11::cast(self, pybind11::return_value_policy::reference ); }')
+    linearModule = module(includes, linearTypeName, constructor1, constructor2, linearLinearScheme, baseClasses=linearBaseClasses)
+
     if not onlyLinear:
         setup1 = Method('setup', 'static_cast<void (DuneType::*)(const typename DuneType::DiscreteFunctionType &)>(&DuneType::setup)')
         setup2 = Method('setup', 'static_cast<void (DuneType::*)()>(&DuneType::setup)')
+
+        linearScheme = Method('linearScheme', '[]( const DuneType &self) { return pybind11::cast(self.linearScheme(), pybind11::return_value_policy::reference ); }')
+        m = module(includes, typeName, constructor1, constructor2, setup1, setup2, linearScheme, baseClasses=baseClasses)
     else:
-        setup1, setup2 = None,None
-
-    m = module(includes, typeName, constructor1, constructor2, setup1, setup2, baseClasses=baseClasses)
-
-    if onlyLinear:
-        from dune.fem.space import addBackend
-        # this might differ from space storage
-        try:
-            backend = scheme._solverBackend
-        except AttributeError:
-            # if backend has not been added use backend from space
-            backend = scheme.space.storage.backend
-        if hasattr(m.Scheme,"_backend") and backend is not None:
-            if backend == 'as_numpy':
-                from scipy.sparse import csr_matrix
-            addBackend(m.Scheme,backend)
+        m = linearModule
 
     # Remove a Prefix in Python
     rmPre = lambda txt,pre: txt if not txt.startswith(pre) else txt[len(pre):]
@@ -192,11 +194,20 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
     else:
         linearizedScheme = m.Scheme(scheme, parameters=params)
 
-    linearizedScheme.nonLinearModel = scheme.model
-    linearizedScheme.parameters = params
-    linearizedScheme.__class__.dirichletIndices = _opDirichletIndices
+    # tune the linear scheme ...
+    from dune.fem.space import addBackend
+    # this might differ from space storage
+    try:
+        backend = scheme._solverBackend
+    except AttributeError:
+        # if backend has not been added use backend from space
+        backend = scheme.space.storage.backend
+    if hasattr(linearModule.Scheme,"_backend") and backend is not None:
+        if backend == 'as_numpy':
+            from scipy.sparse import csr_matrix
+        addBackend(linearModule.Scheme,backend)
 
-    return linearizedScheme
+    return _augmentLinearizedScheme(linearizedScheme, scheme, params)
 
 def linearized(scheme, ubar=None, assemble=True, parameters={}):
     return _linearized(scheme,ubar,assemble,parameters,onlyLinear=False)
