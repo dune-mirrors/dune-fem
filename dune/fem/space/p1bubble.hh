@@ -525,10 +525,10 @@ namespace Dune
         points_[ dimDomain +1 ] = DomainType( 1.0 / ( dimDomain + 1.0 ) );
       }
 
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather,
-                           const LFSon &lfSon,
-                           const LocalGeometry &geometryInFather,
+      template< class LFParent, class LFChild, class LocalGeometry >
+      void restrictLocal ( LFParent &lfParent,
+                           const LFChild &lfChild,
+                           const LocalGeometry &geometryInParent,
                            const bool initialize ) const
       {
         static_assert( SpaceTraitsType::topologyId == 0, "p1Bubble restriction and prolongation is only implemented for simplicial grids.");
@@ -548,50 +548,50 @@ namespace Dune
         if (initialize) {
           childCounter_ = 1;
           for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-            lfFather[ dimRange * dof + coordinate ] = lfSon[ dimRange * dof + coordinate ];
+            lfParent[ dimRange * dof + coordinate ] = lfChild[ dimRange * dof + coordinate ];
           }
         } else {
           ++ childCounter_;
           for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-            lfFather[ dimRange * dof + coordinate ] += lfSon[ dimRange * dof + coordinate ];
+            lfParent[ dimRange * dof + coordinate ] += lfChild[ dimRange * dof + coordinate ];
           }
         }
       }
 
-      template< class LFFather >
-      void restrictFinalize ( LFFather &lfFather ) const
+      template< class LFParent >
+      void restrictFinalize ( LFParent &lfParent ) const
       {
         int dof = dimDomain + 1;
         for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-          lfFather[ dimRange * dof + coordinate ] /= (double)childCounter_;
+          lfParent[ dimRange * dof + coordinate ] /= (double)childCounter_;
         }
 #ifndef NDEBUG
         childCounter_ = -1;
 #endif
       }
 
-      template< class LFFather, class LFSon, class LocalGeometry >
-      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
-                          const LocalGeometry &geometryInFather,
+      template< class LFParent, class LFChild, class LocalGeometry >
+      void prolongLocal ( const LFParent &lfParent, LFChild &lfChild,
+                          const LocalGeometry &geometryInParent,
                           bool initialize ) const
       {
         static_assert( SpaceTraitsType::topologyId == 0, "p1Bubble restriction and prolongation is only implemented for simplicial grids.");
 
-        // P1 Lagrange prolongation: need to install coordinates into the son LF
+        // P1 Lagrange prolongation: need to install coordinates into the child LF
         for ( int dof = 0; dof < dimDomain + 1; ++dof) {
-          const DomainType &pointInSon = points_[dof];
-          const DomainType pointInFather = geometryInFather.global( pointInSon );
+          const DomainType &pointInChild = points_[dof];
+          const DomainType pointInParent = geometryInParent.global( pointInChild );
           RangeType phi;
-          lfFather.evaluate( pointInFather, phi );
+          lfParent.evaluate( pointInParent, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-            lfSon[ dimRange * dof + coordinate ] = phi[ coordinate ];
+            lfChild[ dimRange * dof + coordinate ] = phi[ coordinate ];
           }
         }
 
         // but now for the bubble: just copy the DOF value to the children
         int dof = dimDomain + 1;
         for( int coordinate = 0; coordinate < dimRange; ++coordinate ) {
-          lfSon[ dimRange * dof + coordinate ] = lfFather[ dimRange * dof + coordinate ];
+          lfChild[ dimRange * dof + coordinate ] = lfParent[ dimRange * dof + coordinate ];
         }
       }
 
