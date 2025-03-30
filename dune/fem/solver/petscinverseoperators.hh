@@ -214,10 +214,11 @@ namespace Dune
         PetscInt  maxits    = parameter_->maxIterations();
         PetscReal tolerance = parameter_->tolerance();
         PetscReal omega     = parameter_->relaxation();
+        PetscReal divTol    = parameter_->divergedTolerance();
         if (parameter_->errorMeasure() == 0)
-          ::Dune::Petsc::KSPSetTolerances(ksp(), 1e-50, tolerance, PETSC_DEFAULT, maxits);
+          ::Dune::Petsc::KSPSetTolerances(ksp(), 1e-50, tolerance, divTol, maxits);
         else
-          ::Dune::Petsc::KSPSetTolerances(ksp(), tolerance, 1e-50, PETSC_DEFAULT, maxits);
+          ::Dune::Petsc::KSPSetTolerances(ksp(), tolerance, 1e-50, divTol, maxits);
 
         // if special petsc solver parameter exists use that one, otherwise
         // use solverMethod from SolverParameter
