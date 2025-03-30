@@ -34,7 +34,7 @@
 #if HAVE_PETSC
 
 #include "petscmat.h"
-
+#include <dune/fem/misc/petsc/petsccommon.hh>
 
 namespace Dune
 {
@@ -102,6 +102,9 @@ namespace Dune
       }
       bool blockedMode () const {
         return parameter().getValue< bool > ( keyPrefix() + "petsc.blockedmode", true );
+      }
+      PetscReal divergedTolerance () const {
+        return parameter().getValue< PetscReal > ( keyPrefix() + "petsc.divergedtolerance", PETSC_CURRENT );
       }
     };
 
