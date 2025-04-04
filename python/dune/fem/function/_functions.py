@@ -223,11 +223,17 @@ def discreteFunction(space, name, expr=None, dofVector=None):
 def tupleDiscreteFunction(*spaces, **kwargs):
     # from dune.fem.discretefunction import module, addAttr
     name = kwargs.get("name", "")
+    tupleSpace = spaces[0]
+    spaces = spaces[0].subSpaces
+    """
+    # original code: dune.fem.space.tuple not available (any more)
+    # Needs replacing with either 'product' or 'composite'?
     try:
         tupleSpace = spaces[0]
-        spaces = spaces[0].components
+        spaces = spaces[0].subSpaces
     except AttributeError:
         tupleSpace = dune.fem.space.tuple(*spaces)
+    """
     DiscreteFunction = tupleSpace.DiscreteFunction
     df = DiscreteFunction(tupleSpace,name)
     compNames = kwargs.get("components", None)
