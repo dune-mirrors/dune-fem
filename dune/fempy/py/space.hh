@@ -114,7 +114,7 @@ namespace Dune
       inline static auto registerSubSpace ( pybind11::class_< Space, options... > cls, PriorityTag< 1 > )
         -> std::enable_if_t< std::is_same< const typename Space::template SubDiscreteFunctionSpace< 0 >::Type&, decltype( std::declval< Space & >().template subDiscreteFunctionSpace< 0 >() ) >::value >
       {
-        cls.def_property_readonly( "components", [] ( pybind11::object self ) -> pybind11::tuple {
+        cls.def_property_readonly( "subSpaces", [] ( pybind11::object self ) -> pybind11::tuple {
             Space &space = pybind11::cast< Space & >( self );
             pybind11::tuple components( Space::Sequence::size() );
             Hybrid::forEach( typename Space::Sequence(), [ self, &space, &components ] ( auto i ) {
