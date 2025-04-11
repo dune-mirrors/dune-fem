@@ -60,8 +60,6 @@ The following DUNE modules are suggested:
 
 The following software is optional:
 
-* [Eigen][4]
-
 * [PAPI][17]
 
 * [PETSc][3]
@@ -96,7 +94,6 @@ A detailed description of DUNE-FEM can be found in
  [1]: https://www.dune-project.org
  [2]: https://www.dune-project.org/doc/installation/
  [3]: http://www.mcs.anl.gov/petsc/
- [4]: http://eigen.tuxfamily.org
  [5]: http://lists.dune-project.org/mailman/listinfo/dune-fem
  [6]: http://gitlab.dune-project.org/dune-fem/dune-fem/issues
  [7]: LICENSE.md
