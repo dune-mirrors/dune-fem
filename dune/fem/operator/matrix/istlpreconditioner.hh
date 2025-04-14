@@ -27,7 +27,6 @@ namespace Dune
 
   namespace Fem
   {
-
     struct ISTLPreconditionMethods
     {
       static std::vector< int > supportedPreconditionMethods() {
@@ -649,6 +648,33 @@ namespace Dune
       }
     };
 
+    namespace detail
+    {
+      // specialization for CombinedSpaces such as TypleDiscreteFunctionSpace
+      template< class Spc, decltype( std::declval< const Spc& >().template subDiscreteFunctionSpace<0>(), 0 ) = 0 >
+      inline static bool subSpacesContinuous( const Spc& spc, PriorityTag< 1 > )
+      {
+        int cont = 0;
+        spc.forEachSubSpace( [&cont](const auto& s) { cont += int(s.continuous()); });
+        return cont > 0;
+      }
+
+      // any other space just returns spc.continuous()
+      template< class Spc >
+      inline static bool subSpacesContinuous( const Spc& spc, PriorityTag< 0 > )
+      {
+        return false ;
+        //return spc.continuous();
+      }
+
+      // return any other space just returns spc.continuous()
+      template< class Spc >
+      inline static bool isCompositeContinuous( const Spc& spc )
+      {
+        return subSpacesContinuous( spc, PriorityTag< 2 >() );
+      }
+    }
+
 
     // ISTLPreconditionerFactory
     // -------------------------
@@ -674,7 +700,15 @@ namespace Dune
                      const ISTLSolverParameter& param)
       {
         std::unique_ptr< MatrixAdapterInterfaceType > ptr;
-        if( matrixObj.domainSpace().continuous() )
+        // check for composite spaces here
+        const bool isCompositeContinuous = detail::isCompositeContinuous( matrixObj.domainSpace() );
+
+        if( isCompositeContinuous )
+        {
+          typedef CompositeParallelMatrixAdapter< MatrixType > MatrixAdapterImplementation;
+          ptr.reset( matrixAdapterObject( matrixObj, (MatrixAdapterImplementation *) nullptr, param ) );
+        }
+        else if( matrixObj.domainSpace().continuous() )
         {
           typedef LagrangeParallelMatrixAdapter< MatrixType > MatrixAdapterImplementation;
           ptr.reset( matrixAdapterObject( matrixObj, (MatrixAdapterImplementation *) nullptr, param ) );
@@ -888,13 +922,24 @@ namespace Dune
         }
 
         std::unique_ptr< MatrixAdapterInterfaceType > ptr;
-        if( matrixObj.domainSpace().continuous() )
+
+        // check for composite spaces here
+        const bool isCompositeContinuous = detail::isCompositeContinuous( matrixObj.domainSpace() );
+
+        if( isCompositeContinuous )
         {
+          typedef CompositeParallelMatrixAdapter< MatrixType > MatrixAdapterImplementation;
+          ptr.reset( matrixAdapterObject( matrixObj, (MatrixAdapterImplementation *) nullptr, *parameter ) );
+        }
+        else if (matrixObj.domainSpace().continuous() )
+        {
+          // Lagrange type spaces
           typedef LagrangeParallelMatrixAdapter< MatrixType > MatrixAdapterImplementation;
           ptr.reset( matrixAdapterObject( matrixObj, (MatrixAdapterImplementation *) nullptr, *parameter ) );
         }
         else
         {
+          // general DG spaces
           typedef DGParallelMatrixAdapter< MatrixType > MatrixAdapterImplementation;
           ptr.reset( matrixAdapterObject( matrixObj, (MatrixAdapterImplementation *) nullptr, *parameter ) );
         }

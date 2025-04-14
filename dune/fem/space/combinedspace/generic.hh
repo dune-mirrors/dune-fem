@@ -161,6 +161,14 @@ namespace Dune
       {
         return SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( spaceTuple_ );
       }
+
+      template <class Functor>
+      void forEachSubSpace( const Functor& functor ) const
+      {
+        Hybrid::forEach( std::make_index_sequence< std::tuple_size< DiscreteFunctionSpaceTupleType >::value >{},
+            [ this, &functor ]( auto i ){ functor( this->template subDiscreteFunctionSpace< i >() ); } );
+      }
+
     private:
       //! tuple of spaces
       DiscreteFunctionSpaceTupleType spaceTuple_;
