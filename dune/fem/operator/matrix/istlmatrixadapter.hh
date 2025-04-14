@@ -398,6 +398,133 @@ namespace Dune
       }
     };
 
+    template <class MatrixImp>
+    class CompositeParallelMatrixAdapter
+      : public ISTLParallelMatrixAdapterInterface< MatrixImp >
+    {
+      typedef CompositeParallelMatrixAdapter< MatrixImp >   ThisType ;
+      typedef ISTLParallelMatrixAdapterInterface< MatrixImp > BaseType;
+    public:
+      typedef MatrixImp MatrixType;
+      typedef Fem::PreconditionerWrapper<MatrixType> PreconditionAdapterType;
+
+      typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
+      typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
+
+      typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
+
+      typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
+      typedef Fem::ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
+
+      typedef typename RowDiscreteFunctionType :: DofStorageType     X;
+      typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;
+
+      //! export types
+      typedef MatrixType  matrix_type;
+      typedef X domain_type;
+      typedef Y range_type;
+      typedef typename X::field_type field_type;
+
+      using BaseType :: threading;
+
+    protected:
+      using BaseType :: matrix_;
+      using BaseType :: scp_;
+      using BaseType :: rowSpace_;
+      using BaseType :: colSpace_;
+      using BaseType :: averageCommTime_;
+
+    public:
+      //! constructor: just store a reference to a matrix
+      CompositeParallelMatrixAdapter (const CompositeParallelMatrixAdapter& org)
+        : BaseType( org )
+      {}
+
+      //! constructor: just store a reference to a matrix
+      CompositeParallelMatrixAdapter (MatrixType& A,
+                               const RowSpaceType& rowSpace,
+                               const ColSpaceType& colSpace,
+                               const PreconditionAdapterType& precon,
+                               const bool threading = true)
+        : BaseType( A, rowSpace, colSpace, precon, threading )
+      {}
+
+      //! apply operator to x:  \f$ y = A(x) \f$
+      void apply (const X& x, Y& y) const override
+      {
+        // exchange data first
+        communicateCopy( x );
+
+        // apply vector to matrix
+        if( threading() )
+          matrix_.mvThreaded( x, y );
+        else
+          matrix_.mv(x,y);
+
+        // exchange data also after
+        communicateAdd( y );
+      }
+
+      //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+      void applyscaleadd (field_type alpha, const X& x, Y& y) const override
+      {
+        // exchange data first
+        communicateCopy( x );
+
+        // apply matrix
+        if( threading() )
+          matrix_.usmvThreaded(alpha, x, y );
+        else
+          matrix_.usmv(alpha,x,y);
+
+        // exchange data first
+        communicateAdd( y );
+      }
+
+      double residuum(const Y& rhs, X& x) const override
+      {
+        Y tmp( rhs );
+
+        this->apply(x,tmp);
+        tmp -= rhs;
+
+        // return global sum of residuum
+        return scp_.norm(tmp);
+      }
+
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
+
+    protected:
+      void communicateCopy(const X& x ) const
+      {
+        DFCommunicationOperation::Copy copy;
+        communicate( x, copy );
+      }
+
+      void communicateAdd(const X& x ) const
+      {
+        DFCommunicationOperation::Add add;
+        communicate( x, add );
+      }
+
+      template <class Operation>
+      void communicate(const X& x, const Operation& op ) const
+      {
+        if( rowSpace_.grid().comm().size() <= 1 ) return ;
+
+        Dune::Timer commTime;
+
+        // create temporary discrete function object
+        RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
+                                     rowSpace_, x );
+
+        rowSpace_.communicate( tmp, op );
+
+        // accumulate communication time
+        averageCommTime_ += commTime.elapsed();
+      }
+    };
+
   } // end namespace Fem
 } // end namespace Dune
 
