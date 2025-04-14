@@ -354,11 +354,11 @@ namespace Dune
 
           For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
           "Lagrange space" returns \b true iff the intersection is conforming while a \ref
-          Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
+          Dune::Fem::DiscontinuousGalerkinSpace "discontinuous Galerkin space" always returns
           \b false.
 
-          \param intersection Intersection for which we want to know the continuety
-          \returns \b true  if the space contians functions which are continuous over the
+          \param intersection Intersection for which we want to know the continuity
+          \returns \b true  if the space contains functions which are continuous over the
                             intersection,
                    \b false otherwise
        */
@@ -370,7 +370,7 @@ namespace Dune
 
       /** \brief get a reference to the block mapper
 
-          \returns refernce to the block mapper
+          \returns reference to the block mapper
        */
       inline BlockMapperType &blockMapper () const
       {
@@ -472,7 +472,7 @@ namespace Dune
 
       /** \brief apply a functor to each entity in the associated grid partition
 
-          The functor must provide an the following operator
+          The functor must provide the following operator
           \code
           template< class EntityType >
           void operator() ( const EntityType & );
