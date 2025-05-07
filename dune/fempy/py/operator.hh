@@ -124,6 +124,9 @@ namespace Dune
           using DirichletBlockVector = typename Operator::DirichletBlockVector;
           pybind11::bind_vector<DirichletBlockVector>(cls, "DirichletBlockVector");
           cls.def_property_readonly( "dirichletBlocks",  [] ( Operator &self ) -> auto& { return self.dirichletBlocks(); } );
+          cls.def( "setConstraints", [] ( Operator &self,
+                                          typename Operator::JacobianOperatorType &lin)
+                                          { self.setConstraints( lin ); } );
         }
       }
 

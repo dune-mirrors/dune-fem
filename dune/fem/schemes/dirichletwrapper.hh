@@ -62,6 +62,11 @@ struct DirichletWrapperOperator
     // set boundary values for solution from a general grid function
     constraints()( u, w, ConstraintsType::Operation::set );
   }
+  void setConstraints( JacobianOperatorType &lin ) const
+  {
+    // set boundary values for solution from a general grid function
+    constraints().applyToOperator(lin);
+  }
   template <class GF>
   void subConstraints( const GF &u, RangeFunctionType &w ) const
   {
