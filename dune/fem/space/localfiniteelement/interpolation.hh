@@ -172,6 +172,13 @@ namespace Dune
         (*this)(localFunction,localDofVector.container() );
       }
 
+      template< class LocalFunction, class DofVector >
+      void operator() ( const LocalFunction &localFunction, DofVector &localDofVector ) const
+      {
+        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet_ );
+        localInterpolation().interpolate( wrapper, localDofVector );
+      }
+
       template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
       void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
       {

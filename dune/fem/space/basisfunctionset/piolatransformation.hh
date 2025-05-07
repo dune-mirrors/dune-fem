@@ -107,7 +107,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjt_.mv( arg, dest );
+            gjt_.mtv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
@@ -127,7 +127,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjt_.mtv( arg, dest );
+            gjt_.mv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
@@ -209,7 +209,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjit_.mv( arg, dest );
+            gjit_.mtv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
@@ -229,7 +229,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjit_.mtv( arg, dest );
+            gjit_.mv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
