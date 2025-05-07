@@ -264,6 +264,11 @@ namespace Dune
       {
         linOp_.setConstraints(u);
       }
+      template <class LinOp>
+      void setConstraints( LinOp &lin ) const
+      {
+        linOp_.setConstraints(lin);
+      }
       void setConstraints( const typename DiscreteFunctionType::RangeType &value, DiscreteFunctionType &u ) const
       {
         linOp_.setConstraints(value, u);
