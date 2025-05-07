@@ -158,7 +158,7 @@ namespace Dune
                                 const ReturnType &initialValue,
                                 unsigned int order ) const
       {
-        ReturnType sum( 0 );
+        ReturnType sum( initialValue );
         {
           ConstLocalFunction< UDiscreteFunctionType > uLocal( u );
           for( const EntityType &entity : iterators )

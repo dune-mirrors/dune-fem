@@ -153,7 +153,7 @@ def _linearized(scheme, ubar=None, assemble=True, parameters={}, onlyLinear=True
     from . import module
     schemeType = scheme.cppTypeName
     linearTypeName = "Dune::Fem::LinearScheme< " + ", ".join([schemeType]) + " >"
-    linearBaseClasses = ["DuneType::BaseType"]
+    linearBaseClasses = [f"{linearTypeName}::BaseType"]
     if onlyLinear:
         typeName = linearTypeName
         baseClasses = linearBaseClasses
