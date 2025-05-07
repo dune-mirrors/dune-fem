@@ -146,6 +146,11 @@ public:
     if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
       fullOperator().setConstraints( value, u );
   }
+  void setConstraints( JacobianOperatorType &lin ) const
+  {
+    if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
+      fullOperator().setConstraints( lin );
+  }
   void subConstraints( const DiscreteFunctionType &u, DiscreteFunctionType &v ) const
   {
     if constexpr (AddDirichletBC<Operator,DomainFunctionType>::value)
