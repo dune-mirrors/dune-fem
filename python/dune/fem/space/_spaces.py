@@ -802,7 +802,7 @@ def bdm(gridView, order=1, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if order < 1:
+    if order < 1 or order > 2:
         raise KeyError(\
             "Parameter error in BDMSpace with "+
             "order=" + str(order) + ": " +\
@@ -842,11 +842,11 @@ def raviartThomas(gridView, order=0, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if order > 2:
+    if ( (gridView.type.isSimplex and order > 2) or order > 4):
         raise KeyError(\
             "Parameter error in RTSpace with "+
             "order=" + str(order) + ": " +\
-            "order has to be equal to 0,1 or 2")
+            "space with given order is not implemented for this geometry type")
 
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
