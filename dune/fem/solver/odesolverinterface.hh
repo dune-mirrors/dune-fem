@@ -86,6 +86,9 @@ namespace DuneODE
 
     /** \brief print description of ODE solver to out stream */
     virtual void description(std::ostream&) const = 0;
+
+    /** \brief return stages of RK solver (-1 if not implemented) */
+    virtual int stages () const { return -1; }
   };
 
 

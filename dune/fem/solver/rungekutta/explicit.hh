@@ -214,6 +214,9 @@ namespace DuneODE
           << "\\\\" <<std::endl;
     }
 
+    //! return order of RK solver
+    int stages () const { return stages_; }
+
   protected:
     // Butcher table A,b,c
     Dune::DynamicMatrix< double > A_;
