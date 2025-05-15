@@ -842,7 +842,7 @@ def raviartThomas(gridView, order=0, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if order > 2:
+    if ( (gridView.type.isSimplex and order > 2) or order > 4):
         raise KeyError(\
             "Parameter error in RTSpace with "+
             "order=" + str(order) + ": " +\

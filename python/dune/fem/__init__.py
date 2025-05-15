@@ -177,7 +177,7 @@ def assemble(form,space=None,gridView=None,order=None):
             )
         if isinstance(form, ufl.core.expr.Expr):
             raise ValueError("must provide a form or equation not a ufl expression - forgot to multiply with ufl.dx?")
-        if not all([isinstance(x,DirichletBC) for x in params]):
+        if not all([isinstance(x,DirichletBC) or x==None for x in params]):
             raise ValueError(
 """if the first argument is a list or tuple it must be of the form [ufl_form,DirichletBC,...,DirichletBC]"""
             )
@@ -227,6 +227,11 @@ def assemble(form,space=None,gridView=None,order=None):
             order = estimate_total_polynomial_degree( form )
         return integrate(form.integrals()[0].integrand(), gridView=gridView, order=order)
     else:
+        if order is not None:
+            try:
+                elOrder, intOrder = order
+            except:
+                elOrder, intOrder = order, order+1
         v = args[0]
         if not space:
             try:
@@ -237,12 +242,16 @@ def assemble(form,space=None,gridView=None,order=None):
             # todo: implement this on the C++ side - we use a Galerkin operator as a stopgap solution
             u = ufl.TrialFunction(space) # this is not good - the space might not be available
             op = dune.fem.operator.galerkin( [ufl.inner(u,v)*ufl.dx - form] + params )
+            if order is not None:
+                op.setQuadratureOrders(elOrder,intOrder)
             b = space.zero.copy()
             op(space.zero,b)
             b *= -1 # note: using u*v*ufl.dx + form to avoid the *=-1 fails since the boundary values would have the wrong sign
             return b
         else:
             op = dune.fem.operator.galerkin( [form] + params )
+            if order is not None:
+                op.setQuadratureOrders(elOrder,intOrder)
             A = op.linear()
             zeroU = args[1].ufl_function_space().zero
             if not wasEqn:
