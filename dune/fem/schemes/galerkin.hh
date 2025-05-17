@@ -28,6 +28,7 @@
 
 #include <dune/fem/misc/threads/threaditerator.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
+#include <dune/fem/misc/hasboundaryintersection.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/operator/common/localcontribution.hh>
@@ -798,7 +799,7 @@ namespace Dune
             // add interior integral of any integrands
             Hybrid::forEach( Indices(), addInteriorIntegral );
 
-            if( hasSkeleton || (hasBnd && inside.hasBoundaryIntersections() ) )
+            if( hasSkeleton || (hasBnd && HasBoundaryIntersection<GridPartType>::apply(inside) ) )
             {
               for( const auto &intersection : intersections( gridPart(), inside ) )
               {
@@ -1190,7 +1191,7 @@ namespace Dune
             // add interior integral of any integrands
             Hybrid::forEach( Indices(), addLinearizedInteriorIntegral );
 
-            if( hasSkeleton || (hasBnd && inside.hasBoundaryIntersections() ) )
+            if( hasSkeleton || (hasBnd && HasBoundaryIntersection<GridPartType>::apply(inside) ) )
             {
               for( const auto &intersection : intersections( gridPart(), inside ) )
               {

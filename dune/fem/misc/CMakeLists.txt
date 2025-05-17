@@ -4,7 +4,7 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
              femeoctable.hh femtimer.hh fieldmatrixhelper.hh
              flops.hh fmatrixconverter.hh functor.hh
              griddeclaration.hh gridname.hh gridobjectstreams.hh
-             gridsolution.hh gridwidth.hh h1norm.hh
+             gridsolution.hh gridwidth.hh h1norm.hh hasboundaryintersection.hh
              l1norm.hh l2norm.hh gridfunctionview.hh
              linesegmentsampler.hh lpnorm.hh mapgeomtype.hh
              metaprogramming.hh mpimanager.hh
