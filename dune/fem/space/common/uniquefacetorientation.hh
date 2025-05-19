@@ -35,19 +35,21 @@ namespace Dune
 
       explicit DefaultUniqueFacetOrientation ( const GridPartType &gridPart )
         : gridPart_( gridPart ),
-          space_( const_cast< GridPartType& > (gridPart_) ),
-          parallelMapper_( gridPart_, space_.blockMapper(), space_.communicationInterface() ),
+          // space_( const_cast< GridPartType& > (gridPart_) ),
+          // parallelMapper_( gridPart_, space_.blockMapper(), space_.communicationInterface() ),
           sequence_( -1 )
       {
       }
 
       unsigned int operator() ( const EntityType &entity ) const
       {
+        /*
         if( sequence_ != space_.sequence() )
         {
           parallelMapper_.update();
           sequence_ = space_.sequence();
         }
+        */
 
         unsigned int orientations = 0;
         for( auto intersection : intersections( gridPart(), entity ) )
@@ -62,7 +64,8 @@ namespace Dune
       GlobalKeyType globallyUniqueIndex( const Entity& entity ) const
       {
         GlobalKeyType index = -1;
-        parallelMapper_.mapEach( entity, [ &index ] ( auto local, auto global ) { assert( local == 0 ); index = global; } );
+        // parallelMapper_.mapEach( entity, [ &index ] ( auto local, auto global ) { assert( local == 0 ); index = global; } );
+        return gridPart().indexSet().index(entity);
         return index;
       }
 
@@ -70,8 +73,8 @@ namespace Dune
 
     protected:
       const GridPartType& gridPart_;
-      SpaceType           space_;
-      mutable ParallelMapperType  parallelMapper_;
+      // SpaceType           space_;
+      // mutable ParallelMapperType  parallelMapper_;
       mutable int sequence_;
     };
 

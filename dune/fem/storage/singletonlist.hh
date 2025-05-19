@@ -140,6 +140,7 @@ namespace Dune
 
         std :: cerr << "Object could not be deleted, "
                     << "because it is not in the list anymore!" << std :: endl;
+        std::abort();
       }
 
       // return pair < Object * , refCounter *>
