@@ -35,7 +35,7 @@ namespace Dune
 
       explicit DefaultUniqueFacetOrientation ( const GridPartType &gridPart )
         : gridPart_( gridPart ),
-          // space_( const_cast< GridPartType& > (gridPart_) ),
+          space_( const_cast< GridPartType& > (gridPart_) ), // works without this
           // parallelMapper_( gridPart_, space_.blockMapper(), space_.communicationInterface() ),
           sequence_( -1 )
       {
@@ -73,7 +73,7 @@ namespace Dune
 
     protected:
       const GridPartType& gridPart_;
-      // SpaceType           space_;
+      SpaceType           space_;  // works without this
       // mutable ParallelMapperType  parallelMapper_;
       mutable int sequence_;
     };

@@ -13,6 +13,7 @@
 //- dune-fem includes
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/storage/singleton.hh>
+#include <dune/common/classname.hh>
 
 namespace Dune
 {
@@ -83,6 +84,9 @@ namespace Dune
         //static SingletonListStorage s;
         SingletonListStorage& s = Singleton< SingletonListStorage >::instance();
 
+        std::cout << "[" << &s << "]: "
+                  << className(s) << " : " << std::endl;
+
         //! list that store pairs of key/object pointers
         return s.singletonList();
       }
@@ -114,7 +118,10 @@ namespace Dune
         assert( object );
         ValueType value( object, new unsigned int( 1 ) );
         ListObjType tmp( key, value );
-        singletonList().push_back( tmp );
+        auto &sl = singletonList();
+        std::cout << "[" << &sl << "]: "
+                  << "adding new element to singletonlist: " << object << std::endl;
+        sl.push_back( tmp );
         return *object;
       }
 
@@ -128,26 +135,35 @@ namespace Dune
           DUNE_THROW(SingleThreadModeError, "SingletonList::removeObject: only call in single thread mode!");
         }
 
-        ListIteratorType end = singletonList().end();
-        for( ListIteratorType it = singletonList().begin(); it != end; ++it )
+        auto &sl = singletonList();
+        std::cout << "[" << &sl << "]: "
+                  << "removeObject " << &object << "\n ";
+        ListIteratorType end = sl.end();
+        for( ListIteratorType it = sl.begin(); it != end; ++it )
         {
+          std::cout << "[" << &sl << "]: "
+                      << "Object " << &object << " checking against " << (*it).second.first << std::endl;
           if( (*it).second.first == &object )
           {
+            std::cout << "[" << &sl << "]: "
+                      << "erasing item\n";
             eraseItem( it );
             return;
           }
         }
 
-        std :: cerr << "Object could not be deleted, "
-                    << "because it is not in the list anymore!" << std :: endl;
+        std::cout << "[" << &sl << "]: "
+                  << "Object " << &object << " could not be deleted, "
+                  << "because it is not in the list anymore!" << std :: endl;
         std::abort();
       }
 
       // return pair < Object * , refCounter *>
       inline static ValueType getObjFromList( const KeyType &key )
       {
-        ListIteratorType endit = singletonList().end();
-        for(ListIteratorType it = singletonList().begin(); it!=endit; ++it)
+        auto& sl = singletonList();
+        const ListIteratorType endit = sl.end();
+        for(ListIteratorType it = sl.begin(); it!=endit; ++it)
         {
           if( (*it).first == key )
           {

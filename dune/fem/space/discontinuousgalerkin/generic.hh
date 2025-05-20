@@ -77,8 +77,20 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection ),
         basisFunctionSets_( std::move( basisFunctionSets ) ),
         // block mapper is a singleton so that the communication can be cached efficiently
-        blockMapper_( &BlockMapperProdiverType::getObject( &(gridPart.indexSet() )))
-      {}
+        blockMapper_( &BlockMapperProdiverType::getObject( &(gridPart.indexSet() )) )
+      {
+        std::cout << "ctor GenericDiscontinuousGalerkinSpace: " << this << " ("
+                  << &(gridPart.indexSet()) << " ," << &blockMapper_ << " )"
+                  << &( BaseType::gridPart().indexSet() )
+                  << std::endl;
+      }
+      ~GenericDiscontinuousGalerkinSpace ()
+      {
+        std::cout << "dtor GenericDiscontinuousGalerkinSpace: " << this << " ("
+                  << "* ," << &blockMapper_ << " ) "
+                  << &( BaseType::gridPart().indexSet() )
+                  << std::endl;
+      }
 
       /** \} */
 
