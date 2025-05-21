@@ -17,7 +17,8 @@ def setup(includes, typeName, *args, ctorArgs):
 Dune::FemPy::registerGridView ( cls );
 """
     gv = dune.grid.grid_generator.viewModule(includes+["dune/fempy/py/gridview.hh"],
-                  typeName, postscript, *args).GridView(*ctorArgs)
+                  typeName, postscript, *args,
+                  dynamicAttr=True).GridView(*ctorArgs)
     gv._register()
     return gv
 
@@ -87,6 +88,7 @@ def adaptiveLeafGridView(grid, *args, partition=Partitions.all, **kwargs):
       """)
     return setup(includes, typeName, pickler, ctorArgs=[grid])
 
+from dune.fem.utility.filteredgridview import interpolate
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):
     """create a filtered grid view
 
@@ -114,7 +116,10 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
                                "return " + gridPartName + " ( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                                # "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                               ["pybind11::keep_alive< 1, 2 >()"])
-    return setup(includes, typeName, constructor, ctorArgs=[hostGridView,contains,domainId])
+    view = setup(includes, typeName, constructor, ctorArgs=[hostGridView,contains,domainId])
+    view.hostCppTypeName = hostGridPartType
+    view.interpolate = interpolate
+    return view
 
 
 def geometryGridView(coordFunction):

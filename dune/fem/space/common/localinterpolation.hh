@@ -2,6 +2,7 @@
 #define DUNE_FEM_SPACE_COMMON_LOCALINTERPOLATION_HH
 
 #include <optional>
+#include <cassert>
 
 #include <dune/fem/common/bindguard.hh>
 
