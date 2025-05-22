@@ -23,7 +23,7 @@ namespace Dune
     // -----------------------------
 
     template< class GridPart >
-    struct SimpleFilter;
+    class SimpleFilter;
 
 
 

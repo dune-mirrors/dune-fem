@@ -369,14 +369,18 @@ namespace Dune
       AddLocalContributionType localDf( df );
       for( const auto& element : df.space() )
       {
+        int count = 0;
         auto guard = bindGuard( localDf, element );
         for( const auto& intersection : intersections( gridPart, element ) )
         {
           if( intersection.boundary() )
           {
             localDf[ 0 ] += boundaryId( gridPart, intersection );
+            count += 1;
           }
         }
+        if (count>0)
+          localDf[ 0 ] /= double(count);
       }
     }
 

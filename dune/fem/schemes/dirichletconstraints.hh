@@ -48,6 +48,7 @@
 #include <dune/fem/common/localcontribution.hh>
 #include <dune/fem/space/common/localinterpolation.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/misc/hasboundaryintersection.hh>
 
 namespace Dune {
 
@@ -457,7 +458,7 @@ protected:
       {
         const EntityType &entity = *it;
         // if entity has boundary intersections
-        if( entity.hasBoundaryIntersections() )
+        if( Dune::Fem::HasBoundaryIntersection<GridPartType>::apply(entity) )
         {
           hasDirichletBoundary |= searchEntityDirichletDofs( entity, model_ );
         }
