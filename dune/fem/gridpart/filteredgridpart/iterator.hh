@@ -27,7 +27,7 @@ namespace Dune
 
     public:
       // type of entity
-      typedef typename HostIteratorType::Entity Entity;
+      typedef typename GridPartType::Traits::template Codim<codim>::Entity Entity;
 
       static const int codimension = codim;
 
@@ -71,7 +71,17 @@ namespace Dune
       int level () const { return hostIterator_.level(); }
 
       //! return reference to entity object
-      Entity dereference () const { return *hostIterator_; }
+      Entity dereference () const
+      {
+        if constexpr ( codim == 0 )
+        {
+          return typename Entity::Implementation( &gridPart(), *hostIterator_ );
+        }
+        else
+        {
+          return *hostIterator_;
+        }
+      }
 
       //! \brief check for equality
       bool equals ( const ThisType &other ) const

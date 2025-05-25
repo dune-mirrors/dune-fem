@@ -25,32 +25,35 @@ namespace Dune
       typedef FilteredGridPartIntersectionIterator< GridPartFamily > ThisType;
 
       typedef typename std::remove_const_t< GridPartFamily >::Filter FilterType;
+      typedef typename std::remove_const_t< GridPartFamily >::ExtraData ExtraData;
       typedef typename std::remove_const_t< GridPartFamily >::HostGridPart::IntersectionIteratorType HostIteratorType;
 
-      typedef FilteredGridPartIntersection< FilterType, typename HostIteratorType::Intersection > IntersectionImpl;
+      typedef FilteredGridPartIntersection< GridPartFamily > IntersectionImpl;
 
     public:
       typedef Dune::Intersection< GridPartFamily, IntersectionImpl > Intersection;
 
       FilteredGridPartIntersectionIterator () = default;
 
-      FilteredGridPartIntersectionIterator ( const FilterType &filter, HostIteratorType hostIterator )
-        : filter_( &filter ), hostIterator_( std::move( hostIterator ) )
+      FilteredGridPartIntersectionIterator ( ExtraData data, HostIteratorType hostIterator )
+        : data_( data ), hostIterator_( std::move( hostIterator ) )
       {}
 
-      Intersection dereference () const { return Intersection( IntersectionImpl( filter(), *hostIterator_ ) ); }
+      Intersection dereference () const { return Intersection( IntersectionImpl( data(), *hostIterator_ ) ); }
 
       bool equals ( const ThisType &other ) const { return (hostIterator() == other.hostIterator()); }
 
       void increment () { ++hostIterator_; }
 
-      const FilterType &filter () const { assert( filter_ ); return *filter_; }
+      const FilterType &filter () const { return data()->filter(); }
 
       const HostIteratorType &hostIterator () const { return hostIterator_; }
       HostIteratorType &hostIterator () { return hostIterator_; }
 
-    private:
-      const FilterType *filter_ = nullptr;
+    protected:
+      ExtraData data() const { assert( data_ ); return data_; }
+
+      ExtraData data_;
       HostIteratorType hostIterator_;
     };
 

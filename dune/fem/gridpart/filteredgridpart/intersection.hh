@@ -16,21 +16,27 @@ namespace Dune
     // FilteredGridPartIntersection
     // ----------------------------
 
-    template< class Filter, class HostIntersection >
+    template< class GridPartFamily >
     class FilteredGridPartIntersection
     {
-      typedef FilteredGridPartIntersection< Filter, HostIntersection > ThisType;
+      //typedef FilteredGridPartIntersection< Filter, HostIntersection > ThisType;
+      typedef FilteredGridPartIntersection< GridPartFamily > ThisType;
+
+      typedef typename std::remove_const_t< GridPartFamily > :: Filter Filter;
+      typedef typename std::remove_const_t< GridPartFamily > :: ExtraData ExtraData;
 
     public:
       typedef Filter FilterType;
-      typedef HostIntersection HostIntersectionType;
+      typedef typename std::remove_const_t< GridPartFamily > :: HostGridPart :: IntersectionType HostIntersectionType;
 
       static const int dimensionworld = HostIntersectionType::dimensionworld;
       static const int mydimension = HostIntersectionType::mydimension;
 
       typedef typename HostIntersectionType::ctype ctype;
 
-      typedef typename HostIntersectionType::Entity Entity;
+      typedef typename std::remove_const_t< GridPartFamily > :: template Codim<0>::Entity Entity;
+      typedef typename Entity :: Implementation EntityImpl;
+
       typedef typename HostIntersectionType::Geometry Geometry;
       typedef typename HostIntersectionType::LocalGeometry LocalGeometry;
 
@@ -39,11 +45,13 @@ namespace Dune
 
       FilteredGridPartIntersection () = default;
 
-      FilteredGridPartIntersection ( const FilterType &filter, HostIntersectionType hostIntersection )
+      FilteredGridPartIntersection ( ExtraData data, HostIntersectionType hostIntersection )
         : hostIntersection_( std::move( hostIntersection ) ),
+          data_( data ),
           neighbor_( hostIntersection_.neighbor() ),
           boundary_( !neighbor_ )
       {
+        const FilterType& filter = data_->filter();
         if( neighbor_ )
         {
           if( !filter.interiorIntersection( hostIntersection_ ) )
@@ -69,8 +77,8 @@ namespace Dune
         DUNE_THROW( NotImplemented, "boundarySegmentIndex not implemented for FilteredGridPart, yet" );
       }
 
-      Entity inside () const { return hostIntersection().inside(); }
-      Entity outside () const { return hostIntersection().outside(); }
+      Entity inside ()  const { return Entity( EntityImpl( data(), hostIntersection().inside() )); }
+      Entity outside () const { return Entity( EntityImpl( data(), hostIntersection().outside())); }
 
       bool conforming () const { return hostIntersection().conforming(); }
 
@@ -90,8 +98,12 @@ namespace Dune
 
       const HostIntersectionType &hostIntersection () const { return hostIntersection_; }
 
-    private:
+    protected:
+      ExtraData data() const { assert(data_); return data_; }
+
       HostIntersectionType hostIntersection_;
+      ExtraData data_;
+
       bool neighbor_ = false;
       bool boundary_ = false;
       int boundaryId_ = 0;

@@ -15,6 +15,7 @@
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
+#include <dune/fem/gridpart/filteredgridpart/entity.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersection.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/filteredgridpart/iterator.hh>
@@ -111,26 +112,60 @@ namespace Dune
       //! \brief type of grid part
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > GridPartType;
 
+      // type of data passed to entities, intersections, and iterators
+      // for IdGridPart this is just an empty place holder
+      typedef const GridPartType* ExtraData;
+
       struct GridPartFamily
       {
         typedef FilterImp Filter;
         typedef HostGridPartImp HostGridPart;
+        typedef const GridPartType* ExtraData;
 
         static const int dimension = HostGridPart::dimension;
         static const int dimensionworld = HostGridPart::dimensionworld;
 
-        typedef typename HostGridPart::ctype ctype;
+        struct Traits
+        {
+          typedef HostGridPartImp HostGridPartType;
 
-        typedef FilteredGridPartIntersectionIterator< const GridPartFamily > IntersectionIteratorImpl;
-        typedef FilteredGridPartIntersection< Filter, typename HostGridPart::IntersectionType > IntersectionImpl;
+          // type of data passed to entities, intersections, and iterators
+          // for IdGridPart this is just an empty place holder
+          typedef const GridPartType* ExtraData;
 
-        typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImpl, IntersectionImpl > IntersectionIterator;
-        typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
+          typedef typename HostGridPart::ctype ctype;
+
+          typedef FilteredGridPartIntersectionIterator< const GridPartFamily > IntersectionIteratorImpl;
+          typedef FilteredGridPartIntersection< const GridPartFamily > IntersectionImpl;
+
+          typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImpl, IntersectionImpl > IntersectionIterator;
+          typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
+
+          template< int codim >
+          struct Codim : public HostGridPart::template Codim< codim >
+          {
+            // this is defined in filteredgridpart/entity.hh
+            typedef FilteredGridPartEntity< codim, dimension, const GridPartFamily > Entity;
+            typedef Entity EntityType;
+          };
+
+          typedef Dune::EntityIterator< 0, const GridPartFamily, DeadIterator< typename Codim< 0 >::Entity > > HierarchicIterator;
+        };
+
+        typedef typename Traits::ctype ctype;
 
         template< int codim >
-        struct Codim : public HostGridPart::template Codim< codim >
-        {
-        };
+        struct Codim
+        : public Traits::template Codim< codim >
+        {};
+
+        typedef typename Traits::IntersectionIterator IntersectionIterator;
+        typedef typename Traits::Intersection         Intersection;
+
+        typedef typename Traits::IntersectionIteratorImpl IntersectionIteratorImpl;
+        typedef typename Traits::IntersectionImpl         IntersectionImpl;
+
+        typedef typename Traits::HierarchicIterator HierarchicIterator;
       };
 
       //! \brief grid part imp
@@ -167,12 +202,14 @@ namespace Dune
 
       //! \brief struct providing types of the iterators on codimension cd
       template< int codim >
-      struct Codim : public HostGridPartType::template Codim< codim >
+      struct Codim : public GridPartFamily::template Codim< codim >
       {
         template< PartitionIteratorType pitype >
         struct Partition
         {
-          typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+          typedef EntityIterator< codim, const GridPartFamily, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+
+          //typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
           typedef IteratorType Iterator;
         };
 
@@ -337,14 +374,14 @@ namespace Dune
       IntersectionIteratorType ibegin ( const EntityType &entity ) const
       {
         typedef typename IntersectionIteratorType::Implementation IntersectionIteratorImpl;
-        return IntersectionIteratorType( IntersectionIteratorImpl( filter(), hostGridPart().ibegin( entity ) ) );
+        return IntersectionIteratorType( IntersectionIteratorImpl( this, hostGridPart().ibegin( entity.impl().hostEntity() ) ) );
       }
 
       //! \brief iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityType &entity ) const
       {
         typedef typename IntersectionIteratorType::Implementation IntersectionIteratorImpl;
-        return IntersectionIteratorType( IntersectionIteratorImpl( filter(), hostGridPart().iend( entity ) ) );
+        return IntersectionIteratorType( IntersectionIteratorImpl( this, hostGridPart().iend( entity.impl().hostEntity() ) ) );
       }
 
       //! \brief corresponding communication method for this grid part
@@ -396,10 +433,45 @@ namespace Dune
       }
 
       /** \copydoc GridPartInterface::convert(const Entity &entity) const */
-      template <class Entity>
-      const Entity& convert ( const Entity &entity ) const
+      template < class Entity >
+      auto convert ( const Entity &entity ) const
       {
-        return hostGridPart().convert( entity );
+        if constexpr ( Entity::codimension == 0 )
+        {
+          // make sure we have a grid entity
+          const auto& gridEntity = Fem::gridEntity( entity );
+
+          // create a grid part entity from a given grid entity
+          typedef typename EntityType::Implementation Implementation;
+          // here, grid part information can be passed, if necessary
+          return EntityType( Implementation( this, hostGridPart().convert( gridEntity ) ) );
+        }
+        else
+        {
+          return hostGridPart().convert( entity );
+        }
+      }
+
+      /** \brief return true if intersection iterator will at least stop at one boundary intersection for this entity */
+      bool hasBoundaryIntersections( const typename HostGridPartType::template Codim<0>::Entity& entity ) const
+      {
+        const auto end = hostGridPart().iend( entity );
+        for( auto it = hostGridPart().ibegin( entity ); it != end; ++it )
+        {
+          const auto& intersection = *it;
+          // domain boundaries are also filtered boundaries
+          if( intersection.boundary() )
+            return true;
+
+          // if the neighbor is not contained, we are at a boundary
+          if( intersection.neighbor() )
+          {
+            const auto& neighbor = intersection.outside();
+            if( ! filter().contains( neighbor ) )
+              return true;
+          }
+        }
+        return false;
       }
 
     private:
@@ -420,6 +492,25 @@ namespace Dune
         return HostAccessType::gridIntersection( intersection.impl().hostIntersection() );
       }
     };
+
+    // GridEntityAccess for FilteredEntity
+    // -----------------------------------
+
+    template< int dim, class GridFamily >
+    struct GridEntityAccess< Dune::ExtendedEntity< 0, dim, GridFamily, FilteredGridPartEntityCodim0 > >
+    {
+      typedef Dune::ExtendedEntity< 0, dim, GridFamily, FilteredGridPartEntityCodim0 > EntityType;
+      //typedef FilteredGridPartEntity< 0, dim, GridFamily > EntityType;
+      typedef GridEntityAccess< typename EntityType::Implementation::HostEntityType > HostAccessType;
+      typedef typename HostAccessType::GridEntityType GridEntityType;
+
+      static const GridEntityType &gridEntity ( const EntityType &entity )
+      {
+        return HostAccessType::gridEntity( entity.impl().hostEntity() );
+      }
+    };
+
+
 
     template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
     struct HasBoundaryIntersection< FilteredGridPart<HostGridPartImp,FilterImp,useFilteredIndexSet> >
