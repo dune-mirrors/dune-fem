@@ -15,6 +15,7 @@
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
+#include <dune/fem/gridpart/filteredgridpart/entity.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersection.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/filteredgridpart/iterator.hh>
@@ -130,6 +131,7 @@ namespace Dune
         template< int codim >
         struct Codim : public HostGridPart::template Codim< codim >
         {
+          typedef FilteredGridPartEntity< codim, dimension, const GridPartFamily > Entity;
         };
       };
 

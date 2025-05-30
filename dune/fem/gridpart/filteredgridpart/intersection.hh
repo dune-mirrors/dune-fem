@@ -69,8 +69,8 @@ namespace Dune
         DUNE_THROW( NotImplemented, "boundarySegmentIndex not implemented for FilteredGridPart, yet" );
       }
 
-      Entity inside () const { return hostIntersection().inside(); }
-      Entity outside () const { return hostIntersection().outside(); }
+      Entity inside ()  const { return Entity( EntityImpl( data(), hostIntersection().inside() ); }
+      Entity outside () const { return Entity( EntityImpl( data(), hostIntersection().outside()); }
 
       bool conforming () const { return hostIntersection().conforming(); }
 

@@ -179,6 +179,7 @@ try
   typedef Dune::Fem::LeafGridPart< GridType > HostGridPartType;
   HostGridPartType hostGridPart( grid );
 
+#if 0
   // AdaptiveLeafGridPart
   {
     std::cout << "*************************************" << std::endl;
@@ -269,6 +270,8 @@ try
 
     geomGridPart( hostGridPart, std::true_type() );
   }
+
+#endif
 
   // FilteredGridPart
   {

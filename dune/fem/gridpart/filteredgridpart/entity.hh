@@ -7,6 +7,7 @@
 #include <dune/grid/common/entity.hh>
 #include <dune/grid/common/gridenums.hh>
 
+#include <dune/fem/gridpart/common/extendedentity.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
 
 namespace Dune
@@ -15,19 +16,15 @@ namespace Dune
   namespace Fem
   {
 
-    // FilteredGridPartEntity (reuse host entity for codim > 0)
-    // --------------------------------------------------------
-
-    template <int codim, int dim, class GridFamily >
-    using FilteredGridPartEntity = typename GridFamily::Traits::HostGridPartType::template Codim< codim >::Entity;
-
     // FilteredGridPartEntity for codimension 0
     // ----------------------------------------
 
-    template< int dim, class GridFamily >
-    class FilteredGridPartEntity< 0, dim, GridFamily> : public IdEntityBasic< 0, dim, GridFamily >
+    template< int cd, int dim, class GridFamily >
+    class FilteredGridPartEntityCodim0 : public IdEntityBasic< cd, dim, GridFamily >
     {
-      typedef IdEntityBasic< 0, dim, GridFamily > BaseType ;
+      static_assert( cd == 0, "This should only be used for codim 0");
+
+      typedef IdEntityBasic< cd, dim, GridFamily > BaseType ;
     protected:
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
@@ -38,6 +35,7 @@ namespace Dune
       // type of extra data, e.g. a pointer to grid (here empty)
       typedef typename Traits::ExtraData ExtraData;
 
+      using BaseType :: hostEntity ;
     public:
       using BaseType :: codimension ;
 
@@ -50,9 +48,9 @@ namespace Dune
       /** \} */
 
       /** \brief construct a null entity */
-      FilteredGridPartEntity () = default;
+      FilteredGridPartEntityCodim0 () = default;
 
-      FilteredGridPartEntity ( ExtraData data, HostEntityType hostEntity )
+      FilteredGridPartEntityCodim0 ( ExtraData data, HostEntityType hostEntity )
       : BaseType( data, hostEntity )
       {}
 
@@ -87,6 +85,24 @@ namespace Dune
         return hostEntity().hasBoundaryIntersections();
       }
     };
+
+    // FilteredGridPartEntity (reuse host entity for codim > 0)
+    // --------------------------------------------------------
+
+    template <int codim, int dim, class GridFamily >
+    struct FilteredGridPartEntitySelector
+    {
+      typedef typename GridFamily::HostGridPart::template Codim< codim >::Entity type;
+    };
+
+    template <int dim, class GridFamily >
+    struct FilteredGridPartEntitySelector< 0, dim, GridFamily >
+    {
+      typedef Dune::ExtendedEntity< 0, dim, GridFamily, FilteredGridPartEntityCodim0 > type;
+    };
+
+    template < int codim, int dim, class GridFamily >
+    using FilteredGridPartEntity = typename FilteredGridPartEntitySelector< codim, dim, GridFamily >::type;
 
   } // namespace Fem
 
