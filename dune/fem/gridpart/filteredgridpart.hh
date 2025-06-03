@@ -112,6 +112,12 @@ namespace Dune
       //! \brief type of grid part
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > GridPartType;
 
+      struct EmptyData {};
+
+      // type of data passed to entities, intersections, and iterators
+      // for IdGridPart this is just an empty place holder
+      typedef EmptyData ExtraData;
+
       struct GridPartFamily
       {
         typedef FilterImp Filter;
@@ -120,19 +126,47 @@ namespace Dune
         static const int dimension = HostGridPart::dimension;
         static const int dimensionworld = HostGridPart::dimensionworld;
 
-        typedef typename HostGridPart::ctype ctype;
+        struct Traits
+        {
+          typedef HostGridPartImp HostGridPartType;
 
-        typedef FilteredGridPartIntersectionIterator< const GridPartFamily > IntersectionIteratorImpl;
-        typedef FilteredGridPartIntersection< Filter, typename HostGridPart::IntersectionType > IntersectionImpl;
+          struct EmptyData {};
 
-        typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImpl, IntersectionImpl > IntersectionIterator;
-        typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
+          // type of data passed to entities, intersections, and iterators
+          // for IdGridPart this is just an empty place holder
+          typedef EmptyData ExtraData;
+
+          typedef typename HostGridPart::ctype ctype;
+
+          typedef FilteredGridPartIntersectionIterator< const GridPartFamily > IntersectionIteratorImpl;
+          typedef FilteredGridPartIntersection< const GridPartFamily > IntersectionImpl;
+
+          typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImpl, IntersectionImpl > IntersectionIterator;
+          typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
+
+          template< int codim >
+          struct Codim : public HostGridPart::template Codim< codim >
+          {
+            typedef FilteredGridPartEntity< codim, dimension, const GridPartFamily > Entity;
+          };
+
+          typedef Dune::EntityIterator< 0, const GridPartFamily, DeadIterator< typename Codim< 0 >::Entity > > HierarchicIterator;
+        };
+
+        typedef typename Traits::ctype ctype;
 
         template< int codim >
-        struct Codim : public HostGridPart::template Codim< codim >
-        {
-          typedef FilteredGridPartEntity< codim, dimension, const GridPartFamily > Entity;
-        };
+        struct Codim
+        : public Traits::template Codim< codim >
+        {};
+
+        typedef typename Traits::IntersectionIterator IntersectionIterator;
+        typedef typename Traits::Intersection         Intersection;
+
+        typedef typename Traits::IntersectionIteratorImpl IntersectionIteratorImpl;
+        typedef typename Traits::IntersectionImpl         IntersectionImpl;
+
+        typedef typename Traits::HierarchicIterator HierarchicIterator;
       };
 
       //! \brief grid part imp
@@ -169,7 +203,7 @@ namespace Dune
 
       //! \brief struct providing types of the iterators on codimension cd
       template< int codim >
-      struct Codim : public HostGridPartType::template Codim< codim >
+      struct Codim : public GridPartFamily::template Codim< codim >
       {
         template< PartitionIteratorType pitype >
         struct Partition

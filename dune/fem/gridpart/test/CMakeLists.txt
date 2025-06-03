@@ -15,10 +15,10 @@ foreach( file ${MARCOGRIDFILES} )
   configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
 endforeach()
 
-dune_add_test( NAME test_gplagrangeinterpolation SOURCES test-gplagrangeinterpolation.cc
+dune_add_test( NAME test-gplagrangeinterpolation SOURCES test-gplagrangeinterpolation.cc
 COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM};COUNT_FLOPS;POLORDER=1"
 LINK_LIBRARIES dunefem )
 
-dune_add_test( NAME test_gridpart SOURCES test-gridpart.cc
+dune_add_test( NAME test-gridpart SOURCES test-gridpart.cc
   COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM};COUNT_FLOPS"
   LINK_LIBRARIES dunefem )

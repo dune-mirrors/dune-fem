@@ -35,8 +35,9 @@ namespace Dune
       // type of extra data, e.g. a pointer to grid (here empty)
       typedef typename Traits::ExtraData ExtraData;
 
-      using BaseType :: hostEntity ;
+      using BaseType :: data;
     public:
+      using BaseType :: hostEntity ;
       using BaseType :: codimension ;
 
       /** \name Host Types
@@ -52,6 +53,10 @@ namespace Dune
 
       FilteredGridPartEntityCodim0 ( ExtraData data, HostEntityType hostEntity )
       : BaseType( data, hostEntity )
+      {}
+
+      FilteredGridPartEntityCodim0 ( HostEntityType hostEntity )
+      : BaseType( ExtraData(), hostEntity )
       {}
 
       unsigned int subEntities( const unsigned int codim ) const
@@ -82,7 +87,10 @@ namespace Dune
       bool hasBoundaryIntersections () const
       {
         // TODO, implement correctly.
-        return hostEntity().hasBoundaryIntersections();
+        return true;
+
+        // using data-> ...
+        // return hostEntity().hasBoundaryIntersections();
       }
     };
 

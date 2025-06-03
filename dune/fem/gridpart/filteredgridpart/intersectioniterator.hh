@@ -27,7 +27,7 @@ namespace Dune
       typedef typename std::remove_const_t< GridPartFamily >::Filter FilterType;
       typedef typename std::remove_const_t< GridPartFamily >::HostGridPart::IntersectionIteratorType HostIteratorType;
 
-      typedef FilteredGridPartIntersection< FilterType, typename HostIteratorType::Intersection > IntersectionImpl;
+      typedef FilteredGridPartIntersection< GridPartFamily > IntersectionImpl;
 
     public:
       typedef Dune::Intersection< GridPartFamily, IntersectionImpl > Intersection;
