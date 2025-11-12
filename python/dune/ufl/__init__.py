@@ -31,6 +31,15 @@ except ImportError:
     _uflDomain = lambda cell,dimWorld : ufl.domain.default_domain(cell)
     _ufl2024AndNewer = False
 
+try:
+    from ufl.algorithms.analysis import extract_arguments_and_coefficients
+except ImportError:
+    # ufl newer than 2024.2.0, use extract_terminals_with_domain
+    from ufl.algorithms.analysis import extract_terminals_with_domain
+    def extract_arguments_and_coefficients(a):
+        ret = extract_terminals_with_domain(a)
+        return ret[0], ret[1]
+
 from dune.deprecate import deprecated
 
 # cell
@@ -735,7 +744,7 @@ class DirichletBC:
         else:
             self.ufl_value = value
         assert self.ufl_value.ufl_shape[0] == functionSpace.dimRange
-        args, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(self.ufl_value)
+        args, coeff_ = extract_arguments_and_coefficients(self.ufl_value)
         assert len(args) == 0,\
         """
 Error: the ufl expression used for Dirichlet conditions should not use a `Test` or `Trial` function.

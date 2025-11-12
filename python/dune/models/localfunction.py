@@ -15,7 +15,7 @@ from dune.ufl import GridFunction, Constant, cell
 import dune.ufl
 from dune.ufl.codegen import uflSignature
 
-from dune.ufl import codegen
+from dune.ufl import codegen, extract_arguments_and_coefficients
 
 class UFLFunctionSource(codegen.ModelClass):
     version = "v1_3"
@@ -278,7 +278,7 @@ def UFLFunction(grid, name, order, expr, renumbering=None, virtualize=True, temp
             scalar = True
     except:
         return None
-    args, coeff_ = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+    args, coeff_ = extract_arguments_and_coefficients(expr)
     assert len(args) == 0,\
     """
 Error: the ufl expression used to define a function should not use a `Test` or `Trial` function.

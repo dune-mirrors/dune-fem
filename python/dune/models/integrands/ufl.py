@@ -11,7 +11,6 @@ from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
 from ufl import action, derivative, as_vector, replace, grad
 from ufl.classes import Indexed
 from ufl.core.multiindex import FixedIndex, MultiIndex
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
@@ -28,6 +27,7 @@ from dune.source.cplusplus import construct, lambda_, makeExpression,\
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions
 
+from dune.ufl import extract_arguments_and_coefficients
 from dune.ufl import codegen, DirichletBC, BoundaryId
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm

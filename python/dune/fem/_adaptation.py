@@ -5,7 +5,7 @@ import hashlib, warnings
 
 import ufl
 from dune.fem.function import gridFunction
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
+from dune.ufl import extract_arguments_and_coefficients
 from dune.generator.generator import SimpleGenerator
 from dune.fem.deprecated import deprecated
 

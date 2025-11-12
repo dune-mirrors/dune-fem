@@ -192,7 +192,7 @@ def assemble(form,space=None,gridView=None,order=None):
     from dune.ufl import DirichletBC
     import ufl
     from ufl.equation import Equation
-    from ufl.algorithms.analysis import extract_arguments_and_coefficients
+    from dune.ufl import extract_arguments_and_coefficients
     from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
     if type(form)==tuple or type(form)==list:
         params = [*form[1:]]

@@ -1,7 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
 from ufl import Form, Coefficient, TrialFunction, TestFunction, replace
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.equation import Equation
 
 from dune.common.utility import isString
@@ -12,6 +11,7 @@ from dune.source.fem import fieldTensorType
 from dune.ufl import GridFunction, DirichletBC
 from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.codegen import uflSignature
+from dune.ufl import extract_arguments_and_coefficients
 
 from .ufl import _compileUFL
 from .model import Integrands

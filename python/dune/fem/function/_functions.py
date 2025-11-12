@@ -6,6 +6,7 @@ import numpy as np
 from numpy import dtype as np_dtype
 
 import dune.ufl
+from dune.ufl import extract_arguments_and_coefficients
 import dune.grid
 import dune.fem.space
 import dune.models.localfunction
@@ -175,7 +176,7 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
     if gridView is None:
         if type(expr) == list or type(expr) == tuple:
             expr = ufl.as_vector(expr)
-        args, cc = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+        args, cc = extract_arguments_and_coefficients(expr)
         if len(args) > 0:
             raise AttributeError("no trial or test function should be included in the expression")
         gridView = set( c.gridView for c in cc if hasattr(c,"gridView") )

@@ -5,8 +5,7 @@ import re
 from ufl import replace, Constant, CellDiameter
 from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import (
-     extract_arguments_and_coefficients, extract_arguments,
-     extract_coefficients, extract_type
+     extract_arguments, extract_coefficients, extract_type
      )
 from ufl.algorithms.analysis import extract_constants as ufl_extract_constants
 from ufl.utils.sorting import sorted_by_count
