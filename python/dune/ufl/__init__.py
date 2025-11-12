@@ -567,14 +567,27 @@ def Parameter(domain, parameter, dimRange=None, count=None):
 from ufl.indexed import Indexed
 from ufl.index_combination_utils import create_slice_indices
 from ufl.core.multiindex import MultiIndex
+
 class GridIndexed(Indexed):
-    def __init__(self,gc,i):
-        self.scalar = True
+    @staticmethod
+    def convert2MultiIndex(gc, i):
+        if isinstance(i, MultiIndex):
+            return i
+
+        # if i is int convert to MultiIndex
         component = (i,)
         shape = gc.ufl_shape
         all_indices, _, _ = create_slice_indices(component, shape, gc.ufl_free_indices)
-        mi = MultiIndex(all_indices)
+        return MultiIndex(all_indices)
+
+    def __new__(cls, gc, i):
+        return Indexed.__new__(cls, gc, GridIndexed.convert2MultiIndex(gc, i ))
+
+    def __init__(self,gc, i):
+        self.scalar = True
+        mi = GridIndexed.convert2MultiIndex(gc, i)
         Indexed.__init__(self,gc,mi)
+
         if gc.gf.scalar:
             self.__impl__ = gc.gf
             self.gf = gc
@@ -588,7 +601,6 @@ class GridIndexed(Indexed):
     def plot(self,*args,**kwargs):
         from dune.fem.plotting import plotPointData
         plotPointData(self.__impl__,*args,**kwargs)
-
 
 
 class GridFunction(ufl.Coefficient):
