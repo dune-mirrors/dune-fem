@@ -3,6 +3,7 @@ add_python_targets(ufl
   applyrestrictions
   codegen
   formfiles
+  finiteelement
   gatherderivatives
   latex
   linear

@@ -10,12 +10,17 @@ import ufl.finiteelement
 try:
     # check for ufl 2024 or newer
     from ufl import AbstractFiniteElement
+    try:
+        from ufl.finitelement import FiniteElement
+    except ImportError:
+        from .finiteelement import FiniteElement
+
     uflFE = lambda cell,order,rdim: (
-        ufl.finiteelement.FiniteElement(
-            "Lagrange", cell, order,
+            FiniteElement("Lagrange", cell, order,
             (rdim,) if rdim>0 else (),
             ufl.identity_pullback, ufl.H1)
         )
+
     # return ufl domain given a cell
     _uflDomain = lambda ucell,dimWorld : ufl.Mesh( uflFE(ucell, order=1, rdim=dimWorld) )
     _ufl2024AndNewer = True
