@@ -1572,13 +1572,16 @@ namespace Dune
       }
 
       template < class GridFunction >
-      void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
+      void assemble( const GridFunction &u, JacobianOperatorType &jOp,
+                     const bool doPrepare = true, const bool doFinalize = true) const
       {
         // reserve memory and clear entries
+        if( doPrepare )
         {
           prepare( jOp );
-          iterators_.update();
         }
+
+        iterators_.update();
 
         std::shared_mutex mutex;
 
@@ -1605,9 +1608,12 @@ namespace Dune
           gridSizeInterior_ = op().gridSizeInterior();
         }
 
-        // note: assembly done without local contributions so need
-        // to call flush assembly
-        jOp.flushAssembly();
+        if( doFinalize )
+        {
+          // note: assembly done without local contributions so need
+          // to call flush assembly
+          jOp.flushAssembly();
+        }
       }
 
       using BaseType::iterators_;
