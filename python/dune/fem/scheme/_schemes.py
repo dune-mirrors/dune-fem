@@ -632,6 +632,87 @@ def molGalerkin(integrands, space=None, solver=None, parameters={},
                      virtualize=virtualize, _schemeName='MethodOfLinesScheme', **kwargs)
 
 
+def vertexCenteredGalerkin(integrands, otherIntegrands, solver=None, parameters={},
+                           errorMeasure=None, virtualize=None, **kwargs ):
+    """
+    Parameters:
+
+        integrands   Model of the weak form of the PDEs solved by Galerkin scheme
+        space        Discrete function space
+        solver       String (e.g. 'gmres', 'bicgstab', 'cg'...) or tuple
+                     containing backend and solver name,
+                     e.g. ('petsc', 'gmres') or ('istl', 'bicgstab') or
+                     ('suitesparse', 'umfpack'). See documentation for complete
+                     list.
+        parameters   dictionary with parameters passed to the nonlinear and linear solvers
+        errorMeasure Overloading the nonlinear solver stopping criterion,
+                     i.e. a function `f( w, dw, float )` where w and dw are discrete functions returning a bool whether the
+                     solver has converged or not.
+        virtualize   If True, integrands will be virtualized to avoid
+                     re-compilation. (default: True)
+    """
+
+    # check for newton in parameters
+    parameters = _checkNewtonInParameters( parameters )
+
+    ################################################################
+    ##
+    ## Scan metadata of integrands to detect which scheme to use
+    ##
+    ################################################################
+
+    op1 = galerkin(integrands, solver=solver, parameters=parameters)
+    op2 = galerkin(otherIntegrands, solver=solver, parameters=parameters)
+
+    space = op1.space
+
+    # get storage of solver, it could differ from storage of space
+    solverStorage, solver = getSolverStorage(space, solver)
+
+    _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, solverStorage.solver)
+
+    includes = [] # integrands.cppIncludes
+    #includes += op1.includes + op2.includes
+    includes += ["dune/fempy/parameter.hh"]
+    includes += solverIncludes
+    includes += op1.space.cppIncludes + op2.space.cppIncludes
+    # molgalerkin includes galerkin.hh so it works for both
+    includes += ["dune/fem/schemes/tuplegalerkin.hh"]
+
+    useDirichletBC = 'false'
+    if hasattr(integrands, "hasDirichletBoundary"):
+        useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
+    typeName = 'Dune::Fem::VertexCenteredGalerkinScheme< ' + op1.cppTypeName + ' , ' + op2.cppTypeName + ' , ' + solverTypeName + ', ' + useDirichletBC + ' >'
+
+    from . import module
+
+    parameters.update(param)
+    scheme = module(includes, typeName, backend=solverStorage.backend).Scheme(space, op1, op2, parameters)
+    scheme.model = op1.model
+    if not errorMeasure is None:
+        scheme.setErrorMeasure( errorMeasure );
+
+    # if preconditioning was passed as callable then store in scheme, otherwise None is stored
+    scheme.preconditioning = preconditioning
+    # store solver backend
+    scheme._solverBackend = solverStorage.backend
+
+    scheme.parameters = parameters
+
+    scheme.__class__.linear = _linearized
+    scheme.__class__.dirichletIndices = _opDirichletIndices
+
+    try:
+        from dune.fem import parameter
+        logTag = parameters["logging"]
+        scheme.parameterLog = lambda: parameter.log()[logTag]
+    except KeyError:
+        pass
+
+    return scheme
+
+
+
 def h1(model, space=None, solver=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 

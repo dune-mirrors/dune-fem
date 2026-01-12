@@ -1,47 +1,7 @@
 #ifndef DUNE_FEM_SCHEMES_TUPLEGALERKIN_HH
 #define DUNE_FEM_SCHEMES_TUPLEGALERKIN_HH
 
-#include <cstddef>
-
-#include <tuple>
-#include <type_traits>
-#include <utility>
-#include <shared_mutex>
-#include <vector>
-#include <memory>
-
-#include <dune/common/hybridutilities.hh>
-#include <dune/common/timer.hh>
-
-#include <dune/grid/common/rangegenerators.hh>
-
-#include <dune/fem/function/localfunction/temporary.hh>
-#include <dune/fem/io/parameter/reader.hh>
-#include <dune/fem/operator/common/automaticdifferenceoperator.hh>
-#include <dune/fem/operator/common/differentiableoperator.hh>
-#include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/common/stencil.hh>
-#include <dune/fem/operator/common/temporarylocalmatrix.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/quadrature/intersectionquadrature.hh>
-#include <dune/fem/common/bindguard.hh>
-
-#include <dune/fem/misc/threads/threaditerator.hh>
-#include <dune/fem/misc/threads/threadsafevalue.hh>
-#include <dune/fem/misc/hasboundaryintersection.hh>
-#include <dune/fem/misc/griddeclaration.hh>
-
-#include <dune/fem/operator/common/localmatrixcolumn.hh>
-#include <dune/fem/operator/common/localcontribution.hh>
-#include <dune/fem/operator/1order/localmassmatrix.hh>
-#include <dune/fem/schemes/integrands.hh>
-#include <dune/fem/schemes/dirichletwrapper.hh>
-#include <dune/fem/schemes/femscheme.hh>
-
-#include <dune/fem/space/common/capabilities.hh>
-
-// fempy includes
-#include <dune/fempy/quadrature/fempyquadratures.hh>
+#include <dune/fem/schemes/galerkin.hh>
 
 namespace Dune
 {
@@ -58,10 +18,10 @@ namespace Dune
 
     template< class Op, class... Args >
     struct TupleGalerkinOperator
-      : public virtual Operator< typename Op::DomainFunction, typename Op::RangeFunction >
+      : public virtual Operator< typename Op::DomainFunctionType, typename Op::RangeFunctionType >
     {
-      typedef typename Op::DomainFunction DomainFunctionType;
-      typedef typename Op::RangeFunction  RangeFunctionType;
+      typedef typename Op::DomainFunctionType DomainFunctionType;
+      typedef typename Op::RangeFunctionType  RangeFunctionType;
 
       typedef typename RangeFunctionType::GridPartType GridPartType;
 
@@ -71,30 +31,30 @@ namespace Dune
 
       static_assert( std::is_same< typename DomainFunctionType::GridPartType, typename RangeFunctionType::GridPartType >::value, "DomainFunction and RangeFunction must be defined on the same grid part." );
 
-      explicit GalerkinOperator ( const Op& op, const Args&... args )
-        : ops_( std::make_tuple( op, args ) )
+      explicit TupleGalerkinOperator ( const Op& op, const Args&... args )
+        : ops_( std::make_tuple( op, args... ) )
       {
       }
 
       void setCommunicate( const bool communicate )
       {
-        Hybrid::forEach( OperatorIndices(), [ &ops_, &communicate ] ( auto i ) {
-              std::get< i >( ops_ ).setCommunicate( communicate );
+        Hybrid::forEach( OperatorIndices(), [ this, &communicate ] ( auto i ) {
+              std::get< i >( this->ops_ ).setCommunicate( communicate );
             });
       }
 
       void setQuadratureOrders(unsigned int interior, unsigned int surface)
       {
-        Hybrid::forEach( OperatorIndices(), [ &ops_, &interior, &surface ] ( auto i ) {
-              std::get< i >( ops_ ).setQuadratureOrders(interior,surface);
+        Hybrid::forEach( OperatorIndices(), [ this, &interior, &surface ] ( auto i ) {
+              std::get< i >( this->ops_ ).setQuadratureOrders(interior,surface);
             });
       }
 
       virtual bool nonlinear() const final override
       {
         bool nonlin = true;
-        Hybrid::forEach( OperatorIndices(), [ &ops_, &nonlin ] ( auto i ) {
-            nonlin = std::max( nonlin, std::get< i >( ops_ ).nonlinear() );
+        Hybrid::forEach( OperatorIndices(), [ this, &nonlin ] ( auto i ) {
+            nonlin = std::max( nonlin, std::get< i >( this->ops_ ).nonlinear() );
             });
         return nonlin;
       }
@@ -113,19 +73,62 @@ namespace Dune
       const GridPartType &gridPart () const { return std::get< 0 >( ops_ ).gridPart(); }
 
       typedef typename Op::ModelType           ModelType;
-      typedef typename Op::DirichletModelType  DirichletModelType;
+      //typedef typename Op::DirichletModelType  DirichletModelType;
       ModelType &model() const { return std::get< 0 >( ops_ ).model(); }
 
       std::size_t gridSizeInterior () const { return std::get< 0 >( ops_ ).gridSizeInterior(); }
 
     protected:
+      void evaluate( const DomainFunctionType &u, RangeFunctionType &w ) const
+      {
+        w.clear();
+        Hybrid::forEach( OperatorIndices(), [ this, &u, &w ] ( auto i ) {
+            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+
+            const ThisOp& thisOp = std::get< i >( this->ops_ );
+            typedef typename ThisOp::DomainFunction DomFunc;
+            typedef typename ThisOp::DomainFunction RanFunc;
+
+            DomFunc d("TupleScheme::eval", thisOp.domainSpace() );
+            {
+              const auto uit = u.dbegin();
+              const auto end = d.dend();
+              for( auto it = d.dbegin(); it != end; ++it, ++ uit )
+                *it = *uit;
+            }
+            RanFunc r("TupleScheme::eval", thisOp.rangeSpace() );
+
+            thisOp.evaluate( d, r );
+
+            {
+              const auto rit = r.dbegin();
+              const auto end = w.dend();
+              for( auto it = w.dbegin(); it != end; ++it, ++ rit )
+                *it += *rit;
+            }
+          });
+      }
+
       template < class GridFunction >
       void evaluate( const GridFunction &u, RangeFunctionType &w ) const
       {
-        Hybrid::forEach( OperatorIndices(), [ &ops_, &nonlin ] ( auto i ) {
-            nonlin = std::max( nonlin, std::get< i >( ops_ ).nonlinear() );
-            });
-        iterators_.update();
+        w.clear();
+        Hybrid::forEach( OperatorIndices(), [ this, &u, &w ] ( auto i ) {
+            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+
+            const ThisOp& thisOp = std::get< i >( this->ops_ );
+            typedef typename ThisOp::DomainFunction RanFunc;
+
+            RanFunc r("TupleScheme::eval", thisOp.rangeSpace() );
+            thisOp.evaluate( u, r );
+
+            {
+              const auto rit = r.dbegin();
+              const auto end = w.dend();
+              for( auto it = w.dbegin(); it != end; ++it, ++ rit )
+                *it += *rit;
+            }
+          });
       }
 
       Operators ops_;
@@ -136,13 +139,14 @@ namespace Dune
     // DifferentiableGalerkinOperator
     // ------------------------------
 
-    template< class Op, class, JacobianOperator, class... Args, >
+    template< class Op, class JacobianOperator, class... Args >
     class TupleDifferentiableGalerkinOperator
       : public TupleGalerkinOperator< Op, Args... >,
         public DifferentiableOperator< JacobianOperator >
     {
       typedef TupleGalerkinOperator< Op, Args... >  BaseType;
       typedef typename BaseType::OperatorIndices  OperatorIndices;
+      typedef typename BaseType::Operators        Operators;
     public:
       typedef JacobianOperator JacobianOperatorType;
 
@@ -153,14 +157,14 @@ namespace Dune
 
       typedef typename BaseType::GridPartType GridPartType;
 
-      explicit DifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
-                                                const RangeDiscreteFunctionSpaceType &rSpace,
-                                                const Op& op, const Args&... args )
+      explicit TupleDifferentiableGalerkinOperator ( const DomainDiscreteFunctionSpaceType &dSpace,
+                                                     const RangeDiscreteFunctionSpaceType &rSpace,
+                                                     const Op& op, const Args&... args )
         : BaseType( op, args... )
       {
       }
 
-      virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
+      void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
         assemble( u, jOp );
       }
@@ -185,13 +189,36 @@ namespace Dune
     protected:
       using BaseType::ops_;
 
+      void assemble( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
+      {
+        Hybrid::forEach( OperatorIndices(), [ this, &u, &jOp ] ( auto i ) {
+            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+            const ThisOp& thisOp = std::get< i >( this->ops_ );
+
+            typedef typename ThisOp::DomainFunction DomFunc;
+            typedef typename ThisOp::DomainFunction RanFunc;
+
+            DomFunc d("TupleScheme::assemble", thisOp.domainSpace() );
+            {
+              const auto uit = u.dbegin();
+              const auto end = d.dend();
+              for( auto it = d.dbegin(); it != end; ++it, ++ uit )
+                *it = *uit;
+            }
+
+            thisOp.assemble( d, jOp,
+                             /* prepare */  i == 0,
+                             /* finalize */ i == std::tuple_size< Operators >::value - 1 );
+            });
+      }
+
       template < class GridFunction >
       void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
-        Hybrid::forEach( OperatorIndices(), [ &ops_, &u, &jOp ] ( auto i ) {
-              std::get< i >( ops_ ).assemble( u, jOp,
+        Hybrid::forEach( OperatorIndices(), [ this, &u, &jOp ] ( auto i ) {
+              std::get< i >( this->ops_ ).assemble( u, jOp,
                                               /* prepare */  i == 0,
-                                              /* finalize */ i == std::tuple_size< Operators > - 1 );
+                                              /* finalize */ i == std::tuple_size< Operators >::value - 1 );
             });
       }
     };
@@ -223,21 +250,20 @@ namespace Dune
       };
       */
 
-      template< class Op, class LinearOperator, class LinearInverseOperator, bool addDirichletBC,
-                class... OtherOps,
-                template <class,class...> class DifferentiableGalerkinOperatorImpl = TupleDifferentiableGalerkinOperator >
+      template< class Op, class LinearInverseOperator, bool addDirichletBC,
+                class... OtherOps >
       struct TupleGalerkinSchemeImpl
-        : public FemScheme< TupleGalerkinOperator<Op, OtherOps...>, // Operator
+        : public FemScheme< TupleDifferentiableGalerkinOperator<Op, OtherOps...>, // Operator
                             LinearInverseOperator > // LinearInverseOperator
       {
-        typedef FemScheme< TupleGalerkinOperator<Op, OtherOps...>, // Operator
+        typedef FemScheme< TupleDifferentiableGalerkinOperator<Op, OtherOps...>, // Operator
                            LinearInverseOperator >           BaseType;
 
         typedef typename BaseType :: DiscreteFunctionSpaceType    DiscreteFunctionSpaceType;
 
-        GalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
-                             const Op& op, const OtherOps&... ops,
-                             const ParameterReader& parameter = Parameter::container() )
+        TupleGalerkinSchemeImpl ( const DiscreteFunctionSpaceType &dfSpace,
+                                  const Op& op, const OtherOps&... ops,
+                                  const ParameterReader& parameter = Parameter::container() )
           : BaseType(dfSpace,
                      parameter,
                      op, ops...)
@@ -250,7 +276,7 @@ namespace Dune
     // ----------------------------
 
     template<class DiffOp, class AdvOp, class InverseOperator, bool addDirichletBC >
-    using VertexCenteredGalerkinScheme = Impl::TupleGalerkinSchemeImpl< DiffOp, InverseOperator, addDirichletBC, AdvOp, DifferentiableGalerkinOperator >;
+    using VertexCenteredGalerkinScheme = Impl::TupleGalerkinSchemeImpl< DiffOp, InverseOperator, addDirichletBC, AdvOp >;
 
   } // namespace Fem
 
