@@ -227,9 +227,10 @@ public:
             )
           ), void >::value, int> i = 0
     >
-  void jacobian( const GridFunction &ubar, JacobianOperatorType &linOp ) const
+  void jacobian( const GridFunction &ubar, JacobianOperatorType &linOp,
+                 const bool doPrepare = true, const bool doFinalize = true ) const
   {
-    fullOperator().jacobian(ubar, linOp);
+    fullOperator().jacobian(ubar, linOp, doPrepare, doFinalize);
   }
 
   const GridPartType &gridPart () const { return space().gridPart(); }

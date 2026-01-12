@@ -2,6 +2,7 @@
 #define DUNE_FEM_SCHEMES_TUPLEGALERKIN_HH
 
 #include <dune/fem/schemes/galerkin.hh>
+#include <dune/fem/space/common/interpolate.hh>
 
 namespace Dune
 {
@@ -61,13 +62,13 @@ namespace Dune
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
-        evaluate( u, w );
+        //evaluate( u, w );
       }
 
       template< class GridFunction >
       void operator() ( const GridFunction &u, RangeFunctionType &w ) const
       {
-        evaluate( u, w );
+        //evaluate( u, w );
       }
 
       const GridPartType &gridPart () const { return std::get< 0 >( ops_ ).gridPart(); }
@@ -83,25 +84,26 @@ namespace Dune
       {
         w.clear();
         Hybrid::forEach( OperatorIndices(), [ this, &u, &w ] ( auto i ) {
-            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+            //typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+            typedef typename std::tuple_element< i, Operators >::type ThisOp;
 
             const ThisOp& thisOp = std::get< i >( this->ops_ );
-            typedef typename ThisOp::DomainFunction DomFunc;
-            typedef typename ThisOp::DomainFunction RanFunc;
+            typedef typename ThisOp::DomainFunctionType DomFunc;
+            typedef typename ThisOp::RangeFunctionType  RanFunc;
 
             DomFunc d("TupleScheme::eval", thisOp.domainSpace() );
             {
-              const auto uit = u.dbegin();
+              auto uit = u.dbegin();
               const auto end = d.dend();
               for( auto it = d.dbegin(); it != end; ++it, ++ uit )
                 *it = *uit;
             }
-            RanFunc r("TupleScheme::eval", thisOp.rangeSpace() );
+            RanFunc r("TupleScheme::eval", thisOp.space() );
 
-            thisOp.evaluate( d, r );
+            thisOp( d, r );
 
             {
-              const auto rit = r.dbegin();
+              auto rit = r.dbegin();
               const auto end = w.dend();
               for( auto it = w.dbegin(); it != end; ++it, ++ rit )
                 *it += *rit;
@@ -114,16 +116,17 @@ namespace Dune
       {
         w.clear();
         Hybrid::forEach( OperatorIndices(), [ this, &u, &w ] ( auto i ) {
-            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+            typedef typename std::tuple_element< i, Operators >::type ThisOp;
+            //typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
 
             const ThisOp& thisOp = std::get< i >( this->ops_ );
-            typedef typename ThisOp::DomainFunction RanFunc;
+            typedef typename ThisOp::RangeFunctionType RanFunc;
 
-            RanFunc r("TupleScheme::eval", thisOp.rangeSpace() );
-            thisOp.evaluate( u, r );
+            RanFunc r("TupleScheme::eval", thisOp.space() );
+            thisOp( u, r );
 
             {
-              const auto rit = r.dbegin();
+              auto rit = r.dbegin();
               const auto end = w.dend();
               for( auto it = w.dbegin(); it != end; ++it, ++ rit )
                 *it += *rit;
@@ -169,19 +172,32 @@ namespace Dune
         assemble( u, jOp );
       }
 
+      void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp,
+                      const bool doPrepare, const bool doFinalize ) const
+      {
+        assemble( u, jOp, doPrepare, doFinalize );
+      }
+
       template< class GridFunction >
       void jacobian ( const GridFunction &u, JacobianOperatorType &jOp ) const
       {
         assemble( u, jOp );
       }
 
+      template< class GridFunction >
+      void jacobian ( const GridFunction &u, JacobianOperatorType &jOp,
+                      const bool doPrepare, const bool doFinalize ) const
+      {
+        assemble( u, jOp, doPrepare, doFinalize );
+      }
+
       const DomainDiscreteFunctionSpaceType& domainSpace() const
       {
-        return std::get< 0 >( ops_ ).domainSpace();
+        return std::get< 0 >( ops_ ).space();
       }
       const RangeDiscreteFunctionSpaceType& rangeSpace() const
       {
-        return std::get< 0 >( ops_ ).rangeSpace();
+        return std::get< 0 >( ops_ ).space();
       }
 
       using BaseType::nonlinear;
@@ -189,37 +205,45 @@ namespace Dune
     protected:
       using BaseType::ops_;
 
-      void assemble( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
+      void assemble( const DomainFunctionType &u, JacobianOperatorType &jOp,
+                     const bool doPrepare = true, const bool doFinalize = true) const
       {
         Hybrid::forEach( OperatorIndices(), [ this, &u, &jOp ] ( auto i ) {
-            typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
+            typedef typename std::tuple_element< i, Operators >::type ThisOp;
+            //typedef decltype( std::get< i >( this->ops_ ) ) ThisOp;
             const ThisOp& thisOp = std::get< i >( this->ops_ );
 
-            typedef typename ThisOp::DomainFunction DomFunc;
-            typedef typename ThisOp::DomainFunction RanFunc;
+            typedef typename ThisOp::DomainFunctionType DomFunc;
 
-            DomFunc d("TupleScheme::assemble", thisOp.domainSpace() );
+            DomFunc d("TupleScheme::assemble", thisOp.space() );
             {
-              const auto uit = u.dbegin();
+              auto uit = u.dbegin();
               const auto end = d.dend();
               for( auto it = d.dbegin(); it != end; ++it, ++ uit )
                 *it = *uit;
             }
 
-            thisOp.assemble( d, jOp,
-                             /* prepare */  i == 0,
-                             /* finalize */ i == std::tuple_size< Operators >::value - 1 );
+            //thisOp.jacobian( d, jOp,
+            //                 /* prepare */  i == 0,
+            //                /* finalize */ i == std::tuple_size< Operators >::value - 1 );
             });
       }
 
       template < class GridFunction >
-      void assemble( const GridFunction &u, JacobianOperatorType &jOp ) const
+      void assemble( const GridFunction &u, JacobianOperatorType &jOp, const bool doPrepare = true, const bool doFinalize =true ) const
       {
+        DomainFunctionType u_df("TupleScheme::assemble", domainSpace());
+        Dune::Fem::interpolate(u, u_df);
+        assemble(u_df, jOp);
+
+#if 0
         Hybrid::forEach( OperatorIndices(), [ this, &u, &jOp ] ( auto i ) {
-              std::get< i >( this->ops_ ).assemble( u, jOp,
+              std::get< i >( this->ops_ ).jacobian( u, jOp,
                                               /* prepare */  i == 0,
                                               /* finalize */ i == std::tuple_size< Operators >::value - 1 );
             });
+#endif
+
       }
     };
 
@@ -250,13 +274,13 @@ namespace Dune
       };
       */
 
-      template< class Op, class LinearInverseOperator, bool addDirichletBC,
+      template< class Op, class LinearOperator, class LinearInverseOperator, bool addDirichletBC,
                 class... OtherOps >
       struct TupleGalerkinSchemeImpl
-        : public FemScheme< TupleDifferentiableGalerkinOperator<Op, OtherOps...>, // Operator
+        : public FemScheme< TupleDifferentiableGalerkinOperator<Op, LinearOperator, OtherOps...>, // Operator
                             LinearInverseOperator > // LinearInverseOperator
       {
-        typedef FemScheme< TupleDifferentiableGalerkinOperator<Op, OtherOps...>, // Operator
+        typedef FemScheme< TupleDifferentiableGalerkinOperator<Op, LinearOperator, OtherOps...>, // Operator
                            LinearInverseOperator >           BaseType;
 
         typedef typename BaseType :: DiscreteFunctionSpaceType    DiscreteFunctionSpaceType;
@@ -275,8 +299,8 @@ namespace Dune
     // VertexCenteredGalerkinScheme
     // ----------------------------
 
-    template<class DiffOp, class AdvOp, class InverseOperator, bool addDirichletBC >
-    using VertexCenteredGalerkinScheme = Impl::TupleGalerkinSchemeImpl< DiffOp, InverseOperator, addDirichletBC, AdvOp >;
+    template<class DiffOp, class AdvOp, class LinearOperator, class InverseOperator, bool addDirichletBC >
+    using VertexCenteredGalerkinScheme = Impl::TupleGalerkinSchemeImpl< DiffOp, LinearOperator, InverseOperator, addDirichletBC, AdvOp >;
 
   } // namespace Fem
 

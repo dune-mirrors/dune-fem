@@ -665,11 +665,16 @@ def vertexCenteredGalerkin(integrands, otherIntegrands, solver=None, parameters=
     op2 = galerkin(otherIntegrands, solver=solver, parameters=parameters)
 
     space = op1.space
+    print(op1)
+    print(space)
 
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
 
     _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, solverStorage.solver)
+
+    print(solverTypeName)
+    print(solverStorage.linopType)
 
     includes = [] # integrands.cppIncludes
     #includes += op1.includes + op2.includes
@@ -682,7 +687,7 @@ def vertexCenteredGalerkin(integrands, otherIntegrands, solver=None, parameters=
     useDirichletBC = 'false'
     if hasattr(integrands, "hasDirichletBoundary"):
         useDirichletBC = "true" if integrands.hasDirichletBoundary else "false"
-    typeName = 'Dune::Fem::VertexCenteredGalerkinScheme< ' + op1.cppTypeName + ' , ' + op2.cppTypeName + ' , ' + solverTypeName + ', ' + useDirichletBC + ' >'
+    typeName = 'Dune::Fem::VertexCenteredGalerkinScheme< ' + op1.cppTypeName + ' , ' + op2.cppTypeName + ' , ' + solverStorage.linopType + ', ' + solverTypeName + ', ' + useDirichletBC + ' >'
 
     from . import module
 

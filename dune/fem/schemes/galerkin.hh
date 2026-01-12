@@ -1515,13 +1515,19 @@ namespace Dune
 
       virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
       {
-        assemble( u, jOp );
+        assemble( u, jOp, true, true);
+      }
+
+      void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp, const bool doPrepare, const bool doFinalize ) const
+      {
+        assemble( u, jOp, doPrepare, doFinalize );
       }
 
       template< class GridFunction >
-      void jacobian ( const GridFunction &u, JacobianOperatorType &jOp ) const
+      void jacobian ( const GridFunction &u, JacobianOperatorType &jOp,
+                      const bool doPrepare = true, const bool doFinalize = true ) const
       {
-        assemble( u, jOp );
+        assemble( u, jOp, doPrepare, doFinalize );
       }
 
       const DomainDiscreteFunctionSpaceType& domainSpace() const
@@ -1571,6 +1577,7 @@ namespace Dune
         jOp.clear();
       }
 
+    public:
       template < class GridFunction >
       void assemble( const GridFunction &u, JacobianOperatorType &jOp,
                      const bool doPrepare = true, const bool doFinalize = true) const
@@ -1615,6 +1622,7 @@ namespace Dune
           jOp.flushAssembly();
         }
       }
+    protected:
 
       using BaseType::iterators_;
       using BaseType::gridSizeInterior_;
