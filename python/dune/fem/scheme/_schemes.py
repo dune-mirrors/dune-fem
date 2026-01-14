@@ -665,16 +665,11 @@ def vertexCenteredGalerkin(integrands, otherIntegrands, solver=None, parameters=
     op2 = galerkin(otherIntegrands, solver=solver, parameters=parameters)
 
     space = op1.space
-    print(op1)
-    print(space)
 
     # get storage of solver, it could differ from storage of space
     solverStorage, solver = getSolverStorage(space, solver)
 
     _, solverIncludes, solverTypeName, param = getSolver(solver, solverStorage, solverStorage.solver)
-
-    print(solverTypeName)
-    print(solverStorage.linopType)
 
     includes = [] # integrands.cppIncludes
     #includes += op1.includes + op2.includes
@@ -698,9 +693,10 @@ def vertexCenteredGalerkin(integrands, otherIntegrands, solver=None, parameters=
         scheme.setErrorMeasure( errorMeasure );
 
     # if preconditioning was passed as callable then store in scheme, otherwise None is stored
-    scheme.preconditioning = preconditioning
+    # scheme.preconditioning = preconditioning
     # store solver backend
     scheme._solverBackend = solverStorage.backend
+    scheme.ops = [op1, op2]
 
     scheme.parameters = parameters
 

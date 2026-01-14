@@ -32,6 +32,8 @@ namespace Dune
 
       using BaseType::apply;
       using BaseType::exportMatrix;
+      using BaseType::addMatrix;
+      using BaseType::assign;
 
       SparseRowLinearOperator( const std::string & ,
                                const DomainSpaceType &domainSpace,
@@ -52,6 +54,20 @@ namespace Dune
 
       virtual void finalize () { BaseType::compress(); }
 
+      template <class D, class R, class M>
+      ThisType& operator += ( const SparseRowLinearOperator< D, R, M>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        addMatrix( otherM );
+        return *this;
+      }
+
+      template <class D, class R, class M>
+      void assign( const SparseRowLinearOperator< D, R, M>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        assign( otherM );
+      }
     };
 
   } // namespace Fem

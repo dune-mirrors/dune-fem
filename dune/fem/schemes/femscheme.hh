@@ -102,6 +102,19 @@ public:
     invOp_( parameter )
   {}
 
+  //! constructor for derived classes (GalerkinScheme and MassLumpingScheme) with a list of models
+  template < class Op1, class Op2 >
+  FemScheme ( const DiscreteFunctionSpaceType &space,      // discrete function space
+              const Op1& op1, const Op2& op2,
+              const Dune::Fem::ParameterReader &parameter ) // parameters
+  : space_( space ),
+    // the full discretized operator
+    fullOpPtr_( new DifferentiableOperatorType( space, space, op1, op2 ) ),
+    fullOperator_( *fullOpPtr_ ),
+    // create inverse operator to invert the operator
+    invOp_( parameter )
+  {}
+
   //! constructor for derived classes (LinearScheme and LinearizedScheme)
   FemScheme ( DifferentiableOperatorType& fullOp,
               const Dune::Fem::ParameterReader &parameter) // parameters

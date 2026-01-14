@@ -94,6 +94,26 @@ namespace Dune
           } ), "space"_a, "model"_a, "massModel"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 3 >() );
       }
 
+      // constructor for TupleScheme
+      template< class Scheme, class... options >
+      inline static auto registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 3 > )
+        -> std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, typename Scheme::FirstOperatorType&, typename Scheme::SecondOperatorType & >::value >
+      {
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Scheme::FirstOperatorType FirstOpType;
+        typedef typename Scheme::SecondOperatorType SecondOpType;
+
+        using pybind11::operator""_a;
+
+        cls.def( pybind11::init( [] ( Space &space, FirstOpType& op, SecondOpType& otherOps ) {
+            return new Scheme( space, std::ref(op), std::ref(otherOps) );
+          } ), "space"_a, "op"_a, "otherOps"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 3 >() );
+        cls.def( pybind11::init( [] ( Space &space, FirstOpType& op, SecondOpType& otherOps, const pybind11::dict &parameters ) {
+            return new Scheme( space, std::ref(op), std::ref(otherOps),
+                pyParameter( "fem.solver.", parameters, std::make_shared< std::string >() ) );
+          } ), "space"_a, "op"_a, "otherOps"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 3 >() );
+      }
+
       template< class Scheme, class... options >
       inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
       {}

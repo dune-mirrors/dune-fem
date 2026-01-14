@@ -143,6 +143,36 @@ namespace Dune
         columns_[ column ] = col;
       }
 
+      void addMatrix( const ThisType& other )
+      {
+        compress();
+        //const_cast< ThisType& > (other).compress();
+        if( (rows() != other.rows()) || (cols() != other.cols()) )
+        {
+          std::abort();
+        }
+
+        assert( values_.size() == other.values_.size());
+        const size_t s = values_.size();
+#ifndef NDEBUG
+        for( size_t i=0; i<s; ++i )
+          assert( columns_[i] == other.columns_[i] );
+#endif
+        for( size_t i=0; i<s; ++i )
+          values_[ i ] += other.values_[ i ];
+      }
+
+      void assign( const ThisType& other )
+      {
+        values_  = other.values_;
+        columns_ = other.columns_;
+        rows_    = other.rows_;
+
+        dim_ = other.dim_;
+        maxNzPerRow_ = other.maxNzPerRow_;
+        compressed_  = other.compressed_;
+      }
+
       //! ret = A*f
       template<class ArgDFType, class DestDFType>
       void apply(const ArgDFType& f, DestDFType& ret ) const
@@ -660,6 +690,18 @@ namespace Dune
       {
         finalizeAssembly();
         return matrix_;
+      }
+
+      //! get reference to storage object
+      void addMatrix(const MatrixType& otherMatrix)
+      {
+        matrix_.addMatrix( otherMatrix );
+      }
+
+      //! get reference to storage object
+      void assign(const MatrixType& otherMatrix)
+      {
+        matrix_.assign( otherMatrix );
       }
 
 

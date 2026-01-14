@@ -31,6 +31,8 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
+      using BaseType::addMatrix;
+      using BaseType::assignMatrix;
 
       //! constructor
       //! \param domainSpace space defining domain of operator
@@ -55,6 +57,21 @@ namespace Dune
 
       virtual void finalize() { BaseType::compress(); }
 
+
+      template <class D, class R>
+      ThisType& operator += ( const ISTLLinearOperator< D, R>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        addMatrix( otherM );
+        return *this;
+      }
+
+      template <class D, class R>
+      void assign( const ISTLLinearOperator< D, R>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        assignMatrix( otherM );
+      }
     };
 
     //! ISTLMatrixOperator
@@ -78,6 +95,8 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
+      using BaseType::addMatrix;
+      using BaseType::assign;
 
       //! constructor
       //! \param domainSpace space defining domain of operator
@@ -101,6 +120,23 @@ namespace Dune
       }
 
       virtual void finalize() { BaseType::compress(); }
+
+
+      template <class D, class R>
+      ThisType& operator += ( const ISTLLinearOperator< D, R>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        addMatrix( otherM );
+        return *this;
+      }
+
+      template <class D, class R>
+      void assign( const ISTLLinearOperator< D, R>& other )
+      {
+        auto& otherM = other.exportMatrix();
+        assign( otherM );
+      }
+
 
     };
 

@@ -134,6 +134,11 @@ namespace Dune
           BaseType(org)
         {}
 
+        //! copy constructor, needed by assignMatrix
+        ImprovedBCRSMatrix(const BaseType& org) :
+          BaseType(org)
+        {}
+
         ConstRowIterator slicedBegin( const size_type row ) const
         {
           return ConstRowIterator( this->r, row );
@@ -945,6 +950,24 @@ namespace Dune
       }
 
     public:
+      void addMatrix( const typename MatrixType::BaseType& m )
+      {
+        assert( matrix().N() == m.N() && matrix().M() == m.M() );
+        static_cast< typename MatrixType::BaseType& > (matrix()) += m;
+      }
+
+      void assignMatrix( const typename MatrixType::BaseType& m )
+      {
+        if( !matrix_ )
+        {
+          matrix_.reset( new MatrixType( m ) );
+        }
+        else
+        {
+          static_cast< typename MatrixType::BaseType& > (matrix()) = m;
+        }
+      }
+
       template <class Container>
       void setUnitRows( const Container& unitRows, const Container& auxRows )
       {
