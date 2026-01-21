@@ -120,7 +120,8 @@ namespace Dune
                                      SolverParameter::minres,
                                      SolverParameter::gradient,
                                      SolverParameter::loop,
-                                     SolverParameter::superlu
+                                     SolverParameter::superlu,
+                                     SolverParameter::fgmres
                                    });
       }
     };
@@ -168,6 +169,13 @@ namespace Dune
         else if( method_ == SolverParameter::gmres )
         {
           typedef Dune::RestartedGMResSolver< X > SolverType;
+          SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, verbosity );
+          solver.apply( x, rhs, result );
+          return ;
+        }
+        else if( method_ == SolverParameter::fgmres )
+        {
+          typedef Dune::RestartedFlexibleGMResSolver< X > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
