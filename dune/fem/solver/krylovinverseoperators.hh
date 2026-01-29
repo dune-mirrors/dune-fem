@@ -130,7 +130,11 @@ namespace Dune
           else if ( method_ == SolverParameter::cg )
             std::cout << "Fem::CG";
 
-          std::cout << " preconditioning="<< SolverParameter::preconditionMethodTable( precondMethod_ ) << std::endl;
+          std::cout << " preconditioning=";
+          if ( precondMethod_ == SolverParameter::none && BaseType::preconditioner_ )
+            std::cout << "custom" << std::endl;
+          else
+            std::cout << SolverParameter::preconditionMethodTable( precondMethod_ ) << std::endl;
         }
 
         int numIter = 0;
