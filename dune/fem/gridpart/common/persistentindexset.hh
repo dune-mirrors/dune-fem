@@ -157,6 +157,12 @@ namespace Dune
         dofManager_.removeIndexSet( impl() );
       }
 
+      //! return const reference to the grid
+      const GridType& grid () const
+      {
+        return grid_;
+      }
+
       /** \copydoc Dune::Fem::ConsecutiveIndexSet::backup */
       void backup () const
       {
