@@ -413,6 +413,12 @@ namespace Dune
         return "AdaptiveIndexSetBase";
       }
 
+      //! return const reference to the grid part
+      const GridPartType& gridPart() const
+      {
+        return gridPart_;
+      }
+
       //****************************************************************
       //
       //  INTERFACE METHODS for DUNE INDEX SETS
