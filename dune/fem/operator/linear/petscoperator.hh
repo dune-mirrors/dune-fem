@@ -127,8 +127,8 @@ namespace Dune
       typedef PetscDiscreteFunction< DomainSpaceType > PetscDomainFunctionType;
       typedef PetscDiscreteFunction< RangeSpaceType  > PetscRangeFunctionType;
 
-      typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType DomainEntityType;
-      typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType  RangeEntityType;
+      typedef typename DomainSpaceType::EntityType DomainEntityType;
+      typedef typename RangeSpaceType::EntityType RangeEntityType;
 
       static const unsigned int domainLocalBlockSize = DomainSpaceType::localBlockSize;
       static const unsigned int rangeLocalBlockSize  = RangeSpaceType::localBlockSize;
