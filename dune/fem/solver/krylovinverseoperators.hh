@@ -213,7 +213,10 @@ namespace Dune
                               const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : KrylovInverseOperator( parameter )
       {
-        preconditioner ? BaseType::bind( op, *preconditioner ) : BaseType::bind( op );
+        if( preconditioner )
+          BaseType::bind( op, *preconditioner );
+        else
+          BaseType::bind( op );
       }
 
     protected:
