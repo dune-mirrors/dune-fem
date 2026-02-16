@@ -870,6 +870,17 @@ bdfm.__doc__ = _bdmSpaces.__doc__
 
 def raviartThomas(gridView, order=0, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+    """create a Raviart-Thomas (RT) space
+
+    Args:
+        gridView: the underlying grid part
+        order: polynomial degree of basis functions
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed RT Space
+    """
     _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
