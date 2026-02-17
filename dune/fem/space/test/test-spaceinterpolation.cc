@@ -149,8 +149,9 @@ typedef std::tuple<
   Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
   Dune::Fem::hpDG::AnisotropicDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 3 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasFortinMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasFortinMariniSpace< FunctionSpaceType, GridPartType, 2 >,
+  typename std::conditional< GridPartType::dimension == 2,
+    Dune::Fem::BrezziDouglasFortinMariniSpace< FunctionSpaceType, GridPartType, 1 >,
+    Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 > >::type,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,

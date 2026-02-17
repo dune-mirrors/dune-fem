@@ -38,6 +38,7 @@ namespace Dune
       using hasSingleGeometryType = GridPartCapabilities::hasSingleGeometryType< GridPart >;
 
       static_assert( hasSingleGeometryType::v, "`GridPart` has more the one geometry type." );
+      static_assert( GridPart::dimension == 2, "`BDFM` basis only defined for quadrilaterals." );
 
       static constexpr int dimLocal = GridPart::dimension;
       static constexpr unsigned int topologyId = hasSingleGeometryType::topologyId;

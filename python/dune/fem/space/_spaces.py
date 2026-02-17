@@ -860,7 +860,8 @@ bdm.__doc__ = _bdmSpaces.__doc__
 
 # BDFM space
 def bdfm(gridView, **kwargs):
-    assert gridView.type.isCube, "BDFM space only works for cube elements!"
+    # this space is currently only implemented for quads
+    assert gridView.type.isQuadrilateral, "BDFM space only works for quadrilateral elements!"
     return _bdmSpaces(gridView,
                       bdmName='BDFM',
                       bdmInc='brezzidouglasfortinmarini.hh',
