@@ -72,6 +72,11 @@ namespace Dune
 
         std::false_type hasInterior ( ... );
 
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasCellAverage() ), bool >::value, int > = 0 >
+        std::true_type hasCellAverage ( const Integrands & );
+
+        std::false_type hasCellAverage ( ... );
+
         template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().nonlinear() ), bool >::value, int > = 0 >
         std::true_type hasNonLinear ( const Integrands & );
 
@@ -123,6 +128,7 @@ namespace Dune
       typedef Impl::IntegrandsTraits::IntersectionType< Integrands > IntersectionType;
 
       static const bool hasNonLinear = decltype( Impl::IntegrandsTraits::hasNonLinear( std::declval< const Integrands & >() ) )::value;
+      static const bool hasCellAverage = decltype( Impl::IntegrandsTraits::hasCellAverage( std::declval< const Integrands & >() ) )::value;
 
       static const bool interior = decltype( Impl::IntegrandsTraits::interior( std::declval< const Integrands & >() ) )::value;
       static const bool hasInterior = decltype( Impl::IntegrandsTraits::hasInterior( std::declval< const Integrands & >() ) )::value;
@@ -171,6 +177,43 @@ namespace Dune
       {
         // default for nonlinear is true assuming that the model needs nonlinear solver
         return true;
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static bool hasCellAverage ( const T &integrands )
+      {
+        return integrands.hasCellAverage();
+      }
+
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static bool hasCellAverage ( const T &integrands )
+      {
+        // by default the cell average is not needed
+        return false;
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static void setCellAverage ( T &integrands, const DomainValueType &u)
+      {
+        return integrands.setCellAverage( u );
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static void setCellAverage ( T &integrands, const DomainValueType &uIn, const DomainValueType &uOut)
+      {
+        return integrands.setCellAverage( uIn, uOut );
+      }
+
+      template< class T, std::enable_if_t< ! IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static void setCellAverage ( T &integrands, const DomainValueType &u)
+      {
+        // by default do nothing here
+      }
+
+      template< class T, std::enable_if_t< ! IntegrandsTraits< T >::hasCellAverage, int > = 0 >
+      static void setCellAverage ( T &integrands, const DomainValueType &uIn, const DomainValueType &uOut)
+      {
+        // by default do nothing here
       }
 
       template< class T, std::enable_if_t< IntegrandsTraits< T >::hasInterior, int > = 0 >
@@ -295,6 +338,17 @@ namespace Dune
       void unbind ( ) { integrands().unbind( ); }
 
       bool nonlinear() const { return nonlinear( integrands() ); }
+
+      bool hasCellAverage() const { return hasCellAverage( integrands() ); }
+
+      void setCellAverage ( const DomainValueType &u )
+      {
+        setCellAverage( integrands(), u );
+      }
+      void setCellAverage ( const DomainValueType &uIn, const DomainValueType &uOut )
+      {
+        setCellAverage( integrands(), uIn, uOut );
+      }
 
       bool hasInterior () const { return hasInterior( integrands() ); }
 
@@ -458,6 +512,10 @@ namespace Dune
 
         virtual bool nonlinear() const = 0;
 
+        virtual bool hasCellAverage () const = 0;
+        virtual void setCellAverage ( const DomainValueType &u ) = 0;
+        virtual void setCellAverage ( const DomainValueType &uIn, const DomainValueType &uOut ) = 0;
+
         virtual bool hasInterior () const = 0;
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
         virtual RangeValueType interior ( const InteriorElementPointType &x, const DomainValueType &u ) const = 0;
@@ -496,6 +554,10 @@ namespace Dune
         virtual void unbind ( ) override { impl().unbind( ); }
 
         virtual bool nonlinear () const override { return impl().nonlinear(); }
+
+        virtual bool hasCellAverage () const override { return impl().hasCellAverage(); }
+        virtual void setCellAverage ( const DomainValueType &u ) override { impl().setCellAverage( u ); }
+        virtual void setCellAverage ( const DomainValueType &uIn, const DomainValueType &uOut ) override { impl().setCellAverage( uIn, uOut ); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
@@ -560,6 +622,13 @@ namespace Dune
       void unbind ( ) { impl().unbind( ); }
 
       bool nonlinear() const { return impl().nonlinear(); }
+
+      bool hasCellAverage() const { return impl().hasCellAverage(); }
+      void setCellAverage ( const DomainValueType &u ) { impl().setCellAverage( u ); }
+      void setCellAverage ( const DomainValueType &uIn, const DomainValueType &uOut )
+      {
+        impl().setCellAverage( uIn, uOut );
+      }
 
       bool hasInterior () const { return impl().hasInterior(); }
 
