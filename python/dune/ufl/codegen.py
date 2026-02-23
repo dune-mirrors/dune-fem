@@ -153,13 +153,15 @@ class CodeGenerator(MultiFunction):
         return x
 
     def CellAvg(self, expr):
-        return self.cellAvg(self, expr)
+        return self.cellAvg(expr)
+
+    def cell_avg(self, expr):
+        return self.cellAvg(expr)
 
     def cellAvg(self, expr):
-        idx = str(self._getNumber(expr))
-        var = Variable('const auto& cellAvg')
-        self.code.append(Declaration(var))
-        self.code.append('std::get< ' + idx + ' >( cellAvg_ );')
+        idx = 0 # str(self._getNumber(expr))
+        var = Variable('const auto&', 'std::get< ' + str(idx) + ' >( cellAvg_ )')
+        #self.code.append(Declaration(var))
         return var
 
     # do nothing here (until complex real is needed)
