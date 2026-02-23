@@ -67,7 +67,7 @@ namespace Dune
         // create quadrature
         typedef CachingQuadrature< GridPart, EntityType::codimension > QuadratureType;
         QuadratureType quadrature( entity, localFunction.order() );
-        LocalAverageHelper::applyQuadrature( localFunction, entity.geometry(), quadrature, average );
+        LocalAverageHelper::applyQuadrature( localFunction,  entity.geometry(), quadrature, average );
       }
     };
 
@@ -150,6 +150,35 @@ namespace Dune
         Impl::apply( localFunction, average );
       }
     };
+
+    /** \brief compute the local average of a given
+     *  local function f as 1/|E| \int_E f dx
+    */
+    template <class LocalFunction>
+    static void localAverage( const LocalFunction& localFunction, typename LocalFunction::RangeType& average )
+    {
+      typedef typename ExportsDiscreteFunctionSpaceType< LocalFunction >::Type DiscreteFunctionSpaceType;
+      static const bool hasDiscreteFunctionSpace = ! std::is_same<DiscreteFunctionSpaceType, void>::value;
+
+      typedef typename LocalFunction::GridPartType GridPartType;
+
+      if constexpr ( hasDiscreteFunctionSpace )
+      {
+        LocalAverage< LocalFunction, GridPartType >::apply( localFunction, average );
+      }
+      else
+      {
+        // get entity
+        typedef typename LocalFunction::EntityType EntityType;
+        const EntityType &entity = localFunction.entity();
+        const auto& geometry = localFunction.geometry();
+
+        // create quadrature
+        typedef CachingQuadrature< GridPartType, EntityType::codimension > QuadratureType;
+        QuadratureType quadrature( entity, localFunction.order() );
+        LocalAverageHelper::applyQuadrature( localFunction, geometry, quadrature, average );
+      }
+    }
 
   } // namespace Fem
 
