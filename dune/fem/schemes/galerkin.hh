@@ -187,6 +187,7 @@ namespace Dune
           resizeDomainValueVector( phiOut_, size );
           resizeDomainValueVector( basisValues_, size );
           resizeDomainValueVector( domainValues_, size );
+          resizeDomainValueVector( domainValuesOut_, size );
         }
 
         template< class LocalFunction, class Quadrature >
@@ -283,6 +284,50 @@ namespace Dune
             } );
         }
 
+        template< class Geometry, class Quadrature >
+        static DomainValueType computeCellAverageImpl ( Integrands& integrands, const Geometry& geometry, const Quadrature& quadrature, const DomainValueVectorType &values )
+        {
+          DomainValueType cellAvg;
+          Hybrid::forEach( DomainValueIndices(), [ & geometry, &integrands, &quadrature, &values, &cellAvg ] ( auto i ) {
+              const auto& vec = std::get< i >( values );
+              auto& avg = std::get< i >( cellAvg );
+              avg = 0;
+              const int nop = quadrature.nop();
+              assert( int(vec.size()) == nop );
+              for( int qp =0; qp<nop; ++qp )
+              {
+                const ctype weight = quadrature.weight(qp) * geometry.integrationElement( quadrature.point(qp) );
+                avg.axpy( weight, vec[ qp ] );
+              }
+              avg *= 1./geometry.volume();
+            } );
+          return cellAvg;
+        }
+
+        template< class Geometry, class QuadratureIn >
+        static void computeCellAverage ( Integrands& integrands,
+                                         const Geometry& geometryIn,
+                                         const QuadratureIn& quadratureIn,
+                                         const DomainValueVectorType &valuesIn )
+        {
+          DomainValueType cellAvgIn  = computeCellAverageImpl( integrands, geometryIn, quadratureIn, valuesIn );
+          integrands.setCellAverage( cellAvgIn );
+        }
+
+        template< class Geometry, class QuadratureIn, class QuadratureOut >
+        static void computeCellAverage ( Integrands& integrands,
+                                         const Geometry& geometryIn,
+                                         const QuadratureIn& quadratureIn,
+                                         const DomainValueVectorType &valuesIn,
+                                         const Geometry& geometryOut,
+                                         const QuadratureOut& quadratureOut,
+                                         const DomainValueVectorType &valuesOut)
+        {
+          DomainValueType cellAvgIn  = computeCellAverageImpl( integrands, geometryIn, quadratureIn, valuesIn );
+          DomainValueType cellAvgOut = computeCellAverageImpl( integrands, geometryOut, quadratureOut, valuesOut );
+          integrands.setCellAverage( cellAvgIn, cellAvgOut );
+        }
+
         template< class Phi, std::size_t... i >
         static auto value ( const Phi &phi, std::size_t col, std::index_sequence< i... > )
         {
@@ -343,6 +388,11 @@ namespace Dune
           DomainValueVectorType& domains = domainValues_;
           domainValue( u, quadrature, domains );
 
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(), geometry, quadrature, domains );
+          }
+
           auto& ranges = values_;
           resizeRangeValueVector( ranges, quadrature.nop() );
 
@@ -380,6 +430,11 @@ namespace Dune
           auto& rangeValues = rangeValues_;
           DomainValueVectorType& domains = domainValues_;
           domainValue( u, quadrature, domains );
+
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(), geometry, quadrature, domains );
+          }
 
           rangeValues.resize( domainSize );
           for( std::size_t col = 0; col < domainSize; ++col )
@@ -479,13 +534,28 @@ namespace Dune
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn)), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn  = domainValues_;
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+
+          domainValue( uIn, quadrature.inside(), domainsIn );
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(),
+                                uIn.geometry(), quadrature.inside(), domainsIn,
+                                uOut.geometry(),quadrature.outside(), domainsOut );
+          }
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp < nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            //std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -501,13 +571,28 @@ namespace Dune
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn, wOut)), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn  = domainValues_;
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+
+          domainValue( uIn, quadrature.inside(), domainsIn );
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(),
+                                uIn.geometry(), quadrature.inside(), domainsIn,
+                                uOut.geometry(),quadrature.outside(), domainsOut );
+          }
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp < nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            //std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &qpOut, &wOut, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -537,7 +622,21 @@ namespace Dune
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn  = domainValues_;
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+
+          domainValue( uIn, quadrature.inside(), domainsIn );
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(),
+                                uIn.geometry(), quadrature.inside(), domainsIn,
+                                uOut.geometry(),quadrature.outside(), domainsOut );
+          }
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp < nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
@@ -547,7 +646,8 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            //auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -590,7 +690,21 @@ namespace Dune
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn  = domainValues_;
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+
+          domainValue( uIn, quadrature.inside(), domainsIn );
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          if( integrands().hasCellAverage() )
+          {
+            computeCellAverage( integrands(),
+                                uIn.geometry(), quadrature.inside(), domainsIn,
+                                uOut.geometry(),quadrature.outside(), domainsOut );
+          }
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp < nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
@@ -600,7 +714,8 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            //auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -682,7 +797,7 @@ namespace Dune
         bool hasBoundary() const { return model().hasBoundary(); }
 
       private:
-        IntegrandsType& integrands() const
+        IntegrandsType& integrands () const
         {
           return integrands_;
         }
@@ -736,6 +851,7 @@ namespace Dune
         mutable DomainValueVectorType  phiOut_;
         mutable DomainValueVectorType  basisValues_;
         mutable DomainValueVectorType  domainValues_;
+        mutable DomainValueVectorType  domainValuesOut_;
       };
 
 
