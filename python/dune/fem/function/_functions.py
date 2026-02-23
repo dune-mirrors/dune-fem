@@ -65,7 +65,7 @@ def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, v
 
     # if 'expr' is a ufl expression use the uflFunction
     if isinstance(expr, Expr): # use the old uflFunction
-        return _uflFunction(gridView=gridView,name=name,order=order,ufl=expr)
+        return _uflFunction(gridView=gridView,name=name,order=order,ufl=expr, **kwargs)
     # this could be a python functon
     if isinstance(expr, types.FunctionType):
         gl = len(inspect.getfullargspec(expr)[0])
