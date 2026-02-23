@@ -152,6 +152,16 @@ class CodeGenerator(MultiFunction):
     def conj(self,expr,x):
         return x
 
+    def CellAvg(self, expr):
+        return self.cellAvg(self, expr)
+
+    def cellAvg(self, expr):
+        idx = str(self._getNumber(expr))
+        var = Variable('const auto& cellAvg')
+        self.code.append(Declaration(var))
+        self.code.append('std::get< ' + idx + ' >( cellAvg_ );')
+        return var
+
     # do nothing here (until complex real is needed)
     def Real(self,expr,x):
         return x
@@ -448,6 +458,7 @@ class ModelClass():
         self.needMinCellEdgeLength = isPresent( 'MinCellEdgeLength' )
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
+        self.needCellAverage = True # isPresent( 'CellAvg' )
 
         if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength:
             self.needCellGeometry = True
@@ -646,6 +657,11 @@ class ModelClass():
         volume = 'cellVolume()' if side is None else 'cellVolume_[ static_cast< std::size_t >( ' + side + ' ) ]'
         return UnformattedExpression('auto', volume)
 
+    def cellAverage(self, idx=0, side = None):
+        # self.needCellVolume = True
+        cellavg = 'std::get< ' + str(idx) + ' > ( cellAvg_ )' if side is None else 'std::get< ' + str(idx) + ' > ( cellAvg_[ static_cast< std::size_t >( ' + side + ' ) ]'
+        return UnformattedExpression('auto', cellavg)
+
     def cellDiameter(self, side=None):
         # perhaps not optimal?
         maxEdge = 'maxCellEdgeLength()' if side is None else 'maxCellEdgeLength_[ static_cast< std::size_t >( ' + side + ' ) ]'
@@ -718,6 +734,9 @@ class ModelClass():
 
         code.append(TypeAlias("Side","Dune::Fem::IntersectionSide"))
 
+        #code.append(Declaration(Variable("bool", "_hasCellAverage"),
+        #        initializer=self.needCellAverage, static=True, constexpr=True))
+
         for type, alias in zip(self._constants, self.constantTypes):
             code.append(TypeAlias(alias, type))
         constants = ["std::shared_ptr< " + c + " >" for c in self.constantTypes]
@@ -761,6 +780,9 @@ class ModelClass():
             if self.skeleton is None:
                 entity_   = Variable('EntityType', 'entity_')
                 insideEntity = entity_
+                if self.needCellAverage:
+                    cellAvg_ = Variable('DomainValueType', 'cellAvg_')
+                    insideCellAvg = cellAvg_
                 if self.needCellVolume:
                     cellVolume_ = Variable('ctype', 'cellVolume_')
                     insideVolume = cellVolume_
@@ -774,6 +796,10 @@ class ModelClass():
                 entity_   = Variable('std::array< EntityType, 2 >', 'entity_')
                 insideEntity = entity_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
                 outsideEntity = entity_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
+                if self.needCellAverage:
+                    cellAvg_ = Variable('std::array< DomainValueType, 2 >', 'cellAvg_')
+                    insideCellAvg  = cellAvg_[ UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
+                    outsideCellAvg = cellAvg_[ UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
                 if self.needCellVolume:
                     cellVolume_ = Variable('std::array< ctype, 2 >', 'cellVolume_')
                     insideVolume = cellVolume_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
@@ -958,6 +984,22 @@ class ModelClass():
             code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
             if self.needCellGeometry:
                 code.append(Method('const Geometry &', 'geometry', const=True, code=return_('*geometry_')))
+            if self.needCellAverage:
+                code.append(Method('bool', 'hasCellAverage', const=True, code=return_(self.needCellAverage)))
+                setCellAvg = Method('void', 'setCellAverage', const=False, args=['const DomainValueType& u'])
+                if self.skeleton is None:
+                    setCellAvg.append('cellAvg_ = u;')
+                else:
+                    setCellAvg.append('cellAvg_[ static_cast< std::size_t >( Side::in ) ] = u;')
+                code.append(setCellAvg)
+
+                setCellAvg = Method('void', 'setCellAverage', const=False, args=['const DomainValueType& uIn, const DomainValueType& uOut'])
+                if self.skeleton is None:
+                    setCellAvg.append('cellAvg_ = uIn;')
+                else:
+                    setCellAvg.append('cellAvg_[ static_cast< std::size_t >( Side::in  ) ] = uIn;')
+                    setCellAvg.append('cellAvg_[ static_cast< std::size_t >( Side::out ) ] = uOut;')
+                code.append(setCellAvg)
             if self.needCellVolume:
                 code.append(Method('const ctype', 'cellVolume', const=True, code=return_(insideVolume)))
             if self.needMaxCellEdgeLength:
@@ -991,6 +1033,8 @@ class ModelClass():
             code.append(Declaration(entity_), Declaration(intersection_) )
             if self.needCellGeometry:
                 code.append(Declaration(geometry_))
+            if self.needCellAverage:
+                code.append(Declaration(cellAvg_))
             if self.needCellVolume:
                 code.append(Declaration(cellVolume_))
             if self.needMaxCellEdgeLength:

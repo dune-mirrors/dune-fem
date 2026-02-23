@@ -6,7 +6,7 @@ except ImportError: # older ufl versions
     from ufl import FiniteElementBase as AbstractFiniteElement
 from ufl import FunctionSpace, dx
 from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
-from ufl import CellVolume, CellDiameter, MinCellEdgeLength, MaxCellEdgeLength
+from ufl import CellVolume, CellDiameter, cell_avg, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
 from ufl import action, derivative, as_vector, replace, grad
 from ufl.classes import Indexed
@@ -219,8 +219,11 @@ def _compileUFL(integrands, form, *args, tempVars=True):
     maxFacetEdgeLength = MaxFacetEdgeLength(form.ufl_domain())
     minFacetEdgeLength = MinFacetEdgeLength(form.ufl_domain())
 
+
     phi, u = form.arguments()
     ubar = Coefficient(u.ufl_function_space())
+
+    cellAvg = cell_avg(ubar)
 
     derivatives = gatherDerivatives(form, [phi, u])
 
@@ -251,11 +254,13 @@ def _compileUFL(integrands, form, *args, tempVars=True):
 
     if 'cell' in integrals.keys():
         arg = Variable(integrands.domainValueTuple, 'u')
+        avg = Variable(integrands.domainValueTuple, 'cellAvg_')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[cellVolume] = integrands.cellVolume()
         predefined[cellDiameter] = integrands.cellDiameter()
+        predefined[cellAvg] = integrands.cellAverage()
         predefined[maxCellEdgeLength] = integrands.maxCellEdgeLength()
         predefined[minCellEdgeLength] = integrands.minCellEdgeLength()
         integrands.predefineCoefficients(predefined, False)
