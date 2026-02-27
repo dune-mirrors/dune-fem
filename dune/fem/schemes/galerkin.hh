@@ -187,6 +187,7 @@ namespace Dune
           resizeDomainValueVector( phiOut_, size );
           resizeDomainValueVector( basisValues_, size );
           resizeDomainValueVector( domainValues_, size );
+          resizeDomainValueVector( domainValuesOut_, size );
         }
 
         template< class LocalFunction, class Quadrature >
@@ -479,13 +480,21 @@ namespace Dune
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn)), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn = domainValues_;
+          domainValue( uIn, quadrature.inside(), domainsIn );
+
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand
+                = integrands().skeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -501,13 +510,21 @@ namespace Dune
           typedef typename QuadratureSelector< typename W::DiscreteFunctionSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(maxOrder( uIn, uOut, wIn, wOut)), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn = domainValues_;
+          domainValue( uIn, quadrature.inside(), domainsIn );
+
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< RangeValueType, RangeValueType > integrand = integrands().skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand
+              = integrands().skeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
 
             Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &qpOut, &wOut, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
@@ -537,7 +554,14 @@ namespace Dune
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn = domainValues_;
+          domainValue( uIn, quadrature.inside(), domainsIn );
+
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
@@ -547,7 +571,7 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -590,7 +614,14 @@ namespace Dune
           typedef typename QuadratureSelector< typename J::RangeSpaceType > :: SurfaceQuadratureType  SurfaceQuadratureType;
           typedef IntersectionQuadrature< SurfaceQuadratureType, conforming > IntersectionQuadratureType;
           const IntersectionQuadratureType quadrature( gridPart(), intersection, surfaceQuadratureOrder(order), false );
-          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+
+          DomainValueVectorType& domainsIn = domainValues_;
+          domainValue( uIn, quadrature.inside(), domainsIn );
+
+          DomainValueVectorType& domainsOut = domainValuesOut_;
+          domainValue( uOut, quadrature.outside(), domainsOut );
+
+          for( unsigned int qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
@@ -600,7 +631,7 @@ namespace Dune
             values( domainBasisIn, qpIn, phiIn );
             values( domainBasisOut, qpOut, phiOut );
 
-            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
+            auto integrand = integrands().linearizedSkeleton( qpIn, domainValue( qp, domainsIn ), qpOut, domainValue( qp, domainsOut ) );
             for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
               LocalMatrixColumn< J > jInInCol( jInIn, col );
@@ -736,6 +767,7 @@ namespace Dune
         mutable DomainValueVectorType  phiOut_;
         mutable DomainValueVectorType  basisValues_;
         mutable DomainValueVectorType  domainValues_;
+        mutable DomainValueVectorType  domainValuesOut_;
       };
 
 
