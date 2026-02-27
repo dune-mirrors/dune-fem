@@ -14,6 +14,7 @@ from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.corealg.multifunction import MultiFunction
+from ufl.corealg.traversal import pre_traversal
 from ufl.argument import Argument
 from ufl.coefficient import Coefficient
 from ufl.differentiation import Grad
@@ -151,6 +152,24 @@ class CodeGenerator(MultiFunction):
     # do nothing here (until complex conjugate is needed)
     def conj(self,expr,x):
         return x
+
+    def CellAvg(self, expr):
+        return self.cell_avg(expr)
+
+    def cell_avg(self, expr):
+        name = str( expr.ufl_operands[0].ufl_operands[0] )
+        try:
+            # e.g. cell_avg( u_h ) with dimRange of u_h 2 will result in
+            # cell_avg(u_h[0])
+            # cell_avg(u_h[1])
+            comp = int(str(expr.ufl_operands[0].ufl_operands[1]))
+        except:
+            op = str( expr.ufl_operands[0] )
+            pos = op.find('cell_avg')
+            assert pos == -1, "cell_avg(cell_avg(...)) not implemented!"
+            comp = 0
+        var = Variable('const auto&', 'cellAvg_' + name + '[ ' + str(comp) + ' ]')
+        return var
 
     # do nothing here (until complex real is needed)
     def Real(self,expr,x):
@@ -448,6 +467,9 @@ class ModelClass():
         self.needMinCellEdgeLength = isPresent( 'MinCellEdgeLength' )
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
+        self.needCellAverage = isPresent('cell_avg') or isPresent( 'CellAvg' )
+        if self.needCellAverage:
+            assert self.bindable, "cell_avg operator only implemented for uflFunction"
 
         if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength:
             self.needCellGeometry = True
@@ -456,6 +478,9 @@ class ModelClass():
 
         if self.needMaxCellEdgeLength or self.needMinCellEdgeLength or self.needMaxFacetEdgeLength or self.needMinFacetEdgeLength:
             self.includeFiles += ['dune/fempy/geometry/edgelength.hh']
+
+        if self.needCellAverage:
+            self.includeFiles += ['dune/fem/function/localfunction/average.hh']
 
         # print(f"Found geom = {self.needCellGeometry}, vol = {self.needCellVolume}, area = {self.needFacetArea}, maxEdge = {self.needMaxCellEdgeLength}, minEdge = {self.needMinCellEdgeLength}")
 
@@ -472,6 +497,7 @@ class ModelClass():
             except:
                 cc = extract_coefficients(expr) + extract_constants_ext(expr)
                 coefficients |= set(cc)
+
         extracedAll = False
         while not extracedAll:
             extracedAll = True
@@ -532,6 +558,20 @@ class ModelClass():
         invalidCoefficients = [n for n in self._coefficientNames if n is not None and re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
         if invalidCoefficients:
             raise ValueError('Coefficient names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
+
+        if self.needCellAverage:
+            cellAvgCoeffs = []
+            for coeff in coefficientNames:
+                for expr in uflExpr:
+                    # if cell_avg is present then extract those coefficients
+                    # that the average has to be computed for
+                    strExpr = str(expr)
+                    key = 'cell_avg(' + coeff + ')'
+                    pos = strExpr.find( 'cell_avg(' + coeff )
+                    if pos != -1:
+                        cellAvgCoeffs.append(coeff)
+            # make list contain unique members only
+            self._coefficientNamesAvg=sorted(list(set(cellAvgCoeffs)))
 
         self._parameterNames = [None,] * len(self._constants) if parameterNames is None else list(parameterNames)
         if len(self._parameterNames) != len(self._constants):
@@ -778,12 +818,10 @@ class ModelClass():
                     cellVolume_ = Variable('std::array< ctype, 2 >', 'cellVolume_')
                     insideVolume = cellVolume_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
                     outsideVolume = cellVolume_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
-
                 if self.needMaxCellEdgeLength:
                     maxCellEdgeLength_ = Variable('std::array< ctype, 2 >', 'maxCellEdgeLength_')
                     insideMaxCellEdgeLength = maxCellEdgeLength_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
                     outsideMaxCellEdgeLength = maxCellEdgeLength_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
-
                 if self.needMinCellEdgeLength:
                     minCellEdgeLength_ = Variable('std::array< ctype, 2 >', 'minCellEdgeLength_')
                     insideMinCellEdgeLength = minCellEdgeLength_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
@@ -799,6 +837,13 @@ class ModelClass():
             if self.needMinFacetEdgeLength:
                 minFacetEdgeLength_ = Variable('ctype', 'minFacetEdgeLength_')
         else:
+            if self.needCellAverage:
+                cellAvg_ = []
+                for i, c in enumerate(self._coefficients):
+                    name = self._coefficientNames[i]
+                    if name in self._coefficientNamesAvg:
+                        cellAvg_.append(Variable('CoefficientRangeType< ' + str(i) + ' >', 'cellAvg_' + name))
+
             code.append(Using('BaseType::entity'))
             code.append(Using('BaseType::geometry'))
 
@@ -888,7 +933,19 @@ class ModelClass():
                 uninitEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).unbind( )', uses=[coefficients_]))
                 initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
                 initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
+
         initEntity.append(self.init)
+        if self.needCellAverage and self.bindable:
+            # TODO: generalize
+            #assert len(self._coefficients) == 1, "cell_avg only works for grid function coefficients"
+            for i, c in enumerate(self._coefficients):
+                name = self._coefficientNames[i]
+                if name in self._coefficientNamesAvg:
+                    initEntity.append(UnformattedExpression('void',
+                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
+                    initIntersection.append(UnformattedExpression('void',
+                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
+
         if not self.bindable:
             initEntity.append(return_(True))
         code.append(initEntity)
@@ -973,7 +1030,7 @@ class ModelClass():
                 if self.skeleton is None:
                     method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'class Point'], args=['const Point &x'], const=True)
                     method.append(Declaration(var))
-                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ ).' + name + '( x, ' + var.name + ' );'))
+                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ ).' + name + '( x, ' + var.name + ' )'))
                     method.append(return_(var))
                     code.append(method)
                 else:
@@ -1003,6 +1060,11 @@ class ModelClass():
                 code.append(Declaration(maxFacetEdgeLength_))
             if self.needMinFacetEdgeLength:
                 code.append(Declaration(minFacetEdgeLength_))
+        else:
+            if self.needCellAverage:
+                # append all cell averages
+                for avg in cellAvg_:
+                    code.append(Declaration(avg))
         code.append(Declaration(constants_), Declaration(coefficients_))
 
         if self.vars is not None:
