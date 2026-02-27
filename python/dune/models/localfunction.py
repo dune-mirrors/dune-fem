@@ -58,7 +58,7 @@ class UFLFunctionSource(codegen.ModelClass):
         x = ufl.SpatialCoordinate(self.uflDomain)
         predefined[x] = self.spatialCoordinate('x')
         self.predefineCoefficients(predefined, False)
-        codegen.generateMethod(code, self.expr,
+        avgNames = codegen.generateMethod(code, self.expr,
             'typename FunctionSpaceType::RangeType', 'evaluate',
             returnResult=False,
             args=['const Point &x'],
@@ -109,6 +109,8 @@ class UFLFunctionSource(codegen.ModelClass):
                     code=['DUNE_THROW(Dune::NotImplemented,"hessian method could not be generated for local function ('+repr(e)+')");',
                           'result=typename FunctionSpaceType::HessianRangeType(0);'], const=True))
                 pass
+
+        return avgNames
 
     def _signature(self):
         from dune.common.hashit import hashIt

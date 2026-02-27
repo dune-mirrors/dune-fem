@@ -34,7 +34,7 @@ from dune.ufl.tensors import ExprTensor
 from dune.ufl import Constant as DuneConstant
 from dune.ufl.tensors import apply as exprTensorApply
 from dune.source.cplusplus import assign, construct, TypeAlias, Declaration, Variable,\
-        UnformattedBlock, UnformattedExpression, Struct, return_,\
+        UnformattedBlock, UnformattedExpression, Struct, Block, return_,\
         SwitchStatement
 from dune.source.cplusplus import Method as clsMethod
 from dune.source.cplusplus import SourceWriter, ListWriter, StringWriter
@@ -64,6 +64,7 @@ class CodeGenerator(MultiFunction):
         self.coefficients = [] if coefficients is None else coefficients
         self.code = []
         self.tempVars = tempVars
+        self.cellAvgNames = set()
 
     def _require_predefined(self, expr):
         try:
@@ -159,6 +160,7 @@ class CodeGenerator(MultiFunction):
     def cell_avg(self, expr):
         name = str( expr.ufl_operands[0].ufl_operands[0] )
         try:
+            self.cellAvgNames.add( name )
             # e.g. cell_avg( u_h ) with dimRange of u_h 2 will result in
             # cell_avg(u_h[0])
             # cell_avg(u_h[1])
@@ -377,9 +379,19 @@ def generateCode(predefined, expressions, coefficients=None, tempVars=True):
     expressions = [applyRestrictions(expand_indices(apply_derivatives(apply_algebra_lowering(expr)))) for expr in expressions]
     generator = CodeGenerator(predefined, coefficients, tempVars)
     results = map_expr_dags(generator, expressions)
+
     l = list(generator.using)
     l.sort()
-    return l + generator.code, results
+
+    class ExList(list):
+        def __init__(self, l):
+            super().__init__(l)
+            self.cellAvgNames = None
+
+
+    code = ExList(l + generator.code)
+    code.cellAvgNames = generator.cellAvgNames
+    return code, results
 
 
 ######################################################################
@@ -559,19 +571,6 @@ class ModelClass():
         if invalidCoefficients:
             raise ValueError('Coefficient names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
 
-        if self.needCellAverage:
-            cellAvgCoeffs = []
-            for coeff in coefficientNames:
-                for expr in uflExpr:
-                    # if cell_avg is present then extract those coefficients
-                    # that the average has to be computed for
-                    strExpr = str(expr)
-                    key = 'cell_avg(' + coeff + ')'
-                    pos = strExpr.find( 'cell_avg(' + coeff )
-                    if pos != -1:
-                        cellAvgCoeffs.append(coeff)
-            # make list contain unique members only
-            self._coefficientNamesAvg=sorted(list(set(cellAvgCoeffs)))
 
         self._parameterNames = [None,] * len(self._constants) if parameterNames is None else list(parameterNames)
         if len(self._parameterNames) != len(self._constants):
@@ -837,13 +836,6 @@ class ModelClass():
             if self.needMinFacetEdgeLength:
                 minFacetEdgeLength_ = Variable('ctype', 'minFacetEdgeLength_')
         else:
-            if self.needCellAverage:
-                cellAvg_ = []
-                for i, c in enumerate(self._coefficients):
-                    name = self._coefficientNames[i]
-                    if name in self._coefficientNamesAvg:
-                        cellAvg_.append(Variable('CoefficientRangeType< ' + str(i) + ' >', 'cellAvg_' + name))
-
             code.append(Using('BaseType::entity'))
             code.append(Using('BaseType::geometry'))
 
@@ -935,17 +927,6 @@ class ModelClass():
                 initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( this->entity() )', uses=[entity, coefficients_]))
 
         initEntity.append(self.init)
-        if self.needCellAverage and self.bindable:
-            # TODO: generalize
-            #assert len(self._coefficients) == 1, "cell_avg only works for grid function coefficients"
-            for i, c in enumerate(self._coefficients):
-                name = self._coefficientNames[i]
-                if name in self._coefficientNamesAvg:
-                    initEntity.append(UnformattedExpression('void',
-                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
-                    initIntersection.append(UnformattedExpression('void',
-                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
-
         if not self.bindable:
             initEntity.append(return_(True))
         code.append(initEntity)
@@ -1001,7 +982,23 @@ class ModelClass():
             code.append(initIntersection)
 
         ################################
-        self.methods(code)
+        mthds = Block()
+        coefficientNamesAvg = self.methods(mthds)
+
+        # for cell_avg we only know which one is used after methods have been generated
+        if coefficientNamesAvg is not None and self.needCellAverage and self.bindable:
+            cellAvg_ = []
+            for i, c in enumerate(self._coefficients):
+                name = self._coefficientNames[i]
+                if name in coefficientNamesAvg:
+                    cellAvg_.append(Variable('CoefficientRangeType< ' + str(i) + ' >', 'cellAvg_' + name))
+                    initEntity.append(UnformattedExpression('void',
+                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
+                    initIntersection.append(UnformattedExpression('void',
+                        'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
+
+        # add methods content
+        code.append(mthds.content)
         ################################
 
         code.append(Method('const ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_))), const=True))
@@ -1099,6 +1096,11 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined, tempVar
             arg_d2u = Variable("const HessianRangeType &", "d2u")
             predefined.update( {u: arg_u, du: arg_du, d2u: arg_d2u} )
         code, results = generateCode(predefined, expression, tempVars=tempVars)
+
+        avgNames = None
+        if hasattr(code, "cellAvgNames"):
+            avgNames = code.cellAvgNames
+
         result = Variable(cppType, 'result')
         if cppType == 'double':
             code = code + [assign(result, results[0])]
@@ -1111,7 +1113,7 @@ def generateMethodBody(cppType, expr, returnResult, default, predefined, tempVar
         code = [assign(result, construct(cppType,default) )]
         if returnResult:
             code = [Declaration(result)] + code + [return_(result)]
-    return code
+    return code, avgNames
 def generateMethod(struct,expr, cppType, name,
         returnResult=True,
         defaultReturn='0',
@@ -1128,25 +1130,31 @@ def generateMethod(struct,expr, cppType, name,
     else:
         returnType = cppType
 
+    avgNames = set()
     if isinstance(expr,dict):
         if evalSwitch:
             bndId = Variable('const int', 'bndId')
             code = SwitchStatement(bndId, default=return_(False))
             for id, e in expr.items():
-                code.append(id,
-                        [generateMethodBody('RangeType', e, False, defaultReturn,
-                            predefined, tempVars=tempVars), return_(True)])
+                gmb, avgName = generateMethodBody('RangeType', e, False, defaultReturn, predefined, tempVars=tempVars)
+                avgNames.add( avgName )
+                code.append(id,[gmb, return_(True)])
         else:
             code = UnformattedBlock()
         code = [code]
     else:
-        code = generateMethodBody(cppType, expr, returnResult, defaultReturn, predefined, tempVars=tempVars)
+        gmb, avgName = generateMethodBody(cppType, expr, returnResult, defaultReturn, predefined, tempVars=tempVars)
+        if avgName is not None:
+            for a in avgName:
+                avgNames.add( a )
+        code = gmb
 
     meth = clsMethod(returnType, name,
             code=code,
             args=args,
             targs=targs, static=static, const=const, volatile=volatile, inline=inline)
     struct.append(meth)
+    return avgNames
 
 def uflSignature(form,*args):
     import ufl
