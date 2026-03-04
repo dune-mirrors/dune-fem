@@ -6,6 +6,7 @@
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1cube2d.hh>
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1cube3d.hh>
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1simplex2d.hh>
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1simplex3d.hh>
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2cube2d.hh>
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2simplex2d.hh>
 
@@ -87,6 +88,17 @@ namespace Dune
         template< class ... Args >
         BDMLocalFiniteElement ( Args && ... args )
           : BDM2Simplex2DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+      // 3d, simplex, first order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::GeometryTypes::simplex(3).id(), D, D, 3, 1 >
+        : public BDM1Simplex3DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 32;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM1Simplex3DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
       };
 
     }
