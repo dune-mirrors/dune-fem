@@ -184,6 +184,16 @@ namespace Dune
         return hostEntity() == rhs.hostEntity();
       }
 
+      bool isLeaf () const
+      {
+        return hostEntity().isLeaf();
+      }
+
+      int level () const
+      {
+        return hostEntity().level();
+      }
+
       const HostEntityType &hostEntity () const
       {
         return hostEntity_;
