@@ -620,10 +620,7 @@ public:
     {
       int global = globalBlockDofs[localBlock];
       for (int r=0;r<blockSize;++r)
-        if (dirichlet_.dirichletBlocks_[ global ][r] )
-          buffer.write( 1 );
-        else
-          buffer.write( 0 );
+        buffer.write( dirichlet_.dirichletBlocks_[ global ][r] );
     }
   }
 
@@ -648,8 +645,8 @@ public:
       {
         int val;
         buffer.read(val);
-        if ( !dirichlet_.dirichletBlocks_[ global ][r] && val == 1)
-          dirichlet_.dirichletBlocks_[ global ][r] = true;
+        if ( !dirichlet_.dirichletBlocks_[ global ][r] && val)
+          dirichlet_.dirichletBlocks_[ global ][r] = val;
       }
     }
   }
