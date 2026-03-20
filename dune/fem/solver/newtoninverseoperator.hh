@@ -33,37 +33,66 @@ namespace Dune
      *
      * \note Prevents over-solving linear systems far away from solution.
      *       Source: "Globally Convergent Inexact Newton Methods", Stanley C. Eisenstat and Homer F. Walker, https://doi.org/10.1137/0804022.
+     *
+     * \note etaMax and gamma are configurable via the constructor, via
+     *       setEtaMax()/setGamma() setters, or via the parameter system:
+     *         fem.solver.nonlinear.eisenstatwalker.etamax  (default: 0.99)
+     *         fem.solver.nonlinear.eisenstatwalker.gamma   (default: 0.1)
+     *       For degenerate problems consider etaMax~0.1-0.3,
+     *       gamma~0.5-0.9.
     */
     class EisenstatWalkerStrategy
     {
     protected:
-      const double etaMax_ = 0.99;
-      const double gamma_ = 0.1;
-      mutable double previousEta_ = -1.0;
+      double etaMax_ = 0.99;   // maximum allowed forcing term  (was: const)
+      double gamma_  = 0.1;    // safeguard/superlinear decay   (was: const)
+      mutable double previousEta_      = -1.0;
       mutable double previousResidual_ = -1.0;
       mutable double newtonTolerance_;
 
     public:
       /** constructor
-       *  \param[in]  newtonTolerance      the absolute tolerance of the Newton method
-      */
-      EisenstatWalkerStrategy(const double newtonTolerance) : newtonTolerance_(newtonTolerance) {}
-      double nextLinearTolerance(const double currentResidual) const
+       *  \param[in]  newtonTolerance  absolute tolerance of the Newton method
+       *  \param[in]  etaMax           maximum forcing term      (default: 0.99)
+       *  \param[in]  gamma            safeguard parameter        (default: 0.1)
+       */
+      EisenstatWalkerStrategy( const double newtonTolerance,
+                               const double etaMax = 0.99,
+                               const double gamma  = 0.1 )
+        : etaMax_( etaMax ), gamma_( gamma ), newtonTolerance_( newtonTolerance ) {}
+
+      double nextLinearTolerance( const double currentResidual ) const
       {
         double eta = etaMax_;
-        // First call previousEta_ is negative
+        // First call: previousEta_ is negative
         if (previousEta_ >= 0.0)
         {
-          const double etaA = gamma_ * currentResidual * currentResidual / (previousResidual_ * previousResidual_);
+          const double etaA      = gamma_ * currentResidual * currentResidual
+                                          / (previousResidual_ * previousResidual_);
           const double indicator = gamma_ * previousEta_ * previousEta_;
-          const double etaC = indicator < 0.1 ? std::min(etaA, etaMax_) : std::min(etaMax_, std::max(etaA, indicator));
+          const double etaC      = indicator < 0.1
+                                     ? std::min(etaA, etaMax_)
+                                     : std::min(etaMax_, std::max(etaA, indicator));
           eta = std::min(etaMax_, std::max(etaC, 0.5 * newtonTolerance_ / currentResidual));
         }
         previousResidual_ = currentResidual;
-        previousEta_ = eta;
+        previousEta_      = eta;
         return eta;
       }
-      void setTolerance(const double newtonTolerance) { newtonTolerance_ = newtonTolerance; }
+
+      /** Set the Newton (nonlinear) tolerance used in the lower bound of eta. */
+      void setTolerance( const double newtonTolerance ) { newtonTolerance_ = newtonTolerance; }
+
+      /** Set the maximum allowed forcing term.
+       *  Reduce from 0.99 towards e.g. 0.1 to make EW less aggressive. */
+      void setEtaMax( const double etaMax ) { etaMax_ = etaMax; }
+
+      /** Set the safeguard / superlinear-convergence decay parameter.
+       *  Increase from 0.1 towards e.g. 0.9 for more conservative behaviour. */
+      void setGamma( const double gamma ) { gamma_ = gamma; }
+
+      double etaMax() const { return etaMax_; }
+      double gamma()  const { return gamma_;  }
     };
 
     // NewtonParameter
@@ -163,6 +192,11 @@ namespace Dune
         maxIterations_ = -1;
         maxLinearIterations_ = -1;
         maxLineSearchIterations_ = -1;
+        // NOTE: eisenstatWalkerEtaMax_ and eisenstatWalkerGamma_ reset to
+        //       sentinel -1 so they are re-read from the parameter system on
+        //       next access.
+        eisenstatWalkerEtaMax_ = -1.0;
+        eisenstatWalkerGamma_  = -1.0;
       }
 
       //These methods affect the nonlinear solver
@@ -183,10 +217,6 @@ namespace Dune
       {
         if(verbose_ < 0)
         {
-          // the following causes problems with different default values
-          // used if baseParam_->keyPrefix is not default but the default is
-          // also used in the program
-          // const bool v = baseParam_? baseParam_->verbose() : false;
           const bool v = false;
           verbose_ = parameter_.getValue< bool >(keyPrefix_ +  "verbose", v ) ? 1 : 0 ;
         }
@@ -263,7 +293,7 @@ namespace Dune
       // Forcing: none, eisenstatwalker
       LIST_OF_INT(Forcing,
                   none  =  0, // the provided linear solver tol is used in every iteration
-                  eisenstatwalker=1); // Eistenstat-Walker criterion
+                  eisenstatwalker=1); // Eisenstat-Walker criterion
 
       virtual int forcing () const
       {
@@ -289,6 +319,42 @@ namespace Dune
         Parameter::append( keyPrefix_ + "forcing", Forcing::to_string( strategy ), true );
       }
 
+      // ── Eisenstat-Walker tuning parameters ──────────────────────────────────
+      /** Maximum allowed forcing term eta for Eisenstat-Walker.
+       *  Key: nonlinear.eisenstatwalker.etamax  (default: 0.99)
+       *  For degenerate problems reduce towards 0.1. */
+      virtual double eisenstatWalkerEtaMax () const
+      {
+        if( eisenstatWalkerEtaMax_ < 0.0 )
+          eisenstatWalkerEtaMax_ = parameter_.getValue< double >(
+              keyPrefix_ + "eisenstatwalker.etamax", 0.99 );
+        return eisenstatWalkerEtaMax_;
+      }
+
+      virtual void setEisenstatWalkerEtaMax ( const double etaMax )
+      {
+        assert( etaMax > 0.0 && etaMax < 1.0 );
+        eisenstatWalkerEtaMax_ = etaMax;
+      }
+
+      /** Safeguard/superlinear-convergence decay parameter for Eisenstat-Walker.
+       *  Key: nonlinear.eisenstatwalker.gamma  (default: 0.1)
+       *  For degenerate problems increase towards 0.5-0.9. */
+      virtual double eisenstatWalkerGamma () const
+      {
+        if( eisenstatWalkerGamma_ < 0.0 )
+          eisenstatWalkerGamma_ = parameter_.getValue< double >(
+              keyPrefix_ + "eisenstatwalker.gamma", 0.1 );
+        return eisenstatWalkerGamma_;
+      }
+
+      virtual void setEisenstatWalkerGamma ( const double gamma )
+      {
+        assert( gamma > 0.0 );
+        eisenstatWalkerGamma_ = gamma;
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       //! return true if simplified Newton is to be used
       virtual bool simplified () const
       {
@@ -310,6 +376,9 @@ namespace Dune
       mutable int maxIterations_ = -1;
       mutable int maxLinearIterations_ = -1;
       mutable int maxLineSearchIterations_ = -1;
+      // Eisenstat-Walker tuning — sentinel value -1 means "read from parameter system"
+      mutable double eisenstatWalkerEtaMax_ = -1.0;
+      mutable double eisenstatWalkerGamma_  = -1.0;
     };
 
 
@@ -342,7 +411,7 @@ namespace Dune
      *  \tparam  LInvOp  linear inverse operator
      *
      *  \note Verbosity of the NewtonInverseOperator is controlled via the
-     *        paramter <b>fem.solver.nonlinear.verbose</b>; it defaults to
+     *        parameter <b>fem.solver.nonlinear.verbose</b>; it defaults to
      *        <b>fem.solver.verbose</b>.
      *
      *  \note Similar to CG solver the initial guess should take the
@@ -413,24 +482,9 @@ namespace Dune
       //! performance info about last solver call
       typedef Impl::SolverInfo SolverInfoType;
 
-      /** constructor
-       *
-       *  \param[in]  jInv       linear inverse operator (will be move constructed)
-       *
-       *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.nonlinear.tolerance</b>
-       */
-
-      /** constructor
-       *
-       *  \param[in]  jInv        linear inverse operator (will be move constructed)
-       *  \param[in]  epsilon     tolerance for norm of residual
-       *
-       *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.nonlinear.tolerance</b>
-       */
-
       // main constructor
+      // NOTE: EisenstatWalkerStrategy is now initialised with etaMax and gamma
+      //       read from the parameter system via NewtonParameter.
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const ParameterType &parameter )
         : verbose_( parameter.verbose() ),
           maxLineSearchIterations_( parameter.maxLineSearchIterations() ),
@@ -439,7 +493,9 @@ namespace Dune
           lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } ),
           forcing_ ( parameter.forcing() ),
-          eisenstatWalker_ ( epsilon ),
+          eisenstatWalker_ ( epsilon,
+                             parameter.eisenstatWalkerEtaMax(),
+                             parameter.eisenstatWalkerGamma() ),
           timing_(3, 0.0)
       {
       }
@@ -447,7 +503,7 @@ namespace Dune
 
       /** constructor
        *
-       *  \note The tolerance is read from the paramter
+       *  \note The tolerance is read from the parameter
        *        <b>fem.solver.nonlinear.tolerance</b>
        */
       explicit NewtonInverseOperator ( const ParameterType &parameter = ParameterType( Parameter::container() ) )
@@ -477,14 +533,6 @@ namespace Dune
         : NewtonInverseOperator( epsilon, ParameterType( parameter ) )
       {}
 
-
-      /** constructor
-       *
-       *  \param[in]  op       operator to invert
-       *
-       *  \note The tolerance is read from the paramter
-       *        <b>fem.solver.nonlinear.tolerance</b>
-       */
       void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
 
       EisenstatWalkerStrategy& eisenstatWalker () { return eisenstatWalker_; }
