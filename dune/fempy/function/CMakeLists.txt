@@ -1,5 +1,6 @@
 set(HEADERS
   simplegridfunction.hh
+  virtualizedconstlocalfunction.hh
   virtualizedgridfunction.hh
 )
 

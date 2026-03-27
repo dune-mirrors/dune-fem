@@ -38,10 +38,11 @@ namespace Dune
     public:
       typedef typename GridPart::GridViewType GridView;
       typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
+      typedef typename EntityType::Geometry                      Geometry;
       typedef typename GridPart::IntersectionType IntersectionType;
 
-      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
-      typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
+      typedef typename Geometry::LocalCoordinate LocalCoordinateType;
+      typedef typename Geometry::GlobalCoordinate GlobalCoordinateType;
 
       typedef typename FieldTraits< Value >::field_type RangeFieldType;
       typedef Fem::FunctionSpace< typename GridPart::ctype, RangeFieldType, GridPart::dimensionworld, Value::dimension > FunctionSpaceType;
@@ -76,6 +77,7 @@ namespace Dune
         return static_cast< Fem::QuadraturePointWrapper< QP > >( qp );
       }
 
+    public:
       struct Interface
       {
         virtual ~Interface () = default;
@@ -113,18 +115,64 @@ namespace Dune
         virtual void bind(const EntityType &entity) = 0;
         virtual void bind(const IntersectionType &intersection, Fem::IntersectionSide side) = 0;
         virtual void unbind() = 0;
+
+        virtual const EntityType& entity() const = 0;
+        virtual const Geometry& geometry() const = 0;
       };
 
-      template< class GF >
+      template< class GF, bool copy=true >
       struct DUNE_PRIVATE Implementation final
         : public Interface
       {
         typedef typename std::remove_reference<GF>::type GFType;
 
+        template <class GFT, bool>
+        struct Selector
+        {
+          typedef typename std::remove_reference<GFT>::type GFType;
+          typedef Fem::ConstLocalFunction< GFType > type;
+
+          // since we are using ConstLocalFunction we have entity and geometry
+          static const bool hasGeometry = true;
+
+          static const GF& convert( const GF& gf )
+          {
+            return gf;
+          }
+        };
+
+        template <class GFT>
+        struct Selector< GFT, false>
+        {
+          typedef Selector< GFT, false> SType;
+          typedef GFT& type;
+
+          // not all local functions may have the method geometry
+          template< class GF_t >
+          static std::true_type getGeometry( const GF_t&, decltype( std::declval< const GF_t& >().geometry() ) * = nullptr );
+          static std::false_type getGeometry( ... );
+          static const bool hasGeometry = decltype( SType::getGeometry( std::declval< const GF& >() ) )::value;
+
+          static GF& convert( const GF& gf )
+          {
+            return const_cast< GFT& > (gf);
+          }
+        };
+
+        typedef Selector< GF, copy > SelectorType;
+        typedef typename SelectorType::type GFStorageType;
+        //typedef std::optional< Geometry > GeometryStorageType;
+        struct EmptyObj {};
+        typedef std::conditional< SelectorType::hasGeometry, EmptyObj, std::optional< Geometry > > :: type GeometryStorageType;
+
+        //typedef Fem::ConstLocalFunction< GFType > GFStorageType;
+
         Implementation ( const GF& gf ) :
-          impl_( gf )
+          impl_( SelectorType::convert( gf ) )
         {
         }
+
+        Implementation ( const Implementation& ) = default;
 
         virtual Interface *clone () const override { return new Implementation( *this ); }
 
@@ -160,11 +208,30 @@ namespace Dune
         void bind(const IntersectionType &intersection, Fem::IntersectionSide side) override
         { impl_.bind(intersection, side); }
         virtual void unbind() override { impl_.unbind(); }
+
+        // all local functions should have the method entity
+        virtual const EntityType& entity() const override { return impl_.entity(); }
+        // if we have geometry use that otherwise fallback to entities geometry (rare case)
+        virtual const Geometry& geometry() const override
+        {
+          if constexpr ( SelectorType::hasGeometry )
+          {
+            return impl_.geometry();
+          }
+          else
+          {
+            // since we are returning a reference here we need to store the object
+            geometry_.emplace(impl_.entity().geometry());
+            return geometry_.value();
+          }
+        }
+
       private:
         const auto &impl () const { return impl_; }
         auto &impl () { return impl_; }
 
-        Fem::ConstLocalFunction< GFType > impl_;
+        GFStorageType impl_;
+        mutable GeometryStorageType geometry_;
       };
 
     public:
