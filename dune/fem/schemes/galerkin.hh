@@ -42,6 +42,7 @@
 
 // fempy includes
 #include <dune/fempy/quadrature/fempyquadratures.hh>
+#include <dune/fempy/function/virtualizedconstlocalfunction.hh>
 
 namespace Dune
 {
@@ -140,6 +141,7 @@ namespace Dune
         typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
         typedef std::make_index_sequence< std::tuple_size< RangeValueType >::value > RangeValueIndices;
 
+        typedef FemPy::VirtualizedConstLocalFunctionWrapper< GridPartType, typename IntegrandsType::RRangeType > VirtualizedWrapperType;
 
         template< std::size_t... i >
         static auto makeDomainValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
@@ -181,13 +183,20 @@ namespace Dune
         }
 
       public:
-        void prepare( const std::size_t size ) const
+        void prepare( const std::size_t size, const VirtualizedWrapperType& vuIn, const VirtualizedWrapperType& vuOut ) const
         {
           resizeDomainValueVector( phiIn_, size );
           resizeDomainValueVector( phiOut_, size );
           resizeDomainValueVector( basisValues_, size );
           resizeDomainValueVector( domainValues_, size );
           resizeDomainValueVector( domainValuesOut_, size );
+
+          prepare( vuIn, vuOut );
+        }
+
+        void prepare( const VirtualizedWrapperType& vuIn, const VirtualizedWrapperType& vuOut ) const
+        {
+          integrands().setLinearizedUnknown( vuIn, vuOut );
         }
 
         template< class LocalFunction, class Quadrature >
@@ -334,6 +343,9 @@ namespace Dune
         {
           if( !integrands().init( u.entity() ) )
             return;
+
+          //if( integrands().needUnknown() )
+          //  integrands().setUnknown( u );
 
           const auto& geometry = u.geometry();
 
@@ -815,6 +827,18 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uInside( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOutside( u );
 
+          typedef FemPy::VirtualizedConstLocalFunctionWrapper< GridPartType, typename GridFunction::RangeType > VirtualizedWrapperType;
+
+          VirtualizedWrapperType vuIn( uInside );
+          VirtualizedWrapperType vuOut( uOutside );
+
+          typedef std::make_index_sequence< std::tuple_size< IntegrandsTuple >::value > Indices;
+          // initialize integrands with virtualized u if needed
+          Hybrid::forEach( Indices(), [&integrandsTuple, &vuIn, &vuOut] ( auto i ) {
+                           const auto& integrands = std::get< i >( integrandsTuple );
+                           integrands.prepare( vuIn, vuOut );
+                         });
+
           typedef typename DiscreteFunction::DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
           TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
 
@@ -1204,13 +1228,17 @@ namespace Dune
           Dune::Fem::ConstLocalFunction< GridFunction > uIn( u );
           Dune::Fem::ConstLocalFunction< GridFunction > uOut( u );
 
+          typedef FemPy::VirtualizedConstLocalFunctionWrapper< GridPartType, typename GridFunction::RangeType > VirtualizedWrapperType;
+          VirtualizedWrapperType vuIn( uIn );
+          VirtualizedWrapperType vuOut( uOut );
+
           typedef std::make_index_sequence< std::tuple_size< IntegrandsTuple >::value > Indices;
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
 
           // initialize local temporary data
-          Hybrid::forEach( Indices(), [&integrandsTuple, &maxNumLocalDofs] ( auto i ) {
+          Hybrid::forEach( Indices(), [&integrandsTuple, &maxNumLocalDofs, &vuIn, &vuOut] ( auto i ) {
                            const auto& integrands = std::get< i >( integrandsTuple );
-                           integrands.prepare( maxNumLocalDofs );
+                           integrands.prepare( maxNumLocalDofs, vuIn, vuOut );
                          });
 
           // element counter

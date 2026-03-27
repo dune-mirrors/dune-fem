@@ -16,6 +16,8 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/common/explicitfieldvector.hh>
 
+#include <dune/fempy/function/virtualizedconstlocalfunction.hh>
+
 namespace Dune
 {
 
@@ -77,6 +79,11 @@ namespace Dune
 
         std::false_type hasNonLinear ( ... );
 
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().needsTrialFunction() ), bool >::value, int > = 0 >
+        std::true_type hasNeedsTrialFunction ( const Integrands & );
+
+        std::false_type hasNeedsTrialFunction ( ... );
+
 
         template< class Integrands >
         std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
@@ -127,6 +134,8 @@ namespace Dune
       static const bool interior = decltype( Impl::IntegrandsTraits::interior( std::declval< const Integrands & >() ) )::value;
       static const bool hasInterior = decltype( Impl::IntegrandsTraits::hasInterior( std::declval< const Integrands & >() ) )::value;
 
+      static const bool hasNeedsTrialFunction = decltype( Impl::IntegrandsTraits::hasNeedsTrialFunction( std::declval< const Integrands & >() ) )::value;
+
       static const bool boundary = decltype( Impl::IntegrandsTraits::boundary( std::declval< const Integrands & >() ) )::value;
       static const bool hasBoundary = decltype( Impl::IntegrandsTraits::hasBoundary( std::declval< const Integrands & >() ) )::value;
 
@@ -171,6 +180,18 @@ namespace Dune
       {
         // default for nonlinear is true assuming that the model needs nonlinear solver
         return true;
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasNeedsTrialFunction, int > = 0 >
+      static bool needsTrialFunction ( const T &integrands )
+      {
+        return integrands.needsTrialFunction();
+      }
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasNeedsTrialFunction, int > = 0 >
+      static bool needsTrialFunction ( const T &integrands )
+      {
+        // default for needsTrialFunction is false
+        return false;
       }
 
       template< class T, std::enable_if_t< IntegrandsTraits< T >::hasInterior, int > = 0 >
@@ -297,6 +318,8 @@ namespace Dune
       bool nonlinear() const { return nonlinear( integrands() ); }
 
       bool hasInterior () const { return hasInterior( integrands() ); }
+
+      bool needsTrialFunction () const { return needsTrialFunction( integrands() ); }
 
       template< class Point >
       RangeValueType interior ( const Point &x, const DomainValueType &u ) const
@@ -427,6 +450,8 @@ namespace Dune
       typedef std::array<int,RRangeType::dimension> DirichletComponentType;
       typedef typename EntityType::Geometry::LocalCoordinate DomainType;
 
+      typedef FemPy::VirtualizedConstLocalFunctionWrapper< GridPartType, RRangeType > VirtualizedWrapperType;
+
     private:
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
@@ -457,8 +482,9 @@ namespace Dune
         virtual void unbind ( ) = 0;
 
         virtual bool nonlinear() const = 0;
-
+        virtual bool needsTrialFunction () const = 0;
         virtual bool hasInterior () const = 0;
+
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
         virtual RangeValueType interior ( const InteriorElementPointType &x, const DomainValueType &u ) const = 0;
         virtual Linearization< RangeValueType > linearizedInterior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
@@ -496,6 +522,7 @@ namespace Dune
         virtual void unbind ( ) override { impl().unbind( ); }
 
         virtual bool nonlinear () const override { return impl().nonlinear(); }
+        virtual bool needsTrialFunction () const override { return impl().needsTrialFunction(); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
         virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
@@ -560,6 +587,22 @@ namespace Dune
       void unbind ( ) { impl().unbind( ); }
 
       bool nonlinear() const { return impl().nonlinear(); }
+
+      void setLinearizedUnknown( const VirtualizedWrapperType& uIn, const VirtualizedWrapperType& uOut )
+      {
+        //if( impl().needsTrialFunction() )
+        //{
+        //  //std::cout << "Setting unknown " << typeid( uIn ).name() << std::endl;
+        //}
+#if 0
+        typedef typename LocalFunction::GridPartType GridPartType;
+        typedef typename LocalFunction::RangeType    RangeType;
+        typedef typename VirtualizedGridFunction< GridPartType, RangeType > VGF;
+
+        typedef typename VGF::Implementation< LocalFunction, false /* copy */ > VirtualizedWrapperType;
+        impl().setUnknown( VirtualizedWrapperType( u ) );
+#endif
+      }
 
       bool hasInterior () const { return impl().hasInterior(); }
 
