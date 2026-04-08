@@ -1,17 +1,26 @@
-import matplotlib
-from matplotlib import pyplot
 import numpy as np
 from numpy import amin, amax, linspace, linalg, log, append, zeros, int32
-from matplotlib.collections import PolyCollection
-from matplotlib.colors import LogNorm
+
+try:
+    import matplotlib
+    from matplotlib import pyplot
+    from matplotlib.collections import PolyCollection
+    from matplotlib.colors import LogNorm
+except ImportError or ModuleNotFoundError:
+    import os, warnings
+    # disable plotting if matplotlib is not available
+    os.environ['DUNEPY_DISABLE_PLOTTING'] = '1'
+    warnings.warn(f"Plotting disabled by environment variable 'DUNEPY_DISABLE_PLOTTING' since matplot lib was not found!")
 
 from dune.fem.deprecated import deprecated
+
+# disable from dune.plotting check the environment variable
+from dune.plotting import block, disable
+from dune.grid import Partitions
 
 from ufl.core.expr import Expr
 from dune.fem.function import gridFunction
 
-from dune.plotting import block, disable
-from dune.grid import Partitions
 globalBlock = block
 
 def triangulationOfNetwork(grid, level=0, linewidth=0.01):
@@ -184,7 +193,10 @@ def plotPointData(solution, figure=None, linewidth=0.2,
         *,
         figsize=None,
         gridView=None, partition=Partitions.all):
+
+    # disabled by DUNEPY_DISABLE_PLOTTING
     if disable: return
+
     if grid is not None:
         assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
         gridView = grid
@@ -239,7 +251,10 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
         block=globalBlock, grid=None, colorbar=None,
         allowNaN=False,*,
         gridView=None):
+
+    # disabled by DUNEPY_DISABLE_PLOTTING
     if disable: return
+
     if grid is not None:
         assert gridView is None, "do not pass in 'grid' and 'gridView' only use 'gridView'"
         gridView = grid
@@ -292,7 +307,9 @@ def plotComponents(solution, figure=None, level=0, show=None, gridLines="black",
     # return fig
 
 def mayaviPointData(grid, solution, level=0, component=0, block=globalBlock):
+    # disabled by DUNEPY_DISABLE_PLOTTING
     if disable: return
+
     from mayavi import mlab
     triangulation = grid.triangulation(level)
     z = uh.pointData(level)[:,component]
