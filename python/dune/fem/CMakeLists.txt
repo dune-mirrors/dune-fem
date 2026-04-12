@@ -15,6 +15,7 @@ add_python_targets(fem
   plotting
   view
   deprecated
+  importmesh
 )
 
 dune_add_pybind11_module(NAME _fem)
