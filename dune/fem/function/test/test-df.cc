@@ -44,7 +44,10 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   // fill df with zeros
   typedef typename DiscreteFunction :: DofType DofType;
-  std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
+  //std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
+  // revert to std::fill once problem with PETSc and clang-18 has been fixed
+  for( auto dof = df.dbegin(); dof != df.dend(); ++dof )
+    *dof = DofType(0);
 
   df += other;
   df -= other;
