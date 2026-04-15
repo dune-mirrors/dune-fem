@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from dune.grid import reader
-from dune.fem.function import gridFunction
+from dune.fem.function import boundaryFunction
 
 def meshDim(mesh):
     cell_names = {c.type.lower() for c in mesh.cells}
@@ -238,51 +238,6 @@ def importMesh(msh, ignoreInternalId=0, defaultBndId=None, bndDomain=None, gener
         return {"constructor":(reader.dgfString, domain),
                 "dimgrid":dim, "elementType":elementType}
 
-# a simple projection for boundary ids
-def projectBoundaryIds( gridView ):
-    """
-    Parameter:
-       gridView     a grid view to project boundary ids for
-
-    Returns:
-       a piecewise discrete function containing values corresponding to
-       adjacent boundaries. `0` refers to interior elements.
-    """
-    import io, sys
-    from dune.fem.space import finiteVolume
-    from dune.generator import algorithm
-
-    code = """
-    #include <dune/fem/misc/boundaryidprovider.hh>
-
-    template <class GridView, class Intersection>
-    int boundaryId( const GridView& gv, const Intersection& i )
-    {
-      return Dune::Fem::boundaryId( gv, i );
-    }
-    """
-    bndId = None
-
-    @gridFunction(gridView, order=1, name="bndId")
-    def bndFunc(e,x):
-        bndId = None
-        maxId = 0
-        if e.hasBoundaryIntersections:
-            for i in gridView.intersections( e ):
-                dist = np.linalg.norm( np.array(i.geometryInInside.toGlobal(i.geometryInInside.toLocal(x)))
-                                      - np.array(x) )
-                if bndId is None:
-                    bndId = algorithm.load("boundaryId", io.StringIO(code), gridView, i )
-                if i.boundary:
-                    id = bndId( gridView, i )
-                else:
-                    id = 0
-                if dist <= 1e-12:
-                    maxId = max(maxId,id)
-        return maxId
-
-    return bndFunc
-
 def main() -> int:
     from dune.alugrid import aluGrid as leafGridView
     import matplotlib.pyplot as plt
@@ -292,7 +247,7 @@ def main() -> int:
     # test the gmsh reader - boundary ids are missing and 2d cubes fail (3d cubes work...)
     # gridView = leafGridView((reader.gmsh,msh)) # , defaultBndId=7, dimgrid=2, elementType="simplex")
     gridView = leafGridView((reader.gmsh,msh), dimgrid=3, elementType="cube")
-    bndIds = projectBoundaryIds(gridView)
+    bndIds = boundaryFunction(gridView)
     if gridView.dimension == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
@@ -300,7 +255,7 @@ def main() -> int:
     """
 
     gridView = leafGridView((reader.meshio,msh), defaultBndId=5)
-    bndIds = projectBoundaryIds(gridView)
+    bndIds = boundaryFunction(gridView)
     if gridView.dimension == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
@@ -311,7 +266,7 @@ def main() -> int:
         print("can't read in grid with general element type")
         return
     gridView = leafGridView(domain)
-    bndIds = projectBoundaryIds(gridView)
+    bndIds = boundaryFunction(gridView)
     if domain["dimgrid"] == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
@@ -322,7 +277,7 @@ def main() -> int:
         print("can't read in grid with general element type")
         return
     gridView = leafGridView(domain)
-    bndIds = projectBoundaryIds(gridView)
+    bndIds = boundaryFunction(gridView)
     if domain["dimgrid"] == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
@@ -330,7 +285,7 @@ def main() -> int:
 
     # without a default - this will use '1'
     gridView = leafGridView((reader.meshio,msh))
-    bndIds = projectBoundaryIds(gridView)
+    bndIds = boundaryFunction(gridView)
     if domain["dimgrid"] == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
@@ -342,7 +297,7 @@ def main() -> int:
             print("can't read in grid with general element type")
             return
         gridView = leafGridView(domain)
-        bndIds = projectBoundaryIds(gridView)
+        bndIds = boundaryFunction(gridView)
         if domain["dimgrid"] == 2:
             bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
         else:
