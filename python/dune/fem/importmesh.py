@@ -1,7 +1,6 @@
-import sys
 import numpy as np
 from dune.grid import reader
-from dune.fem.function import boundaryFunction
+from dune.alugrid.importmesh import importMesh
 
 def meshDim(mesh):
     cell_names = {c.type.lower() for c in mesh.cells}
@@ -20,12 +19,14 @@ def meshDim(mesh):
         return 2, elementType
     return 1, "simplex"
 
-def mesh2DGF(points, cells, bndDomain = None, bndSegments = None, periodic = None, dim = None,
-             computeFirstIndex = True, defaultBndId = None):
+def mesh2DGF(mesh, bndDomain = None, bndSegments = None, periodic = None, dim = None,
+             computeFirstIndex = True, defaultBndId = None, ignoreInternalId=0):
     """
     Parameter:
-       points      array(list) of points of length dim
-       cells       dict containing element vertex numbers
+       mesh        either a filename then meshio is used to read the mesh file
+                   or pair of (points,cells) with
+                   points      array(list) of points of length dim
+                   cells       dict containing element vertex numbers
        bndDomain   dict id -> list[lower,upper] (or id -> str) where lower and upper describe the bounding box of the boundary section
        bndSegments dict id -> list of lists containing vertex numbers of boundary segments
        periodic    string containing periodic boundary transformation
@@ -35,12 +36,58 @@ def mesh2DGF(points, cells, bndDomain = None, bndSegments = None, periodic = Non
     Returns
         String containing the mesh description in DGF format.
     """
-    import numpy as np
+    if not type(mesh) is str:
+        points, cells = mesh
+    else:
+        try:
+            import meshio
+        except ImportError:
+            raise ImportError("Function `importMesh` uses the `meshio` package - run `pip install meshio`")
+        mesh = meshio.read(mesh)
+        dim, elementType = meshDim(mesh)
+        if dim == 2:
+            bndCells = ["line"]
+        else:
+            bndCells = {"triangle", "quad"}
+
+        cells = mesh.cells_dict
+        points = mesh.points.astype("float")
+
+        if bndSegments is None:
+            bndSegments = {}
+        for cell in bndCells:
+            # we prefer 'physical' tagging
+            try:
+                bnd = list(cells[cell])
+            except KeyError:
+                continue
+            try:
+                for i,(line,id) in enumerate( zip(bnd,mesh.cell_data_dict["gmsh:physical"][cell]) ):
+                    if id == ignoreInternalId: continue # inside skeleton tag
+                    if id <= 0: continue
+                    if id in bndSegments:
+                        bndSegments[id] += [line]
+                    else:
+                        bndSegments[id] = [line]
+                    bnd[i] = None
+            except KeyError:
+                pass
+            # we prefer 'physical' but will try 'geometrical' tagging as well
+            try:
+                for line,id in zip(bnd,mesh.cell_data_dict["gmsh:geometrical"][cell]):
+                    if line is None: continue
+                    if id == ignoreInternalId: continue # inside skeleton tag
+                    if id <= 0: continue
+                    if id in bndSegments:
+                        bndSegments[id] += [line]
+                    else:
+                        bndSegments[id] = [line]
+            except KeyError:
+                pass
 
     if defaultBndId:
         assert not bndDomain
         bndDomain = {defaultBndId:"default"}
-
     if dim is None:
         if "tetra" in cells or "hexahedron" in cells:
             dim = 3
@@ -110,6 +157,7 @@ def mesh2DGF(points, cells, bndDomain = None, bndSegments = None, periodic = Non
         dgf += "#\n\n"
 
     # boundary domain section
+    print(bndDomain)
     if bndDomain is not None:
         assert isinstance(bndDomain, dict), "Expecting a dictionary for boundary domain"
         dgf += "BoundaryDomain\n"
@@ -136,110 +184,12 @@ def mesh2DGF(points, cells, bndDomain = None, bndSegments = None, periodic = Non
     if periodic is not None:
         dgf += periodic
 
-    return dgf
-
-# remark: currently does not support surface grids
-# Nice to have: would be good to have a way of setting a 'default' boundary id on missing boundaries
-#               Also setting other properties, i.e., longest edge, type of refinement etc.
-#               Possibly add a 'parameter' entry to the constructor dict with this information?
-def importMesh(msh, ignoreInternalId=0, defaultBndId=None, bndDomain=None, generateDGF=False):
-    try:
-        import meshio
-    except ImportError:
-        raise ImportError("Function `importMesh` uses the `meshio` package - run `pip install meshio`")
-    mesh = meshio.read(msh)
-    dim, elementType = meshDim(mesh)
-
-    if dim == 2:
-        zCoord = mesh.points[:,2]
-        assert np.isclose(min(zCoord),max(zCoord)) # check it's not a surface grid
-        points = np.delete( mesh.points, 2, 1) # remove the z component from the points
-        bndCells = ["line"]
-    else:
-        points = mesh.points
-        bndCells = {"triangle", "quad", "triangle6", "quad9"}
-
-    cells = mesh.cells_dict
-    points = points.astype("float")
-
-    segments = {}
-    segs = []
-    for cell in bndCells:
-        # we prefer 'physical' tagging
-        try:
-            bnd = list(cells[cell])
-        except KeyError:
-            continue
-        try:
-            for i,(line,id) in enumerate( zip(bnd,mesh.cell_data_dict["gmsh:physical"][cell]) ):
-                if id == ignoreInternalId: continue # inside skeleton tag
-                if id <= 0: continue
-                if id in segments:
-                    segments[id] += [line]
-                else:
-                    segments[id] = [line]
-                segs += [[id,*line]]
-                bnd[i] = None
-        except KeyError:
-           pass
-        # we prefer 'physical' but will try 'geometrical' tagging as well
-        try:
-            for line,id in zip(bnd,mesh.cell_data_dict["gmsh:geometrical"][cell]):
-                if line is None: continue
-                if id == ignoreInternalId: continue # inside skeleton tag
-                if id <= 0: continue
-                if id in segments:
-                    segments[id] += [line]
-                else:
-                    segments[id] = [line]
-                segs += [[id,*line]]
-        except KeyError:
-           pass
-    segs = np.array(segs)
-
-    if not generateDGF:
-        if elementType == "simplex":
-            cells = cells["triangle"] if dim==2 else cells["tetra"]
-            minIndex = np.inf
-            for c in cells:
-                minIndex = min(minIndex,min(c))
-            for c in cells:
-                c -= minIndex
-            for s in segs:
-                s -= minIndex
-            domain = {"vertices":points, "simplices":cells, "boundaries":segs}
-        elif elementType == "cube":
-            cells = cells["quad"] if dim==2 else cells["hexahedron"]
-            if dim==2:
-                for c in cells: # gmsh reader has different cube ordering (this could be done in alugrid's gridfactory)
-                    c[2],c[3] = c[3],c[2]
-            elif dim==3:
-                for c in cells: # gmsh reader has different cube ordering (this could be done in alugrid's gridfactory)
-                    c[2],c[3] = c[3],c[2]
-                    c[6],c[7] = c[7],c[6]
-            minIndex = np.inf
-            for c in cells:
-                minIndex = min(minIndex,min(c))
-            for c in cells:
-                c -= minIndex
-            for s in segs:
-                s -= minIndex
-            domain = {"vertices":points, "cubes":cells, "boundaries":segs}
-            if defaultBndId:
-                domain["defaultBndId"] = defaultBndId;
-        return {"constructor":domain, "dimgrid":dim, "elementType":elementType}
-    else:
-        domain = mesh2DGF(points, cells, bndSegments=segments, bndDomain=bndDomain, defaultBndId=defaultBndId)
-        try:
-            with open (generateDGF, "w") as file:
-                file.write(domain)
-        except:
-            pass
-        return {"constructor":(reader.dgfString, domain),
-                "dimgrid":dim, "elementType":elementType}
+    return dgf, dim, elementType
 
 def main() -> int:
+    import sys
     from dune.alugrid import aluGrid as leafGridView
+    from dune.fem.function import boundaryFunction
     import matplotlib.pyplot as plt
     msh = sys.argv[1]
 
@@ -254,6 +204,7 @@ def main() -> int:
         gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
     """
 
+    # plot 1
     gridView = leafGridView((reader.meshio,msh), defaultBndId=5)
     bndIds = boundaryFunction(gridView)
     if gridView.dimension == 2:
@@ -261,47 +212,52 @@ def main() -> int:
     else:
         gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
 
-    domain = importMesh(msh, defaultBndId=5)
+    # plot 2
+    domain = importMesh(msh, defaultBndId=5, ignoreInternalId=5)
     if domain["elementType"] == "general":
         print("can't read in grid with general element type")
         return
     gridView = leafGridView(domain)
     bndIds = boundaryFunction(gridView)
-    if domain["dimgrid"] == 2:
+    if gridView.dimension == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
         gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
 
-    domain = importMesh(msh, generateDGF="test.dgf", defaultBndId=5)
-    if domain["elementType"] == "general":
-        print("can't read in grid with general element type")
-        return
-    gridView = leafGridView(domain)
+    # plot 3
+    domain, dim, elementType = mesh2DGF(msh, defaultBndId = 5)
+    try:
+        with open ("test.dgf", "w") as file:
+            file.write(domain)
+    except:
+        pass
+    gridView = leafGridView((reader.dgfString,domain), dimgrid=dim, elementType=elementType)
     bndIds = boundaryFunction(gridView)
-    if domain["dimgrid"] == 2:
+    if dim == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
         gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
 
-    # without a default - this will use '1'
+    # plot 4: without a default - this will use '1'
     gridView = leafGridView((reader.meshio,msh))
     bndIds = boundaryFunction(gridView)
-    if domain["dimgrid"] == 2:
+    if gridView.dimension == 2:
         bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
     else:
         gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
 
-    if False: # without a default using DGF - this should segfault
-        domain = importMesh(msh, generateDGF="test.dgf")
-        if domain["elementType"] == "general":
-            print("can't read in grid with general element type")
-            return
-        gridView = leafGridView(domain)
+    # plot 5
+    try: # without a default using DGF - this should give an exception
+         # since boundary segs are attached but no default given
+        domain, dim, elementType = mesh2DGF(msh)
+        gridView = leafGridView((reader.dgfString,domain), dimgrid=dim, elementType=elementType)
         bndIds = boundaryFunction(gridView)
-        if domain["dimgrid"] == 2:
+        if gridView.dimension == 2:
             bndIds.plot(level=0, gridLines="white", cmap=plt.cm.jet, block=False)
         else:
             gridView.writeVTK(msh, pointdata=[bndIds], subsampling=0)
+    except RuntimeError:
+        print("failed due to missing default")
 
     plt.show()
 
