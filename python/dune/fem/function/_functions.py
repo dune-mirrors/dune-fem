@@ -40,6 +40,7 @@ def localFunction(gridView, name, order, value):
     return _localFunction(gridView, name, order, value)
 
 def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, view=None, **kwargs):
+    # first check if 'expr' is already a grid function wrapper
     if hasattr(expr,"gridView"): return expr
     from ufl.core.expr import Expr
     from ufl import as_vector
@@ -50,12 +51,6 @@ def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, v
     if name is None:
         name = "_tmp"
 
-    # first check if 'expr' is already a grid function wrapper
-    try:
-        if expr.gridView is not None:
-            return expr
-    except AttributeError:
-        pass
     # next change a list/tuple into a ufl expression
     if isinstance(expr, list) or isinstance(expr, tuple):
         expr = as_vector(expr)
@@ -122,6 +117,52 @@ def partitionFunction(gridView,name="rank"):
         def __call__(self,en,x):
             return [self.rank]
     return Partition(gridView.comm.rank)
+
+
+# a simple projection for boundary ids
+def boundaryFunction( gridView ):
+    """
+    Parameter:
+       gridView     a grid view to project boundary ids for
+
+    Returns:
+       a piecewise discrete function containing values corresponding to
+       adjacent boundaries. `0` refers to interior elements.
+    """
+    import io, sys
+    from dune.fem.space import finiteVolume
+    from dune.generator import algorithm
+
+    code = """
+    #include <dune/fem/misc/boundaryidprovider.hh>
+
+    template <class GridView, class Intersection>
+    int boundaryId( const GridView& gv, const Intersection& i )
+    {
+      return Dune::Fem::boundaryId( gv, i );
+    }
+    """
+    bndId = None
+
+    @gridFunction(gridView, order=1, name="bndId")
+    def bndFunc(e,x):
+        bndId = None
+        maxId = 0
+        if e.hasBoundaryIntersections:
+            for i in gridView.intersections( e ):
+                dist = np.linalg.norm( np.array(i.geometryInInside.toGlobal(i.geometryInInside.toLocal(x)))
+                                      - np.array(x) )
+                if bndId is None:
+                    bndId = algorithm.load("boundaryId", io.StringIO(code), gridView, i )
+                if i.boundary:
+                    id = bndId( gridView, i )
+                else:
+                    id = 0
+                if dist <= 1e-12:
+                    maxId = max(maxId,id)
+        return maxId
+    return bndFunc
+
 
 def uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
                 predefined=None, *args, **kwargs):
