@@ -567,7 +567,6 @@ class GridIndexed(Indexed):
         mi = MultiIndex(all_indices)
         Indexed.__init__(self,gc,mi)
         if gc.gf.scalar:
-            assert i==0
             self.__impl__ = gc.gf
             self.gf = gc
         else:

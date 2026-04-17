@@ -136,7 +136,8 @@ def femscheme(includes, space, solver, operator, modelType):
 def _augmentLinearizedScheme(linearizedScheme, originalScheme, parameters):
     linearizedScheme.nonLinearModel = originalScheme.model
     linearizedScheme.parameters = parameters
-    linearizedScheme.__class__.dirichletIndices = _opDirichletIndices
+    if hasattr(linearizedScheme,"dirichletBlocks"):
+        linearizedScheme.__class__.dirichletIndices = _opDirichletIndices
     # @todo assemble and parameters are ignored, perhaps add some checks.
     linearizedScheme.__class__.linear = lambda self, ubar=None, assemble=True, parameters={}, onlyLinear=True: _augmentLinearizedScheme(self.linearScheme(), originalScheme, parameters) if onlyLinear else self
     return linearizedScheme
@@ -232,7 +233,8 @@ def femschemeModule(space, model, includes, solver, operator, *args,
     scheme.parameters = parameters
     scheme._solverBackend = solverStorage.backend
     scheme.__class__.linear = _linearized
-    scheme.__class__.dirichletIndices = _opDirichletIndices
+    if hasattr(scheme,"dirichletBlocks"):
+        scheme.__class__.dirichletIndices = _opDirichletIndices
     return scheme
 
 def dg(model, space=None, penalty=1, solver=None, parameters={},
@@ -426,7 +428,8 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
     scheme.parameters = parameters
 
     scheme.__class__.linear = _linearized
-    scheme.__class__.dirichletIndices = _opDirichletIndices
+    if hasattr(scheme,"dirichletBlocks"):
+        scheme.__class__.dirichletIndices = _opDirichletIndices
 
     if not errorMeasure is None:
         scheme.setErrorMeasure( errorMeasure );
@@ -599,7 +602,8 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
     scheme.parameters = parameters
 
     scheme.__class__.linear = _linearized
-    scheme.__class__.dirichletIndices = _opDirichletIndices
+    if hasattr(scheme,"dirichletBlocks"):
+        scheme.__class__.dirichletIndices = _opDirichletIndices
 
     try:
         from dune.fem import parameter
