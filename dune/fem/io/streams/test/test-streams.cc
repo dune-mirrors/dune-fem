@@ -99,6 +99,25 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
 
   std::cerr << std :: endl ;
 
+  bool failed = false;
+  try
+  {
+    double dummy;
+    // this should fail
+    in >> dummy;
+  }
+  catch( const Exception& e )
+  {
+    failed = true;
+  }
+
+  // check that reading beyond stream length fails
+  if( !failed )
+  {
+    DUNE_THROW(StreamError, "Reading over stream size does not cause exception!");
+    return false;
+  }
+
   bool equal = true;
   equal &= (data.my_string == check.my_string);
   equal &= (data.my_uint   == check.my_uint);

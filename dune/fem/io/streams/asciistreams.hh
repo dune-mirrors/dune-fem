@@ -166,7 +166,7 @@ namespace Dune
     protected:
       bool valid () const
       {
-        return stream_.good() | stream_.eof();
+        return stream_.good() && !stream_.eof();
       }
     };
 
@@ -319,7 +319,7 @@ namespace Dune
     protected:
       bool valid () const
       {
-        return stream_.good() | stream_.eof();
+        return stream_.good() && !stream_.eof();
       }
     };
 
