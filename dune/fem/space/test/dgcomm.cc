@@ -124,7 +124,6 @@ class DGL2ProjectionAllPartitionNoComm
     TemporaryLocalFunction< DiscreteFunctionSpaceType > dfLocal( space );
 
     typename DiscreteFunctionSpaceType::RangeType ret (0.0);
-    typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
     for( const auto& entity : elements( space.gridPart(), Partitions::all ) )
     {
