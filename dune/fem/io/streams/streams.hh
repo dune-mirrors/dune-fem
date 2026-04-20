@@ -378,7 +378,7 @@ namespace Dune
     protected:
       void readError () const
       {
-        DUNE_THROW( StreamError, "Unable to read from stream." );
+        DUNE_THROW( Exception, "Unable to read from stream." );
       }
     };
 

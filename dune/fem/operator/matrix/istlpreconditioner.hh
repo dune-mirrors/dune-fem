@@ -166,18 +166,18 @@ namespace Dune
           {
             // note that for SOR xnew == xold
             for (; j.index()<rowIdx; ++j)
-              rhs -= (*j) * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
+              rhs -= (*j)[0][0] * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
 
             // not needed, since we store the diagonal separately
             coliterator diag=j;               // *diag = a_ii
             for (; j!=endj; ++j)
-              rhs -= (*j) * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
+              rhs -= (*j)[0][0] * xold[j.index()];  //  rhs -= sum_{j<i} a_ij * x_j
 
             // v = rhs / diag
             if( hasDiagInv )
               v = rhs * diagInv[ rowIdx ];
             else
-              v = rhs / (*diag);
+              v = rhs / (*diag)[0][0];
 
             xnew[ rowIdx ] += w*v;            //  x_i = w / a_ii * (b_i - sum_{j<i} a_ij * xnew_j - sum_{j>=i} a_ij * xold_j)
           }

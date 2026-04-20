@@ -154,11 +154,18 @@ namespace Dune
 
       protected:
         template <class X, class Y, bool isMV>
-        void mvThreadedImpl( const field_type& alpha,
+        void mvThreadedImpl( [[maybe_unused]] const field_type& alpha,
                              const X& x, Y& y, std::integral_constant<bool, isMV> ) const
         {
           auto doMV = [this, &alpha, &x, &y] ()
           {
+            // this is simply to avoid warnings since
+            // there exist no maybe_unused for lambda captures
+            if constexpr ( isMV )
+            {
+              [[maybe_unused]] field_type a = alpha;
+            }
+
             const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads() );
             const ConstRowIterator endi = slicedEnd( slice.second );
             for (ConstRowIterator i = slicedBegin(slice.first); i!=endi; ++i)
