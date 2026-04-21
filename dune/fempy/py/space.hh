@@ -174,6 +174,7 @@ namespace Dune
         typedef typename BlockMapperType::GlobalKeyType  GlobalKeyType;
 
         registerFunctionSpace(module,cls);
+        cls.def_property_readonly( "continuous", [] ( Space &self ) -> bool { return self.continuous(); } );
         cls.def_property_readonly( "sequence", [] ( Space &self ) -> int { return self.sequence(); } );
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
         cls.def_property_readonly( "primarySize", [] ( Space &self ) -> int { return self.primarySize(); } );
