@@ -133,6 +133,8 @@ typedef Dune::GridSelector::GridType GridType;
 typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
 
 static const int dimRange = GridPartType::dimensionworld;
+static const bool isTetrahedron = Dune::Capabilities::hasSingleGeometryType< GridType >::v &&
+                                  Dune::GeometryType(Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId, GridType::dimension).isTetrahedron();
 
 typedef Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimRange > > FunctionSpaceType;
 
@@ -155,7 +157,7 @@ typedef std::tuple<
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
+  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, isTetrahedron ? 0 : 1 >, // for tetras only order=0 is implemented
   Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
   //Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS

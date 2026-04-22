@@ -898,7 +898,9 @@ def raviartThomas(gridView, order=0, dimRange=None,
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
-    if ( (gridView.type.isSimplex and order > 2) or order > 4):
+    # for simplex grids 0,1 in 2d and 0 in 3d
+    # for quads up to order 4 and for hexas 0,1
+    if ( (gridView.type.isSimplex and order > (3-gridView.dimension)) or order > 4 or (gridView.type.isHexahedron and order > 1)):
         raise KeyError(\
             "Parameter error in RTSpace with "+
             "order=" + str(order) + ": " +\
