@@ -137,20 +137,20 @@ namespace Dune
     public:
       LocalFiniteElementInterpolation()
         : basisFunctionSet_()
-        , localInterpolation_()
+        , localInterpolation_( nullptr )
       {
       }
 
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
-                                                 const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
+                                                 const LocalInterpolationType &localInterpolation )
       : basisFunctionSet_( basisFunctionSet ),
-        localInterpolation_( localInterpolation )
+        localInterpolation_( &localInterpolation )
       {}
 
       ThisType& operator=( const ThisType& other )
       {
         basisFunctionSet_ = other.basisFunctionSet_;
-        localInterpolation_.emplace( other.localInterpolation() );
+        localInterpolation_ = &other.localInterpolation();
         return *this;
       }
 
@@ -188,13 +188,13 @@ namespace Dune
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
       const LocalInterpolationType &localInterpolation () const
       {
-        assert( localInterpolation_.has_value() );
+        assert( localInterpolation_ );
         return *localInterpolation_;
       }
 
     private:
       BasisFunctionSetType    basisFunctionSet_;
-      std::optional< LocalInterpolationType > localInterpolation_;
+      const LocalInterpolationType* localInterpolation_;
     };
 
     namespace Impl

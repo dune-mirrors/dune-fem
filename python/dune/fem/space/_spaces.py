@@ -803,7 +803,7 @@ def _bdmSpaces(gridView, order=1, dimRange=None,
                field="double", storage=None, scalar=False, dimrange=None, codegen=True,
                bdmName='BDM',
                bdmInc='brezzidouglasmarini.hh',
-               bdmType='BrezziDouglasMariniSpace'):
+               bdmType='DynamicBrezziDouglasMariniSpace'):
     """create a BD(F)M space
 
     Args:
@@ -844,13 +844,13 @@ def _bdmSpaces(gridView, order=1, dimRange=None,
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::" + bdmType + "< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >," +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
             clone=_clone(_kwargs),
-            ctorArgs=[gridView])
+            ctorArgs=[gridView, order])
     return spc.as_ufl()
 
 # BDM space
@@ -865,7 +865,7 @@ def bdfm(gridView, **kwargs):
     return _bdmSpaces(gridView,
                       bdmName='BDFM',
                       bdmInc='brezzidouglasfortinmarini.hh',
-                      bdmType='BrezziDouglasFortinMariniSpace',
+                      bdmType='DynamicBrezziDouglasFortinMariniSpace',
                       **kwargs)
 bdfm.__doc__ = _bdmSpaces.__doc__
 
@@ -911,15 +911,15 @@ def raviartThomas(gridView, order=0, dimRange=None,
 
     includes = [ "dune/fem/space/raviartthomas.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
-    typeName = "Dune::Fem::RaviartThomasSpace< " +\
+    typeName = "Dune::Fem::DynamicRaviartThomasSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >," +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
             clone=_clone(_kwargs),
-            ctorArgs=[gridView])
+            ctorArgs=[gridView, order])
     return spc.as_ufl()
 
 def rannacherTurek(gridView, dimRange=None,
