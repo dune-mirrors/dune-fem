@@ -96,12 +96,22 @@ namespace Dune
         using GridPartType = typename BaseType::GridPartType;
         using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
+        using KeyType      = typename BaseType::KeyType;
 
         explicit OrthogonalDiscontinuousGalerkinSpace ( GridPartType &gridPart,
-                                                         const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
-                                                         const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+                                                        const KeyType initialOrder,
+                                                        const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                        const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType{}, initialOrder, interface, direction )
+        {
+        }
+
+        explicit OrthogonalDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                        const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                        const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
           : BaseType( gridPart, BasisFunctionSetsType{}, order, interface, direction )
-        {}
+        {
+        }
 
         template <class Function,
                   std::enable_if_t<

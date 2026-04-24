@@ -97,6 +97,14 @@ namespace Dune
 
         using GridPartType = typename BaseType::GridPartType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
+        using KeyType = typename BaseType::KeyType;
+
+        explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                      const KeyType initialOrder,
+                                                      const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                      const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType{}, initialOrder, interface, direction )
+        {}
 
         explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                       const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
@@ -136,6 +144,14 @@ namespace Dune
         using GridPartType = typename BaseType::GridPartType;
         using EntityType   = typename BaseType::EntityType;
         using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
+        using KeyType      = typename BaseType::KeyType;
+
+        explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                                const KeyType initialOrder,
+                                                                const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                                const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType{}, initialOrder, interface, direction )
+        {}
 
         explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                                 const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,

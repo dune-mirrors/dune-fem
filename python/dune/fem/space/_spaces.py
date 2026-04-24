@@ -141,15 +141,16 @@ def dgonb(gridView, order=1, dimRange=None, field="double",
     return spc.as_ufl()
 
 def dgonbhp(gridView, order=1, dimRange=None, field="double",
-            storage=None, scalar=False, dimrange=None, codegen=True):
+            storage=None, scalar=False, dimrange=None, codegen=True, maxOrder=-1):
     """create a discontinuous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
-        order: polynomial order of the finite element functions
+        order:    polynomial order of the finite element functions
         dimRange: dimension of the range space
-        field: field of the range space
-        storage: underlying linear algebra backend
+        field:    field of the range space
+        storage:  underlying linear algebra backend
+        maxOrder: max polynomial order (default maxOrder = order)
 
     Returns:
         Space: the constructed Space
@@ -163,16 +164,20 @@ def dgonbhp(gridView, order=1, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
+    assert isinstance(order, int)
+    assert isinstance(maxOrder, int)
+    maxOrder = max(maxOrder, order)
+
     includes = [ "dune/fem/space/hpdg/orthogonal.hh" ] + gridView.cppIncludes
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," + storageType(codegen) + " >"
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(maxOrder) + " ," + storageType(codegen) + " >"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
             clone=_clone(_kwargs),
-            ctorArgs=[gridView])
+            ctorArgs=[gridView, order])
     return spc.as_ufl()
 
 def dglegendre(gridView, order=1, dimRange=None, field="double",
@@ -225,15 +230,16 @@ def dglegendre(gridView, order=1, dimRange=None, field="double",
 ##  Legendre hpDG space
 ###########################################################################
 def dglegendrehp(gridView, order=1, dimRange=None, field="double",
-                 storage=None, scalar=False, dimrange=None, codegen=True):
+                 storage=None, scalar=False, dimrange=None, codegen=True, maxOrder=-1):
     """create a discontinuous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
 
     Args:
         gridView: the underlying grid view
-        order: polynomial order of the finite element functions
+        order:    polynomial order of the finite element functions
         dimRange: dimension of the range space
-        field: field of the range space
-        storage: underlying linear algebra backend
+        field:    field of the range space
+        storage:  underlying linear algebra backend
+        maxOrder: max polynomial order (default maxOrder = order)
 
     Returns:
         Space: the constructed Space
@@ -247,6 +253,10 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
+    assert isinstance(order, int)
+    assert isinstance(maxOrder, int)
+    maxOrder = max(maxOrder, order)
+
     if not (gridView.type.isCube):
         raise KeyError(\
             "the `dglegendrehp' space can only be used with a fully "+
@@ -256,13 +266,13 @@ def dglegendrehp(gridView, order=1, dimRange=None, field="double",
     dimw = gridView.dimWorld
     typeName = "Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimRange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + ", " +\
+      "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(maxOrder) + ", " +\
       storageType(codegen) + ">"
 
     spc = module(field, includes, typeName, storage=storage,
             scalar=scalar, codegen=codegen,
             clone=_clone(_kwargs),
-            ctorArgs=[gridView])
+            ctorArgs=[gridView,order])
     return spc.as_ufl()
 
 ###########################################################################
