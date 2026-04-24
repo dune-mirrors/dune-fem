@@ -461,6 +461,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
             switch.append(i+maxId+2, generateDirichletCode(predefined, v[1], tempVars=tempVars))
         integrands.dDirichlet = [switch]
 
+    print(integrands)
     return integrands
 
 def compileUFL(form, *args, tempVars=True, virtualize=True):
@@ -487,4 +488,5 @@ def compileUFL(form, *args, tempVars=True, virtualize=True):
     integrands = Integrands((d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                             uflExpr,virtualize)
 
+    print(integrands)
     return _compileUFL(integrands,form,*args,tempVars)

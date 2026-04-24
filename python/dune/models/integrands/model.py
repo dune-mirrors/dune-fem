@@ -66,10 +66,13 @@ class Integrands(codegen.ModelClass):
         self.baseName = 'integrands'
         self.baseSignature = []
 
+        print("Integrands cell_avg", self.needCellAverage)
+
     def signature(self):
         return self.form.signature()
 
     def methods(self,code):
+        print("Methods")
         code.append(TypeAlias("DomainValueType", self.domainValueTuple))
         code.append(TypeAlias("RangeValueType", self.rangeValueTuple))
         code.append(Declaration(Variable("bool", "_nonlinear"), initializer=self.nonlinear, static=True, constexpr=True))

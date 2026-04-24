@@ -124,6 +124,12 @@ class MultiLinearExprSplitter(Transformer):
         tensor[tuple()] = expr
         return {self.empty: tensor}
 
+    #def cell_avg(self, expr, left):
+    #    print("cell_avg", expr, left )
+    #    return left
+
+    cell_avg = terminal
+
     atan = terminal
     atan2 = terminal
     atan_2 = terminal
@@ -183,7 +189,9 @@ class MultiLinearExprSplitter(Transformer):
 
 def splitMultiLinearExpr(expr, arguments=None):
     if arguments is None:
+        print("******", arguments)
         arguments = extract_arguments(expr)
+    print("******", arguments)
     return MultiLinearExprSplitter(arguments).visit(expr)
 
 def splitForm(form, arguments, idFct=None):
