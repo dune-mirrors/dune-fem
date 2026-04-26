@@ -126,9 +126,9 @@ namespace Dune
         return hostEntity() == rhs.hostEntity();
       }
 
-      unsigned int subEntities( const unsigned int codim ) const
+      unsigned int subEntities( const unsigned int c ) const
       {
-        return hostEntity().subEntities( codim );
+        return hostEntity().subEntities( c );
       }
 
       /** \} */
