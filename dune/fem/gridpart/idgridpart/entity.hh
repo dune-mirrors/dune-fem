@@ -126,8 +126,12 @@ namespace Dune
         return hostEntity() == rhs.hostEntity();
       }
 
-      /** \} */
+      unsigned int subEntities( const unsigned int codim ) const
+      {
+        return hostEntity().subEntities( codim );
+      }
 
+      /** \} */
 
       /** \name Methods Supporting the GridPart Implementation
        *  \{ */
@@ -242,11 +246,6 @@ namespace Dune
       {}
 
       /** \} */
-
-      unsigned int subEntities( const unsigned int codim ) const
-      {
-        return hostEntity().subEntities( codim );
-      }
 
       template< int codim >
       int count () const
