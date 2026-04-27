@@ -195,8 +195,10 @@ namespace Dune
     inline static void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
                                void *mctx,PetscErrorCode (*monitordestroy)(void*)
-#else
+#elif PETSC_VERSION_MAJOR >=3 && PETSC_VERSION_MINOR < 25 // PETSc 3.2 to 3.24
                                void *mctx,PetscErrorCode (*monitordestroy)(void**)
+#else // PETSc 3.25 and beyond
+                               PetscCtx mctx, PetscCtxDestroyFn *monitordestroy
 #endif
                        )
     {

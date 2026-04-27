@@ -464,7 +464,7 @@ namespace Dune
               else if ( factorType == Factorization::mumps )
                 ::Dune::Petsc::PCFactorSetMatSolverPackage( pc, MATSOLVERMUMPS );
               else
-                DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid factorization package choosen." );
+                DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid factorization package chosen." );
 
               ::Dune::Petsc::PCSetUp( pc );
               break;
@@ -479,7 +479,7 @@ namespace Dune
             break;
 
           default:
-            DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid preconditioner choosen." );
+            DUNE_THROW( InvalidStateException, "PetscInverseOperator: invalid preconditioner chosen." );
         }
 
         // set monitor in verbose mode for all cores

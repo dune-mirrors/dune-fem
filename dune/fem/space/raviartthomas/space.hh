@@ -24,6 +24,7 @@
 #include <dune/localfunctions/raviartthomas/raviartthomas2cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas3cube2d.hh>
 #include <dune/localfunctions/raviartthomas/raviartthomas4cube2d.hh>
+#include <dune/localfunctions/common/virtualwrappers.hh>
 
 // dune-fem includes
 #include <dune/fem/space/common/uniquefacetorientation.hh>
@@ -39,14 +40,19 @@ namespace Dune
 
     namespace Impl
     {
-
       // RaviartThomasLocalFiniteElement
       // -------------------------------
 
       template< unsigned int id, class DomainField, class RangeField, int dimension, int order >
       struct RaviartThomasLocalFiniteElement
       {
-        static_assert( AlwaysFalse< DomainField >::value, "RaviartThomasLocalFiniteElement not implemented for your choice." );
+        // 0 here means that the element is not implemented
+        static constexpr std::size_t numOrientations = 0;
+
+        RaviartThomasLocalFiniteElement()
+        {
+          DUNE_THROW(NotImplemented,"RaviartThomasLocalFiniteElement not implemented for your choice." );
+        }
       };
 
       // 2d, Simplex, 0th order
@@ -141,11 +147,10 @@ namespace Dune
 
     } // namespace Impl
 
-
     // RaviartThomasLocalFiniteElementMap
     // ----------------------------------
 
-    template< class GridPart, class FunctionSpace, int polOrder >
+    template< class GridPart, class FunctionSpace, int polOrder = -1 >
     class RaviartThomasLocalFiniteElementMap
     {
       using hasSingleGeometryType = GridPartCapabilities::hasSingleGeometryType< GridPart >;
@@ -165,31 +170,66 @@ namespace Dune
       using DomainFieldType = typename FunctionSpace::DomainFieldType;
       using RangeFieldType = typename FunctionSpace::RangeFieldType;
 
-      using KeyType = std::tuple<>;
+      typedef unsigned int KeyType;
 
       using TransformationType = PiolaTransformation< Geometry, FunctionSpace::dimRange >;
 
-      using LocalFiniteElementType =
-          Impl::RaviartThomasLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, polOrder >;
+    protected:
+      // for dynamic space the polOrder is passed as negative value
+      static constexpr bool dynamicOrder = polOrder < 0;
+
+      using DomainType = typename FunctionSpace::DomainType;
+      using RangeType  = typename FunctionSpace::RangeType;
+      typedef LocalBasisTraits<DomainFieldType, FunctionSpace::dimDomain, DomainType,
+                               RangeFieldType,  FunctionSpace::dimRange,  RangeType,
+                               typename FunctionSpace::JacobianRangeType > LBT;
+
+      // this is the same for each order, so take order 0 which exists for all combinations
+      static constexpr std::size_t numOrientations =
+          Impl::RaviartThomasLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, 0 >::numOrientations;
+
+    public:
+      // type of LocalFiniteElement
+      typedef typename std::conditional< dynamicOrder,
+              // virtual LFE type
+              LocalFiniteElementVirtualInterface< LBT >,
+              // real implementation type
+              Impl::RaviartThomasLocalFiniteElement< topologyId, DomainFieldType,
+                  RangeFieldType, dimLocal, polOrder > > :: type     LocalFiniteElementType;
 
       using LocalBasisType          = typename LocalFiniteElementType::Traits::LocalBasisType;
       using LocalCoefficientsType   = typename LocalFiniteElementType::Traits::LocalCoefficientsType;
       using LocalInterpolationType  = typename LocalFiniteElementType::Traits::LocalInterpolationType;
 
-      static constexpr auto size () -> std::size_t { return LocalFiniteElementType::numOrientations; }
+      static constexpr auto size () -> std::size_t { return numOrientations; }
 
-      template< class ... Args >
-      RaviartThomasLocalFiniteElementMap ( const GridPartType& gridPart, Args&& ... )
-        : orientation_( gridPart )
+      RaviartThomasLocalFiniteElementMap ( const GridPartType& gridPart, const unsigned int ord )
+        : orientation_( gridPart ), order_( dynamicOrder ? ord : polOrder )
       {
-        for ( auto i : range( size() ) )
-          map_[ i ] = LocalFiniteElementType( i );
+        if constexpr ( dynamicOrder )
+        {
+          if ( order_ == 0 )
+            this->template createLFE< 0 > ();
+          else if ( order_ == 1 )
+            this->template createLFE< 1 > ();
+          else if ( order_ == 2 )
+            this->template createLFE< 2 > ();
+          else if ( order_ == 3 )
+            this->template createLFE< 3 > ();
+          else if ( order_ == 4 )
+            this->template createLFE< 4 > ();
+        }
+        else
+        {
+          for ( auto i : range( size() ) )
+            map_[ i ].reset( new LocalFiniteElementType( i ) );
+        }
       }
 
-      int order () const { return polOrder; }
+      int order () const { return order_; }
 
       template< class Entity >
-      int order ( const Entity& entity ) const { return order; }
+      int order ( const Entity& entity ) const { return order(); }
 
       template< class Entity >
       auto operator() ( const Entity& entity ) const
@@ -197,21 +237,47 @@ namespace Dune
       {
         auto o = orientation_( entity );
         return std::tuple< std::size_t, const LocalBasisType&, const LocalInterpolationType& >(
-            static_cast< std::size_t >( o ), map_[ o ].localBasis(), map_[ o ].localInterpolation() );
+            static_cast< std::size_t >( o ), map( o ).localBasis(), map( o ).localInterpolation() );
       }
 
-      auto localCoefficients ( const GeometryType& type ) const
-        -> const LocalCoefficientsType&
+      auto localCoefficients ( const GeometryType& type ) const -> const LocalCoefficientsType&
       {
-        return map_[ 0 ].localCoefficients();
+        return map( 0 ).localCoefficients();
       }
 
       bool hasCoefficients ( const GeometryType& type ) const { return type == GeometryType( topologyId, dimLocal ); }
       auto gridPart () const -> const GridPartType& { return orientation_.gridPart(); }
 
     private:
+      template <int p>
+      void createLFE()
+      {
+        using LFEImpl = Impl::RaviartThomasLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, p >;
+        if constexpr ( LFEImpl::numOrientations > 0 )
+        {
+          using LFEObject = LocalFiniteElementVirtualImp< LFEImpl >;
+          for ( auto i : range( size() ) )
+          {
+            LFEImpl imp( i );
+            map_[ i ].reset( new LFEObject( imp ) );
+          }
+        }
+        else
+        {
+          DUNE_THROW(NotImplemented,"RaviartThomasLocalFiniteElement not implemented for your choice." );
+        }
+      }
+
+      const LocalFiniteElementType& map( const size_t i ) const
+      {
+        assert( map_[i] );
+        return *(map_[i]);
+      }
+
       UniqueFacetOrientation< GridPartType > orientation_;
-      std::array< LocalFiniteElementType, LocalFiniteElementType::numOrientations > map_;
+      std::array< std::unique_ptr< LocalFiniteElementType >, numOrientations > map_;
+
+      const int order_;
     };
 
 
@@ -221,6 +287,11 @@ namespace Dune
     template< class FunctionSpace, class GridPart, int polOrder, class Storage = CachingStorage >
     using RaviartThomasSpace
         = LocalFiniteElementSpace< RaviartThomasLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >, FunctionSpace, Storage >;
+
+    // dynamic polynomial order choice in this case
+    template< class FunctionSpace, class GridPart, class Storage = CachingStorage >
+    using DynamicRaviartThomasSpace
+        = LocalFiniteElementSpace< RaviartThomasLocalFiniteElementMap< GridPart, FunctionSpace >, FunctionSpace, Storage >;
 
 
   } // namespace Fem
