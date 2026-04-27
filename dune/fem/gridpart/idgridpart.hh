@@ -322,4 +322,11 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/grid/test/checkindexset.hh>
+template< class HostGridPart >
+struct EnableSubIndexCheck< Dune::Fem::IdGridPart< HostGridPart > >
+{
+  static const bool v = false;
+};
+
 #endif // #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_HH

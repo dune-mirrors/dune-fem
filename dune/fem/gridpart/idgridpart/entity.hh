@@ -126,6 +126,11 @@ namespace Dune
         return hostEntity() == rhs.hostEntity();
       }
 
+      unsigned int subEntities( const unsigned int c ) const
+      {
+        return hostEntity().subEntities( c );
+      }
+
       /** \} */
 
 
@@ -242,11 +247,6 @@ namespace Dune
       {}
 
       /** \} */
-
-      unsigned int subEntities( const unsigned int codim ) const
-      {
-        return hostEntity().subEntities( codim );
-      }
 
       template< int codim >
       int count () const
