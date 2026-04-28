@@ -531,4 +531,21 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/grid/test/checkindexset.hh>
+template< class Grid, Dune::PartitionIteratorType idxpitype , bool onlyCodimensionZero >
+struct EnableSubIndexCheck< Dune::Fem::AdaptiveLeafGridPart<Grid,idxpitype,onlyCodimensionZero> >
+{
+  static const bool v = false;
+};
+template< class Grid, Dune::PartitionIteratorType idxpitype >
+struct EnableSubIndexCheck< Dune::Fem::DGAdaptiveLeafGridPart< Grid, idxpitype > >
+{
+  static const bool v = false;
+};
+template< class Grid, Dune::PartitionIteratorType idxpitype >
+struct EnableSubIndexCheck< Dune::Fem::IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
+{
+  static const bool v = false;
+};
+
 #endif // #ifndef DUNE_FEM_ADAPTIVELEAFGRIDPART_HH

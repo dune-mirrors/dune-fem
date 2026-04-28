@@ -100,4 +100,11 @@ namespace Dune
 
 } // namespace Dune
 
+#include <dune/grid/test/checkindexset.hh>
+template< class Grid >
+struct EnableSubIndexCheck< Dune::Fem::LeafGridPart<Grid> >
+{
+  static const bool v = false;
+};
+
 #endif // #ifndef DUNE_FEM_GRIDPART_LEAFGRIDPART_HH
