@@ -324,7 +324,6 @@ namespace Dune
                            const int subNumber,
                            const std::integral_constant<bool,false> codim0 ) const
       {
-        assert(false);
         DUNE_THROW(NotImplemented,"CodimIndexSet::subIndex: not implemented for entities with codim > 0" );
         return IndexType( -1 );
       }
