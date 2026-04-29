@@ -40,45 +40,6 @@
 #include "checkgridpart.hh"
 #include <dune/fem/test/testgrid.hh>
 
-template< class Grid >
-struct EnableSubIndexCheck< Dune::Fem::LeafGridPart<Grid> >
-{
-  static const bool v = EnableSubIndexCheck<Grid>::v;
-};
-template< class Grid, Dune::PartitionIteratorType idxpitype , bool onlyCodimensionZero >
-struct EnableSubIndexCheck< Dune::Fem::AdaptiveLeafGridPart<Grid,idxpitype,onlyCodimensionZero> >
-{
-  static const bool v = false;
-};
-template< class Grid, Dune::PartitionIteratorType idxpitype >
-struct EnableSubIndexCheck< Dune::Fem::DGAdaptiveLeafGridPart< Grid, idxpitype > >
-{
-  static const bool v = false;
-};
-template< class Grid, Dune::PartitionIteratorType idxpitype >
-struct EnableSubIndexCheck< Dune::Fem::IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
-{
-  static const bool v = false;
-};
-template< class HostGridPart >
-struct EnableSubIndexCheck< Dune::Fem::IdGridPart< HostGridPart > >
-{
-  static const bool v = EnableSubIndexCheck< HostGridPart >;
-};
-template< class HostGridPart, class Filter >
-struct EnableSubIndexCheck< Dune::Fem::FilteredGridPart<
-                            HostGridPart, Filter, false > >
-{
-  static const bool v = EnableSubIndexCheck< HostGridPart >;
-};
-template< class HostGridPart, class Filter >
-struct EnableSubIndexCheck< Dune::Fem::FilteredGridPart<
-                            HostGridPart, Filter, true > >
-{
-  static const bool v = false;
-};
-
-
 template< class GridPart, class LocalFunction >
 void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFunction )
 {
