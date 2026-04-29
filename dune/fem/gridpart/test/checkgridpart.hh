@@ -50,13 +50,13 @@ struct EnableSubIndexCheck< Dune::Fem::IntersectionAdaptiveLeafGridPart< Grid, i
 template< class HostGridPart >
 struct EnableSubIndexCheck< Dune::Fem::IdGridPart< HostGridPart > >
 {
-  static const bool v = EnableSubIndexCheck< HostGridPart >;
+  static const bool v = EnableSubIndexCheck< HostGridPart > :: v;
 };
 template< class HostGridPart, class Filter >
 struct EnableSubIndexCheck< Dune::Fem::FilteredGridPart<
                             HostGridPart, Filter, false > >
 {
-  static const bool v = EnableSubIndexCheck< HostGridPart >;
+  static const bool v = EnableSubIndexCheck< HostGridPart > :: v;
 };
 template< class HostGridPart, class Filter >
 struct EnableSubIndexCheck< Dune::Fem::FilteredGridPart<
@@ -66,15 +66,15 @@ struct EnableSubIndexCheck< Dune::Fem::FilteredGridPart<
 };
 
 template< class CoordFunction >
-struct EnableSubIndexCheck< GeoGridPart< CoordFunction > >
+struct EnableSubIndexCheck< Dune::Fem::GeoGridPart< CoordFunction > >
 {
-  typedef GeoGridPart< GridFunction > GP;
+  typedef Dune::Fem::GeoGridPart< CoordFunction > GP;
   static const bool v = EnableSubIndexCheck< typename GP::HostGridPartType > :: v;
 };
 template< class GridFunction >
-struct EnableSubIndexCheck< GeometryGridPart< GridFunction > >
+struct EnableSubIndexCheck< Dune::Fem::GeometryGridPart< GridFunction > >
 {
-  typedef GeometryGridPart< GridFunction > GP;
+  typedef Dune::Fem::GeometryGridPart< GridFunction > GP;
   static const bool v = EnableSubIndexCheck< typename GP::HostGridPartType > :: v;
 };
 

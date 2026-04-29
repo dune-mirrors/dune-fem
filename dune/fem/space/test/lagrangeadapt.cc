@@ -81,6 +81,7 @@ int main ( int argc, char **argv )
 }
 
 #include <dune/grid/test/checkindexset.hh>
+#include <dune/fem/gridpart/test/checkgridpart.hh>
 template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart )
 {
