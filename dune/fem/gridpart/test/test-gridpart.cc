@@ -12,6 +12,7 @@
 #include <dune/grid/test/checkgeometry.hh>
 #include <dune/grid/test/checkintersectionit.hh>
 #include <dune/grid/test/checkentityseed.hh>
+#include <dune/grid/test/checkindexset.hh>
 
 #include <dune/fem/function/common/common.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -38,7 +39,6 @@
 #include "checkintersections.hh"
 #include "checkgridpart.hh"
 #include <dune/fem/test/testgrid.hh>
-
 
 template< class GridPart, class LocalFunction >
 void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFunction )
