@@ -28,15 +28,17 @@ __cite_dune_module_as__ = """
   doi={10.1007/s00607-010-0110-3}
 }
 
-@article{dunefempy:18,
-title = {{Python framework for hp-adaptive discontinuous Galerkin methods for two-phase flow in porous media}},
-journal = "Applied Mathematical Modelling",
-volume = "67",
-pages = "179 - 200",
-year = "2019",
-doi = "10.1016/j.apm.2018.10.013",
-author = "Dedner, A. and Kane, B. and Kl{\"o}fkorn, R. and Nolte, M."
-}
+@software{dunefempy:20,
+  author       = {Dedner, Andreas and
+                  Kloefkorn, Robert and
+                  Nolte, Martin},
+  title        = {Python Bindings for the DUNE-FEM module},
+  month        = mar,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {v2.7.0},
+  doi          = {10.5281/zenodo.3706994},
+  url          = {https://doi.org/10.5281/zenodo.3706994},
 """
 
 
