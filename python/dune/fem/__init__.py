@@ -15,6 +15,31 @@ from . import model as model
 
 from dune.fem.deprecated import deprecated
 
+__cite_dune_module_as__ = """
+@article{dunefem:10,
+  author = {Dedner, A. and Kl{\"o}fkorn, R. and Nolte, M. and Ohlberger, M.},
+  title = {{A Generic Interface for Parallel and Adaptive Scientific Computing:
+  Abstraction Principles and the DUNE-FEM Module}},
+  journal = {Computing},
+  year = {2010},
+  volume = {90},
+  pages = {165--196},
+  number = {3--4},
+  doi={10.1007/s00607-010-0110-3}
+}
+
+@article{dunefempy:18,
+title = {{Python framework for hp-adaptive discontinuous Galerkin methods for two-phase flow in porous media}},
+journal = "Applied Mathematical Modelling",
+volume = "67",
+pages = "179 - 200",
+year = "2019",
+doi = "10.1016/j.apm.2018.10.013",
+author = "Dedner, A. and Kane, B. and Kl{\"o}fkorn, R. and Nolte, M."
+}
+"""
+
+
 class plotting:
     @staticmethod
     def plotPointData(*args,**kwarg):
