@@ -467,6 +467,7 @@ class ModelClass():
         self.needMinCellEdgeLength = isPresent( 'MinCellEdgeLength' )
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
+
         self.needCellAverage = isPresent('cell_avg') or isPresent( 'CellAvg' )
         print(uflStr)
         print("Found cell_avg", self.needCellAverage)
@@ -654,6 +655,7 @@ class ModelClass():
         return ["coeff" + n[0] + n[1:] for n in self._coefficientNames]
 
     def constant(self, idx):
+        print("Constant ", self._constants[idx])
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
 
     def coefficient(self, idx, x, side=None):
@@ -966,6 +968,7 @@ class ModelClass():
             for i, c in enumerate(self._coefficients):
                 name = self._coefficientNames[i]
                 if name in self._coefficientNamesAvg:
+                    print("Adding coeff ", name)
                     initEntity.append(UnformattedExpression('void',
                         'Dune::Fem::localAverage( std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ), cellAvg_' + name + ' )', uses=[entity, coefficients_]))
                     initIntersection.append(UnformattedExpression('void',

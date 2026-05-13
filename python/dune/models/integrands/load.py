@@ -98,6 +98,7 @@ class Source(object):
             self.modelIncludes = modelIncludes
         else:
             self.modelIncludes = ["dune/fempy/py/integrands.hh"]
+        self.modelIncludes += ["dune/fem/function/localfunction/average.hh"]
         self.integrands = integrands
         self.tempVars = tempVars
         self.virtualize = virtualize
