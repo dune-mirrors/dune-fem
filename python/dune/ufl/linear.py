@@ -124,6 +124,7 @@ class MultiLinearExprSplitter(Transformer):
         tensor[tuple()] = expr
         return {self.empty: tensor}
 
+    cell_avg = terminal
     atan = terminal
     atan2 = terminal
     atan_2 = terminal
