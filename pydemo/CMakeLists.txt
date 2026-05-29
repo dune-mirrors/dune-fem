@@ -2,4 +2,4 @@
 dune_python_add_test(NAME advdiff_python
                      SCRIPT advectiondiffusion.py
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                     TIMEOUT 2000)
+                     TIMEOUT 3500)

@@ -40,7 +40,8 @@ namespace Dune
                    loop     = 6,  // LoopSolver
                    superlu  = 7,  // SuperLUSolver
                    bicg     = 8,  // BiCG
-                   preonly  = 9); // only preconder
+                   preonly  = 9,  // only preconder
+                   fgmres   = 10);// Flexible GMRes
 
       static const std::string solverMethodTable(int id)
       {
@@ -224,7 +225,13 @@ namespace Dune
 
       virtual int preconditionerIteration () const
       {
-        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", 1 );
+        const int defaultIter = 1;
+        if(parameter_.exists(keyPrefix_ + "preconditioning.iteration"))
+        {
+          std::cout << "WARNING: Parameter " + keyPrefix_ + "preconditioning.iteration is deprecated. Please use " + keyPrefix_ + "preconditioning.iterations instead." << std::endl;
+          return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iteration", defaultIter );
+        }
+        return parameter_.getValue< int >( keyPrefix_ + "preconditioning.iterations", defaultIter );
       }
 
       virtual int preconditionerLevel () const
