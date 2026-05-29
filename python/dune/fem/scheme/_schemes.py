@@ -349,7 +349,7 @@ def _massLumpingGalerkin(integrands, integrandsParam=None, massIntegrands=None, 
                 from ufl import TrialFunction, TestFunction, dx, inner
                 # the following is a hack to avoid issues with a missing 'normal' integrand
                 space = massIntegrands.lhs.arguments()[0].ufl_function_space()
-                integrands = Constant(0)*inner( TrialFunction(space), TestFunction(space) ) * dx == 0
+                integrands = Constant(0, name="__masslumping_zero__")*inner( TrialFunction(space), TestFunction(space) ) * dx == 0
         else:
             try:
                 eqSpace = integrands.lhs.arguments()[0].ufl_function_space()
