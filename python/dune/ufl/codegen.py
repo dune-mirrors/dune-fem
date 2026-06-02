@@ -26,7 +26,7 @@ import dune.source.cplusplus as cplusplus
 from dune.source.cplusplus import ConditionalExpression, Declaration, Using, Variable
 
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Include, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Variable
-from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
+from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, cellDiameter, return_
 
 from .applyrestrictions import applyRestrictions
 
@@ -462,16 +462,16 @@ class ModelClass():
 
         self.needFacetArea = isPresent( 'FacetArea' )
         self.needCellVolume = isPresent( 'CellVolume' )
-        self.needMaxCellEdgeLength = ( isPresent( 'MaxCellEdgeLength' ) or
-                                       isPresent( 'CellDiameter' ) )
+        self.needMaxCellEdgeLength = isPresent( 'MaxCellEdgeLength' )
         self.needMinCellEdgeLength = isPresent( 'MinCellEdgeLength' )
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
+        self.needCellDiameter       = isPresent( 'CellDiameter' ) or isPresent( 'DuneCellDiameter' )
         self.needCellAverage = isPresent('cell_avg') or isPresent( 'CellAvg' )
         if self.needCellAverage:
             assert self.bindable, "cell_avg operator only implemented for uflFunction"
 
-        if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength:
+        if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength or self.needCellDiameter:
             self.needCellGeometry = True
         else:
             self.needCellGeometry = uflStr.find( 'SpatialCoordinate' ) != -1
@@ -479,14 +479,11 @@ class ModelClass():
         if self.needMaxCellEdgeLength or self.needMinCellEdgeLength or self.needMaxFacetEdgeLength or self.needMinFacetEdgeLength:
             self.includeFiles += ['dune/fempy/geometry/edgelength.hh']
 
+        if self.needCellDiameter:
+            self.includeFiles += ['dune/fempy/geometry/celldiameter.hh']
+
         if self.needCellAverage:
             self.includeFiles += ['dune/fem/function/localfunction/average.hh']
-
-        # print(f"Found geom = {self.needCellGeometry}, vol = {self.needCellVolume}, area = {self.needFacetArea}, maxEdge = {self.needMaxCellEdgeLength}, minEdge = {self.needMinCellEdgeLength}")
-
-        #self.needFacetArea = False
-        #self.needCellGeometry = False
-        #self.needCellVolume = False
 
         uflExpr = [e for e in uflExpr if e is not None]
 
@@ -687,9 +684,8 @@ class ModelClass():
         return UnformattedExpression('auto', volume)
 
     def cellDiameter(self, side=None):
-        # perhaps not optimal?
-        maxEdge = 'maxCellEdgeLength()' if side is None else 'maxCellEdgeLength_[ static_cast< std::size_t >( ' + side + ' ) ]'
-        return UnformattedExpression('auto', maxEdge)
+        cellDiam = 'cellDiameter()' if side is None else 'cellDiameter_[ static_cast< std::size_t >( ' + side + ' ) ]'
+        return UnformattedExpression('auto', cellDiam)
 
     def intersection(self):
         return UnformattedExpression('auto', 'intersection_')
@@ -810,6 +806,9 @@ class ModelClass():
                 if self.needMinCellEdgeLength:
                     minCellEdgeLength_ = Variable('ctype', 'minCellEdgeLength_')
                     insideMinCellEdgeLength = minCellEdgeLength_
+                if self.needCellDiameter:
+                    cellDiameter_ = Variable('ctype', 'cellDiameter_')
+                    insideCellDiameter = cellDiameter_
             else:
                 entity_   = Variable('std::array< EntityType, 2 >', 'entity_')
                 insideEntity = entity_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
@@ -826,6 +825,10 @@ class ModelClass():
                     minCellEdgeLength_ = Variable('std::array< ctype, 2 >', 'minCellEdgeLength_')
                     insideMinCellEdgeLength = minCellEdgeLength_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
                     outsideMinCellEdgeLength = minCellEdgeLength_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
+                if self.needCellDiameter:
+                    cellDiameter_ = Variable('std::array< ctype, 2 >', 'cellDiameter_')
+                    insideCellDiameter = cellDiameter_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
+                    outsideCellDiameter = cellDiameter_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
             if self.needCellGeometry:
                 geometry_ = Variable('std::optional< Geometry >', 'geometry_')
 
@@ -916,6 +919,8 @@ class ModelClass():
                 initEntity.append(assign(insideMaxCellEdgeLength, maxEdgeLength(self.cellGeometry())))
             if self.needMinCellEdgeLength:
                 initEntity.append(assign(insideMinCellEdgeLength, minEdgeLength(self.cellGeometry())))
+            if self.needCellDiameter:
+                initEntity.append(assign(insideCellDiameter, cellDiameter(self.cellGeometry())))
 
             uninitEntity = Method('void', 'unbind')
             initIntersection = Method('void', 'bind', args=[intersection, Variable('Side', 'side')])
@@ -978,13 +983,15 @@ class ModelClass():
                     initIntersection.append(assign(insideMaxCellEdgeLength, maxEdgeLength(self.cellGeometry())))
                 if self.needMinCellEdgeLength:
                     initIntersection.append(assign(insideMinCellEdgeLength, minEdgeLength(self.cellGeometry())))
+                if self.needCellDiameter:
+                    initIntersection.append(assign(insideCellDiameter, cellDiameter(self.cellGeometry())))
                 for i, c in enumerate(self._coefficients):
                     # initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
                     initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).bind( intersection_, Side::in  )', uses=[coefficients_]))
                 initIntersection.append('if( intersection.neighbor() )')
                 initIntersection.append('{')
                 initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
-                if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength:
+                if self.needCellVolume or self.needMaxCellEdgeLength or self.needMinCellEdgeLength or self.needCellDiameter:
                     initIntersection.append('  const Geometry& outsideGeom = entity_[ static_cast< std::size_t >( Side::out ) ].geometry();')
                     outsideGeom = UnformattedExpression('auto', 'outsideGeom')
                 if self.needCellVolume:
@@ -993,6 +1000,8 @@ class ModelClass():
                     initIntersection.append(assign(outsideMaxCellEdgeLength, maxEdgeLength(outsideGeom)))
                 if self.needMinCellEdgeLength:
                     initIntersection.append(assign(outsideMinCellEdgeLength, minEdgeLength(outsideGeom)))
+                if self.needCellDiameter:
+                    initIntersection.append(assign(outsideCellDiameter, cellDiameter(outsideGeom)))
                 for i, c in enumerate(self._coefficients):
                     # initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( entity_[ static_cast< std::size_t >( Side::out ) ] )', uses=[coefficients_]))
                     initIntersection.append(UnformattedExpression('void', '  std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).bind( intersection_, Side::out )', uses=[coefficients_]))
@@ -1021,6 +1030,8 @@ class ModelClass():
                 code.append(Method('const ctype', 'maxCellEdgeLength', const=True, code=return_(insideMaxCellEdgeLength)))
             if self.needMinCellEdgeLength:
                 code.append(Method('const ctype', 'minCellEdgeLength', const=True, code=return_(insideMinCellEdgeLength)))
+            if self.needCellDiameter:
+                code.append(Method('const ctype', 'cellDiameter', const=True, code=return_(insideCellDiameter)))
 
         # code.append(AccessModifier('private'))
 
@@ -1054,6 +1065,8 @@ class ModelClass():
                 code.append(Declaration(maxCellEdgeLength_))
             if self.needMinCellEdgeLength:
                 code.append(Declaration(minCellEdgeLength_))
+            if self.needCellDiameter:
+                code.append(Declaration(cellDiameter_))
             if self.needFacetArea:
                 code.append(Declaration(facetArea_))
             if self.needMaxFacetEdgeLength:

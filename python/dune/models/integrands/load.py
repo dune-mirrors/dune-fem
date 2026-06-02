@@ -146,6 +146,7 @@ class Source(object):
         code.append(Include("dune/python/pybind11/extensions.h"))
         code.append(Include("dune/fempy/py/grid/gridpart.hh"))
         code.append(Include("dune/fempy/geometry/edgelength.hh"))
+        code.append(Include("dune/fempy/geometry/celldiameter.hh"))
 
         if integrands._coefficients:
             if self.virtualize:
