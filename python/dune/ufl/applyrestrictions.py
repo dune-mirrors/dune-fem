@@ -36,6 +36,8 @@ class RestrictionPropagator(MultiFunction):
 
     cell_volume = _apply_restriction
     cell_diameter = _apply_restriction
+    max_cell_edge_length = _apply_restriction
+    min_cell_edge_length = _apply_restriction
 
 
 def applyRestrictions(form):
