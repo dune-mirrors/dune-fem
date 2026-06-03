@@ -43,10 +43,10 @@ from ufl import SpatialCoordinate,TestFunction,TrialFunction,Coefficient,\
         as_vector, as_matrix,dx,ds,grad,inner,zero,FacetNormal,dot
 from ufl.differentiation import Grad
 
-acknowledgeNewCellDiameter = False
+_acknowledgeNewCellDiameter = False
 def DuneCellDiameter(*args, **kwargs):
-    global acknowledgeNewCellDiameter
-    acknowledgeNewCellDiameter = True
+    global _acknowledgeNewCellDiameter
+    _acknowledgeNewCellDiameter = True
     return CellDiameter(*args, **kwargs)
 
 def translateIndex(index):
@@ -473,7 +473,7 @@ class ModelClass():
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
         self.needCellDiameter       = isPresent( 'CellDiameter' )
-        if self.needCellDiameter and not acknowledgeNewCellDiameter:
+        if self.needCellDiameter and not _acknowledgeNewCellDiameter:
             raise TypeError("""Due to a bug in the CellDiameter implementation,
 the previous result was the same as MaxCellEdgeLength. If you want
 to keep the outcome of your code as is, replace all 'CellDiameter' with
