@@ -801,6 +801,8 @@ try:
 except Exception as e:
     pass
 
+from .codegen import DuneCellDiameter
+
 from ufl.core.ufl_type import ufl_type
 from ufl.classes import all_ufl_classes
 @ufl_type(is_scalar=True)

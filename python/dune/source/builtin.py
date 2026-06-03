@@ -108,3 +108,4 @@ coordinate = BuiltInFunction('dune/fem/common/coordinate.hh', 'X', 'coordinate',
 
 maxEdgeLength = BuiltInFunction('dune/fempy/geometry/edgelength.hh', 'typename Geometry::ctype', 'maxEdgeLength', namespace='Dune::FemPy', targs=['class Geometry'], args=['const Geometry &geometry'])
 minEdgeLength = BuiltInFunction('dune/fempy/geometry/edgelength.hh', 'typename Geometry::ctype', 'minEdgeLength', namespace='Dune::FemPy', targs=['class Geometry'], args=['const Geometry &geometry'])
+cellDiameter  = BuiltInFunction('dune/fempy/geometry/celldiameter.hh', 'typename Geometry::ctype', 'cellDiameter', namespace='Dune::FemPy', targs=['class Geometry'], args=['const Geometry &geometry'])

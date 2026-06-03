@@ -1,4 +1,5 @@
 set(HEADERS
+  celldiameter.hh
   edgelength.hh
 )
 
