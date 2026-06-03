@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import re
 
-from ufl import replace, Constant
+from ufl import replace, Constant, CellDiameter
 from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import (
      extract_arguments_and_coefficients, extract_arguments,
@@ -42,6 +42,12 @@ from dune.source.cplusplus import SourceWriter, ListWriter, StringWriter
 from ufl import SpatialCoordinate,TestFunction,TrialFunction,Coefficient,\
         as_vector, as_matrix,dx,ds,grad,inner,zero,FacetNormal,dot
 from ufl.differentiation import Grad
+
+acknowledgeNewCellDiameter = False
+def DuneCellDiameter(*args, **kwargs):
+    global acknowledgeNewCellDiameter
+    acknowledgeNewCellDiameter = True
+    return CellDiameter(*args, **kwargs)
 
 def translateIndex(index):
     if isinstance(index, (tuple, MultiIndex)):
@@ -466,7 +472,19 @@ class ModelClass():
         self.needMinCellEdgeLength = isPresent( 'MinCellEdgeLength' )
         self.needMaxFacetEdgeLength = isPresent( 'MaxFacetEdgeLength' )
         self.needMinFacetEdgeLength = isPresent( 'MinFacetEdgeLength' )
-        self.needCellDiameter       = isPresent( 'CellDiameter' ) or isPresent( 'DuneCellDiameter' )
+        self.needCellDiameter       = isPresent( 'CellDiameter' )
+        if self.needCellDiameter and not acknowledgeNewCellDiameter:
+            raise TypeError("""Due to a bug in the CellDiameter implementation,
+the previous result was the same as MaxCellEdgeLength. If you want
+to keep the outcome of your code as is, replace all 'CellDiameter' with
+'MaxCellEdgeLength.' or simply use:
+
+from ufl import MaxCellEdgeLength as CellDiameter
+
+If you want the correct cell diameter use:
+
+from dune.ufl import DuneCellDiameter as CellDiameter""")
+
         self.needCellAverage = isPresent('cell_avg') or isPresent( 'CellAvg' )
         if self.needCellAverage:
             assert self.bindable, "cell_avg operator only implemented for uflFunction"
