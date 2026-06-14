@@ -429,7 +429,7 @@ namespace Dune
             }
 
             //! evaluate local function
-            template< class Point, class V=RangeType, std::enable_if_t<!std::is_same_v<V,double>, int> = 0 >
+            template< class Point >
             void evaluate ( const Point &p, RangeType &val ) const
             {
               val = localFunction_( Fem::coordinate(p) );
