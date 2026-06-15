@@ -259,7 +259,8 @@ namespace Dune
       typedef typename Entity::Geometry::GlobalCoordinate GlobalCoordinate;
       typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
 
-      typedef decltype( std::declval< Evaluator >()( std::declval< GlobalCoordinate >() ) ) Value;
+      typedef decltype( std::declval< Evaluator >()( std::declval< GlobalCoordinate >() ) ) Value_;
+      typedef std::conditional_t<std::is_same_v<Value_,double>, Dune::FieldVector<double,1>, Value_ > Value;
 
       LocalEvaluatorAdapter ( Evaluator evaluator ) : evaluator_( std::move( evaluator ) ) {}
 
@@ -426,12 +427,19 @@ namespace Dune
             {
               return localFunction_( Fem::coordinate(p) );
             }
+
             //! evaluate local function
             template< class Point >
             void evaluate ( const Point &p, RangeType &val ) const
             {
               val = localFunction_( Fem::coordinate(p) );
             }
+            template< class Point, class V=RangeType, std::enable_if_t<std::is_same_v<V,double>, int> = 0 >
+            void evaluate ( const Point &p, Dune::FieldVector<double,1> &val ) const
+            {
+              val[0] = localFunction_( Fem::coordinate(p) );
+            }
+
             template< class Point, class JacobianRangeType >
             void jacobian ( const Point &p, JacobianRangeType &val ) const
             {
