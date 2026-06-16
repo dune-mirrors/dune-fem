@@ -34,6 +34,9 @@
 /* Define if we have PETSc */
 #cmakedefine HAVE_PETSC ENABLE_PETSC
 
+/* Define if we have PETSc4py */
+#cmakedefine HAVE_PETSC4PY ENABLE_PETSC4PY
+
 /* Define if we have AmgXSolver */
 #cmakedefine HAVE_AMGXSOLVER 1
 

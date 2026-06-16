@@ -109,7 +109,8 @@ namespace Dune
 
 #endif //#if HAVE_DUNE_ISTL
 
-#ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+// #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+#ifdef HAVE_PETSC4PY
       template< class DF , class ... options>
       inline auto addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<3> )
       -> void_t< decltype(std::declval<DF&>().petscVec()) >

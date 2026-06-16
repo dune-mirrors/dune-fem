@@ -9,6 +9,7 @@ set(modules
   FindPackageMultipass.cmake
   FindPAPI.cmake
   FindPETSc.cmake
+  FindPETSc4py.cmake
   FindPThreads.cmake
   FindSIONlib.cmake
   FindXDR.cmake

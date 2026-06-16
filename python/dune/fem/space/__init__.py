@@ -246,7 +246,7 @@ def addDiscreteFunction(space, storage):
     if storage.name == "petsc":
         try:
             import petsc4py
-            dfIncludes += [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"]
+            dfIncludes += ["petsc4py/petsc4py.h"] # [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"]
             ctor = [Constructor(['const std::string &name', 'const ' + spaceType + '&space', 'pybind11::handle dofVector'],
                     ['if (import_petsc4py() != 0) {',
                      '  throw std::runtime_error("Error during import of petsc4py");',

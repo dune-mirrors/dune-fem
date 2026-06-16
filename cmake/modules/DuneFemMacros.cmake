@@ -162,3 +162,5 @@ include(AddSuiteSparseFlags)
 
 # torture tests AKA nighly builds
 include(FemTortureTests)
+
+include(DuneFempyMacros)

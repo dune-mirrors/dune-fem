@@ -138,7 +138,8 @@ namespace Dune
       {
       }
 
-#ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+// #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+#ifdef HAVE_PETSC4PY
       template< class Mat >
       inline static const Mat &getPetscMatrix ( const Mat &matrix ) noexcept
       {
