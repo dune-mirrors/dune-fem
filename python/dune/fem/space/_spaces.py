@@ -657,8 +657,7 @@ def composite(*spaces, **kwargs):
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
     pickler = Pickler(getterBody=
-      """
-            auto& tsp = self.cast<DuneType&>();
+      """   auto& tsp = self.cast<DuneType&>();
             /* Return a tuple that fully encodes the state of the object */
             pybind11::dict d;
             if (pybind11::hasattr(self, "__dict__")) {
@@ -666,8 +665,7 @@ def composite(*spaces, **kwargs):
             }
             return pybind11::make_tuple(tsp.spaceTuple(),d);
       """, setterBody=
-      """
-            if (t.size() != 2)
+      """   if (t.size() != 2)
                 throw std::runtime_error("Invalid state in AdaptGV with "+std::to_string(t.size())+"arguments!");
             pybind11::handle pyspaceTuple = t[0];
             auto spaceTuple = pyspaceTuple.cast<typename DuneType::DiscreteFunctionSpaceTupleType>();

@@ -1,6 +1,5 @@
 # FindPETSc4py.cmake
-find_package(Python COMPONENTS Interpreter REQUIRED)
-execute_process(COMMAND ${Python_EXECUTABLE} -c
+execute_process(COMMAND ${DUNE_PYTHON_VIRTUALENV_EXECUTABLE} -c
   "import petsc4py,sys; print(petsc4py.get_include())"
   OUTPUT_VARIABLE PETSC4PY_INCLUDE OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(PETSC4PY_INCLUDE)
