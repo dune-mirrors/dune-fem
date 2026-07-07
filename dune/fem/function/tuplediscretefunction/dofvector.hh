@@ -264,7 +264,7 @@ namespace Dune
       Iterator( const Iterator & ) = default;
       Iterator &operator= ( const Iterator & ) = default;
 
-      FieldType &operator* () { return *container_[ iterator_ ]; }
+      FieldType &operator* () { return container_[ iterator_ ]; }
       FieldType *operator-> () { return container_[ iterator_ ]; }
 
       Iterator &operator++ () { iterator_++; return *this; }
@@ -292,7 +292,7 @@ namespace Dune
 
       ConstIterator( const ConstIterator & ) = default;
 
-      const FieldType &operator* () const { return *container_[ iterator_ ]; }
+      const FieldType &operator* () const { return container_[ iterator_ ]; }
       FieldType *operator-> () const { return container_[ iterator_ ]; }
 
       ConstIterator &operator++ () { iterator_++; return *this; }
