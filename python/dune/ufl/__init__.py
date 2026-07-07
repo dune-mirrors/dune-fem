@@ -592,12 +592,15 @@ class GridIndexed(Indexed):
         self.scalar = True
         mi = GridIndexed.convert2MultiIndex(gc, i)
         Indexed.__init__(self,gc,mi)
-
-        if gc.gf.scalar:
-            self.__impl__ = gc.gf
-            self.gf = gc
-        else:
-            self.__impl__ = gc.gf[i]
+        try:
+            if gc.gf.scalar:
+                self.__impl__ = gc.gf
+                self.gf = gc
+            else:
+                self.__impl__ = gc.gf[i]
+                self.gf = None
+        except AttributeError:
+            self.__impl__ = gc[i]
             self.gf = None
     def __getattr__(self, item):
         if item == "gf": return None
