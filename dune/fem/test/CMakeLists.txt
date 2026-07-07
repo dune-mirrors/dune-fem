@@ -55,6 +55,10 @@ dune_add_test( NAME l2projection_istl SOURCES l2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} l2projection_istl )
 
+dune_add_test( NAME test-femtuple SOURCES test-femtuple.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} test-femtuple )
+
 if( ${FEM_TORTURE_TESTS} )
   dune_add_test( NAME l2projection_istl_complex SOURCES l2projection.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )

@@ -53,8 +53,26 @@ namespace Dune
 
       static const int blockSize = 1;
 
-      typedef FieldType *DofBlockType;
-      typedef const FieldType *ConstDofBlockType;
+      struct DofBlockRef
+      {
+        FieldType *ptr_;
+        explicit DofBlockRef(FieldType *p = nullptr) : ptr_(p) {}
+        FieldType &operator[]( std::size_t i ) const { return ptr_[ i ]; }
+        operator FieldType &() const { return *ptr_; }
+        FieldType *operator->() const { return ptr_; }
+      };
+
+      struct ConstDofBlockRef
+      {
+        const FieldType *ptr_;
+        explicit ConstDofBlockRef(const FieldType *p = nullptr) : ptr_(p) {}
+        const FieldType &operator[]( std::size_t i ) const { return ptr_[ i ]; }
+        operator const FieldType &() const { return *ptr_; }
+        const FieldType *operator->() const { return ptr_; }
+      };
+
+      typedef DofBlockRef DofBlockType;
+      typedef ConstDofBlockRef ConstDofBlockType;
 
       typedef Fem::Envelope< DofBlockType > DofBlockPtrType;
       typedef Fem::Envelope< ConstDofBlockType > ConstDofBlockPtrType;
@@ -147,7 +165,7 @@ namespace Dune
       {
         return DofBlockPtrType( this->operator[]( index ) );
       }
-      ConstDofBlockType blockPtr ( std::size_t index ) const
+      ConstDofBlockPtrType blockPtr ( std::size_t index ) const
       {
         return ConstDofBlockPtrType( this->operator[]( index ) );
       }
@@ -202,33 +220,33 @@ namespace Dune
       }
 
       template< std::size_t i >
-      FieldType *blockAccess ( std::size_t index, std::integral_constant< std::size_t, i > )
+      DofBlockType blockAccess ( std::size_t index, std::integral_constant< std::size_t, i > )
       {
         const std::size_t thisBlockSize = std::tuple_element< i, DofVectorTuple >::type::blockSize;
         std::size_t offset = std::get< i >( *this ).size() * thisBlockSize;
         if( index < offset )
-          return &std::get< i >( *this )[ index / thisBlockSize ][ index % thisBlockSize ];
+          return DofBlockType( &std::get< i >( *this )[ index / thisBlockSize ][ index % thisBlockSize ] );
         else
           return blockAccess( index - offset, std::integral_constant< std::size_t, i +1 >() );
       }
 
-      FieldType *blockAccess ( std::size_t index, std::integral_constant< std::size_t, sizeof ... ( DofVectors ) > )
+      DofBlockType blockAccess ( std::size_t index, std::integral_constant< std::size_t, sizeof ... ( DofVectors ) > )
       {
         DUNE_THROW( RangeError, "Index out of range" );
       }
 
       template< std::size_t i >
-      const FieldType *blockAccess ( std::size_t index, std::integral_constant< std::size_t, i > ) const
+      ConstDofBlockType blockAccess ( std::size_t index, std::integral_constant< std::size_t, i > ) const
       {
         const std::size_t thisBlockSize = std::tuple_element< i, DofVectorTuple >::type::blockSize;
         std::size_t offset = std::get< i >( *this ).size() * thisBlockSize;
         if( index < offset )
-          return &std::get< i >( *this )[ index / thisBlockSize ][ index % thisBlockSize ];
+          return ConstDofBlockType( &std::get< i >( *this )[ index / thisBlockSize ][ index % thisBlockSize ] );
         else
           return blockAccess( index - offset, std::integral_constant< std::size_t, i +1 >() );
       }
 
-      const FieldType *blockAccess ( std::size_t index, std::integral_constant< std::size_t, sizeof ... ( DofVectors ) > ) const
+      ConstDofBlockType blockAccess ( std::size_t index, std::integral_constant< std::size_t, sizeof ... ( DofVectors ) > ) const
       {
         DUNE_THROW( RangeError, "Index out of range" );
       }
