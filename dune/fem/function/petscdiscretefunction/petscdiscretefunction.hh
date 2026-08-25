@@ -95,12 +95,14 @@ namespace Dune
        *
        *  \param[in]  name         name of the discrete function
        *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  backend      backend for internal PetscVector
        */
       PetscDiscreteFunction( const std::string& name,
-                             const DiscreteFunctionSpaceType& space )
+                             const DiscreteFunctionSpaceType& space,
+                             const int backend = ::Dune::Petsc::Backend::defaultBackend )
         : BaseType( name, space ),
           memObject_(),
-          dofVector_( allocateDofStorage( space ) )
+          dofVector_( allocateDofStorage( space, backend ) )
       {}
 
       /** \brief Constructor to use if the vector storing the dofs already exists
@@ -121,7 +123,7 @@ namespace Dune
       PetscDiscreteFunction( const ThisType& other )
         : BaseType( "copy of " + other.name(), other.space() ),
           memObject_(),
-          dofVector_( allocateDofStorage( other.space() ) )
+          dofVector_( allocateDofStorage( other.space(), other.getVector().backend() ) )
       {
         assign( other );
       }
@@ -202,9 +204,9 @@ namespace Dune
       typedef PetscManagedDofStorage< DiscreteFunctionSpaceType, BlockMapperType > PetscManagedDofStorageType;
 
       // allocate managed dof storage
-      DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
+      DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space, const int backend )
       {
-        memObject_.reset( new PetscManagedDofStorageType( space, space.blockMapper() ) );
+        memObject_.reset( new PetscManagedDofStorageType( space, space.blockMapper(), backend ) );
 
         return memObject_->getArray();
       }

@@ -15,6 +15,9 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/common/staticlistofint.hh>
+
+
 #if HAVE_PETSC
 
   /*
@@ -473,10 +476,108 @@ namespace Dune
     inline static void VecSetBlockSize ( Vec x, PetscInt bs ) { ErrorCheck( ::VecSetBlockSize( x, bs ) ); }
     inline static void VecSetFromOptions ( Vec vec ) { ErrorCheck( ::VecSetFromOptions( vec ) ); }
     inline static void VecSetType ( Vec vec, const VecType method ) { ErrorCheck( ::VecSetType( vec, method ) ); }
+    inline static void VecGetType ( Vec vec, VecType* method ) { ErrorCheck( ::VecGetType( vec, method ) ); }
     inline static void VecSetSizes ( Vec v, PetscInt n, PetscInt N ) { ErrorCheck( ::VecSetSizes( v, n, N ) ); }
     inline static void VecSetValue ( Vec v, int row, PetscScalar value, InsertMode mode ) { ErrorCheck( ::VecSetValue( v, row, value, mode ) ); }
     inline static void VecSetValuesBlocked ( Vec v, PetscInt ni, const PetscInt xi[], const PetscScalar values[], InsertMode mode ) { ErrorCheck( ::VecSetValuesBlocked( v, ni, xi, values, mode ) ); }
     inline static void VecView ( Vec vec, PetscViewer viewer ) { ErrorCheck( ::VecView( vec, viewer ) ); }
+
+    /* ========================================
+     * class Backend
+     *
+     * This class defined different backends for Petsc Matrices and Vectors.
+     * The backend id allows to convert back and forth to Petsc VecType and
+     * MatType.
+     */
+    class Backend
+    {
+    public:
+      LIST_OF_INT_FORWARDED(BT,
+        block    = 0, // MATSEQBAIJ and MATMPIBAIJ as well as MATBAIJ                | VECSEQ and VECMPI as well as VECSTANDARD
+        scalar   = 1, // MATSEQAIJ and MATMPIAIJ as well as MATAIJ                   | VECSEQ and VECMPI as well as VECSTANDARD
+        kokkos   = 2, // MATSEQAIJKOKKOS and MATMPIAIJKOKKOS as well as MATAIJKOKKOS | VECSEQKOKKOS and VECMPIKOKKOS as well as VECKOKKOS
+        cuda     = 3  // MATSEQAIJCUDA and MATMPIAIJCUDA as well as MATAIJCUDA       | VECSEQCUDA and VECMPICUDA as well as VECCUDA
+      );
+
+      //! default vec/mat backend is block matrices with standard vectors
+      static const int defaultBackend = block;
+
+      //! convert id to Petsc VecType
+      static VecType toVecType( const int id )
+      {
+        switch (id)
+        {
+          case kokkos:
+            return VECKOKKOS;
+          case cuda:
+            return VECCUDA;
+          default: // black and scalar
+            return VECSTANDARD;
+        }
+      }
+
+      //! convert id to Petsc MatType
+      static MatType toMatType( const int id )
+      {
+        switch (id)
+        {
+          case block:
+            return MATBAIJ;
+          case scalar:
+            return MATAIJ;
+          case kokkos:
+            return MATAIJKOKKOS;
+          case cuda:
+            return MATSELLCUDA;
+
+          default:
+            return MATBAIJ;
+        }
+      }
+
+      //! convert Petsc VecType to id
+      static int toVecId( VecType vectype )
+      {
+        std::string t( vectype );
+        std::size_t notFound = (-1);
+        if ( t.find("kokkos") != notFound )
+          return kokkos;
+        else if ( t.find("cuda") != notFound )
+          return cuda;
+        else
+          return block;
+      }
+
+      //! convert Petsc MatType to id
+      static int toMatId( MatType mattype )
+      {
+        std::string t( mattype );
+        const std::size_t notFound = (-1);
+        if ( t.find("kokkos") != notFound )
+          return kokkos;
+        else if ( t.find("cuda") != notFound )
+          return cuda;
+        else if ( t.find("baij") != notFound )
+          return block;
+        else
+          return scalar;
+      }
+
+      //! return vector with backend names for Parameter container
+      static const std::vector< std::string >& availableBackend()
+      {
+        static std::vector< std::string > mthds;
+        if ( mthds.empty() )
+        {
+          for ( int i=0; i<=cuda; ++i )
+          {
+            mthds.push_back( BT::to_string( i ) );
+          }
+        }
+        return mthds;
+      }
+    };
+
 
   } // namespace Petsc
 
