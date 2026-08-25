@@ -97,11 +97,20 @@ namespace Dune
         return factorType;
       }
 
+      [[deprecated]]
       bool viennaCL () const {
         return parameter().getValue< bool > ( keyPrefix() + "petsc.viennacl", false );
       }
+
+      [[deprecated]]
       bool blockedMode () const {
         return parameter().getValue< bool > ( keyPrefix() + "petsc.blockedmode", true );
+      }
+
+      int backend () const
+      {
+        using Dune::Petsc::Backend;
+        return parameter_.getEnum( keyPrefix() + "petsc.backend", Backend::availableBackend(), Backend::defaultBackend );
       }
     };
 
@@ -180,8 +189,7 @@ namespace Dune
           rangeMappers_( rangeSpace ),
           localMatrixStack_( *this ),
           status_(statNothing),
-          viennaCL_( param.viennaCL() ),
-          blockedMode_( blockedMatrix && (!viennaCL_) && param.blockedMode() )
+          backend_( param.backend() )
       {}
 
       PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
@@ -241,9 +249,9 @@ namespace Dune
       void apply ( const DF &arg, RF &dest ) const
       {
         if( ! petscArg_ )
-          petscArg_.reset( new PetscDomainFunctionType( "PetscOp-arg", domainSpace() ) );
+          petscArg_.reset( new PetscDomainFunctionType( "PetscOp-arg", domainSpace(), backend() ) );
         if( ! petscDest_ )
-          petscDest_.reset( new PetscRangeFunctionType( "PetscOp-arg", rangeSpace() ) );
+          petscDest_.reset( new PetscRangeFunctionType( "PetscOp-dest", rangeSpace(), backend() ) );
 
         petscArg_->assign( arg );
         apply( *petscArg_, *petscDest_ );
@@ -303,21 +311,14 @@ namespace Dune
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, globalRows, globalCols );
 
           PetscInt bs = 1;
-          if( viennaCL_ )
-          {
-            ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJVIENNACL );
-          }
-          else if( blockedMode_ )
+          ::Dune::Petsc::MatSetType( petscMatrix_, ::Dune::Petsc::Backend::toMatType( backend_ ) );
+          if( blockedMode() )
           {
             bs = domainLocalBlockSize ;
-            ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
             // set block size
             ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
           }
-          else
-          {
-            ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
-          }
+
           /*
           std::cout << "Matrix dimension with bs=" << bs << "   "
             << localRows << "x" << localCols << "   "
@@ -476,7 +477,10 @@ namespace Dune
         }
       }
 
-      bool blockedMode() const { return blockedMode_; }
+      bool blockedMode() const { return backend() == Dune::Petsc::Backend::block; }
+
+      //! return type of backend
+      const int backend () const { return backend_; }
 
     protected:
       template< class PetscOp >
@@ -489,7 +493,7 @@ namespace Dune
         assert( localCol < localCols );
 #endif
 
-        if( blockedMode_ )
+        if( blockedMode() )
         {
           // convert process local indices to global indices
           const PetscInt row = rangeMappers_.parallelIndex( localRow );
@@ -601,7 +605,7 @@ namespace Dune
         std::vector< PetscInt >& r = rcTemp.first;
         std::vector< PetscInt >& c = rcTemp.second;
 
-        if( blockedMode_ )
+        if( blockedMode() )
         {
           setupIndicesBlocked( rangeMappers_,  rangeEntity,  r );
           setupIndicesBlocked( domainMappers_, domainEntity, c );
@@ -803,8 +807,7 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
       mutable Status status_;
 
-      const bool viennaCL_;
-      const bool blockedMode_;
+      const int backend_;
 
       mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
       mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;

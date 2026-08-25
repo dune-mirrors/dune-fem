@@ -13,8 +13,10 @@
 #include <dune/fem/storage/envelope.hh>
 
 #include <dune/fem/common/hybrid.hh>
+#include <dune/fem/common/staticlistofint.hh>
 
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
+
 
 #if HAVE_PETSC
 
@@ -66,9 +68,10 @@ namespace Dune
 
       //! Constructor of ManagedDofStorageImpl, only to call from DofManager
       PetscManagedDofStorage( const DiscreteFunctionSpace& space,
-                              const MapperType& mapper )
+                              const MapperType& mapper,
+                              const int backend )
         : BaseType( space.grid(), mapper, myArray_ ),
-          myArray_( space )
+          myArray_( space, backend )
       {
       }
 
@@ -100,6 +103,7 @@ namespace Dune
     };
 
 
+
     // PetscVector
     // -----------
 
@@ -122,6 +126,7 @@ namespace Dune
       friend class PetscDofBlock< const ThisType >;
       friend class PetscDofProxy< ThisType >;
       friend class PetscDofProxy< const ThisType >;
+
     public:
       typedef PetscScalar  value_type ;
       typedef Vec  DofContainerType;
@@ -154,15 +159,18 @@ namespace Dune
 
       // note that Vec is a pointer type so no deep copy is made
       PetscVector ( const DFSpace& space, Vec vec )
-        : mappers_( space ), vec_(vec), owner_(false)
+        : mappers_( space ), vec_(vec),
+          backend_( getBackend( vec ) ), // determine backend from given PetscVec
+          owner_(false)
       {
         static_assert( DefaultCommunicationOperationType::value == DFCommunicationOperation::copy ||
                        DefaultCommunicationOperationType::value == DFCommunicationOperation::add,
                        "only copy/add are available communication operations for petsc");
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
       }
-      PetscVector ( const DFSpace& space )
-        : mappers_( space ), owner_(true)
+
+      PetscVector ( const DFSpace& space, const int backend = ::Dune::Petsc::Backend::defaultBackend )
+        : mappers_( space ), backend_( backend ), owner_(true)
       {
         static_assert( DefaultCommunicationOperationType::value == DFCommunicationOperation::copy ||
                        DefaultCommunicationOperationType::value == DFCommunicationOperation::add,
@@ -173,7 +181,7 @@ namespace Dune
 
       // TODO: think about sequence overflows...
       PetscVector ( const ThisType &other )
-        : mappers_( other.mappers_ ), owner_(true)
+        : mappers_( other.mappers_ ), backend_( other.backend_ ), owner_(true)
       {
         // init vector
         init();
@@ -227,6 +235,9 @@ namespace Dune
         communicateIfNecessary();
         return &vec_;
       }
+
+      // return type of petsc backend (see petsccommon.hh)
+      const int backend() const { return backend_; }
 
       // accessors for the underlying PETSc vectors
       Vec& array ()
@@ -554,8 +565,16 @@ namespace Dune
       }
 
     protected:
+      const int getBackend( Vec vec ) const
+      {
+        VecType vt;
+        ::Dune::Petsc::VecGetType( vec, &vt );
+        // convert Petsc VecType to our id
+        return ::Dune::Petsc::Backend::toVecId( vt );
+      }
+
       // setup vector according to mapping sizes
-      void init()
+      void init ()
       {
         mappers_.update();
 
@@ -572,6 +591,7 @@ namespace Dune
           ::Dune::Petsc::VecCreateGhost( comm, localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
         else
           ::Dune::Petsc::VecCreateGhostBlock( comm, blockSize, localSize, globalSize, numGhostBlocks, ghostBlocks, &vec_ );
+        ::Dune::Petsc::VecSetType( vec_, ::Dune::Petsc::Backend::toVecType( backend_ ) );
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
       }
 
@@ -631,6 +651,7 @@ namespace Dune
       MappersType mappers_;
       Vec vec_;
       Vec ghostedVec_;
+      const int backend_;
 
       mutable unsigned long memorySequence_ = 0;  // represents the state of the PETSc vec in memory
       mutable unsigned long sequence_ = 0;        // represents the modifications to the PETSc vec
