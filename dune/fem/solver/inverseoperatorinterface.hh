@@ -47,6 +47,7 @@ namespace Dune {
       typedef typename BaseType :: RangeFunctionType  RangeFunctionType;
 
       typedef typename Traits :: SolverDiscreteFunctionType   SolverDiscreteFunctionType;
+      typedef typename SolverDiscreteFunctionType :: DiscreteFunctionSpaceType SolverDiscreteFunctionSpaceType;
       typedef typename Traits :: OperatorType                 OperatorType;
       typedef typename Traits :: AssembledOperatorType        AssembledOperatorType;
       typedef typename Traits :: PreconditionerType           PreconditionerType;
@@ -191,6 +192,22 @@ namespace Dune {
         iterations_ = asImp().apply( u, w );
       }
 
+      // method to create temporary discrete functions, can be overloaded in derived class
+      // this method is overloaded in PetscInverseOperator
+      virtual void allocateMemory( const SolverDiscreteFunctionSpaceType& uSpace,
+                                   const SolverDiscreteFunctionSpaceType& wSpace ) const
+      {
+        if( ! rhs_ )
+        {
+          rhs_.reset( new SolverDiscreteFunctionType( "InvOp::rhs", uSpace ) );
+        }
+
+        if( ! x_ )
+        {
+          x_.reset( new SolverDiscreteFunctionType( "InvOp::x", wSpace ) );
+        }
+      }
+
       template <class DImpl, class RImpl>
       void opApply( const DiscreteFunctionInterface< DImpl >&u,
                     DiscreteFunctionInterface< RImpl >& w ) const
@@ -199,15 +216,8 @@ namespace Dune {
           DUNE_THROW(Dune::NotImplemented, "InverseOperator::operator() for matrix free operators only makes sense" <<
                                            " for fixed types of domain and range functions to avoid excessive copying!");
 
-        if( ! rhs_ )
-        {
-          rhs_.reset( new SolverDiscreteFunctionType( "InvOp::rhs", u.space() ) );
-        }
-
-        if( ! x_ )
-        {
-          x_.reset( new SolverDiscreteFunctionType( "InvOp::x", w.space() ) );
-        }
+        // create temporary dfs, this can be overloaded in derived class
+        allocateMemory( u.space(), w.space() );
 
         // copy right hand side
         rhs_->assign( u );
