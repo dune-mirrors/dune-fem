@@ -40,6 +40,10 @@ else: # download tutorial
 
     # clone repo without history
     git clone --quiet https://gitlab.dune-project.org/dune-fem/dune-fempy.git $TMPNAME
+    if [ $? -ne 0 ]; then
+      rm -rf $TMPNAME
+      git clone --quiet https://github.com/dune-project/dune-fempy.git $TMPNAME
+    fi
     cd $TMPNAME
     git checkout --quiet {_docHash}
 
