@@ -3,6 +3,8 @@ from dune.generator import algorithm, path
 import io
 from dune.common import comm
 
+from ._boundaryfilter import boundaryFilter
+
 class EmptyResult:
     def __init__(self, obj):
         self.obj = obj
