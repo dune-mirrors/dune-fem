@@ -23,21 +23,21 @@ def integrate(grid,expression,order=None):
 
 # used to convert python functions with (x) arguments into gridfunctions -
 # this is not yet handles by the 'gridFunction' function
-def _globalFunction(gridView, name, order, value):
-    gf = gridView.function(value,name=name,order=order)
+def _globalFunction(gridView, name, order, value, **kwargs):
+    gf = gridView.function(value,name=name,order=order, **kwargs)
     return dune.ufl.GridFunction(gf)
-def globalFunction(gridView, name, order, value):
+def globalFunction(gridView, name, order, value, **kwargs):
     deprecated("dune.fem.function.globalFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
-    return _globalFunction(gridView, name, order, value)
+    return _globalFunction(gridView, name, order, value, **kwargs)
 
 # used to convert python functions with (e,x) arguments into gridfunctions -
 # this is not yet handles by the 'gridFunction' function
-def _localFunction(gridView, name, order, value):
-    gf = gridView.function(value,name=name,order=order)
+def _localFunction(gridView, name, order, value, **kwargs):
+    gf = gridView.function(value,name=name,order=order, **kwargs)
     return dune.ufl.GridFunction(gf)
-def localFunction(gridView, name, order, value):
+def localFunction(gridView, name, order, value, **kwargs):
     deprecated("dune.fem.function.localFunction is deprecated use dune.fem.function.gridFunction instead. New signature is (expr, gridView, order,order)")
-    return _localFunction(gridView, name, order, value)
+    return _localFunction(gridView, name, order, value, **kwargs)
 
 def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, view=None, **kwargs):
     # first check if 'expr' is already a grid function wrapper
@@ -65,11 +65,11 @@ def gridFunction(expr=None,gridView=None,*,name=None,order=None, fctName=None, v
     if isinstance(expr, types.FunctionType):
         gl = len(inspect.getfullargspec(expr)[0])
         if gl == 1:   # global function
-            func = _globalFunction(gridView, name, order, expr)
+            func = _globalFunction(gridView, name, order, expr, **kwargs)
         elif gl == 2: # local function
-            func = _localFunction(gridView, name, order, expr)
+            func = _localFunction(gridView, name, order, expr, **kwargs)
         elif gl == 3: # local function with self argument (i.e. from @gridFunction)
-            func = _localFunction(gridView, name, order, lambda en,x: expr(en,x))
+            func = _localFunction(gridView, name, order, lambda en,x: expr(en,x), **kwargs)
         return func
     # next we check for a cpp code snipett
     if isinstance(expr,str): # this is a cppFunction
