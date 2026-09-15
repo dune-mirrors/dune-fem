@@ -287,7 +287,7 @@ namespace Dune
         {
           std::stringstream sstr;
           if ( value.find("help") == std::string::npos )
-            sstr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
+            sstr << std::endl << "Parameter '" << key << "' with value '" << value << "' invalid." << std::endl;
           else
             sstr << "Help for parameter '" << key << "':" << std::endl;
 
