@@ -126,7 +126,7 @@ namespace Dune
     /*
      * This should be called just before the termination of the program.
      */
-    inline void finalize ()
+    inline bool finalize ()
     {
       // TODO: test here if we are using our own handler
       ::PetscPopErrorHandler();
@@ -137,6 +137,8 @@ namespace Dune
       {
         ::PetscFinalize();
       }
+      ErrorCheck( ::PetscFinalized( &finalized ) );
+      return finalized;
     }
 
     template <class Comm>
@@ -304,6 +306,11 @@ namespace Dune
       }
       // the following seems not to work for block matrix
       ErrorCheck( ::MatSetOption(mat, MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) );
+
+      // when using MatZeroRows only set entries to zero
+      // and do not change the sparsity pattern
+      ErrorCheck( ::MatSetOption(mat, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE) );
+
       // the following only works for block matrix
       // but should be used with MAT_NEW_NONZERO_LOCATIONS...
       // ErrorCheck( ::MatSetOption(mat, MAT_USE_HASH_TABLE,PETSC_FALSE) );
