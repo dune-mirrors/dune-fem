@@ -7,6 +7,8 @@
 #include <list>
 #include <map>
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/fem/storage/singleton.hh>
 
 #include <dune/fempy/grid/adaptation.hh>
@@ -42,6 +44,11 @@ namespace Dune
     template< class Grid >
     inline static GridAdaptation< Grid > &gridAdaptation ( Grid &grid )
     {
+      if constexpr ( ! Dune::Fem::Capabilities::isLocallyAdaptive< Grid > :: v )
+      {
+        DUNE_THROW(NotImplemented,"Chosen grid is not locally adaptive, therefore cannot adapt with prolongation/restriction!");
+      }
+
       auto result = detail::gridAdaptationInstances< Grid >().insert( std::make_pair( &grid, nullptr ) );
       auto pos = result.first;
       if( result.second )
