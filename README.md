@@ -98,7 +98,7 @@ A detailed description of DUNE-FEM can be found in
  [3]: http://www.mcs.anl.gov/petsc/
  [5]: http://lists.dune-project.org/mailman/listinfo/dune-fem
  [6]: http://gitlab.dune-project.org/dune-fem/dune-fem/issues
- [7]: LICENSE.md
+ [7]: https://gitlab.dune-project.org/dune-fem/dune-fem/LICENSE.md
  [8]: http://gitlab.dune-project.org/extensions/dune-alugrid
  [9]: http://gitlab.dune-project.org/extensions/dune-spgrid
  [10]: http://gitlab.dune-project.org/core/dune-common
