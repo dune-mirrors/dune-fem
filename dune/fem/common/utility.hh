@@ -207,6 +207,18 @@ namespace Dune
       public:
         static constexpr int value = SelectValue< SFS, CheckCodegenSFS< SFS >::value >::value;
       };
+
+#define GENERATE_MEMBER_CHECK(MemberType)\
+  template <class T> \
+  class hasMember_##MemberType {\
+    template <class U>\
+    static std::true_type foo(typename U::MemberType *);\
+    template <class U>\
+    static std::false_type foo(...);\
+public:\
+    static const bool value = decltype(foo<T>(nullptr))::value;\
+};
+
     } // end namespace detail
   } // end namespace Fem
 
