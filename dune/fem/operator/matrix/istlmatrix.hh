@@ -801,6 +801,9 @@ namespace Dune
       const bool threading_ ;
 
       ISTLSolverParameter param_;
+
+      mutable std::unique_ptr< ColumnDiscreteFunctionType > istlArg_;
+      mutable std::unique_ptr< RowDiscreteFunctionType > istlDest_;
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
@@ -1048,9 +1051,19 @@ namespace Dune
       template <class CDF, class RDF>
       void apply(const CDF& arg, RDF& dest) const
       {
-        // this can happen when different storages are used for discrete
-        // function and matrix/solver objects
-        DUNE_THROW(NotImplemented,"ISTLMatrixObj::apply called for DiscreteFunctions not specified in the template list");
+        if( ! istlArg_ )
+        {
+          istlArg_.reset( new ColumnDiscreteFunctionType( "ISTLMatrixObj::istlArg_", domainSpace() ) );
+        }
+
+        if( ! istlDest_ )
+        {
+          istlDest_.reset( new RowDiscreteFunctionType( "ISTLMatrixObj::istlDest_", rangeSpace() ) );
+        }
+
+        istlArg_->assign( arg );
+        apply( *istlArg_, *istlDest_ );
+        dest.assign( *istlDest_ );
       }
 
       //! resort row numbering in matrix to have ascending numbering
