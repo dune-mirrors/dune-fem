@@ -200,10 +200,12 @@ namespace Dune
           solver.apply( x, rhs, result );
           return ;
         }
+        /*
         else if( method_ == SolverParameter::superlu )
         {
           callSuperLU( op, rhs, x, result );
         }
+        */
         else
         {
           DUNE_THROW(NotImplemented,"ISTLSolverAdapter::operator(): wrong method solver identifier" << method_ );

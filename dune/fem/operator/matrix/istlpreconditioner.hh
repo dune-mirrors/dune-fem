@@ -141,8 +141,8 @@ namespace Dune
 
         const auto nextRow = [&i]()
         {
-          // increment/decrement iterator
-          if constexpr ( forward )
+          // increment/decrement iterator (for new iterator we only need ++
+          if constexpr ( forward or requires{ i.isNewIterator();} )
             ++i;
           else
             --i;
@@ -837,6 +837,7 @@ namespace Dune
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
                                          verbose);
         }
+#ifndef USE_IBCRS_MATRIX
         // ILDL
         else if(preconditioning == SolverParameter::ildl)
         {
@@ -846,6 +847,7 @@ namespace Dune
           PreConType preconAdapter( matrix, verbose, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
+#endif
         else
         {
           preConErrorMsg(preconditioning);
