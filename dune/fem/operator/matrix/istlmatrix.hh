@@ -3,6 +3,8 @@
 
 #if HAVE_DUNE_ISTL
 
+#define USE_IBCRS_MATRIX
+
 //- system includes
 #include <vector>
 #include <iostream>
@@ -19,6 +21,7 @@
 //- Dune istl includes
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/ibcrsmatrix.hh>
 #include <dune/istl/preconditioners.hh>
 
 //- Dune fem includes
@@ -35,6 +38,7 @@
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 #include <dune/fem/operator/matrix/istlpreconditioner.hh>
 #include <dune/fem/operator/matrix/functor.hh>
+
 
 namespace Dune
 {
@@ -56,14 +60,22 @@ namespace Dune
     // --ISTLMatrixHandle
     //////////////////////////////////////////////////////
     template <class LittleBlockType, class RowDiscreteFunctionImp, class ColDiscreteFunctionImp = RowDiscreteFunctionImp>
+#ifdef USE_IBCRS_MATRIX
+    class ImprovedBCRSMatrix : public IBCRSMatrix<LittleBlockType>
+#else
     class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType>
+#endif
     {
         friend struct MatrixDimension<ImprovedBCRSMatrix>;
       public:
         typedef RowDiscreteFunctionImp RowDiscreteFunctionType;
         typedef ColDiscreteFunctionImp ColDiscreteFunctionType;
 
+#ifdef USE_IBCRS_MATRIX
+        typedef IBCRSMatrix<LittleBlockType> BaseType;
+#else
         typedef BCRSMatrix<LittleBlockType> BaseType;
+#endif
         //! type of the base matrix
         typedef BaseType MatrixBaseType;
         typedef typename BaseType :: RowIterator RowIteratorType ;
@@ -113,6 +125,40 @@ namespace Dune
 
         typedef typename BaseType :: BuildMode BuildMode ;
 
+#ifdef USE_IBCRS_MATRIX
+        struct SlicedIterator : public RowIterator
+        {
+          template <class block_iter_type, class pattern_type>
+          SlicedIterator( block_iter_type block_iter, pattern_type const* pattern_ptr, size_type row)
+            : RowIterator( block_iter, pattern_ptr, row )
+          {}
+        };
+
+        struct ReversedIterator : public std::reverse_iterator<ConstRowIterator>
+        {
+          typedef std::reverse_iterator<ConstRowIterator> IterBaseType;
+          ReversedIterator( const ConstRowIterator& it )
+            : IterBaseType( it )
+          {}
+
+          ReversedIterator( ConstRowIterator&& it )
+            : IterBaseType( std::move(it) )
+          {}
+
+          //ReversedIterator& operator --(int) { return this->operator++(int(0)); }
+
+          // provide reversed index method
+          size_type index() const { return std::prev(this->base()).index(); }
+
+          void isNewIterator() const {}
+        };
+
+        ReversedIterator beforeBegin() const { return ReversedIterator( this->begin() ); }
+        ReversedIterator beforeEnd() const { return ReversedIterator( this->end() ); }
+#else
+        using SlicedConstIterator = ConstRowIterator;
+#endif
+
       public:
         //! constructor used by ISTLMatrixObject to build matrix in implicit mode
         ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nnz, double overflowFraction) :
@@ -134,15 +180,26 @@ namespace Dune
           BaseType(org)
         {}
 
-        ConstRowIterator slicedBegin( const size_type row ) const
+        RowIterator slicedRowIt( size_type row )
         {
-          return ConstRowIterator( this->r, row );
+#ifdef USE_IBCRS_MATRIX
+          return RowIterator( SlicedIterator( this->block_iter_, this->pattern_ptr_, row ) );
+#else
+          return RowIterator( this->r, row );
+#endif
         }
 
-        ConstRowIterator slicedEnd( const size_type row ) const
+        ConstRowIterator slicedRowIt( size_type row ) const
         {
+#ifdef USE_IBCRS_MATRIX
+          return ConstRowIterator( SlicedIterator( this->block_iter_, this->pattern_ptr_, row ) );
+#else
           return ConstRowIterator( this->r, row );
+#endif
         }
+
+        ConstRowIterator slicedBegin( size_type row ) const { return slicedRowIt( row ); }
+        ConstRowIterator slicedEnd( size_type row ) const { return slicedRowIt( row ); }
 
         std::pair< size_type, size_type > sliceBeginEnd( const size_type thread, const size_type numThreads ) const
         {
@@ -238,9 +295,13 @@ namespace Dune
         //! clear Matrix, i.e. set all entries to 0
         void clear()
         {
-          for (auto& row : *this)
-            for (auto& entry : row)
-              entry = 0;
+          const auto endrow = this->end();
+          for (auto row = this->begin(); row !=endrow; ++row)
+          {
+            const auto colend = (*row).end();
+            for (auto col = (*row).begin(); col != colend; ++col )
+              *col = 0;
+          }
         }
 
         //! clear Matrix, i.e. set all entries to 0
@@ -250,9 +311,10 @@ namespace Dune
           for (int i = 0; i < idBlock.rows; ++i)
               idBlock[i][i] = 1.0;
 
-          auto& matRow = (*this)[ row ];
-          auto colIt = matRow.begin();
-          const auto& colEndIt = matRow.end();
+          auto matRow = slicedRowIt( row );
+          assert( matRow != this->end() );
+          auto colIt = (*matRow).begin();
+          const auto& colEndIt = (*matRow).end();
           for (; colIt != colEndIt; ++colIt)
           {
               if( colIt.index() == row )
@@ -891,9 +953,11 @@ namespace Dune
         // build mode of the matrix is implicit and the
         // matrix is currently being build
 
+#ifndef USE_IBCRS_MATRIX
         if( matrix().buildMode() == MatrixType::implicit && matrix().buildStage() == MatrixType::building )
           return true;
         else
+#endif
           return false;
       }
 
@@ -933,12 +997,14 @@ namespace Dune
         {
           const std::size_t blockRow( r/(LittleBlockType :: rows) );
           const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
-          auto& row = matrix()[blockRow];
-          const auto endcol = row.end();
+
+          auto row = matrix().slicedRowIt( blockRow );
+          assert( row != matrix().end() );
+          const auto endcol = (*row).end();
 #ifndef NDEBUG
           bool set = false;
 #endif
-          for (auto col=row.begin(); col!=endcol; ++col)
+          for (auto col=(*row).begin(); col!=endcol; ++col)
           {
             for (auto& entry : (*col)[localRowIdx])
               entry = 0;
@@ -965,7 +1031,7 @@ namespace Dune
       //! default reserve method setting implicit build mode
       void reserve()
       {
-        reserve( Stencil<DomainSpaceType,RangeSpaceType>(domainSpace_, rangeSpace_), true );
+        reserve( Stencil<DomainSpaceType,RangeSpaceType>(domainSpace_, rangeSpace_), false );
       }
 
       //! reserve memory for assemble based on the provided stencil
@@ -977,7 +1043,7 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil, const bool proposeImplicit = true )
+      void reserve(const Stencil &stencil, const bool proposeImplicit = false )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
@@ -985,7 +1051,13 @@ namespace Dune
           removeObj();
 
           // do not use implicit build mode when multi threading is enabled
-          const bool implicit = proposeImplicit && MPIManager::numThreads() == 1;
+          const bool implicit =
+#ifdef USE_IBCRS_MATRIX
+            false;
+#else
+            proposeImplicit && MPIManager::numThreads() == 1;
+#endif
+
           if( implicit )
           {
             auto nnz = stencil.maxNonZerosEstimate();
@@ -1168,6 +1240,7 @@ namespace Dune
                                 Operation& operation )
       {
         typedef typename MatrixType::size_type Index;
+#ifndef USE_IBCRS_MATRIX
         if( implicitModeActive() )
         {
           auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
@@ -1184,6 +1257,7 @@ namespace Dune
           rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
         }
         else
+#endif
         {
           auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
           {
