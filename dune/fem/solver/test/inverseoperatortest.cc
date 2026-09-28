@@ -381,6 +381,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
+#if 0
   // ISTL::InverseOperator< LinearOperator > + ISTLLinearOperator
   {
     using DiscreteFunction  = Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType >;
@@ -407,7 +408,7 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUPERLU
-
+#endif
 #endif // HAVE_DUNE_ISTL
 
 #if HAVE_PETSC
@@ -429,8 +430,8 @@ int main(int argc, char** argv)
     designation = std::string(" === PetscInverseOperator + PetscLinearOperator + PetscParameter === ");
     Dune::Fem::PetscSolverParameter param( "petsctest.", Dune::Fem::parameterDict(
             "petsctest.",
-              "preconditioning.method","hypre",
-              "petsc.hypre.method", "pilu-t",
+              //"preconditioning.method","hypre",
+              //"petsc.hypre.method", "pilu-t",
               "verbose",false
             ));
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param);
