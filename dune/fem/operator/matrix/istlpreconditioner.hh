@@ -141,8 +141,8 @@ namespace Dune
 
         const auto nextRow = [&i]()
         {
-          // increment/decrement iterator
-          if constexpr ( forward )
+          // increment/decrement iterator (for new iterator we only need ++
+          if constexpr ( forward or requires{ i.isNewIterator();} )
             ++i;
           else
             --i;
@@ -268,6 +268,9 @@ namespace Dune
           std::string name = SolverParameter::preconditionMethodTable( method );
           std::cout << "Using ParallelIterative(" << name << "): it = " << n << ", w = "<< relax << std::endl;
         }
+
+        if( _n <= 0 )
+          DUNE_THROW(InvalidStateException,"ParallelIterative: number of iterations `" << _n << "` is invalid!" );
 
         Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
 
@@ -837,6 +840,7 @@ namespace Dune
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations,
                                          verbose);
         }
+#ifndef USE_IBCRS_MATRIX
         // ILDL
         else if(preconditioning == SolverParameter::ildl)
         {
@@ -846,6 +850,7 @@ namespace Dune
           PreConType preconAdapter( matrix, verbose, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
           return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
+#endif
         else
         {
           preConErrorMsg(preconditioning);

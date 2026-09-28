@@ -202,7 +202,11 @@ namespace Dune
         }
         else if( method_ == SolverParameter::superlu )
         {
+#ifndef USE_IBCRS_MATRIX
           callSuperLU( op, rhs, x, result );
+#else
+          DUNE_THROW(NotImplemented,"SuperLU not supported for Experimental::BCRSMatrix");
+#endif
         }
         else
         {
