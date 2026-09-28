@@ -356,9 +356,8 @@ namespace Dune
 
             const row_type& row = matrix_[i];
             // multiply with row
-            typedef typename MatrixType :: ConstColIterator ConstColIterator;
-            ConstColIterator endj = row.end();
-            for (ConstColIterator j = row.begin(); j!=endj; ++j)
+            auto endj = row.end();
+            for (auto j = row.begin(); j!=endj; ++j)
             {
               (*j).umv(x[j.index()], tmp);
             }
