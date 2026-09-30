@@ -16,19 +16,11 @@ namespace Dune
     template< class Grid >
     struct BoundaryIdProvider
     {
-      template <class T, class = int>
-      struct hasBoundaryId : std::false_type {};
-
-      template <class T>
-      struct hasBoundaryId<T, decltype(std::declval<T>().impl().boundaryId())> : std::true_type {};
-
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )
       {
-        static constexpr bool hasBndId = hasBoundaryId< Intersection >::value;
-
         // for all grids that have the method, call it on the implementation
-        if constexpr ( hasBndId )
+        if constexpr ( requires{ intersection.impl().boundaryId(); })
         {
           return intersection.impl().boundaryId();
         }
