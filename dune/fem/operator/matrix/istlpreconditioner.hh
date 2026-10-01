@@ -269,6 +269,9 @@ namespace Dune
           std::cout << "Using ParallelIterative(" << name << "): it = " << n << ", w = "<< relax << std::endl;
         }
 
+        if( _n <= 0 )
+          DUNE_THROW(InvalidStateException,"ParallelIterative: number of iterations `" << _n << "` is invalid!" );
+
         Dune::CheckIfDiagonalPresent<MatrixType,l>::check(_A_);
 
         const auto& space = mObj_.domainSpace();
