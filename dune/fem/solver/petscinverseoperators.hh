@@ -484,9 +484,9 @@ namespace Dune
             }
           case -4: // PetscPrec::pcgamg:
             // requires MATRIX_AIJ, i.e. not blocking of entries
-            if( parameter.blockedMode() )
+            if( assembledOperator_->backend() == Dune::Petsc::Backend::block )
             {
-              DUNE_THROW(NotImplemented,"PetscInverseOperator: 'pcgamg' requires 'aij' matrix. Set 'petsc.blockedmode' to false!");
+              DUNE_THROW(NotImplemented,"PetscInverseOperator: 'pcgamg' requires 'aij' matrix. Set 'petsc.backend' to 'scalar'!");
             }
             ::Dune::Petsc::PCSetType( pc, PCGAMG );
             break;
