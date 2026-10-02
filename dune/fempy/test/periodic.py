@@ -79,8 +79,8 @@ gridView = hostGridView(domain, dimgrid=2)
 # 1. in dune-grid to avoid dgfGF reader instantiation
 # 2. issue in SFC in dune-alugrid, setting sfc=None in the hostgrid does not
 #             help since the newly created grid in dune-periodic is the issue.
-from dune.periodic import flatPeriodicGrid as pGrid
-gridView = pGrid(gridView, (1,0))
+# from dune.periodic import flatPeriodicGrid as pGrid
+# gridView = pGrid(gridView, (1,0))
 
 gridView = adaptiveGridView( gridView )
 space = solutionSpace(gridView, order=1)
@@ -98,7 +98,7 @@ for i in range(levels):
     print('\t | u_h - u | =', '{:0.5e}'.format(errors[0]))
     print('\t | grad(uh - u) | =', '{:0.5e}'.format(errors[1]))
     if i < levels-1:
-        if True: # use dune-fem's global refine and check prolongation
+        if False: # use dune-fem's global refine and check prolongation
             print("Before grid:",gridView.size(2),gridView.hierarchicalGrid.leafView.size(2))
             globalRefine(2,[uh])
             print("After grid:",gridView.size(2),gridView.hierarchicalGrid.leafView.size(2))
