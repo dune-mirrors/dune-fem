@@ -87,7 +87,7 @@ space = solutionSpace(gridView, order=1)
 x = SpatialCoordinate(space)
 # switching to cos here works fine due to Neumann zero boundary value
 # exact = cos(x[0]*pi/4)
-exact = sin(x[0]*pi/4)
+exact = cos(x[0]*pi/4)
 
 levels = 2
 for i in range(levels):
@@ -107,4 +107,4 @@ for i in range(levels):
             print('\t | grad(uh - u) | =', '{:0.5e}'.format(errors[1]))
             assert np.all(np.isclose(errors2,errors))
         else:
-            gridView.hierarchicalGrid.globalRefine(1)
+            gridView.hierarchicalGrid.globalRefine(2)
