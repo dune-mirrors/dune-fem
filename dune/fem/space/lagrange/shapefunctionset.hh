@@ -16,6 +16,13 @@
 #include "genericbasefunctions.hh"
 #include "genericlagrangepoints.hh"
 
+#if __GNUC__ >= 13
+// save diagnostic state
+#pragma GCC diagnostic push
+// turn off the specific warning, caused by code in line 216 (false positive).
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 /*
   @file
   @brief Shape function set for Lagrange space
@@ -357,5 +364,10 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#if __GNUC__ >= 13
+// turn the warnings back on
+#pragma GCC diagnostic pop
+#endif // #if defined(__GNUC__)
 
 #endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_SHAPEFUNCTIONSET_HH
