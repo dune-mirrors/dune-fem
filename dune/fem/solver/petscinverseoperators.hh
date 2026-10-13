@@ -199,6 +199,7 @@ namespace Dune
         // Create linear solver context
         ksp_.reset( new KSP() );
         const auto& comm = assembledOperator_->domainSpace().gridPart().comm();
+        const int backend = assembledOperator_->backend();
 
         ::Dune::Petsc::KSPCreate( comm, &ksp() );
 
@@ -362,22 +363,24 @@ namespace Dune
             break;
           case SolverParameter::sor:
             ::Dune::Petsc::PCSetType( pc, PCSOR );
-            if( std::abs( omega - 1.0 ) > 1e-14 )
+            if( (backend == Dune::Petsc::Backend::block) and (std::abs( omega - 1.0 ) > 1e-14) )
             {
               DUNE_THROW(InvalidStateException,"PETSc::SOR can only handle relaxation=1.0!");
             }
-            // this fails with a PETSc Error if omega is not 1.0
+            // this fails with a PETSc Error if omega is not 1.0 for block matrices
+            // src/mat/impls/baij/seq/baij.c:232
             ::Dune::Petsc::PCSORSetOmega( pc, omega );
             break;
           case SolverParameter::ssor:
             ::Dune::Petsc::PCSetType( pc, PCSOR );
             // set symmetric version
             ::Dune::Petsc::PCSORSetSymmetric( pc, SOR_LOCAL_SYMMETRIC_SWEEP );
-            if( std::abs( omega - 1.0 ) > 1e-14 )
+            if( (backend == Dune::Petsc::Backend::block) and (std::abs( omega - 1.0 ) > 1e-14) )
             {
               DUNE_THROW(InvalidStateException,"PETSc::SOR can only handle relaxation=1.0!");
             }
-            // this fails with a PETSc Error if omega is not 1.0
+            // this fails with a PETSc Error if omega is not 1.0 for block matrices
+            // src/mat/impls/baij/seq/baij.c:232
             ::Dune::Petsc::PCSORSetOmega( pc, omega );
             break;
           case SolverParameter::jacobi:
