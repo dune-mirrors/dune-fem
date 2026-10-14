@@ -137,7 +137,7 @@ def boundaryFunction( gridView ):
     #include <dune/fem/misc/boundaryidprovider.hh>
 
     template <class GridView, class Intersection>
-    int boundaryId( const GridView& gv, const Intersection& i )
+    int bndId( const GridView& gv, const Intersection& i )
     {
       return Dune::Fem::boundaryId( gv, i );
     }
@@ -153,7 +153,7 @@ def boundaryFunction( gridView ):
                 dist = np.linalg.norm( np.array(i.geometryInInside.toGlobal(i.geometryInInside.toLocal(x)))
                                       - np.array(x) )
                 if bndId is None:
-                    bndId = algorithm.load("boundaryId", io.StringIO(code), gridView, i )
+                    bndId = algorithm.load("bndId", io.StringIO(code), gridView, i )
                 if i.boundary:
                     id = bndId( gridView, i )
                 else:
