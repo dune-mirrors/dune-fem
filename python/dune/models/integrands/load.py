@@ -256,7 +256,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         uflExpr = [form]
         for dBC in dirichletBCs:
             arg.append(dBC.replace(coeff))
-            uflExpr += [dBC.ufl_value] # arg[-1].ufl_value]
+            uflExpr += [dBC.ufl_value, dBC.subDomain] # arg[-1].ufl_value]
 
         if modelPatch[1] is not None:
             uflExpr += modelPatch[1]
