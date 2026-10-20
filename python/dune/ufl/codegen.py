@@ -510,8 +510,11 @@ from dune.ufl import DuneCellDiameter as CellDiameter""")
             try:
                 coefficients |= set(list(expr.coefficients())+extract_constants_ext(expr))
             except:
-                cc = extract_coefficients(expr) + extract_constants_ext(expr)
-                coefficients |= set(cc)
+                try:
+                    cc = extract_coefficients(expr) + extract_constants_ext(expr)
+                    coefficients |= set(cc)
+                except ValueError: # this is raised if cc is for example an int so not a ufl expression
+                    pass
 
         extracedAll = False
         while not extracedAll:

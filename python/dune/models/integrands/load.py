@@ -256,7 +256,7 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         uflExpr = [form]
         for dBC in dirichletBCs:
             arg.append(dBC.replace(coeff))
-            uflExpr += [dBC.ufl_value] # arg[-1].ufl_value]
+            uflExpr += [dBC.ufl_value, dBC.subDomain] # arg[-1].ufl_value]
 
         if modelPatch[1] is not None:
             uflExpr += modelPatch[1]
@@ -269,6 +269,8 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
         integrands = Integrands(u,
                                 (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                                 uflExpr,virtualize)
+        print(integrands.coefficientList)
+        print( [k.name if hasattr(k,"name") else None for k in integrands.coefficientList] )
 
     if modelPatch[0] is not None:
         modelPatch[0](integrands)

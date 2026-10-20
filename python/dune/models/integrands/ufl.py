@@ -400,8 +400,8 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         defaultCode = []
         if len(codeDomains)>0:
             defaultCode.append(Declaration(Variable('int', 'domainId')))
-        # defaultCode.append(Declaration(Variable('auto', 'x'),
-        #     initializer=UnformattedExpression('auto','intersection.geometry().center()')))
+        defaultCode.append(Declaration(Variable('auto', 'x'),
+            initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
             block.append(generateDirichletDomainCode(predefined, v[3], tempVars=tempVars))
@@ -473,7 +473,7 @@ def compileUFL(form, *args, tempVars=True, virtualize=True):
     # added for dirichlet treatment same as conservationlaw model
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
 
-    uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs]
+    uflExpr = [form] + [bc.ufl_value for bc in dirichletBCs] + [bc.subDomain for bc in dirichletBCs]
     if len(form.arguments()) < 2:
         raise ValueError("Integrands model requires form with at least two arguments.")
 
