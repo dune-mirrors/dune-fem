@@ -110,7 +110,9 @@ void testAll( GridPartType& gp )
   // check geometries of macro level and leaf level
   //Dune::GeometryChecker<typename GridPartType::GridType> checker;
   //checker.checkGeometry( gridPart );
-  Dune::checkGeometryLifetime( gridPart );
+  std::cout << "Disabled checkGeometryLifeTime:\n";
+  std::cout << "This test uses geometries on subentities but the capabilities only work for the HostGrid" << std::endl;
+  // Dune::checkGeometryLifetime( gridPart );
 
   // check entity seeds
   // Dune::checkEntitySeed( gridPart, std::cerr );

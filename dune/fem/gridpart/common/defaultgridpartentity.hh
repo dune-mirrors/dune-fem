@@ -72,7 +72,10 @@ namespace Dune
 
       bool hasFather () const
       {
-        DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
+        // it should be possible to check if there is a 'father' even if
+        // the entitiy only comes from a grid view/part
+        return false;
+        // DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
 
       const LocalGeometry &geometryInFather () const
