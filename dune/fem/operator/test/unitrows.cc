@@ -231,7 +231,7 @@ try
 
   for( int step = 0; step <nrSteps; ++step )
   {
-    if( std::abs( error[step] )  > 1e-10 )
+    if( std::abs( error[step][0] )  > 1e-10 )
     {
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving laplace matrix system failed");
     }
