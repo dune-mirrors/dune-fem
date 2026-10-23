@@ -270,6 +270,11 @@ def load(grid, form, *args, renumbering=None, tempVars=True,
                                 (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                                 uflExpr,virtualize)
 
+        integrands.vecCoeff = coeff
+        if u_.ufl_function_space().scalar:
+            integrands.vecCoeff[u_] = u[0]
+        integrands.replaceScalar = lambda expr: replace(expr,integrands.vecCoeff)
+
     if modelPatch[0] is not None:
         modelPatch[0](integrands)
 
