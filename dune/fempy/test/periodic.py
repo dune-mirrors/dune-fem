@@ -87,7 +87,7 @@ space = solutionSpace(gridView, order=1)
 x = SpatialCoordinate(space)
 # switching to cos here works fine due to Neumann zero boundary value
 # exact = cos(x[0]*pi/4)
-exact = cos(x[0]*pi/4)
+exact = sin(x[0]*pi/4)
 
 levels = 2
 for i in range(levels):
