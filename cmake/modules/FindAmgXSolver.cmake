@@ -5,7 +5,7 @@
 #  AMGXSOLVER_INCLUDES     - the PETSc include directories
 #  AMGXSOLVER_LIBRARIES    - Link these to use PETSc
 
-cmake_policy(VERSION 3.3)
+#cmake_policy(VERSION 3.3)
 
 include(AddMPIFlags)
 
