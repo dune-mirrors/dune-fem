@@ -135,7 +135,16 @@ namespace Dune
       {
         static const bool v = true;
       };
-#endif // #if HAVE_DUNE_ALUGRID
+#endif // #if HAVE_DUNE_P4ESTGRID
+
+#if HAVE_DUNE_PERIODIC
+      template <class HG>
+      struct supportsCallbackAdaptation< Dune::Periodic::FlatPeriodicGrid<HG> >
+      {
+        using G = Dune::Periodic::FlatPeriodicGrid<HG>;
+        static const bool v = supportsCallbackAdaptation<typename G::HostEmbeddedGrid> :: v;
+      };
+#endif // #if HAVE_DUNE_PERIODIC
 
       template< int dim, int dimworld >
       struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
@@ -189,6 +198,15 @@ namespace Dune
         static const bool v = true;
       };
 #endif // #if HAVE_DUNE_P4ESTGRID
+
+#if HAVE_DUNE_PERIODIC
+      template <class HG>
+      struct isLocallyAdaptive< Dune::Periodic::FlatPeriodicGrid<HG> >
+      {
+        using G = Dune::Periodic::FlatPeriodicGrid<HG>;
+        static const bool v = isLocallyAdaptive<typename G::HostEmbeddedGrid> :: v;
+      };
+#endif //#f HAVE_DUNE_PERIODIC
 
       template< int dim, int dimworld >
       struct isLocallyAdaptive< AlbertaGrid< dim, dimworld > >

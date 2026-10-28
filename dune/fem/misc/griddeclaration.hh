@@ -15,6 +15,10 @@
 #include <dune/p4estgrid/declaration.hh>
 #endif // #if HAVE_DUNE_P4ESTGRID
 
+#if HAVE_DUNE_PERIODIC
+#include <dune/periodic/flatperiodicgrid.hh>
+#endif // #if HAVE_DUNE_PERIODIC
+
 #if HAVE_OPM_GRID
 #include <opm/grid/polyhedralgrid/declaration.hh>
 #endif // #if HAVE_OPM_GRID

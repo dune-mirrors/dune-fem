@@ -199,7 +199,35 @@ namespace Dune
     };
 #endif // #if HAVE_DUNE_ALUGRID
 
+#if HAVE_DUNE_PERIODIC // fails since Intersections are GeometryGrid intersection
+                       // while HostGrid is ALU - so hard to say which specialization is correct
+    template<class HG>
+    struct TwistUtility<Dune::Periodic::FlatPeriodicGrid<HG>>
+    {
+      using GridType = Dune::Periodic::FlatPeriodicGrid<HG>;
+      using HostGrid = typename GridType::HostGrid;
+      using TU = TwistUtility<HostGrid>;
+      template< class Intersection >
+      static inline int twistInSelf(const GridType & grid, const Intersection& isec)
+      {
+        return TU::twistInSelf(grid.hostGrid(),isec);
+      }
+      template< class Intersection >
+      static inline int twistInNeighbor(const GridType &grid, const Intersection& isec )
+      {
+        return TU::twistInNeighbor(grid.hostGrid(),isec);
+      }
+      template <class Intersection>
+      static inline GeometryType elementGeometry(const Intersection& intersection, const bool inside)
+      {
+        return elementGeometry(intersection,inside);
+      }
 
+    private:
+      TwistUtility(const TwistUtility&);
+      TwistUtility& operator=(const TwistUtility&);
+    };
+#endif
 
     // Specialization for UGGrid
     // -------------------------
