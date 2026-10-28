@@ -79,8 +79,8 @@ gridView = hostGridView(domain, dimgrid=2)
 # 1. in dune-grid to avoid dgfGF reader instantiation
 # 2. issue in SFC in dune-alugrid, setting sfc=None in the hostgrid does not
 #             help since the newly created grid in dune-periodic is the issue.
-# from dune.periodic import flatPeriodicGrid as pGrid
-# gridView = pGrid(gridView, (1,0))
+from dune.periodic import flatPeriodicGrid as pGrid
+gridView = pGrid(gridView, (1,0))
 
 gridView = adaptiveGridView( gridView )
 space = solutionSpace(gridView, order=1)
