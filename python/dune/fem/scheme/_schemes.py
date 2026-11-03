@@ -8,7 +8,7 @@ from ufl import Form
 
 from dune.generator import Constructor, Method
 
-from dune.fem.operator import _opDirichletIndices
+from dune.fem.operator import _opDirichletIndices, _estimateOrder
 
 logger = logging.getLogger(__name__)
 
@@ -521,7 +521,9 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
 
     ## GalerkinOperator with one integrand
 
+    estimatedOrder = None
     if isinstance(integrands,Equation):
+        estimatedOrder = _estimateOrder(integrands.lhs - integrands.rhs)
         if space is None:
             try:
                 space = integrands.lhs.arguments()[0].ufl_function_space()
@@ -611,6 +613,10 @@ def _galerkin(integrands, space=None, solver=None, parameters={},
         scheme.parameterLog = lambda: parameter.log()[logTag]
     except KeyError:
         pass
+
+    # set quadrature to the estimated degree or default to 2 * space.order, so it is as accurate as assemble/integrate
+    if estimatedOrder is not None and estimatedOrder > 2*space.order:
+        scheme.setQuadratureOrders(estimatedOrder, estimatedOrder+1)
 
     return scheme
 

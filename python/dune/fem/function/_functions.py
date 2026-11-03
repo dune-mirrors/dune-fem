@@ -185,9 +185,9 @@ def _uflFunction(gridView, name, order, ufl, virtualize=True, scalar=False,
             raise AttributeError("expression contains grid functions over different views.")
         gridView = gridView.pop() # there is only one element in this set - the unique gridView
     if order is None:
-        try:
-            order = ufl.algorithms.estimate_total_polynomial_degree(expr)
-        except:
+        from dune.fem.operator import _estimateOrder
+        order = _estimateOrder(expr) # estimate order, includes order lowering
+        if order is None:
             raise AttributeError("a suitable order could not be determined - provide the order as argument")
     Func = dune.models.localfunction.UFLFunction(gridView, name, order,
             expr, renumbering=None,

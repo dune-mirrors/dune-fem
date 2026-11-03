@@ -250,7 +250,8 @@ def assemble(form,space=None,gridView=None,order=None):
             # e.g. degree(x)=1, degree(x.x)=2, degree(sin(x))=3=degree(x)+2, degree(sin(x.x))=4=degree(x.x)+2
             # so degree( (df-exact)**2 ) = 8 if exact=sin(x.x) independent of degree(df).
             # With for example df linear Lagrange I would assume that integrating with order=5 is more than enough.
-            order = estimate_total_polynomial_degree( form )
+            from dune.fem.operator import _estimateOrder
+            order = _estimateOrder( form ) # estimate order, includes order lowering
         return integrate(form.integrals()[0].integrand(), gridView=gridView, order=order)
     else:
         if order is not None:

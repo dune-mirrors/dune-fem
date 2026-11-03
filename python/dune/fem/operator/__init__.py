@@ -74,6 +74,16 @@ def _opDirichletIndices(self, id=None):
         return [i*len(block)+j for i,block in enumerate(self.dirichletBlocks)
                                for j,b in enumerate(block) if b==id]
 
+def _estimateOrder(form):
+    """ ufl estimate of the polynomial degree of a form, after the preprocessing done by the code generation; None if it cannot be estimated. """
+    from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
+    from ufl.algorithms.apply_derivatives import apply_derivatives
+    from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
+    try:
+        return estimate_total_polynomial_degree(apply_derivatives(apply_algebra_lowering(form)))
+    except ValueError:  # e.g. a missing degree handler: keep the default order
+        return None
+
 def _galerkin(integrands, domainSpace=None, rangeSpace=None,
               virtualize=None, communicate=True,
               jacobianStorage=None,
@@ -101,7 +111,9 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
         integrands = integrands[0]
     if isinstance(integrands,Form):
         integrands = integrands == 0
+    estimatedOrder = None
     if isinstance(integrands,Equation):
+        estimatedOrder = _estimateOrder(integrands.lhs - integrands.rhs)
         from dune.fem.model._models import integrands as makeIntegrands
         if rangeSpace == None:
             try:
@@ -191,6 +203,9 @@ def _galerkin(integrands, domainSpace=None, rangeSpace=None,
         op.__class__.dirichletIndices = _opDirichletIndices
     # apply communicate flag
     op.setCommunicate( communicate )
+    # set quadrature to the estimated degree or default to 2 * space.order, so it is as accurate as assemble/integrate
+    if estimatedOrder is not None and estimatedOrder > 2*max(domainSpace.order, rangeSpace.order):
+        op.setQuadratureOrders(estimatedOrder, estimatedOrder+1)
     return op
 
 # galerkin operator
