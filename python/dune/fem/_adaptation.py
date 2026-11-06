@@ -125,8 +125,7 @@ class GridMarker(AdaptationMarkerBase):
         self._layered   = layered
 
         if gridView is not None:
-            # make sure grid
-            GridMarker.checkGridView( self.gridView )
+            GridMarker.checkGridView( self._gridView )
 
         self._marking = self._doerflerMarking if self._strategy == 'doerfler' else self._defaultMarking
 
@@ -237,7 +236,11 @@ def gridAdapt(marker, *args, loadBalance=True):
     # get grid adaptation object
     hgridadapt = module(hgrid).gridAdaptation(hgrid)
     # perform adaptation step
-    hgridadapt.adapt(args)
+
+    if len(args) == 0:
+        hgridadapt.adapt()
+    else:
+        hgridadapt.adapt(args)
 
     # perform load balance if enabled
     if loadBalance:
@@ -357,10 +360,10 @@ def globalRefine(level, first, *args):
     hgrid,args = _adaptArguments(first,*args)
 
     # if no discrete functions were supplied then simply globally refine grid
-    if len(args) == 0:
+    if False: # len(args) == 0:
         hgrid.globalRefine(level)
-        return
-    module(hgrid).gridAdaptation(hgrid).globalRefine(level, args)
+    else:
+        module(hgrid).gridAdaptation(hgrid).globalRefine(level, args)
 
 if __name__ == "__main__":
     import doctest

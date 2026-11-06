@@ -161,6 +161,10 @@ namespace Dune
         adaptationManager_.adapt();
         restrictProlong_.clear();
       }
+      void adapt ( )
+      {
+        adaptationManager_.adapt();
+      }
 
       void markAll ( )
       {

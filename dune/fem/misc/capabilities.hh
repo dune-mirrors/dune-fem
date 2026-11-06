@@ -142,7 +142,13 @@ namespace Dune
       struct supportsCallbackAdaptation< Dune::Periodic::FlatPeriodicGrid<HG> >
       {
         using G = Dune::Periodic::FlatPeriodicGrid<HG>;
-        static const bool v = supportsCallbackAdaptation<typename G::HostEmbeddedGrid> :: v;
+        static const bool v = false; // supportsCallbackAdaptation<typename G::HostEmbeddedGrid> :: v;
+      };
+      template <class HG>
+      struct supportsCallbackAdaptation< Dune::Periodic::PeriodicGrid<HG> >
+      {
+        using G = Dune::Periodic::PeriodicGrid<HG>;
+        static const bool v = false; // supportsCallbackAdaptation<typename G::HostEmbeddedGrid> :: v;
       };
 #endif // #if HAVE_DUNE_PERIODIC
 
@@ -205,6 +211,12 @@ namespace Dune
       {
         using G = Dune::Periodic::FlatPeriodicGrid<HG>;
         static const bool v = isLocallyAdaptive<typename G::HostEmbeddedGrid> :: v;
+      };
+      template <class HG>
+      struct isLocallyAdaptive< Dune::Periodic::PeriodicGrid<HG> >
+      {
+        using G = Dune::Periodic::PeriodicGrid<HG>;
+        static const bool v = isLocallyAdaptive<typename G::HostGrid> :: v;
       };
 #endif //#f HAVE_DUNE_PERIODIC
 
