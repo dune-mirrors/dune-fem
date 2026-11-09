@@ -101,7 +101,7 @@ namespace Dune
       bool contains ( const Entity & entity ) const
       {
         enum { cc = Entity::codimension };
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().contains< cc >( entity ) );
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().template contains< cc >( entity ) );
         return asImp().template contains< cc >( entity );
       }
 

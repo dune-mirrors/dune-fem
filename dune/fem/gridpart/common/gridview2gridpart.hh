@@ -160,6 +160,18 @@ namespace Dune
         return gridView().isConforming();
       }
 
+      /** \copydoc Dune::Fem::GridPartInterface::size( codim ) */
+      int size ( int codim ) const
+      {
+        return gridView().size( codim );
+      }
+
+      /** \copydoc Dune::Fem::GridPartInterface::size( type ) */
+      int size ( const GeometryType &type ) const
+      {
+        return gridView().size( type );
+      }
+
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { assert( indexSet_ ); return *indexSet_; }
 
