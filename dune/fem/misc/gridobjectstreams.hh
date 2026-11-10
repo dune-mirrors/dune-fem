@@ -7,8 +7,13 @@
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/misc/griddeclaration.hh>
 
+
 namespace Dune
 {
+  namespace Periodic
+  {
+      template <class G> class FlatPeriodicGrid;
+  };
 
   namespace Fem
   {
@@ -63,6 +68,12 @@ namespace Dune
       struct Selector< G, false >
       {
         typedef DummyObjectStream type;
+      };
+
+      template <class EHG >
+      struct Selector< Periodic::FlatPeriodicGrid<EHG>, false >
+      {
+        typedef typename EHG::ObjectStreamType type;
       };
 
       typedef typename Selector< Grid, hasMember_ObjectStreamType< Grid > :: value > :: type ObjectStreamType;
