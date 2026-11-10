@@ -26,29 +26,41 @@ before_script:
   - duneci-install-module https://gitlab.dune-project.org/core/dune-istl.git
   - duneci-install-module https://gitlab.dune-project.org/extensions/dune-alugrid.git
 
-# test minimal compiler requirement, which is gcc 10  
-ubuntu-24.04-gcc-14-20-debug:
-  image: registry.dune-project.org/docker/ci/ubuntu:24.04
+# test standard setup ubuntu+gcc
+ubuntu-26.04-gcc-15-20-debug:
+  image: registry.dune-project.org/docker/ci/ubuntu:26.04
   script:
     - DUNECI_CMAKE_FLAGS+="-DCMAKE_CXX_FLAGS=\"-O3 -DDEBUG\" -DCMAKE_BUILD_TYPE=None"
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-14-20
+    DUNECI_TOOLCHAIN: gcc-15-20
     # DUNE_CONTROL_PATH: /duneci/modules:$CI_PROJECT_DIR
   tags: [duneci]
 
 
-debian-12-gcc-12-20-minimal-no-petsc:
-  image: registry.dune-project.org/docker/ci/debian:12
+debian-13-gcc-14-23-minimal-no-petsc:
+  image: registry.dune-project.org/docker/ci/debian:13
   script:
     - DUNECI_CMAKE_FLAGS+="-DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DDUNE_ENABLE_PYTHONBINDINGS=OFF"
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-12-20
+    DUNECI_TOOLCHAIN: gcc-14-23
   tags: [duneci]
 
-debian-12-clang-14-20:
-  image: registry.dune-project.org/docker/ci/debian:12
+#debian-13-clang-19-23:
+#  image: registry.dune-project.org/docker/ci/debian:13
+#  script:
+#    - duneci-standard-test
+#  variables:
+#    # it seems necesarry to build all libraries shared not only # 'libdunefem'
+#    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
+#    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
+#    # bug in CI clang-10-17 and clang-10-20 are mixed up
+#    DUNECI_TOOLCHAIN: clang-19-23
+#  tags: [duneci]
+
+ubuntu:26.04-clang-21-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:26.04
   script:
     - duneci-standard-test
   variables:
@@ -56,28 +68,28 @@ debian-12-clang-14-20:
     # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
     # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
     # bug in CI clang-10-17 and clang-10-20 are mixed up
-    DUNECI_TOOLCHAIN: clang-14-20
+    DUNECI_TOOLCHAIN: clang-21-20
   tags: [duneci]
 
-ubuntu:24.04--gcc-14-20:headercheck:
-  image: registry.dune-project.org/docker/ci/ubuntu:24.04
+ubuntu:26.04--gcc-15-20:headercheck:
+  image: registry.dune-project.org/docker/ci/ubuntu:26.04
   script:
     - DUNECI_CMAKE_FLAGS="-DENABLE_HEADERCHECK=ON -DDUNE_MAX_TEST_CORES=4 -DBUILD_SHARED_LIBS=TRUE -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_LATEX=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Alberta=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Vc=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_PETSc=TRUE -DCMAKE_DISABLE_DOCUMENTATION=TRUE"
     - duneci-install-module https://gitlab.dune-project.org/dune-fem/dune-fem.git
     - cd /duneci/modules/dune-fem/build-cmake
     - make headercheck
   variables:
-    DUNECI_TOOLCHAIN: gcc-14-20
+    DUNECI_TOOLCHAIN: gcc-15-20
   tags: [duneci]
 
 # test minimal compiler requirement, which is gcc 10
-torture-24.04-gcc-14-20:
-  image: registry.dune-project.org/docker/ci/ubuntu:24.04
+torture-26.04-gcc-15-20:
+  image: registry.dune-project.org/docker/ci/ubuntu:26.04
   when: manual
   allow_failure: true
   script:
     - DUNECI_CMAKE_FLAGS+="-DFEM_TORTURE_TESTS=ON"
     - duneci-standard-test
   variables:
-    DUNECI_TOOLCHAIN: gcc-14-20
+    DUNECI_TOOLCHAIN: gcc-15-20
   tags: [duneci]
