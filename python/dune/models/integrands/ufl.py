@@ -400,7 +400,7 @@ def _compileUFL(integrands, form, *args, tempVars=True):
         defaultCode = []
         if len(codeDomains)>0:
             defaultCode.append(Declaration(Variable('int', 'domainId')))
-        defaultCode.append(Declaration(Variable('auto', 'x'),
+        defaultCode.append(Declaration(Variable('[[maybe_unused]] auto', 'x'),
             initializer=UnformattedExpression('auto','intersection.geometry().center()')))
         for i,v in enumerate(codeDomains):
             block = Block()
