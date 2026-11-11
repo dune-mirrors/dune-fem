@@ -36,7 +36,27 @@ import dune.ufl.tensors as tensors
 
 from .model import Integrands
 
-def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
+# used for Dirichlet conditions - taken from conservationlaw
+def generateDirichletCode(predefined, tensor, tempVars=True):
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
+
+def generateDirichletDomainCode(predefined, tensor, tempVars=True):
+    # predefined={}
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
+    result = Variable('int', 'domainId')
+    return [preamble,assign(result, results[0])]
+
+def generateCode(predefined, testFunctions, tensorMap, tempVars=True, binary=False):
+    if binary:
+        length = len(testFunctions)//2
+    else:
+        length = len(testFunctions)
     # build list of all expressions to compile
     expressions = []
     for phi in testFunctions:
@@ -61,30 +81,14 @@ def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
             results = results[len(keys):]
         def reformat(row):
             if np.array(row).shape[0] == phi.ufl_shape[0]:
-                return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx},RangeValueType>")
+                return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx%length},RangeValueType>")
             else:
                 return InitializerList(*row)
         values += [tensors.reformat(reformat, phi.ufl_shape, value)]
 
     return preamble, values
 
-# used for Dirichlet conditions - taken from conservationlaw
-def generateDirichletCode(predefined, tensor, tempVars=True):
-    keys = tensor.keys()
-    expressions = [tensor[i] for i in keys]
-    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
-    result = Variable('auto', 'result')
-    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
-
-def generateDirichletDomainCode(predefined, tensor, tempVars=True):
-    # predefined={}
-    keys = tensor.keys()
-    expressions = [tensor[i] for i in keys]
-    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
-    result = Variable('int', 'domainId')
-    return [preamble,assign(result, results[0])]
-
-def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True):
+def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True, binary=False):
     """generate code for a bilinear form
 
     Args:
@@ -95,6 +99,10 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
         tempVars:         introduce temporary variables during code generation
     """
 
+    if binary:
+        length = len(testFunctions)//2
+    else:
+        length = len(testFunctions)
     # build list of all expressions to compile
     expressions = []
     for var, trialFunctions in trialFunctionMap.items():
@@ -137,7 +145,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
 
             def reformat(row):
                 if np.array(row).shape[0] == phi.ufl_shape[0]:
-                    return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx},RangeValueType>")
+                    return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx%length},RangeValueType>")
                 else:
                     return InitializerList(*row)
             values[var] += [tensors.reformat(reformat, phi.ufl_shape, value)]
@@ -146,7 +154,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
 
 
 def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
-    preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars=tempVars)
+    preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars=tempVars, binary=False)
     return preamble + [return_(construct('RangeValueType', *values, brace=True))]
 
 
@@ -162,7 +170,8 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
                   code=return_(construct('RangeValueType',*values,
                     brace=True)) ))]
 
-    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
+    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions},
+                                              tensorMap, tempVars=tempVars, binary=False)
     capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'],
                        code=return_(construct('RangeValueType', *values[var], brace=True))))]
@@ -170,7 +179,7 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
-    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=tempVars)
+    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=tempVars, binary=True)
     return preamble + [return_(make_pair(construct('RangeValueType', *values[:len(testFunctions)], brace=True), construct('RangeValueType', *values[len(testFunctions):], brace=True)))]
 
 
@@ -188,7 +197,8 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
-    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, tempVars=tempVars)
+    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap,
+                 tempVars=tempVars,binary=True)
 
     captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
     captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
