@@ -16,6 +16,7 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/experimental/bcrsmatrix.hh>
 #include <dune/python/istl/bcrsmatrix.hh>
 #endif // #if HAVE_DUNE_ISTL
 
@@ -164,6 +165,14 @@ namespace Dune
       {
         return matrix;
       }
+
+      // new implementation of BCRSMatrix from experimental
+      template< class B, class A >
+      inline static const Dune::Experimental::BCRSMatrix< B, A > &getBCRSMatrix ( const Dune::Experimental::BCRSMatrix< B, A > &matrix ) noexcept
+      {
+        return matrix;
+      }
+
       template< class Operator, class... options>
       inline static auto addMatrixBackend ( pybind11::class_< Operator, options... > cls, PriorityTag< 3 > )
       -> void_t<decltype( getBCRSMatrix( std::declval< const Operator & >().exportMatrix() ) ) >
