@@ -893,10 +893,10 @@ namespace Dune
         }
       }
 
+    public:
       //! Desctructor, removes all MemObjects and IndexSetObjects
       ~DofManager ();
 
-    public:
       DofManager( const ThisType& ) = delete;
 
       //! return factor to over estimate new memory allocation
@@ -1241,7 +1241,14 @@ namespace Dune
       //********************************************************
       // Interface for DofManager access
       //********************************************************
+    protected:
+      static const std::string& dmKey()
+      {
+        static const std::string key("fem::DM");
+        return key;
+      }
 
+    public:
       /** \brief obtain a reference to the DofManager for a given grid
        *
        *  \param[in]  grid  grid for which the DofManager is desired
@@ -1250,8 +1257,31 @@ namespace Dune
        */
       static inline ThisType& instance( const GridType& grid )
       {
-        typedef DofManagerFactory< ThisType > DofManagerFactoryType;
-        return DofManagerFactoryType :: instance( grid );
+        // if grid supports user data storage
+        if constexpr ( requires{ grid.userData(); })
+        {
+          typedef std::shared_ptr< ThisType > DMPtrType;
+          auto& userData = grid.userData();
+          auto it = userData.find( dmKey() );
+          if( it == userData.end() )
+          {
+            DMPtrType dmPtr( new ThisType( &grid ) );
+            std::any dmAny = dmPtr;
+            userData.emplace( std::make_pair( dmKey(), dmAny ) );
+            return *dmPtr;
+          }
+          else
+          {
+            auto dmPtr = std::any_cast< DMPtrType > ( it->second );
+            return *dmPtr;
+          }
+        }
+        else
+        {
+          // old singleton implementation
+          typedef DofManagerFactory< ThisType > DofManagerFactoryType;
+          return DofManagerFactoryType :: instance( grid );
+        }
       }
     };
 
