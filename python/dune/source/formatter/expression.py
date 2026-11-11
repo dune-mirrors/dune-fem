@@ -130,7 +130,10 @@ class FormatExpression:
 
     def initializerList(self, expr):
         args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
-        return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
+        if expr.cppType is None:
+            return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
+        else:
+            return entangleLists([[expr.cppType+'{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
 
     def lambda_(self, expr):
         capture = '' if not expr.capture else ' ' + ', '.join([c.name for c in expr.capture]) + ' '

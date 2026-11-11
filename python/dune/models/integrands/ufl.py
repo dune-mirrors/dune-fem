@@ -1,5 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
+import numpy as np
 try: # ufl 2024 and newer
     from ufl import AbstractFiniteElement
 except ImportError: # older ufl versions
@@ -50,7 +51,7 @@ def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
 
     # extract generated code for expressions and build values
     values = []
-    for phi in testFunctions:
+    for testFctIdx, phi in enumerate(testFunctions):
         value = tensors.fill(phi.ufl_shape, makeExpression(0))
         if (phi,) in tensorMap:
             tensor = tensorMap[(phi,)]
@@ -58,7 +59,12 @@ def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
             for i, r in zip(keys, results[:len(keys)]):
                 value = tensors.setItem(value, i, r)
             results = results[len(keys):]
-        values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
+        def reformat(row):
+            if np.array(row).shape[0] == phi.ufl_shape[0]:
+                return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx},RangeValueType>")
+            else:
+                return InitializerList(*row)
+        values += [tensors.reformat(reformat, phi.ufl_shape, value)]
 
     return preamble, values
 
@@ -107,7 +113,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
     values = {}
     for var, trialFunctions in trialFunctionMap.items():
         values[var] = []
-        for phi in testFunctions:
+        for testFctIdx, phi in enumerate(testFunctions):
             value = tensors.fill(phi.ufl_shape, None)
             for idx in range(len(trialFunctions)):
                 psi = trialFunctions[idx]
@@ -128,7 +134,13 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
                         value = tensors.setItem(value, i, s)
                     results = results[len(keys):]
             value = tensors.apply(lambda v : makeExpression(0) if v is None else v, phi.ufl_shape, value)
-            values[var] += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
+
+            def reformat(row):
+                if np.array(row).shape[0] == phi.ufl_shape[0]:
+                    return InitializerList(*row,cppType=f"std::tuple_element_t<{testFctIdx},RangeValueType>")
+                else:
+                    return InitializerList(*row)
+            values[var] += [tensors.reformat(reformat, phi.ufl_shape, value)]
 
     return preamble, values
 
@@ -152,7 +164,8 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
 
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
-    return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var], brace=True))))]
+    return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'],
+                       code=return_(construct('RangeValueType', *values[var], brace=True))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):

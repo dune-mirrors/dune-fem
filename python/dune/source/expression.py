@@ -137,8 +137,8 @@ class DereferenceExpression(Expression):
 
 
 class InitializerList(Expression):
-    def __init__(self, *args):
-        Expression.__init__(self)
+    def __init__(self, *args, **kwargs):
+        Expression.__init__(self, **kwargs)
         self.args = tuple(args)
 
 
