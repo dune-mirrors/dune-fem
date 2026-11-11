@@ -541,7 +541,9 @@ protected:
             {
               int comp = subEntityFilter[i]-1+k;
               assert( comp < dimRange );
-              dirichletBlocks_[ globalBlockDofs[ i ] ][k] = dblock[comp];
+              // never release a component constrained by another intersection
+              if( dblock[comp] )
+                dirichletBlocks_[ globalBlockDofs[ i ] ][k] = dblock[comp];
             }
             // we have Dirichlet values
             hasDirichletBoundary = true ;
