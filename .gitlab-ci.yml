@@ -47,20 +47,8 @@ debian-13-gcc-14-23-minimal-no-petsc:
     DUNECI_TOOLCHAIN: gcc-14-23
   tags: [duneci]
 
-#debian-13-clang-19-23:
-#  image: registry.dune-project.org/docker/ci/debian:13
-#  script:
-#    - duneci-standard-test
-#  variables:
-#    # it seems necesarry to build all libraries shared not only # 'libdunefem'
-#    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
-#    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
-#    # bug in CI clang-10-17 and clang-10-20 are mixed up
-#    DUNECI_TOOLCHAIN: clang-19-23
-#  tags: [duneci]
-
-ubuntu:26.04-clang-21-20:
-  image: registry.dune-project.org/docker/ci/ubuntu:26.04
+debian-13-clang-19-23:
+  image: registry.dune-project.org/docker/ci/debian:13
   script:
     - duneci-standard-test
   variables:
@@ -68,8 +56,20 @@ ubuntu:26.04-clang-21-20:
     # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
     # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
     # bug in CI clang-10-17 and clang-10-20 are mixed up
-    DUNECI_TOOLCHAIN: clang-21-20
+    DUNECI_TOOLCHAIN: clang-19-23
   tags: [duneci]
+
+#ubuntu:26.04-clang-21-20:
+#  image: registry.dune-project.org/docker/ci/ubuntu:26.04
+#  script:
+#    - duneci-standard-test
+#  variables:
+#    # it seems necesarry to build all libraries shared not only # 'libdunefem'
+#    # DUNE_CMAKE_FLAGS: '-DBUILD_SHARED_LIBS=TRUE $GLOBAL_CMAKE_FLAGS'
+#    # DUNECI_CMAKE_FLAGS: $DUNE_CMAKE_FLAGS
+#    # bug in CI clang-10-17 and clang-10-20 are mixed up
+#    DUNECI_TOOLCHAIN: clang-21-20
+#  tags: [duneci]
 
 ubuntu:26.04--gcc-15-20:headercheck:
   image: registry.dune-project.org/docker/ci/ubuntu:26.04
