@@ -360,7 +360,7 @@ def globalRefine(level, first, *args):
     hgrid,args = _adaptArguments(first,*args)
 
     # if no discrete functions were supplied then simply globally refine grid
-    if False: # len(args) == 0:
+    if len(args) == 0:
         hgrid.globalRefine(level)
     else:
         module(hgrid).gridAdaptation(hgrid).globalRefine(level, args)
