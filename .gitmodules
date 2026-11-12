@@ -1,0 +1,3 @@
+[submodule "python/dune/fem/_tutorial"]
+	path = _tutorial
+	url = https://gitlab.dune-project.org/dune-fem/dune-fempy.git
