@@ -1,0 +1,11 @@
+{
+  "project.optional-dependencies": {
+    "parallel": ["mpi4py"],
+    "full":     ["mpi4py", "matplotlib", "scipy"],
+    "extra":    ["dune-fem-dg", "dune-vem"],
+    "doc":      ["mpi4py", "matplotlib", "scipy", "pandas",
+                 "pygmsh", "triangle", "iomesh", "sortedcontainers",
+                 "pyqt5", "pandoc", "jupyter", "nbconvert", "jupytext", "nbsphinx",
+                 "sphinx_rtd_theme", "sphinx-autobuild", "sphinxcontrib-bibtex"]
+  }
+}
