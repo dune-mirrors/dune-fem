@@ -20,6 +20,12 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioner.hh>
 
+#if HAVE_DUNE_ISTL_GPU
+#include <dune/istl/gpu/vector.hh>
+#include <dune/istl/gpu/sparsematrix.hh>
+#include <dune/istl/gpu/hyprepreconditioner.hh>
+#endif
+
 namespace Dune
 {
 
@@ -128,13 +134,17 @@ namespace Dune
 
     template< int method,
               class X,
-              class Reduction = ISTLSolverReduction< X > >
+              class Xgpu,
+              class Reduction = ISTLSolverReduction< Xgpu > >
     struct ISTLSolverAdapter
     {
       typedef Reduction ReductionType;
 
-      typedef X domain_type;
-      typedef X range_type;
+      typedef Xgpu domain_type;
+      typedef Xgpu range_type;
+
+      // if X and Xgpu differ a copy is needed
+      static const bool copyVector = ! std::is_same_v< X, Xgpu >;
 
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
@@ -142,10 +152,40 @@ namespace Dune
           parameter_( parameter )
       {}
 
-      template<class Op, class ScP, class PC >
+      template<class Op, class ScP, class PC, class VectorType >
       void operator () ( Op& op, ScP &scp, PC &pc,
-                         range_type &rhs, domain_type &x,
+                         VectorType &rhs, VectorType &x,
                          Dune::InverseOperatorResult &result ) const
+      {
+        if constexpr ( std::is_same_v< VectorType, domain_type > )
+        {
+          applySolver( op, scp, pc, rhs, x, result );
+        }
+        else
+        {
+          std::cout << "Copying to device memory" << std::endl;
+          // otherwise copy to device, solve, copy back
+          const size_t size = rhs.size()*X::block_type::dimension ;
+          range_type gpuRhs( size );
+          gpuRhs.copyFromHost( rhs );
+          domain_type gpuX( size );
+          gpuX.copyFromHost( x );
+
+          typedef Dune::GPU::GpuSparseMatrix< typename domain_type::field_type > GpuSparseMatrixType;
+          GpuSparseMatrixType gpuMat = GpuSparseMatrixType::fromMatrix( op.getmat() /*, true */ );
+          using GPUOperator = Dune::MatrixAdapter< GpuSparseMatrixType, domain_type, domain_type >;
+          GPUOperator gpuOp( gpuMat );
+          Dune::ScalarProduct< domain_type > gpuScp;
+          Dune::Richardson< domain_type, domain_type > gpuPc;
+          applySolver( gpuOp, gpuScp, gpuPc, gpuRhs, gpuX, result );
+          gpuX.copyToHost( x );
+        }
+      }
+
+      template<class Op, class ScP, class PC, class VectorType >
+      void applySolver(Op& op, ScP &scp, PC &pc,
+                       VectorType &rhs, VectorType &x,
+                       Dune::InverseOperatorResult &result ) const
       {
         int verbosity = (Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose()) ? 2 : 0;
         if ( verbosity && Parameter::verbose( Parameter::extendedStatistics ) )
@@ -154,48 +194,48 @@ namespace Dune
         int maxIterations = std::min( std::numeric_limits< int >::max(), parameter_->maxIterations() );
         if( method_ == SolverParameter::cg )
         {
-          typedef Dune::CGSolver< X > SolverType;
+          typedef Dune::CGSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::bicgstab )
         {
-          typedef Dune::BiCGSTABSolver< X > SolverType;
+          typedef Dune::BiCGSTABSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::gmres )
         {
-          typedef Dune::RestartedGMResSolver< X > SolverType;
+          typedef Dune::RestartedGMResSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::fgmres )
         {
-          typedef Dune::RestartedFlexibleGMResSolver< X > SolverType;
+          typedef Dune::RestartedFlexibleGMResSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), parameter_->gmresRestart(), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::minres )
         {
-          typedef Dune::MINRESSolver< X > SolverType;
+          typedef Dune::MINRESSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
         }
         else if( method_ == SolverParameter::gradient )
         {
-          typedef Dune::GradientSolver< X > SolverType;
+          typedef Dune::GradientSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
         }
         else if( method_ == SolverParameter::loop )
         {
-          typedef Dune::LoopSolver< X > SolverType;
+          typedef Dune::LoopSolver< VectorType > SolverType;
           SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbosity );
           solver.apply( x, rhs, result );
           return ;
@@ -303,14 +343,36 @@ namespace Dune
       typedef typename SolverDiscreteFunctionType::ScalarProductType   ParallelScalarProductType;
       typedef typename SolverDiscreteFunctionType::DofStorageType      BlockVectorType;
 
-      typedef ISTLSolverAdapter< method, BlockVectorType > SolverAdapterType;
-      typedef typename SolverAdapterType::ReductionType ReductionType;
+      typedef ISTLSolverAdapter< method, BlockVectorType, BlockVectorType > SolverAdapterType;
+
+#if HAVE_DUNE_ISTL_GPU
+      typedef Dune::GPU::GpuVector< typename BlockVectorType::field_type > GPUVectorType;
+      typedef ISTLSolverAdapter< method, BlockVectorType, GPUVectorType > GPUSolverAdapterType;
+#else
+      typedef SolverAdapterType GPUSolverAdapterType;
+#endif
+
     public:
 
       //non-deprecated constructors
       ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter() )
-        : BaseType( parameter ), solverAdapter_( ReductionType( parameter_ ), parameter_ )
-      {}
+        : BaseType( parameter ),
+          solverAdapter_(),
+          gpuSolverAdapter_()
+      {
+#if HAVE_DUNE_ISTL_GPU
+        if( parameter.usegpu() )
+        {
+          typedef typename GPUSolverAdapterType::ReductionType ReductionType;
+          gpuSolverAdapter_.reset( new GPUSolverAdapterType( ReductionType( parameter_ ), parameter_  ));
+        }
+#endif
+
+        {
+          typedef typename SolverAdapterType::ReductionType ReductionType;
+          solverAdapter_.reset( new SolverAdapterType( ReductionType( parameter_ ), parameter_ ) );
+        }
+      }
 
       ISTLInverseOperator ( const OperatorType &op,
                             const ISTLSolverParameter & parameter = ISTLSolverParameter() )
@@ -331,34 +393,78 @@ namespace Dune
       template <class DomainFunction>
       int apply( const DomainFunction& u, SolverDiscreteFunctionType& w ) const
       {
-        auto& scp = w.scalarProduct();
-        // u may not be a discrete function, therefore use w.space()
-        const DiscreteFunctionSpaceType& space = w.space();
-
-        typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > ISTLPreconditionerType;
-        std::shared_ptr< ISTLPreconditionerType > istlPre;
-        if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+#if HAVE_DUNE_ISTL_GPU
+        // GPU version based on dune-istl-gpu
+        if( gpuSolverAdapter_ && assembledOperator_ )
         {
-          typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerAdapterType;
-          istlPre.reset( new ISTLPreconditionerAdapterType( preconditioner_, space, space ) );
+          auto& scp = w.scalarProduct();
+          // u may not be a discrete function, therefore use w.space()
+          const DiscreteFunctionSpaceType& space = w.space();
+
+          typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > ISTLPreconditionerType;
+          std::shared_ptr< ISTLPreconditionerType > istlPre;
+          if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+          {
+            typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerAdapterType;
+            istlPre.reset( new ISTLPreconditionerAdapterType( preconditioner_, space, space ) );
+          }
+
+          if( assembledOperator_ )
+          {
+            auto& matrix = assembledOperator_->matrixAdapter( *(gpuSolverAdapter_->parameter()) );
+
+            // if preconditioner_ was set use that one, otherwise the one from the matrix object
+            ISTLPreconditionerType& matrixPre = matrix.preconditionAdapter();
+            ISTLPreconditionerType& precon    = ( preconditioner_ ) ? (*istlPre) : matrixPre;
+            return solve( *gpuSolverAdapter_, matrix, scp, precon, u, w );
+          }
+
+          // only assembled implemented currently
+
+          /*
+          if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+          {
+            assert( operator_ );
+            assert( istlPre );
+            typedef ISTLLinearOperatorAdapter< OperatorType >  ISTLOperatorType;
+            ISTLOperatorType istlOperator( *operator_, space, space );
+            return solve( *gpuSolverAdapter_, istlOperator, scp, *istlPre, u, w );
+          }
+          */
         }
-
-        if( assembledOperator_ )
+        else
+#endif
         {
-          auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_.parameter()) );
-          // if preconditioner_ was set use that one, otherwise the one from the matrix object
-          ISTLPreconditionerType& matrixPre = matrix.preconditionAdapter();
-          ISTLPreconditionerType& precon    = ( preconditioner_ ) ? (*istlPre) : matrixPre;
-          return solve( matrix, scp, precon, u, w );
-        }
+          assert( solverAdapter_ );
+          auto& scp = w.scalarProduct();
+          // u may not be a discrete function, therefore use w.space()
+          const DiscreteFunctionSpaceType& space = w.space();
 
-        if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
-        {
-          assert( operator_ );
-          assert( istlPre );
-          typedef ISTLLinearOperatorAdapter< OperatorType >  ISTLOperatorType;
-          ISTLOperatorType istlOperator( *operator_, space, space );
-          return solve( istlOperator, scp, *istlPre, u, w );
+          typedef Dune::Preconditioner< BlockVectorType, BlockVectorType > ISTLPreconditionerType;
+          std::shared_ptr< ISTLPreconditionerType > istlPre;
+          if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+          {
+            typedef ISTLPreconditionAdapter< PreconditionerType > ISTLPreconditionerAdapterType;
+            istlPre.reset( new ISTLPreconditionerAdapterType( preconditioner_, space, space ) );
+          }
+
+          if( assembledOperator_ )
+          {
+            auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_->parameter()) );
+            // if preconditioner_ was set use that one, otherwise the one from the matrix object
+            ISTLPreconditionerType& matrixPre = matrix.preconditionAdapter();
+            ISTLPreconditionerType& precon    = ( preconditioner_ ) ? (*istlPre) : matrixPre;
+            return solve( *solverAdapter_, matrix, scp, precon, u, w );
+          }
+
+          if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
+          {
+            assert( operator_ );
+            assert( istlPre );
+            typedef ISTLLinearOperatorAdapter< OperatorType >  ISTLOperatorType;
+            ISTLOperatorType istlOperator( *operator_, space, space );
+            return solve( *solverAdapter_, istlOperator, scp, *istlPre, u, w );
+          }
         }
 
         DUNE_THROW(InvalidStateException,"ISTLInverseOperator::apply: No valid operator found!");
@@ -366,8 +472,8 @@ namespace Dune
       }
 
       //! final solve execution only copying the right hand side
-      template< class OperatorAdapter, class ISTLPreconditioner, class DomainFunction >
-      int solve ( OperatorAdapter &istlOperator, ParallelScalarProductType &scp,
+      template< class SolverAdapter, class OperatorAdapter, class ISTLPreconditioner, class DomainFunction >
+      int solve ( SolverAdapter& solverAdapter, OperatorAdapter &istlOperator, ParallelScalarProductType &scp,
                   ISTLPreconditioner &preconditioner,
                   const DomainFunction& u,
                   SolverDiscreteFunctionType& w ) const
@@ -387,8 +493,8 @@ namespace Dune
         }
 
         Dune::InverseOperatorResult result;
-        solverAdapter_.setMaxIterations( parameter_->maxIterations() );
-        solverAdapter_( istlOperator, scp, preconditioner, rhs_->blockVector(), w.blockVector(), result );
+        solverAdapter.setMaxIterations( parameter_->maxIterations() );
+        solverAdapter( istlOperator, scp, preconditioner, rhs_->blockVector(), w.blockVector(), result );
         return (result.converged) ? result.iterations : -(result.iterations);
       }
 
@@ -402,7 +508,8 @@ namespace Dune
       using BaseType :: rightHandSideCopied_;
       using BaseType :: parameter_;
 
-      mutable SolverAdapterType solverAdapter_;
+      mutable std::unique_ptr< SolverAdapterType > solverAdapter_;
+      mutable std::unique_ptr< GPUSolverAdapterType > gpuSolverAdapter_;
     };
 
   } // namespace Fem

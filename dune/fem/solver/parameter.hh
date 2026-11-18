@@ -249,6 +249,11 @@ namespace Dune
         return parameter_.getValue< bool >( keyPrefix_ + "knolltrick", false );
       }
 
+      virtual bool usegpu() const
+      {
+        return parameter_.getValue< bool >( keyPrefix_ + "usegpu", true );
+      }
+
      private:
       virtual double absoluteTol__ ( )  const
       {
