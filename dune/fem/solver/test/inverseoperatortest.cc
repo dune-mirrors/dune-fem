@@ -395,7 +395,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver, &param );
   }
 
-/*
 #if HAVE_SUPERLU
   // ISTLInverseOperator< ISTLSuperLU > + ISTLLinearOperator
   if( Dune::Fem::MPIManager::size() == 1 )
@@ -408,7 +407,6 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // HAVE_SUPERLU
-      */
 
 #endif // HAVE_DUNE_ISTL
 

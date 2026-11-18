@@ -132,7 +132,7 @@ namespace Dune
       }
     };
 
-    template< int method,
+    template< int mthd,
               class X,
               class Xgpu,
               class Reduction = ISTLSolverReduction< Xgpu > >
@@ -148,9 +148,11 @@ namespace Dune
 
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
-          method_( method < 0 ? parameter->solverMethod( ISTLInverseOperatorMethods::supportedSolverMethods() ) : method ),
+          method_( mthd < 0 ? parameter->solverMethod( ISTLInverseOperatorMethods::supportedSolverMethods() ) : mthd ),
           parameter_( parameter )
       {}
+
+      int method () const { return method_; }
 
       template<class Op, class ScP, class PC, class VectorType >
       void operator () ( Op& op, ScP &scp, PC &pc,
@@ -344,6 +346,7 @@ namespace Dune
       typedef typename SolverDiscreteFunctionType::DofStorageType      BlockVectorType;
 
       typedef ISTLSolverAdapter< method, BlockVectorType, BlockVectorType > SolverAdapterType;
+      typedef typename SolverAdapterType::ReductionType ReductionType;
 
 #if HAVE_DUNE_ISTL_GPU
       typedef Dune::GPU::GpuVector< typename BlockVectorType::field_type > GPUVectorType;
@@ -357,21 +360,17 @@ namespace Dune
       //non-deprecated constructors
       ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : BaseType( parameter ),
-          solverAdapter_(),
+          solverAdapter_( ReductionType( parameter_ ), parameter_ ),
           gpuSolverAdapter_()
       {
 #if HAVE_DUNE_ISTL_GPU
         if( parameter.usegpu() )
         {
-          typedef typename GPUSolverAdapterType::ReductionType ReductionType;
-          gpuSolverAdapter_.reset( new GPUSolverAdapterType( ReductionType( parameter_ ), parameter_  ));
+          typedef typename GPUSolverAdapterType::ReductionType GPUReductionType;
+          gpuSolverAdapter_.reset( new GPUSolverAdapterType( GPUReductionType( parameter_ ), parameter_  ));
         }
 #endif
 
-        {
-          typedef typename SolverAdapterType::ReductionType ReductionType;
-          solverAdapter_.reset( new SolverAdapterType( ReductionType( parameter_ ), parameter_ ) );
-        }
       }
 
       ISTLInverseOperator ( const OperatorType &op,
@@ -395,7 +394,7 @@ namespace Dune
       {
 #if HAVE_DUNE_ISTL_GPU
         // GPU version based on dune-istl-gpu
-        if( gpuSolverAdapter_ && assembledOperator_ )
+        if( gpuSolverAdapter_ && assembledOperator_ && solverAdapter_.method() != SolverParameter::superlu )
         {
           auto& scp = w.scalarProduct();
           // u may not be a discrete function, therefore use w.space()
@@ -450,11 +449,11 @@ namespace Dune
 
           if( assembledOperator_ )
           {
-            auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_->parameter()) );
+            auto& matrix = assembledOperator_->matrixAdapter( *(solverAdapter_.parameter()) );
             // if preconditioner_ was set use that one, otherwise the one from the matrix object
             ISTLPreconditionerType& matrixPre = matrix.preconditionAdapter();
             ISTLPreconditionerType& precon    = ( preconditioner_ ) ? (*istlPre) : matrixPre;
-            return solve( *solverAdapter_, matrix, scp, precon, u, w );
+            return solve( solverAdapter_, matrix, scp, precon, u, w );
           }
 
           if constexpr (std::is_same< SolverDiscreteFunctionType, RangeFunctionType >::value )
@@ -463,7 +462,7 @@ namespace Dune
             assert( istlPre );
             typedef ISTLLinearOperatorAdapter< OperatorType >  ISTLOperatorType;
             ISTLOperatorType istlOperator( *operator_, space, space );
-            return solve( *solverAdapter_, istlOperator, scp, *istlPre, u, w );
+            return solve( solverAdapter_, istlOperator, scp, *istlPre, u, w );
           }
         }
 
@@ -508,7 +507,7 @@ namespace Dune
       using BaseType :: rightHandSideCopied_;
       using BaseType :: parameter_;
 
-      mutable std::unique_ptr< SolverAdapterType > solverAdapter_;
+      mutable SolverAdapterType solverAdapter_;
       mutable std::unique_ptr< GPUSolverAdapterType > gpuSolverAdapter_;
     };
 
