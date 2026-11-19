@@ -175,7 +175,7 @@ class FemSpace(Space):
         if field is None:
             self.field = space.field
 
-        Space.__init__(self,space, field=self.field, scalar=self.scalar)
+        Space.__init__(self,space, field=self.field, scalar=self.scalar, order=getattr(space, "order", 1))
         self.__impl__ = space
         __module__ = space.__module__
         self.FemSpaceClass = space.__class__
