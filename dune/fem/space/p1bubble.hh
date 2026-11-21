@@ -412,6 +412,8 @@ namespace Dune
 
       // type of local interpolation
       typedef LocalBubbleElementInterpolation< FunctionSpace, GridPart, Storage > InterpolationType;
+      // required e.g. by TupleDiscreteFunctionSpace (composite spaces)
+      typedef InterpolationType InterpolationImplType;
 
       // static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
       static const InterfaceType defaultInterface = GridPartType::indexSetInterfaceType;
@@ -476,6 +478,14 @@ namespace Dune
       InterpolationType interpolation () const
       {
         return InterpolationType();
+      }
+
+      /** \brief return local interpolation for given entity
+       *  \note required e.g. by TupleDiscreteFunctionSpace (composite spaces)
+       */
+      InterpolationImplType localInterpolation ( const EntityType &entity ) const
+      {
+        return InterpolationImplType();
       }
 
       /** \brief return local interpolation for given entity
