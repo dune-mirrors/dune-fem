@@ -110,7 +110,36 @@ namespace Dune
       int backend () const
       {
         using Dune::Petsc::Backend;
-        return parameter_.getEnum( keyPrefix() + "petsc.backend", Backend::availableBackend(), Backend::defaultBackend );
+
+        // check if platform was selected
+        std::vector<int> supportedPlatforms{{ SolverParameter::CPU, SolverParameter::GPU }};
+        int pltfrm = this->platform( supportedPlatforms );
+
+        const auto& petscBackends = Backend::availableBackend();
+        std::vector< std::string > allowedBackends;
+
+        int offset = Backend::defaultBackend;
+
+        if( pltfrm == SolverParameter::CPU )
+        {
+          // black and scalar for CPU architecture
+          allowedBackends.push_back( petscBackends[ Backend::block ] );
+          allowedBackends.push_back( petscBackends[ Backend::scalar ] );
+        }
+        else if ( pltfrm == SolverParameter::GPU )
+        {
+          // for GPUs the default PETSc backend is KOKKOS
+          offset = Backend::kokkos;
+          allowedBackends.push_back( petscBackends[ Backend::kokkos ] );
+          allowedBackends.push_back( petscBackends[ Backend::cuda ] );
+        }
+        else
+        {
+          DUNE_THROW(NotImplemented,"Unsupported platform, supported are 'cpu' and 'gpu'!");
+        }
+
+        int bckend = parameter_.getEnum( keyPrefix() + "petsc.backend", allowedBackends, Backend::defaultBackend );
+        return bckend + offset;
       }
     };
 

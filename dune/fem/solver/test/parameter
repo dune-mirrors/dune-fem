@@ -36,6 +36,8 @@ fem.solver.linear.method: gmres  # this is fixed to gmres in the test
 fem.solver.linear.tolerance: 1e-12
 fem.solver.linear.gmres.restart: 15
 fem.solver.linear.maxiterations: 100
+# fem.solver.linear.platform: gpu
+
 #fem.solver.nonlinear.linear.preconditioning: kspoptions
 #fem.solver.preconditioning.method: kspoptions
 #fem.solver.kspoptions: -pc_type hypre -pc_hypre_type boomeramg -ksp_error_if_not_converged -ksp_level 0

@@ -68,6 +68,16 @@ namespace Dune
         return Preconditioners::to_string( id );
       }
 
+      // identifier for platform, e.g. CPU, GPU and more
+      LIST_OF_INT_FORWARDED(Platform,
+                   CPU      = 1,  // CPU architectures (as before and the default)
+                   GPU      = 2); // GPU (new GPU architectures)
+
+      static const std::string platformTable(int id)
+      {
+        return Platform::to_string( id );
+      }
+
       SolverParameter ( const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( "fem.solver." ), parameter_( parameter )
       {}
@@ -218,6 +228,25 @@ namespace Dune
           return -(method-standardMethods.size()); // return in [ 0,-additionalMethods.size() )
       }
 
+      virtual int platform(
+            const std::vector<int> standardPlatforms,
+            const std::vector<std::string> &additionalPlatforms = {},
+            int defaultPlatform = 0   // this is the first platform passed in
+          ) const
+      {
+        std::vector<std::string> pltTable(standardPlatforms.size());
+        for (std::size_t i=0;i<standardPlatforms.size();++i)
+          pltTable[i] = platformTable(standardPlatforms[i]);
+        for (std::size_t i=0;i<additionalPlatforms.size();++i)
+          pltTable[standardPlatforms.size()+i] = additionalPlatforms[i];
+
+        std::size_t pltfrm = parameter_.getEnum( keyPrefix_ + "platform", pltTable, defaultPlatform );
+        if (pltfrm < standardPlatforms.size())
+          return standardPlatforms[ pltfrm ];
+        else
+          return -(pltfrm-standardPlatforms.size()); // return in [ 0,-additionalPlatforms.size() )
+      }
+
       virtual double relaxation () const
       {
         return parameter_.getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
@@ -247,11 +276,6 @@ namespace Dune
       virtual bool knollTrick() const
       {
         return parameter_.getValue< bool >( keyPrefix_ + "knolltrick", false );
-      }
-
-      virtual bool usegpu() const
-      {
-        return parameter_.getValue< bool >( keyPrefix_ + "usegpu", true );
       }
 
      private:

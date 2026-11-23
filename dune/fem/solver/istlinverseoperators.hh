@@ -372,10 +372,11 @@ namespace Dune
       ISTLInverseOperator ( const ISTLSolverParameter & parameter = ISTLSolverParameter() )
         : BaseType( parameter ),
           solverAdapter_( ReductionType( parameter_ ), parameter_ ),
-          gpuSolverAdapter_()
+          gpuSolverAdapter_(),
+          platform_( parameter.platform( std::vector<int> {{ SolverParameter::CPU, SolverParameter::GPU }} ))
       {
 #if HAVE_DUNE_ISTL_GPU
-        if( parameter.usegpu() )
+        if( platform_ == SolverParameter::GPU )
         {
           typedef typename GPUSolverAdapterType::ReductionType GPUReductionType;
           gpuSolverAdapter_.reset( new GPUSolverAdapterType( GPUReductionType( parameter_ ), parameter_  ));
@@ -512,6 +513,7 @@ namespace Dune
 
       mutable SolverAdapterType solverAdapter_;
       mutable std::unique_ptr< GPUSolverAdapterType > gpuSolverAdapter_;
+      const int platform_;
     };
 
   } // namespace Fem
