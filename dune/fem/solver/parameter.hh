@@ -62,7 +62,7 @@ namespace Dune
                             amg_jacobi   = 8 , // AMG with Jacobi smoother
                             ildl         = 9 , // ILDL from istl
                             oas          = 10, // Overlapping Additive Schwarz
-                            icc          = 11);// Incomplete Cholesky factorization
+                            icc          = 11); // Incomplete Cholesky factorization
       static const std::string preconditionMethodTable(int id)
       {
         return Preconditioners::to_string( id );

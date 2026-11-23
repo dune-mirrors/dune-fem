@@ -152,6 +152,9 @@ namespace Dune
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
           method_( mthd < 0 ? parameter->solverMethod( ISTLInverseOperatorMethods::supportedSolverMethods() ) : mthd ),
+          preconditioning_( parameter->istlPlatform() == SolverParameter::GPU ?
+              parameter->preconditionMethod( ISTLPreconditionMethods::supportedGPUPreconditionMethods(), ISTLPreconditionMethods::extraGPUPreconditionMethods()
+                      ) : SolverParameter::none ),
           parameter_( parameter )
       {}
 
@@ -169,7 +172,7 @@ namespace Dune
 #if HAVE_DUNE_ISTL_GPU
         else
         {
-          std::cout << "Copying to device memory" << std::endl;
+          //std::cout << "Copying to device memory" << std::endl;
           // otherwise copy to device, solve, copy back
           const size_t size = rhs.size()*X::block_type::dimension ;
           range_type gpuRhs( size );
@@ -183,13 +186,68 @@ namespace Dune
           GPUOperator gpuOp( gpuMat );
           Dune::ScalarProduct< domain_type > gpuScp;
 
-          //using GpuJac = Dune::GPU::GpuJac< GpuSparseMatrixType, domain_type, domain_type >;
-          //GpuJac gpuPc( gpuOp.getmat(), 0.8 );
+          typedef Dune::Preconditioner< domain_type, domain_type > Preconditioner;
+          std::shared_ptr< Preconditioner > gpuPc;
 
-          using GpuPC = Dune::GPU::GpuSeqILU0< GpuSparseMatrixType, domain_type, domain_type >;
-          GpuPC gpuPc( gpuMat, 0.8 );
+          if( preconditioning_ == SolverParameter::none )
+          {
+            using GpuPC = IdentityPreconditionerWrapper< domain_type, domain_type >;
+            gpuPc.reset( new GpuPC() );
+          }
+          else if ( preconditioning_ == SolverParameter::jacobi )
+          {
+            using GpuPC = Dune::GPU::GpuJac< GpuSparseMatrixType, domain_type, domain_type >;
+            gpuPc.reset( new GpuPC( gpuOp.getmat(), parameter_->relaxation() ) );
+          }
+          else if ( preconditioning_ == SolverParameter::ilu )
+          {
+            if( parameter_->preconditionerIteration() > 0 )
+              DUNE_THROW(NotImplemented,"Only ILU(0) is currently supported for GPU platforms! Set 'linear.preconditioning.iterations' to '0'!");
 
-          applySolver( gpuOp, gpuScp, gpuPc, gpuRhs, gpuX, result );
+            using GpuPC = Dune::GPU::GpuSeqILU0< GpuSparseMatrixType, domain_type, domain_type >;
+            gpuPc.reset( new GpuPC( gpuOp.getmat(), parameter_->relaxation() ) );
+          }
+#if HAVE_HYPRE
+          else if ( preconditioning_ == 0 )
+          {
+            if constexpr ( requires{HYPRE_Initialized();} )
+            {
+              if( ! HYPRE_Initialized() )
+              {
+                HYPRE_Initialize();
+                /* Set log level */
+                //HYPRE_SetLogLevel( 0 );
+                int verbosity = (Parameter::verbose( Parameter::solverStatistics ) && parameter_->verbose()) ? 2 : 0;
+                if( verbosity )
+                {
+                  OPM_HYPRE_SAFE_CALL(HYPRE_PrintDeviceInfo());
+                }
+              }
+            }
+            using GpuPC = Dune::GPU::HyprePreconditioner< GpuSparseMatrixType, domain_type, domain_type >;
+            gpuPc.reset( new GpuPC( gpuOp.getmat(), true ) );
+          }
+#endif
+#if HAVE_AMGX
+          else if ( preconditioning_ == -1 )
+          {
+            static bool initialized = false ;
+            if ( ! initialized )
+            {
+              AMGX_SAFE_CALL(AMGX_initialize());
+              initialized = true;
+            }
+
+            using GpuPC = Dune::GPU::AMGXPreconditioner< GpuSparseMatrixType, domain_type, domain_type >;
+            gpuPc.reset( new GpuPC( gpuOp.getmat(), 30 ) );
+          }
+#endif
+          else
+          {
+            DUNE_THROW(NotImplemented,"Wrong preconditioner chosen!");
+          }
+
+          applySolver( gpuOp, gpuScp, *gpuPc, gpuRhs, gpuX, result );
           gpuX.copyToHost( x );
         }
 #endif
@@ -298,6 +356,7 @@ namespace Dune
 
       ReductionType reduction_;
       const int method_;
+      const int preconditioning_;
 
       std::shared_ptr<ISTLSolverParameter> parameter_;
     };
@@ -373,7 +432,7 @@ namespace Dune
         : BaseType( parameter ),
           solverAdapter_( ReductionType( parameter_ ), parameter_ ),
           gpuSolverAdapter_(),
-          platform_( parameter.platform( std::vector<int> {{ SolverParameter::CPU, SolverParameter::GPU }} ))
+          platform_( parameter.istlPlatform() )
       {
 #if HAVE_DUNE_ISTL_GPU
         if( platform_ == SolverParameter::GPU )

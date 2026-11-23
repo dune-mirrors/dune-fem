@@ -40,7 +40,22 @@ namespace Dune
                                      SolverParameter::amg_ilu,     // AMG with ILU-0 smoother (deprecated)
                                      SolverParameter::amg_jacobi,  // AMG with Jacobi smoother
                                      SolverParameter::ildl         // ILDL from istl
-                                    });
+                                  });
+      }
+
+      static std::vector< int > supportedGPUPreconditionMethods() {
+        return std::vector< int > ({ SolverParameter::none,    // no preconditioner
+                                     SolverParameter::ilu ,    // ILU(0) preconditioner
+                                     SolverParameter::jacobi,  // Jacobi preconditioner
+                                  });
+      }
+
+      static std::vector<std::string> extraGPUPreconditionMethods()
+      {
+        return std::vector< std::string >
+                 ({"hypre",      // =  0,   // Hypre preconditioning
+                   "amgx",       // = -1,   // AMGX preconditioner
+                 });
       }
     };
 
@@ -81,6 +96,17 @@ namespace Dune
       virtual bool fastILUStorage () const
       {
         return parameter().getValue< bool >( keyPrefix() + "preconditioning.fastilustorage", true );
+      }
+
+      virtual int istlPlatform() const
+      {
+        // ISTL supports CPU and if DUNE_ISTL_GPU is available also GPU
+        std::vector<int> supportedPlatforms = {{ SolverParameter::CPU }};
+#if HAVE_DUNE_ISTL_GPU
+        // add GPU as supported platform
+        supportedPlatforms.push_back( SolverParameter::GPU );
+#endif
+        return this->platform( supportedPlatforms );
       }
     };
 
@@ -760,8 +786,10 @@ namespace Dune
                            const MatrixAdapterType*,
                            const ISTLSolverParameter& param )
       {
-        int preconditioning = param.preconditionMethod(
-            ISTLPreconditionMethods::supportedPreconditionMethods() );
+        // for GPU we select none here to avoid building preconditioner on CPU
+        const int preconditioning = ( param.istlPlatform() == SolverParameter::CPU ) ?
+          param.preconditionMethod( ISTLPreconditionMethods::supportedPreconditionMethods() ) : SolverParameter::none ;
+
         const double relaxFactor   = param.relaxation();
         const size_t numIterations = param.preconditionerIteration();
 
