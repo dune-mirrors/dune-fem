@@ -162,6 +162,11 @@ namespace Dune
           BaseType (rows, cols, BaseType :: row_wise)
         {}
 
+        //! constructor using row_wise assembly
+        ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz, BuildMode bm ) :
+          BaseType (rows, cols, nz, bm)
+        {}
+
         //! copy constructor, needed by ISTL preconditioners
         ImprovedBCRSMatrix( ) :
           BaseType ()
