@@ -507,7 +507,6 @@ namespace Dune
         else
 #endif
         {
-          assert( solverAdapter_ );
           auto& scp = w.scalarProduct();
           // u may not be a discrete function, therefore use w.space()
           const DiscreteFunctionSpaceType& space = w.space();
