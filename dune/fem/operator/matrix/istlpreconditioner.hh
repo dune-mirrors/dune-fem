@@ -102,10 +102,10 @@ namespace Dune
       virtual int istlPlatform() const
       {
         // ISTL supports CPU and if DUNE_ISTL_GPU is available also GPU
-        std::vector<int> supportedPlatforms = {{ SolverParameter::CPU }};
+        std::vector<int> supportedPlatforms = {{ SolverParameter::Platform::CPU }};
 #if HAVE_DUNE_ISTL_GPU
         // add GPU as supported platform
-        supportedPlatforms.push_back( SolverParameter::GPU );
+        supportedPlatforms.push_back( SolverParameter::Platform::GPU );
 #endif
         return this->platform( supportedPlatforms );
       }
@@ -788,8 +788,8 @@ namespace Dune
                            const ISTLSolverParameter& param )
       {
         // for GPU we select none here to avoid building preconditioner on CPU
-        const int preconditioning = ( param.istlPlatform() == SolverParameter::CPU ) ?
-          param.preconditionMethod( ISTLPreconditionMethods::supportedPreconditionMethods() ) : SolverParameter::none ;
+        const int preconditioning = ( param.istlPlatform() == SolverParameter::Platform::CPU ) ?
+          param.preconditionMethod( ISTLPreconditionMethods::supportedPreconditionMethods() ) : SolverParameter::Preconditioners::none ;
 
         const double relaxFactor   = param.relaxation();
         const size_t numIterations = param.preconditionerIteration();

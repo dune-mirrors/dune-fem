@@ -152,9 +152,9 @@ namespace Dune
       ISTLSolverAdapter ( const ReductionType &reduction, std::shared_ptr<ISTLSolverParameter> parameter )
         : reduction_( reduction ),
           method_( mthd < 0 ? parameter->solverMethod( ISTLInverseOperatorMethods::supportedSolverMethods() ) : mthd ),
-          preconditioning_( parameter->istlPlatform() == SolverParameter::GPU ?
-              parameter->preconditionMethod( ISTLPreconditionMethods::supportedGPUPreconditionMethods(), ISTLPreconditionMethods::extraGPUPreconditionMethods()
-                      ) : SolverParameter::none ),
+          preconditioning_( parameter->istlPlatform() == SolverParameter::Platform::GPU ?
+              parameter->preconditionMethod( ISTLPreconditionMethods::supportedGPUPreconditionMethods(), ISTLPreconditionMethods::extraGPUPreconditionMethods() ) :
+              SolverParameter::Preconditioners::none ),
           parameter_( parameter )
       {}
 
@@ -189,17 +189,17 @@ namespace Dune
           typedef Dune::Preconditioner< domain_type, domain_type > Preconditioner;
           std::shared_ptr< Preconditioner > gpuPc;
 
-          if( preconditioning_ == SolverParameter::none )
+          if( preconditioning_ == SolverParameter::Preconditioners::none )
           {
             using GpuPC = IdentityPreconditionerWrapper< domain_type, domain_type >;
             gpuPc.reset( new GpuPC() );
           }
-          else if ( preconditioning_ == SolverParameter::jacobi )
+          else if ( preconditioning_ == SolverParameter::Preconditioners::jacobi )
           {
             using GpuPC = Dune::GPU::Jac< GpuSparseMatrixType, domain_type, domain_type >;
             gpuPc.reset( new GpuPC( gpuOp.getmat(), parameter_->relaxation() ) );
           }
-          else if ( preconditioning_ == SolverParameter::ilu )
+          else if ( preconditioning_ == SolverParameter::Preconditioners::ilu )
           {
             if( parameter_->preconditionerIteration() > 0 )
               DUNE_THROW(NotImplemented,"Only ILU(0) is currently supported for GPU platforms! Set 'linear.preconditioning.iterations' to '0'!");
@@ -239,7 +239,7 @@ namespace Dune
           }
 #endif
 #if HAVE_AMGX
-          else if ( preconditioning_ == -1 )
+          else if ( preconditioning_ == -2 )
           {
             static bool initialized = false ;
             if ( ! initialized )
@@ -445,7 +445,7 @@ namespace Dune
           platform_( parameter.istlPlatform() )
       {
 #if HAVE_DUNE_ISTL_GPU
-        if( platform_ == SolverParameter::GPU )
+        if( platform_ == SolverParameter::Platform::GPU )
         {
           typedef typename GPUSolverAdapterType::ReductionType GPUReductionType;
           gpuSolverAdapter_.reset( new GPUSolverAdapterType( GPUReductionType( parameter_ ), parameter_  ));
