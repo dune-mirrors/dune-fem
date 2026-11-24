@@ -196,7 +196,7 @@ namespace Dune
           }
           else if ( preconditioning_ == SolverParameter::jacobi )
           {
-            using GpuPC = Dune::GPU::GpuJac< GpuSparseMatrixType, domain_type, domain_type >;
+            using GpuPC = Dune::GPU::Jac< GpuSparseMatrixType, domain_type, domain_type >;
             gpuPc.reset( new GpuPC( gpuOp.getmat(), parameter_->relaxation() ) );
           }
           else if ( preconditioning_ == SolverParameter::ilu )
@@ -204,11 +204,21 @@ namespace Dune
             if( parameter_->preconditionerIteration() > 0 )
               DUNE_THROW(NotImplemented,"Only ILU(0) is currently supported for GPU platforms! Set 'linear.preconditioning.iterations' to '0'!");
 
-            using GpuPC = Dune::GPU::GpuSeqILU0< GpuSparseMatrixType, domain_type, domain_type >;
+            using GpuPC = Dune::GPU::SeqILU0< GpuSparseMatrixType, domain_type, domain_type >;
             gpuPc.reset( new GpuPC( gpuOp.getmat(), parameter_->relaxation() ) );
           }
+          else if ( preconditioning_ == 0 ) // DILU
+          {
+            typedef typename Op::MatrixType CPUMatrixType;
+            using GpuPC = Dune::GPU::DILU< CPUMatrixType, domain_type, domain_type >;
+            bool splitMatrix = true;
+            bool tuneKernel  = true;
+            int mixedPrecisionScheme = 0;
+            bool reorder = true;
+            gpuPc.reset( new GpuPC( gpuOp.getmat(), op.getmat(), splitMatrix, tuneKernel, mixedPrecisionScheme, reorder) );
+          }
 #if HAVE_HYPRE
-          else if ( preconditioning_ == 0 )
+          else if ( preconditioning_ == -1 )
           {
             if constexpr ( requires{HYPRE_Initialized();} )
             {

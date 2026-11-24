@@ -53,8 +53,9 @@ namespace Dune
       static std::vector<std::string> extraGPUPreconditionMethods()
       {
         return std::vector< std::string >
-                 ({"hypre",      // =  0,   // Hypre preconditioning
-                   "amgx",       // = -1,   // AMGX preconditioner
+                 ({"dilu",       // =  0,   // DILU
+                   "hypre",      // = -1,   // Hypre preconditioning
+                   "amgx",       // = -2,   // AMGX preconditioner
                  });
       }
     };
