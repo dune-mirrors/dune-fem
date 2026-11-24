@@ -1039,7 +1039,7 @@ namespace Dune
 #ifdef USE_IBCRS_MATRIX
             false;
 #else
-            proposeImplicit && MPIManager::numThreads() == 1;
+            proposeImplicit && (MPIManager::numThreads() == 1) && (param_.istlPlatform() != SolverParameter::Platform::GPU);
 #endif
 
           if( implicit )
