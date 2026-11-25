@@ -98,7 +98,14 @@ check-github-api:
   image: registry.dune-project.org/docker/ci/ubuntu:26.04
   before_script: []
   script:
-    - curl --fail --silent --show-error --output /dev/null --write-out 'HTTP %{http_code}\n' https://api.github.com/
+    - |
+      curl --silent --show-error \
+        --dump-header /tmp/github-headers \
+        --output /tmp/github-body \
+        --write-out 'HTTP %{http_code}\n' \
+        https://api.github.com/
+      cat /tmp/github-headers
+      cat /tmp/github-body
   when: manual
   tags: [duneci]
 
