@@ -93,3 +93,12 @@ torture-26.04-gcc-15-20:
   variables:
     DUNECI_TOOLCHAIN: gcc-15-20
   tags: [duneci]
+
+check-github-api:
+  image: registry.dune-project.org/docker/ci/ubuntu:26.04
+  before_script: []
+  script:
+    - curl --fail --silent --show-error --output /dev/null --write-out 'HTTP %{http_code}\n' https://api.github.com/
+  when: manual
+  tags: [duneci]
+
