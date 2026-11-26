@@ -212,23 +212,30 @@ namespace Dune
               [[maybe_unused]] field_type a = alpha;
             }
 
+            typedef typename Y::block_type YBlock;
+
+            YBlock yi( 0 );
             const auto slice = sliceBeginEnd( MPIManager::thread(), MPIManager::numThreads() );
             const ConstRowIterator endi = slicedEnd( slice.second );
             for (ConstRowIterator i = slicedBegin(slice.first); i!=endi; ++i)
             {
-              if constexpr ( isMV )
-                y[i.index()] = 0;
+              yi = 0;
 
               ConstColIterator endj = (*i).end();
               for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
               {
                 auto&& xj = Dune::Impl::asVector(x[j.index()]);
-                auto&& yi = Dune::Impl::asVector(y[i.index()]);
                 if constexpr ( isMV )
                   Dune::Impl::asMatrix(*j).umv(xj, yi);
                 else
                   Dune::Impl::asMatrix(*j).usmv(alpha, xj, yi);
               }
+
+              if constexpr ( isMV )
+                y[i.index()] = yi;
+              else
+                y[i.index()] += yi;
+
             }
           };
 
