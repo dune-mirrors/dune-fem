@@ -234,7 +234,7 @@ namespace Dune
                 }
               }
             }
-            using GpuPC = Dune::GPU::HyprePreconditioner< GpuSparseMatrixType, domain_type, domain_type >;
+            using GpuPC = Dune::GPU::BoomerAMGPreconditioner< GpuSparseMatrixType, domain_type, domain_type >;
             gpuPc.reset( new GpuPC( gpuOp.getmat(), true ) );
           }
 #endif
